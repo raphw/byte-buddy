@@ -9747,11 +9747,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     protected abstract static class AdviceVisitor extends ExceptionTableSensitiveMethodVisitor implements Dispatcher.RelocationHandler.Relocation {
 
         /**
-         * The actual method visitor that is underlying this method visitor to which all instructions are written.
-         */
-        protected final MethodVisitor methodVisitor;
-
-        /**
          * A description of the instrumented method.
          */
         protected final MethodDescription instrumentedMethod;
@@ -9790,7 +9785,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Creates a new advice visitor.
          *
          * @param methodVisitor         The actual method visitor that is underlying this method visitor to which all instructions are written.
-         * @param delegate              A delegate to which all instructions of the original method are written to. Must delegate to {@code methodVisitor}.
          * @param implementationContext The implementation context to use.
          * @param assigner              The assigner to use.
          * @param exceptionHandler      The stack manipulation to apply within a suppression handler.
@@ -9803,7 +9797,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param readerFlags           The ASM reader flags that were set.
          */
         protected AdviceVisitor(MethodVisitor methodVisitor,
-                                MethodVisitor delegate,
                                 Context implementationContext,
                                 Assigner assigner,
                                 StackManipulation exceptionHandler,
@@ -9814,8 +9807,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 List<? extends TypeDescription> postMethodTypes,
                                 int writerFlags,
                                 int readerFlags) {
-            super(OpenedClassReader.ASM_API, delegate);
-            this.methodVisitor = methodVisitor;
+            super(OpenedClassReader.ASM_API, methodVisitor);
             this.instrumentedMethod = instrumentedMethod;
             preparationStart = new Label();
             argumentHandler = methodExit.getArgumentHandlerFactory().resolve(instrumentedMethod,
@@ -9873,11 +9865,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             methodExit.prepare();
             methodEnter.initialize();
             methodExit.initialize();
-            stackMapFrameHandler.injectInitializationFrame(methodVisitor);
+            stackMapFrameHandler.injectInitializationFrame(mv);
             methodEnter.apply();
-            methodVisitor.visitLabel(preparationStart);
-            methodSizeHandler.requireStackSize(argumentHandler.prepare(methodVisitor));
-            stackMapFrameHandler.injectStartFrame(methodVisitor);
+            mv.visitLabel(preparationStart);
+            methodSizeHandler.requireStackSize(argumentHandler.prepare(mv));
+            stackMapFrameHandler.injectStartFrame(mv);
             onUserStart();
         }
 
@@ -9903,13 +9895,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         public void onVisitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
-            stackMapFrameHandler.translateFrame(methodVisitor, type, localVariableLength, localVariable, stackSize, stack);
+            stackMapFrameHandler.translateFrame(mv, type, localVariableLength, localVariable, stackSize, stack);
         }
 
         @Override
         public void visitMaxs(int stackSize, int localVariableLength) {
             onUserEnd();
-            methodVisitor.visitMaxs(methodSizeHandler.compoundStackSize(stackSize), methodSizeHandler.compoundLocalVariableLength(localVariableLength));
+            mv.visitMaxs(methodSizeHandler.compoundStackSize(stackSize), methodSizeHandler.compoundLocalVariableLength(localVariableLength));
         }
 
         @Override
@@ -9965,7 +9957,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         int writerFlags,
                                         int readerFlags) {
                 super(methodVisitor,
-                        methodVisitor,
                         implementationContext,
                         assigner,
                         exceptionHandler,
@@ -10058,8 +10049,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                      List<? extends TypeDescription> postMethodTypes,
                                      int writerFlags,
                                      int readerFlags) {
-                super(methodVisitor,
-                        new StackAwareMethodVisitor(methodVisitor, instrumentedMethod),
+                super(new StackAwareMethodVisitor(methodVisitor, instrumentedMethod),
                         implementationContext,
                         assigner,
                         exceptionHandler,
@@ -10125,9 +10115,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             protected void onUserEnd() {
-                methodVisitor.visitLabel(returnHandler);
+                mv.visitLabel(returnHandler);
                 onUserReturn();
-                stackMapFrameHandler.injectCompletionFrame(methodVisitor);
+                stackMapFrameHandler.injectCompletionFrame(mv);
                 methodExit.apply();
                 onExitAdviceReturn();
                 if (instrumentedMethod.getReturnType().represents(boolean.class)
@@ -10135,22 +10125,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         || instrumentedMethod.getReturnType().represents(short.class)
                         || instrumentedMethod.getReturnType().represents(char.class)
                         || instrumentedMethod.getReturnType().represents(int.class)) {
-                    methodVisitor.visitVarInsn(Opcodes.ILOAD, argumentHandler.returned());
-                    methodVisitor.visitInsn(Opcodes.IRETURN);
+                    mv.visitVarInsn(Opcodes.ILOAD, argumentHandler.returned());
+                    mv.visitInsn(Opcodes.IRETURN);
                 } else if (instrumentedMethod.getReturnType().represents(long.class)) {
-                    methodVisitor.visitVarInsn(Opcodes.LLOAD, argumentHandler.returned());
-                    methodVisitor.visitInsn(Opcodes.LRETURN);
+                    mv.visitVarInsn(Opcodes.LLOAD, argumentHandler.returned());
+                    mv.visitInsn(Opcodes.LRETURN);
                 } else if (instrumentedMethod.getReturnType().represents(float.class)) {
-                    methodVisitor.visitVarInsn(Opcodes.FLOAD, argumentHandler.returned());
-                    methodVisitor.visitInsn(Opcodes.FRETURN);
+                    mv.visitVarInsn(Opcodes.FLOAD, argumentHandler.returned());
+                    mv.visitInsn(Opcodes.FRETURN);
                 } else if (instrumentedMethod.getReturnType().represents(double.class)) {
-                    methodVisitor.visitVarInsn(Opcodes.DLOAD, argumentHandler.returned());
-                    methodVisitor.visitInsn(Opcodes.DRETURN);
+                    mv.visitVarInsn(Opcodes.DLOAD, argumentHandler.returned());
+                    mv.visitInsn(Opcodes.DRETURN);
                 } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
-                    methodVisitor.visitVarInsn(Opcodes.ALOAD, argumentHandler.returned());
-                    methodVisitor.visitInsn(Opcodes.ARETURN);
+                    mv.visitVarInsn(Opcodes.ALOAD, argumentHandler.returned());
+                    mv.visitInsn(Opcodes.ARETURN);
                 } else {
-                    methodVisitor.visitInsn(Opcodes.RETURN);
+                    mv.visitInsn(Opcodes.RETURN);
                 }
                 methodSizeHandler.requireStackSize(instrumentedMethod.getReturnType().getStackSize().getSize());
             }
@@ -10226,20 +10216,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             || instrumentedMethod.getReturnType().represents(short.class)
                             || instrumentedMethod.getReturnType().represents(char.class)
                             || instrumentedMethod.getReturnType().represents(int.class)) {
-                        stackMapFrameHandler.injectReturnFrame(methodVisitor);
-                        methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.returned());
+                        stackMapFrameHandler.injectReturnFrame(mv);
+                        mv.visitVarInsn(Opcodes.ISTORE, argumentHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(long.class)) {
-                        stackMapFrameHandler.injectReturnFrame(methodVisitor);
-                        methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.returned());
+                        stackMapFrameHandler.injectReturnFrame(mv);
+                        mv.visitVarInsn(Opcodes.LSTORE, argumentHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(float.class)) {
-                        stackMapFrameHandler.injectReturnFrame(methodVisitor);
-                        methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.returned());
+                        stackMapFrameHandler.injectReturnFrame(mv);
+                        mv.visitVarInsn(Opcodes.FSTORE, argumentHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(double.class)) {
-                        stackMapFrameHandler.injectReturnFrame(methodVisitor);
-                        methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.returned());
+                        stackMapFrameHandler.injectReturnFrame(mv);
+                        mv.visitVarInsn(Opcodes.DSTORE, argumentHandler.returned());
                     } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
-                        stackMapFrameHandler.injectReturnFrame(methodVisitor);
-                        methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.returned());
+                        stackMapFrameHandler.injectReturnFrame(mv);
+                        mv.visitVarInsn(Opcodes.ASTORE, argumentHandler.returned());
                     }
                 }
 
@@ -10315,72 +10305,72 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected void onUserPrepare() {
-                    methodVisitor.visitTryCatchBlock(userStart, returnHandler, exceptionHandler, throwable.getInternalName());
+                    mv.visitTryCatchBlock(userStart, returnHandler, exceptionHandler, throwable.getInternalName());
                 }
 
                 @Override
                 protected void onUserStart() {
-                    methodVisitor.visitLabel(userStart);
+                    mv.visitLabel(userStart);
                 }
 
                 @Override
                 protected void onUserReturn() {
-                    stackMapFrameHandler.injectReturnFrame(methodVisitor);
+                    stackMapFrameHandler.injectReturnFrame(mv);
                     if (instrumentedMethod.getReturnType().represents(boolean.class)
                             || instrumentedMethod.getReturnType().represents(byte.class)
                             || instrumentedMethod.getReturnType().represents(short.class)
                             || instrumentedMethod.getReturnType().represents(char.class)
                             || instrumentedMethod.getReturnType().represents(int.class)) {
-                        methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.returned());
+                        mv.visitVarInsn(Opcodes.ISTORE, argumentHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(long.class)) {
-                        methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.returned());
+                        mv.visitVarInsn(Opcodes.LSTORE, argumentHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(float.class)) {
-                        methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.returned());
+                        mv.visitVarInsn(Opcodes.FSTORE, argumentHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(double.class)) {
-                        methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.returned());
+                        mv.visitVarInsn(Opcodes.DSTORE, argumentHandler.returned());
                     } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
-                        methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.returned());
+                        mv.visitVarInsn(Opcodes.ASTORE, argumentHandler.returned());
                     }
-                    methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                    methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.thrown());
+                    mv.visitInsn(Opcodes.ACONST_NULL);
+                    mv.visitVarInsn(Opcodes.ASTORE, argumentHandler.thrown());
                     Label endOfHandler = new Label();
-                    methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
-                    methodVisitor.visitLabel(exceptionHandler);
-                    stackMapFrameHandler.injectExceptionFrame(methodVisitor);
-                    methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.thrown());
+                    mv.visitJumpInsn(Opcodes.GOTO, endOfHandler);
+                    mv.visitLabel(exceptionHandler);
+                    stackMapFrameHandler.injectExceptionFrame(mv);
+                    mv.visitVarInsn(Opcodes.ASTORE, argumentHandler.thrown());
                     if (instrumentedMethod.getReturnType().represents(boolean.class)
                             || instrumentedMethod.getReturnType().represents(byte.class)
                             || instrumentedMethod.getReturnType().represents(short.class)
                             || instrumentedMethod.getReturnType().represents(char.class)
                             || instrumentedMethod.getReturnType().represents(int.class)) {
-                        methodVisitor.visitInsn(Opcodes.ICONST_0);
-                        methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.returned());
+                        mv.visitInsn(Opcodes.ICONST_0);
+                        mv.visitVarInsn(Opcodes.ISTORE, argumentHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(long.class)) {
-                        methodVisitor.visitInsn(Opcodes.LCONST_0);
-                        methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.returned());
+                        mv.visitInsn(Opcodes.LCONST_0);
+                        mv.visitVarInsn(Opcodes.LSTORE, argumentHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(float.class)) {
-                        methodVisitor.visitInsn(Opcodes.FCONST_0);
-                        methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.returned());
+                        mv.visitInsn(Opcodes.FCONST_0);
+                        mv.visitVarInsn(Opcodes.FSTORE, argumentHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(double.class)) {
-                        methodVisitor.visitInsn(Opcodes.DCONST_0);
-                        methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.returned());
+                        mv.visitInsn(Opcodes.DCONST_0);
+                        mv.visitVarInsn(Opcodes.DSTORE, argumentHandler.returned());
                     } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
-                        methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                        methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.returned());
+                        mv.visitInsn(Opcodes.ACONST_NULL);
+                        mv.visitVarInsn(Opcodes.ASTORE, argumentHandler.returned());
                     }
-                    methodVisitor.visitLabel(endOfHandler);
+                    mv.visitLabel(endOfHandler);
                     methodSizeHandler.requireStackSize(StackSize.SINGLE.getSize());
                 }
 
                 @Override
                 protected void onExitAdviceReturn() {
-                    methodVisitor.visitVarInsn(Opcodes.ALOAD, argumentHandler.thrown());
+                    mv.visitVarInsn(Opcodes.ALOAD, argumentHandler.thrown());
                     Label endOfHandler = new Label();
-                    methodVisitor.visitJumpInsn(Opcodes.IFNULL, endOfHandler);
-                    methodVisitor.visitVarInsn(Opcodes.ALOAD, argumentHandler.thrown());
-                    methodVisitor.visitInsn(Opcodes.ATHROW);
-                    methodVisitor.visitLabel(endOfHandler);
-                    stackMapFrameHandler.injectPostCompletionFrame(methodVisitor);
+                    mv.visitJumpInsn(Opcodes.IFNULL, endOfHandler);
+                    mv.visitVarInsn(Opcodes.ALOAD, argumentHandler.thrown());
+                    mv.visitInsn(Opcodes.ATHROW);
+                    mv.visitLabel(endOfHandler);
+                    stackMapFrameHandler.injectPostCompletionFrame(mv);
                 }
             }
         }

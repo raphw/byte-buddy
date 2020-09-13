@@ -1,17 +1,22 @@
 package net.bytebuddy.asm;
 
+import net.bytebuddy.Bar;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.modifier.Ownership;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Rule;
@@ -19,6 +24,8 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -1483,6 +1490,28 @@ public class AdviceTest {
         assertThat(type.getDeclaredConstructor().newInstance(), notNullValue(Object.class));
     }
 
+    @Test
+    public void testDrainsStackOnReservedValue() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(FOO, boolean.class, Ownership.STATIC)
+                .defineMethod(BAR, boolean.class, Visibility.PUBLIC)
+                .intercept(new Implementation.Simple(new ByteCodeAppender() {
+                    @Override
+                    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+                        methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, implementationContext.getInstrumentedType().getInternalName(), FOO, Type.getDescriptor(boolean.class));
+                        methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, implementationContext.getInstrumentedType().getInternalName(), FOO, Type.getDescriptor(boolean.class));
+                        methodVisitor.visitInsn(Opcodes.IRETURN);
+                        return new Size(2, 0);
+                    }
+                }))
+                .visit(Advice.to(EmptyAdviceWithEnterValue.class).on(isMethod()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER)
+                .getLoaded();
+        assertThat(type.getMethod(BAR).invoke(type.getConstructor().newInstance()), is((Object) false));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testUserSerializableTypeValueNonAssignable() throws Exception {
         new ByteBuddy()
@@ -2204,6 +2233,18 @@ public class AdviceTest {
         private static void advice() {
             /* empty */
         }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EmptyAdviceWithEnterValue {
+
+        @Advice.OnMethodEnter
+        private static Object enter() {
+            return null;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit() { }
     }
 
     @SuppressWarnings("unused")
