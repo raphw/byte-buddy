@@ -5753,9 +5753,15 @@ public interface DynamicType {
     interface Unloaded<T> extends DynamicType {
 
         /**
+         * <p>
          * Attempts to load this dynamic type including all of its auxiliary types, if any. If the class loader is an
          * unsealed instance of {@link InjectionClassLoader}, the classes are injected directy into the class loader, otherwise,
          * a new class loader is created where the supplied class loader is set as parent.
+         * </p>
+         * <p>
+         * <b>Note</b>: A new class is attempted to be loaded each time this method is invoked, even if a compatible class was
+         * created previously. Consider using a {@link net.bytebuddy.TypeCache}.
+         * </p>
          *
          * @param classLoader The class loader to use for this class loading.
          * @return This dynamic type in its loaded state.
@@ -5763,7 +5769,13 @@ public interface DynamicType {
         Loaded<T> load(ClassLoader classLoader);
 
         /**
+         * <p>
          * Attempts to load this dynamic type including all of its auxiliary types, if any.
+         * </p>
+         * <p>
+         * <b>Note</b>: A new class is attempted to be loaded each time this method is invoked, even if a compatible class was
+         * created previously. Consider using a {@link net.bytebuddy.TypeCache}.
+         * </p>
          *
          * @param classLoader          The class loader to use for this class loading.
          * @param classLoadingStrategy The class loader strategy which should be used for this class loading.
