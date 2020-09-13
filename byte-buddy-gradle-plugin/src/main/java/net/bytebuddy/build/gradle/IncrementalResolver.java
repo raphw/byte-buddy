@@ -17,7 +17,6 @@ package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.gradle.api.ChangeType;
 import net.bytebuddy.build.gradle.api.FileChange;
-import net.bytebuddy.pool.TypePool;
 import org.gradle.api.Project;
 
 import java.io.File;
