@@ -2323,11 +2323,11 @@ public interface TypeWriter<T> {
                 super.visit(version, modifiers, name, signature, superName, interfaces);
             }
 
-            @Override
+            /*@Override
             public void visitPermittedSubclass(String permittedSubclass) {
                 constraint.assertPermittedSubclass();
                 super.visitPermittedSubclass(permittedSubclass);
-            }
+            }*/
 
             @Override
             public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
@@ -4862,19 +4862,19 @@ public interface TypeWriter<T> {
                         }
                     }
 
-                    @Override
+                    /*@Override
                     protected void onVisitPermittedSubclass(String permittedSubclass) {
                         if (permittedSubclasses.remove(permittedSubclass)) {
                             cv.visitPermittedSubclass(permittedSubclass);
                         }
-                    }
+                    }*/
 
-                    @Override
+                    /*@Override
                     protected void onAfterPermittedSubclasses() {
                         for (String permittedSubclass : permittedSubclasses) {
                             cv.visitPermittedSubclass(permittedSubclass);
                         }
-                    }
+                    }*/
 
                     @Override
                     protected void onVisitOuterClass(String owner, String name, String descriptor) {
@@ -5729,9 +5729,9 @@ public interface TypeWriter<T> {
                 if (!instrumentedType.isNestHost()) {
                     classVisitor.visitNestHost(instrumentedType.getNestHost().getInternalName());
                 }
-                for (TypeDescription typeDescription : instrumentedType.getPermittedSubclasses()) {
+                /*for (TypeDescription typeDescription : instrumentedType.getPermittedSubclasses()) {
                     classVisitor.visitPermittedSubclass(typeDescription.getInternalName());
-                }
+                }*/
                 MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
                 if (enclosingMethod != null) {
                     classVisitor.visitOuterClass(enclosingMethod.getDeclaringType().getInternalName(),

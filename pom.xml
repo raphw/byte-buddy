@@ -60,7 +60,7 @@
         <bytecode.test.version>1.6</bytecode.test.version>
         <pitest.target>net.bytebuddy</pitest.target>
         <asm.url>https://asm.ow2.io</asm.url>
-        <version.asm>9.0-beta</version.asm>
+        <version.asm>8.0.1</version.asm>
         <version.junit>4.13</version.junit>
         <version.mockito>2.23.0</version.mockito>
         <version.plugin.clean>3.0.0</version.plugin.clean>
