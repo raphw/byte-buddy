@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 19. September 2020: version 1.10.15
+
+- Rewrite of Gradle plugin, including support for incremental builds.
+- Fix `MethodCall` bug when loading arguments from array.
+- Mark rebased methods `private final` as required by the JVM when using a native method preifx.
+- Fix stack excess monitoring when using advice to discover excess stack values correctly to avoid verifier error.
+
 ### 31. July 2020: version 1.10.14
 
 - Fix build config to include Eclipse e2e file.
