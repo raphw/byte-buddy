@@ -158,7 +158,7 @@ public class GradleTypeTransformer {
          * @param names The names being discovered.
          */
         protected GradlePackageVisitor(String type, Map<String, String> names) {
-            super(Opcodes.ASM8);
+            super(Opcodes.ASM9);
             this.type = type;
             this.names = names;
         }
@@ -221,7 +221,7 @@ public class GradleTypeTransformer {
              * Creates a new package annotation visitor.
              */
             protected GradleTypeAnnotationVisitor() {
-                super(Opcodes.ASM8);
+                super(Opcodes.ASM9);
             }
 
             @Override

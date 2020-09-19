@@ -7813,10 +7813,10 @@ public interface TypePool {
                 return new RecordComponentExtractor(name, descriptor, signature);
             }
 
-            /*@Override
+            @Override
             public void visitPermittedSubclass(String permittedSubclass) {
                 permittedSubclasses.add(permittedSubclass);
-            }*/
+            }
 
             /**
              * Creates a type description from all data that is currently collected. This method should only be invoked

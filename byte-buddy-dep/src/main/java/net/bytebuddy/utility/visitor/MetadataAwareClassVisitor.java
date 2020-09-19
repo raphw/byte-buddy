@@ -162,7 +162,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
         super.visitNestHost(nestHost);
     }
 
-    /*@Override
+    @Override
     public final void visitPermittedSubclass(String permittedSubclass) {
         onVisitPermittedSubclass(permittedSubclass);
     }
@@ -171,10 +171,10 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * An order-sensitive invocation of {@code ClassVisitor#visitPermittedSubclass}.
      *
      * @param permittedSubclass The internal name of the permitted subclass.
-     *//*
+     */
     protected void onVisitPermittedSubclass(String permittedSubclass) {
         super.visitPermittedSubclass(permittedSubclass);
-    }*/
+    }
 
     @Override
     public final void visitOuterClass(String owner, String name, String descriptor) {

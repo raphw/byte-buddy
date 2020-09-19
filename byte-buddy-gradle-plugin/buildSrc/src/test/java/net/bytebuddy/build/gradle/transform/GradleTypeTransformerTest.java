@@ -60,7 +60,7 @@ public class GradleTypeTransformerTest {
             JarEntry entry = jarInputStream.getNextJarEntry();
             assertThat(entry, notNullValue(JarEntry.class));
             assertThat(entry.getName(), is(Target.class.getName().replace('.', '/') + ".class"));
-            new ClassReader(jarInputStream).accept(new ClassVisitor(Opcodes.ASM8) {
+            new ClassReader(jarInputStream).accept(new ClassVisitor(Opcodes.ASM9) {
 
                 private boolean found;
 
