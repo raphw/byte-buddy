@@ -2487,7 +2487,7 @@ public class MethodCall implements Implementation.Composable {
              * {@inheritDoc}
              */
             public TargetHandler.Resolved resolve(MethodDescription instrumentedMethod) {
-                if (instrumentedMethod.getParameters().size() < index) {
+                if (index >= instrumentedMethod.getParameters().size()) {
                     throw new IllegalArgumentException(instrumentedMethod + " does not have a parameter with index " + index);
                 }
                 return new Resolved(instrumentedMethod.getParameters().get(index));
