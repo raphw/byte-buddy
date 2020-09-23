@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 23. September 2020: version 1.10.16
+
+- Update to ASM 9 for full support of sealed types. 
+
 ### 19. September 2020: version 1.10.15
 
 - Rewrite of Gradle plugin, including support for incremental builds.
