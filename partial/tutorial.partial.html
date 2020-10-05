@@ -848,7 +848,7 @@ class MyApplication {
     built-in class loading. This way, the redefined definition of <code>foo.Bar</code> is loaded and used throughout
     our application's runtime. Note however that we do not reference the class by a class literal when we use the
     <code>TypePool</code> to provide a description. If we did use a class literal for <code>foo.Bar</code>, the JVM
-    would have loaded this class before we had a change to redefine it and our redefinition attempt would be without
+    would have loaded this class before we had a chance to redefine it and our redefinition attempt would be without
     effect. Also, note that when working with unloaded classes, we further need to specify a
     <code>ClassFileLocator</code> which allows to locate a class's class file. In the example above, we simply
     create a class file locator which scans the running application's class path for such files.
@@ -2187,7 +2187,7 @@ new ByteBuddy()
 <p>
     When a class is redefined or rebased, the same rule might not apply. By default, <code>ByteBuddy</code> is
     configured to preserve any annotations of a rebased or redefined method, even if the method is intercepted
-    as above. This behavior can however be changed such that Byte Buddy discards any prexisting annotations by
+    as above. This behavior can however be changed such that Byte Buddy discards any preexisting annotations by
     setting the <code>AnnotationRetention</code> strategy to <code>DISABLED</code>.
 </p>
 
