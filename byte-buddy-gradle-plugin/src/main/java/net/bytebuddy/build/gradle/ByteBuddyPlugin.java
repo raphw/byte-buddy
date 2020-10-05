@@ -66,7 +66,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
         project.getPluginManager().apply(JavaBasePlugin.class);
         JavaPluginConvention convention = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
         if (convention == null) {
-            project.getLogger().info("Not setting up explicit Byte Buddy configurations since Java plugin was not registered");
+            project.getLogger().warn("Not setting up explicit Byte Buddy configurations since Java plugin did not register convention");
         } else {
             for (SourceSet sourceSet : convention.getSourceSets()) {
                 String name = sourceSet.getName().equals("main") ? "byteBuddy" : (sourceSet.getName() + "ByteBuddy");
