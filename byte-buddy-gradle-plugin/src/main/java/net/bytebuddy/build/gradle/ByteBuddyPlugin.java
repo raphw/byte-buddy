@@ -64,15 +64,15 @@ public class ByteBuddyPlugin implements Plugin<Project> {
      */
     public void apply(Project project) {
         project.getPluginManager().apply(JavaBasePlugin.class);
-        JavaPluginConvention convention = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
-        if (convention == null) {
-            project.getLogger().warn("Not setting up explicit Byte Buddy configurations since Java plugin did not register convention");
-        } else {
-            for (SourceSet sourceSet : convention.getSourceSets()) {
+        Object convention = project.getConvention().getPlugins().get("java");
+        if (convention instanceof JavaPluginConvention) {
+            for (SourceSet sourceSet : ((JavaPluginConvention) convention).getSourceSets()) {
                 String name = sourceSet.getName().equals("main") ? "byteBuddy" : (sourceSet.getName() + "ByteBuddy");
                 project.getExtensions().add(name, DISPATCHER.toExtension());
                 project.afterEvaluate(DISPATCHER.toAction(name, sourceSet));
             }
+        } else {
+            project.getLogger().warn("Skipping implicit Byte Buddy task configuration since Java plugin did not register Java plugin convention");
         }
     }
 
