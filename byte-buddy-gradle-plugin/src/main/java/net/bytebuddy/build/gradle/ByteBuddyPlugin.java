@@ -18,6 +18,7 @@ package net.bytebuddy.build.gradle;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.SourceDirectorySet;
+import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
@@ -62,9 +63,10 @@ public class ByteBuddyPlugin implements Plugin<Project> {
      * {@inheritDoc}
      */
     public void apply(Project project) {
+        project.getPluginManager().apply(JavaBasePlugin.class);
         JavaPluginConvention convention = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
         if (convention == null) {
-            project.getLogger().debug("Not setting up explicit Byte Buddy configurations since Java plugin was not registered");
+            project.getLogger().info("Not setting up explicit Byte Buddy configurations since Java plugin was not registered");
         } else {
             for (SourceSet sourceSet : convention.getSourceSets()) {
                 String name = sourceSet.getName().equals("main") ? "byteBuddy" : (sourceSet.getName() + "ByteBuddy");
