@@ -85,11 +85,13 @@ public abstract class AbstractByteBuddyTaskConfiguration<
             byteBuddyTask.dependsOn(compileTask);
             extension.configure(byteBuddyTask);
             configureDirectories(sourceSet.getJava(), compileTask, byteBuddyTask);
-            for (Map.Entry<Project, Set<Task>> entry : project.getAllTasks(true).entrySet()) {
+            for (Map.Entry<Project, Set<Task>> entry : project.getRootProject().getAllTasks(true).entrySet()) {
                 for (Task task : entry.getValue()) {
-                    if (!task.getName().equals(name) && task.getDependsOn().contains(compileTask.getName())) {
+                    if (!(task.getName().equals(name)
+                            && task.getProject().equals(project))
+                            && task.getTaskDependencies().getDependencies(task).contains(compileTask)) {
                         task.dependsOn(byteBuddyTask);
-                        project.getLogger().warn("Altered task '{}' of project '{}' to depend on '{}' of project '{}'",
+                        project.getLogger().debug("Altered task '{}' of project '{}' to depend on '{}' of project '{}'",
                                 task.getName(),
                                 entry.getKey().getName(),
                                 name,

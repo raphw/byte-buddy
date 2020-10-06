@@ -68,7 +68,6 @@ public class ByteBuddyTaskConfiguration extends AbstractByteBuddyTaskConfigurati
         }
     }
 
-
     /**
      * Transforms a directory to a file.
      */
