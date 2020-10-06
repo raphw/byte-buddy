@@ -449,7 +449,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     }
 
     /**
-     * A {@link Plugin.Engine.Listener} that logs several relevant events during the build.
+     * A {@link net.bytebuddy.build.Plugin.Engine.Listener} that logs several relevant events during the build.
      */
     protected static class TransformationLogger extends Plugin.Engine.Listener.Adapter {
 
