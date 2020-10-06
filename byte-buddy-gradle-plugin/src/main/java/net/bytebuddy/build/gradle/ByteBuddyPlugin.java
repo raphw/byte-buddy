@@ -15,10 +15,12 @@
  */
 package net.bytebuddy.build.gradle;
 
+import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.plugins.JavaBasePlugin;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
@@ -62,17 +64,44 @@ public class ByteBuddyPlugin implements Plugin<Project> {
     /**
      * {@inheritDoc}
      */
-    public void apply(Project project) {
+    public void apply(final Project project) {
         project.getLogger().debug("Applying Byte Buddy Gradle plugin (legacy mode: {})", DISPATCHER instanceof Dispatcher.ForLegacyGradle);
-        project.getPluginManager().apply(JavaBasePlugin.class);
-        JavaPluginConvention convention = project.getConvention().findPlugin(JavaPluginConvention.class);
-        if (convention == null) {
-            project.getLogger().warn("Skipping implicit Byte Buddy task configuration since Java plugin did not register Java plugin convention");
-        } else {
-            for (SourceSet sourceSet : convention.getSourceSets()) {
-                String name = sourceSet.getName().equals(SourceSet.MAIN_SOURCE_SET_NAME) ? "byteBuddy" : (sourceSet.getName() + "ByteBuddy");
-                project.getExtensions().add(name, DISPATCHER.toExtension());
-                project.afterEvaluate(DISPATCHER.toAction(name, sourceSet));
+        project.getPlugins().withType(JavaPlugin.class, new JavaPluginConfigurationAction(project));
+    }
+
+    /**
+     * An action to configure the Java plugin to apply transformations.
+     */
+    protected static class JavaPluginConfigurationAction implements Action<JavaPlugin> {
+
+        /**
+         * The Gradle project.
+         */
+        private final Project project;
+
+        /**
+         * Creates a Java plugin configuration action.
+         *
+         * @param project The Gradle project.
+         */
+        protected JavaPluginConfigurationAction(Project project) {
+            this.project = project;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void execute(JavaPlugin plugin) {
+            project.getLogger().debug("Java plugin was discovered for modification: {}", plugin);
+            JavaPluginConvention convention = project.getConvention().findPlugin(JavaPluginConvention.class);
+            if (convention == null) {
+                project.getLogger().warn("Skipping implicit Byte Buddy task configuration since Java plugin did not register Java plugin convention");
+            } else {
+                for (SourceSet sourceSet : convention.getSourceSets()) {
+                    String name = sourceSet.getName().equals(SourceSet.MAIN_SOURCE_SET_NAME) ? "byteBuddy" : (sourceSet.getName() + "ByteBuddy");
+                    project.getExtensions().add(name, DISPATCHER.toExtension());
+                    project.afterEvaluate(DISPATCHER.toAction(name, sourceSet));
+                }
             }
         }
     }
