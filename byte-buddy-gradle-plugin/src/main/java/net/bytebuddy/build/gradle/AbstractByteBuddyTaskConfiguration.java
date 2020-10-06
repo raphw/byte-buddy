@@ -22,6 +22,9 @@ import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.JavaCompile;
 
+import java.util.Map;
+import java.util.Set;
+
 /**
  * An abstract configuration for a Byte Buddy task and extension.
  *
@@ -82,10 +85,16 @@ public abstract class AbstractByteBuddyTaskConfiguration<
             byteBuddyTask.dependsOn(compileTask);
             extension.configure(byteBuddyTask);
             configureDirectories(sourceSet.getJava(), compileTask, byteBuddyTask);
-            for (Task task : project.getTasks()) {
-                if (!task.getName().equals(name) && task.getDependsOn().contains(compileTask.getName())) {
-                    task.dependsOn(byteBuddyTask);
-                    project.getLogger().debug("Altered task '{}' to depend on '{}'", task.getName(), name);
+            for (Map.Entry<Project, Set<Task>> entry : project.getAllTasks(true).entrySet()) {
+                for (Task task : entry.getValue()) {
+                    if (!task.getName().equals(name) && task.getDependsOn().contains(compileTask.getName())) {
+                        task.dependsOn(byteBuddyTask);
+                        project.getLogger().warn("Altered task '{}' of project '{}' to depend on '{}' of project '{}'",
+                                task.getName(),
+                                entry.getKey().getName(),
+                                name,
+                                project.getName());
+                    }
                 }
             }
         }
