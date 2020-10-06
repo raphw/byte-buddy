@@ -63,6 +63,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
      * {@inheritDoc}
      */
     public void apply(Project project) {
+        project.getLogger().debug("Applying Byte Buddy Gradle plugin (legacy mode: {})", DISPATCHER instanceof Dispatcher.ForLegacyGradle);
         project.getPluginManager().apply(JavaBasePlugin.class);
         JavaPluginConvention convention = project.getConvention().findPlugin(JavaPluginConvention.class);
         if (convention == null) {

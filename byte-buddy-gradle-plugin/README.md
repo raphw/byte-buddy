@@ -13,10 +13,12 @@ plugins {
   id 'net.bytebuddy.byte-buddy-gradle-plugin' version byteBuddyVersion
 }
 
+import static net.bytebuddy.dynamic.ElementMatchers.*;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
+// Skipped dependency declaration of JUnit.
 
 class HookInstallingPlugin implements Plugin {
 
@@ -26,16 +28,17 @@ class HookInstallingPlugin implements Plugin {
     }
 
     @Override
-    Builder<?> apply(Builder<?> builder, 
-                     TypeDescription typeDescription, 
-                     ClassFileLocator classFileLocator) {
+    DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, 
+                                 TypeDescription typeDescription, 
+                                 ClassFileLocator classFileLocator) {
         return builder.method(isAnnotatedWith(anyOf(Test.class, Before.class, After.class))
                 .or(isStatic().and(isAnnotatedWith(anyOf(BeforeClass.class, AfterClass.class)))))
                 .intercept(MethodDelegation.to(SampleInterceptor.class))
                 .implement(Hooked.class);
     }
     
-    @Override void close() { }
+    @Override 
+    void close() { }
 }
 
 testByteBuddy {

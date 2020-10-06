@@ -45,7 +45,7 @@ public interface DirectoryProperty extends Provider<Directory> {
      * @param path The method's argument.
      * @return The method's return value.
      */
-    DirectoryProperty dir(String path);
+    Provider<Directory> dir(String path);
 
     /**
      * A placeholder representation of Gradle's {@code org.gradle.api.file.DirectoryProperty#set} method.
