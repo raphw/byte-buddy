@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 7. October 2020: version 1.10.17
+
+- Adjust Gradle plugin to properly consider registration order with the Java plugin.
+- Correct task adjustment when using Byte Buddy in a multimodule project.
+
 ### 23. September 2020: version 1.10.16
 
 - Update to ASM 9 for full support of sealed types. 
