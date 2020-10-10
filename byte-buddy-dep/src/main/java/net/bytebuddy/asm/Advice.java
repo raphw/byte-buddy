@@ -31,6 +31,7 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.*;
@@ -62,6 +63,8 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
+import static net.bytebuddy.matcher.ElementMatchers.isGetter;
+import static net.bytebuddy.matcher.ElementMatchers.isSetter;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -2132,7 +2135,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   Assigner assigner,
                                   ArgumentHandler argumentHandler,
                                   Sort sort) {
-                FieldDescription fieldDescription = resolve(instrumentedType);
+                FieldDescription fieldDescription = resolve(instrumentedType, instrumentedMethod);
                 if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
                     throw new IllegalStateException("Cannot read non-static field " + fieldDescription + " from static method " + instrumentedMethod);
                 } else if (sort.isPremature(instrumentedMethod) && !fieldDescription.isStatic()) {
@@ -2156,15 +2159,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * Resolves the field being bound.
              *
              * @param instrumentedType The instrumented type.
+             * @param instrumentedMethod The instrumented method.
              * @return The field being bound.
              */
-            protected abstract FieldDescription resolve(TypeDescription instrumentedType);
+            protected abstract FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
 
             /**
              * An offset mapping for a field that is resolved from the instrumented type by its name.
              */
             @HashCodeAndEqualsPlugin.Enhance
             public abstract static class Unresolved extends ForField {
+
+                /**
+                 * Indicates that a name should be extracted from an accessor method.
+                 */
+                protected static final String BEAN_PROPERTY = "";
 
                 /**
                  * The name of the field.
@@ -2185,13 +2194,35 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                protected FieldDescription resolve(TypeDescription instrumentedType) {
-                    FieldLocator.Resolution resolution = fieldLocator(instrumentedType).locate(name);
+                protected FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                    FieldLocator locator = fieldLocator(instrumentedType);
+                    FieldLocator.Resolution resolution = name.equals(BEAN_PROPERTY)
+                            ? resolveAccessor(locator, instrumentedMethod)
+                            : locator.locate(name);
                     if (!resolution.isResolved()) {
                         throw new IllegalStateException("Cannot locate field named " + name + " for " + instrumentedType);
                     } else {
                         return resolution.getField();
                     }
+                }
+
+                /**
+                 * Resolves a field locator for a potential accessor method.
+                 *
+                 * @param fieldLocator      The field locator to use.
+                 * @param methodDescription The method description that is the potential accessor.
+                 * @return A resolution for a field locator.
+                 */
+                private static FieldLocator.Resolution resolveAccessor(FieldLocator fieldLocator, MethodDescription methodDescription) {
+                    String fieldName;
+                    if (isSetter().matches(methodDescription)) {
+                        fieldName = methodDescription.getInternalName().substring(3);
+                    } else if (isGetter().matches(methodDescription)) {
+                        fieldName = methodDescription.getInternalName().substring(methodDescription.getInternalName().startsWith("is") ? 2 : 3);
+                    } else {
+                        return FieldLocator.Resolution.Illegal.INSTANCE;
+                    }
+                    return fieldLocator.locate(Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1));
                 }
 
                 /**
@@ -2353,7 +2384,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                protected FieldDescription resolve(TypeDescription instrumentedType) {
+                protected FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                     if (!fieldDescription.isStatic() && !fieldDescription.getDeclaringType().asErasure().isAssignableFrom(instrumentedType)) {
                         throw new IllegalStateException(fieldDescription + " is no member of " + instrumentedType);
                     } else if (!fieldDescription.isAccessibleTo(instrumentedType)) {
@@ -2500,6 +2531,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 break;
                             case Renderer.ForJavaSignature.SYMBOL:
                                 renderers.add(Renderer.ForJavaSignature.INSTANCE);
+                                break;
+                            case Renderer.ForPropertyName.SYMBOL:
+                                renderers.add(Renderer.ForPropertyName.INSTANCE);
                                 break;
                             default:
                                 throw new IllegalStateException("Illegal sort descriptor " + pattern.charAt(to + 1) + " for " + pattern);
@@ -2708,6 +2742,29 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public String apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                         return value;
+                    }
+                }
+
+                /**
+                 * A renderer for a property name.
+                 */
+                enum ForPropertyName implements Renderer {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * The signature symbol.
+                     */
+                    public static final char SYMBOL = 'p';
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public String apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                        return FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.resolve(instrumentedMethod);
                     }
                 }
             }
@@ -10871,6 +10928,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * Indicates that the annotated parameter should be mapped to a field in the scope of the instrumented method.
      * </p>
      * <p>
+     * Setting {@link FieldValue#value()} is optional. If the value is not set, the field value attempts to bind a setter's
+     * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
+     * to be an illegal candidate for binding.
+     * </p>
      * <b>Important</b>: Parameters with this option must not be used when from a constructor in combination with
      * {@link OnMethodEnter} and a non-static field where the {@code this} reference is not available.
      * </p>
@@ -10895,7 +10956,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          *
          * @return The name of the field.
          */
-        String value();
+        String value() default OffsetMapping.ForField.Unresolved.BEAN_PROPERTY;
 
         /**
          * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
@@ -10963,6 +11024,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * <li>{@code #d} for the method's descriptor.</li>
          * <li>{@code #s} for the method's signature.</li>
          * <li>{@code #r} for the method's return type.</li>
+         * <li>{@code #p} for the property's name.</li>
          * </ul>
          * Any other {@code #} character must be escaped by {@code \} which can be escaped by itself. This property is ignored if the annotated
          * parameter is of type {@link Class}.

@@ -13,6 +13,7 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -39,9 +40,15 @@ import java.util.Collections;
 import java.util.Map;
 
 import static junit.framework.TestCase.fail;
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.isMethod;
+import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -939,6 +946,18 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(IllegalReturnSubstitutionAdvice.class).on(named(FOO)))
                 .make();
+    }
+
+    @Test
+    public void testFieldAdviceBean() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Bean.class)
+                .visit(Advice.to(FieldAdviceBean.class).on(ElementMatchers.isSetter()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        type.getDeclaredMethod("setFoo", String.class).invoke(type.getDeclaredConstructor().newInstance(), BAR);
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
     }
 
     @Test
@@ -2694,6 +2713,37 @@ public class AdviceTest {
 
         public static String bar() {
             return BAR;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class Bean {
+
+        public static int enter;
+
+        private String foo;
+
+        public String getFoo() {
+            return foo;
+        }
+
+        public void setFoo(String foo) {
+            this.foo = foo;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FieldAdviceBean {
+
+        @Advice.OnMethodExit
+        private static void enter(@Advice.FieldValue String propertyValue, @Advice.Origin("#p") String propertyName) {
+            Bean.enter++;
+            if (!propertyValue.equals(BAR)) {
+                throw new AssertionError();
+            }
+            if (!propertyName.equals(FOO)) {
+                throw new AssertionError();
+            }
         }
     }
 
