@@ -61,7 +61,7 @@
         <pitest.target>net.bytebuddy</pitest.target>
         <asm.url>https://asm.ow2.io</asm.url>
         <version.asm>9.0</version.asm>
-        <version.junit>4.13</version.junit>
+        <version.junit>4.13.1</version.junit>
         <version.mockito>2.23.0</version.mockito>
         <version.plugin.clean>3.0.0</version.plugin.clean>
         <version.plugin.bundle>3.5.0</version.plugin.bundle>
