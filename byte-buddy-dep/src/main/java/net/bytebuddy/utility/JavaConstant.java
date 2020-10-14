@@ -1633,8 +1633,11 @@ public interface JavaConstant {
                         throw new IllegalArgumentException("Not a compile-time constant: " + constant);
                     }
                 }
-                if (!typeDescription.isAssignableTo(iterator.next())) {
-                    throw new IllegalArgumentException("Cannot assign " + constants + " to " + methodDescription);
+                TypeDescription next = iterator.next();
+                if (!typeDescription.isAssignableTo(next)) {
+                    if (!methodDescription.isVarArgs() || iterator.hasNext() || !next.isArray() || !typeDescription.isAssignableTo(next.getComponentType())) {
+                        throw new IllegalArgumentException("Cannot assign " + constants + " to " + methodDescription);
+                    }
                 }
             }
             return new Dynamic(new ConstantDynamic("invoke",
