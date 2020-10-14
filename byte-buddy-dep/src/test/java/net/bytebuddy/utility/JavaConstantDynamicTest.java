@@ -1,5 +1,7 @@
 package net.bytebuddy.utility;
 
+import java.lang.reflect.Method;
+
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -480,6 +482,24 @@ public class JavaConstantDynamicTest {
 
     @Test
     @JavaVersionRule.Enforce(11)
+    public void testInvocationOfVarargsMethod() throws Exception {
+        final Integer[] sourceIntegers = new Integer[] { Integer.valueOf(1), Integer.valueOf(2) };
+        Class<? extends Foo> baz = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+            .intercept(FixedValue.value(toJavaConstant(sourceIntegers)))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(baz.getDeclaredFields().length, is(0));
+        assertThat(baz.getDeclaredMethods().length, is(1));
+        Foo foo = baz.getDeclaredConstructor().newInstance();
+        assertThat(baz.getDeclaredMethod(FOO).invoke(foo), equalTo(sourceIntegers));
+        assertThat(baz.getDeclaredMethod(FOO).invoke(foo), sameInstance(baz.getDeclaredMethod(FOO).invoke(foo)));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(11)
     public void testStaticFieldVarHandle() throws Exception {
         Class<? extends Foo> baz = new ByteBuddy()
                 .subclass(Foo.class)
@@ -649,6 +669,7 @@ public class JavaConstantDynamicTest {
         public Object bar() {
             return null;
         }
+
     }
 
     private static Object methodHandle() throws Exception {
@@ -660,4 +681,24 @@ public class JavaConstantDynamicTest {
     private static Object methodType() throws Exception {
         return Class.forName("java.lang.invoke.MethodType").getMethod("methodType", Class.class).invoke(null, void.class);
     }
+
+    private static JavaConstant toJavaConstant(Integer[] integers) throws Exception {
+        // This is convoluted and exists only to test issue #954.
+        JavaConstant[] constants = new JavaConstant[integers.length];
+        for (int i = 0; i < integers.length; i++) {
+            constants[i] = toJavaConstant(integers[i]);
+        }
+        return JavaConstant.Dynamic.ofInvocation(JavaConstantDynamicTest.class.getDeclaredMethod("toIntegers", Integer[].class), constants);
+    }
+
+    private static JavaConstant toJavaConstant(Integer i) throws Exception {
+        // This is convoluted and exists only to test issue #954.
+        return JavaConstant.Dynamic.ofInvocation(Integer.class.getMethod("valueOf", String.class), i.toString());
+    }
+
+    public static Integer[] toIntegers(final Integer... varargs) {
+        // This is convoluted and exists only to test issue #954.
+        return varargs;
+    }
+
 }
