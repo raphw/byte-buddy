@@ -39,7 +39,7 @@ public interface TypeInitializer extends ByteCodeAppender {
     TypeWriter.MethodPool.Record wrap(TypeWriter.MethodPool.Record record);
 
     /**
-     * A drain for writing a type initializer.
+     * A drain for writing a type initializer. 用于编写类型初始值设定项的排水管
      */
     interface Drain {
 
@@ -74,7 +74,7 @@ public interface TypeInitializer extends ByteCodeAppender {
             protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
 
             /**
-             * Creates a new default type initializer drain.
+             * Creates a new default type initializer drain. 创建新的默认类型初始值设定项排出
              *
              * @param instrumentedType             The instrumented type.
              * @param methodPool                   The method pool to use.

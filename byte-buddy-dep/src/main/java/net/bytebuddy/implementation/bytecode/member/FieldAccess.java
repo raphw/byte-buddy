@@ -88,7 +88,7 @@ public enum FieldAccess {
 
     /**
      * Creates a field access representation for a given field. If the field's return type derives from its declared shape, the value
-     * is additionally casted to the generically resolved field.
+     * is additionally casted to the generically resolved field. 为给定字段创建字段访问表示。如果字段的返回类型派生自其声明的形状，则该值将额外强制转换为一般解析的字段
      *
      * @param fieldDescription The field to be accessed.
      * @return A field access definition for the given field.
@@ -170,18 +170,18 @@ public enum FieldAccess {
     }
 
     /**
-     * A dispatcher for implementing a non-generic read or write access on a field.
+     * A dispatcher for implementing a non-generic read or write access on a field. 一种调度程序，用于实现对字段的非通用读或写访问
      */
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class AccessDispatcher implements Defined {
 
         /**
-         * A description of the accessed field.
+         * A description of the accessed field. 已访问字段的说明
          */
         private final FieldDescription.InDefinedShape fieldDescription;
 
         /**
-         * Creates a new access dispatcher.
+         * Creates a new access dispatcher. 创建新的访问调度程序
          *
          * @param fieldDescription A description of the accessed field.
          */
@@ -235,7 +235,7 @@ public enum FieldAccess {
         }
 
         /**
-         * A reading field access operation.
+         * A reading field access operation. 读取字段访问操作
          */
         @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class FieldGetInstruction extends AbstractFieldInstruction {

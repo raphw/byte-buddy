@@ -7694,7 +7694,7 @@ public interface TypePool {
     }
 
     /**
-     * A type pool that attempts to load a class.
+     * A type pool that attempts to load a class. 尝试加载类的类型池
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ClassLoading extends AbstractBase.Hierarchical {
@@ -7723,7 +7723,7 @@ public interface TypePool {
 
         /**
          * Returns a type pool that attempts type descriptions by loadings types from the given class loader.
-         *
+         * 返回一个类型池，该类型池通过从给定的类加载器中加载类型来尝试进行类型描述
          * @param classLoader The class loader to use.
          * @return An class loading type pool.
          */
@@ -7753,7 +7753,7 @@ public interface TypePool {
 
         /**
          * Returns a type pool that attempts type descriptions by loadings types from the system class loader.
-         *
+         * 返回一个类型池，该类型池通过从系统加载器加载类型来尝试进行类型描述
          * @return An class loading type pool for the system class loader.
          */
         public static TypePool ofClassPath() {

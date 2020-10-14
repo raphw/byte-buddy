@@ -38,7 +38,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     /**
      * Creates a new type builder for creating a subclass.
      *
-     * @param instrumentedType             An instrumented type representing the subclass.
+     * @param instrumentedType             An instrumented type representing the subclass. 表示子类 instrumented 类型
      * @param classFileVersion             The class file version to use for types that are not based on an existing class file.
      * @param auxiliaryTypeNamingStrategy  The naming strategy to use for naming auxiliary types.
      * @param annotationValueFilterFactory The annotation value filter factory to use.
@@ -195,7 +195,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     /**
      * Applies this builder's constructor strategy to the given instrumented type.
-     *
+     * 将此构建器的构造函数策略应用于给定的 instrumented 类型
      * @param instrumentedType The instrumented type to apply the constructor onto.
      * @return The instrumented type with the constructor strategy applied onto.
      */

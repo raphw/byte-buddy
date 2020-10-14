@@ -428,7 +428,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         }
 
         /**
-         * A version locator for a JVM that does not provide the {@code java.lang.Runtime.Version} class.
+         * A version locator for a JVM that does not provide the {@code java.lang.Runtime.Version} class. JVM的版本定位器，它不提供 {@code java.lang.Runtime.Version} 类
          */
         enum ForLegacyVm implements VersionLocator, PrivilegedAction<String> {
 

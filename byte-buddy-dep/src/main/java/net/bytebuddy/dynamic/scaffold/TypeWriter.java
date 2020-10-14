@@ -395,22 +395,22 @@ public interface TypeWriter<T> {
             ByteCodeAppender.Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext);
 
             /**
-             * The sort of an entry.
+             * The sort of an entry. 一个条目的类型
              */
             enum Sort {
 
                 /**
-                 * Describes a method that should not be implemented or retained in its original state.
+                 * Describes a method that should not be implemented or retained in its original state. 描述不应在其原始状态下实现或保留的方法
                  */
                 SKIPPED(false, false),
 
                 /**
-                 * Describes a method that should be defined but is abstract or native, i.e. does not define any byte code.
+                 * Describes a method that should be defined but is abstract or native, i.e. does not define any byte code. 描述一个应该定义但抽象或本机的方法，即不定义任何字节码
                  */
                 DEFINED(true, false),
 
                 /**
-                 * Describes a method that is implemented in byte code.
+                 * Describes a method that is implemented in byte code. 描述用字节码实现的方法
                  */
                 IMPLEMENTED(true, true);
 
@@ -522,7 +522,7 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * A base implementation of an abstract entry that defines a method.
+             * A base implementation of an abstract entry that defines a method. 定义方法的抽象项的基实现
              */
             abstract class ForDefinedMethod implements Record {
 
@@ -573,7 +573,7 @@ public interface TypeWriter<T> {
                     private final Visibility visibility;
 
                     /**
-                     * Creates a new record for an implemented method without attributes or a modifier resolver.
+                     * Creates a new record for an implemented method without attributes or a modifier resolver. 为没有属性或修饰符解析器的已实现方法创建新记录
                      *
                      * @param methodDescription The implemented method.
                      * @param byteCodeAppender  The byte code appender to apply.
@@ -584,7 +584,7 @@ public interface TypeWriter<T> {
 
                     /**
                      * Creates a new entry for a method that defines a method as byte code.
-                     *
+                     * 为将方法定义为字节码的方法创建新条目
                      * @param methodDescription       The implemented method.
                      * @param byteCodeAppender        The byte code appender to apply.
                      * @param methodAttributeAppender The method attribute appender to apply.
@@ -1064,7 +1064,7 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * Wraps the given record in an accessor bridge wrapper if necessary.
+                 * Wraps the given record in an accessor bridge wrapper if necessary. 如有必要，将给定记录包装在存取器网桥包装器中
                  *
                  * @param delegate          The delegate for implementing the bridge's target.
                  * @param instrumentedType  The instrumented type that defines the bridge methods and the bridge target.
@@ -1767,7 +1767,7 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * Resolves this type to a dynamic type.
+             * Resolves this type to a dynamic type. 将此类型解析为动态类型
              *
              * @param typeResolutionStrategy The type resolution strategy to apply.
              * @return A dynamic type representing the inlined type.
@@ -3432,7 +3432,7 @@ public interface TypeWriter<T> {
                         }
 
                         /**
-                         * A frame writer is responsible for adding empty frames on jump instructions.
+                         * A frame writer is responsible for adding empty frames on jump instructions. 帧编写器负责在跳转指令上添加空帧
                          */
                         protected interface FrameWriter {
 
@@ -3499,7 +3499,7 @@ public interface TypeWriter<T> {
                             }
 
                             /**
-                             * An active frame writer that creates the most efficient frame.
+                             * An active frame writer that creates the most efficient frame. 创建最有效帧的活动帧编写器
                              */
                             class Active implements FrameWriter {
 
@@ -3545,7 +3545,7 @@ public interface TypeWriter<T> {
 
                         /**
                          * An initialization handler that appends code to a previously visited type initializer without allowing active
-                         * {@link TypeInitializer} registrations.
+                         * {@link TypeInitializer} registrations. 一个初始化处理程序，它将代码附加到以前访问过的类型初始值设定项，而不允许活动的{@link TypeInitializer}注册
                          */
                         protected abstract static class WithoutDrain extends Appending {
 
@@ -3607,7 +3607,7 @@ public interface TypeWriter<T> {
 
                             /**
                              * An initialization handler that appends code to a previously visited type initializer without allowing active
-                             * {@link TypeInitializer} registrations and with an active record.
+                             * {@link TypeInitializer} registrations and with an active record. 一种初始化处理程序，它将代码附加到以前访问过的类型初始值设定项中，而不允许活动{@link TypeInitializer}注册，并且具有活动记录
                              */
                             protected static class WithActiveRecord extends WithoutDrain {
 
@@ -3659,17 +3659,17 @@ public interface TypeWriter<T> {
 
                         /**
                          * An initialization handler that appends code to a previously visited type initializer with allowing active
-                         * {@link TypeInitializer} registrations.
+                         * {@link TypeInitializer} registrations. 一个初始化处理程序，它将代码附加到以前访问过的类型初始值设定项，并允许活动的{@link TypeInitializer}注册
                          */
                         protected abstract static class WithDrain extends Appending {
 
                             /**
-                             * A label marking the beginning of the appended code.
+                             * A label marking the beginning of the appended code. 标记附加代码开头的标签
                              */
                             protected final Label appended;
 
                             /**
-                             * A label marking the beginning og the original type initializer's code.
+                             * A label marking the beginning og the original type initializer's code. 标记原始类型初始值设定项代码开头的标签
                              */
                             protected final Label original;
 
@@ -3803,7 +3803,7 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * A class visitor which is capable of applying a redefinition of an existing class file.
+                 * A class visitor which is capable of applying a redefinition of an existing class file. 能够应用现有类文件的重新定义的类访问者
                  */
                 @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM")
                 protected class RedefinitionClassVisitor extends MetadataAwareClassVisitor {
@@ -3869,9 +3869,9 @@ public interface TypeWriter<T> {
                     private boolean retainDeprecationModifiers;
 
                     /**
-                     * Creates a class visitor which is capable of redefining an existent class on the fly.
+                     * Creates a class visitor which is capable of redefining an existent class on the fly. 创建一个能够动态重新定义现有类的类访问者
                      *
-                     * @param classVisitor    The underlying class visitor to which writes are delegated.
+                     * @param classVisitor    The underlying class visitor to which writes are delegated. 委托写入的底层类访问者
                      * @param typeInitializer The type initializer to apply.
                      * @param contextRegistry A context registry to register the lazily created implementation context to.
                      * @param writerFlags     The writer flags being used.
@@ -4018,7 +4018,7 @@ public interface TypeWriter<T> {
                     }
 
                     /**
-                     * Redefines a field using the given explicit field pool record and default value.
+                     * Redefines a field using the given explicit field pool record and default value. 使用给定的显式字段池记录和默认值重新定义字段
                      *
                      * @param record           The field pool value to apply during visitation of the existing field.
                      * @param defaultValue     The default value to write onto the field which might be {@code null}.
@@ -4491,7 +4491,7 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * A class visitor that decorates an existing type.
+                 * A class visitor that decorates an existing type. 装饰现有类型的类访问者
                  */
                 @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM")
                 protected class DecorationClassVisitor extends MetadataAwareClassVisitor implements TypeInitializer.Drain {

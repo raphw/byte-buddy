@@ -21,7 +21,7 @@ public interface StackManipulation {
     boolean isValid();
 
     /**
-     * Applies the stack manipulation that is described by this instance.
+     * Applies the stack manipulation that is described by this instance. 应用此实例描述的堆栈操作
      *
      * @param methodVisitor         The method visitor used to write the method implementation to.
      * @param implementationContext The context of the current implementation.
@@ -51,7 +51,7 @@ public interface StackManipulation {
     }
 
     /**
-     * Canonical representation of a legal stack manipulation which does not require any action.
+     * Canonical representation of a legal stack manipulation which does not require any action. 不需要任何操作的合法堆栈操作的规范表示
      */
     enum Trivial implements StackManipulation {
 
@@ -94,7 +94,7 @@ public interface StackManipulation {
         /**
          * Creates an immutable descriptor of the size change that is implied by some stack manipulation.
          *
-         * @param sizeImpact  The change of the size of the operand stack that is implied by some stack manipulation.
+         * @param sizeImpact  The change of the size of the operand stack that is implied by some stack manipulation. 某些栈操作暗含的操作数堆栈大小的更改
          * @param maximalSize The maximal stack size that is required for executing this stack manipulation. Should
          *                    never be negative number.
          */
@@ -123,7 +123,7 @@ public interface StackManipulation {
 
         /**
          * Concatenates this size representation with another size representation in order to represent the size
-         * change that is represented by both alterations of the operand stack size.
+         * change that is represented by both alterations of the operand stack size. 将此大小表示形式与另一个大小表示形式相连接，以便表示由操作数堆栈大小的两个更改表示的大小更改
          *
          * @param other The other size representation.
          * @return A new size representation representing both stack size requirements.
@@ -146,29 +146,29 @@ public interface StackManipulation {
     }
 
     /**
-     * An immutable stack manipulation that aggregates a sequence of other stack manipulations.
+     * An immutable stack manipulation that aggregates a sequence of other stack manipulations. 一种不可变的堆栈操作，它聚合了一系列其他堆栈操作
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Compound implements StackManipulation {
 
         /**
-         * The stack manipulations this compound operation represents in their application order.
+         * The stack manipulations this compound operation represents in their application order. 此复合操作按应用程序顺序表示的堆栈操作
          */
         private final List<StackManipulation> stackManipulations;
 
         /**
-         * Creates a new compound stack manipulation.
+         * Creates a new compound stack manipulation. 创建新的复合堆栈操作
          *
-         * @param stackManipulation The stack manipulations to be composed in the order of their composition.
+         * @param stackManipulation The stack manipulations to be composed in the order of their composition. 要按组合顺序组合的堆栈操作
          */
         public Compound(StackManipulation... stackManipulation) {
             this(Arrays.asList(stackManipulation));
         }
 
         /**
-         * Creates a new compound stack manipulation.
+         * Creates a new compound stack manipulation. 创建一个新的复合堆栈操作
          *
-         * @param stackManipulations The stack manipulations to be composed in the order of their composition.
+         * @param stackManipulations The stack manipulations to be composed in the order of their composition. 堆栈操作按其组成顺序进行组成
          */
         public Compound(List<? extends StackManipulation> stackManipulations) {
             this.stackManipulations = new ArrayList<StackManipulation>();

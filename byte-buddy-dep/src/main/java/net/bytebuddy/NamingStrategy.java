@@ -40,7 +40,7 @@ public interface NamingStrategy {
     String rebase(TypeDescription typeDescription);
 
     /**
-     * An abstract base implementation where the names of redefined and rebased types are retained.
+     * An abstract base implementation where the names of redefined and rebased types are retained. 一个抽象的基实现，其中保留了重定义和重基类型的名称
      */
     abstract class AbstractBase implements NamingStrategy {
 

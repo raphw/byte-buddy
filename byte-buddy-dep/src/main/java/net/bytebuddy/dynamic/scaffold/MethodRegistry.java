@@ -21,7 +21,7 @@ import java.util.*;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * A method registry is responsible for storing information on how a method is intercepted.
+ * A method registry is responsible for storing information on how a method is intercepted. 方法注册表负责存储有关如何截获方法的信息
  */
 public interface MethodRegistry {
 
@@ -55,7 +55,7 @@ public interface MethodRegistry {
 
     /**
      * Prepares this method registry.
-     *
+     * 准备此方法注册表
      * @param instrumentedType    The instrumented type that should be created.
      * @param methodGraphCompiler The method graph compiler to be used for analyzing the fully assembled instrumented type.
      * @param typeValidation      Determines if a type should be explicitly validated.
@@ -154,12 +154,12 @@ public interface MethodRegistry {
         }
 
         /**
-         * A compiled handler for implementing a method.
+         * A compiled handler for implementing a method. 用于实现方法的编译处理程序
          */
         interface Compiled {
 
             /**
-             * Assembles this compiled entry with a method attribute appender.
+             * Assembles this compiled entry with a method attribute appender. 使用方法属性附加器将此编译后的条目组装在一起
              *
              * @param methodDescription The method description to apply with this handler.
              * @param attributeAppender The method attribute appender to apply together with this handler.
@@ -170,7 +170,7 @@ public interface MethodRegistry {
         }
 
         /**
-         * A handler for a method that is implemented as byte code.
+         * A handler for a method that is implemented as byte code. 作为字节码实现的方法的处理程序
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForImplementation implements Handler {
@@ -181,7 +181,7 @@ public interface MethodRegistry {
             private final Implementation implementation;
 
             /**
-             * Creates a new handler for implementing a method with byte code.
+             * Creates a new handler for implementing a method with byte code. 创建一个新的处理程序以实现带有字节码的方法
              *
              * @param implementation The implementation to apply.
              */
@@ -200,18 +200,18 @@ public interface MethodRegistry {
             }
 
             /**
-             * A compiled handler for implementing a method.
+             * A compiled handler for implementing a method. 用于实现方法的编译处理程序
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class Compiled implements Handler.Compiled {
 
                 /**
-                 * The byte code appender to apply.
+                 * The byte code appender to apply. 要应用的字节码追加器
                  */
                 private final ByteCodeAppender byteCodeAppender;
 
                 /**
-                 * Creates a new compiled handler for a method implementation.
+                 * Creates a new compiled handler for a method implementation. 为方法实现创建一个新的编译处理程序
                  *
                  * @param byteCodeAppender The byte code appender to apply.
                  */
@@ -864,12 +864,12 @@ public interface MethodRegistry {
 
             /**
              * Creates a new compiled version of a default method registry.
-             *
+             * 创建默认方法注册表的新编译版本
              * @param instrumentedType      The instrumented type.
              * @param loadedTypeInitializer The loaded type initializer of the instrumented type.
              * @param typeInitializer       The type initializer of the instrumented type.
              * @param methods               The declared or virtually inherited methods of this type.
-             * @param implementations       A map of all method descriptions mapped to their handling entries.
+             * @param implementations       A map of all method descriptions mapped to their handling entries. 所有方法描述的映射，映射到它们的处理条目
              * @param supportsBridges       {@code true} if the created type supports bridge methods.
              */
             protected Compiled(TypeDescription instrumentedType,
@@ -980,7 +980,7 @@ public interface MethodRegistry {
                 }
 
                 /**
-                 * Transforms this entry into a method record.
+                 * Transforms this entry into a method record. 将此项转换为方法记录
                  *
                  * @param instrumentedType The instrumented type to bind.
                  * @param supportsBridges  {@code true} if the record should support bridge methods.

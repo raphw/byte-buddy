@@ -491,7 +491,7 @@ public interface AsmVisitorWrapper {
         }
 
         /**
-         * A class visitor that applies the outer ASM visitor for identifying declared methods.
+         * A class visitor that applies the outer ASM visitor for identifying declared methods. 一个类访问者，它应用外部ASM访问者来标识声明的方法
          */
         protected class DispatchingVisitor extends ClassVisitor {
 
@@ -521,7 +521,7 @@ public interface AsmVisitorWrapper {
             private final int readerFlags;
 
             /**
-             * A mapping of fields by their name.
+             * A mapping of fields by their name. 按名称对字段进行映射
              */
             private final Map<String, MethodDescription> methods;
 
@@ -575,7 +575,7 @@ public interface AsmVisitorWrapper {
     }
 
     /**
-     * An ordered, immutable chain of {@link AsmVisitorWrapper}s.
+     * An ordered, immutable chain of {@link AsmVisitorWrapper}s. AsmVisitorWrapper 链式
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Compound implements AsmVisitorWrapper {

@@ -459,13 +459,13 @@ public interface MethodDelegationBinder {
                 /**
                  * Creates a new method binding.
                  *
-                 * @param target                       The target method this binding represents.
+                 * @param target                       The target method this binding represents. 此绑定表示的目标方法
                  * @param registeredTargetIndices      A map of identification tokens to the indices of their binding
-                 *                                     parameters.
-                 * @param methodInvocation             A stack manipulation that represents the actual method invocation.
+                 *                                     parameters. 标识令牌到其绑定参数的索引的映射
+                 * @param methodInvocation             A stack manipulation that represents the actual method invocation. 表示实际方法调用的堆栈操作
                  * @param parameterStackManipulations  A list of manipulations that each represent the loading of a
-                 *                                     parameter value onto the operand stack.
-                 * @param terminatingStackManipulation The stack manipulation that is applied after the method invocation.
+                 *                                     parameter value onto the operand stack. 操作列表，每个操作表示将参数值加载到操作数堆栈上
+                 * @param terminatingStackManipulation The stack manipulation that is applied after the method invocation. 方法调用后应用的堆栈操作
                  */
                 protected Build(MethodDescription target,
                                 Map<?, Integer> registeredTargetIndices,
@@ -555,7 +555,7 @@ public interface MethodDelegationBinder {
             }
 
             /**
-             * Resolves a method binding for the {@code source} method.
+             * Resolves a method binding for the {@code source} method. 解析{@code source}方法的方法绑定
              *
              * @param ambiguityResolver The ambiguity resolver to use.
              * @param source            The source method being bound.

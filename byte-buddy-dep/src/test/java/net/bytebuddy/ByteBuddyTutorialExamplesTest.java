@@ -65,7 +65,7 @@ public class ByteBuddyTutorialExamplesTest {
     @Rule
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
-    // Other than in the tutorial, the tests use a wrapper strategy for class loading to retain the test's repeatability.
+    // Other than in the tutorial, the tests use a wrapper strategy for class loading to retain the test's repeatability. 除了本教程中的内容外，测试还使用包装器策略进行类加载，以保留测试的可重复性
 
     @SuppressWarnings("unused")
     private static void println(String s) {

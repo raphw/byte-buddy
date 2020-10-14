@@ -147,7 +147,7 @@ public class ByteBuddy {
     protected final TypeValidation typeValidation;
 
     /**
-     * The class writer strategy to use.
+     * The class writer strategy to use. 要使用的类编写器策略
      */
     protected final ClassWriterStrategy classWriterStrategy;
 
@@ -227,22 +227,22 @@ public class ByteBuddy {
     /**
      * <p>
      * Creates a new builder for subclassing the provided type. If the provided type is an interface, a new class implementing
-     * this interface type is created.
+     * this interface type is created. 为提供的类型创建一个新的生成器。如果提供的类型是接口，则会创建一个实现此接口类型的新类
      * </p>
      * <p>
      * When extending a class, Byte Buddy imitates all visible constructors of the subclassed type. Any constructor is implemented
      * to only invoke its super type constructor of equal signature. Another behavior can be specified by supplying an explicit
-     * {@link ConstructorStrategy} by {@link ByteBuddy#subclass(Class, ConstructorStrategy)}.
+     * {@link ConstructorStrategy} by {@link ByteBuddy#subclass(Class, ConstructorStrategy)}. 当扩展一个类时，Byte Buddy会模仿子类类型的所有可见构造函数。任何构造函数的实现都只调用其等签名的超类型构造函数。另一个行为可以通过{@link ByteBuddy#subclass(Class, ConstructorStrategy)}提供显式的{@link ConstructorStrategy}来指定
      * </p>
      * <p>
-     * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables or an owner type.
+     * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables or an owner type. 如果这些方法声明类型变量或所有者类型，则这些方法在泛化状态下实现所提供的类型
      * </p>
      * <p>
      * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
-     * types, a external cache or {@link TypeCache} should be used.
+     * types, a external cache or {@link TypeCache} should be used. Byte Buddy不缓存以前的子类，但会尝试生成新的子类。对于缓存类型，应使用外部缓存或{@link TypeCache}
      * </p>
      *
-     * @param superType The super class or interface type to extend.
+     * @param superType The super class or interface type to extend. 要扩展的超类或接口类型
      * @param <T>       A loaded type that the generated class is guaranteed to inherit.
      * @return A type builder for creating a new class extending the provided class or interface.
      */
@@ -347,7 +347,7 @@ public class ByteBuddy {
      *
      * @param superType The super class or interface type to extend. The type must be a raw type or parameterized type. All type
      *                  variables that are referenced by the generic type must be declared by the generated subclass before creating
-     *                  the type.
+     *                  the type. 要扩展的超类或接口类型。类型必须是原始类型或参数化类型。泛型类型引用的所有类型变量都必须在创建类型之前由生成的子类声明
      * @return A type builder for creating a new class extending the provided class or interface.
      */
     public DynamicType.Builder<?> subclass(TypeDefinition superType) {
@@ -357,11 +357,11 @@ public class ByteBuddy {
     /**
      * <p>
      * Creates a new builder for subclassing the provided type. If the provided type is an interface, a new class implementing
-     * this interface type is created.
+     * this interface type is created. 为提供的类型创建一个新的生成器。如果提供的类型是接口，则会创建一个实现此接口类型的新类
      * </p>
      * <p>
      * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link TypeDescription} values are implemented
-     * as raw types if they declare type variables.
+     * as raw types if they declare type variables. 此方法按原样实现所提供的类型，也就是说，如果{@link TypeDescription}值声明类型变量，则它们将作为原始类型实现
      * </p>
      * <p>
      * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching

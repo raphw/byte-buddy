@@ -4420,13 +4420,13 @@ public interface DynamicType {
                 }
 
                 /**
-                 * An adapter for matching an existing method.
+                 * An adapter for matching an existing method. 用于匹配现有方法的适配器
                  */
                 @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 protected class MethodMatchAdapter extends MethodDefinition.ImplementationDefinition.AbstractBase<U> {
 
                     /**
-                     * The method matcher of this adapter.
+                     * The method matcher of this adapter. 此适配器的方法匹配器
                      */
                     private final LatentMatcher<? super MethodDescription> matcher;
 
@@ -4456,7 +4456,7 @@ public interface DynamicType {
 
                     /**
                      * Materializes the method definition with the supplied handler.
-                     *
+                     * 通过提供的处理程序具体化方法定义
                      * @param handler The handler that implements any method matched by this instances matcher.
                      * @return A method definition where any matched method is implemented by the supplied handler.
                      */
@@ -4465,7 +4465,7 @@ public interface DynamicType {
                     }
 
                     /**
-                     * An annotation adapter for implementing annotations during a method definition.
+                     * An annotation adapter for implementing annotations during a method definition. 一个注释适配器，用于在方法定义期间实现注释
                      */
                     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                     protected class AnnotationAdapter extends MethodDefinition.AbstractBase.Adapter<U> {
@@ -4944,7 +4944,7 @@ public interface DynamicType {
         }
 
         /**
-         * A default implementation of an unloaded dynamic type.
+         * A default implementation of an unloaded dynamic type. 不加载动态类型的默认实现
          *
          * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
          *            type itself, an interface or the direct super class.

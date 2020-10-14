@@ -35,21 +35,21 @@ import org.objectweb.asm.Opcodes;
 import java.util.*;
 
 /**
- * An implementation is responsible for implementing methods of a dynamically created type as byte code. An
+ * An implementation is responsible for implementing methods of a dynamically created type as byte code. An     Implementation 负责把动态创建的类Dynamic.type，转化为字节码。一个Implementation的使用可以按如下两步
  * implementation is applied in two stages:
  * <ol>
  * <li>The implementation is able to prepare an instrumented type by adding fields and/or helper methods that are
  * required for the methods implemented by this implementation. Furthermore,
  * {@link LoadedTypeInitializer}s  and byte code for the type initializer can be registered for the instrumented
- * type.</li>
+ * type.</li> Implementation 能够去准备一个 instrumentedType，通过添加 field 和 辅助类（ 以便于添加方法的的 Implementation。此外，LoadedTypeInitialize r和 类型初始化的字节码，可以被注册为 instrumentedType
  * <li>Any implementation is required to supply a byte code appender that is responsible for providing the byte code
  * to the instrumented methods that were delegated to this implementation. This byte code appender is also
  * be responsible for providing implementations for the methods added in step <i>1</i>.</li>
- * </ol>
+ * </ol> Implementation 提供一个code appender，可以被用来做方法的实现的委托调用。code appender 也负责去提供在 step 1 中添加的类型
  * <p>&nbsp;</p>
  * An implementation should provide meaningful implementations of both {@link java.lang.Object#equals(Object)}
  * and {@link Object#hashCode()} if it wants to avoid to be used twice within the creation of a dynamic type. For two
- * equal implementations only one will be applied on the creation of a dynamic type.
+ * equal implementations only one will be applied on the creation of a dynamic type. 同时任何的Implementation应该提供有意义的equals和hashCode，避免重复生成
  */
 public interface Implementation extends InstrumentedType.Prepareable {
 
@@ -59,12 +59,12 @@ public interface Implementation extends InstrumentedType.Prepareable {
      * @param implementationTarget The target of the current implementation.
      * @return A byte code appender for implementing methods delegated to this implementation. This byte code appender
      * is also responsible for handling methods that were added by this implementation on the call to
-     * {@link Implementation#prepare(InstrumentedType)}.
+     * {@link Implementation#prepare(InstrumentedType)}. Target 是当前的 implementation，这个的意思是基于当前的implementation创建一个ByteCodeAppender
      */
     ByteCodeAppender appender(Target implementationTarget);
 
     /**
-     * Represents an implementation that can be chained together with another implementation.
+     * Represents an implementation that can be chained together with another implementation. 链式的 implementation
      */
     interface Composable extends Implementation {
 
@@ -238,7 +238,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
      * The target of an implementation. Implementation targets must be immutable and can be queried without altering
      * the implementation result. An implementation target provides information on the type that is to be created
      * where it is the implementation's responsibility to cache expensive computations, especially such computations
-     * that require reflective look-up.
+     * that require reflective look-up. 一个 implementation 的目标。目标必须是不可变得，并且查询时返回固定结果，不能有随机的结果。Target 提供生成 implementation 的一切信息
      */
     interface Target {
 
@@ -435,7 +435,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
      * The context for an implementation application. An implementation context represents a mutable data structure
      * where any registration is irrevocable. Calling methods on an implementation context should be considered equally
      * sensitive as calling a {@link org.objectweb.asm.MethodVisitor}. As such, an implementation context and a
-     * {@link org.objectweb.asm.MethodVisitor} are complementary for creating an new Java type.
+     * {@link org.objectweb.asm.MethodVisitor} are complementary for creating an new Java type. 包含了一个 Implenentation有关的上下文信息
      */
     interface Context extends MethodAccessorFactory {
 
@@ -510,7 +510,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             void drain(TypeInitializer.Drain drain, ClassVisitor classVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory);
 
             /**
-             * An abstract base implementation of an extractable view of an implementation context.
+             * An abstract base implementation of an extractable view of an implementation context. 实现上下文的可提取视图的抽象基实现
              */
             @HashCodeAndEqualsPlugin.Enhance
             abstract class AbstractBase implements ExtractableView {
@@ -521,12 +521,12 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 protected final TypeDescription instrumentedType;
 
                 /**
-                 * The class file version of the dynamic type.
+                 * The class file version of the dynamic type. 动态类型的类文件版本
                  */
                 protected final ClassFileVersion classFileVersion;
 
                 /**
-                 * Create a new extractable view.
+                 * Create a new extractable view. 创建新的可提取视图
                  *
                  * @param instrumentedType The instrumented type.
                  * @param classFileVersion The class file version of the dynamic type.
@@ -549,7 +549,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
         }
 
         /**
-         * A factory for creating a new implementation context.
+         * A factory for creating a new implementation context. 用于创建新的实现上下文的工厂
          */
         interface Factory {
 
@@ -723,7 +723,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             private boolean fieldCacheCanAppendEntries;
 
             /**
-             * Creates a new default implementation context.
+             * Creates a new default implementation context. 创建新的默认实现上下文
              *
              * @param instrumentedType            The description of the type that is currently subject of creation.
              * @param classFileVersion            The class file version of the created class.
@@ -786,7 +786,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             @Override
-            public TypeDescription register(AuxiliaryType auxiliaryType) {
+            public TypeDescription register(AuxiliaryType auxiliaryType) { // 注册上下文信息 auxiliaryTypes 保存了所有辅助类的信息
                 DynamicType dynamicType = auxiliaryTypes.get(auxiliaryType);
                 if (dynamicType == null) {
                     dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(instrumentedType), auxiliaryClassFileVersion, this);
@@ -817,7 +817,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
                 return fieldCache;
             }
-
+            // 使用asm的接口 classVisitor.visitField，生成类文件
             @Override
             public void drain(TypeInitializer.Drain drain,
                               ClassVisitor classVisitor,

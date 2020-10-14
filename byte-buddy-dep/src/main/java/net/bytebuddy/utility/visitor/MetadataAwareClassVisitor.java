@@ -3,7 +3,7 @@ package net.bytebuddy.utility.visitor;
 import org.objectweb.asm.*;
 
 /**
- * A class visitor that traces invocations of visitation methods and notifies if a nest host or outer class was not visited.
+ * A class visitor that traces invocations of visitation methods and notifies if a nest host or outer class was not visited. 一种类访问器，它跟踪访问方法的调用，并在嵌套主机或外部类未被访问时通知它
  */
 public abstract class MetadataAwareClassVisitor extends ClassVisitor {
 

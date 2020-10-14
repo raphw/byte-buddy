@@ -5961,13 +5961,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * A relocation handler is responsible for chaining the usual control flow of an instrumented method.
+         * A relocation handler is responsible for chaining the usual control flow of an instrumented method. 重定位处理程序负责链接插入拦截方法的常规控制流
          */
         interface RelocationHandler {
 
             /**
              * Binds this relocation handler to a relocation dispatcher.
-             *
+             * 将此重新定位处理程序绑定到重新定位调度程序
              * @param instrumentedMethod The instrumented method.
              * @param relocation         The relocation to apply.
              * @return A bound relocation handler.
@@ -5975,7 +5975,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             Bound bind(MethodDescription instrumentedMethod, Relocation relocation);
 
             /**
-             * A relocator is responsible for triggering a relocation if a relocation handler triggers a relocating condition.
+             * A relocator is responsible for triggering a relocation if a relocation handler triggers a relocating condition. 如果重新定位处理程序触发重新定位条件，则重新定位程序负责触发重新定位
              */
             interface Relocation {
 
@@ -5999,7 +5999,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     /**
                      * Creates a new relocation for an unconditional jump to a given label.
-                     *
+                     * 为无条件跳转到给定标签创建新的重新定位
                      * @param label The label to jump to.
                      */
                     public ForLabel(Label label) {
@@ -6034,7 +6034,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             /**
-             * A disabled relocation handler that does never trigger a relocation.
+             * A disabled relocation handler that does never trigger a relocation. 一个不触发重定位的已禁用重定位处理程序
              */
             enum Disabled implements RelocationHandler, Bound {
 

@@ -67,7 +67,7 @@ public interface AnnotationAppender {
         AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath);
 
         /**
-         * Target for an annotation that is written to a Java type.
+         * Target for an annotation that is written to a Java type. 写入Java类型的注释的目标
          */
         @HashCodeAndEqualsPlugin.Enhance
         class OnType implements Target {
@@ -200,18 +200,18 @@ public interface AnnotationAppender {
 
     /**
      * A default implementation for an annotation appender that writes annotations to a given byte consumer
-     * represented by an ASM {@link org.objectweb.asm.AnnotationVisitor}.
+     * represented by an ASM {@link org.objectweb.asm.AnnotationVisitor}. 注释追加器的默认实现，它将注释写入由 ASM AnnotationVisitor 表示的给定字节使用者
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Default implements AnnotationAppender {
 
         /**
-         * The target onto which an annotation write process is to be applied.
+         * The target onto which an annotation write process is to be applied. 要对其应用注释写入过程的目标
          */
         private final Target target;
 
         /**
-         * Creates a default annotation appender.
+         * Creates a default annotation appender. 创建默认注解附加器
          *
          * @param target The target to which annotations are written to.
          */
@@ -420,7 +420,7 @@ public interface AnnotationAppender {
         }
 
         /**
-         * Creates a type annotation appender for a type annotations of a super class type.
+         * Creates a type annotation appender for a type annotations of a super class type. 为超类类型的类型注释创建类型注释追加器
          *
          * @param annotationAppender    The annotation appender to write any type annotation to.
          * @param annotationValueFilter The annotation value filter to apply.
@@ -510,7 +510,7 @@ public interface AnnotationAppender {
         }
 
         /**
-         * Appends all supplied type variables to the supplied method appender.
+         * Appends all supplied type variables to the supplied method appender. 将所有提供的类型变量附加到提供的方法附加器中
          *
          * @param annotationAppender    The annotation appender to write any type annotation to.
          * @param annotationValueFilter The annotation value filter to apply.
@@ -526,7 +526,7 @@ public interface AnnotationAppender {
         }
 
         /**
-         * Appends all supplied type variables to the supplied method appender.
+         * Appends all supplied type variables to the supplied method appender. 将提供的所有类型变量附加到提供的方法附加器
          *
          * @param annotationAppender    The annotation appender to write any type annotation to.
          * @param annotationValueFilter The annotation value filter to apply.

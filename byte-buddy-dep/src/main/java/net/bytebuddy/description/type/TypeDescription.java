@@ -374,11 +374,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     /**
      * <p>
      * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
-     * a specialization of a generic type.
+     * a specialization of a generic type. 表示Java编程语言的泛型类型。非泛型{@linktypedescription}被认为是泛型类型的专门化
      * </p>
      * <p>
      * Note that annotations that are declared on an annotated type refer to any type annotations that are declared by this
-     * generic type. For reading annotations of the erasure type, {@link TypeDefinition#asErasure()} must be called before.
+     * generic type. For reading annotations of the erasure type, {@link TypeDefinition#asErasure()} must be called before. 请注意，在带注解类型上声明的注解引用此泛型类型声明的任何类型注解。要读取擦除类型的注解，必须先调用{@link TypeDefinition#asErasure()}
      * </p>
      */
     interface Generic extends TypeDefinition, AnnotationSource {
@@ -411,7 +411,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         /**
          * Returns this type as a raw type. This resembles calling {@code asErasure().asGenericType()}.
-         *
+         * 将此类型作为原始类型返回。这类似于调用{@code asErasure().asGenericType()}
          * @return This type as a raw type.
          */
         Generic asRawType();
@@ -419,7 +419,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * <p>
          * Returns the upper bounds of this type. Any type with a well-defined upper bound is bound by at least one type. If no such
-         * type is defined, the bound is implicitly {@link Object}.
+         * type is defined, the bound is implicitly {@link Object}. 返回此类型的上限。任何具有定义良好上限的类型都至少受一个类型的约束。如果没有定义此类类型，则绑定是隐式的{@link Object}
          * </p>
          * <p>
          * Only non-symbolic type variables ({@link net.bytebuddy.description.type.TypeDefinition.Sort#VARIABLE}, and wildcard types
@@ -433,7 +433,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         /**
          * <p>
-         * Returns the lower bounds of this type.
+         * Returns the lower bounds of this type. 返回此类型的下限
          * </p>
          * <p>
          * Only wildcard types ({@link Sort#WILDCARD}) define a lower bound. For other
@@ -446,7 +446,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         /**
          * <p>
-         * Returns the type arguments of this type.
+         * Returns the type arguments of this type. 返回此类型的类型参数
          * </p>
          * <p>
          * Parameters are only well-defined for parameterized types ({@link Sort#PARAMETERIZED}).
@@ -1619,7 +1619,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             /**
              * An abstract implementation of a visitor that substitutes generic types by replacing (nested)
-             * type variables and/or non-generic component types.
+             * type variables and/or non-generic component types. 访问器的抽象实现，通过替换（嵌套）类型变量和/或非泛型组件类型来替换泛型类型
              */
             abstract class Substitutor implements Visitor<Generic> {
 
@@ -1718,9 +1718,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
 
                     /**
-                     * Attaches all types to the given field description.
+                     * Attaches all types to the given field description. 将所有类型附加到给定的字段说明
                      *
-                     * @param fieldDescription The field description to which visited types should be attached to.
+                     * @param fieldDescription The field description to which visited types should be attached to. 访问类型应附加到的字段说明
                      * @return A substitutor that attaches visited types to the given field's type context.
                      */
                     public static ForAttachment of(FieldDescription fieldDescription) {
@@ -1748,7 +1748,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
 
                     /**
-                     * Attaches all types to the given type description.
+                     * Attaches all types to the given type description. 将所有类型附加到给定的类型描述
                      *
                      * @param typeDescription The type description to which visited types should be attached to.
                      * @return A substitutor that attaches visited types to the given type's type context.
@@ -1778,7 +1778,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A visitor for detaching a type from its declaration context by detaching type variables. This is achieved by
                  * detaching type variables and by replacing the declaring type which is identified by a provided {@link ElementMatcher}
-                 * with {@link TargetType}.
+                 * with {@link TargetType}. 用于通过分离类型变量将类型从其声明上下文中分离的访问者。这是通过分离类型变量和用TargetType替换由提供的ElementMatcher标识的声明类型来实现的
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 public static class ForDetachment extends Substitutor {
@@ -1799,7 +1799,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                     /**
                      * Returns a new detachment visitor that detaches any type matching the supplied type description.
-                     *
+                     * 返回一个新的分离访问者，该访问者分离与提供的类型描述匹配的任何类型
                      * @param typeDefinition The type to detach.
                      * @return A detachment visitor for the supplied type description.
                      */
@@ -3459,7 +3459,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 /**
-                 * Returns a new immutable generic type description for a loaded type.
+                 * Returns a new immutable generic type description for a loaded type. 返回已加载类型的新的不可变泛型类型说明
                  *
                  * @param type The type to be represented by this generic type description.
                  * @return The generic type description representing the given type.

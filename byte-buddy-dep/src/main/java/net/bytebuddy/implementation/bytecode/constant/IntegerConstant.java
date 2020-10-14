@@ -127,7 +127,7 @@ public enum IntegerConstant implements StackManipulation {
 
     /**
      * A stack manipulation that loads a JVM-integer value by a {@code BIPUSH} operation which is
-     * legal for single byte integer values.
+     * legal for single byte integer values. 栈操作通过BIPUSH操作加载JVM整数值，该操作对单字节整数值合法
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class SingleBytePush implements StackManipulation {
@@ -139,7 +139,7 @@ public enum IntegerConstant implements StackManipulation {
 
         /**
          * Creates a new {@code BIPUSH} stack manipulation for the given value.
-         *
+         * 为给定值创建一个新的{@code BIPUSH}堆栈操作
          * @param value The single byte value to be loaded onto the operand stack.
          */
         protected SingleBytePush(byte value) {

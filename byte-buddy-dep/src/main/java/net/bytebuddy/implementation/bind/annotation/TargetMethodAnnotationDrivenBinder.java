@@ -628,7 +628,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
 
             /**
              * A bound handler represents an unambiguous parameter binder that was located for a given array of
-             * annotations.
+             * annotations. 绑定处理程序表示一个明确的参数绑定器，该绑定器位于给定的注释数组中
              *
              * @param <T> The annotation type of a given handler.
              */

@@ -24,7 +24,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 /**
  * This implementation returns a fixed value for a method. Other than the {@link net.bytebuddy.implementation.StubMethod}
  * implementation, this implementation allows to determine a specific value which must be assignable to the returning value
- * of any instrumented method. Otherwise, an exception will be thrown.
+ * of any instrumented method. Otherwise, an exception will be thrown. Implementation的一个实现，用来修改原始方法，让其返回一个我们定义的值
  *
  * @see FieldAccessor
  */
@@ -32,12 +32,12 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 public abstract class FixedValue implements Implementation {
 
     /**
-     * The assigner that is used for assigning the fixed value to a method's return type.
+     * The assigner that is used for assigning the fixed value to a method's return type. assigner是负责类型转换的
      */
     protected final Assigner assigner;
 
     /**
-     * Indicates if dynamic type castings should be attempted for incompatible assignments.
+     * Indicates if dynamic type castings should be attempted for incompatible assignments. typing是决定是否强制装换的
      */
     protected final Assigner.Typing typing;
 
@@ -191,16 +191,16 @@ public abstract class FixedValue implements Implementation {
     }
 
     /**
-     * Blueprint method that for applying the actual implementation.
+     * Blueprint method that for applying the actual implementation. 用于实际实现的蓝图方法
      *
-     * @param methodVisitor           The method visitor to which the implementation is applied to.
-     * @param implementationContext   The implementation context for the given implementation.
+     * @param methodVisitor           The method visitor to which the implementation is applied to. 实现应用到的方法访问者
+     * @param implementationContext   The implementation context for the given implementation. 给定实现的实现上下文
      * @param instrumentedMethod      The instrumented method that is target of the implementation.
      * @param fixedValueType          A description of the type of the fixed value that is loaded by the
-     *                                {@code valueLoadingInstruction}.
+     *                                {@code valueLoadingInstruction}. 对 valueLoadingInstruction 加载的固定值类型的描述
      * @param valueLoadingInstruction A stack manipulation that represents the loading of the fixed value onto the
-     *                                operand stack.
-     * @return A representation of the stack and variable array sized that are required for this implementation.
+     *                                operand stack. 一种堆栈操作，表示将固定值加载到操作数堆栈上
+     * @return A representation of the stack and variable array sized that are required for this implementation. 此实现所需的堆栈和变量数组大小的表示
      */
     protected ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
                                           Context implementationContext,

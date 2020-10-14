@@ -109,8 +109,8 @@ public enum MethodVariableAccess {
 
     /**
      * Loads a reference to the {@code this} reference what is only meaningful for a non-static method.
-     *
-     * @return A stack manipulation loading the {@code this} reference.
+     * 加载对{@code this}引用的引用，该引用仅对非静态方法有意义
+     * @return A stack manipulation loading the {@code this} reference. 加载{@code this}引用的堆栈操作
      */
     public static StackManipulation loadThis() {
         return MethodVariableAccess.REFERENCE.loadFrom(0);
@@ -118,7 +118,7 @@ public enum MethodVariableAccess {
 
     /**
      * Creates a stack assignment for a reading given offset of the local variable array.
-     *
+     * 为局部变量数组的给定偏移量创建堆栈赋值
      * @param offset The offset of the variable where {@code double} and {@code long} types count two slots.
      * @return A stack manipulation representing the variable read.
      */
@@ -310,7 +310,7 @@ public enum MethodVariableAccess {
     }
 
     /**
-     * A stack manipulation for loading a variable of a method's local variable array onto the operand stack.
+     * A stack manipulation for loading a variable of a method's local variable array onto the operand stack. 一种堆栈操作，用于将方法的局部变量数组的变量加载到操作数堆栈上
      */
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class OffsetLoading implements StackManipulation {
@@ -322,7 +322,7 @@ public enum MethodVariableAccess {
 
         /**
          * Creates a new argument loading stack manipulation.
-         *
+         * 创建新的参数加载堆栈操作
          * @param offset The offset of the local variable array from which the variable should be loaded.
          */
         protected OffsetLoading(int offset) {

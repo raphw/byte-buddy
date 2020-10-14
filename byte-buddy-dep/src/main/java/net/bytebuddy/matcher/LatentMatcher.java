@@ -65,9 +65,9 @@ public interface LatentMatcher<T> {
     }
 
     /**
-     * A latent matcher representing an already resolved {@link ElementMatcher}.
+     * A latent matcher representing an already resolved {@link ElementMatcher}. 表示已解析的{@link ElementMatcher}的潜在匹配器
      *
-     * @param <S> The type of the matched element.
+     * @param <S> The type of the matched element. 匹配元素的类型
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Resolved<S> implements LatentMatcher<S> {

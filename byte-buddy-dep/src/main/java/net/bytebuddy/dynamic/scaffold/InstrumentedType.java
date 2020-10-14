@@ -445,7 +445,7 @@ public interface InstrumentedType extends TypeDescription {
         private final TypeDescription enclosingType;
 
         /**
-         * A list of types that are declared by this type.
+         * A list of types that are declared by this type. 此类型声明的类型列表
          */
         private final List<? extends TypeDescription> declaredTypes;
 

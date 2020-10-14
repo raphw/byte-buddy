@@ -435,7 +435,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             }
 
             /**
-             * Creates a list of type variables that are attached to the provided type.
+             * Creates a list of type variables that are attached to the provided type. 创建附加到提供类型的类型变量列表
              *
              * @param typeDescription       The type to which the type variables are to be attached to.
              * @param detachedTypeVariables A mapping of type variable symbols to their detached type variable bounds.

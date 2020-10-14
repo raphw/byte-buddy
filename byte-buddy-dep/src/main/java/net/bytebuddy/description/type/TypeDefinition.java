@@ -42,7 +42,7 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
 
     /**
      * Returns the erasure of this type. Wildcard types ({@link TypeDescription.Generic.Sort#WILDCARD})
-     * do not have a well-defined erasure and cause an {@link IllegalStateException} to be thrown.
+     * do not have a well-defined erasure and cause an {@link IllegalStateException} to be thrown. 返回此类型的擦除。通配符类型（{@linkTypeDescription.Generic.Sort#WILDCARD})不要使用定义良好的擦除操作，并导致抛出{@link IllegalStateException}
      *
      * @return The erasure of this type.
      */

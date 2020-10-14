@@ -30,12 +30,12 @@ public interface ClassWriterStrategy {
     ClassWriter resolve(int flags, TypePool typePool, ClassReader classReader);
 
     /**
-     * Default implementations of class writer strategies.
+     * Default implementations of class writer strategies. 类编写器策略的默认实现
      */
     enum Default implements ClassWriterStrategy {
 
         /**
-         * A class writer strategy that retains the original class's constant pool if applicable.
+         * A class writer strategy that retains the original class's constant pool if applicable. 如果适用的话，将保留原始类的常量池的类编写器策略
          */
         CONSTANT_POOL_RETAINING {
             @Override
@@ -62,7 +62,7 @@ public interface ClassWriterStrategy {
 
     /**
      * A class writer that piggy-backs on Byte Buddy's {@link TypePool} to avoid class loading or look-up errors when redefining a class.
-     * This is not available when creating a new class where automatic frame computation is however not normally a requirement.
+     * This is not available when creating a new class where automatic frame computation is however not normally a requirement. 但是，在创建通常不需要自动帧计算的新类时，此功能不可用
      */
     class FrameComputingClassWriter extends ClassWriter {
 

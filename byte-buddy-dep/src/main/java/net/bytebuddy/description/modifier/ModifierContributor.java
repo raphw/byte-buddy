@@ -158,7 +158,7 @@ public interface ModifierContributor {
         }
 
         /**
-         * Creates a new resolver for any modifier contributor of a given type.
+         * Creates a new resolver for any modifier contributor of a given type. 为给定类型的任何修饰符贡献器创建新的解析器
          *
          * @param modifierContributors The modifier contributors to resolve.
          * @param <S>                  The modifier contributors type.
@@ -178,7 +178,7 @@ public interface ModifierContributor {
         }
 
         /**
-         * Resolves the modifier contributors based on a given modifier.
+         * Resolves the modifier contributors based on a given modifier. 基于给定的修饰符解析修饰符贡献器
          *
          * @param modifiers The base modifiers.
          * @return The resolved modifiers.

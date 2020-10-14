@@ -324,13 +324,13 @@ public class MethodCallProxy implements AuxiliaryType {
         }
 
         /**
-         * The appender for implementing the {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy.MethodCall}.
+         * The appender for implementing the {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy.MethodCall}. 实现{@link net.bytebuddy.implementation.auxiliary.MethodCallProxy.MethodCall}的追加器
          */
         @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class Appender implements ByteCodeAppender {
 
             /**
-             * The instrumented type that is implemented.
+             * The instrumented type that is implemented. 实现的 instrumented 类型
              */
             private final TypeDescription instrumentedType;
 
@@ -367,7 +367,7 @@ public class MethodCallProxy implements AuxiliaryType {
      * A stack manipulation that creates a {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy}
      * for a given method an pushes such an object onto the call stack. For this purpose, all arguments of the proxied method
      * are loaded onto the stack what is only possible if this instance is used from a method with an identical signature such
-     * as the target method itself.
+     * as the target method itself. 创建 {@链接 net.bytebuddy.implementation.auxiliary.MethodCallProxy} 对于给定的方法，an将此类对象推送到调用堆栈上。为此，代理方法的所有参数都被加载到堆栈中，只有当此实例从具有相同签名的方法（如目标方法本身）中使用时，才有可能
      */
     @HashCodeAndEqualsPlugin.Enhance
     public static class AssignableSignatureCall implements StackManipulation {
