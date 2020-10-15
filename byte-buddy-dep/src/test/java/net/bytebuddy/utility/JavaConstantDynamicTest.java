@@ -494,7 +494,7 @@ public class JavaConstantDynamicTest {
         assertThat(baz.getDeclaredFields().length, is(0));
         assertThat(baz.getDeclaredMethods().length, is(1));
         Foo foo = baz.getDeclaredConstructor().newInstance();
-        assertThat(baz.getDeclaredMethod(FOO).invoke(foo), equalTo(sourceIntegers));
+        assertThat((Integer[])baz.getDeclaredMethod(FOO).invoke(foo), equalTo(sourceIntegers));
         assertThat(baz.getDeclaredMethod(FOO).invoke(foo), sameInstance(baz.getDeclaredMethod(FOO).invoke(foo)));
     }
 
