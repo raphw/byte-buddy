@@ -10932,6 +10932,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
      * to be an illegal candidate for binding.
      * </p>
+     * <p>
      * <b>Important</b>: Parameters with this option must not be used when from a constructor in combination with
      * {@link OnMethodEnter} and a non-static field where the {@code this} reference is not available.
      * </p>
