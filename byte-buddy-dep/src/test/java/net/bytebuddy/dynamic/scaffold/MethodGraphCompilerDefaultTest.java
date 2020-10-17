@@ -1040,6 +1040,18 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
+    public void testDominantInterfaceMethod() throws Exception {
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(BaseInterface.ExtensionType.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(12));
+        MethodDescription method = typeDescription.getInterfaces().get(0).getDeclaredMethods().getOnly();
+        MethodGraph.Node node = methodGraph.locate(method.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getRepresentative(), is(method));
+    }
+
+    @Test
     public void testVisibilityExtension() throws Exception {
         TypeDescription typeDescription = new InstrumentedType.Default("foo",
                 Opcodes.ACC_PUBLIC,
@@ -1637,6 +1649,24 @@ public class MethodGraphCompilerDefaultTest {
             public void foo(Number t) {
                 /* empty */
             }
+        }
+    }
+
+    public interface BaseInterface {
+
+        void foo();
+
+        abstract class BaseType implements BaseInterface {
+            /* empty */
+        }
+
+        interface ExtensionInterface extends BaseInterface {
+
+            void foo();
+        }
+
+        abstract class ExtensionType extends BaseType implements ExtensionInterface {
+            /* empty */
         }
     }
 }
