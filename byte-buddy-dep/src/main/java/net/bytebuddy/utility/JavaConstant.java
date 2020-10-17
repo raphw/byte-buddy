@@ -1602,7 +1602,9 @@ public interface JavaConstant {
         public static Dynamic ofInvocation(MethodDescription.InDefinedShape methodDescription, List<?> constants) {
             if (!methodDescription.isConstructor() && methodDescription.getReturnType().represents(void.class)) {
                 throw new IllegalArgumentException("Bootstrap method is no constructor or non-void static factory: " + methodDescription);
-            } else if (!methodDescription.isVarArgs() && methodDescription.getParameters().size() + (methodDescription.isStatic() || methodDescription.isConstructor() ? 0 : 1) != constants.size()) {
+            } else if (methodDescription.isVarArgs()
+                ? methodDescription.getParameters().size() + (methodDescription.isStatic() || methodDescription.isConstructor() ? 0 : 1) > constants.size() + 1
+                : methodDescription.getParameters().size() + (methodDescription.isStatic() || methodDescription.isConstructor() ? 0 : 1) != constants.size()) {
                 throw new IllegalArgumentException("Cannot assign " + constants + " to " + methodDescription);
             }
             List<Object> arguments = new ArrayList<Object>(constants.size());
@@ -1611,9 +1613,17 @@ public interface JavaConstant {
                     methodDescription.getInternalName(),
                     methodDescription.getDescriptor(),
                     methodDescription.getDeclaringType().isInterface()));
-            Iterator<TypeDescription> iterator = (methodDescription.isStatic() || methodDescription.isConstructor()
+            List<TypeDescription> parameters = (methodDescription.isStatic() || methodDescription.isConstructor()
                     ? methodDescription.getParameters().asTypeList().asErasures()
-                    : CompoundList.of(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList().asErasures())).iterator();
+                    : CompoundList.of(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList().asErasures()));
+            Iterator<TypeDescription> iterator;
+            if (methodDescription.isVarArgs()) {
+                iterator = CompoundList.of(parameters.subList(0, parameters.size() - 1), Collections.nCopies(
+                        constants.size() - parameters.size() + 1,
+                        parameters.get(parameters.size() - 1).getComponentType())).iterator();
+            } else {
+                iterator = parameters.iterator();
+            }
             for (Object constant : constants) {
                 TypeDescription typeDescription;
                 if (constant instanceof JavaConstant) {
@@ -1633,13 +1643,8 @@ public interface JavaConstant {
                         throw new IllegalArgumentException("Not a compile-time constant: " + constant);
                     }
                 }
-                if (iterator.hasNext()) {
-                    TypeDescription next = iterator.next();
-                    if (!typeDescription.isAssignableTo(next)) {
-                        if (!methodDescription.isVarArgs() || iterator.hasNext() || !next.isArray() || !typeDescription.isAssignableTo(next.getComponentType())) {
-                            throw new IllegalArgumentException("Cannot assign " + constants + " to " + methodDescription);
-                        }
-                    }
+                if (!typeDescription.isAssignableTo(iterator.next())) {
+                    throw new IllegalArgumentException("Cannot assign " + constants + " to " + methodDescription);
                 }
             }
             return new Dynamic(new ConstantDynamic("invoke",

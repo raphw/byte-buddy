@@ -5,6 +5,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -480,13 +481,12 @@ public class JavaConstantDynamicTest {
 
     @Test
     @JavaVersionRule.Enforce(11)
-    public void testInvocationOfVarargsMethod() throws Exception {
-        Integer[] integer = new Integer[] {1, 2};
-        JavaConstant[] constant = new JavaConstant[integer.length];
-        for (int index = 0; index < integer.length; index++) {
-            constant[index] = JavaConstant.Dynamic.ofInvocation(Integer.class.getMethod("valueOf", String.class), integer[index].toString());
+    public void testInvocationOfVarargsMethodExcess() throws Exception {
+        JavaConstant[] constant = new JavaConstant[2];
+        for (int index = 0; index < constant.length; index++) {
+            constant[index] = JavaConstant.Dynamic.ofInvocation(Integer.class.getMethod("valueOf", String.class), Integer.toString(index));
         }
-        JavaConstant.Dynamic value = JavaConstant.Dynamic.ofInvocation(JavaConstantDynamicTest.class.getDeclaredMethod("identity", Integer[].class), constant);
+        JavaConstant.Dynamic value = JavaConstant.Dynamic.ofInvocation(JavaConstantDynamicTest.class.getDeclaredMethod("identity", Integer[].class), (Object[]) constant);
         Class<? extends Foo> baz = new ByteBuddy()
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
@@ -497,7 +497,47 @@ public class JavaConstantDynamicTest {
         assertThat(baz.getDeclaredFields().length, is(0));
         assertThat(baz.getDeclaredMethods().length, is(1));
         Foo foo = baz.getDeclaredConstructor().newInstance();
-        assertThat((Integer[])baz.getDeclaredMethod(FOO).invoke(foo), equalTo(integer));
+        assertThat((Integer[]) baz.getDeclaredMethod(FOO).invoke(foo), CoreMatchers.equalTo(new Integer[] {0, 1}));
+        assertThat(baz.getDeclaredMethod(FOO).invoke(foo), sameInstance(baz.getDeclaredMethod(FOO).invoke(foo)));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(11)
+    public void testInvocationOfVarargsMethodEqual() throws Exception {
+        JavaConstant[] constant = new JavaConstant[1];
+        for (int index = 0; index < constant.length; index++) {
+            constant[index] = JavaConstant.Dynamic.ofInvocation(Integer.class.getMethod("valueOf", String.class), Integer.toString(index));
+        }
+        JavaConstant.Dynamic value = JavaConstant.Dynamic.ofInvocation(JavaConstantDynamicTest.class.getDeclaredMethod("identity", Integer[].class), (Object[]) constant);
+        Class<? extends Foo> baz = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(FixedValue.value(value))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(baz.getDeclaredFields().length, is(0));
+        assertThat(baz.getDeclaredMethods().length, is(1));
+        Foo foo = baz.getDeclaredConstructor().newInstance();
+        assertThat((Integer[]) baz.getDeclaredMethod(FOO).invoke(foo), CoreMatchers.equalTo(new Integer[] {0}));
+        assertThat(baz.getDeclaredMethod(FOO).invoke(foo), sameInstance(baz.getDeclaredMethod(FOO).invoke(foo)));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(11)
+    public void testInvocationOfVarargsMethodNoArguments() throws Exception {
+        JavaConstant.Dynamic value = JavaConstant.Dynamic.ofInvocation(JavaConstantDynamicTest.class.getDeclaredMethod("identity", Integer[].class));
+        Class<? extends Foo> baz = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(FixedValue.value(value))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(baz.getDeclaredFields().length, is(0));
+        assertThat(baz.getDeclaredMethods().length, is(1));
+        Foo foo = baz.getDeclaredConstructor().newInstance();
+        assertThat((Integer[]) baz.getDeclaredMethod(FOO).invoke(foo), CoreMatchers.equalTo(new Integer[0]));
         assertThat(baz.getDeclaredMethod(FOO).invoke(foo), sameInstance(baz.getDeclaredMethod(FOO).invoke(foo)));
     }
 
