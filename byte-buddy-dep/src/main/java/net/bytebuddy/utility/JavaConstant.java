@@ -1602,7 +1602,7 @@ public interface JavaConstant {
         public static Dynamic ofInvocation(MethodDescription.InDefinedShape methodDescription, List<?> constants) {
             if (!methodDescription.isConstructor() && methodDescription.getReturnType().represents(void.class)) {
                 throw new IllegalArgumentException("Bootstrap method is no constructor or non-void static factory: " + methodDescription);
-            } else if (methodDescription.getParameters().size() + (methodDescription.isStatic() || methodDescription.isConstructor() ? 0 : 1) != constants.size()) {
+            } else if (!methodDescription.isVarArgs() && methodDescription.getParameters().size() + (methodDescription.isStatic() || methodDescription.isConstructor() ? 0 : 1) != constants.size()) {
                 throw new IllegalArgumentException("Cannot assign " + constants + " to " + methodDescription);
             }
             List<Object> arguments = new ArrayList<Object>(constants.size());
@@ -1633,8 +1633,13 @@ public interface JavaConstant {
                         throw new IllegalArgumentException("Not a compile-time constant: " + constant);
                     }
                 }
-                if (!typeDescription.isAssignableTo(iterator.next())) {
-                    throw new IllegalArgumentException("Cannot assign " + constants + " to " + methodDescription);
+                if (iterator.hasNext()) {
+                    TypeDescription next = iterator.next();
+                    if (!typeDescription.isAssignableTo(next)) {
+                        if (!methodDescription.isVarArgs() || iterator.hasNext() || !next.isArray() || !typeDescription.isAssignableTo(next.getComponentType())) {
+                            throw new IllegalArgumentException("Cannot assign " + constants + " to " + methodDescription);
+                        }
+                    }
                 }
             }
             return new Dynamic(new ConstantDynamic("invoke",
