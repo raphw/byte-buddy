@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 
 public class JavaConstantMethodHandleTest {
 
-    private static final String BAR = "bar", QUX = "qux";
+    private static final String BAR = "bar", FROB = "frob", QUX = "qux";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
@@ -106,12 +106,13 @@ public class JavaConstantMethodHandleTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodHandleOfSetter() throws Exception {
-        JavaConstant.MethodHandle methodHandle = JavaConstant.MethodHandle.ofSetter(Foo.class.getDeclaredField(BAR));
+        JavaConstant.MethodHandle methodHandle = JavaConstant.MethodHandle.ofSetter(Foo.class.getDeclaredField(FROB));
         assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.PUT_FIELD));
-        assertThat(methodHandle.getName(), is(BAR));
+        assertThat(methodHandle.getName(), is(FROB));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) TypeDescription.ForLoadedType.of(Foo.class)));
         assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
-        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
+        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Integer.class)));
+        assertThat(methodHandle.getDescriptor(), is(methodHandle.getParameterTypes().getOnly().getDescriptor()));
     }
 
     @Test
@@ -123,6 +124,7 @@ public class JavaConstantMethodHandleTest {
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) TypeDescription.ForLoadedType.of(Foo.class)));
         assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
         assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
+        assertThat(methodHandle.getDescriptor(), is(methodHandle.getParameterTypes().getOnly().getDescriptor()));
     }
 
     @Test
@@ -195,6 +197,8 @@ public class JavaConstantMethodHandleTest {
 
         public Void bar;
 
+        public Integer frob;
+      
         public Foo(Void value) {
             /* empty*/
         }

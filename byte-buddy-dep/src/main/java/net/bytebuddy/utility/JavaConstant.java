@@ -692,9 +692,11 @@ public interface JavaConstant {
          * @return The method descriptor of this method handle representation.
          */
         public String getDescriptor() {
-            if (handleType.isField()) {
-                return returnType.getDescriptor();
-            } else {
+            switch (handleType) {
+            case PUT_FIELD:
+            case PUT_STATIC_FIELD:
+                return parameterTypes.get(0).getDescriptor();
+            default:
                 StringBuilder stringBuilder = new StringBuilder().append('(');
                 for (TypeDescription parameterType : parameterTypes) {
                     stringBuilder.append(parameterType.getDescriptor());
