@@ -1610,7 +1610,7 @@ public interface JavaConstant {
                     methodDescription.getDeclaringType().getInternalName(),
                     methodDescription.getInternalName(),
                     methodDescription.getDescriptor(),
-                    false));
+                    methodDescription.getDeclaringType().isInterface()));
             Iterator<TypeDescription> iterator = (methodDescription.isStatic() || methodDescription.isConstructor()
                     ? methodDescription.getParameters().asTypeList().asErasures()
                     : CompoundList.of(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList().asErasures())).iterator();
