@@ -87,10 +87,16 @@ public abstract class FixedValue implements Implementation {
      * @return An implementation for the given {@code value}.
      *
      * @see #value(JavaConstant)
+     * @see #value(TypeDescription)
+     * @see #nullValue()
      */
     public static AssignerConfigurable value(Object fixedValue) {
-        if (fixedValue instanceof JavaConstant) {
+        if (fixedValue instanceof AssignerConfigurable) {
+            return (AssignerConfigurable) fixedValue;
+        } else if (fixedValue instanceof JavaConstant) {
             return value((JavaConstant) fixedValue);
+        } else if (fixedValue instanceof TypeDescription) {
+            return value((TypeDescription) fixedValue);
         } else {
             Class<?> type = fixedValue.getClass();
             if (type == String.class) {
