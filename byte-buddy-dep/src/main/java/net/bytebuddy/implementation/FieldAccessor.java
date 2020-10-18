@@ -681,6 +681,9 @@ public abstract class FieldAccessor implements Implementation {
          * {@inheritDoc}
          */
         public Composable setsValue(Object value) {
+            if (value == null) {
+                return setsDefaultValue();
+            }
             Class<?> type = value.getClass();
             if (type == String.class) {
                 return setsValue(new TextConstant((String) value), String.class);
