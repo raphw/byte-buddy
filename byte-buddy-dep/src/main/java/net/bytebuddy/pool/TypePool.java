@@ -7726,7 +7726,7 @@ public interface TypePool {
 
             @Override
             public void visitOuterClass(String typeName, String methodName, String methodDescriptor) {
-                if (methodName != null) {
+                if (methodName != null && !methodName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
                     typeContainment = new LazyTypeDescription.TypeContainment.WithinMethod(typeName, methodName, methodDescriptor);
                 } else if (typeName != null) {
                     typeContainment = new LazyTypeDescription.TypeContainment.WithinType(typeName, true);
