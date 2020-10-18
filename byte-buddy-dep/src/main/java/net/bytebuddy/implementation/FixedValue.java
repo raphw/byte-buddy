@@ -85,35 +85,41 @@ public abstract class FixedValue implements Implementation {
      *
      * @param fixedValue The fixed value to return from the method.
      * @return An implementation for the given {@code value}.
+     *
+     * @see #value(JavaConstant)
      */
     public static AssignerConfigurable value(Object fixedValue) {
-        Class<?> type = fixedValue.getClass();
-        if (type == String.class) {
-            return new ForPoolValue(new TextConstant((String) fixedValue), TypeDescription.STRING);
-        } else if (type == Class.class) {
-            return new ForPoolValue(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) fixedValue)), TypeDescription.CLASS);
-        } else if (type == Boolean.class) {
-            return new ForPoolValue(IntegerConstant.forValue((Boolean) fixedValue), boolean.class);
-        } else if (type == Byte.class) {
-            return new ForPoolValue(IntegerConstant.forValue((Byte) fixedValue), byte.class);
-        } else if (type == Short.class) {
-            return new ForPoolValue(IntegerConstant.forValue((Short) fixedValue), short.class);
-        } else if (type == Character.class) {
-            return new ForPoolValue(IntegerConstant.forValue((Character) fixedValue), char.class);
-        } else if (type == Integer.class) {
-            return new ForPoolValue(IntegerConstant.forValue((Integer) fixedValue), int.class);
-        } else if (type == Long.class) {
-            return new ForPoolValue(LongConstant.forValue((Long) fixedValue), long.class);
-        } else if (type == Float.class) {
-            return new ForPoolValue(FloatConstant.forValue((Float) fixedValue), float.class);
-        } else if (type == Double.class) {
-            return new ForPoolValue(DoubleConstant.forValue((Double) fixedValue), double.class);
-        } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
-            return new ForPoolValue(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(fixedValue)), type);
-        } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
-            return new ForPoolValue(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(fixedValue)), type);
+        if (fixedValue instanceof JavaConstant) {
+            return value((JavaConstant) fixedValue);
         } else {
-            return reference(fixedValue);
+            Class<?> type = fixedValue.getClass();
+            if (type == String.class) {
+                return new ForPoolValue(new TextConstant((String) fixedValue), TypeDescription.STRING);
+            } else if (type == Class.class) {
+                return new ForPoolValue(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) fixedValue)), TypeDescription.CLASS);
+            } else if (type == Boolean.class) {
+                return new ForPoolValue(IntegerConstant.forValue((Boolean) fixedValue), boolean.class);
+            } else if (type == Byte.class) {
+                return new ForPoolValue(IntegerConstant.forValue((Byte) fixedValue), byte.class);
+            } else if (type == Short.class) {
+                return new ForPoolValue(IntegerConstant.forValue((Short) fixedValue), short.class);
+            } else if (type == Character.class) {
+                return new ForPoolValue(IntegerConstant.forValue((Character) fixedValue), char.class);
+            } else if (type == Integer.class) {
+                return new ForPoolValue(IntegerConstant.forValue((Integer) fixedValue), int.class);
+            } else if (type == Long.class) {
+                return new ForPoolValue(LongConstant.forValue((Long) fixedValue), long.class);
+            } else if (type == Float.class) {
+                return new ForPoolValue(FloatConstant.forValue((Float) fixedValue), float.class);
+            } else if (type == Double.class) {
+                return new ForPoolValue(DoubleConstant.forValue((Double) fixedValue), double.class);
+            } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
+                return new ForPoolValue(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(fixedValue)), type);
+            } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
+                return new ForPoolValue(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(fixedValue)), type);
+            } else {
+                return reference(fixedValue);
+            }
         }
     }
 
