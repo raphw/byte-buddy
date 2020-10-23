@@ -215,17 +215,34 @@ public interface ClassInjector {
                             String packageName = entry.getKey().substring(0, packageIndex);
                             PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(classLoader, packageName, entry.getKey());
                             if (definition.isDefined()) {
-                                Package definedPackage = dispatcher.getPackage(classLoader, packageName);
+                                Package definedPackage = dispatcher.getDefinedPackage(classLoader, packageName);
                                 if (definedPackage == null) {
-                                    dispatcher.definePackage(classLoader,
-                                            packageName,
-                                            definition.getSpecificationTitle(),
-                                            definition.getSpecificationVersion(),
-                                            definition.getSpecificationVendor(),
-                                            definition.getImplementationTitle(),
-                                            definition.getImplementationVersion(),
-                                            definition.getImplementationVendor(),
-                                            definition.getSealBase());
+                                    try {
+                                        dispatcher.definePackage(classLoader,
+                                                packageName,
+                                                definition.getSpecificationTitle(),
+                                                definition.getSpecificationVersion(),
+                                                definition.getSpecificationVendor(),
+                                                definition.getImplementationTitle(),
+                                                definition.getImplementationVersion(),
+                                                definition.getImplementationVendor(),
+                                                definition.getSealBase());
+                                    } catch (IllegalStateException exception) {
+                                        // Custom classloaders may call getPackage (instead of getDefinedPackage) from
+                                        // within definePackage, which can cause the package to be defined in an
+                                        // ancestor classloader or find a previously defined one from an ancestor. In
+                                        // this case definePackage will also throw since it considers that package
+                                        // already loaded and will not allow to define it directly in this classloader.
+                                        // To make sure this is the case, call getPackage instead of getDefinedPackage
+                                        // here and verify that we actually have a compatible package defined in an
+                                        // ancestor classloader. This issue is known to happen on WLS14+JDK11.
+                                        definedPackage = dispatcher.getPackage(classLoader, packageName);
+                                        if (definedPackage == null) {
+                                            throw exception;
+                                        } else if (!definition.isCompatibleTo(definedPackage)) {
+                                            throw new SecurityException("Sealing violation for package " + packageName + " (getPackage fallback)");
+                                        }
+                                    }
                                 } else if (!definition.isCompatibleTo(definedPackage)) {
                                     throw new SecurityException("Sealing violation for package " + packageName);
                                 }
@@ -299,11 +316,20 @@ public interface ClassInjector {
             Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain);
 
             /**
-             * Looks up a package from a class loader.
+             * Looks up a package from a class loader. If the operation is not supported, falls back to {@link #getPackage(ClassLoader, String)}
              *
              * @param classLoader The class loader to query.
              * @param name        The binary name of the package.
              * @return The package for the given name as defined by the provided class loader or {@code null} if no such package exists.
+             */
+            Package getDefinedPackage(ClassLoader classLoader, String name);
+
+            /**
+             * Looks up a package from a class loader or its ancestor.
+             *
+             * @param classLoader The class loader to query.
+             * @param name        The binary name of the package.
+             * @return The package for the given name as defined by the provided class loader or its ancestor, or {@code null} if no such package exists.
              */
             Package getPackage(ClassLoader classLoader, String name);
 
@@ -412,6 +438,13 @@ public interface ClassInjector {
                     /**
                      * {@inheritDoc}
                      */
+                    public Package getDefinedPackage(ClassLoader classLoader, String name) {
+                        throw new UnsupportedOperationException("Cannot get defined package using reflection: " + message);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Package getPackage(ClassLoader classLoader, String name) {
                         throw new UnsupportedOperationException("Cannot get package using reflection: " + message);
                     }
@@ -481,7 +514,12 @@ public interface ClassInjector {
                 protected final Method defineClass;
 
                 /**
-                 * An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
+                 * An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                 */
+                protected final Method getDefinedPackage;
+
+                /**
+                 * An instance of {@link ClassLoader#getPackage(String)}.
                  */
                 protected final Method getPackage;
 
@@ -493,17 +531,20 @@ public interface ClassInjector {
                 /**
                  * Creates a new direct injection dispatcher.
                  *
-                 * @param findLoadedClass An instance of {@link ClassLoader#findLoadedClass(String)}.
-                 * @param defineClass     An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                 * @param getPackage      An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
-                 * @param definePackage   An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
+                 * @param findLoadedClass   An instance of {@link ClassLoader#findLoadedClass(String)}.
+                 * @param defineClass       An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
+                 * @param getDefinedPackage An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                 * @param getPackage        An instance of {@link ClassLoader#getPackage(String)}.
+                 * @param definePackage     An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                  */
                 protected Direct(Method findLoadedClass,
                                  Method defineClass,
+                                 Method getDefinedPackage,
                                  Method getPackage,
                                  Method definePackage) {
                     this.findLoadedClass = findLoadedClass;
                     this.defineClass = defineClass;
+                    this.getDefinedPackage = getDefinedPackage;
                     this.getPackage = getPackage;
                     this.definePackage = definePackage;
                 }
@@ -516,18 +557,19 @@ public interface ClassInjector {
                  */
                 @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
                 protected static Initializable make() throws Exception {
-                    Method getPackage;
+                    Method getDefinedPackage;
                     if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
                         try {
-                            getPackage = ClassLoader.class.getMethod("getDefinedPackage", String.class);
+                            getDefinedPackage = ClassLoader.class.getMethod("getDefinedPackage", String.class);
+                            getDefinedPackage.setAccessible(true);
                         } catch (NoSuchMethodException ignored) {
-                            getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
-                            getPackage.setAccessible(true);
+                            getDefinedPackage = null;
                         }
                     } else {
-                        getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
-                        getPackage.setAccessible(true);
+                        getDefinedPackage = null;
                     }
+                    Method getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
+                    getPackage.setAccessible(true);
                     Method findLoadedClass = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
                     findLoadedClass.setAccessible(true);
                     Method defineClass = ClassLoader.class.getDeclaredMethod("defineClass",
@@ -552,11 +594,12 @@ public interface ClassInjector {
                         getClassLoadingLock.setAccessible(true);
                         return new ForJava7CapableVm(findLoadedClass,
                                 defineClass,
+                                getDefinedPackage,
                                 getPackage,
                                 definePackage,
                                 getClassLoadingLock);
                     } catch (NoSuchMethodException ignored) {
-                        return new ForLegacyVm(findLoadedClass, defineClass, getPackage, definePackage);
+                        return new ForLegacyVm(findLoadedClass, defineClass, getDefinedPackage, getPackage, definePackage);
                     }
                 }
 
@@ -605,6 +648,20 @@ public interface ClassInjector {
                         throw new IllegalStateException("Could not access java.lang.ClassLoader#defineClass", exception);
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking java.lang.ClassLoader#defineClass", exception.getCause());
+                    }
+                }
+
+                @Override
+                public Package getDefinedPackage(ClassLoader classLoader, String name) {
+                    if (getDefinedPackage == null) {
+                        return getPackage(classLoader, name);
+                    }
+                    try {
+                        return (Package) getDefinedPackage.invoke(classLoader, name);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access java.lang.ClassLoader#getDefinedPackage", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#getDefinedPackage", exception.getCause());
                     }
                 }
 
@@ -667,15 +724,17 @@ public interface ClassInjector {
                      * @param getClassLoadingLock An instance of {@code ClassLoader#getClassLoadingLock(String)}.
                      * @param findLoadedClass     An instance of {@link ClassLoader#findLoadedClass(String)}.
                      * @param defineClass         An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                     * @param getPackage          An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
+                     * @param getDefinedPackage   An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                     * @param getPackage          An instance of {@link ClassLoader#getPackage(String)}.
                      * @param definePackage       An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                      */
                     protected ForJava7CapableVm(Method findLoadedClass,
                                                 Method defineClass,
+                                                Method getDefinedPackage,
                                                 Method getPackage,
                                                 Method definePackage,
                                                 Method getClassLoadingLock) {
-                        super(findLoadedClass, defineClass, getPackage, definePackage);
+                        super(findLoadedClass, defineClass, getDefinedPackage, getPackage, definePackage);
                         this.getClassLoadingLock = getClassLoadingLock;
                     }
 
@@ -701,16 +760,18 @@ public interface ClassInjector {
                     /**
                      * Creates a new resolved reflection store for a VM prior to Java 8.
                      *
-                     * @param findLoadedClass An instance of {@link ClassLoader#findLoadedClass(String)}.
-                     * @param defineClass     An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                     * @param getPackage      An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
-                     * @param definePackage   An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
+                     * @param findLoadedClass   An instance of {@link ClassLoader#findLoadedClass(String)}.
+                     * @param defineClass       An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
+                     * @param getDefinedPackage An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                     * @param getPackage        An instance of {@link ClassLoader#getPackage(String)}.
+                     * @param definePackage     An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                      */
                     protected ForLegacyVm(Method findLoadedClass,
                                           Method defineClass,
+                                          Method getDefinedPackage,
                                           Method getPackage,
                                           Method definePackage) {
-                        super(findLoadedClass, defineClass, getPackage, definePackage);
+                        super(findLoadedClass, defineClass, getDefinedPackage, getPackage, definePackage);
                     }
 
                     /**
@@ -744,7 +805,12 @@ public interface ClassInjector {
                 private final Method defineClass;
 
                 /**
-                 * The accessor method for using {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
+                 * The accessor method for using {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                 */
+                private final Method getDefinedPackage;
+
+                /**
+                 * The accessor method for using {@link ClassLoader#getPackage(String)}.
                  */
                 private final Method getPackage;
 
@@ -765,7 +831,8 @@ public interface ClassInjector {
                  * @param accessor            An instance of the accessor class that is required for using it's intentionally non-static methods.
                  * @param findLoadedClass     An instance of {@link ClassLoader#findLoadedClass(String)}.
                  * @param defineClass         An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                 * @param getPackage          An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
+                 * @param getDefinedPackage   An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                 * @param getPackage          An instance of {@link ClassLoader#getPackage(String)}.
                  * @param definePackage       An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                  * @param getClassLoadingLock The accessor method for using {@code ClassLoader#getClassLoadingLock(String)} or returning the
                  *                            supplied {@link ClassLoader} if this method does not exist on the current VM.
@@ -773,12 +840,14 @@ public interface ClassInjector {
                 protected UsingUnsafeInjection(Object accessor,
                                                Method findLoadedClass,
                                                Method defineClass,
+                                               Method getDefinedPackage,
                                                Method getPackage,
                                                Method definePackage,
                                                Method getClassLoadingLock) {
                     this.accessor = accessor;
                     this.findLoadedClass = findLoadedClass;
                     this.defineClass = defineClass;
+                    this.getDefinedPackage = getDefinedPackage;
                     this.getPackage = getPackage;
                     this.definePackage = definePackage;
                     this.getClassLoadingLock = getClassLoadingLock;
@@ -799,17 +868,16 @@ public interface ClassInjector {
                     Field theUnsafe = unsafe.getDeclaredField("theUnsafe");
                     theUnsafe.setAccessible(true);
                     Object unsafeInstance = theUnsafe.get(null);
-                    Method getPackage;
+                    Method getDefinedPackage;
                     if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
                         try {
-                            getPackage = ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class);
+                            getDefinedPackage = ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class);
                         } catch (NoSuchMethodException ignored) {
-                            getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
+                            getDefinedPackage = null;
                         }
                     } else {
-                        getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
+                        getDefinedPackage = null;
                     }
-                    getPackage.setAccessible(true);
                     DynamicType.Builder<?> builder = new ByteBuddy()
                             .with(TypeValidation.DISABLED)
                             .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
@@ -829,7 +897,8 @@ public interface ClassInjector {
                                     .withArgument(1, 2, 3, 4, 5))
                             .defineMethod("getPackage", Package.class, Visibility.PUBLIC)
                             .withParameters(ClassLoader.class, String.class)
-                            .intercept(MethodCall.invoke(getPackage)
+                            .intercept(MethodCall.invoke(ClassLoader.class
+                                    .getDeclaredMethod("getPackage", String.class))
                                     .onArgument(0)
                                     .withArgument(1))
                             .defineMethod("definePackage", Package.class, Visibility.PUBLIC)
@@ -839,6 +908,14 @@ public interface ClassInjector {
                                     .getDeclaredMethod("definePackage", String.class, String.class, String.class, String.class, String.class, String.class, String.class, URL.class))
                                     .onArgument(0)
                                     .withArgument(1, 2, 3, 4, 5, 6, 7, 8));
+                    if (getDefinedPackage != null) {
+                        builder = builder
+                            .defineMethod("getDefinedPackage", Package.class, Visibility.PUBLIC)
+                            .withParameters(ClassLoader.class, String.class)
+                            .intercept(MethodCall.invoke(getDefinedPackage)
+                                .onArgument(0)
+                                .withArgument(1));
+                    }
                     try {
                         builder = builder.defineMethod("getClassLoadingLock", Object.class, Visibility.PUBLIC)
                                 .withParameters(ClassLoader.class, String.class)
@@ -857,6 +934,7 @@ public interface ClassInjector {
                             unsafe.getMethod("allocateInstance", Class.class).invoke(unsafeInstance, type),
                             type.getMethod("findLoadedClass", ClassLoader.class, String.class),
                             type.getMethod("defineClass", ClassLoader.class, String.class, byte[].class, int.class, int.class, ProtectionDomain.class),
+                            getDefinedPackage != null ? type.getMethod("getDefinedPackage", ClassLoader.class, String.class) : null,
                             type.getMethod("getPackage", ClassLoader.class, String.class),
                             type.getMethod("definePackage", ClassLoader.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class, URL.class),
                             type.getMethod("getClassLoadingLock", ClassLoader.class, String.class));
@@ -926,6 +1004,22 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
+                public Package getDefinedPackage(ClassLoader classLoader, String name) {
+                    if (getDefinedPackage == null) {
+                        return getPackage(classLoader, name);
+                    }
+                    try {
+                        return (Package) getDefinedPackage.invoke(accessor, classLoader, name);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access (accessor)::getDefinedPackage", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking (accessor)::getDefinedPackage", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public Package getPackage(ClassLoader classLoader, String name) {
                     try {
                         return (Package) getPackage.invoke(accessor, classLoader, name);
@@ -984,7 +1078,12 @@ public interface ClassInjector {
                 protected final Method defineClass;
 
                 /**
-                 * An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
+                 * An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                 */
+                protected final Method getDefinedPackage;
+
+                /**
+                 * An instance of {@link ClassLoader#getPackage(String)}.
                  */
                 protected final Method getPackage;
 
@@ -996,17 +1095,20 @@ public interface ClassInjector {
                 /**
                  * Creates a new unsafe field injecting injection dispatcher.
                  *
-                 * @param findLoadedClass An instance of {@link ClassLoader#findLoadedClass(String)}.
-                 * @param defineClass     An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                 * @param getPackage      An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
-                 * @param definePackage   An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
+                 * @param findLoadedClass   An instance of {@link ClassLoader#findLoadedClass(String)}.
+                 * @param defineClass       An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
+                 * @param getDefinedPackage An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                 * @param getPackage        An instance of {@link ClassLoader#getPackage(String)}.
+                 * @param definePackage     An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                  */
                 protected UsingUnsafeOverride(Method findLoadedClass,
                                               Method defineClass,
+                                              Method getDefinedPackage,
                                               Method getPackage,
                                               Method definePackage) {
                     this.findLoadedClass = findLoadedClass;
                     this.defineClass = defineClass;
+                    this.getDefinedPackage = getDefinedPackage;
                     this.getPackage = getPackage;
                     this.definePackage = definePackage;
                 }
@@ -1048,18 +1150,19 @@ public interface ClassInjector {
                             .getMethod("objectFieldOffset", Field.class)
                             .invoke(unsafe, override);
                     Method putBoolean = unsafeType.getMethod("putBoolean", Object.class, long.class, boolean.class);
-                    Method getPackage;
+                    Method getDefinedPackage;
                     if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
                         try {
-                            getPackage = ClassLoader.class.getMethod("getDefinedPackage", String.class);
+                            getDefinedPackage = ClassLoader.class.getMethod("getDefinedPackage", String.class);
+                            putBoolean.invoke(unsafe, getDefinedPackage, offset, true);
                         } catch (NoSuchMethodException ignored) {
-                            getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
-                            putBoolean.invoke(unsafe, getPackage, offset, true);
+                            getDefinedPackage = null;
                         }
                     } else {
-                        getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
-                        putBoolean.invoke(unsafe, getPackage, offset, true);
+                        getDefinedPackage = null;
                     }
+                    Method getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
+                    putBoolean.invoke(unsafe, getPackage, offset, true);
                     Method findLoadedClass = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
                     Method defineClass = ClassLoader.class.getDeclaredMethod("defineClass",
                             String.class,
@@ -1084,11 +1187,12 @@ public interface ClassInjector {
                         putBoolean.invoke(unsafe, getClassLoadingLock, offset, true);
                         return new ForJava7CapableVm(findLoadedClass,
                                 defineClass,
+                                getDefinedPackage,
                                 getPackage,
                                 definePackage,
                                 getClassLoadingLock);
                     } catch (NoSuchMethodException ignored) {
-                        return new ForLegacyVm(findLoadedClass, defineClass, getPackage, definePackage);
+                        return new ForLegacyVm(findLoadedClass, defineClass, getDefinedPackage, getPackage, definePackage);
                     }
                 }
 
@@ -1137,6 +1241,20 @@ public interface ClassInjector {
                         throw new IllegalStateException("Could not access java.lang.ClassLoader#defineClass", exception);
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking java.lang.ClassLoader#defineClass", exception.getCause());
+                    }
+                }
+
+                @Override
+                public Package getDefinedPackage(ClassLoader classLoader, String name) {
+                    if (getDefinedPackage == null) {
+                        return getPackage(classLoader, name);
+                    }
+                    try {
+                        return (Package) getDefinedPackage.invoke(classLoader, name);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access java.lang.ClassLoader#getDefinedPackage", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#getDefinedPackage", exception.getCause());
                     }
                 }
 
@@ -1199,15 +1317,17 @@ public interface ClassInjector {
                      * @param getClassLoadingLock An instance of {@code ClassLoader#getClassLoadingLock(String)}.
                      * @param findLoadedClass     An instance of {@link ClassLoader#findLoadedClass(String)}.
                      * @param defineClass         An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                     * @param getPackage          An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
+                     * @param getDefinedPackage   An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                     * @param getPackage          An instance of {@link ClassLoader#getPackage(String)}.
                      * @param definePackage       An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                      */
                     protected ForJava7CapableVm(Method findLoadedClass,
                                                 Method defineClass,
+                                                Method getDefinedPackage,
                                                 Method getPackage,
                                                 Method definePackage,
                                                 Method getClassLoadingLock) {
-                        super(findLoadedClass, defineClass, getPackage, definePackage);
+                        super(findLoadedClass, defineClass, getDefinedPackage, getPackage, definePackage);
                         this.getClassLoadingLock = getClassLoadingLock;
                     }
 
@@ -1233,16 +1353,18 @@ public interface ClassInjector {
                     /**
                      * Creates a new resolved class injector using unsafe field injection for a VM prior to Java 7.
                      *
-                     * @param findLoadedClass An instance of {@link ClassLoader#findLoadedClass(String)}.
-                     * @param defineClass     An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                     * @param getPackage      An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
-                     * @param definePackage   An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
+                     * @param findLoadedClass   An instance of {@link ClassLoader#findLoadedClass(String)}.
+                     * @param defineClass       An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
+                     * @param getDefinedPackage An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                     * @param getPackage        An instance of {@link ClassLoader#getPackage(String)}.
+                     * @param definePackage     An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                      */
                     protected ForLegacyVm(Method findLoadedClass,
                                           Method defineClass,
+                                          Method getDefinedPackage,
                                           Method getPackage,
                                           Method definePackage) {
-                        super(findLoadedClass, defineClass, getPackage, definePackage);
+                        super(findLoadedClass, defineClass, getDefinedPackage, getPackage, definePackage);
                     }
 
                     /**
@@ -1297,6 +1419,13 @@ public interface ClassInjector {
                  */
                 public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
                     throw new UnsupportedOperationException("Cannot define class using reflection: " + message);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Package getDefinedPackage(ClassLoader classLoader, String name) {
+                    throw new UnsupportedOperationException("Cannot get defined package using reflection: " + message);
                 }
 
                 /**

@@ -9,6 +9,7 @@ import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.Super;
+import net.bytebuddy.test.utility.LegacyGetPackageClassLoader;
 import net.bytebuddy.test.utility.ClassReflectionInjectionAvailableRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Before;
@@ -58,10 +59,21 @@ public class ClassInjectorUsingReflectionTest {
 
     @Test
     @ClassReflectionInjectionAvailableRule.Enforce
+    public void testInjectionOnLegacyClassloader() throws Exception {
+        ClassLoader classLoader = new LegacyGetPackageClassLoader();
+        new ClassInjector.UsingReflection(classLoader.getParent()).inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Foo.class),
+            ClassFileLocator.ForClassLoader.read(Foo.class)));
+        new ClassInjector.UsingReflection(classLoader).inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Foo.class),
+            ClassFileLocator.ForClassLoader.read(Foo.class)));
+        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
+    }
+
+    @Test
+    @ClassReflectionInjectionAvailableRule.Enforce
     @JavaVersionRule.Enforce(atMost = 8)
     public void testDirectInjection() throws Exception {
         ClassInjector.UsingReflection.Dispatcher dispatcher = ClassInjector.UsingReflection.Dispatcher.Direct.make().initialize();
-        assertThat(dispatcher.getPackage(classLoader, Foo.class.getPackage().getName()), nullValue(Package.class));
+        assertThat(dispatcher.getDefinedPackage(classLoader, Foo.class.getPackage().getName()), nullValue(Package.class));
         assertThat(dispatcher.definePackage(classLoader,
                 Foo.class.getPackage().getName(),
                 null,
@@ -81,7 +93,7 @@ public class ClassInjectorUsingReflectionTest {
     @JavaVersionRule.Enforce(atMost = 10)
     public void testUnsafeInjection() throws Exception {
         ClassInjector.UsingReflection.Dispatcher dispatcher = ClassInjector.UsingReflection.Dispatcher.UsingUnsafeInjection.make().initialize();
-        assertThat(dispatcher.getPackage(classLoader, Foo.class.getPackage().getName()), nullValue(Package.class));
+        assertThat(dispatcher.getDefinedPackage(classLoader, Foo.class.getPackage().getName()), nullValue(Package.class));
         assertThat(dispatcher.definePackage(classLoader,
                 Foo.class.getPackage().getName(),
                 null,
@@ -100,7 +112,7 @@ public class ClassInjectorUsingReflectionTest {
     @ClassReflectionInjectionAvailableRule.Enforce
     public void testUnsafeOverride() throws Exception {
         ClassInjector.UsingReflection.Dispatcher dispatcher = ClassInjector.UsingReflection.Dispatcher.UsingUnsafeOverride.make().initialize();
-        assertThat(dispatcher.getPackage(classLoader, Foo.class.getPackage().getName()), nullValue(Package.class));
+        assertThat(dispatcher.getDefinedPackage(classLoader, Foo.class.getPackage().getName()), nullValue(Package.class));
         assertThat(dispatcher.definePackage(classLoader,
                 Foo.class.getPackage().getName(),
                 null,
@@ -137,7 +149,7 @@ public class ClassInjectorUsingReflectionTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testDispatcherFaultyInitializationGetPackage() throws Exception {
-        new ClassInjector.UsingReflection.Dispatcher.Initializable.Unavailable("foo").initialize().getPackage(null, null);
+        new ClassInjector.UsingReflection.Dispatcher.Initializable.Unavailable("foo").initialize().getDefinedPackage(null, null);
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -163,7 +175,7 @@ public class ClassInjectorUsingReflectionTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testDispatcherFaultyDispatcherGetPackage() throws Exception {
-        new ClassInjector.UsingReflection.Dispatcher.Unavailable(FOO).getPackage(null, null);
+        new ClassInjector.UsingReflection.Dispatcher.Unavailable(FOO).getDefinedPackage(null, null);
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -183,6 +195,7 @@ public class ClassInjectorUsingReflectionTest {
     public void testLegacyDispatcherGetLock() throws Exception {
         ClassLoader classLoader = mock(ClassLoader.class);
         assertThat(new ClassInjector.UsingReflection.Dispatcher.Direct.ForLegacyVm(null,
+                null,
                 null,
                 null,
                 null).getClassLoadingLock(classLoader, FOO), is((Object) classLoader));
