@@ -62,9 +62,9 @@ public class ClassInjectorUsingReflectionTest {
     public void testInjectionOnLegacyClassloader() throws Exception {
         ClassLoader classLoader = new LegacyGetPackageClassLoader();
         new ClassInjector.UsingReflection(classLoader.getParent()).inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Foo.class),
-            ClassFileLocator.ForClassLoader.read(Foo.class)));
+                ClassFileLocator.ForClassLoader.read(Foo.class)));
         new ClassInjector.UsingReflection(classLoader).inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Foo.class),
-            ClassFileLocator.ForClassLoader.read(Foo.class)));
+                ClassFileLocator.ForClassLoader.read(Foo.class)));
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
     }
 
