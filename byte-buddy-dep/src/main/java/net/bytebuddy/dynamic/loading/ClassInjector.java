@@ -561,7 +561,6 @@ public interface ClassInjector {
                     if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
                         try {
                             getDefinedPackage = ClassLoader.class.getMethod("getDefinedPackage", String.class);
-                            getDefinedPackage.setAccessible(true);
                         } catch (NoSuchMethodException ignored) {
                             getDefinedPackage = null;
                         }
@@ -1154,7 +1153,6 @@ public interface ClassInjector {
                     if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
                         try {
                             getDefinedPackage = ClassLoader.class.getMethod("getDefinedPackage", String.class);
-                            putBoolean.invoke(unsafe, getDefinedPackage, offset, true);
                         } catch (NoSuchMethodException ignored) {
                             getDefinedPackage = null;
                         }
