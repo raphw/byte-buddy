@@ -70,9 +70,9 @@ public abstract class FixedValue implements Implementation {
     /**
      * <p>
      * Returns a fixed value from any intercepted method. The fixed value is stored in the constant pool if this is possible.
-     * Java is capable of storing any primitive value, {@link String} values and {@link Class} references in the constant pool.
-     * Since Java 7, {@code MethodHandle} as well as {@code MethodType} references are also supported. Alternatively, the fixed
-     * value is stored in a static field.
+     * Specifically, an argument that is a {@link JavaConstant}, {@link TypeDescription}, primitive, {@link String} or
+     * {@link Class} value is stored in the constant pool.  Since Java 7, {@code MethodHandle} as well as {@code MethodType}
+     * references are also supported. Alternatively, the fixed value is stored in a static field.
      * </p>
      * <p>
      * When a value is stored in the class's constant pool, its identity is lost. If an object's identity is important, the
@@ -91,9 +91,7 @@ public abstract class FixedValue implements Implementation {
      * @see #nullValue()
      */
     public static AssignerConfigurable value(Object fixedValue) {
-        if (fixedValue instanceof AssignerConfigurable) {
-            return (AssignerConfigurable) fixedValue;
-        } else if (fixedValue instanceof JavaConstant) {
+        if (fixedValue instanceof JavaConstant) {
             return value((JavaConstant) fixedValue);
         } else if (fixedValue instanceof TypeDescription) {
             return value((TypeDescription) fixedValue);
