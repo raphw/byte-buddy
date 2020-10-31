@@ -37,6 +37,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
@@ -806,6 +807,7 @@ public class MethodCall implements Implementation.Composable {
             public MethodDescription resolve(TypeDescription targetType, MethodDescription instrumentedMethod) {
                 List<MethodDescription> candidates = CompoundList.<MethodDescription>of(
                         instrumentedType.getSuperClass().getDeclaredMethods().filter(isConstructor().and(matcher)),
+                        instrumentedType.getDeclaredMethods().filter(isMethod().and(not(ElementMatchers.isVirtual()))),
                         methodGraphCompiler.compile(targetType, instrumentedType).listNodes().asMethodList().filter(matcher));
                 if (candidates.size() == 1) {
                     return candidates.get(0);
