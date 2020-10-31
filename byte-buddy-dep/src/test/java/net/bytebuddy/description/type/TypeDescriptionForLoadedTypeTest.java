@@ -51,28 +51,28 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Test
     @Override
-    @Ignore("The OpenJDK reflection API suffers a bug that affects parsing of type variable bounds")
+    @JavaVersionRule.Enforce(16)
     public void testTypeVariableU() throws Exception {
         super.testTypeVariableU();
     }
 
     @Test
     @Override
-    @Ignore("The OpenJDK reflection API suffers a bug that affects parsing of type variable bounds")
+    @JavaVersionRule.Enforce(16)
     public void testTypeVariableV() throws Exception {
         super.testTypeVariableV();
     }
 
     @Test
     @Override
-    @Ignore("The OpenJDK reflection API suffers a bug that affects parsing of type variable bounds")
+    @JavaVersionRule.Enforce(16)
     public void testTypeVariableW() throws Exception {
         super.testTypeVariableW();
     }
 
     @Test
     @Override
-    @Ignore("The OpenJDK reflection API suffers a bug that affects parsing of type variable bounds")
+    @JavaVersionRule.Enforce(16)
     public void testTypeVariableX() throws Exception {
         super.testTypeVariableX();
     }

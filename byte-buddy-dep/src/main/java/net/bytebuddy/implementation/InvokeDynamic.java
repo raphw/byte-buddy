@@ -1294,12 +1294,18 @@ public class InvokeDynamic implements Implementation.Composable {
                         return new ForStringConstant((String) value);
                     } else if (value instanceof Class<?>) {
                         return new ForClassConstant(TypeDescription.ForLoadedType.of((Class<?>) value));
+                    } else if (value instanceof TypeDescription) {
+                        return new ForClassConstant((TypeDescription) value);
                     } else if (value instanceof Enum<?>) {
                         return new ForEnumerationValue(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
+                    } else if (value instanceof EnumerationDescription) {
+                        return new ForEnumerationValue((EnumerationDescription) value);
                     } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
                         return new ForJavaConstant(JavaConstant.MethodHandle.ofLoaded(value));
                     } else if (JavaType.METHOD_TYPE.isInstance(value)) {
                         return new ForJavaConstant(JavaConstant.MethodType.ofLoaded(value));
+                    } else if (value instanceof JavaConstant) {
+                        return new ForJavaConstant((JavaConstant) value);
                     } else {
                         return ForInstance.of(value);
                     }

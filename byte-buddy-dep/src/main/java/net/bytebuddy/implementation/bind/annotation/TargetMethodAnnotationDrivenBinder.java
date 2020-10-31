@@ -18,6 +18,7 @@ package net.bytebuddy.implementation.bind.annotation;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -28,6 +29,7 @@ import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.*;
+import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 
@@ -269,6 +271,12 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 } else if (value instanceof TypeDescription) {
                     stackManipulation = ClassConstant.of((TypeDescription) value);
                     suppliedType = TypeDescription.CLASS;
+                } else if (value instanceof Enum<?>) {
+                    stackManipulation = FieldAccess.forEnumeration(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
+                    suppliedType = TypeDescription.ForLoadedType.of(((Enum<?>) value).getDeclaringClass());
+                } else if (value instanceof EnumerationDescription) {
+                    stackManipulation = FieldAccess.forEnumeration((EnumerationDescription) value);
+                    suppliedType = ((EnumerationDescription) value).getEnumerationType();
                 } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
                     stackManipulation = new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value));
                     suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
@@ -278,9 +286,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 } else if (JavaType.METHOD_TYPE.isInstance(value)) {
                     stackManipulation = new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value));
                     suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
-                } else if (value instanceof JavaConstant.MethodType) {
-                    stackManipulation = new JavaConstantValue((JavaConstant.MethodType) value);
-                    suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
+                } else if (value instanceof JavaConstant) {
+                    stackManipulation = new JavaConstantValue((JavaConstant) value);
+                    suppliedType = ((JavaConstant) value).getType();
                 } else {
                     throw new IllegalStateException("Not able to save in class's constant pool: " + value);
                 }

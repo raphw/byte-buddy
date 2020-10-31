@@ -279,7 +279,8 @@ public class MethodCall implements Implementation.Composable {
 
     /**
      * Defines a number of arguments to be handed to the method that is being invoked by this implementation. Any
-     * wrapper type instances for primitive values, instances of {@link java.lang.String} or {@code null} are loaded
+     * wrapper type instances for primitive values, instances of {@link java.lang.String}, method handles, types,
+     * method types as well as instances of {@link TypeDescription} or {@link JavaConstant} or {@code null} are loaded
      * directly onto the operand stack. This might corrupt referential identity for these values. Any other values
      * are stored within a {@code static} field that is added to the instrumented type.
      *
@@ -1810,8 +1811,6 @@ public class MethodCall implements Implementation.Composable {
             public static ArgumentLoader.Factory of(Object value) {
                 if (value == null) {
                     return ForNullConstant.INSTANCE;
-                } else if (value instanceof String) {
-                    return new ForStackManipulation(new TextConstant((String) value), String.class);
                 } else if (value instanceof Boolean) {
                     return new ForStackManipulation(IntegerConstant.forValue((Boolean) value), boolean.class);
                 } else if (value instanceof Byte) {
@@ -1828,15 +1827,23 @@ public class MethodCall implements Implementation.Composable {
                     return new ForStackManipulation(FloatConstant.forValue((Float) value), float.class);
                 } else if (value instanceof Double) {
                     return new ForStackManipulation(DoubleConstant.forValue((Double) value), double.class);
+                } else if (value instanceof String) {
+                    return new ForStackManipulation(new TextConstant((String) value), String.class);
                 } else if (value instanceof Class) {
                     return new ForStackManipulation(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)), Class.class);
+                } else if (value instanceof TypeDescription) {
+                    return new ForStackManipulation(ClassConstant.of((TypeDescription) value), Class.class);
+                } else if (value instanceof Enum<?>) {
+                    EnumerationDescription enumerationDescription = new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value);
+                    return new ForStackManipulation(FieldAccess.forEnumeration(enumerationDescription), enumerationDescription.getEnumerationType());
+                } else if (value instanceof EnumerationDescription) {
+                    return new ForStackManipulation(FieldAccess.forEnumeration((EnumerationDescription) value), ((EnumerationDescription) value).getEnumerationType());
                 } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
                     return new ForStackManipulation(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)), JavaType.METHOD_HANDLE.getTypeStub());
                 } else if (JavaType.METHOD_TYPE.isInstance(value)) {
                     return new ForStackManipulation(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)), JavaType.METHOD_TYPE.getTypeStub());
-                } else if (value instanceof Enum<?>) {
-                    EnumerationDescription enumerationDescription = new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value);
-                    return new ForStackManipulation(FieldAccess.forEnumeration(enumerationDescription), enumerationDescription.getEnumerationType());
+                } else if (value instanceof JavaConstant) {
+                    return new ForStackManipulation(new JavaConstantValue((JavaConstant) value), ((JavaConstant) value).getType());
                 } else {
                     return new ForInstance.Factory(value);
                 }

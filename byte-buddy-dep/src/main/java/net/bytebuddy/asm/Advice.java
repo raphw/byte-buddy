@@ -1258,6 +1258,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return new ForStackManipulation(DoubleConstant.forValue((Double) value));
                     } else if (value instanceof String) {
                         return new ForStackManipulation(new TextConstant((String) value));
+                    } else if (value instanceof Enum<?>) {
+                        return new ForStackManipulation(FieldAccess.forEnumeration(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value)));
+                    } else if (value instanceof EnumerationDescription) {
+                        return new ForStackManipulation(FieldAccess.forEnumeration((EnumerationDescription) value));
+                    } else if (value instanceof Class<?>) {
+                        return new ForStackManipulation(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)));
+                    } else if (value instanceof TypeDescription) {
+                        return new ForStackManipulation(ClassConstant.of((TypeDescription) value));
+                    } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
+                        return new ForStackManipulation(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)));
+                    } else if (JavaType.METHOD_TYPE.isInstance(value)) {
+                        return new ForStackManipulation(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)));
+                    } else if (value instanceof JavaConstant) {
+                        return new ForStackManipulation(new JavaConstantValue((JavaConstant) value));
                     } else {
                         throw new IllegalArgumentException("Not a constant value: " + value);
                     }
@@ -3633,6 +3647,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     } else if (value instanceof String) {
                         stackManipulation = new TextConstant((String) value);
                         typeDescription = TypeDescription.STRING;
+                    } else if (value instanceof Class<?>) {
+                        stackManipulation = ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value));
+                        typeDescription = TypeDescription.CLASS;
+                    } else if (value instanceof TypeDescription) {
+                        stackManipulation = ClassConstant.of((TypeDescription) value);
+                        typeDescription = TypeDescription.CLASS;
+                    } else if (value instanceof Enum<?>) {
+                        stackManipulation = FieldAccess.forEnumeration(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
+                        typeDescription = TypeDescription.ForLoadedType.of(((Enum<?>) value).getDeclaringClass());
+                    } else if (value instanceof EnumerationDescription) {
+                        stackManipulation = FieldAccess.forEnumeration((EnumerationDescription) value);
+                        typeDescription = ((EnumerationDescription) value).getEnumerationType();
                     } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
                         JavaConstant constant = JavaConstant.MethodHandle.ofLoaded(value);
                         stackManipulation = new JavaConstantValue(constant);
@@ -3641,6 +3667,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         JavaConstant constant = JavaConstant.MethodType.ofLoaded(value);
                         stackManipulation = new JavaConstantValue(constant);
                         typeDescription = constant.getType();
+                    } else if (value instanceof JavaConstant) {
+                        stackManipulation = new JavaConstantValue((JavaConstant) value);
+                        typeDescription = ((JavaConstant) value).getType();
                     } else {
                         throw new IllegalStateException("Not a constant value: " + value);
                     }

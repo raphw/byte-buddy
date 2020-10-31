@@ -235,9 +235,18 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                                 byte[].class,
                                 CfOptions.class,
                                 DexOptions.class,
-                                DexFile.class), DexOptions.class.getField("targetApiLevel"));
-                    } catch (Throwable throwable) {
-                        dispatcher = new Dispatcher.Unavailable(throwable.getMessage());
+                                DexFile.class), DexOptions.class.getField("minSdkVersion"));
+                    } catch (Throwable suppressed) {
+                        try {
+                            dispatcher = new Dispatcher.ForLegacyVm(CfTranslator.class.getMethod("translate",
+                                    DirectClassFile.class,
+                                    byte[].class,
+                                    CfOptions.class,
+                                    DexOptions.class,
+                                    DexFile.class), DexOptions.class.getField("targetApiLevel"));
+                        } catch (Throwable throwable) {
+                            dispatcher = new Dispatcher.Unavailable(throwable.getMessage());
+                        }
                     }
                 }
                 DISPATCHER = dispatcher;
