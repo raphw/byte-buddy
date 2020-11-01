@@ -514,7 +514,7 @@ public interface ClassInjector {
                 protected final Method defineClass;
 
                 /**
-                 * An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                 * An instance of {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                  */
                 protected final Method getDefinedPackage;
 
@@ -533,7 +533,7 @@ public interface ClassInjector {
                  *
                  * @param findLoadedClass   An instance of {@link ClassLoader#findLoadedClass(String)}.
                  * @param defineClass       An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                 * @param getDefinedPackage An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                 * @param getDefinedPackage An instance of {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                  * @param getPackage        An instance of {@link ClassLoader#getPackage(String)}.
                  * @param definePackage     An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                  */
@@ -723,7 +723,7 @@ public interface ClassInjector {
                      * @param getClassLoadingLock An instance of {@code ClassLoader#getClassLoadingLock(String)}.
                      * @param findLoadedClass     An instance of {@link ClassLoader#findLoadedClass(String)}.
                      * @param defineClass         An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                     * @param getDefinedPackage   An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                     * @param getDefinedPackage   An instance of {@code java.lang,ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                      * @param getPackage          An instance of {@link ClassLoader#getPackage(String)}.
                      * @param definePackage       An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                      */
@@ -761,7 +761,7 @@ public interface ClassInjector {
                      *
                      * @param findLoadedClass   An instance of {@link ClassLoader#findLoadedClass(String)}.
                      * @param defineClass       An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                     * @param getDefinedPackage An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                     * @param getDefinedPackage An instance of {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                      * @param getPackage        An instance of {@link ClassLoader#getPackage(String)}.
                      * @param definePackage     An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                      */
@@ -804,7 +804,7 @@ public interface ClassInjector {
                 private final Method defineClass;
 
                 /**
-                 * The accessor method for using {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                 * The accessor method for using {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                  */
                 private final Method getDefinedPackage;
 
@@ -830,7 +830,7 @@ public interface ClassInjector {
                  * @param accessor            An instance of the accessor class that is required for using it's intentionally non-static methods.
                  * @param findLoadedClass     An instance of {@link ClassLoader#findLoadedClass(String)}.
                  * @param defineClass         An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                 * @param getDefinedPackage   An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                 * @param getDefinedPackage   An instance of {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                  * @param getPackage          An instance of {@link ClassLoader#getPackage(String)}.
                  * @param definePackage       An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                  * @param getClassLoadingLock The accessor method for using {@code ClassLoader#getClassLoadingLock(String)} or returning the
@@ -1077,7 +1077,7 @@ public interface ClassInjector {
                 protected final Method defineClass;
 
                 /**
-                 * An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                 * An instance of {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                  */
                 protected final Method getDefinedPackage;
 
@@ -1096,7 +1096,7 @@ public interface ClassInjector {
                  *
                  * @param findLoadedClass   An instance of {@link ClassLoader#findLoadedClass(String)}.
                  * @param defineClass       An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                 * @param getDefinedPackage An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                 * @param getDefinedPackage An instance of {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                  * @param getPackage        An instance of {@link ClassLoader#getPackage(String)}.
                  * @param definePackage     An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                  */
@@ -1315,7 +1315,7 @@ public interface ClassInjector {
                      * @param getClassLoadingLock An instance of {@code ClassLoader#getClassLoadingLock(String)}.
                      * @param findLoadedClass     An instance of {@link ClassLoader#findLoadedClass(String)}.
                      * @param defineClass         An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                     * @param getDefinedPackage   An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                     * @param getDefinedPackage   An instance of {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                      * @param getPackage          An instance of {@link ClassLoader#getPackage(String)}.
                      * @param definePackage       An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                      */
@@ -1353,7 +1353,7 @@ public interface ClassInjector {
                      *
                      * @param findLoadedClass   An instance of {@link ClassLoader#findLoadedClass(String)}.
                      * @param defineClass       An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                     * @param getDefinedPackage An instance of {@link ClassLoader#getDefinedPackage(String)}. May be {@code null}.
+                     * @param getDefinedPackage An instance of {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                      * @param getPackage        An instance of {@link ClassLoader#getPackage(String)}.
                      * @param definePackage     An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                      */
