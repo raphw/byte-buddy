@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 1. November 2020: version 1.10.18
+
+- Fixes descriptor used for method handle constant of field.
+- Fixes assignability check for varargs.
+- Allow using static interface methods for bootstraping.
+- Allow providing null to setsValue for field assignment.
+- Cleans up providing of constant arguments as type description, enum or constant.
+- Support getPackage in legacy class loaders.
+- Allow method call by matcher on private method of instrumented type.
+
 ### 7. October 2020: version 1.10.17
 
 - Adjust Gradle plugin to properly consider registration order with the Java plugin.
