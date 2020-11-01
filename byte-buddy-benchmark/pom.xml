@@ -5,7 +5,7 @@
     <parent>
         <artifactId>byte-buddy-parent</artifactId>
         <groupId>net.bytebuddy</groupId>
-        <version>1.10.19-SNAPSHOT</version>
+        <version>1.10.18-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy-benchmark</artifactId>
