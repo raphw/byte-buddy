@@ -2616,16 +2616,22 @@ public class MethodCall implements Implementation.Composable {
                  * {@inheritDoc}
                  */
                 public TypeDescription getTypeDescription() {
-                    return methodDescription.getReturnType().asErasure();
+                    return methodDescription.isConstructor()
+                            ? methodDescription.getDeclaringType().asErasure()
+                            : methodDescription.getReturnType().asErasure();
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public StackManipulation toStackManipulation(MethodDescription invokedMethod, Assigner assigner, Assigner.Typing typing) {
-                    StackManipulation stackManipulation = assigner.assign(methodDescription.getReturnType(), invokedMethod.getDeclaringType().asGenericType(), typing);
+                    StackManipulation stackManipulation = assigner.assign(methodDescription.isConstructor()
+                                    ? methodDescription.getDeclaringType().asGenericType()
+                                    : methodDescription.getReturnType(), invokedMethod.getDeclaringType().asGenericType(), typing);
                     if (!stackManipulation.isValid()) {
-                        throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + methodDescription.getReturnType());
+                        throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + (methodDescription.isConstructor()
+                                ? methodDescription.getDeclaringType()
+                                : methodDescription.getReturnType()));
                     }
                     return new StackManipulation.Compound(appender.toStackManipulation(instrumentedMethod,
                             methodDescription,
