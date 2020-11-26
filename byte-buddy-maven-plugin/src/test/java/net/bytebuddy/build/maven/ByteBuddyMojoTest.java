@@ -4,10 +4,15 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.MockitoRule;
+
+import org.apache.maven.model.Build;
+import org.apache.maven.model.PluginManagement;
 import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.testing.MojoRule;
 import org.apache.maven.plugin.testing.SilentLog;
+import org.apache.maven.plugin.testing.stubs.MavenProjectStub;
+import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.collection.CollectRequest;
@@ -29,6 +34,7 @@ import java.net.URLClassLoader;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 import static junit.framework.TestCase.fail;
@@ -52,6 +58,8 @@ public class ByteBuddyMojoTest {
     @Mock
     private DependencyNode root;
 
+    private MavenProject mavenProject;
+
     private File project;
 
     @Before
@@ -60,6 +68,12 @@ public class ByteBuddyMojoTest {
         project = File.createTempFile(FOO, TEMP);
         assertThat(project.delete(), is(true));
         assertThat(project.mkdir(), is(true));
+
+        Properties properties = new Properties();
+        properties.setProperty("maven.compiler.target", "1.8");
+
+        mavenProject = new MavenProject();
+        mavenProject.getModel().setProperties(properties);
     }
 
     @After
@@ -291,7 +305,7 @@ public class ByteBuddyMojoTest {
             } finally {
                 out.close();
             }
-            Mojo mojo = mojoRule.lookupMojo(goal, pom);
+            ByteBuddyMojo mojo = (ByteBuddyMojo) mojoRule.lookupMojo(goal, pom);
             if (goal.equals("transform")) {
                 mojoRule.setVariableValueToObject(mojo, "outputDirectory", project.getAbsolutePath());
                 mojoRule.setVariableValueToObject(mojo, "compileClasspathElements", Collections.emptyList());
@@ -306,6 +320,7 @@ public class ByteBuddyMojoTest {
             mojoRule.setVariableValueToObject(mojo, "artifactId", BAR);
             mojoRule.setVariableValueToObject(mojo, "version", QUX);
             mojoRule.setVariableValueToObject(mojo, "packaging", JAR);
+            mojo.project = mavenProject;
             mojo.setLog(new SilentLog());
             mojo.execute();
         } finally {

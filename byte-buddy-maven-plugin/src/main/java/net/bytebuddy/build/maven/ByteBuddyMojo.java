@@ -19,31 +19,45 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.BuildLogger;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
+import net.bytebuddy.build.Plugin.Engine.Source.ForFolder;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.utility.CompoundList;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugins.annotations.*;
-import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
-import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.repository.RemoteRepository;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.Scanner;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.sonatype.plexus.build.incremental.BuildContext;
 
 /**
  * A Maven plugin for applying Byte Buddy transformations during a build.
  */
 public abstract class ByteBuddyMojo extends AbstractMojo {
+
+    @Component
+    public BuildContext buildContext;
 
     /**
      * The built project's group id.
@@ -204,7 +218,40 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             return;
         }
         try {
-            apply(new File(getOutputDirectory()), getClassPathElements());
+
+            String sourceDirectory = getSourceDirectory();
+            List<String> modifiedTypes = new ArrayList<String>();
+            List<File> modifiedClassFiles = new ArrayList<File>();
+            
+            getLog().info("Build context: " + (buildContext == null ? "none" : buildContext.getClass().getName()));
+
+            if (sourceDirectory != null && buildContext != null) {
+
+                Scanner scanner = buildContext.newScanner(new File(sourceDirectory));
+                scanner.scan();
+
+                for (String file : scanner.getIncludedFiles()) {
+
+                    // Keep logical path to be able to filter classes downstream
+                    modifiedTypes.add(file.replace(".java", ""));
+
+                    // Create file reference to class files to mark them as changed later
+                    modifiedClassFiles.add(new File(getOutputDirectory(), file.replace(".java", ".class")));
+                }
+
+                if (buildContext.isIncremental()) {
+                    getLog().info("Incrementally processing: " + modifiedTypes.toString());
+                }
+            }
+
+            apply(new File(getOutputDirectory()), getClassPathElements(), modifiedTypes);
+
+            if (buildContext != null) {
+                for (File classFile : modifiedClassFiles) {
+                    buildContext.refresh(classFile);
+                }
+            }
+
         } catch (IOException exception) {
             throw new MojoFailureException("Error during writing process", exception);
         }
@@ -216,6 +263,8 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @return The output directory to search for class files.
      */
     protected abstract String getOutputDirectory();
+    
+    protected abstract String getSourceDirectory();
 
     /**
      * Returns the class path elements of the relevant output directory.
@@ -227,13 +276,14 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * Applies the instrumentation.
      *
-     * @param root      The root folder that contains all class files.
-     * @param classPath An iterable over all class path elements.
+     * @param root          The root folder that contains all class files.
+     * @param classPath     An iterable over all class path elements.
+     * @param modifiedFiles A list of logical file names (no .java or .class) so that the files to be precessed can be limited to those.
      * @throws MojoExecutionException If the plugin cannot be applied.
      * @throws IOException            If an I/O exception occurs.
      */
     @SuppressWarnings("unchecked")
-    private void apply(File root, List<? extends String> classPath) throws MojoExecutionException, IOException {
+    private void apply(File root, List<? extends String> classPath, final List<String> modifiedFiles) throws MojoExecutionException, IOException {
         if (!root.exists()) {
             if (warnOnMissingOutputDirectory) {
                 getLog().warn("Skipping instrumentation due to missing directory: " + root);
@@ -294,6 +344,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 } catch (Throwable throwable) {
                     throw new MojoExecutionException("Cannot create plugin engine", throwable);
                 }
+
+                ForFolder classesSource = new FilteredFolder(root, modifiedFiles);
+
                 try {
                     summary = pluginEngine
                             .with(extendedParsing
@@ -309,7 +362,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                             .with(threads == 0
                                     ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE
                                     : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(threads))
-                            .apply(new Plugin.Engine.Source.ForFolder(root), new Plugin.Engine.Target.ForFolder(root), factories);
+                            .apply(classesSource, new Plugin.Engine.Target.ForFolder(root), factories);
                 } catch (Throwable throwable) {
                     throw new MojoExecutionException("Failed to transform class files in " + root, throwable);
                 }
@@ -356,6 +409,65 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     }
 
     /**
+     * A {@link ForFolder} implementation that filters the resources returned to only expose ones with names of the
+     * configured list.
+     * 
+     * @author Oliver Drotbohm
+     */
+    private static class FilteredFolder extends Plugin.Engine.Source.ForFolder {
+        
+        private final List<String> includes;
+
+        private FilteredFolder(File folder, List<String> includes) {
+
+            super(folder);
+            this.includes = includes;
+        }
+
+        @Override
+        public Iterator<Element> iterator() {
+
+            Iterator<Element> source = super.iterator();
+
+            if (includes.isEmpty()) {
+                return source;
+            }
+
+            Set<Element> result = new HashSet<Element>();
+
+            while (source.hasNext()) {
+                Element element = source.next();
+                for (String name : includes) {
+                    if (element.getName().equals(name + ".class") || element.getName().startsWith(name + "$")) {
+                        result.add(element);
+                    }
+                }
+            }
+
+            return result.iterator();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+
+            if(this == obj) {
+                return true;
+            }
+
+            if (!(obj instanceof FilteredFolder)) {
+                return false;
+            }
+
+            return super.equals(obj) && this.includes.equals(((FilteredFolder) obj).includes);
+        }
+
+        @Override
+        public int hashCode() {
+            return super.hashCode() + 17 * this.includes.hashCode();
+        }
+    }
+
+    /**
      * A Byte Buddy plugin that transforms a project's production class files.
      */
     @Mojo(name = "transform",
@@ -379,6 +491,15 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         @Override
         protected String getOutputDirectory() {
             return outputDirectory;
+        }
+        
+        /* 
+        * (non-Javadoc)
+        * @see net.bytebuddy.build.maven.ByteBuddyMojo#getSourceDirectory()
+        */
+        @Override
+        protected String getSourceDirectory() {
+            return project.getBuild().getSourceDirectory();
         }
 
         @Override
@@ -411,6 +532,11 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         @Override
         protected String getOutputDirectory() {
             return testOutputDirectory;
+        }
+
+        @Override
+        protected String getSourceDirectory() {
+            return project.getBuild().getTestSourceDirectory();
         }
 
         @Override
