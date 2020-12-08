@@ -216,10 +216,10 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                         }
                     }
                     source = new Plugin.Engine.Source.Filtering(new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory())), new FilePrefixMatcher(names));
-                    getLog().info("Incrementally processing: " + names.toString());
+                    getLog().debug("Incrementally processing: " + names.toString());
                 } else {
                     source = new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory()));
-                    getLog().info("Cannot build incrementally - all names are processed");
+                    getLog().debug("Cannot build incrementally - all class files are processed");
                 }
                 Plugin.Engine.Summary summary = apply(new File(getOutputDirectory()), getClassPathElements(), source);
                 for (TypeDescription typeDescription : summary.getTransformed()) {
