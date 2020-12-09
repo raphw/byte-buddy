@@ -144,7 +144,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    private Annotation first, second, defaultFirst, defaultSecond, explicitTarget, broken;
+    private Annotation first, second, defaultFirst, defaultSecond, empty, explicitTarget, broken;
 
     private Class<?> brokenCarrier;
 
@@ -160,6 +160,8 @@ public abstract class AbstractAnnotationDescriptionTest {
             carrier = DefaultSample.class;
         } else if (annotation == defaultSecond) {
             carrier = NonDefaultSample.class;
+        } else if (annotation == empty) {
+            carrier = EmptySample.class;
         } else if (annotation == explicitTarget) {
             carrier = ExplicitTarget.Carrier.class;
         } else if (annotation == broken) {
@@ -176,6 +178,7 @@ public abstract class AbstractAnnotationDescriptionTest {
         second = BarSample.class.getAnnotation(Sample.class);
         defaultFirst = DefaultSample.class.getAnnotation(SampleDefault.class);
         defaultSecond = NonDefaultSample.class.getAnnotation(SampleDefault.class);
+        empty = EmptySample.class.getAnnotation(SampleDefault.class);
         explicitTarget = ExplicitTarget.Carrier.class.getAnnotation(ExplicitTarget.class);
         brokenCarrier = new ByteBuddy()
                 .subclass(Object.class)
@@ -208,6 +211,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     public void assertToString() throws Exception {
         assertToString(describe(first).toString(), first);
         assertToString(describe(second).toString(), second);
+        assertToString(describe(empty).toString(), empty);
     }
 
     private void assertToString(String toString, Annotation actual) throws Exception {
@@ -233,6 +237,7 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertThat(describe(first).hashCode(), is(describe(first).hashCode()));
         assertThat(describe(second).hashCode(), is(describe(second).hashCode()));
         assertThat(describe(first).hashCode(), not(describe(second).hashCode()));
+        assertThat(describe(empty).hashCode(), is(describe(empty).hashCode()));
     }
 
     @Test
@@ -276,6 +281,7 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertThat(describe(first), not(equalSecond));
         assertThat(describe(first), not(new Object()));
         assertThat(describe(first), not(equalTo(null)));
+        assertThat(describe(empty), is(describe(empty)));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -842,6 +848,22 @@ public abstract class AbstractAnnotationDescriptionTest {
             enumArrayValue = SampleEnumeration.OTHER,
             annotationArrayValue = @Other(BAR))
     private static class NonDefaultSample {
+        /* empty */
+    }
+
+    @SampleDefault(booleanArrayValue = {},
+            byteArrayValue = {},
+            shortArrayValue = {},
+            charArrayValue = {},
+            intArrayValue = {},
+            longArrayValue = {},
+            floatArrayValue = {},
+            doubleArrayValue = {},
+            stringArrayValue = {},
+            classArrayValue = {},
+            enumArrayValue = {},
+            annotationArrayValue = {})
+    private static class EmptySample {
         /* empty */
     }
 

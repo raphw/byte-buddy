@@ -1998,10 +1998,10 @@ public interface AnnotationValue<T, S> {
      * of user-defined types, i.e. {@link java.lang.Class}, {@link java.lang.annotation.Annotation} and {@link java.lang.Enum}
      * instances.
      *
-     * @param <U> The component type of the annotation's value when it is not loaded.
-     * @param <V> The component type of the annotation's value when it is loaded.
+     * @param <U> The array type of the annotation's value when it is not loaded.
+     * @param <V> The array type of the annotation's value when it is loaded.
      */
-    class ForDescriptionArray<U, V> extends AbstractBase<U[], V[]> {
+    class ForDescriptionArray<U, V> extends AbstractBase<U, V> {
 
         /**
          * The component type for arrays containing unloaded versions of the annotation array's values.
@@ -2050,7 +2050,7 @@ public interface AnnotationValue<T, S> {
                 }
                 values.add(ForEnumerationDescription.<W>of(value));
             }
-            return new ForDescriptionArray<EnumerationDescription, W>(EnumerationDescription.class, enumerationType, values);
+            return new ForDescriptionArray<EnumerationDescription[], W[]>(EnumerationDescription.class, enumerationType, values);
         }
 
         /**
@@ -2070,7 +2070,7 @@ public interface AnnotationValue<T, S> {
                 }
                 values.add(new ForAnnotationDescription<W>(value));
             }
-            return new ForDescriptionArray<AnnotationDescription, W>(AnnotationDescription.class, annotationType, values);
+            return new ForDescriptionArray<AnnotationDescription[], W[]>(AnnotationDescription.class, annotationType, values);
         }
 
         /**
@@ -2085,7 +2085,7 @@ public interface AnnotationValue<T, S> {
             for (TypeDescription value : typeDescription) {
                 values.add((AnnotationValue) ForTypeDescription.<Class>of(value));
             }
-            return new ForDescriptionArray<TypeDescription, Class<?>>(TypeDescription.class, TypeDescription.CLASS, values);
+            return new ForDescriptionArray<TypeDescription[], Class<?>[]>(TypeDescription.class, TypeDescription.CLASS, values);
         }
 
         /**
@@ -2099,26 +2099,26 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        public AnnotationValue<U[], V[]> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
+        public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
             if (typeDefinition.isArray() && typeDefinition.getComponentType().asErasure().equals(componentType)) {
                 for (AnnotationValue<?, ?> value : values) {
                     value = value.filter(property, typeDefinition.getComponentType());
                     if (value.getState() != State.RESOLVED) {
-                        return (AnnotationValue<U[], V[]>) value;
+                        return (AnnotationValue<U, V>) value;
                     }
                 }
                 return this;
             } else {
-                return new ForMismatchedType<U[], V[]>(property, "Array with component tag: " + RenderingDispatcher.CURRENT.toComponentTag(componentType));
+                return new ForMismatchedType<U, V>(property, "Array with component tag: " + RenderingDispatcher.CURRENT.toComponentTag(componentType));
             }
         }
 
         /**
          * {@inheritDoc}
          */
-        public U[] resolve() {
+        public U resolve() {
             @SuppressWarnings("unchecked")
-            U[] resolved = (U[]) Array.newInstance(unloadedComponentType, values.size());
+            U resolved = (U) Array.newInstance(unloadedComponentType, values.size());
             int index = 0;
             for (AnnotationValue<?, ?> value : values) {
                 Array.set(resolved, index++, value.resolve());
@@ -2130,7 +2130,7 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        public AnnotationValue.Loaded<V[]> load(ClassLoader classLoader) {
+        public AnnotationValue.Loaded<V> load(ClassLoader classLoader) {
             List<AnnotationValue.Loaded<?>> values = new ArrayList<AnnotationValue.Loaded<?>>(this.values.size());
             for (AnnotationValue<?, ?> value : this.values) {
                 values.add(value.load(classLoader));
@@ -2138,7 +2138,7 @@ public interface AnnotationValue<T, S> {
             try {
                 return new Loaded<V>((Class<V>) Class.forName(componentType.getName(), false, classLoader), values);
             } catch (ClassNotFoundException exception) {
-                return new ForMissingType.Loaded<V[]>(componentType.getName(), exception);
+                return new ForMissingType.Loaded<V>(componentType.getName(), exception);
             }
         }
 
@@ -2161,17 +2161,16 @@ public interface AnnotationValue<T, S> {
             }
             AnnotationValue<?, ?> annotationValue = (AnnotationValue<?, ?>) other;
             Object value = annotationValue.resolve();
-            if (!(value instanceof Object[])) {
+            if (value == null || !value.getClass().isArray()) {
                 return false;
             }
-            Object[] arrayValue = (Object[]) value;
-            if (values.size() != arrayValue.length) {
+            if (values.size() != Array.getLength(value)) {
                 return false;
             }
             Iterator<? extends AnnotationValue<?, ?>> iterator = values.iterator();
-            for (Object aValue : arrayValue) {
+            for (int index = 0; index < values.size(); index++) {
                 AnnotationValue<?, ?> self = iterator.next();
-                if (!self.resolve().equals(aValue)) {
+                if (!self.resolve().equals(Array.get(value, index))) {
                     return false;
                 }
             }
@@ -2186,9 +2185,9 @@ public interface AnnotationValue<T, S> {
         /**
          * Represents a loaded complex array.
          *
-         * @param <W> The component type of the loaded array.
+         * @param <W> The type of the loaded array.
          */
-        protected static class Loaded<W> extends AnnotationValue.Loaded.AbstractBase<W[]> {
+        protected static class Loaded<W> extends AnnotationValue.Loaded.AbstractBase<W> {
 
             /**
              * The loaded component type of the array.
@@ -2226,9 +2225,9 @@ public interface AnnotationValue<T, S> {
             /**
              * {@inheritDoc}
              */
-            public W[] resolve() {
+            public W resolve() {
                 @SuppressWarnings("unchecked")
-                W[] array = (W[]) Array.newInstance(componentType, values.size());
+                W array = (W) Array.newInstance(componentType, values.size());
                 int index = 0;
                 for (AnnotationValue.Loaded<?> annotationValue : values) {
                     Array.set(array, index++, annotationValue.resolve());

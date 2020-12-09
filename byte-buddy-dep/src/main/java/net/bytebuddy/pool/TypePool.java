@@ -6171,9 +6171,9 @@ public interface TypePool {
                 }
 
                 /**
-                 * A lazy projection of an annotation value that is an array of non-primitive values.
+                 * A lazy projection of an annotation value that contains an array of values.
                  */
-                private static class ForNonPrimitiveArray extends LazyAnnotationValue<Object[], Object[]> {
+                private static class ForArray extends LazyAnnotationValue<Object, Object> {
 
                     /**
                      * The type pool to use for looking up types.
@@ -6197,18 +6197,18 @@ public interface TypePool {
                      * @param componentTypeReference A reference to the component type.
                      * @param values                 A list of all values of this array value in their order.
                      */
-                    private ForNonPrimitiveArray(TypePool typePool, ComponentTypeReference componentTypeReference, List<AnnotationValue<?, ?>> values) {
+                    private ForArray(TypePool typePool, ComponentTypeReference componentTypeReference, List<AnnotationValue<?, ?>> values) {
                         this.typePool = typePool;
                         this.componentTypeReference = componentTypeReference;
                         this.values = values;
                     }
 
                     @Override
-                    protected AnnotationValue<Object[], Object[]> doResolve() {
+                    protected AnnotationValue<Object, Object> doResolve() {
                         String typeName = componentTypeReference.lookup();
                         Resolution resolution = typePool.describe(typeName);
                         if (!resolution.isResolved()) {
-                            return new ForMissingType<Object[], Object[]>(typeName);
+                            return new ForMissingType<Object, Object>(typeName);
                         } else if (resolution.resolve().isEnum()) {
                             return new AnnotationValue.ForDescriptionArray<Object, Object>(EnumerationDescription.class, resolution.resolve(), values);
                         } else if (resolution.resolve().isAnnotation()) {
@@ -6217,8 +6217,24 @@ public interface TypePool {
                             return new AnnotationValue.ForDescriptionArray<Object, Object>(TypeDescription.class, resolution.resolve(), values);
                         } else if (resolution.resolve().represents(String.class)) {
                             return new AnnotationValue.ForDescriptionArray<Object, Object>(String.class, resolution.resolve(), values);
+                        } else if (resolution.resolve().represents(boolean.class)) {
+                            return new AnnotationValue.ForDescriptionArray<Object, Object>(boolean.class, resolution.resolve(), values);
+                        } else if (resolution.resolve().represents(byte.class)) {
+                            return new AnnotationValue.ForDescriptionArray<Object, Object>(byte.class, resolution.resolve(), values);
+                        } else if (resolution.resolve().represents(short.class)) {
+                            return new AnnotationValue.ForDescriptionArray<Object, Object>(short.class, resolution.resolve(), values);
+                        } else if (resolution.resolve().represents(char.class)) {
+                            return new AnnotationValue.ForDescriptionArray<Object, Object>(char.class, resolution.resolve(), values);
+                        } else if (resolution.resolve().represents(int.class)) {
+                            return new AnnotationValue.ForDescriptionArray<Object, Object>(int.class, resolution.resolve(), values);
+                        } else if (resolution.resolve().represents(long.class)) {
+                            return new AnnotationValue.ForDescriptionArray<Object, Object>(long.class, resolution.resolve(), values);
+                        } else if (resolution.resolve().represents(float.class)) {
+                            return new AnnotationValue.ForDescriptionArray<Object, Object>(float.class, resolution.resolve(), values);
+                        } else if (resolution.resolve().represents(double.class)) {
+                            return new AnnotationValue.ForDescriptionArray<Object, Object>(double.class, resolution.resolve(), values);
                         } else {
-                            return new ForIncompatibleType<Object[], Object[]>(resolution.resolve());
+                            return new ForIncompatibleType<Object, Object>(resolution.resolve());
                         }
                     }
                 }
@@ -7979,7 +7995,7 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public void onComplete() {
-                        annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForNonPrimitiveArray(Default.this, componentTypeReference, values));
+                        annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForArray(Default.this, componentTypeReference, values));
                     }
                 }
 
