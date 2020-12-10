@@ -2221,6 +2221,155 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         }
                     }
                 }
+
+                /**
+                 * An origin that forwards all invocations to a delegate where an {@link ElementMatcher} is applied prior to iteration.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class Filtering implements Origin {
+
+                    /**
+                     * The origin to which invocations are delegated.
+                     */
+                    private final Origin delegate;
+
+                    /**
+                     * The element matcher being used to filter elements.
+                     */
+                    private final ElementMatcher<Element> matcher;
+
+                    /**
+                     * {@code true} if the manifest should be retained.
+                     */
+                    private final boolean manifest;
+
+                    /**
+                     * Creates a new filtering origin that retains the delegated origin's manifest.
+                     *
+                     * @param delegate The origin to which invocations are delegated.
+                     * @param matcher  The element matcher being used to filter elements.
+                     */
+                    public Filtering(Origin delegate, ElementMatcher<Element> matcher) {
+                        this(delegate, matcher, true);
+                    }
+
+                    /**
+                     * Creates a new filtering origin.
+                     *
+                     * @param delegate The origin to which invocations are delegated.
+                     * @param matcher  The element matcher being used to filter elements.
+                     * @param manifest {@code true} if the manifest should be retained.
+                     */
+                    public Filtering(Origin delegate, ElementMatcher<Element> matcher, boolean manifest) {
+                        this.delegate = delegate;
+                        this.matcher = matcher;
+                        this.manifest = manifest;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Manifest getManifest() throws IOException {
+                        return manifest ? delegate.getManifest() : NO_MANIFEST;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ClassFileLocator getClassFileLocator() {
+                        return delegate.getClassFileLocator();
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void close() throws IOException {
+                        delegate.close();
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Iterator<Element> iterator() {
+                        return new FilteringIterator(delegate.iterator(), matcher);
+                    }
+
+                    /**
+                     * An iterator that applies a filter to observed elements.
+                     */
+                    private static class FilteringIterator implements Iterator<Element> {
+
+                        /**
+                         * The underlying iterator.
+                         */
+                        private final Iterator<Element> iterator;
+
+                        /**
+                         * The element matcher being used to filter elements.
+                         */
+                        private final ElementMatcher<Element> matcher;
+
+                        /**
+                         * The current element or {@code null} if no further elements are available.
+                         */
+                        private Element current;
+
+                        /**
+                         * Creates a new filtering iterator.
+                         *
+                         * @param iterator The underlying iterator.
+                         * @param matcher  The element matcher being used to filter elements.
+                         */
+                        private FilteringIterator(Iterator<Element> iterator, ElementMatcher<Element> matcher) {
+                            this.iterator = iterator;
+                            this.matcher = matcher;
+                            Element element;
+                            while (iterator.hasNext()) {
+                                element = iterator.next();
+                                if (matcher.matches(element)) {
+                                    current = element;
+                                    break;
+                                }
+                            }
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public boolean hasNext() {
+                            return current != null;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Element next() {
+                            if (current == null) {
+                                throw new NoSuchElementException();
+                            }
+                            try {
+                                return current;
+                            } finally {
+                                current = null;
+                                Element element;
+                                while (iterator.hasNext()) {
+                                    element = iterator.next();
+                                    if (matcher.matches(element)) {
+                                        current = element;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public void remove() {
+                            iterator.remove();
+                        }
+                    }
+                }
             }
 
             /**
@@ -2748,6 +2897,58 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public Origin read() throws IOException {
                     return new Origin.ForJarFile(new JarFile(file));
+                }
+            }
+
+            /**
+             * A source that applies a filter upon iterating elements.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class Filtering implements Source {
+
+                /**
+                 * The source to which invocations are delegated.
+                 */
+                private final Source delegate;
+
+                /**
+                 * The element matcher being used to filter elements.
+                 */
+                private final ElementMatcher<Element> matcher;
+
+                /**
+                 * {@code true} if the manifest should be retained.
+                 */
+                private final boolean manifest;
+
+                /**
+                 * Creates a new filtering source that retains the manifest of the delegated source.
+                 *
+                 * @param delegate The source to which invocations are delegated.
+                 * @param matcher  The element matcher being used to filter elements.
+                 */
+                public Filtering(Source delegate, ElementMatcher<Element> matcher) {
+                    this(delegate, matcher, true);
+                }
+
+                /**
+                 * Creates a new filtering source.
+                 *
+                 * @param delegate The source to which invocations are delegated.
+                 * @param matcher  The element matcher being used to filter elements.
+                 * @param manifest {@code true} if the manifest should be retained.
+                 */
+                public Filtering(Source delegate, ElementMatcher<Element> matcher, boolean manifest) {
+                    this.delegate = delegate;
+                    this.matcher = matcher;
+                    this.manifest = manifest;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Origin read() throws IOException {
+                    return new Origin.Filtering(delegate.read(), matcher, manifest);
                 }
             }
         }

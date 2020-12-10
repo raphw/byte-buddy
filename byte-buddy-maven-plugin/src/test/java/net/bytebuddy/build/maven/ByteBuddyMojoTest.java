@@ -4,10 +4,12 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.MockitoRule;
-import org.apache.maven.plugin.Mojo;
+
+import org.apache.maven.model.Build;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.testing.MojoRule;
 import org.apache.maven.plugin.testing.SilentLog;
+import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.collection.CollectRequest;
@@ -27,8 +29,8 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 import static junit.framework.TestCase.fail;
@@ -52,19 +54,29 @@ public class ByteBuddyMojoTest {
     @Mock
     private DependencyNode root;
 
-    private File project;
+    @Mock
+    private MavenProject project;
+
+    private File folder;
 
     @Before
     public void setUp() throws Exception {
         when(repositorySystem.collectDependencies(Mockito.<RepositorySystemSession>any(), Mockito.<CollectRequest>any())).thenReturn(new CollectResult(new CollectRequest()).setRoot(root));
-        project = File.createTempFile(FOO, TEMP);
-        assertThat(project.delete(), is(true));
-        assertThat(project.mkdir(), is(true));
+        folder = File.createTempFile(FOO, TEMP);
+        assertThat(folder.delete(), is(true));
+        assertThat(folder.mkdir(), is(true));
+
+        Properties properties = new Properties();
+        properties.setProperty("maven.compiler.target", "1.5");
+
+        project = new MavenProject();
+        project.setBuild(new Build());
+        project.getModel().setProperties(properties);
     }
 
     @After
     public void tearDown() throws Exception {
-        assertThat(project.delete(), is(true));
+        assertThat(folder.delete(), is(true));
     }
 
     @Test
@@ -79,7 +91,7 @@ public class ByteBuddyMojoTest {
         files.addAll(addClass("foo.Qux"));
         try {
             execute("transform", "simple");
-            ClassLoader classLoader = new URLClassLoader(new URL[]{project.toURI().toURL()});
+            ClassLoader classLoader = new URLClassLoader(new URL[]{folder.toURI().toURL()});
             assertMethod(classLoader.loadClass("foo.Bar"), FOO, QUX);
             assertMethod(classLoader.loadClass("foo.Bar"), BAR, BAR);
             assertMethod(classLoader.loadClass("foo.Qux"), FOO, FOO);
@@ -88,7 +100,7 @@ public class ByteBuddyMojoTest {
             for (File file : files) {
                 assertThat(file.delete(), is(true));
             }
-            assertThat(new File(project, FOO).delete(), is(true));
+            assertThat(new File(folder, FOO).delete(), is(true));
         }
     }
 
@@ -99,7 +111,7 @@ public class ByteBuddyMojoTest {
         files.addAll(addClass("foo.Qux"));
         try {
             execute("transform", "suffix");
-            ClassLoader classLoader = new URLClassLoader(new URL[]{project.toURI().toURL()});
+            ClassLoader classLoader = new URLClassLoader(new URL[]{folder.toURI().toURL()});
             assertMethod(classLoader.loadClass("foo.Bar"), FOO, QUX);
             assertMethod(classLoader.loadClass("foo.Bar"), BAR, BAR);
             assertThat(classLoader.loadClass("foo.Bar").getDeclaredMethod(FOO + "$" + QUX), notNullValue(Method.class));
@@ -109,7 +121,7 @@ public class ByteBuddyMojoTest {
             for (File file : files) {
                 assertThat(file.delete(), is(true));
             }
-            assertThat(new File(project, FOO).delete(), is(true));
+            assertThat(new File(folder, FOO).delete(), is(true));
         }
     }
 
@@ -120,7 +132,7 @@ public class ByteBuddyMojoTest {
         files.addAll(addClass("foo.Qux"));
         try {
             execute("transform", "argument");
-            ClassLoader classLoader = new URLClassLoader(new URL[]{project.toURI().toURL()});
+            ClassLoader classLoader = new URLClassLoader(new URL[]{folder.toURI().toURL()});
             assertMethod(classLoader.loadClass("foo.Bar"), FOO, "42");
             assertMethod(classLoader.loadClass("foo.Bar"), BAR, BAR);
             assertMethod(classLoader.loadClass("foo.Qux"), FOO, FOO);
@@ -129,7 +141,7 @@ public class ByteBuddyMojoTest {
             for (File file : files) {
                 assertThat(file.delete(), is(true));
             }
-            assertThat(new File(project, FOO).delete(), is(true));
+            assertThat(new File(folder, FOO).delete(), is(true));
         }
     }
 
@@ -138,13 +150,13 @@ public class ByteBuddyMojoTest {
         Set<File> files = new HashSet<File>(addClass("foo.Bar"));
         try {
             execute("transform", "live");
-            ClassLoader classLoader = new URLClassLoader(new URL[]{project.toURI().toURL()});
+            ClassLoader classLoader = new URLClassLoader(new URL[]{folder.toURI().toURL()});
             assertMethod(classLoader.loadClass("foo.Bar"), FOO, QUX);
         } finally {
             for (File file : files) {
                 assertThat(file.delete(), is(true));
             }
-            assertThat(new File(project, FOO).delete(), is(true));
+            assertThat(new File(folder, FOO).delete(), is(true));
         }
     }
 
@@ -153,7 +165,7 @@ public class ByteBuddyMojoTest {
         Set<File> files = new HashSet<File>(addClass("foo.Bar"));
         try {
             execute("transform", "live.allowed");
-            ClassLoader classLoader = new URLClassLoader(new URL[]{project.toURI().toURL()});
+            ClassLoader classLoader = new URLClassLoader(new URL[]{folder.toURI().toURL()});
             try {
                 assertMethod(classLoader.loadClass("foo.Bar"), FOO, QUX);
                 fail();
@@ -164,7 +176,7 @@ public class ByteBuddyMojoTest {
             for (File file : files) {
                 assertThat(file.delete(), is(true));
             }
-            assertThat(new File(project, FOO).delete(), is(true));
+            assertThat(new File(folder, FOO).delete(), is(true));
         }
     }
 
@@ -177,7 +189,7 @@ public class ByteBuddyMojoTest {
             for (File file : files) {
                 assertThat(file.delete(), is(true));
             }
-            assertThat(new File(project, FOO).delete(), is(true));
+            assertThat(new File(folder, FOO).delete(), is(true));
         }
     }
 
@@ -190,7 +202,7 @@ public class ByteBuddyMojoTest {
             for (File file : files) {
                 assertThat(file.delete(), is(true));
             }
-            assertThat(new File(project, FOO).delete(), is(true));
+            assertThat(new File(folder, FOO).delete(), is(true));
         }
     }
 
@@ -201,7 +213,7 @@ public class ByteBuddyMojoTest {
         files.addAll(addClass("foo.Qux"));
         try {
             execute("transform-test", "simple");
-            ClassLoader classLoader = new URLClassLoader(new URL[]{project.toURI().toURL()});
+            ClassLoader classLoader = new URLClassLoader(new URL[]{folder.toURI().toURL()});
             assertMethod(classLoader.loadClass("foo.Bar"), FOO, QUX);
             assertMethod(classLoader.loadClass("foo.Bar"), BAR, BAR);
             assertMethod(classLoader.loadClass("foo.Qux"), FOO, FOO);
@@ -210,7 +222,7 @@ public class ByteBuddyMojoTest {
             for (File file : files) {
                 assertThat(file.delete(), is(true));
             }
-            assertThat(new File(project, FOO).delete(), is(true));
+            assertThat(new File(folder, FOO).delete(), is(true));
         }
     }
 
@@ -221,7 +233,7 @@ public class ByteBuddyMojoTest {
         files.addAll(addClass("foo.Qux"));
         try {
             execute("transform", "entry");
-            ClassLoader classLoader = new URLClassLoader(new URL[]{project.toURI().toURL()});
+            ClassLoader classLoader = new URLClassLoader(new URL[]{folder.toURI().toURL()});
             assertMethod(classLoader.loadClass("foo.Bar"), FOO, QUX);
             assertMethod(classLoader.loadClass("foo.Bar"), BAR, BAR);
             assertMethod(classLoader.loadClass("foo.Qux"), FOO, FOO);
@@ -230,7 +242,7 @@ public class ByteBuddyMojoTest {
             for (File file : files) {
                 assertThat(file.delete(), is(true));
             }
-            assertThat(new File(project, FOO).delete(), is(true));
+            assertThat(new File(folder, FOO).delete(), is(true));
         }
     }
 
@@ -241,7 +253,7 @@ public class ByteBuddyMojoTest {
         files.addAll(addClass("foo.Qux"));
         try {
             execute("transform", "entry.illegal");
-            ClassLoader classLoader = new URLClassLoader(new URL[]{project.toURI().toURL()});
+            ClassLoader classLoader = new URLClassLoader(new URL[]{folder.toURI().toURL()});
             assertMethod(classLoader.loadClass("foo.Bar"), FOO, QUX);
             assertMethod(classLoader.loadClass("foo.Bar"), BAR, BAR);
             assertMethod(classLoader.loadClass("foo.Qux"), FOO, FOO);
@@ -250,7 +262,7 @@ public class ByteBuddyMojoTest {
             for (File file : files) {
                 assertThat(file.delete(), is(true));
             }
-            assertThat(new File(project, FOO).delete(), is(true));
+            assertThat(new File(folder, FOO).delete(), is(true));
         }
     }
 
@@ -261,7 +273,7 @@ public class ByteBuddyMojoTest {
         files.addAll(addClass("foo.Qux"));
         try {
             execute("transform", "entry.illegal.transform");
-            ClassLoader classLoader = new URLClassLoader(new URL[]{project.toURI().toURL()});
+            ClassLoader classLoader = new URLClassLoader(new URL[]{folder.toURI().toURL()});
             assertMethod(classLoader.loadClass("foo.Bar"), FOO, QUX);
             assertMethod(classLoader.loadClass("foo.Bar"), BAR, BAR);
             assertMethod(classLoader.loadClass("foo.Qux"), FOO, FOO);
@@ -270,7 +282,7 @@ public class ByteBuddyMojoTest {
             for (File file : files) {
                 assertThat(file.delete(), is(true));
             }
-            assertThat(new File(project, FOO).delete(), is(true));
+            assertThat(new File(folder, FOO).delete(), is(true));
         }
     }
 
@@ -291,21 +303,20 @@ public class ByteBuddyMojoTest {
             } finally {
                 out.close();
             }
-            Mojo mojo = mojoRule.lookupMojo(goal, pom);
+            ByteBuddyMojo mojo = (ByteBuddyMojo) mojoRule.lookupMojo(goal, pom); // TODO: fix project instance
             if (goal.equals("transform")) {
-                mojoRule.setVariableValueToObject(mojo, "outputDirectory", project.getAbsolutePath());
-                mojoRule.setVariableValueToObject(mojo, "compileClasspathElements", Collections.emptyList());
+                project.getBuild().setOutputDirectory(folder.getAbsolutePath());
             } else if (goal.equals("transform-test")) {
-                mojoRule.setVariableValueToObject(mojo, "testOutputDirectory", project.getAbsolutePath());
-                mojoRule.setVariableValueToObject(mojo, "testClasspathElements", Collections.emptyList());
+                project.getBuild().setTestOutputDirectory(folder.getAbsolutePath());
             } else {
                 throw new AssertionError("Unknown goal: " + goal);
             }
             mojoRule.setVariableValueToObject(mojo, "repositorySystem", repositorySystem);
-            mojoRule.setVariableValueToObject(mojo, "groupId", FOO);
-            mojoRule.setVariableValueToObject(mojo, "artifactId", BAR);
-            mojoRule.setVariableValueToObject(mojo, "version", QUX);
-            mojoRule.setVariableValueToObject(mojo, "packaging", JAR);
+            project.setGroupId(FOO);
+            project.setArtifactId(BAR);
+            project.setVersion(QUX);
+            project.setPackaging(JAR);
+            mojo.project = project;
             mojo.setLog(new SilentLog());
             mojo.execute();
         } finally {
@@ -320,7 +331,7 @@ public class ByteBuddyMojoTest {
                 .defineMethod(FOO, String.class, Visibility.PUBLIC).intercept(FixedValue.value(FOO))
                 .defineMethod(BAR, String.class, Visibility.PUBLIC).intercept(FixedValue.value(BAR))
                 .make()
-                .saveIn(project)
+                .saveIn(folder)
                 .values();
     }
 
