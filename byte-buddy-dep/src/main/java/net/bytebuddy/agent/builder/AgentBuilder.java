@@ -18,6 +18,7 @@ package net.bytebuddy.agent.builder;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.build.EntryPoint;
@@ -56,6 +57,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
@@ -8598,7 +8600,10 @@ public interface AgentBuilder {
                     InstallationListener.NoOp.INSTANCE,
                     new RawMatcher.Disjunction(
                             new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader().or(isExtensionClassLoader())),
-                            new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").or(nameStartsWith("sun.reflect.")).<TypeDescription>or(isSynthetic()))),
+                            new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.")
+                                    .and(not(ElementMatchers.nameStartsWith(NamingStrategy.SuffixingRandom.BYTE_BUDDY_RENAME_PACKAGE + ".")))
+                                    .or(nameStartsWith("sun.reflect."))
+                                    .<TypeDescription>or(isSynthetic()))),
                     Collections.<Transformation>emptyList());
         }
 
