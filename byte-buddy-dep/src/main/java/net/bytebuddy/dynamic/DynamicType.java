@@ -3579,7 +3579,7 @@ public interface DynamicType {
                     fieldManifestation = FieldManifestation.FINAL;
                 }
                 return builder
-                        .defineMethod((type.represents(boolean.class) || type.represents(Boolean.class)
+                        .defineMethod((type.represents(boolean.class)
                                 ? "is"
                                 : "get") + Character.toUpperCase(name.charAt(0)) + name.substring(1), type, Visibility.PUBLIC)
                         .intercept(FieldAccessor.ofField(name))
