@@ -548,12 +548,27 @@
                 <bytecode.test.version>8</bytecode.test.version>
             </properties>
         </profile>
-        <!-- Runs the build with compatibility for Java 15 JVMs. -->
+        <!-- Runs the build with compatibility for Java 16 JVMs. -->
         <profile>
             <id>java16-compatibility</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
                 <jdk>16</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>8</sourcecode.main.version>
+                <sourcecode.test.version>8</sourcecode.test.version>
+                <bytecode.main.version>8</bytecode.main.version>
+                <bytecode.test.version>8</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
+            </properties>
+        </profile>
+        <!-- Runs the build with compatibility for Java 15 JVMs. -->
+        <profile>
+            <id>java17-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>17</jdk>
             </activation>
             <properties>
                 <sourcecode.main.version>8</sourcecode.main.version>
@@ -686,8 +701,20 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <bytecode.main.version>15</bytecode.main.version>
-                <bytecode.test.version>15</bytecode.test.version>
+                <bytecode.main.version>16</bytecode.main.version>
+                <bytecode.test.version>16</bytecode.test.version>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Builds using a byte code target for Java 17. -->
+        <profile>
+            <id>java17</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>17</bytecode.main.version>
+                <bytecode.test.version>17</bytecode.test.version>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
