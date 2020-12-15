@@ -19,6 +19,7 @@ jobs:
       - name: Install JDK and build project
         run: |
           . ./.github/scripts/install-jdk.sh --feature ea --os linux-x64
+          export MAVEN_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED"
           ./mvnw verify -Pjava15 -Dnet.bytebuddy.experimental=true
         continue-on-error: true
   hotspot-supported:
