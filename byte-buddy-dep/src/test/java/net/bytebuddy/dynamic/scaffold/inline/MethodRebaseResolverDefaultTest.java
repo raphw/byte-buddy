@@ -102,7 +102,7 @@ public class MethodRebaseResolverDefaultTest {
     @Test
     public void testCreationWithoutConstructor() throws Exception {
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(instrumentedType,
-                Collections.singleton(token),
+                Collections.singleton(signatureToken),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);
@@ -117,7 +117,7 @@ public class MethodRebaseResolverDefaultTest {
     public void testCreationWithConstructor() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(instrumentedType,
-                Collections.singleton(token),
+                Collections.singleton(signatureToken),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);

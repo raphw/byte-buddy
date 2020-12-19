@@ -19,7 +19,6 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -31,14 +30,12 @@ import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
-import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
 
@@ -226,10 +223,11 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 typeValidation,
                 visibilityBridgeStrategy,
                 InliningImplementationMatcher.of(ignoredMethods, originalType));
+        HashSet<MethodDescription.SignatureToken> rebaseables = new HashSet<MethodDescription.SignatureToken>(
+                originalType.getDeclaredMethods().asSignatureTokenList(is(originalType), instrumentedType));
+        rebaseables.retainAll(methodRegistry.getInstrumentedMethods().asSignatureTokenList());
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(methodRegistry.getInstrumentedType(),
-                new HashSet<MethodDescription.Token>(originalType.getDeclaredMethods()
-                        .asTokenList(is(originalType))
-                        .filter(RebaseableMatcher.of(methodRegistry.getInstrumentedType(), methodRegistry.getInstrumentedMethods()))),
+                rebaseables,
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);
@@ -250,44 +248,5 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 originalType,
                 classFileLocator,
                 methodRebaseResolver).make(typeResolutionStrategy.resolve());
-    }
-
-    /**
-     * A matcher that filters any method that should not be rebased, i.e. that is not already defined by the original type.
-     */
-    @HashCodeAndEqualsPlugin.Enhance
-    protected static class RebaseableMatcher implements ElementMatcher<MethodDescription.Token> {
-
-        /**
-         * A set of method tokens representing all instrumented methods.
-         */
-        private final Set<MethodDescription.Token> tokens;
-
-        /**
-         * Creates a new matcher for identifying rebasable methods.
-         *
-         * @param tokens A set of method tokens representing all instrumented methods.
-         */
-        protected RebaseableMatcher(Set<MethodDescription.Token> tokens) {
-            this.tokens = tokens;
-        }
-
-        /**
-         * Returns a matcher that filters any method that should not be rebased.
-         *
-         * @param instrumentedType    The instrumented type.
-         * @param instrumentedMethods All instrumented methods.
-         * @return A suitable matcher that filters all methods that should not be rebased.
-         */
-        protected static ElementMatcher<MethodDescription.Token> of(TypeDescription instrumentedType, MethodList<?> instrumentedMethods) {
-            return new RebaseableMatcher(new HashSet<MethodDescription.Token>(instrumentedMethods.asTokenList(is(instrumentedType))));
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean matches(MethodDescription.Token target) {
-            return tokens.contains(target);
-        }
     }
 }

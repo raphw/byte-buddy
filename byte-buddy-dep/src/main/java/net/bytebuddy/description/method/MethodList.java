@@ -24,6 +24,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,6 +42,22 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
      * @return The transformed token list.
      */
     ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher);
+
+    /**
+     * Returns a list of signature tokens for this list of methods.
+     *
+     * @return A list of signature tokens for this list of methods.
+     */
+    List<MethodDescription.SignatureToken> asSignatureTokenList();
+
+    /**
+     * Returns a list of signature tokens for this list of methods.
+     *
+     * @param matcher         A matcher for resolving methods to {@link net.bytebuddy.description.method.MethodDescription.Token}s.
+     * @param typeDescription The type description to resolve the {@link net.bytebuddy.description.method.MethodDescription.SignatureToken}s to.
+     * @return A list of signature tokens for this list of methods.
+     */
+    List<MethodDescription.SignatureToken> asSignatureTokenList(ElementMatcher<? super TypeDescription> matcher, TypeDescription typeDescription);
 
     /**
      * Returns this list of these method descriptions resolved to their defined shape.
@@ -70,6 +87,28 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
                 tokens.add(methodDescription.asToken(matcher));
             }
             return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(tokens);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public List<MethodDescription.SignatureToken> asSignatureTokenList() {
+            List<MethodDescription.SignatureToken> tokens = new ArrayList<MethodDescription.SignatureToken>(size());
+            for (MethodDescription methodDescription : this) {
+                tokens.add(methodDescription.asSignatureToken());
+            }
+            return tokens;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public List<MethodDescription.SignatureToken> asSignatureTokenList(ElementMatcher<? super TypeDescription> matcher, TypeDescription typeDescription) {
+            List<MethodDescription.SignatureToken> tokens = new ArrayList<MethodDescription.SignatureToken>(size());
+            for (MethodDescription methodDescription : this) {
+                tokens.add(methodDescription.asToken(matcher).asSignatureToken(typeDescription));
+            }
+            return tokens;
         }
 
         /**
@@ -309,6 +348,20 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
          */
         public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             return new ByteCodeElement.Token.TokenList<MethodDescription.Token>();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public List<MethodDescription.SignatureToken> asSignatureTokenList() {
+            return Collections.<MethodDescription.SignatureToken>emptyList();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public List<MethodDescription.SignatureToken> asSignatureTokenList(ElementMatcher<? super TypeDescription> matcher, TypeDescription typeDescription) {
+            return Collections.<MethodDescription.SignatureToken>emptyList();
         }
 
         /**

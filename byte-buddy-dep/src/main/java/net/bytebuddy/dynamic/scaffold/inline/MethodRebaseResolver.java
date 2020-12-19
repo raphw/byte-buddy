@@ -33,8 +33,6 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.is;
-
 /**
  * A method rebase resolver is responsible for mapping methods of an instrumented type to an alternative signature.
  * This way a method can exist in two versions within a class:
@@ -507,21 +505,21 @@ public interface MethodRebaseResolver {
          * Creates a new method rebase resolver.
          *
          * @param instrumentedType            The instrumented type.
-         * @param rebaseableMethodTokens      Tokens describing all methods that can possibly be rebased.
+         * @param rebaseables      Tokens describing all methods that can possibly be rebased.
          * @param classFileVersion            The class file version for the instrumentation.
          * @param auxiliaryTypeNamingStrategy The naming strategy for naming a potential auxiliary type.
          * @param methodNameTransformer       A transformer for method names.
          * @return A method rebase resolver that is capable of rebasing any of the provided methods.
          */
         public static MethodRebaseResolver make(TypeDescription instrumentedType,
-                                                Set<? extends MethodDescription.Token> rebaseableMethodTokens,
+                                                Set<? extends MethodDescription.SignatureToken> rebaseables,
                                                 ClassFileVersion classFileVersion,
                                                 AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                 MethodNameTransformer methodNameTransformer) {
             DynamicType placeholderType = null;
             Map<MethodDescription.InDefinedShape, Resolution> resolutions = new HashMap<MethodDescription.InDefinedShape, Resolution>();
             for (MethodDescription.InDefinedShape instrumentedMethod : instrumentedType.getDeclaredMethods()) {
-                if (rebaseableMethodTokens.contains(instrumentedMethod.asToken(is(instrumentedType)))) {
+                if (rebaseables.contains(instrumentedMethod.asSignatureToken())) {
                     Resolution resolution;
                     if (instrumentedMethod.isConstructor()) {
                         if (placeholderType == null) {
