@@ -9,7 +9,6 @@ import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -20,7 +19,6 @@ import java.net.URLClassLoader;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
-import static net.bytebuddy.matcher.ElementMatchers.returns;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -168,6 +166,17 @@ public class ByteBuddyTest {
         }
         Class<?> subclass = subclassBuilder.make().load(type.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         assertThat(subclass.getDeclaredMethods().length, is(1000));
+    }
+
+    @Test
+    public void testClassCompiledToJsr14() throws Exception {
+        assertThat(new ByteBuddy()
+                .redefine(Class.forName("net.bytebuddy.test.precompiled.Jsr14Sample"))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .getConstructor()
+                .newInstance(), notNullValue());
     }
 
     public static class Recorder {

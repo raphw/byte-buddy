@@ -3326,7 +3326,7 @@ public interface TypeWriter<T> {
                     public void assertType(int modifiers, boolean definesInterfaces, boolean isGeneric) {
                         if ((modifiers & Opcodes.ACC_ANNOTATION) != 0 && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot define annotation type for class file version " + classFileVersion);
-                        } else if (isGeneric && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
+                        } else if (isGeneric && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V4)) { // JSR14 allows for generic 1.4 classes.
                             throw new IllegalStateException("Cannot define a generic type for class file version " + classFileVersion);
                         }
                     }
@@ -3335,7 +3335,7 @@ public interface TypeWriter<T> {
                      * {@inheritDoc}
                      */
                     public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
-                        if (isGeneric && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
+                        if (isGeneric && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V4)) { // JSR14 allows for generic 1.4 classes.
                             throw new IllegalStateException("Cannot define generic field '" + name + "' for class file version " + classFileVersion);
                         }
                     }
@@ -3352,7 +3352,7 @@ public interface TypeWriter<T> {
                                              boolean isConstructor,
                                              boolean isDefaultValueIncompatible,
                                              boolean isGeneric) {
-                        if (isGeneric && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
+                        if (isGeneric && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V4)) { // JSR14 allows for generic 1.4 classes.
                             throw new IllegalStateException("Cannot define generic method '" + name + "' for class file version " + classFileVersion);
                         } else if (!isVirtual && isAbstract) {
                             throw new IllegalStateException("Cannot define static or non-virtual method '" + name + "' to be abstract");
