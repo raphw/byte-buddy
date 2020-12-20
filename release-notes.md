@@ -1,6 +1,17 @@
 Byte Buddy release notes
 ------------------------
 
+### 21. December 2020: version 1.10.19
+
+- Fix constructor type resolution in `MethodCall`.
+- Add support for incremental builds to Byte Buddy Maven plugin.
+- Correctly handle empty, primitive arrays as annotation properties in `TypePool`.
+- Improve matching of rebaseale methods by using signature tokens rather then full tokens.
+- Use *get* as prefix for getters of `Boolean` wrapper properties.
+- Consider types in `net.bytebuddy.renamed` package in Byte Buddy agent.
+- Set names for all cached variables.
+- Do not fail validation for generic properties in Java 1.4 class files since they can be legally contained due to JSR14.
+
 ### 1. November 2020: version 1.10.18
 
 - Fixes descriptor used for method handle constant of field.
