@@ -15,7 +15,6 @@
  */
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
