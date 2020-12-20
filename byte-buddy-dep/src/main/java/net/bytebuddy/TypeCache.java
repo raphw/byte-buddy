@@ -424,7 +424,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             return types.hashCode();
         }

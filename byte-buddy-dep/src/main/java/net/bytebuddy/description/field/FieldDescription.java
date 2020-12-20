@@ -192,7 +192,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             return getDeclaringType().hashCode() + 31 * (17 + getName().hashCode());
         }
@@ -587,7 +587,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             int result = name.hashCode();
             result = 31 * result + modifiers;
@@ -656,7 +656,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             int result = name.hashCode();
             result = 31 * result + type.hashCode();

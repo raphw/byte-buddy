@@ -187,7 +187,7 @@ public interface ParameterDescription extends AnnotationSource,
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             return getDeclaringMethod().hashCode() ^ getIndex();
         }
@@ -1254,7 +1254,7 @@ public interface ParameterDescription extends AnnotationSource,
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             int result = type.hashCode();
             result = 31 * result + annotations.hashCode();

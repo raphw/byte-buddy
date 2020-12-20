@@ -839,7 +839,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             int hashCode = 17 + getDeclaringType().hashCode();
             hashCode = 31 * hashCode + getInternalName().hashCode();
@@ -1918,7 +1918,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             int result = name.hashCode();
             result = 31 * result + modifiers;
@@ -2038,7 +2038,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             int result = name.hashCode();
             result = 31 * result + returnType.hashCode();
@@ -2121,7 +2121,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             int result = returnType.hashCode();
             result = 31 * result + parameterTypes.hashCode();

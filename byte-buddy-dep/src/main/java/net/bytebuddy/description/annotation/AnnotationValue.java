@@ -870,7 +870,7 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             return propertyDelegate.hashCode(value);
         }
@@ -1359,7 +1359,7 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
-            @CachedReturnPlugin.Enhance
+            @CachedReturnPlugin.Enhance("hashCode")
             public int hashCode() {
                 return propertyDelegate.hashCode(value);
             }
@@ -2143,7 +2143,7 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             int result = 1;
             for (AnnotationValue<?, ?> value : values) {
@@ -2254,7 +2254,7 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
-            @CachedReturnPlugin.Enhance
+            @CachedReturnPlugin.Enhance("hashCode")
             public int hashCode() {
                 int result = 1;
                 for (AnnotationValue.Loaded<?> value : values) {

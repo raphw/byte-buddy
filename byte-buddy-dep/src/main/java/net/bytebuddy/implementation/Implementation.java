@@ -191,7 +191,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             @Override
-            @CachedReturnPlugin.Enhance
+            @CachedReturnPlugin.Enhance("hashCode")
             public int hashCode() {
                 return 31 * getMethodDescription().asSignatureToken().hashCode() + getTypeDescription().hashCode();
             }

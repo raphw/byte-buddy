@@ -903,7 +903,7 @@ public interface RecordComponentDescription extends DeclaredByType,
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             int result = name.hashCode();
             result = 31 * result + type.hashCode();

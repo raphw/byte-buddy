@@ -64,7 +64,7 @@ public interface EnumerationDescription extends NamedElement {
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             return getValue().hashCode() + 31 * getEnumerationType().hashCode();
         }

@@ -115,7 +115,7 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
     }
 
     @Override
-    @CachedReturnPlugin.Enhance
+    @CachedReturnPlugin.Enhance("hashCode")
     public int hashCode() {
         int result = symbol.hashCode();
         result = 31 * result + bounds.hashCode();

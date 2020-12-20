@@ -355,7 +355,7 @@ public interface AnnotationDescription {
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             int result = annotationType.hashCode();
             result = 31 * result + values.hashCode();
@@ -433,7 +433,7 @@ public interface AnnotationDescription {
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {
             int hashCode = 0;
             for (MethodDescription.InDefinedShape methodDescription : getAnnotationType().getDeclaredMethods()) {

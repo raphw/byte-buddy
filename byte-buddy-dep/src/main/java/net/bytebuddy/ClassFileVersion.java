@@ -275,7 +275,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      *
      * @return The currently running Java process's class file version.
      */
-    @CachedReturnPlugin.Enhance
+    @CachedReturnPlugin.Enhance("vm")
     public static ClassFileVersion ofThisVm() {
         return VERSION_LOCATOR.locate();
     }

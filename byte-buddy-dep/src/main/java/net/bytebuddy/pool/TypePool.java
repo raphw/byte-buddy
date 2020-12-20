@@ -6028,7 +6028,7 @@ public interface TypePool {
                 }
 
                 @Override
-                @CachedReturnPlugin.Enhance
+                @CachedReturnPlugin.Enhance("hashCode")
                 public int hashCode() {
                     return doResolve().hashCode();
                 }
@@ -6070,7 +6070,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    @CachedReturnPlugin.Enhance
+                    @CachedReturnPlugin.Enhance("resolved")
                     @SuppressWarnings("unchecked")
                     protected AnnotationValue<TypeDescription, Class<?>> doResolve() {
                         Resolution resolution = typePool.describe(typeName);
@@ -6107,7 +6107,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    @CachedReturnPlugin.Enhance
+                    @CachedReturnPlugin.Enhance("resolved")
                     protected AnnotationValue<AnnotationDescription, Annotation> doResolve() {
                         AnnotationToken.Resolution resolution = annotationToken.toAnnotationDescription(typePool);
                         if (!resolution.isResolved()) {
@@ -6154,7 +6154,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    @CachedReturnPlugin.Enhance
+                    @CachedReturnPlugin.Enhance("resolved")
                     @SuppressWarnings("unchecked")
                     protected AnnotationValue<EnumerationDescription, Enum<?>> doResolve() {
                         Resolution resolution = typePool.describe(typeName);

@@ -224,7 +224,7 @@ public enum JavaType {
      * @return A loaded type of this Java type.
      * @throws ClassNotFoundException If the represented type cannot be loaded.
      */
-    @CachedReturnPlugin.Enhance
+    @CachedReturnPlugin.Enhance("loaded")
     public Class<?> load() throws ClassNotFoundException {
         return Class.forName(typeDescription.getName(), false, ClassLoadingStrategy.BOOTSTRAP_LOADER);
     }
@@ -244,7 +244,7 @@ public enum JavaType {
      *
      * @return {@code true} if this type is available on the current JVM.
      */
-    @CachedReturnPlugin.Enhance
+    @CachedReturnPlugin.Enhance("available")
     public boolean isAvailable() {
         try {
             load();
