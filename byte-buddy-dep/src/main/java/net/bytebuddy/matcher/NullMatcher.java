@@ -25,6 +25,13 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 @HashCodeAndEqualsPlugin.Enhance
 public class NullMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
+    private static final NullMatcher<?> INSTANCE = new NullMatcher<Object>();
+
+    @SuppressWarnings("unchecked")
+    public static <T> NullMatcher<T> of() {
+        return (NullMatcher<T>) INSTANCE;
+    }
+
     /**
      * {@inheritDoc}
      */

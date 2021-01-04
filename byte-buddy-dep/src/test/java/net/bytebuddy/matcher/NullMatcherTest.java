@@ -21,4 +21,9 @@ public class NullMatcherTest extends AbstractElementMatcherTest<NullMatcher<?>> 
     public void testPositiveToNegative() throws Exception {
         assertThat(new NullMatcher<Object>().matches(new Object()), is(false));
     }
+
+    @Test
+    public void testSingletonIsEquivalentToNewInstance() {
+        assertThat(NullMatcher.of(), is(new NullMatcher<Object>()));
+    }
 }

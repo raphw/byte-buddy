@@ -123,7 +123,7 @@ public final class ElementMatchers {
      */
     public static <T> ElementMatcher.Junction<T> is(Object value) {
         return value == null
-                ? new NullMatcher<T>()
+                ? NullMatcher.<T>of()
                 : new EqualityMatcher<T>(value);
     }
 
@@ -2213,7 +2213,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the bootstrap class loader.
      */
     public static <T extends ClassLoader> ElementMatcher.Junction<T> isBootstrapClassLoader() {
-        return new NullMatcher<T>();
+        return NullMatcher.of();
     }
 
     /**
@@ -2298,6 +2298,6 @@ public final class ElementMatchers {
      * @return A matcher that validates a module's existence.
      */
     public static <T extends JavaModule> ElementMatcher.Junction<T> supportsModules() {
-        return not(new NullMatcher<T>());
+        return not(NullMatcher.of());
     }
 }
