@@ -25,6 +25,19 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 @HashCodeAndEqualsPlugin.Enhance
 public class BooleanMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
+    private static final BooleanMatcher<?> TRUE = new BooleanMatcher<Object>(true);
+    private static final BooleanMatcher<?> FALSE = new BooleanMatcher<Object>(false);
+
+    /**
+     * Returns boolean element matcher.
+     *
+     * @param matches The predefined result.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> BooleanMatcher<T> of(boolean matches) {
+        return (BooleanMatcher<T>) (matches ? TRUE : FALSE);
+    }
+
     /**
      * The predefined result.
      */

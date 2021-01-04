@@ -298,7 +298,7 @@ public final class ElementMatchers {
      * @return A matcher that matches anything.
      */
     public static <T> ElementMatcher.Junction<T> any() {
-        return new BooleanMatcher<T>(true);
+        return BooleanMatcher.of(true);
     }
 
     /**
@@ -308,7 +308,7 @@ public final class ElementMatchers {
      * @return A matcher that matches nothing.
      */
     public static <T> ElementMatcher.Junction<T> none() {
-        return new BooleanMatcher<T>(false);
+        return BooleanMatcher.of(false);
     }
 
     /**
@@ -1379,7 +1379,7 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> canThrow(TypeDescription exceptionType) {
         return exceptionType.isAssignableTo(RuntimeException.class) || exceptionType.isAssignableTo(Error.class)
-                ? new BooleanMatcher<T>(true)
+                ? BooleanMatcher.<T>of(true)
                 : ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<TypeDescription.Generic>(erasure(isSuperTypeOf(exceptionType))));
     }
 
@@ -1408,7 +1408,7 @@ public final class ElementMatchers {
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresGenericException(TypeDescription.Generic exceptionType) {
         return !exceptionType.getSort().isWildcard() && exceptionType.asErasure().isAssignableTo(Throwable.class)
                 ? ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<TypeDescription.Generic>(is(exceptionType)))
-                : new BooleanMatcher<T>(false);
+                : BooleanMatcher.<T>of(false);
     }
 
     /**
@@ -1432,7 +1432,7 @@ public final class ElementMatchers {
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresException(TypeDescription exceptionType) {
         return exceptionType.isAssignableTo(Throwable.class)
                 ? ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<TypeDescription.Generic>(erasure(exceptionType)))
-                : new BooleanMatcher<T>(false);
+                : BooleanMatcher.<T>of(false);
     }
 
     /**
@@ -2251,7 +2251,7 @@ public final class ElementMatchers {
      */
     public static <T extends ClassLoader> ElementMatcher.Junction<T> isChildOf(ClassLoader classLoader) {
         return classLoader == BOOTSTRAP_CLASSLOADER
-                ? new BooleanMatcher<T>(true)
+                ? BooleanMatcher.<T>of(true)
                 : ElementMatchers.<T>hasChild(is(classLoader));
     }
 

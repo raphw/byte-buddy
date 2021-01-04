@@ -33,4 +33,10 @@ public class BooleanMatcherTest extends AbstractElementMatcherTest<BooleanMatche
         assertThat(new BooleanMatcher<Object>(true).toString(), is("true"));
         assertThat(new BooleanMatcher<Object>(false).toString(), is("false"));
     }
+
+    @Test
+    public void testSingletonEquivalentToNewInstance() {
+        assertThat(BooleanMatcher.of(true), is(new BooleanMatcher<Object>(true)));
+        assertThat(BooleanMatcher.of(false), is(new BooleanMatcher<Object>(false)));
+    }
 }
