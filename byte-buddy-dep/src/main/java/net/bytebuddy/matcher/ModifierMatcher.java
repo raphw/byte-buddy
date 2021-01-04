@@ -28,6 +28,16 @@ import org.objectweb.asm.Opcodes;
 public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
+     * Returns a new element matcher that matches an element by its modifier.
+     *
+     * @param mode The match mode to apply to the matched element's modifier.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T extends ModifierReviewable> ModifierMatcher<T> of(Mode mode) {
+        return (ModifierMatcher<T>) mode.matcher;
+    }
+
+    /**
      * The matching mode to apply by this modifier matcher.
      */
     private final Mode mode;
@@ -159,6 +169,11 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
         private final String description;
 
         /**
+         * The canonical matcher instance.
+         */
+        private final ModifierMatcher<?> matcher;
+
+        /**
          * Creates a new modifier matcher mode.
          *
          * @param modifiers   The mask of the modifier to match.
@@ -167,6 +182,7 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
         Mode(int modifiers, String description) {
             this.modifiers = modifiers;
             this.description = description;
+            this.matcher = new ModifierMatcher<ModifierReviewable>(this);
         }
 
         /**

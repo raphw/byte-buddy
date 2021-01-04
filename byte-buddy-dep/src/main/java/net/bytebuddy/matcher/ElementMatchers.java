@@ -255,7 +255,7 @@ public final class ElementMatchers {
      * @return A matcher for a {@code mandated} parameter.
      */
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> isMandated() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.MANDATED);
+        return ModifierMatcher.of(ModifierMatcher.Mode.MANDATED);
     }
 
     /**
@@ -898,7 +898,7 @@ public final class ElementMatchers {
      * @return A matcher for a {@code abstract} modifier reviewable.
      */
     public static <T extends ModifierReviewable.OfAbstraction> ElementMatcher.Junction<T> isAbstract() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.ABSTRACT);
+        return ModifierMatcher.of(ModifierMatcher.Mode.ABSTRACT);
     }
 
     /**
@@ -908,7 +908,7 @@ public final class ElementMatchers {
      * @return A matcher for an enum.
      */
     public static <T extends ModifierReviewable.OfEnumeration> ElementMatcher.Junction<T> isEnum() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.ENUMERATION);
+        return ModifierMatcher.of(ModifierMatcher.Mode.ENUMERATION);
     }
 
     /**
@@ -975,7 +975,7 @@ public final class ElementMatchers {
      * @return A matcher for a {@code public} modifier reviewable.
      */
     public static <T extends ModifierReviewable.OfByteCodeElement> ElementMatcher.Junction<T> isPublic() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.PUBLIC);
+        return ModifierMatcher.of(ModifierMatcher.Mode.PUBLIC);
     }
 
     /**
@@ -985,7 +985,7 @@ public final class ElementMatchers {
      * @return A matcher for a {@code protected} modifier reviewable.
      */
     public static <T extends ModifierReviewable.OfByteCodeElement> ElementMatcher.Junction<T> isProtected() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.PROTECTED);
+        return ModifierMatcher.of(ModifierMatcher.Mode.PROTECTED);
     }
 
     /**
@@ -1005,7 +1005,7 @@ public final class ElementMatchers {
      * @return A matcher for a {@code private} modifier reviewable.
      */
     public static <T extends ModifierReviewable.OfByteCodeElement> ElementMatcher.Junction<T> isPrivate() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.PRIVATE);
+        return ModifierMatcher.of(ModifierMatcher.Mode.PRIVATE);
     }
 
     /**
@@ -1015,7 +1015,7 @@ public final class ElementMatchers {
      * @return A matcher for a {@code static} modifier reviewable.
      */
     public static <T extends ModifierReviewable.OfByteCodeElement> ElementMatcher.Junction<T> isStatic() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.STATIC);
+        return ModifierMatcher.of(ModifierMatcher.Mode.STATIC);
     }
 
     /**
@@ -1025,7 +1025,7 @@ public final class ElementMatchers {
      * @return A matcher for a {@code final} modifier reviewable.
      */
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isFinal() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.FINAL);
+        return ModifierMatcher.of(ModifierMatcher.Mode.FINAL);
     }
 
     /**
@@ -1035,7 +1035,7 @@ public final class ElementMatchers {
      * @return A matcher for a synthetic modifier reviewable.
      */
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isSynthetic() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.SYNTHETIC);
+        return ModifierMatcher.of(ModifierMatcher.Mode.SYNTHETIC);
     }
 
     /**
@@ -1045,7 +1045,7 @@ public final class ElementMatchers {
      * @return A matcher for a {@code synchronized} method description.
      */
     public static <T extends ModifierReviewable.ForMethodDescription> ElementMatcher.Junction<T> isSynchronized() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.SYNCHRONIZED);
+        return ModifierMatcher.of(ModifierMatcher.Mode.SYNCHRONIZED);
     }
 
     /**
@@ -1055,7 +1055,7 @@ public final class ElementMatchers {
      * @return A matcher for a {@code native} method description.
      */
     public static <T extends ModifierReviewable.ForMethodDescription> ElementMatcher.Junction<T> isNative() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.NATIVE);
+        return ModifierMatcher.of(ModifierMatcher.Mode.NATIVE);
     }
 
     /**
@@ -1065,7 +1065,7 @@ public final class ElementMatchers {
      * @return A matcher for a {@code strictfp} method description.
      */
     public static <T extends ModifierReviewable.ForMethodDescription> ElementMatcher.Junction<T> isStrict() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.STRICT);
+        return ModifierMatcher.of(ModifierMatcher.Mode.STRICT);
     }
 
     /**
@@ -1075,7 +1075,7 @@ public final class ElementMatchers {
      * @return A matcher for a var-args method description.
      */
     public static <T extends ModifierReviewable.ForMethodDescription> ElementMatcher.Junction<T> isVarArgs() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.VAR_ARGS);
+        return ModifierMatcher.of(ModifierMatcher.Mode.VAR_ARGS);
     }
 
     /**
@@ -1085,7 +1085,7 @@ public final class ElementMatchers {
      * @return A matcher for a bridge method.
      */
     public static <T extends ModifierReviewable.ForMethodDescription> ElementMatcher.Junction<T> isBridge() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.BRIDGE);
+        return ModifierMatcher.of(ModifierMatcher.Mode.BRIDGE);
     }
 
     /**
@@ -1523,7 +1523,7 @@ public final class ElementMatchers {
      * @see ElementMatchers#isAnnotation()
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isInterface() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.INTERFACE);
+        return ModifierMatcher.of(ModifierMatcher.Mode.INTERFACE);
     }
 
     /**
@@ -1533,7 +1533,7 @@ public final class ElementMatchers {
      * @return A matcher for an annotation type.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isAnnotation() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.ANNOTATION);
+        return ModifierMatcher.of(ModifierMatcher.Mode.ANNOTATION);
     }
 
     /**
@@ -2148,7 +2148,7 @@ public final class ElementMatchers {
      * @return A matcher for a {@code volatile} field.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> isVolatile() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.VOLATILE);
+        return ModifierMatcher.of(ModifierMatcher.Mode.VOLATILE);
     }
 
     /**
@@ -2158,7 +2158,7 @@ public final class ElementMatchers {
      * @return A matcher for a {@code transient} field.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> isTransient() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.TRANSIENT);
+        return ModifierMatcher.of(ModifierMatcher.Mode.TRANSIENT);
     }
 
     /**

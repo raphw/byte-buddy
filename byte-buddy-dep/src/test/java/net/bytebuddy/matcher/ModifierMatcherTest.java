@@ -73,4 +73,9 @@ public class ModifierMatcherTest extends AbstractElementMatcherTest<ModifierMatc
     public void testStringRepresentation() throws Exception {
         assertThat(new ModifierMatcher<ModifierReviewable>(mode).toString(), is(mode.getDescription()));
     }
+
+    @Test
+    public void testSingletonEquivalentToNewInstance() {
+        assertThat(ModifierMatcher.of(mode), is(new ModifierMatcher<ModifierReviewable>(mode)));
+    }
 }
