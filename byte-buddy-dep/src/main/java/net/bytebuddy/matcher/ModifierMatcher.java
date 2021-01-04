@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 - 2020 Rafael Winterhalter
+ * Copyright 2014 - Present Rafael Winterhalter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,13 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
     /**
      * Returns a new element matcher that matches an element by its modifier.
      *
+     * @param <T>  The type of the matched entity.
      * @param mode The match mode to apply to the matched element's modifier.
+     * @return A matcher that matches methods of the provided sort.
      */
     @SuppressWarnings("unchecked")
-    public static <T extends ModifierReviewable> ModifierMatcher<T> of(Mode mode) {
-        return (ModifierMatcher<T>) mode.matcher;
+    public static <T extends ModifierReviewable> ElementMatcher.Junction<T> of(Mode mode) {
+        return (ElementMatcher.Junction<T>) mode.getMatcher();
     }
 
     /**
@@ -182,7 +184,7 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
         Mode(int modifiers, String description) {
             this.modifiers = modifiers;
             this.description = description;
-            this.matcher = new ModifierMatcher<ModifierReviewable>(this);
+            matcher = new ModifierMatcher<ModifierReviewable>(this);
         }
 
         /**
@@ -201,6 +203,15 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
          */
         protected int getModifiers() {
             return modifiers;
+        }
+
+        /**
+         * Returns a reusable matcher for this modifier sort.
+         *
+         * @return A reusable matcher for this modifier sort.
+         */
+        protected ModifierMatcher<?> getMatcher() {
+            return matcher;
         }
     }
 }

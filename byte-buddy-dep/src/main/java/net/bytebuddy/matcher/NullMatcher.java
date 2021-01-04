@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 - 2020 Rafael Winterhalter
+ * Copyright 2014 - Present Rafael Winterhalter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,20 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 @HashCodeAndEqualsPlugin.Enhance
 public class NullMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
+    /**
+     * An instance of this matcher.
+     */
     private static final NullMatcher<?> INSTANCE = new NullMatcher<Object>();
 
+    /**
+     * Returns a matcher that only matches {@code null}.
+     *
+     * @param <T> The type of the matched entity.
+     * @return A matcher that only matches {@code null}.
+     */
     @SuppressWarnings("unchecked")
-    public static <T> NullMatcher<T> of() {
-        return (NullMatcher<T>) INSTANCE;
+    public static <T> ElementMatcher.Junction<T> make() {
+        return (ElementMatcher.Junction<T>) INSTANCE;
     }
 
     /**

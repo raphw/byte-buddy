@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 - 2020 Rafael Winterhalter
+ * Copyright 2014 - Present Rafael Winterhalter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,13 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
     /**
      * Returns an element matcher that matches a specific sort of method description.
      *
+     * @param <T>  The type of the matched entity.
      * @param sort The sort of method description to be matched by this element matcher.
+     * @return A matcher that matches methods of the provided sort.
      */
     @SuppressWarnings("unchecked")
-    public static <T extends MethodDescription> MethodSortMatcher<T> of(Sort sort) {
-        return (MethodSortMatcher<T>) sort.matcher;
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> of(Sort sort) {
+        return (ElementMatcher.Junction<T>) sort.getMatcher();
     }
 
     /**
@@ -77,7 +79,6 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
                 return target.isMethod();
             }
         },
-
 
         /**
          * Matches method descriptions that represent constructors, not methods or the type initializer.
@@ -124,6 +125,9 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
          */
         private final String description;
 
+        /**
+         * A reusable matcher for this sort.
+         */
         private final MethodSortMatcher<?> matcher;
 
         /**
@@ -133,7 +137,7 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
          */
         Sort(String description) {
             this.description = description;
-            this.matcher = new MethodSortMatcher<MethodDescription>(this);
+            matcher = new MethodSortMatcher<MethodDescription>(this);
         }
 
         /**
@@ -151,6 +155,15 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
          */
         protected String getDescription() {
             return description;
+        }
+
+        /**
+         * Returns the predefined matcher for this method sort.
+         *
+         * @return The predefined matcher for this method sort.
+         */
+        protected MethodSortMatcher<?> getMatcher() {
+            return matcher;
         }
     }
 }

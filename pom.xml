@@ -226,26 +226,6 @@
                 <artifactId>clirr-maven-plugin</artifactId>
                 <version>${version.plugin.clirr}</version>
             </plugin>
-            <!-- Resolve the current year. -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>${version.plugin.buildhelp}</version>
-                <executions>
-                    <execution>
-                        <id>timestamp-property</id>
-                        <goals>
-                            <goal>timestamp-property</goal>
-                        </goals>
-                        <phase>validate</phase>
-                        <configuration>
-                            <locale>en_US</locale>
-                            <name>current.year</name>
-                            <pattern>yyyy</pattern>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <!-- Add license headers to all files. -->
             <plugin>
                 <groupId>com.mycila</groupId>
@@ -258,7 +238,7 @@
                     <failIfMissing>true</failIfMissing>
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <properties>
-                        <current.year>${current.year}</current.year>
+                        <current.year>Present</current.year>
                         <copyright.holder>${copyright.holder}</copyright.holder>
                     </properties>
                     <includes>

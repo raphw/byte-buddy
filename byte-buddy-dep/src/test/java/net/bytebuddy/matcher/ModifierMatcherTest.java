@@ -76,6 +76,6 @@ public class ModifierMatcherTest extends AbstractElementMatcherTest<ModifierMatc
 
     @Test
     public void testSingletonEquivalentToNewInstance() {
-        assertThat(ModifierMatcher.of(mode), is(new ModifierMatcher<ModifierReviewable>(mode)));
+        assertThat(ModifierMatcher.of(mode), is((ElementMatcher.Junction<ModifierReviewable>) new ModifierMatcher<ModifierReviewable>(mode)));
     }
 }

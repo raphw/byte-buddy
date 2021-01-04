@@ -24,6 +24,6 @@ public class NullMatcherTest extends AbstractElementMatcherTest<NullMatcher<?>> 
 
     @Test
     public void testSingletonIsEquivalentToNewInstance() {
-        assertThat(NullMatcher.of(), is(new NullMatcher<Object>()));
+        assertThat(NullMatcher.make(), is((ElementMatcher.Junction<Object>) new NullMatcher<Object>()));
     }
 }

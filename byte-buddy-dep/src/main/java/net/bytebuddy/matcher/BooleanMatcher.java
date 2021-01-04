@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 - 2020 Rafael Winterhalter
+ * Copyright 2014 - Present Rafael Winterhalter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,26 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 @HashCodeAndEqualsPlugin.Enhance
 public class BooleanMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
+    /**
+     * A matcher that always returns {@code true}.
+     */
     private static final BooleanMatcher<?> TRUE = new BooleanMatcher<Object>(true);
+
+    /**
+     * A matcher that always returns {@code false}.
+     */
     private static final BooleanMatcher<?> FALSE = new BooleanMatcher<Object>(false);
 
     /**
-     * Returns boolean element matcher.
+     * Returns an element matcher that returns the provided result.
      *
-     * @param matches The predefined result.
+     * @param <T>     The type of the matched entity.
+     * @param matches A matcher that always matches or never matches.
+     * @return A matcher that returns the provided result for all inputs.
      */
     @SuppressWarnings("unchecked")
-    public static <T> BooleanMatcher<T> of(boolean matches) {
-        return (BooleanMatcher<T>) (matches ? TRUE : FALSE);
+    public static <T> ElementMatcher.Junction<T> of(boolean matches) {
+        return (ElementMatcher.Junction<T>) (matches ? TRUE : FALSE);
     }
 
     /**

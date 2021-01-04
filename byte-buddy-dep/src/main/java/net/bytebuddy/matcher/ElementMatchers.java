@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 - 2020 Rafael Winterhalter
+ * Copyright 2014 - Present Rafael Winterhalter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public final class ElementMatchers {
      */
     public static <T> ElementMatcher.Junction<T> is(Object value) {
         return value == null
-                ? NullMatcher.<T>of()
+                ? NullMatcher.<T>make()
                 : new EqualityMatcher<T>(value);
     }
 
@@ -2213,7 +2213,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the bootstrap class loader.
      */
     public static <T extends ClassLoader> ElementMatcher.Junction<T> isBootstrapClassLoader() {
-        return NullMatcher.of();
+        return NullMatcher.make();
     }
 
     /**
@@ -2298,6 +2298,6 @@ public final class ElementMatchers {
      * @return A matcher that validates a module's existence.
      */
     public static <T extends JavaModule> ElementMatcher.Junction<T> supportsModules() {
-        return not(NullMatcher.of());
+        return not(NullMatcher.make());
     }
 }
