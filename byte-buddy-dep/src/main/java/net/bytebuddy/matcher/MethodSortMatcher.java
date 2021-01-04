@@ -28,6 +28,16 @@ import net.bytebuddy.description.method.MethodDescription;
 public class MethodSortMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
+     * Returns an element matcher that matches a specific sort of method description.
+     *
+     * @param sort The sort of method description to be matched by this element matcher.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T extends MethodDescription> MethodSortMatcher<T> of(Sort sort) {
+        return (MethodSortMatcher<T>) sort.matcher;
+    }
+
+    /**
      * The sort of method description to be matched by this element matcher.
      */
     private final Sort sort;
@@ -114,6 +124,8 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
          */
         private final String description;
 
+        private final MethodSortMatcher<?> matcher;
+
         /**
          * Creates a new method sort representation.
          *
@@ -121,6 +133,7 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
          */
         Sort(String description) {
             this.description = description;
+            this.matcher = new MethodSortMatcher<MethodDescription>(this);
         }
 
         /**

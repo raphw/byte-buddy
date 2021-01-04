@@ -1543,7 +1543,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches method descriptions that represent a Java method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isMethod() {
-        return new MethodSortMatcher<T>(MethodSortMatcher.Sort.METHOD);
+        return MethodSortMatcher.of(MethodSortMatcher.Sort.METHOD);
     }
 
     /**
@@ -1553,7 +1553,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches method descriptions that represent a Java constructor.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isConstructor() {
-        return new MethodSortMatcher<T>(MethodSortMatcher.Sort.CONSTRUCTOR);
+        return MethodSortMatcher.of(MethodSortMatcher.Sort.CONSTRUCTOR);
     }
 
     /**
@@ -1563,7 +1563,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches method descriptions that represent the type initializer.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isTypeInitializer() {
-        return new MethodSortMatcher<T>(MethodSortMatcher.Sort.TYPE_INITIALIZER);
+        return MethodSortMatcher.of(MethodSortMatcher.Sort.TYPE_INITIALIZER);
     }
 
     /**
@@ -1573,7 +1573,7 @@ public final class ElementMatchers {
      * @return A matcher for virtual methods.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isVirtual() {
-        return new MethodSortMatcher<T>(MethodSortMatcher.Sort.VIRTUAL);
+        return MethodSortMatcher.of(MethodSortMatcher.Sort.VIRTUAL);
     }
 
     /**
@@ -1583,7 +1583,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches Java 8 default methods.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isDefaultMethod() {
-        return new MethodSortMatcher<T>(MethodSortMatcher.Sort.DEFAULT_METHOD);
+        return MethodSortMatcher.of(MethodSortMatcher.Sort.DEFAULT_METHOD);
     }
 
     /**

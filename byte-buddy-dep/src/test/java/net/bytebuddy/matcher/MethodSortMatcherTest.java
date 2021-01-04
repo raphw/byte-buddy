@@ -59,6 +59,11 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
         assertThat(new MethodSortMatcher<MethodDescription>(sort).toString(), is(sort.getDescription()));
     }
 
+    @Test
+    public void testSingletonIsEquivalentToNewInstance() {
+        assertThat(MethodSortMatcher.of(sort), is(new MethodSortMatcher<MethodDescription>(sort)));
+    }
+
     private enum MockImplementation {
 
         CONSTRUCTOR {
