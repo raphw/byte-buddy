@@ -25,8 +25,8 @@ import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.URL;
 import java.util.*;
 
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
@@ -180,6 +180,15 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     public boolean extendedParsing;
 
     /**
+     * Determines if the build should discover Byte Buddy build plugins on this Maven plugin's class loader.
+     * Discovered plugins are stored by their name in the <i>/META-INF/net.bytebuddy/build.plugins</i> file
+     * where each line contains the fully qualified class name. Discovered plugins are not provided with any
+     * explicit constructor arguments.
+     */
+    @Parameter(defaultValue = "true", required = true)
+    public boolean discover;
+
+    /**
      * Indicates the amount of threads used for parallel type processing or {@code 0} for serial processing.
      */
     @Parameter(defaultValue = "0", required = true)
@@ -285,6 +294,23 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : repositorySystemSession,
                 project.getRemotePluginRepositories());
         try {
+            List<Transformation> transformations = new ArrayList<Transformation>(this.transformations);
+            if (discover) {
+                Enumeration<URL> plugins = getClass().getClassLoader().getResources("/META-INF/net.bytebuddy/build.plugins");
+                while (plugins.hasMoreElements()) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(plugins.nextElement().openStream(), "UTF-8"));
+                    try {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            Transformation transformation = new Transformation();
+                            transformation.plugin = line;
+                            transformations.add(transformation);
+                        }
+                    } finally {
+                        reader.close();
+                    }
+                }
+            }
             List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>(transformations.size());
             for (Transformation transformation : transformations) {
                 String plugin = transformation.getPlugin();

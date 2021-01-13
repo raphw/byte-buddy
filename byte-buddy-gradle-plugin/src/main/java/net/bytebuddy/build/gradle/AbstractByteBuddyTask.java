@@ -31,11 +31,9 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.util.ConfigureUtil;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.net.URL;
+import java.util.*;
 
 /**
  * An abstract Byte Buddy task implementation.
@@ -76,6 +74,11 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      * {@code true} if extended parsing should be used.
      */
     private boolean extendedParsing;
+
+    /**
+     * {@code true} if plugins should be discovered from the class loader.
+     */
+    private boolean discover;
 
     /**
      * The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
@@ -223,6 +226,25 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     }
 
     /**
+     * Returns {@code true} if plugins should be discovered from the class loader.
+     *
+     * @return {@code true} if plugins should be discovered from the class loader.
+     */
+    @Input
+    public boolean isDiscover() {
+        return discover;
+    }
+
+    /**
+     * Determines if plugins should be discovered from the class loader.
+     *
+     * @param discover {@code true} if plugins should be discovered from the class loader.
+     */
+    public void setDiscover(boolean discover) {
+        this.discover = discover;
+    }
+
+    /**
      * Returns the number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
      *
      * @return The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
@@ -273,8 +295,31 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
         if (source().equals(target())) {
             throw new IllegalStateException("Source and target cannot be equal: " + source());
         }
-        List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>(getTransformations().size());
-        for (Transformation transformation : getTransformations()) {
+        List<Transformation> transformations = new ArrayList<Transformation>(getTransformations());
+        if (isDiscover()) {
+            Enumeration<URL> plugins = getClass().getClassLoader().getResources("/META-INF/net.bytebuddy/build.plugins");
+            while (plugins.hasMoreElements()) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(plugins.nextElement().openStream(), "UTF-8"));
+                try {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        try {
+                            @SuppressWarnings("unchecked")
+                            Class<? extends Plugin> plugin = (Class<? extends Plugin>) Class.forName(line);
+                            Transformation transformation = new Transformation();
+                            transformation.setPlugin(plugin);
+                            transformations.add(transformation);
+                        } catch (ClassNotFoundException exception) {
+                            throw new IllegalStateException("Discovered plugin is not available: " + line, exception);
+                        }
+                    }
+                } finally {
+                    reader.close();
+                }
+            }
+        }
+        List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>(transformations.size());
+        for (Transformation transformation : transformations) {
             try {
                 factories.add(new Plugin.Factory.UsingReflection(transformation.getPlugin())
                         .with(transformation.makeArgumentResolvers())

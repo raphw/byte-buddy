@@ -65,6 +65,11 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     private boolean extendedParsing;
 
     /**
+     * {@code true} if plugins should be discovered from the class loader.
+     */
+    private boolean discover;
+
+    /**
      * The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
      */
     private int threads;
@@ -78,6 +83,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         suffix = "";
         failOnLiveInitializer = true;
         warnOnEmptyTypeSet = true;
+        discover = true;
     }
 
     /**
@@ -207,6 +213,24 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     }
 
     /**
+     * Returns {@code true} if plugins should be discovered from the class loader.
+     *
+     * @return {@code true} if plugins should be discovered from the class loader.
+     */
+    public boolean isDiscover() {
+        return discover;
+    }
+
+    /**
+     * Deterimes if plugins should be discovered from the class loader.
+     *
+     * @param discover {@code true} if plugins should be discovered from the class loader.
+     */
+    public void setDiscover(boolean discover) {
+        this.discover = discover;
+    }
+
+    /**
      * Returns the number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
      *
      * @return The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
@@ -244,6 +268,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         task.setWarnOnEmptyTypeSet(isWarnOnEmptyTypeSet());
         task.setFailFast(isFailFast());
         task.setExtendedParsing(isExtendedParsing());
+        task.setDiscover(isDiscover());
         task.setThreads(getThreads());
         doConfigure(task);
     }

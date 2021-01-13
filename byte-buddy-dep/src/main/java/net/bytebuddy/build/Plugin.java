@@ -53,6 +53,10 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
  * concurrently and must assure its own thread-safety if run outside of a {@link Plugin.Engine} or when using a parallel
  * {@link Plugin.Engine.Dispatcher}.
  * </p>
+ * <p>
+ * For discoverability, plugin class names can be stored in a file named <i>/META-INF/net.bytebuddy/build.plugins</i> with the fully
+ * qualified class name of the plugin per line.
+ * </p>
  */
 public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
 
