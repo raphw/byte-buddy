@@ -124,6 +124,7 @@ public class AgentBuilderDefaultTest {
         when(transformer.transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED)))
                 .thenReturn((DynamicType.Builder) builder);
         when(poolStrategy.typePool(any(ClassFileLocator.class), any(ClassLoader.class))).thenReturn(typePool);
+        when(poolStrategy.typePool(any(ClassFileLocator.class), any(ClassLoader.class), any(String.class))).thenReturn(typePool);
         when(typePool.describe(REDEFINED.getName())).thenReturn(resolution);
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
         when(initializationStrategy.dispatcher()).thenReturn(dispatcher);

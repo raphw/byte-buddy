@@ -32,6 +32,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.*;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
@@ -293,6 +294,65 @@ public interface TypePool {
              */
             public ConcurrentMap<String, Resolution> getStorage() {
                 return storage;
+            }
+        }
+
+        /**
+         * A discriminating cache provider that delegates a type name to one of two caches.
+         */
+        class Discriminating implements CacheProvider {
+
+            /**
+             * The matcher that determines which cache to use.
+             */
+            private final ElementMatcher<String> matcher;
+
+            /**
+             * The cache provider to use for matched types.
+             */
+            private final CacheProvider matched;
+
+            /**
+             * The cache provider to use for unmatched types.
+             */
+            private final CacheProvider unmatched;
+
+            /**
+             * Creates a new discriminating cache provider.
+             *
+             * @param matcher   The matcher that determines which cache to use.
+             * @param matched   The cache provider to use for matched types.
+             * @param unmatched The cache provider to use for unmatched types.
+             */
+            public Discriminating(ElementMatcher<String> matcher, CacheProvider matched, CacheProvider unmatched) {
+                this.matcher = matcher;
+                this.matched = matched;
+                this.unmatched = unmatched;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Resolution find(String name) {
+                return (matcher.matches(name) ? matched : unmatched).find(name);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Resolution register(String name, Resolution resolution) {
+                return (matcher.matches(name) ? matched : unmatched).register(name, resolution);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void clear() {
+                try {
+                    unmatched.clear();
+                } finally {
+                    matched.clear();
+                }
             }
         }
     }

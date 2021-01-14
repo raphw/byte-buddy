@@ -2597,6 +2597,17 @@ public interface AgentBuilder {
         TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader);
 
         /**
+         * Creates a type pool for a given class file locator. If a cache is used, the type that is
+         * currently instrumented is not used.
+         *
+         * @param classFileLocator The class file locator to use.
+         * @param classLoader      The class loader for which the class file locator was created.
+         * @param name             The name of the currently instrumented type.
+         * @return A type pool for the supplied class file locator.
+         */
+        TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader, String name);
+
+        /**
          * <p>
          * A default type locator that resolves types only if any property that is not the type's name is requested.
          * </p>
@@ -2642,6 +2653,13 @@ public interface AgentBuilder {
              */
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader, String name) {
+                return typePool(classFileLocator, classLoader);
             }
         }
 
@@ -2691,6 +2709,13 @@ public interface AgentBuilder {
              */
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return new TypePool.Default(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader, String name) {
+                return typePool(classFileLocator, classLoader);
             }
         }
 
@@ -2742,6 +2767,13 @@ public interface AgentBuilder {
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return TypePool.ClassLoading.of(classLoader, new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode));
             }
+
+            /**
+             * {@inheritDoc}
+             */
+            public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader, String name) {
+                return typePool(classFileLocator, classLoader);
+            }
         }
 
         /**
@@ -2777,6 +2809,15 @@ public interface AgentBuilder {
              */
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return new TypePool.Default.WithLazyResolution(locate(classLoader), classFileLocator, readerMode);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader, String name) {
+                return new TypePool.Default.WithLazyResolution(new TypePool.CacheProvider.Discriminating(ElementMatchers.<String>is(name),
+                        new TypePool.CacheProvider.Simple(),
+                        locate(classLoader)), classFileLocator, readerMode);
             }
 
             /**
@@ -3459,7 +3500,7 @@ public interface AgentBuilder {
         /**
          * Describes the given type.
          *
-         * @param typeName        The binary name of the type to describe.
+         * @param name        The binary name of the type to describe.
          * @param type            The type that is being redefined, if a redefinition is applied or {@code null} if no redefined type is available.
          * @param typePool        The type pool to use for locating a type if required.
          * @param classLoader     The type's class loader where {@code null} represents the bootstrap class loader.
@@ -3467,7 +3508,7 @@ public interface AgentBuilder {
          * @param module          The type's module or {@code null} if the current VM does not support modules.
          * @return An appropriate type description.
          */
-        TypeDescription apply(String typeName, Class<?> type, TypePool typePool, CircularityLock circularityLock, ClassLoader classLoader, JavaModule module);
+        TypeDescription apply(String name, Class<?> type, TypePool typePool, CircularityLock circularityLock, ClassLoader classLoader, JavaModule module);
 
         /**
          * Default implementations of a {@link DescriptionStrategy}.
@@ -3488,14 +3529,14 @@ public interface AgentBuilder {
              */
             HYBRID(true) {
                 /** {@inheritDoc} */
-                public TypeDescription apply(String typeName,
+                public TypeDescription apply(String name,
                                              Class<?> type,
                                              TypePool typePool,
                                              CircularityLock circularityLock,
                                              ClassLoader classLoader,
                                              JavaModule module) {
                     return type == null
-                            ? typePool.describe(typeName).resolve()
+                            ? typePool.describe(name).resolve()
                             : TypeDescription.ForLoadedType.of(type);
                 }
             },
@@ -3515,13 +3556,13 @@ public interface AgentBuilder {
              */
             POOL_ONLY(false) {
                 /** {@inheritDoc} */
-                public TypeDescription apply(String typeName,
+                public TypeDescription apply(String name,
                                              Class<?> type,
                                              TypePool typePool,
                                              CircularityLock circularityLock,
                                              ClassLoader classLoader,
                                              JavaModule module) {
-                    return typePool.describe(typeName).resolve();
+                    return typePool.describe(name).resolve();
                 }
             },
 
@@ -3539,13 +3580,13 @@ public interface AgentBuilder {
              */
             POOL_FIRST(false) {
                 /** {@inheritDoc} */
-                public TypeDescription apply(String typeName,
+                public TypeDescription apply(String name,
                                              Class<?> type,
                                              TypePool typePool,
                                              CircularityLock circularityLock,
                                              ClassLoader classLoader,
                                              JavaModule module) {
-                    TypePool.Resolution resolution = typePool.describe(typeName);
+                    TypePool.Resolution resolution = typePool.describe(name);
                     return resolution.isResolved() || type == null
                             ? resolution.resolve()
                             : TypeDescription.ForLoadedType.of(type);
@@ -3637,13 +3678,13 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public TypeDescription apply(String typeName,
+            public TypeDescription apply(String name,
                                          Class<?> type,
                                          TypePool typePool,
                                          CircularityLock circularityLock,
                                          ClassLoader classLoader,
                                          JavaModule module) {
-                TypeDescription typeDescription = delegate.apply(typeName, type, typePool, circularityLock, classLoader, module);
+                TypeDescription typeDescription = delegate.apply(name, type, typePool, circularityLock, classLoader, module);
                 return typeDescription instanceof TypeDescription.ForLoadedType
                         ? typeDescription
                         : new TypeDescription.SuperTypeLoading(typeDescription, classLoader, new UnlockingClassLoadingDelegate(circularityLock));
@@ -3746,13 +3787,13 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public TypeDescription apply(String typeName,
+                public TypeDescription apply(String name,
                                              Class<?> type,
                                              TypePool typePool,
                                              CircularityLock circularityLock,
                                              ClassLoader classLoader,
                                              JavaModule module) {
-                    TypeDescription typeDescription = delegate.apply(typeName, type, typePool, circularityLock, classLoader, module);
+                    TypeDescription typeDescription = delegate.apply(name, type, typePool, circularityLock, classLoader, module);
                     return typeDescription instanceof TypeDescription.ForLoadedType
                             ? typeDescription
                             : new TypeDescription.SuperTypeLoading(typeDescription, classLoader, new ThreadSwitchingClassLoadingDelegate(executorService));
@@ -4510,6 +4551,17 @@ public interface AgentBuilder {
         ClassFileLocator resolve(String name, byte[] binaryRepresentation, ClassLoader classLoader, JavaModule module, ProtectionDomain protectionDomain);
 
         /**
+         * Resolves the type pool for a given type name by the supplied {@link PoolStrategy}.
+         *
+         * @param poolStrategy     The pool strategy to use.
+         * @param classFileLocator The class file locator to use.
+         * @param classLoader      The class loader to use.
+         * @param name             The name of the type for which the type pool is resolved.
+         * @return A suitable type pool.
+         */
+        TypePool typePool(PoolStrategy poolStrategy, ClassFileLocator classFileLocator, ClassLoader classLoader, String name);
+
+        /**
          * An implementation of default class file buffer strategy.
          */
         enum Default implements ClassFileBufferStrategy {
@@ -4525,6 +4577,14 @@ public interface AgentBuilder {
                                                 JavaModule module,
                                                 ProtectionDomain protectionDomain) {
                     return ClassFileLocator.Simple.of(name, binaryRepresentation);
+                }
+
+                /** {@inheritDoc} */
+                public TypePool typePool(PoolStrategy poolStrategy,
+                                         ClassFileLocator classFileLocator,
+                                         ClassLoader classLoader,
+                                         String name) {
+                    return poolStrategy.typePool(classFileLocator, classLoader, name);
                 }
             },
 
@@ -4545,9 +4605,16 @@ public interface AgentBuilder {
                                                 ProtectionDomain protectionDomain) {
                     return ClassFileLocator.NoOp.INSTANCE;
                 }
+
+                /** {@inheritDoc} */
+                public TypePool typePool(PoolStrategy poolStrategy,
+                                         ClassFileLocator classFileLocator,
+                                         ClassLoader classLoader,
+                                         String name) {
+                    return poolStrategy.typePool(classFileLocator, classLoader);
+                }
             }
         }
-
     }
 
     /**
@@ -10294,29 +10361,29 @@ public interface AgentBuilder {
                 if (internalTypeName == null || !lambdaInstrumentationStrategy.isInstrumented(classBeingRedefined)) {
                     return NO_TRANSFORMATION;
                 }
-                String typeName = internalTypeName.replace('/', '.');
+                String name = internalTypeName.replace('/', '.');
                 try {
-                    listener.onDiscovery(typeName, classLoader, module, classBeingRedefined != null);
-                    ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileBufferStrategy.resolve(typeName,
+                    listener.onDiscovery(name, classLoader, module, classBeingRedefined != null);
+                    ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileBufferStrategy.resolve(name,
                             binaryRepresentation,
                             classLoader,
                             module,
                             protectionDomain), locationStrategy.classFileLocator(classLoader, module));
-                    TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
+                    TypePool typePool = classFileBufferStrategy.typePool(poolStrategy, classFileLocator, classLoader, name);
                     try {
-                        return doTransform(module, classLoader, typeName, classBeingRedefined, classBeingRedefined != null, protectionDomain, typePool, classFileLocator);
+                        return doTransform(module, classLoader, name, classBeingRedefined, classBeingRedefined != null, protectionDomain, typePool, classFileLocator);
                     } catch (Throwable throwable) {
                         if (classBeingRedefined != null && descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(classBeingRedefined, throwable)) {
-                            return doTransform(module, classLoader, typeName, NO_LOADED_TYPE, Listener.LOADED, protectionDomain, typePool, classFileLocator);
+                            return doTransform(module, classLoader, name, NO_LOADED_TYPE, Listener.LOADED, protectionDomain, typePool, classFileLocator);
                         } else {
                             throw throwable;
                         }
                     }
                 } catch (Throwable throwable) {
-                    listener.onError(typeName, classLoader, module, classBeingRedefined != null, throwable);
+                    listener.onError(name, classLoader, module, classBeingRedefined != null, throwable);
                     return NO_TRANSFORMATION;
                 } finally {
-                    listener.onComplete(typeName, classLoader, module, classBeingRedefined != null);
+                    listener.onComplete(name, classLoader, module, classBeingRedefined != null);
                 }
             }
 
@@ -10325,7 +10392,7 @@ public interface AgentBuilder {
              *
              * @param module              The instrumented class's Java module in its wrapped form or {@code null} if the current VM does not support modules.
              * @param classLoader         The instrumented class's class loader.
-             * @param typeName            The binary name of the instrumented class.
+             * @param name            The binary name of the instrumented class.
              * @param classBeingRedefined The loaded {@link Class} being redefined or {@code null} if no such class exists.
              * @param loaded              {@code true} if the instrumented type is loaded.
              * @param protectionDomain    The instrumented type's protection domain.
@@ -10335,13 +10402,13 @@ public interface AgentBuilder {
              */
             private byte[] doTransform(JavaModule module,
                                        ClassLoader classLoader,
-                                       String typeName,
+                                       String name,
                                        Class<?> classBeingRedefined,
                                        boolean loaded,
                                        ProtectionDomain protectionDomain,
                                        TypePool typePool,
                                        ClassFileLocator classFileLocator) {
-                TypeDescription typeDescription = descriptionStrategy.apply(typeName, classBeingRedefined, typePool, circularityLock, classLoader, module);
+                TypeDescription typeDescription = descriptionStrategy.apply(name, classBeingRedefined, typePool, circularityLock, classLoader, module);
                 List<Transformer> transformers = new ArrayList<Transformer>();
                 if (!ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
                     for (Transformation transformation : transformations) {
