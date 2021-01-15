@@ -1,5 +1,6 @@
 package net.bytebuddy.pool;
 
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
@@ -10,14 +11,13 @@ import org.mockito.Mock;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.CoreMatchers.sameInstance;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 public class TypePoolCacheProviderTest {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "foo", BAR = "bar";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -49,9 +49,33 @@ public class TypePoolCacheProviderTest {
     }
 
     @Test
-    public void testSimpleMap() {
+    public void testSimpleMap() throws Exception {
         ConcurrentMap<String, TypePool.Resolution> storage = new ConcurrentHashMap<String, TypePool.Resolution>();
         TypePool.CacheProvider.Simple cacheProvider = new TypePool.CacheProvider.Simple(storage);
         assertThat(cacheProvider.getStorage(), sameInstance(storage));
+    }
+
+    @Test
+    public void testDiscriminatingMatched() throws Exception {
+        TypePool.CacheProvider matched = mock(TypePool.CacheProvider.class), unmatched = mock(TypePool.CacheProvider.class);
+        TypePool.CacheProvider discriminating = new TypePool.CacheProvider.Discriminating(ElementMatchers.<String>is(FOO), matched, unmatched);
+        when(matched.register(FOO, resolution)).thenReturn(resolution);
+        assertThat(discriminating.register(FOO, resolution), sameInstance(resolution));
+        verifyZeroInteractions(unmatched);
+        discriminating.clear();
+        verify(matched).clear();
+        verify(unmatched).clear();
+    }
+
+    @Test
+    public void testDiscriminatingUnmatched() throws Exception {
+        TypePool.CacheProvider matched = mock(TypePool.CacheProvider.class), unmatched = mock(TypePool.CacheProvider.class);
+        TypePool.CacheProvider discriminating = new TypePool.CacheProvider.Discriminating(ElementMatchers.<String>is(BAR), matched, unmatched);
+        when(unmatched.register(FOO, resolution)).thenReturn(resolution);
+        assertThat(discriminating.register(FOO, resolution), sameInstance(resolution));
+        verifyZeroInteractions(matched);
+        discriminating.clear();
+        verify(matched).clear();
+        verify(unmatched).clear();
     }
 }
