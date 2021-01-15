@@ -24,21 +24,12 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
-
-import java.io.*;
-import java.net.URL;
-import java.util.*;
-
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugins.annotations.Component;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.plugins.annotations.*;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.codehaus.plexus.util.Scanner;
@@ -46,6 +37,13 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.sonatype.plexus.build.incremental.BuildContext;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.*;
 
 /**
  * A Maven plugin for applying Byte Buddy transformations during a build.
@@ -207,8 +205,32 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         if (skip) {
             getLog().info("Not applying instrumentation as a result of plugin configuration.");
             return;
-        } else if (transformations == null || transformations.isEmpty()) {
-            getLog().warn("No transformations are specified. Skipping plugin application.");
+        }
+        List<Transformation> transformations = this.transformations == null
+                ? new ArrayList<Transformation>()
+                : new ArrayList<Transformation>(this.transformations);
+        if (discover) {
+            try {
+                Enumeration<URL> plugins = getClass().getClassLoader().getResources("/META-INF/net.bytebuddy/build.plugins");
+                while (plugins.hasMoreElements()) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(plugins.nextElement().openStream(), "UTF-8"));
+                    try {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            Transformation transformation = new Transformation();
+                            transformation.plugin = line;
+                            transformations.add(transformation);
+                        }
+                    } finally {
+                        reader.close();
+                    }
+                }
+            } catch (IOException exception) {
+                throw new MojoExecutionException("Failed plugin discovery", exception);
+            }
+        }
+        if (transformations.isEmpty()) {
+            getLog().warn("No transformations are specified or discovered. Skipping plugin application.");
             return;
         }
         try {
@@ -230,13 +252,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     source = new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory()));
                     getLog().debug("Cannot build incrementally - all class files are processed");
                 }
-                Plugin.Engine.Summary summary = apply(new File(getOutputDirectory()), getClassPathElements(), source);
+                Plugin.Engine.Summary summary = apply(new File(getOutputDirectory()), getClassPathElements(), transformations, source);
                 for (TypeDescription typeDescription : summary.getTransformed()) {
                     context.refresh(new File(getOutputDirectory(), typeDescription.getName() + JAVA_CLASS_EXTENSION));
                 }
             } else {
                 getLog().debug("Not applying incremental build with context: " + context);
-                apply(new File(getOutputDirectory()), getClassPathElements(), new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory())));
+                apply(new File(getOutputDirectory()), getClassPathElements(), transformations, new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory())));
             }
         } catch (IOException exception) {
             throw new MojoFailureException("Error during writing process", exception);
@@ -268,15 +290,19 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * Applies the instrumentation.
      *
-     * @param root      The root folder that contains all class files.
-     * @param classPath An iterable over all class path elements.
-     * @param source    The source for the plugin's application.
+     * @param root            The root folder that contains all class files.
+     * @param classPath       An iterable over all class path elements.
+     * @param transformations The transformations to apply.
+     * @param source          The source for the plugin's application.
      * @return A summary of the applied transformation.
      * @throws MojoExecutionException If the plugin cannot be applied.
      * @throws IOException            If an I/O exception occurs.
      */
     @SuppressWarnings("unchecked")
-    private Plugin.Engine.Summary apply(File root, List<? extends String> classPath, Plugin.Engine.Source source) throws MojoExecutionException, IOException {
+    private Plugin.Engine.Summary apply(File root,
+                                        List<? extends String> classPath,
+                                        List<Transformation> transformations,
+                                        Plugin.Engine.Source source) throws MojoExecutionException, IOException {
         if (!root.exists()) {
             if (warnOnMissingOutputDirectory) {
                 getLog().warn("Skipping instrumentation due to missing directory: " + root);
@@ -294,23 +320,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : repositorySystemSession,
                 project.getRemotePluginRepositories());
         try {
-            List<Transformation> transformations = new ArrayList<Transformation>(this.transformations);
-            if (discover) {
-                Enumeration<URL> plugins = getClass().getClassLoader().getResources("/META-INF/net.bytebuddy/build.plugins");
-                while (plugins.hasMoreElements()) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(plugins.nextElement().openStream(), "UTF-8"));
-                    try {
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            Transformation transformation = new Transformation();
-                            transformation.plugin = line;
-                            transformations.add(transformation);
-                        }
-                    } finally {
-                        reader.close();
-                    }
-                }
-            }
             List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>(transformations.size());
             for (Transformation transformation : transformations) {
                 String plugin = transformation.getPlugin();
