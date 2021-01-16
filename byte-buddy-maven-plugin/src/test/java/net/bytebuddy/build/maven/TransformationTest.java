@@ -19,7 +19,6 @@ public class TransformationTest {
         transformation.version = BAZ;
         transformation.packaging = JAR;
         assertThat(transformation.getPlugin(), is(FOO));
-        assertThat(transformation.getRawPlugin(), is(FOO));
         assertThat(transformation.getGroupId(FOO), is(BAR));
         assertThat(transformation.getArtifactId(FOO), is(QUX));
         assertThat(transformation.getVersion(FOO), is(BAZ));

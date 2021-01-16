@@ -206,20 +206,22 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             getLog().info("Not applying instrumentation as a result of plugin configuration.");
             return;
         }
-        List<Transformation> transformations = this.transformations == null
-                ? new ArrayList<Transformation>()
-                : new ArrayList<Transformation>(this.transformations);
+        List<Transformer> transformers = new ArrayList<Transformer>();
+        if (transformations != null) {
+            for (Transformation transformation : transformations) {
+                transformers.add(new Transformer.ForConfiguredPlugin(transformation));
+            }
+        }
         if (discover) {
             try {
-                Enumeration<URL> plugins = getClass().getClassLoader().getResources("META-INF/net.bytebuddy/build.plugins");
+                Enumeration<URL> plugins = ByteBuddyMojo.class.getClassLoader().getResources("META-INF/net.bytebuddy/build.plugins");
                 while (plugins.hasMoreElements()) {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(plugins.nextElement().openStream(), "UTF-8"));
                     try {
                         String line;
                         while ((line = reader.readLine()) != null) {
-                            Transformation transformation = new Transformation();
-                            transformation.plugin = line;
-                            transformations.add(transformation);
+                            transformers.add(new Transformer.ForDiscoveredPlugin(line));
+                            getLog().debug("Discovered plugin: " + line);
                         }
                     } finally {
                         reader.close();
@@ -229,9 +231,11 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 throw new MojoExecutionException("Failed plugin discovery", exception);
             }
         }
-        if (transformations.isEmpty()) {
+        if (transformers.isEmpty()) {
             getLog().warn("No transformations are specified or discovered. Skipping plugin application.");
             return;
+        } else {
+            getLog().debug(transformers.size() + " plugins are being applied via configuration and discovery");
         }
         try {
             if (incremental && context != null && getSourceDirectory() != null) {
@@ -252,13 +256,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     source = new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory()));
                     getLog().debug("Cannot build incrementally - all class files are processed");
                 }
-                Plugin.Engine.Summary summary = apply(new File(getOutputDirectory()), getClassPathElements(), transformations, source);
+                Plugin.Engine.Summary summary = apply(new File(getOutputDirectory()), getClassPathElements(), transformers, source);
                 for (TypeDescription typeDescription : summary.getTransformed()) {
                     context.refresh(new File(getOutputDirectory(), typeDescription.getName() + JAVA_CLASS_EXTENSION));
                 }
             } else {
                 getLog().debug("Not applying incremental build with context: " + context);
-                apply(new File(getOutputDirectory()), getClassPathElements(), transformations, new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory())));
+                apply(new File(getOutputDirectory()), getClassPathElements(), transformers, new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory())));
             }
         } catch (IOException exception) {
             throw new MojoFailureException("Error during writing process", exception);
@@ -290,10 +294,10 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * Applies the instrumentation.
      *
-     * @param root            The root folder that contains all class files.
-     * @param classPath       An iterable over all class path elements.
-     * @param transformations The transformations to apply.
-     * @param source          The source for the plugin's application.
+     * @param root         The root folder that contains all class files.
+     * @param classPath    An iterable over all class path elements.
+     * @param transformers The transformers to apply.
+     * @param source       The source for the plugin's application.
      * @return A summary of the applied transformation.
      * @throws MojoExecutionException If the plugin cannot be applied.
      * @throws IOException            If an I/O exception occurs.
@@ -301,7 +305,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     @SuppressWarnings("unchecked")
     private Plugin.Engine.Summary apply(File root,
                                         List<? extends String> classPath,
-                                        List<Transformation> transformations,
+                                        List<Transformer> transformers,
                                         Plugin.Engine.Source source) throws MojoExecutionException, IOException {
         if (!root.exists()) {
             if (warnOnMissingOutputDirectory) {
@@ -320,23 +324,24 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : repositorySystemSession,
                 project.getRemotePluginRepositories());
         try {
-            List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>(transformations.size());
-            for (Transformation transformation : transformations) {
-                String plugin = transformation.getPlugin();
+            List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>(transformers.size());
+            for (Transformer transformer : transformers) {
+                String plugin = transformer.getPlugin();
                 try {
                     factories.add(new Plugin.Factory.UsingReflection((Class<? extends Plugin>) Class.forName(plugin,
                             false,
-                            classLoaderResolver.resolve(transformation.asCoordinate(project.getGroupId(),
+                            transformer.toClassLoader(classLoaderResolver,
+                                    project.getGroupId(),
                                     project.getArtifactId(),
                                     project.getVersion(),
-                                    project.getPackaging()))))
-                            .with(transformation.makeArgumentResolvers())
+                                    project.getPackaging())))
+                            .with(transformer.toArgumentResolvers())
                             .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File.class, root),
                                     Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Log.class, getLog()),
                                     Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new MavenBuildLogger(getLog()))));
-                    getLog().info("Resolved plugin: " + transformation.getRawPlugin());
+                    getLog().info("Resolved plugin: " + plugin);
                 } catch (Throwable throwable) {
-                    throw new MojoExecutionException("Cannot resolve plugin: " + transformation.getRawPlugin(), throwable);
+                    throw new MojoExecutionException("Cannot resolve plugin: " + plugin, throwable);
                 }
             }
             EntryPoint entryPoint = (initialization == null ? Initialization.makeDefault() : initialization).getEntryPoint(classLoaderResolver,
@@ -677,6 +682,126 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         @Override
         public void onLiveInitializer(TypeDescription typeDescription, TypeDescription definingType) {
             log.debug("Discovered live initializer for " + definingType + " as a result of transforming " + typeDescription);
+        }
+    }
+
+    /**
+     * A transformer that is applied during the plugin's execution.
+     */
+    protected abstract static class Transformer {
+
+        /**
+         * Returns the name of the plugin to apply.
+         *
+         * @return The name of the plugin to apply.
+         * @throws MojoExecutionException If the plugin name was not set.
+         */
+        protected abstract String getPlugin() throws MojoExecutionException;
+
+        /**
+         * Returns the argument resolvers to use.
+         *
+         * @return The argument resolvers to use.
+         */
+        protected abstract List<? extends Plugin.Factory.UsingReflection.ArgumentResolver> toArgumentResolvers();
+
+        /**
+         * Resolves the class loader to use for resolving the plugin.
+         *
+         * @param classLoaderResolver The class loader resolver to use.
+         * @param groupId             The group id of this project.
+         * @param artifactId          The artifact id of this project.
+         * @param version             The version of this project.
+         * @param packaging           The packaging of this project.
+         * @return The class loader to use.
+         * @throws MojoFailureException   If the class loader resolution yields a failure.
+         * @throws MojoExecutionException The the class loader resolution is incorrect.
+         */
+        protected abstract ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver,
+                                                     String groupId,
+                                                     String artifactId,
+                                                     String version,
+                                                     String packaging) throws MojoFailureException, MojoExecutionException;
+
+        /**
+         * A transformer for an explicitly configured plugin.
+         */
+        protected static class ForConfiguredPlugin extends Transformer {
+
+            /**
+             * The configured transformation.
+             */
+            private final Transformation transformation;
+
+            /**
+             * Creates a new transformer for an explicitly configured plugin.
+             *
+             * @param transformation The configured transformation.
+             */
+            protected ForConfiguredPlugin(Transformation transformation) {
+                this.transformation = transformation;
+            }
+
+            @Override
+            protected String getPlugin() throws MojoExecutionException {
+                return transformation.getPlugin();
+            }
+
+            @Override
+            protected List<? extends Plugin.Factory.UsingReflection.ArgumentResolver> toArgumentResolvers() {
+                return transformation.makeArgumentResolvers();
+            }
+
+            @Override
+            protected ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver,
+                                                String groupId,
+                                                String artifactId,
+                                                String version,
+                                                String packaging) throws MojoFailureException, MojoExecutionException {
+                return classLoaderResolver.resolve(transformation.asCoordinate(groupId,
+                        artifactId,
+                        version,
+                        packaging));
+            }
+        }
+
+        /**
+         * A transformer for a discovered plugin.
+         */
+        protected static class ForDiscoveredPlugin extends Transformer {
+
+            /**
+             * The name of the discovered plugin.
+             */
+            private final String plugin;
+
+            /**
+             * Creates a new transformer for a discovered plugin.
+             *
+             * @param plugin The name of the discovered plugin.
+             */
+            protected ForDiscoveredPlugin(String plugin) {
+                this.plugin = plugin;
+            }
+
+            @Override
+            protected String getPlugin() {
+                return plugin;
+            }
+
+            @Override
+            protected List<? extends Plugin.Factory.UsingReflection.ArgumentResolver> toArgumentResolvers() {
+                return Collections.emptyList();
+            }
+
+            @Override
+            protected ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver,
+                                                String groupId,
+                                                String artifactId,
+                                                String version,
+                                                String packaging) {
+                return ByteBuddyMojo.class.getClassLoader();
+            }
         }
     }
 }

@@ -53,15 +53,6 @@ public class Transformation extends CoordinateConfiguration {
     }
 
     /**
-     * Returns the plugin name or {@code null} if it is not set.
-     *
-     * @return The configured plugin name.
-     */
-    public String getRawPlugin() {
-        return plugin;
-    }
-
-    /**
      * Creates the argument resolvers for the plugin's constructor by transforming the plugin arguments.
      *
      * @return A list of argument resolvers.
