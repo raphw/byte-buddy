@@ -36,4 +36,6 @@ This example transformation uses a standard plugin that is shipped with Byte Bud
 
 A plugin can declare a constructor that takes arguments of type `File`, `BuildLogger` or a Gradle-specific `Logger` where the class file root directory or an appropriate logger is provided. It is also possible to supply an argument explicitly by specifying an argument in the plugin configuration.
 
+A plugin can be applied automatically when it is included as a dependency of the *byte-buddy-maven-plugin* configuration and if the plugin's containing jar file declares the plugin's name in the *META-INF/net.bytebuddy/build.plugins* file.
+
 The plugin supports Maven's `BuildContext` and incremental build feature which is currently supported by the Eclipse IDE. To enable it, it needs to be activated explicitly by setting the `incremental` property to `true`.

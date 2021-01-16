@@ -24,4 +24,6 @@ This example transformation uses a standard plugin that is shipped with Byte Bud
 
 A custom can declare a constructor that can take arguments of type `File`, `BuildLogger` or a Gradle-specific `Logger` where the class file root directory or an appropriate logger is provided. It is also possible to supply an argument explicitly by specifying an argument in the plugin configuration.
 
+A plugin can be applied automatically if the plugin's containing jar file declares the plugin's name in the *META-INF/net.bytebuddy/build.plugins* file.
+
 The plugin offers the implementation of custom tasks, the `ByteBuddyTask` transforms classes within a folder and writes it to another folder while using Gradle's incremental build feature what requires Gradle 6 or later. The `ByteBuddySimpleTask` does not support incremental build but works from Gradle 2 on up whereas the `ByteBuddyJarTask` allows the transformation of a bundled jar file. Insight into the Byte Buddy plugins autoconfiguration can be found in the debug log.
