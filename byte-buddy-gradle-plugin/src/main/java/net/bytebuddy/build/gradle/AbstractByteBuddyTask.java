@@ -309,6 +309,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                             Transformation transformation = new Transformation();
                             transformation.setPlugin(plugin);
                             transformations.add(transformation);
+                            getLogger().debug("Disocvered plugin: {}", line);
                         } catch (ClassNotFoundException exception) {
                             throw new IllegalStateException("Discovered plugin is not available: " + line, exception);
                         }
@@ -317,6 +318,11 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                     reader.close();
                 }
             }
+        }
+        if (transformers.isEmpty()) {
+            getLogger().warn("No transformations are specified or discovered. Skipping plugin application.");
+        } else {
+            getLogger().debug("{} plugins are being applied via configuration and discovery", transformers.size());
         }
         List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>(transformations.size());
         for (Transformation transformation : transformations) {
