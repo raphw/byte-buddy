@@ -322,7 +322,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
         if (transformers.isEmpty()) {
             getLogger().warn("No transformations are specified or discovered. Skipping plugin application.");
         } else {
-            getLogger().debug("{} plugins are being applied via configuration and discovery", transformers.size());
+            getLogger().debug("{} plugins are being applied via configuration and discovery", transformations.size());
         }
         List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>(transformations.size());
         for (Transformation transformation : transformations) {
