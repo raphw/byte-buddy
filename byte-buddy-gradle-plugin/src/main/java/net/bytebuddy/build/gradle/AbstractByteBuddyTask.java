@@ -297,7 +297,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
         }
         List<Transformation> transformations = new ArrayList<Transformation>(getTransformations());
         if (isDiscover()) {
-            Enumeration<URL> plugins = getClass().getClassLoader().getResources("/META-INF/net.bytebuddy/build.plugins");
+            Enumeration<URL> plugins = getClass().getClassLoader().getResources("META-INF/net.bytebuddy/build.plugins");
             while (plugins.hasMoreElements()) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(plugins.nextElement().openStream(), "UTF-8"));
                 try {

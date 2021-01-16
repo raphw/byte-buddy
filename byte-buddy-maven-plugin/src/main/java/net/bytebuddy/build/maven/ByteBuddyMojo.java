@@ -211,7 +211,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 : new ArrayList<Transformation>(this.transformations);
         if (discover) {
             try {
-                Enumeration<URL> plugins = getClass().getClassLoader().getResources("/META-INF/net.bytebuddy/build.plugins");
+                Enumeration<URL> plugins = getClass().getClassLoader().getResources("META-INF/net.bytebuddy/build.plugins");
                 while (plugins.hasMoreElements()) {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(plugins.nextElement().openStream(), "UTF-8"));
                     try {
