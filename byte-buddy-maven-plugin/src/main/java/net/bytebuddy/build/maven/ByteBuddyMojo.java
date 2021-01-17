@@ -207,9 +207,11 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             return;
         }
         List<Transformer> transformers = new ArrayList<Transformer>();
+        Set<String> undiscoverable = new HashSet<String>();
         if (transformations != null) {
             for (Transformation transformation : transformations) {
                 transformers.add(new Transformer.ForConfiguredPlugin(transformation));
+                undiscoverable.add(transformation.getPlugin());
             }
         }
         if (discover) {
@@ -220,8 +222,12 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     try {
                         String line;
                         while ((line = reader.readLine()) != null) {
-                            transformers.add(new Transformer.ForDiscoveredPlugin(line));
-                            getLog().debug("Discovered plugin: " + line);
+                            if (undiscoverable.add(line)) {
+                                transformers.add(new Transformer.ForDiscoveredPlugin(line));
+                                getLog().debug("Registered discovered plugin: " + line);
+                            } else {
+                                getLog().info("Skipping discovered plugin " + line + " which was previously discovered or registered");
+                            }
                         }
                     } finally {
                         reader.close();

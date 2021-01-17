@@ -297,21 +297,29 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
         }
         List<Transformation> transformations = new ArrayList<Transformation>(getTransformations());
         if (isDiscover()) {
+            Set<String> undiscoverable = new HashSet<String>();
+            for (Transformation transformation : transformations) {
+                undiscoverable.add(transformation.getPlugin().getName());
+            }
             Enumeration<URL> plugins = getClass().getClassLoader().getResources("META-INF/net.bytebuddy/build.plugins");
             while (plugins.hasMoreElements()) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(plugins.nextElement().openStream(), "UTF-8"));
                 try {
                     String line;
                     while ((line = reader.readLine()) != null) {
-                        try {
-                            @SuppressWarnings("unchecked")
-                            Class<? extends Plugin> plugin = (Class<? extends Plugin>) Class.forName(line);
-                            Transformation transformation = new Transformation();
-                            transformation.setPlugin(plugin);
-                            transformations.add(transformation);
-                            getLogger().debug("Disocvered plugin: {}", line);
-                        } catch (ClassNotFoundException exception) {
-                            throw new IllegalStateException("Discovered plugin is not available: " + line, exception);
+                        if (undiscoverable.add(line)) {
+                            try {
+                                @SuppressWarnings("unchecked")
+                                Class<? extends Plugin> plugin = (Class<? extends Plugin>) Class.forName(line);
+                                Transformation transformation = new Transformation();
+                                transformation.setPlugin(plugin);
+                                transformations.add(transformation);
+                            } catch (ClassNotFoundException exception) {
+                                throw new IllegalStateException("Discovered plugin is not available: " + line, exception);
+                            }
+                            getLogger().debug("Registered discovered plugin: {}", line);
+                        } else {
+                            getLogger().info("Skipping discovered plugin {} which was previously discovered or registered", line);
                         }
                     }
                 } finally {
