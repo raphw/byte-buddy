@@ -77,40 +77,40 @@ public interface TypeAttributeAppender {
 
         /**
          * A type attribute appender that writes all annotations of the instrumented but excludes annotations up to
-         * a given index.
+         * a given index. 类型属性附加器，它写入已检测的所有注释，但不包括直到给定索引的注释
          */
         @HashCodeAndEqualsPlugin.Enhance
         public static class Differentiating implements TypeAttributeAppender {
 
             /**
-             * The index of the first annotations that should be directly written onto the type.
+             * The index of the first annotations that should be directly written onto the type. 应该直接写到类型上的第一个注释的索引
              */
             private final int annotationIndex;
 
             /**
-             * The index of the first type variable for which type annotations should be directly written onto the type.
+             * The index of the first type variable for which type annotations should be directly written onto the type. 应将类型注释直接写到类型上的第一个类型变量的索引
              */
             private final int typeVariableIndex;
 
             /**
-             * The index of the first interface type for which type annotations should be directly written onto the type.
+             * The index of the first interface type for which type annotations should be directly written onto the type. 应将类型注释直接写入该类型的第一个接口类型的索引
              */
             private final int interfaceTypeIndex;
 
             /**
-             * Creates a new differentiating type attribute appender.
+             * Creates a new differentiating type attribute appender. 创建一个新的区分类型属性追加器
              *
-             * @param typeDescription The type for which to resolve all exclusion indices.
+             * @param typeDescription The type for which to resolve all exclusion indices. 解决所有排除索引的类型
              */
             public Differentiating(TypeDescription typeDescription) {
                 this(typeDescription.getDeclaredAnnotations().size(), typeDescription.getTypeVariables().size(), typeDescription.getInterfaces().size());
             }
 
             /**
-             * Creates a new differentiating type attribute appender.
+             * Creates a new differentiating type attribute appender. 创建一个新的区分类型属性追加器
              *
-             * @param annotationIndex    The index of the first annotations that should be directly written onto the type.
-             * @param typeVariableIndex  The index of the first interface type for which type annotations should be directly written onto the type.
+             * @param annotationIndex    The index of the first annotations that should be directly written onto the type. 应该直接写到类型上的第一个注释的索引
+             * @param typeVariableIndex  The index of the first interface type for which type annotations should be directly written onto the type. 应将类型注释直接写入该类型的第一个接口类型的索引
              * @param interfaceTypeIndex The index of the first interface type for which type annotations should be directly written onto the type.
              */
             protected Differentiating(int annotationIndex, int typeVariableIndex, int interfaceTypeIndex) {
@@ -193,9 +193,9 @@ public interface TypeAttributeAppender {
         }
 
         /**
-         * Creates a new compound attribute appender.
+         * Creates a new compound attribute appender. 创建一个新的复合属性追加器
          *
-         * @param typeAttributeAppenders The type attribute appenders to concatenate in the order of their application.
+         * @param typeAttributeAppenders The type attribute appenders to concatenate in the order of their application. 类型属性附加器按照其应用顺序进行连接
          */
         public Compound(List<? extends TypeAttributeAppender> typeAttributeAppenders) {
             this.typeAttributeAppenders = new ArrayList<TypeAttributeAppender>();

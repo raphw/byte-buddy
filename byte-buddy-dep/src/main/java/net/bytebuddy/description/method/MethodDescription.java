@@ -37,8 +37,8 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
 import static net.bytebuddy.matcher.ElementMatchers.ofSort;
 
 /**
- * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
- * interface must provide meaningful {@code equal(Object)} and {@code hashCode()} implementations.
+ * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this 这个接口的实现描述了一个Java方法，即方法或构造函数
+ * interface must provide meaningful {@code equal(Object)} and {@code hashCode()} implementations. 此接口的实现必须提供有意义的equal(Object)和hashCode()实现
  */
 public interface MethodDescription extends TypeVariableSource,
         ModifierReviewable.ForMethodDescription,
@@ -47,7 +47,7 @@ public interface MethodDescription extends TypeVariableSource,
         ByteCodeElement.TypeDependant<MethodDescription.InDefinedShape, MethodDescription.Token> {
 
     /**
-     * The internal name of a Java constructor.
+     * The internal name of a Java constructor. Java构造函数的内部名称
      */
     String CONSTRUCTOR_INTERNAL_NAME = "<init>";
 
@@ -57,7 +57,7 @@ public interface MethodDescription extends TypeVariableSource,
     String TYPE_INITIALIZER_INTERNAL_NAME = "<clinit>";
 
     /**
-     * The type initializer of any representation of a type initializer.
+     * The type initializer of any representation of a type initializer. 类型初始值设定项的任何表示形式的类型初始值设定项
      */
     int TYPE_INITIALIZER_MODIFIER = Opcodes.ACC_STATIC;
 
@@ -303,7 +303,7 @@ public interface MethodDescription extends TypeVariableSource,
     }
 
     /**
-     * Represents a method in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved.
+     * Represents a method in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved. 以其定义的形状表示方法，即以类定义的形式表示方法，而不解析其类型变量
      */
     interface InDefinedShape extends MethodDescription {
 
@@ -314,7 +314,7 @@ public interface MethodDescription extends TypeVariableSource,
         ParameterList<ParameterDescription.InDefinedShape> getParameters();
 
         /**
-         * An abstract base implementation of a method description in its defined shape.
+         * An abstract base implementation of a method description in its defined shape. 方法描述在其定义的形状中的抽象基实现
          */
         abstract class AbstractBase extends MethodDescription.AbstractBase implements InDefinedShape {
 
@@ -344,7 +344,7 @@ public interface MethodDescription extends TypeVariableSource,
     }
 
     /**
-     * An abstract base implementation of a method description.
+     * An abstract base implementation of a method description. 方法描述的抽象基实现
      */
     abstract class AbstractBase extends TypeVariableSource.AbstractBase implements MethodDescription {
 
@@ -1339,7 +1339,7 @@ public interface MethodDescription extends TypeVariableSource,
     }
 
     /**
-     * A method description that represents a given method but with substituted method types.
+     * A method description that represents a given method but with substituted method types. 表示给定方法但具有替代方法类型的方法描述
      */
     class TypeSubstituting extends AbstractBase implements InGenericShape {
 
@@ -1448,37 +1448,37 @@ public interface MethodDescription extends TypeVariableSource,
     }
 
     /**
-     * A token representing a method's properties detached from a type.
+     * A token representing a method's properties detached from a type. 表示方法的属性与类型分离的令牌
      */
     class Token implements ByteCodeElement.Token<Token> {
 
         /**
-         * The internal name of the represented method.
+         * The internal name of the represented method. 所表示方法的内部名称
          */
         private final String name;
 
         /**
-         * The modifiers of the represented method.
+         * The modifiers of the represented method. 所表示方法的修饰符
          */
         private final int modifiers;
 
         /**
-         * A list of tokens representing the method's type variables.
+         * A list of tokens representing the method's type variables. 表示方法类型变量的标记列表
          */
         private final List<? extends TypeVariableToken> typeVariableTokens;
 
         /**
-         * The return type of the represented method.
+         * The return type of the represented method. 所表示方法的返回类型
          */
         private final TypeDescription.Generic returnType;
 
         /**
-         * The parameter tokens of the represented method.
+         * The parameter tokens of the represented method. 所表示方法的参数标记
          */
         private final List<? extends ParameterDescription.Token> parameterTokens;
 
         /**
-         * The exception types of the represented method.
+         * The exception types of the represented method. 表示方法的异常类型
          */
         private final List<? extends TypeDescription.Generic> exceptionTypes;
 
@@ -1493,7 +1493,7 @@ public interface MethodDescription extends TypeVariableSource,
         private final AnnotationValue<?, ?> defaultValue;
 
         /**
-         * The receiver type of the represented method or {@code null} if the receiver type is implicit.
+         * The receiver type of the represented method or {@code null} if the receiver type is implicit. 所表示方法的接收者类型；如果接收者类型是隐式的，则为{@code null}
          */
         private final TypeDescription.Generic receiverType;
 
@@ -1733,27 +1733,27 @@ public interface MethodDescription extends TypeVariableSource,
     }
 
     /**
-     * A token representing a method's name and raw return and parameter types.
+     * A token representing a method's name and raw return and parameter types. 表示方法名称、原始返回和参数类型的标记
      */
     class SignatureToken {
 
         /**
-         * The internal name of the represented method.
+         * The internal name of the represented method. 表示的方法的内部名称
          */
         private final String name;
 
         /**
-         * The represented method's raw return type.
+         * The represented method's raw return type. 表示方法的原始返回类型
          */
         private final TypeDescription returnType;
 
         /**
-         * The represented method's raw parameter types.
+         * The represented method's raw parameter types. 表示方法的原始参数类型
          */
         private final List<? extends TypeDescription> parameterTypes;
 
         /**
-         * Creates a new type token.
+         * Creates a new type token. 创建新类型标记
          *
          * @param name           The internal name of the represented method.
          * @param returnType     The represented method's raw return type.
@@ -1840,7 +1840,7 @@ public interface MethodDescription extends TypeVariableSource,
     }
 
     /**
-     * A token representing a method's erased return and parameter types.
+     * A token representing a method's erased return and parameter types. 表示方法的已擦除返回和参数类型的标记
      */
     class TypeToken {
 

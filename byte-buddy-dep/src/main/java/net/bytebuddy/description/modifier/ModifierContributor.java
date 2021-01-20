@@ -169,7 +169,7 @@ public interface ModifierContributor {
         }
 
         /**
-         * Resolves the modifier contributors based on a zero modifier.
+         * Resolves the modifier contributors based on a zero modifier. 解决基于零修饰符的修饰符贡献者
          *
          * @return The resolved modifiers.
          */

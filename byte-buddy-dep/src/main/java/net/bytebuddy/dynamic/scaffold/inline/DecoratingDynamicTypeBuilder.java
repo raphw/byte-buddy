@@ -39,30 +39,30 @@ import static net.bytebuddy.matcher.ElementMatchers.isVirtual;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 
 /**
- * A type builder that decorates a type by allowing for the application of attribute changes and ASM visitor wrappers.
+ * A type builder that decorates a type by allowing for the application of attribute changes and ASM visitor wrappers. 通过允许应用属性更改和ASM访问者包装来装饰类型的类型构建器
  *
- * @param <T> A loaded type that the built type is guaranteed to be a subclass of.
+ * @param <T> A loaded type that the built type is guaranteed to be a subclass of. 保证已构建类型为其子类的已加载类型
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
     /**
-     * The instrumented type to decorate.
+     * The instrumented type to decorate. 用于装饰的 instrumented 类型
      */
     private final TypeDescription instrumentedType;
 
     /**
-     * The type attribute appender to apply onto the instrumented type.
+     * The type attribute appender to apply onto the instrumented type. 类型属性追加器将应用于检测的类型
      */
     private final TypeAttributeAppender typeAttributeAppender;
 
     /**
-     * The ASM visitor wrapper to apply onto the class writer.
+     * The ASM visitor wrapper to apply onto the class writer. ASM访问者包装器将应用于类编写器
      */
     private final AsmVisitorWrapper asmVisitorWrapper;
 
     /**
-     * The class file version to define auxiliary types in.
+     * The class file version to define auxiliary types in. 用于定义辅助类型的类文件版本
      */
     private final ClassFileVersion classFileVersion;
 

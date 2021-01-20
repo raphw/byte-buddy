@@ -17,12 +17,12 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A method graph represents a view on a set of methods as they are seen from a given type. Any method is represented as a node that represents
- * a method, its bridge methods, its resolution state and information on if it was made visible by a visibility bridge.
+ * a method, its bridge methods, its resolution state and information on if it was made visible by a visibility bridge. 方法图表示从给定类型看到的一组方法的视图。任何方法都表示为一个节点，该节点表示一个方法、它的桥方法、它的解析状态以及有关它是否被可见性桥显示的信息
  */
 public interface MethodGraph {
 
     /**
-     * Locates a node in this graph which represents the provided method token.
+     * Locates a node in this graph which represents the provided method token. 在此图中查找表示提供的方法令牌的节点
      *
      * @param token A method token that represents the method to be located.
      * @return The node representing the given token.
@@ -37,7 +37,7 @@ public interface MethodGraph {
     NodeList listNodes();
 
     /**
-     * A canonical implementation of an empty method graph.
+     * A canonical implementation of an empty method graph. 空方法图的规范实现
      */
     enum Empty implements MethodGraph.Linked, MethodGraph.Compiler {
 
@@ -79,19 +79,19 @@ public interface MethodGraph {
 
     /**
      * A linked method graph represents a view that additionally exposes information of a given type's super type view and a
-     * view on this graph's directly implemented interfaces.
+     * view on this graph's directly implemented interfaces. 链接的方法图表示一个视图，该视图还公开给定类型的超级类型视图的信息以及此图直接实现的接口上的视图
      */
     interface Linked extends MethodGraph {
 
         /**
-         * Returns a graph representing the view on this represented type's super type.
+         * Returns a graph representing the view on this represented type's super type. 返回表示此表示类型的超类型上的视图的图形
          *
-         * @return A graph representing the view on this represented type's super type.
+         * @return A graph representing the view on this represented type's super type. 表示此表示类型的超类型上的视图的图形
          */
         MethodGraph getSuperClassGraph();
 
         /**
-         * Returns a graph representing the view on this represented type's directly implemented interface type.
+         * Returns a graph representing the view on this represented type's directly implemented interface type. 返回表示此表示类型的直接实现接口类型上的视图的图形
          *
          * @param typeDescription The interface type for which a view is to be returned.
          * @return A graph representing the view on this represented type's directly implemented interface type.
@@ -99,28 +99,28 @@ public interface MethodGraph {
         MethodGraph getInterfaceGraph(TypeDescription typeDescription);
 
         /**
-         * A simple implementation of a linked method graph that exposes views by delegation to given method graphs.
+         * A simple implementation of a linked method graph that exposes views by delegation to given method graphs. 一个链接方法图的简单实现，通过委托将视图公开给给定的方法图
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Delegation implements Linked {
 
             /**
-             * The represented type's method graph.
+             * The represented type's method graph. 表示类型的方法图
              */
             private final MethodGraph methodGraph;
 
             /**
-             * The super class's method graph.
+             * The super class's method graph. 超类的方法图
              */
             private final MethodGraph superClassGraph;
 
             /**
-             * A mapping of method graphs of the represented type's directly implemented interfaces to their graph representatives.
+             * A mapping of method graphs of the represented type's directly implemented interfaces to their graph representatives. 表示类型的直接实现接口的方法图到它们的图表示的映射
              */
             private final Map<TypeDescription, MethodGraph> interfaceGraphs;
 
             /**
-             * Creates a new delegation method graph.
+             * Creates a new delegation method graph. 创建新的委派方法图
              *
              * @param methodGraph     The represented type's method graph.
              * @param superClassGraph The super class's method graph.
@@ -158,36 +158,36 @@ public interface MethodGraph {
     }
 
     /**
-     * Represents a node within a method graph.
+     * Represents a node within a method graph. 表示方法图中的节点
      */
     interface Node {
 
         /**
-         * Returns the sort of this node.
+         * Returns the sort of this node. 返回此节点的排序
          *
-         * @return The sort of this node.
+         * @return The sort of this node. 这个节点的类型
          */
         Sort getSort();
 
         /**
-         * Returns the method that is represented by this node.
+         * Returns the method that is represented by this node. 返回此节点表示的方法
          *
-         * @return The method that is represented by this node.
+         * @return The method that is represented by this node. 此节点表示的方法
          */
         MethodDescription getRepresentative();
 
         /**
          * Returns a set of type tokens that this method represents. This set contains the actual method's type including the
-         * types of all bridge methods.
+         * types of all bridge methods. 返回此方法表示的一组类型标记。此集合包含实际方法的类型，包括所有桥方法的类型
          *
-         * @return A set of type tokens that this method represents.
+         * @return A set of type tokens that this method represents. 此方法表示的一组类型标记
          */
         Set<MethodDescription.TypeToken> getMethodTypes();
 
         /**
-         * Returns the minimal method visibility of all methods that are represented by this node.
+         * Returns the minimal method visibility of all methods that are represented by this node. 返回此节点表示的所有方法的最小方法可见性
          *
-         * @return The minimal method visibility of all methods that are represented by this node.
+         * @return The minimal method visibility of all methods that are represented by this node. 此节点表示的所有方法的最小方法可见性
          */
         Visibility getVisibility();
 
@@ -197,37 +197,37 @@ public interface MethodGraph {
         enum Sort {
 
             /**
-             * Represents a resolved node that was made visible by a visibility bridge.
+             * Represents a resolved node that was made visible by a visibility bridge. 表示由可见性桥显示的已解析节点
              */
             VISIBLE(true, true, true),
 
             /**
-             * Represents a resolved node that was not made visible by a visibility bridge.
+             * Represents a resolved node that was not made visible by a visibility bridge. 表示未被可见性桥显示的已解析节点
              */
             RESOLVED(true, true, false),
 
             /**
-             * Represents an ambiguous node, i.e. a node that might refer to several methods.
+             * Represents an ambiguous node, i.e. a node that might refer to several methods. 表示不明确的节点，即可能引用多个方法的节点
              */
             AMBIGUOUS(true, false, false),
 
             /**
-             * Represents an unresolved node.
+             * Represents an unresolved node. 表示未解析的节点
              */
             UNRESOLVED(false, false, false);
 
             /**
-             * {@code true} if this sort represents a resolved node.
+             * {@code true} if this sort represents a resolved node. true -> 如果此排序表示已解析的节点
              */
             private final boolean resolved;
 
             /**
-             * {@code true} if this sort represents a non-ambiguous node.
+             * {@code true} if this sort represents a non-ambiguous node. true -> 如果此排序表示非二义节点
              */
             private final boolean unique;
 
             /**
-             * {@code true} if this sort represents a node that was made by a visibility bridge.
+             * {@code true} if this sort represents a node that was made by a visibility bridge. true -> 如果此排序表示由可见性桥生成的节点
              */
             private final boolean madeVisible;
 
@@ -273,7 +273,7 @@ public interface MethodGraph {
         }
 
         /**
-         * A canonical implementation of an unresolved node.
+         * A canonical implementation of an unresolved node. 未解析节点的规范实现
          */
         enum Unresolved implements Node {
 
@@ -304,18 +304,18 @@ public interface MethodGraph {
         }
 
         /**
-         * A simple implementation of a resolved node of a method without bridges.
+         * A simple implementation of a resolved node of a method without bridges. 无桥方法的解析节点的简单实现
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Simple implements Node {
 
             /**
-             * The represented method.
+             * The represented method. 表示方法
              */
             private final MethodDescription methodDescription;
 
             /**
-             * Creates a simple node.
+             * Creates a simple node. 创建简单节点
              *
              * @param methodDescription The represented method.
              */
@@ -346,35 +346,35 @@ public interface MethodGraph {
     }
 
     /**
-     * A compiler to produce a {@link MethodGraph} from a given type.
+     * A compiler to produce a {@link MethodGraph} from a given type. 从给定类型生成方法图的编译器
      */
     @SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "Safe initialization is implied")
     interface Compiler {
 
         /**
-         * The default compiler for compiling Java methods.
+         * The default compiler for compiling Java methods. 编译Java方法的默认编译器
          */
         Compiler DEFAULT = MethodGraph.Compiler.Default.forJavaHierarchy();
 
         /**
-         * Compiles the given type into a method graph considering the type to be the viewpoint.
+         * Compiles the given type into a method graph considering the type to be the viewpoint. 将给定的类型编译为方法图，并将该类型视为视点
          *
-         * @param typeDescription The type to be compiled.
-         * @return A linked method graph representing the given type.
+         * @param typeDescription The type to be compiled. 要编译的类型
+         * @return A linked method graph representing the given type. 表示给定类型的链接方法图
          */
         MethodGraph.Linked compile(TypeDescription typeDescription);
 
         /**
-         * Compiles the given type into a method graph.
+         * Compiles the given type into a method graph. 将给定类型编译为方法图
          *
-         * @param typeDefinition The type to be compiled.
-         * @param viewPoint      The view point that determines the method's visibility.
-         * @return A linked method graph representing the given type.
+         * @param typeDefinition The type to be compiled. 要编译的类型
+         * @param viewPoint      The view point that determines the method's visibility. 确定方法可见性的视图点
+         * @return A linked method graph representing the given type. 表示给定类型的链接方法图
          */
         MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint);
 
         /**
-         * A flat compiler that simply returns the methods that are declared by the instrumented type.
+         * A flat compiler that simply returns the methods that are declared by the instrumented type. 一个平面编译器，它只返回由插入指令的类型声明的方法
          */
         enum ForDeclaredMethods implements Compiler {
 
@@ -399,7 +399,7 @@ public interface MethodGraph {
         }
 
         /**
-         * An abstract base implementation of a method graph compiler.
+         * An abstract base implementation of a method graph compiler. 方法图编译器的抽象基实现
          */
         abstract class AbstractBase implements Compiler {
 
@@ -410,30 +410,30 @@ public interface MethodGraph {
         }
 
         /**
-         * A default implementation of a method graph.
+         * A default implementation of a method graph. 方法图的默认实现
          *
-         * @param <T> The type of the harmonizer token to be used for linking methods of different types.
+         * @param <T> The type of the harmonizer token to be used for linking methods of different types. 用于链接不同类型的方法的harmonizer标记的类型
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Default<T> extends AbstractBase {
 
             /**
-             * The harmonizer to be used.
+             * The harmonizer to be used. 要使用的协调器
              */
             private final Harmonizer<T> harmonizer;
 
             /**
-             * The merger to be used.
+             * The merger to be used. 要使用的合并器
              */
             private final Merger merger;
 
             /**
-             * A visitor to apply to all type descriptions before analyzing their methods or resolving super types.
+             * A visitor to apply to all type descriptions before analyzing their methods or resolving super types. 在分析方法或解析超级类型之前应用于所有类型描述的访问者
              */
             private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
             /**
-             * Creates a new default method graph compiler.
+             * Creates a new default method graph compiler. 创建新的默认方法图编译器
              *
              * @param harmonizer The harmonizer to be used.
              * @param merger     The merger to be used.
@@ -446,7 +446,7 @@ public interface MethodGraph {
             }
 
             /**
-             * Creates a default compiler using the given harmonizer and merger. All raw types are reified before analyzing their properties.
+             * Creates a default compiler using the given harmonizer and merger. All raw types are reified before analyzing their properties. 使用给定的协调器和合并器创建默认编译器。所有原始类型在分析其属性之前都被具体化
              *
              * @param harmonizer The harmonizer to be used for creating tokens that uniquely identify a method hierarchy.
              * @param merger     The merger to be used for identifying a method to represent an ambiguous method resolution.
@@ -520,7 +520,7 @@ public interface MethodGraph {
             }
 
             /**
-             * Analyzes the given type description without checking if the end of the type hierarchy was reached.
+             * Analyzes the given type description without checking if the end of the type hierarchy was reached. 分析给定的类型描述，而不检查是否已到达类型层次结构的末尾
              *
              * @param typeDefinition   The type to analyze.
              * @param key              The type in its original form before applying the visitor.
@@ -541,7 +541,7 @@ public interface MethodGraph {
             }
 
             /**
-             * Analyzes the given type description.
+             * Analyzes the given type description. 分析给定的类型描述
              *
              * @param typeDescription  The type to analyze.
              * @param snapshots        A map containing snapshots of key stores for previously analyzed types.
@@ -557,10 +557,10 @@ public interface MethodGraph {
             }
 
             /**
-             * Analyzes the given type description without checking if it is already presented in the key store.
+             * Analyzes the given type description without checking if it is already presented in the key store. 分析给定的类型描述，而不检查它是否已出现在密钥存储中
              *
              * @param typeDefinition   The type to analyze.
-             * @param snapshots        A map containing snapshots of key stores for previously analyzed types.
+             * @param snapshots        A map containing snapshots of key stores for previously analyzed types. 包含先前分析类型的密钥存储快照的映射
              * @param relevanceMatcher A matcher for filtering methods that should be included in the graph.
              * @return A key store describing the provided type.
              */
@@ -577,9 +577,9 @@ public interface MethodGraph {
 
             /**
              * A harmonizer is responsible for creating a token that identifies a method's relevant attributes for considering
-             * two methods of being equal or not.
+             * two methods of being equal or not. 协调器负责创建一个标识方法相关属性的标记，以考虑两个方法是否相等
              *
-             * @param <S> The type of the token that is created by the implementing harmonizer.
+             * @param <S> The type of the token that is created by the implementing harmonizer. 由实现协调器创建的令牌的类型
              */
             public interface Harmonizer<S> {
 
@@ -720,7 +720,7 @@ public interface MethodGraph {
             public interface Merger {
 
                 /**
-                 * Merges two ambiguously resolved methods to yield a single representative.
+                 * Merges two ambiguously resolved methods to yield a single representative. 合并两个模糊解析的方法以产生一个代表
                  *
                  * @param left  The left method description, i.e. the method that was discovered first or was previously merged.
                  * @param right The right method description, i.e. the method that was discovered last.
@@ -729,7 +729,7 @@ public interface MethodGraph {
                 MethodDescription merge(MethodDescription left, MethodDescription right);
 
                 /**
-                 * A directional merger that always returns either the left or right method description.
+                 * A directional merger that always returns either the left or right method description. 总是返回左或右方法描述的定向合并
                  */
                 enum Directional implements Merger {
 
@@ -1654,13 +1654,13 @@ public interface MethodGraph {
     }
 
     /**
-     * A simple implementation of a method graph.
+     * A simple implementation of a method graph. 方法图的简单实现
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Simple implements MethodGraph {
 
         /**
-         * The nodes represented by this method graph.
+         * The nodes represented by this method graph. 本方法图表示的节点
          */
         private final LinkedHashMap<MethodDescription.SignatureToken, Node> nodes;
 

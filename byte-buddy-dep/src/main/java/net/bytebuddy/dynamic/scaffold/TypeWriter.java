@@ -1791,7 +1791,7 @@ public interface TypeWriter<T> {
         }
 
         /**
-         * A class validator that validates that a class only defines members that are appropriate for the sort of the generated class.
+         * A class validator that validates that a class only defines members that are appropriate for the sort of the generated class. 验证类的类验证器仅定义适合于所生成类的成员
          */
         protected static class ValidatingClassVisitor extends ClassVisitor {
 
@@ -1990,7 +1990,7 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * A constraint for members that are legal for a given type.
+             * A constraint for members that are legal for a given type. 对给定类型合法成员的约束
              */
             protected interface Constraint {
 
@@ -2100,7 +2100,7 @@ public interface TypeWriter<T> {
                 enum ForClass implements Constraint {
 
                     /**
-                     * Represents the constraints of a non-abstract class.
+                     * Represents the constraints of a non-abstract class. 表示非抽象类的约束
                      */
                     MANIFEST(true),
 

@@ -264,19 +264,19 @@ public interface MethodRegistry {
     }
 
     /**
-     * A method registry that fully prepared the instrumented type.
+     * A method registry that fully prepared the instrumented type. 完全准备插入指令的类型的方法注册表
      */
     interface Prepared {
 
         /**
-         * Returns the fully prepared instrumented type.
+         * Returns the fully prepared instrumented type. 返回完全准备好的检测类型
          *
          * @return The fully prepared instrumented type.
          */
         TypeDescription getInstrumentedType();
 
         /**
-         * Returns the declared or virtually inherited methods of this type.
+         * Returns the declared or virtually inherited methods of this type. 返回此类型的已声明或实际继承的方法
          *
          * @return The declared or virtually inherited methods of this type.
          */
@@ -304,11 +304,11 @@ public interface MethodRegistry {
         TypeInitializer getTypeInitializer();
 
         /**
-         * Compiles this prepared method registry.
+         * Compiles this prepared method registry. 编译此准备好的方法注册表
          *
-         * @param implementationTargetFactory A factory for creating an implementation target.
-         * @param classFileVersion            The type's class file version.
-         * @return A factory for creating an implementation target.
+         * @param implementationTargetFactory A factory for creating an implementation target. 用于创建实现目标的工厂
+         * @param classFileVersion            The type's class file version. 类型的类文件版本
+         * @return A factory for creating an implementation target. 用于创建实现目标的工厂
          */
         Compiled compile(Implementation.Target.Factory implementationTargetFactory, ClassFileVersion classFileVersion);
     }
@@ -582,17 +582,17 @@ public interface MethodRegistry {
         protected static class Prepared implements MethodRegistry.Prepared {
 
             /**
-             * A map of all method descriptions mapped to their handling entries.
+             * A map of all method descriptions mapped to their handling entries. 映射到其处理项的所有方法描述的映射
              */
             private final LinkedHashMap<MethodDescription, Entry> implementations;
 
             /**
-             * The loaded type initializer of the instrumented type.
+             * The loaded type initializer of the instrumented type. 插入指令类型的已加载类型初始值设定项
              */
             private final LoadedTypeInitializer loadedTypeInitializer;
 
             /**
-             * The type initializer of the instrumented type.
+             * The type initializer of the instrumented type. 插入指令的类型的类型初始值设定项
              */
             private final TypeInitializer typeInitializer;
 
@@ -602,17 +602,17 @@ public interface MethodRegistry {
             private final TypeDescription instrumentedType;
 
             /**
-             * A method graph describing the instrumented type.
+             * A method graph describing the instrumented type. 描述插入指令的类型的方法图
              */
             private final MethodGraph.Linked methodGraph;
 
             /**
-             * The declared or virtually inherited methods of this type.
+             * The declared or virtually inherited methods of this type. 此类型的声明或实际继承的方法
              */
             private final MethodList<?> methods;
 
             /**
-             * Creates a prepared version of a default method registry.
+             * Creates a prepared version of a default method registry. 创建默认方法注册表的准备版本
              *
              * @param implementations       A map of all method descriptions mapped to their handling entries.
              * @param loadedTypeInitializer The loaded type initializer of the instrumented type.

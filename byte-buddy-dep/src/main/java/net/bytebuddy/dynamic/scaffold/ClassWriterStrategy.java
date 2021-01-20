@@ -6,7 +6,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 /**
- * A class writer strategy is responsible for the creation of a {@link ClassWriter} when creating a type.
+ * A class writer strategy is responsible for the creation of a {@link ClassWriter} when creating a type. 创建类型时，类编写器策略负责创建{@link ClassWriter}
  */
 public interface ClassWriterStrategy {
 
@@ -45,7 +45,7 @@ public interface ClassWriterStrategy {
         },
 
         /**
-         * A class writer strategy that discards the original class's constant pool if applicable.
+         * A class writer strategy that discards the original class's constant pool if applicable. 一个类编写器策略，如果适用，该策略将丢弃原始类的常量池
          */
         CONSTANT_POOL_DISCARDING {
             @Override
@@ -67,12 +67,12 @@ public interface ClassWriterStrategy {
     class FrameComputingClassWriter extends ClassWriter {
 
         /**
-         * The type pool to use for computing stack map frames, if required.
+         * The type pool to use for computing stack map frames, if required. 如果需要，用于计算栈映射框架的类型池
          */
         private final TypePool typePool;
 
         /**
-         * Creates a new frame computing class writer.
+         * Creates a new frame computing class writer. 创建一个新的框架计算类编写器
          *
          * @param flags    The flags to be handed to the writer.
          * @param typePool The type pool to use for computing stack map frames, if required.

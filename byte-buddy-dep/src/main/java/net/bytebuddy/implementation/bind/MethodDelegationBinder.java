@@ -20,16 +20,16 @@ import java.util.*;
 /**
  * A method delegation binder is responsible for creating a method binding for a <i>source method</i> to a
  * <i>target method</i>. Such a binding allows to implement the source method by calling the target method.
- * <p>&nbsp;</p>
+ * <p>&nbsp;</p> 方法委托绑定器负责创建源方法到目标方法的方法绑定。这样的绑定允许通过调用目标方法来实现源方法(也就是说，实现了目标方法和原方法的映射关系)
  * Usually, an implementation will attempt to bind a specific source method to a set of target method candidates
  * where all legal bindings are considered for binding. To chose a specific candidate, an
- * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}
+ * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver} 通常，一个实现会尝试将一个特定的源方法绑定到一组目标候选方法，其中所有合法的绑定都会考虑绑定。选择一个特定的候选人，一个模棱两可的解决方案将被咨询选择一个最佳的绑定
  * will be consulted for selecting a <i>best</i> binding.
  */
 public interface MethodDelegationBinder {
 
     /**
-     * Compiles this method delegation binder for a target method.
+     * Compiles this method delegation binder for a target method. 为目标方法编译此方法委派绑定器
      *
      * @param candidate The target method to bind.
      * @return A compiled target for binding.
@@ -37,7 +37,7 @@ public interface MethodDelegationBinder {
     Record compile(MethodDescription candidate);
 
     /**
-     * A method delegation that was compiled to a target method.
+     * A method delegation that was compiled to a target method. 尝试将源方法绑定到此已编译目标
      */
     interface Record {
 
@@ -137,18 +137,18 @@ public interface MethodDelegationBinder {
     }
 
     /**
-     * A binding attempt for a single parameter. Implementations of this type are a suggestion of composing a
-     * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding}
+     * A binding attempt for a single parameter. Implementations of this type are a suggestion of composing a 对单个参数的绑定尝试
+     * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding} 这种类型的实现建议使用net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding.Builder组成net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding
      * by using a
      * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding.Builder}.
-     * However, method bindings can also be composed without this type which is merely a suggestion.
+     * However, method bindings can also be composed without this type which is merely a suggestion. 但是，方法绑定也可以在没有这种类型的情况下进行组合，而这种类型只是一个建议
      *
      * @param <T> The type of the identification token for this parameter binding.
      */
     interface ParameterBinding<T> extends StackManipulation {
 
         /**
-         * Returns an identification token for this binding.
+         * Returns an identification token for this binding. 返回此绑定的标识令牌
          *
          * @return An identification token unique to this binding.
          */
@@ -156,7 +156,7 @@ public interface MethodDelegationBinder {
 
         /**
          * A singleton representation of an illegal binding for a method parameter. An illegal binding usually
-         * suggests that a source method cannot be bound to a specific target method.
+         * suggests that a source method cannot be bound to a specific target method. 方法参数非法绑定的单例表示。非法绑定通常表示源方法不能绑定到特定的目标方法
          */
         enum Illegal implements ParameterBinding<Void> {
 
@@ -182,7 +182,7 @@ public interface MethodDelegationBinder {
         }
 
         /**
-         * An anonymous binding of a target method parameter.
+         * An anonymous binding of a target method parameter. 目标方法参数的匿名绑定
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Anonymous implements ParameterBinding<Object> {
@@ -226,7 +226,7 @@ public interface MethodDelegationBinder {
         }
 
         /**
-         * A uniquely identifiable parameter binding for a target method. Such bindings are usually later processed by
+         * A uniquely identifiable parameter binding for a target method. Such bindings are usually later processed by 目标方法的唯一可识别参数绑定
          * a {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}
          * in order to resolve binding conflicts between several bindable target methods to the same source method.
          *
@@ -237,17 +237,17 @@ public interface MethodDelegationBinder {
         class Unique<T> implements ParameterBinding<T> {
 
             /**
-             * The token that identifies this parameter binding as unique.
+             * The token that identifies this parameter binding as unique. 将此参数绑定标识为唯一的标记
              */
             private final T identificationToken;
 
             /**
-             * The stack manipulation that represents the loading of the parameter binding onto the stack.
+             * The stack manipulation that represents the loading of the parameter binding onto the stack. 表示将参数绑定加载到堆栈上的堆栈操作
              */
             private final StackManipulation delegate;
 
             /**
-             * Creates a new unique parameter binding representant.
+             * Creates a new unique parameter binding representant. 创建新的唯一参数绑定表示。
              *
              * @param delegate            The stack manipulation that loads the argument for this parameter onto the operand stack.
              * @param identificationToken The token used for identifying this parameter binding.
@@ -919,7 +919,7 @@ public interface MethodDelegationBinder {
     }
 
     /**
-     * A termination handler is responsible for terminating a method delegation.
+     * A termination handler is responsible for terminating a method delegation. 终止处理程序负责终止方法委派
      */
     interface TerminationHandler {
 
@@ -936,7 +936,7 @@ public interface MethodDelegationBinder {
 
         /**
          * Responsible for creating a {@link StackManipulation}
-         * that is applied after the interception method is applied.
+         * that is applied after the interception method is applied. 负责创建在应用拦截方法后应用的 StackManipulation
          */
         enum Default implements TerminationHandler {
 
@@ -971,7 +971,7 @@ public interface MethodDelegationBinder {
     /**
      * A helper class that allows to identify a best binding for a given type and source method choosing from a list of given
      * target methods by using a given {@link net.bytebuddy.implementation.bind.MethodDelegationBinder}
-     * and an {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}.
+     * and an {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}. 一种帮助程序类，它允许通过使用给定的MethodDelegationBinder和AmbiguityResolver，从给定的目标方法列表中选择给定类型和源方法的最佳绑定
      * <p>&nbsp;</p>
      * The {@code Processor} will:
      * <ol>
@@ -983,17 +983,17 @@ public interface MethodDelegationBinder {
     class Processor implements MethodDelegationBinder.Record {
 
         /**
-         * The delegation records to consider.
+         * The delegation records to consider. 以供考虑的代理记录
          */
         private final List<? extends Record> records;
 
         /**
-         * The processor's ambiguity resolver.
+         * The processor's ambiguity resolver. 处理器的歧义解析器
          */
         private final AmbiguityResolver ambiguityResolver;
 
         /**
-         * The binding resolver being used to select the relevant method binding.
+         * The binding resolver being used to select the relevant method binding. 绑定解析器用于选择相关的方法绑定
          */
         private final BindingResolver bindingResolver;
 

@@ -243,8 +243,8 @@ public class ByteBuddy {
      * </p>
      *
      * @param superType The super class or interface type to extend. 要扩展的超类或接口类型
-     * @param <T>       A loaded type that the generated class is guaranteed to inherit.
-     * @return A type builder for creating a new class extending the provided class or interface.
+     * @param <T>       A loaded type that the generated class is guaranteed to inherit. 保证生成的类可以继承的已加载类型
+     * @return A type builder for creating a new class extending the provided class or interface. 类型生成器，用于创建扩展提供的类或接口的新类
      */
     @SuppressWarnings("unchecked")
     public <T> DynamicType.Builder<T> subclass(Class<T> superType) {
@@ -370,7 +370,7 @@ public class ByteBuddy {
      *
      * @param superType           The super class or interface type to extend. The type must be a raw type or parameterized
      *                            type. All type variables that are referenced by the generic type must be declared by the
-     *                            generated subclass before creating the type.
+     *                            generated subclass before creating the type. 要扩展的超类或接口类型。 该类型必须是原始类型或参数化类型。 在创建类型之前，必须由生成的子类声明泛型类型引用的所有类型变量
      * @param constructorStrategy A constructor strategy that determines the
      * @return A type builder for creating a new class extending the provided class or interface.
      */

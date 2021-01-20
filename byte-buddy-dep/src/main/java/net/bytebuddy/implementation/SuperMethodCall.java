@@ -110,12 +110,12 @@ public enum SuperMethodCall implements Implementation.Composable {
         }
 
         /**
-         * A handler that determines how to handle the method return value.
+         * A handler that determines how to handle the method return value. 确定如何处理方法返回值的处理程序
          */
         protected enum TerminationHandler {
 
             /**
-             * A termination handler that returns the value of the super method invocation.
+             * A termination handler that returns the value of the super method invocation. 返回超级方法调用值的终止处理程序
              */
             RETURNING {
                 @Override

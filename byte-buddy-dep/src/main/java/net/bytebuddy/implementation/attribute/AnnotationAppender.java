@@ -12,17 +12,17 @@ import java.lang.reflect.Array;
 import java.util.List;
 
 /**
- * Annotation appenders are capable of writing annotations to a specified target.
+ * Annotation appenders are capable of writing annotations to a specified target. 注释附加器能够将注释写入指定的目标
  */
 public interface AnnotationAppender {
 
     /**
-     * A constant for informing ASM over ignoring a given name.
+     * A constant for informing ASM over ignoring a given name. 用于通知ASM忽略给定名称的常量
      */
     String NO_NAME = null;
 
     /**
-     * Writes the given annotation to the target that this appender represents.
+     * Writes the given annotation to the target that this appender represents. 将给定的注释写入此追加程序代表的目标
      *
      * @param annotationDescription The annotation to be written.
      * @param annotationValueFilter The annotation value filter to use.
@@ -42,7 +42,7 @@ public interface AnnotationAppender {
     AnnotationAppender append(AnnotationDescription annotationDescription, AnnotationValueFilter annotationValueFilter, int typeReference, String typePath);
 
     /**
-     * Represents a target for an annotation writing process.
+     * Represents a target for an annotation writing process. 表示注解编写过程的目标
      */
     interface Target {
 
@@ -67,20 +67,20 @@ public interface AnnotationAppender {
         AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath);
 
         /**
-         * Target for an annotation that is written to a Java type. 写入Java类型的注释的目标
+         * Target for an annotation that is written to a Java type. 写入Java类型注解的目标
          */
         @HashCodeAndEqualsPlugin.Enhance
         class OnType implements Target {
 
             /**
-             * The class visitor to write the annotation to.
+             * The class visitor to write the annotation to. 编写注解的类访问者
              */
             private final ClassVisitor classVisitor;
 
             /**
-             * Creates a new wrapper for a Java type.
+             * Creates a new wrapper for a Java type. 为Java类型创建一个新的包装
              *
-             * @param classVisitor The ASM class visitor to which the annotations are appended to.
+             * @param classVisitor The ASM class visitor to which the annotations are appended to. 注解附加的ASM类访问者
              */
             public OnType(ClassVisitor classVisitor) {
                 this.classVisitor = classVisitor;
@@ -328,7 +328,7 @@ public interface AnnotationAppender {
 
     /**
      * A type visitor that visits all type annotations of a generic type and writes any discovered annotation to a
-     * supplied {@link AnnotationAppender}.
+     * supplied {@link AnnotationAppender}. 类型访问者，该类型访问者访问通用类型的所有类型注释，并将所有发现的注释写入提供的{@link AnnotationAppender}中
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ForTypeAnnotations implements TypeDescription.Generic.Visitor<AnnotationAppender> {
@@ -394,7 +394,7 @@ public interface AnnotationAppender {
         private final String typePath;
 
         /**
-         * Creates a new type annotation appending visitor for an empty type path.
+         * Creates a new type annotation appending visitor for an empty type path. 为空的类型路径创建一个新的类型注释附加访问者
          *
          * @param annotationAppender    The annotation appender to use.
          * @param annotationValueFilter The annotation value filter to use.

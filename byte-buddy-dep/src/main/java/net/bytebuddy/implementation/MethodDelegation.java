@@ -773,18 +773,18 @@ public class MethodDelegation implements Implementation.Composable {
         }
 
         /**
-         * An implementation delegate for invoking methods on a field that is declared by the instrumented type or a super type.
+         * An implementation delegate for invoking methods on a field that is declared by the instrumented type or a super type. 用于在由 instrumented 类型或超类型声明的字段上调用方法的实现委托
          */
         @HashCodeAndEqualsPlugin.Enhance
         abstract class ForField implements ImplementationDelegate {
 
             /**
-             * The name of the field that is target of the delegation.
+             * The name of the field that is target of the delegation. 委托目标的字段名称
              */
             protected final String fieldName;
 
             /**
-             * The method graph compiler to use.
+             * The method graph compiler to use. 方法图编译器要使用
              */
             protected final MethodGraph.Compiler methodGraphCompiler;
 
@@ -799,12 +799,12 @@ public class MethodDelegation implements Implementation.Composable {
             protected final ElementMatcher<? super MethodDescription> matcher;
 
             /**
-             * Creates a new implementation delegate for a field delegation.
+             * Creates a new implementation delegate for a field delegation. 为字段委托创建一个新的实现委托
              *
-             * @param fieldName           The name of the field that is target of the delegation.
+             * @param fieldName           The name of the field that is target of the delegation. 委托目标的字段名称
              * @param methodGraphCompiler The method graph compiler to use.
              * @param parameterBinders    The parameter binders to use.
-             * @param matcher             The matcher to use for filtering methods.
+             * @param matcher             The matcher to use for filtering methods. 用于过滤方法的匹配器
              */
             protected ForField(String fieldName,
                                MethodGraph.Compiler methodGraphCompiler,
@@ -1339,13 +1339,13 @@ public class MethodDelegation implements Implementation.Composable {
          * of its super types. To be considered a valid delegation target, a method must be visible and accessible to the instrumented type.
          * This is the case if the method's declaring type is either public or in the same package as the instrumented type and if the method
          * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
-         * a delegation target if the delegation is targeting the instrumented type.
+         * a delegation target if the delegation is targeting the instrumented type. 委托任何拦截的方法来调用由提供的类型的实例或其任何父类型声明的非{@code static}方法。 要被视为有效的委派目标，方法必须对插接类型可见且可访问。 如果方法的声明类型是公共的或与检测类型在同一包中，并且该方法是公共或非私有的且与检测类型在同一包中，则是这种情况。 如果委托是针对检测类型的，则私有方法只能用作委托目标
          *
          * @param target              The target instance for the delegation.
          * @param type                The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
          * @param fieldName           The name of the field that is holding the {@code target} instance.
          * @param methodGraphCompiler The method graph compiler to use.
-         * @return A method delegation that redirects method calls to a static method of the supplied type.
+         * @return A method delegation that redirects method calls to a static method of the supplied type. 将方法调用重定向到提供的类型的静态方法的方法委托
          */
         public MethodDelegation to(Object target, Type type, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
             TypeDescription.Generic typeDescription = TypeDefinition.Sort.describe(type);

@@ -20,7 +20,7 @@ import net.bytebuddy.pool.TypePool;
 import java.util.List;
 
 /**
- * An abstract base implementation of a dynamic type builder that alters an existing type.
+ * An abstract base implementation of a dynamic type builder that alters an existing type. 动态类型构建器的抽象基础实现，可更改现有类型
  *
  * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of.
  */

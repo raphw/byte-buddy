@@ -68,18 +68,18 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     }
 
     /**
-     * A compiled record of a target method annotation-driven binder.
+     * A compiled record of a target method annotation-driven binder. 目标方法注释驱动绑定器的编译记录
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class Record implements MethodDelegationBinder.Record {
 
         /**
-         * The candidate method.
+         * The candidate method. 候选方法
          */
         private final MethodDescription candidate;
 
         /**
-         * A list of handlers for each parameter.
+         * A list of handlers for each parameter. 每个参数的处理程序列表
          */
         private final List<DelegationProcessor.Handler> handlers;
 
@@ -132,7 +132,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
 
     /**
      * A parameter binder is used as a delegate for binding a parameter according to a particular annotation type found
-     * on this parameter.
+     * on this parameter. 参数绑定器用作委托，用于根据在此参数上找到的特定注释类型绑定参数
      *
      * @param <T> The {@link java.lang.annotation.Annotation#annotationType()} handled by this parameter binder.
      */

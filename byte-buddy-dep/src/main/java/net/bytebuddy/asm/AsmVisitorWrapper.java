@@ -73,7 +73,7 @@ public interface AsmVisitorWrapper {
                       int readerFlags);
 
     /**
-     * A class visitor wrapper that does not apply any changes.
+     * A class visitor wrapper that does not apply any changes. 不应用任何更改的类访问者包装
      */
     enum NoOp implements AsmVisitorWrapper {
 

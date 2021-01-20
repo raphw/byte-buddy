@@ -463,17 +463,17 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     }
 
     /**
-     * A simple visitor that extracts the class file version of a class file.
+     * A simple visitor that extracts the class file version of a class file. 一个简单的访问者，它提取类文件的类文件版本
      */
     protected static class VersionExtractor extends ClassVisitor {
 
         /**
-         * The class file version extracted from a class.
+         * The class file version extracted from a class. 从类中提取的类文件版本
          */
         private int classFileVersionNumber;
 
         /**
-         * Creates a new extractor.
+         * Creates a new extractor. 创建一个新的提取器
          */
         protected VersionExtractor() {
             super(OpenedClassReader.ASM_API);

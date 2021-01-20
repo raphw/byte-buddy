@@ -211,17 +211,17 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
     }
 
     /**
-     * Represents a list of explicitly provided annotation descriptions.
+     * Represents a list of explicitly provided annotation descriptions. 表示显式提供的注释描述的列表
      */
     class Explicit extends AbstractBase {
 
         /**
-         * The list of represented annotation descriptions.
+         * The list of represented annotation descriptions. 表示的注释描述列表
          */
         private final List<? extends AnnotationDescription> annotationDescriptions;
 
         /**
-         * Creates a new list of annotation descriptions.
+         * Creates a new list of annotation descriptions. 创建注释说明的新列表
          *
          * @param annotationDescription The list of represented annotation descriptions.
          */

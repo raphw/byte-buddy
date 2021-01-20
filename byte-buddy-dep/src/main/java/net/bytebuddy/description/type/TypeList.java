@@ -181,7 +181,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     }
 
     /**
-     * A list containing descriptions of generic types.
+     * A list containing descriptions of generic types. 包含通用类型描述的列表
      */
     interface Generic extends FilterableList<TypeDescription.Generic, Generic> {
 
@@ -299,7 +299,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             }
 
             /**
-             * Creates a new explicit list of generic types.
+             * Creates a new explicit list of generic types. 创建泛型类型的新显式列表
              *
              * @param typeDefinitions The generic types represented by this list.
              */

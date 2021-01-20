@@ -57,12 +57,12 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
     boolean isVisibleTo(TypeDescription typeDescription);
 
     /**
-     * <p>
+     * <p> 检查是否可以从给定类型访问此元素
      * Checks if this element is accessible from a given type. Accessibility is a more narrow criteria then visibility which can be
      * checked by {@link ByteCodeElement#isVisibleTo(TypeDescription)}. Accessibility allows the invocation of a method on external
      * instances or on itself. Methods that can be invoked from within an instance might however not be considered accessible.
      * </p>
-     * <p>
+     * <p> 方法或字段可以定义一个签名，其中包含对某个类型不可见的类型, 这样的方法可以合法地从这个类型调用，甚至可以通过这个类型实现为桥方法。但是，在签名中声明不可见类型的方法是不合法的，因为这些类型不是可能需要额外验证的桥
      * <b>Note</b>: A method or field might define a signature that includes types that are not visible to a type. Such methods can be
      * legally invoked from this type and can even be implemented as bridge methods by this type. It is however not legal to declare
      * a method with invisible types in its signature that are not bridges what might require additional validation.

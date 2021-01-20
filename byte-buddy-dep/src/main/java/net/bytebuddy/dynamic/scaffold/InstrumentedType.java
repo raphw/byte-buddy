@@ -187,7 +187,7 @@ public interface InstrumentedType extends TypeDescription {
     TypeDescription validated();
 
     /**
-     * Implementations represent an {@link InstrumentedType} with a flexible name.
+     * Implementations represent an {@link InstrumentedType} with a flexible name. 实现表示一个具有灵活名称的{@link InstrumentedType}
      */
     interface WithFlexibleName extends InstrumentedType {
 
@@ -330,7 +330,7 @@ public interface InstrumentedType extends TypeDescription {
             },
 
             /**
-             * A factory for an instrumented type that does not allow to modify represented types.
+             * A factory for an instrumented type that does not allow to modify represented types. 用于 instrumented 类型的工厂，不允许修改表示的类型
              */
             FROZEN {
                 @Override

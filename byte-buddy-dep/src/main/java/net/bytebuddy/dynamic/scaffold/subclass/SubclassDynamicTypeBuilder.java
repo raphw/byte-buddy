@@ -23,20 +23,20 @@ import java.util.List;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * A type builder that creates an instrumented type as a subclass, i.e. a type that is not based on an existing class file.
+ * A type builder that creates an instrumented type as a subclass, i.e. a type that is not based on an existing class file. 类型生成器，它创建一个检测类型作为子类，即不基于现有类文件的类型
  *
- * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of.
+ * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of. 动态类型可以保证是其子类型的已加载类型
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase.Adapter<T> {
 
     /**
-     * The constructor strategy to apply onto the instrumented type.
+     * The constructor strategy to apply onto the instrumented type. 应用于检测类型的构造方法
      */
     private final ConstructorStrategy constructorStrategy;
 
     /**
-     * Creates a new type builder for creating a subclass.
+     * Creates a new type builder for creating a subclass. 创建一个新的类型生成器以创建子类
      *
      * @param instrumentedType             An instrumented type representing the subclass. 表示子类 instrumented 类型
      * @param classFileVersion             The class file version to use for types that are not based on an existing class file.

@@ -433,13 +433,13 @@ public interface AnnotationDescription {
     }
 
     /**
-     * An adapter implementation of an annotation.
+     * An adapter implementation of an annotation. 注解的适配器实现
      */
     abstract class AbstractBase implements AnnotationDescription {
 
         /**
          * An array containing all element types that are a legal annotation target when such a target
-         * is not specified explicitly.
+         * is not specified explicitly. 当未显式指定合法注释目标时，包含所有元素类型的数组
          */
         private static final ElementType[] DEFAULT_TARGET = new ElementType[]{ElementType.ANNOTATION_TYPE,
                 ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.METHOD,
@@ -535,27 +535,27 @@ public interface AnnotationDescription {
     }
 
     /**
-     * A description of an already loaded annotation.
+     * A description of an already loaded annotation. 已经加载的注释的描述
      *
-     * @param <S> The type of the annotation.
+     * @param <S> The type of the annotation. 注释的类型
      */
     class ForLoadedAnnotation<S extends Annotation> extends AbstractBase.ForPrepared<S> {
 
         /**
-         * The represented annotation value.
+         * The represented annotation value. 表示的注解值
          */
         private final S annotation;
 
         /**
          * The annotation's loaded type which might be loaded by a different class loader than the value's
-         * annotation type but must be structurally equal to it.
+         * annotation type but must be structurally equal to it. 注解的加载类型，可以由与值的注解类型不同的类加载器加载，但结构上必须与其相等
          */
         private final Class<S> annotationType;
 
         /**
-         * Creates a new annotation description for a loaded annotation.
+         * Creates a new annotation description for a loaded annotation. 为已加载的注释创建新的注解描述
          *
-         * @param annotation The annotation to represent.
+         * @param annotation The annotation to represent. 要表示的注解
          */
         @SuppressWarnings("unchecked")
         protected ForLoadedAnnotation(S annotation) {

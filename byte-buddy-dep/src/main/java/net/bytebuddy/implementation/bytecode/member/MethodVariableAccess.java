@@ -98,7 +98,7 @@ public enum MethodVariableAccess {
     }
 
     /**
-     * Loads all arguments of the provided method onto the operand stack.
+     * Loads all arguments of the provided method onto the operand stack. 将所提供方法的所有参数加载到操作数堆栈上
      *
      * @param methodDescription The method for which all parameters are to be loaded onto the operand stack.
      * @return A stack manipulation that loads all parameters of the provided method onto the operand stack.
@@ -182,7 +182,7 @@ public enum MethodVariableAccess {
     }
 
     /**
-     * A stack manipulation that loads all parameters of a given method onto the operand stack.
+     * A stack manipulation that loads all parameters of a given method onto the operand stack. 将给定方法的所有参数加载到操作数堆栈上的堆栈操作
      */
     @HashCodeAndEqualsPlugin.Enhance
     public static class MethodLoading implements StackManipulation {
@@ -198,7 +198,7 @@ public enum MethodVariableAccess {
         private final TypeCastingHandler typeCastingHandler;
 
         /**
-         * Creates a new method loading stack manipulation.
+         * Creates a new method loading stack manipulation. 创建加载堆栈操作的新方法
          *
          * @param methodDescription  The method for which all parameters are loaded onto the operand stack.
          * @param typeCastingHandler A type casting handler which is capable of transforming all method parameters.

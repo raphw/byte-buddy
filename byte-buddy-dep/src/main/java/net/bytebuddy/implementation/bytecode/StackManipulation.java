@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Describes a manipulation of a method's operand stack that does not affect the frame's variable array.
+ * Describes a manipulation of a method's operand stack that does not affect the frame's variable array. 描述对方法操作数堆栈的操作，该操作不影响框架的变量数组
  */
 public interface StackManipulation {
 

@@ -138,52 +138,52 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
 
     /**
      * Checks if the type described by this instance represents {@code type}.
-     *
+     * 检查此实例描述的类型是否表示 { @code type }
      * @param type The type of interest.
      * @return {@code true} if the type described by this instance represents {@code type}.
      */
     boolean represents(Type type);
 
     /**
-     * Represents a {@link TypeDescription.Generic}'s form.
+     * Represents a {@link TypeDescription.Generic}'s form. 表示{@link TypeDescription.Generic}的形式
      */
     enum Sort {
 
         /**
-         * Represents a non-generic type.
+         * Represents a non-generic type. 表示非通用类型
          */
         NON_GENERIC,
 
         /**
-         * Represents a generic array type.
+         * Represents a generic array type. 表示通用数组类型
          */
         GENERIC_ARRAY,
 
         /**
-         * Represents a parameterized type.
+         * Represents a parameterized type. 表示参数化类型
          */
         PARAMETERIZED,
 
         /**
-         * Represents a wildcard type.
+         * Represents a wildcard type. 表示通配符类型
          */
         WILDCARD,
 
         /**
-         * Represents a type variable that is attached to a {@link net.bytebuddy.description.TypeVariableSource}.
+         * Represents a type variable that is attached to a {@link net.bytebuddy.description.TypeVariableSource}. 表示附加到{@link net.bytebuddy.description.TypeVariableSource}的类型变量
          */
         VARIABLE,
 
         /**
          * Represents a type variable that is merely symbolic and is not attached to a {@link net.bytebuddy.description.TypeVariableSource}
-         * and does not defined bounds.
+         * and does not defined bounds. 表示仅是符号性的类型变量，未附加到{@link net.bytebuddy.description.TypeVariableSource}且未定义界限
          */
         VARIABLE_SYMBOLIC;
 
         /**
-         * Describes a loaded generic type as a {@link TypeDescription.Generic}.
+         * Describes a loaded generic type as a {@link TypeDescription.Generic}. 将加载的通用类型描述为{@link TypeDescription.Generic}
          *
-         * @param type The type to describe.
+         * @param type The type to describe. 要描述的类型
          * @return A description of the provided generic type.
          */
         public static TypeDescription.Generic describe(Type type) {
@@ -192,7 +192,7 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
 
         /**
          * Describes the generic type while using the supplied annotation reader for resolving type annotations if this
-         * language feature is available on the current JVM.
+         * language feature is available on the current JVM. 如果当前JVM上提供了此语言功能，则在使用提供的注解阅读器 解析 类型注解时 描述泛型类型
          *
          * @param type             The type to describe.
          * @param annotationReader The annotation reader for extracting type annotations.

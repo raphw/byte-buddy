@@ -602,12 +602,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * Represents an offset mapping for an advice method to an alternative offset.
+     * Represents an offset mapping for an advice method to an alternative offset. 直接用定义在二进制的字节码文件的偏移量来代替传统的遍历访问 这个map保存这样的映射关系
      */
     public interface OffsetMapping {
 
         /**
-         * Resolves an offset mapping to a given target offset.
+         * Resolves an offset mapping to a given target offset. Target封装了 目标方法的offset信息
          *
          * @param instrumentedType   The instrumented type.
          * @param instrumentedMethod The instrumented method for which the mapping is to be resolved.
@@ -623,26 +623,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                        Sort sort);
 
         /**
-         * A target offset of an offset mapping.
+         * A target offset of an offset mapping. 它的实现类中。都各自有ReadOnly和ReadWrite实现 ReadOnly实现了读取目标类的字节码，并被StackManipulation包装
          */
         interface Target {
 
             /**
-             * Resolves a read instruction.
+             * Resolves a read instruction. 一个 StackManipulation 代表着一个adivce参数的读取，这就是处理读的指令
              *
              * @return A stack manipulation that represents a reading of an advice parameter.
              */
             StackManipulation resolveRead();
 
             /**
-             * Resolves a write instruction.
+             * Resolves a write instruction. 处理写的指令
              *
              * @return A stack manipulation that represents a writing to an advice parameter.
              */
             StackManipulation resolveWrite();
 
             /**
-             * Resolves an increment instruction.
+             * Resolves an increment instruction. 处理增加指令
              *
              * @param value The incrementation value.
              * @return A stack manipulation that represents a writing to an advice parameter.
@@ -667,7 +667,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             /**
              * A target for an offset mapping that represents a non-operational value. All writes are discarded and a value's
-             * default value is returned upon every read.
+             * default value is returned upon every read. ForDefaultValue 对默认值的读写
              */
             @HashCodeAndEqualsPlugin.Enhance
             abstract class ForDefaultValue implements Target {
@@ -770,7 +770,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             /**
-             * A target for an offset mapping that represents a local variable.
+             * A target for an offset mapping that represents a local variable. ForVariable 对本地变量的处理
              */
             @HashCodeAndEqualsPlugin.Enhance
             abstract class ForVariable implements Target {
@@ -894,7 +894,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             /**
-             * A target mapping for an array of all local variables.
+             * A target mapping for an array of all local variables. ForArray 对数组类型的处理
              */
             @HashCodeAndEqualsPlugin.Enhance
             abstract class ForArray implements Target {
@@ -984,7 +984,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             /**
-             * A target for an offset mapping that loads a field value.
+             * A target for an offset mapping that loads a field value. ForField 对Field的处理
              */
             @HashCodeAndEqualsPlugin.Enhance
             abstract class ForField implements Target {
@@ -1112,7 +1112,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             /**
-             * A target for an offset mapping that represents a read-only stack manipulation.
+             * A target for an offset mapping that represents a read-only stack manipulation. ForStackManipulation 工具类，直接返回对某个类型的StackManipulation包装
              */
             @HashCodeAndEqualsPlugin.Enhance
             class ForStackManipulation implements Target {
@@ -3619,7 +3619,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * An argument handler is responsible for resolving offsets of the local variable array in the context of the applied instrumentation.
+     * An argument handler is responsible for resolving offsets of the local variable array in the context of the applied instrumentation. 负责寻找定位 参数在字节码中的本地变量的偏移量。比如public String hello(int id),参数名"id"就放在本地变量中  instrumented 表示被修改的目标方法，advice表示增强
      */
     public interface ArgumentHandler {
 
@@ -3629,7 +3629,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         int THIS_REFERENCE = 0;
 
         /**
-         * Resolves an offset relative to an offset of the instrumented method.
+         * Resolves an offset relative to an offset of the instrumented method. 定位instrumented 方法的偏移
          *
          * @param offset The offset to resolve.
          * @return The resolved offset.
@@ -3651,7 +3651,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         int enter();
 
         /**
-         * Returns the offset of the local variable with the given name.
+         * Returns the offset of the local variable with the given name. 根据name定位变量在本地变量 方法的偏移
          *
          * @param name The name of the local variable being accessed.
          * @return The named variable's offset.
@@ -3659,26 +3659,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         int named(String name);
 
         /**
-         * Resolves the offset of the returned value of the instrumented method.
+         * Resolves the offset of the returned value of the instrumented method. 定位instrumented return value的offset
          *
          * @return The offset of the returned value of the instrumented method.
          */
         int returned();
 
         /**
-         * Resolves the offset of the thrown exception of the instrumented method.
+         * Resolves the offset of the thrown exception of the instrumented method. 定位instrumented exception的offset
          *
          * @return The offset of the thrown exception of the instrumented method.
          */
         int thrown();
 
         /**
-         * An argument handler that is used for resolving the instrumented method.
+         * An argument handler that is used for resolving the instrumented method. 针对被修改方法参数的定位
          */
         interface ForInstrumentedMethod extends ArgumentHandler {
 
             /**
-             * Resolves a local variable index.
+             * Resolves a local variable index. 定位 instrumented 方法的偏移
              *
              * @param index The index to resolve.
              * @return The resolved local variable index.
@@ -3686,7 +3686,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             int variable(int index);
 
             /**
-             * Prepares this argument handler for future offset access.
+             * Prepares this argument handler for future offset access. 处理参数
              *
              * @param methodVisitor The method visitor to which to write any potential byte code.
              * @return The minimum stack size that is required to apply this manipulation.
@@ -3694,7 +3694,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             int prepare(MethodVisitor methodVisitor);
 
             /**
-             * Binds an advice method as enter advice for this handler.
+             * Binds an advice method as enter advice for this handler. 绑定一个advice方法作为方法开始的处理
              *
              * @param adviceMethod The resolved enter advice handler.
              * @return The resolved argument handler for enter advice.
@@ -3702,7 +3702,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             ForAdvice bindEnter(MethodDescription adviceMethod);
 
             /**
-             * Binds an advice method as exit advice for this handler.
+             * Binds an advice method as exit advice for this handler. 绑定一个advice方法作为方法结束的处理
              *
              * @param adviceMethod  The resolved exit advice handler.
              * @param skipThrowable {@code true} if no throwable is stored.
@@ -3711,21 +3711,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             ForAdvice bindExit(MethodDescription adviceMethod, boolean skipThrowable);
 
             /**
-             * Returns {@code true} if the original arguments are copied before invoking the instrumented method.
+             * Returns {@code true} if the original arguments are copied before invoking the instrumented method. 在执行目标类的方法前，是否copy原始的方法参数
              *
              * @return {@code true} if the original arguments are copied before invoking the instrumented method.
              */
             boolean isCopyingArguments();
 
             /**
-             * Returns a list of the named types in their declared order.
+             * Returns a list of the named types in their declared order. 按照声明顺序返回被命名类的类型
              *
              * @return A list of the named types in their declared order.
              */
             List<TypeDescription> getNamedTypes();
 
             /**
-             * A default implementation of an argument handler for an instrumented method.
+             * A default implementation of an argument handler for an instrumented method. 绑定了入口和退出的方法处理
              */
             abstract class Default implements ForInstrumentedMethod {
 
@@ -3828,7 +3828,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 /**
-                 * A simple argument handler for an instrumented method.
+                 * A simple argument handler for an instrumented method. 简单的hanlder实现
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 protected static class Simple extends Default {
@@ -3874,7 +3874,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 /**
-                 * An argument handler for an instrumented method that copies all arguments before executing the instrumented method.
+                 * An argument handler for an instrumented method that copies all arguments before executing the instrumented method. 其中prepare方法的实现。修改了目标方法的每一个参数
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 protected static class Copying extends Default {
@@ -3948,12 +3948,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * An argument handler that is used for resolving an advice method.
+         * An argument handler that is used for resolving an advice method. ArgumentHandler 的实现针对于遍历增强advice的方法
          */
         interface ForAdvice extends ArgumentHandler {
 
             /**
-             * Resolves an offset of the advice method.
+             * Resolves an offset of the advice method.  mapped 方法，解决advice中方法的偏移
              *
              * @param offset The offset to resolve.
              * @return The resolved offset.
@@ -3961,7 +3961,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             int mapped(int offset);
 
             /**
-             * A default implementation for an argument handler for an advice method.
+             * A default implementation for an argument handler for an advice method. 可以看到保留有 对被修改类型和增强的引用。以及退出类型，可获得的本地变量关系
              */
             abstract class Default implements ForAdvice {
 
@@ -4028,7 +4028,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 /**
-                 * An argument handler for an enter advice method.
+                 * An argument handler for an enter advice method. 继承default的实现，专门针对进入方法的类型。可以看出return()和thrwown()方法不实现
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 protected static class ForMethodEnter extends Default {
@@ -4068,7 +4068,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 /**
-                 * An argument handler for an exit advice method.
+                 * An argument handler for an exit advice method. 针对退出方法的处理
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 protected static class ForMethodExit extends Default {
@@ -4190,7 +4190,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * A handler for computing the instrumented method's size.
+     * A handler for computing the instrumented method's size. 类似ArumentHander,这个是用来处理方法的。用来计算目标方法的字节码大小
      */
     protected interface MethodSizeHandler {
 
@@ -4588,7 +4588,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * A handler for computing and translating stack map frames.
+     * A handler for computing and translating stack map frames. 处理栈帧映射的
      */
     protected interface StackMapFrameHandler {
 
@@ -5587,7 +5587,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * An exception handler is responsible for providing byte code for handling an exception thrown from a suppressing advice method.
+     * An exception handler is responsible for providing byte code for handling an exception thrown from a suppressing advice method. 处理异常的
      */
     public interface ExceptionHandler {
 
@@ -5658,7 +5658,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * A dispatcher for implementing advice.
+     * A dispatcher for implementing advice. 单例用来指向不同advice的分发器
      */
     protected interface Dispatcher {
 
@@ -5673,21 +5673,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         AnnotationVisitor IGNORE_ANNOTATION = null;
 
         /**
-         * Returns {@code true} if this dispatcher is alive.
+         * Returns {@code true} if this dispatcher is alive. isAlive() 判断dispatcher()的是否活着
          *
          * @return {@code true} if this dispatcher is alive.
          */
         boolean isAlive();
 
         /**
-         * The type that is produced as a result of executing this advice method.
+         * The type that is produced as a result of executing this advice method. 获取advice的类型
          *
          * @return A description of the type that is produced by this advice method.
          */
         TypeDefinition getAdviceType();
 
         /**
-         * A dispatcher that is not yet resolved.
+         * A dispatcher that is not yet resolved. 是Dispatcher 的实现，表明没有解决的的dispacther。仅仅内置了一个Map<String, TypeDefinition> getNamedTypes();保存所有被enter声明
          */
         interface Unresolved extends Dispatcher {
 
@@ -5727,7 +5727,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * A suppression handler for optionally suppressing exceptions.
+         * A suppression handler for optionally suppressing exceptions. superess是抑制的意思，这个类的作用拦截Suppress exception。在前后加入自定一的动做
          */
         interface SuppressionHandler {
 
@@ -5740,7 +5740,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             Bound bind(StackManipulation exceptionHandler);
 
             /**
-             * A bound version of a suppression handler that must not be reused.
+             * A bound version of a suppression handler that must not be reused. 封装了拦截的动作。上面的bind函数就是返回这么一个对象，包含了对handler的额外处理
              */
             interface Bound {
 
@@ -5834,7 +5834,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             /**
-             * A suppression handler that suppresses a given throwable type.
+             * A suppression handler that suppresses a given throwable type. Suppressing是 SuppressingHandler的实现  要知道 字节码中，if,switch,或者 try catch等会经常使用标签label，方便根据判断跳转（jump）到不同的代码逻辑。 可以看到这里就是使用几个lable，完成这样的工作
              */
             @HashCodeAndEqualsPlugin.Enhance
             class Suppressing implements SuppressionHandler {
@@ -5961,7 +5961,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * A relocation handler is responsible for chaining the usual control flow of an instrumented method. 重定位处理程序负责链接插入拦截方法的常规控制流
+         * A relocation handler is responsible for chaining the usual control flow of an instrumented method. 重定位处理程序负责链接插入拦截方法的常规控制流  负责对instrumented method的控制流，链式的串联起来。 重定位的操作是在字节码中jump到不同代码逻辑，一般依赖字节码中存在的lable。但是最终写到字节码前，可把很多条件保留在代码逻辑里，具体生成是按照代码逻辑生成不同lable。这个RelocationHandler就是组合逻辑，在不同位置生成label
          */
         interface RelocationHandler {
 
@@ -8732,7 +8732,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * A method visitor that weaves the advice methods' byte codes.
+     * A method visitor that weaves the advice methods' byte codes. 给目标类添加advice的逻辑 这些变量都是前面定义的
      */
     protected abstract static class AdviceVisitor extends ExceptionTableSensitiveMethodVisitor implements Dispatcher.RelocationHandler.Relocation {
 
