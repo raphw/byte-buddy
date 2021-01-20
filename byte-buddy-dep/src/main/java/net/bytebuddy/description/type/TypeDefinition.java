@@ -261,7 +261,7 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
     }
 
     /**
-     * An iterator that iterates over a type's class hierarchy.
+     * An iterator that iterates over a type's class hierarchy. 在类型的类层次结构上进行迭代的迭代器
      */
     class SuperClassIterator implements Iterator<TypeDefinition> {
 

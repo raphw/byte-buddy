@@ -474,13 +474,13 @@ public interface MethodGraph {
              * <p>
              * Creates a default compiler for a method hierarchy following the rules of the Java programming language. According
              * to these rules, two methods of the same name are only different if their parameter types represent different raw
-             * types. The return type is not considered as a part of the signature.
+             * types. The return type is not considered as a part of the signature. 根据Java编程语言的规则为方法层次结构创建默认编译器。根据这些规则，只有当两个同名方法的参数类型表示不同的原始类型时，它们才是不同的。返回类型不被视为签名的一部分
              * </p>
              * <p>
-             * Ambiguous methods are merged by considering the method that was discovered first.
+             * Ambiguous methods are merged by considering the method that was discovered first. 通过考虑最先发现的方法来合并模糊方法
              * </p>
              *
-             * @return A compiler for resolving a method hierarchy following the rules of the Java programming language.
+             * @return A compiler for resolving a method hierarchy following the rules of the Java programming language. 一种编译器，用于按照Java编程语言的规则解析方法层次结构
              */
             public static Compiler forJavaHierarchy() {
                 return of(Harmonizer.ForJavaMethod.INSTANCE, Merger.Directional.LEFT);
@@ -490,13 +490,13 @@ public interface MethodGraph {
              * <p>
              * Creates a default compiler for a method hierarchy following the rules of the Java virtual machine. According
              * to these rules, two methods of the same name are different if their parameter types and return types represent
-             * different type erasures.
+             * different type erasures. 根据Java虚拟机的规则为方法层次结构创建默认编译器。根据这些规则，如果相同名称的两个方法的参数类型和返回类型表示不同的类型擦除，则它们是不同的
              * </p>
              * <p>
-             * Ambiguous methods are merged by considering the method that was discovered first.
+             * Ambiguous methods are merged by considering the method that was discovered first. 通过考虑最先发现的方法来合并模糊方法
              * </p>
              *
-             * @return A compiler for resolving a method hierarchy following the rules of the Java programming language.
+             * @return A compiler for resolving a method hierarchy following the rules of the Java programming language. 一种编译器，用于按照Java编程语言的规则解析方法层次结构
              */
             public static Compiler forJVMHierarchy() {
                 return of(Harmonizer.ForJVMMethod.INSTANCE, Merger.Directional.LEFT);
@@ -522,11 +522,11 @@ public interface MethodGraph {
             /**
              * Analyzes the given type description without checking if the end of the type hierarchy was reached. 分析给定的类型描述，而不检查是否已到达类型层次结构的末尾
              *
-             * @param typeDefinition   The type to analyze.
-             * @param key              The type in its original form before applying the visitor.
-             * @param snapshots        A map containing snapshots of key stores for previously analyzed types.
-             * @param relevanceMatcher A matcher for filtering methods that should be included in the graph.
-             * @return A key store describing the provided type.
+             * @param typeDefinition   The type to analyze. 要分析的类型
+             * @param key              The type in its original form before applying the visitor. 在应用访问者之前以其原始形式输入
+             * @param snapshots        A map containing snapshots of key stores for previously analyzed types. 包含先前分析类型的密钥存储快照的映射
+             * @param relevanceMatcher A matcher for filtering methods that should be included in the graph. 用于筛选应包含在图中的方法的匹配器
+             * @return A key store describing the provided type. 描述所提供类型的密钥存储
              */
             protected Key.Store<T> analyze(TypeDefinition typeDefinition,
                                            TypeDefinition key,
@@ -561,8 +561,8 @@ public interface MethodGraph {
              *
              * @param typeDefinition   The type to analyze.
              * @param snapshots        A map containing snapshots of key stores for previously analyzed types. 包含先前分析类型的密钥存储快照的映射
-             * @param relevanceMatcher A matcher for filtering methods that should be included in the graph.
-             * @return A key store describing the provided type.
+             * @param relevanceMatcher A matcher for filtering methods that should be included in the graph. 用于筛选应包含在图中的方法的匹配器
+             * @return A key store describing the provided type. 描述所提供类型的密钥存储
              */
             protected Key.Store<T> doAnalyze(TypeDefinition typeDefinition,
                                              Map<TypeDefinition, Key.Store<T>> snapshots,
@@ -584,7 +584,7 @@ public interface MethodGraph {
             public interface Harmonizer<S> {
 
                 /**
-                 * Harmonizes the given type token.
+                 * Harmonizes the given type token. 协调给定的类型标记
                  *
                  * @param typeToken The type token to harmonize.
                  * @return A token representing the given type token.
@@ -925,21 +925,21 @@ public interface MethodGraph {
                 }
 
                 /**
-                 * A detached version of a key that identifies methods by their JVM signature, i.e. parameter types and return type.
+                 * A detached version of a key that identifies methods by their JVM signature, i.e. parameter types and return type. 一种键的分离版本，它通过方法的JVM签名（即参数类型和返回类型）来标识方法
                  */
                 protected static class Detached extends Key<MethodDescription.TypeToken> {
 
                     /**
-                     * The type tokens represented by this key.
+                     * The type tokens represented by this key. 此键表示的类型标记
                      */
                     private final Set<MethodDescription.TypeToken> identifiers;
 
                     /**
                      * Creates a new detached key.
                      *
-                     * @param internalName   The internal name of the method this key identifies.
-                     * @param parameterCount The number of method parameters of the method this key identifies.
-                     * @param identifiers    The type tokens represented by this key.
+                     * @param internalName   The internal name of the method this key identifies. 此键标识的方法的内部名称
+                     * @param parameterCount The number of method parameters of the method this key identifies. 此键标识的方法的方法参数数
+                     * @param identifiers    The type tokens represented by this key. 此键表示的类型标记
                      */
                     protected Detached(String internalName, int parameterCount, Set<MethodDescription.TypeToken> identifiers) {
                         super(internalName, parameterCount);
@@ -947,7 +947,7 @@ public interface MethodGraph {
                     }
 
                     /**
-                     * Creates a new detached key of the given method token.
+                     * Creates a new detached key of the given method token. 创建给定方法令牌的新分离密钥
                      *
                      * @param token The method token to represent as a key.
                      * @return A detached key representing the given method token..
@@ -1093,9 +1093,9 @@ public interface MethodGraph {
                     }
 
                     /**
-                     * Transforms this store into a method graph by applying the given merger.
+                     * Transforms this store into a method graph by applying the given merger. 通过应用给定的合并将此存储转换为方法图
                      *
-                     * @param merger The merger to apply for resolving the representative for ambiguous resolutions.
+                     * @param merger The merger to apply for resolving the representative for ambiguous resolutions. 申请解决合并代表人决议不明确的
                      * @return The method graph that represents this key store.
                      */
                     protected MethodGraph asGraph(Merger merger) {

@@ -140,7 +140,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
         }
 
         /**
-         * An abstract base implementation of a valid special method invocation.
+         * An abstract base implementation of a valid special method invocation. 有效的特殊方法调用的抽象基实现
          */
         abstract class AbstractBase implements SpecialMethodInvocation {
 
@@ -168,12 +168,12 @@ public interface Implementation extends InstrumentedType.Prepareable {
         }
 
         /**
-         * A canonical implementation of a {@link SpecialMethodInvocation}.
+         * A canonical implementation of a {@link SpecialMethodInvocation}. {@link SpecialMethodInvocation} 的规范实现
          */
         class Simple extends SpecialMethodInvocation.AbstractBase {
 
             /**
-             * The method description that is represented by this legal special method invocation.
+             * The method description that is represented by this legal special method invocation. 由这个合法的特殊方法调用表示的方法描述
              */
             private final MethodDescription methodDescription;
 

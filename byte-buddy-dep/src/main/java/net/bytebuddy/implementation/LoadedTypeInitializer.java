@@ -14,13 +14,13 @@ import java.util.List;
 
 /**
  * Implementations of this interface explicitly initialize a loaded type. Usually, such implementations inject runtime
- * context into an instrumented type which cannot be defined by the means of the Java class file format.
+ * context into an instrumented type which cannot be defined by the means of the Java class file format. 此接口的实现显式初始化加载的类型。通常，这样的实现将运行时上下文注入到一个不能通过Java类文件格式定义的插装类型中
  */
 public interface LoadedTypeInitializer {
 
     /**
      * Callback that is invoked on the creation of an instrumented type. If the loaded type initializer is alive, this
-     * method should be implemented empty instead of throwing an exception.
+     * method should be implemented empty instead of throwing an exception. 在创建检测类型时调用的回调。如果加载的类型初始值设定项是活动的，则此方法应实现为空，而不是引发异常
      *
      * @param type The manifestation of the instrumented type.
      */
@@ -57,7 +57,7 @@ public interface LoadedTypeInitializer {
     }
 
     /**
-     * A type initializer for setting a value for a static field.
+     * A type initializer for setting a value for a static field. 用于设置静态字段值的类型初始值设定项
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ForStaticField implements LoadedTypeInitializer, Serializable {
@@ -115,7 +115,7 @@ public interface LoadedTypeInitializer {
     }
 
     /**
-     * A compound loaded type initializer that combines several type initializers.
+     * A compound loaded type initializer that combines several type initializers. 组合了几个类型初始值设定项的复合加载类型初始值设定项
      */
     @SuppressFBWarnings(value = "SE_BAD_FIELD", justification = "Serialization is considered opt-in for a rare use case")
     @HashCodeAndEqualsPlugin.Enhance
@@ -127,7 +127,7 @@ public interface LoadedTypeInitializer {
         private static final long serialVersionUID = 1L;
 
         /**
-         * The loaded type initializers that are represented by this compound type initializer.
+         * The loaded type initializers that are represented by this compound type initializer. 由该复合类型初始值设定项表示的已加载类型初始值设定项
          */
         private final List<LoadedTypeInitializer> loadedTypeInitializers;
 

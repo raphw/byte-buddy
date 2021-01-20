@@ -667,13 +667,13 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * A method locator that identifies a unique virtual method.
+         * A method locator that identifies a unique virtual method. 标识唯一虚方法的方法定位器
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForElementMatcher implements MethodLocator {
 
             /**
-             * The matcher to use.
+             * The matcher to use. 要使用的匹配器
              */
             private final ElementMatcher<? super MethodDescription> matcher;
 

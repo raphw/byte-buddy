@@ -1845,20 +1845,20 @@ public interface MethodDescription extends TypeVariableSource,
     class TypeToken {
 
         /**
-         * The represented method's raw return type.
+         * The represented method's raw return type. 表示方法的原始返回类型
          */
         private final TypeDescription returnType;
 
         /**
-         * The represented method's raw parameter types.
+         * The represented method's raw parameter types. 表示方法的原始参数类型
          */
         private final List<? extends TypeDescription> parameterTypes;
 
         /**
-         * Creates a new type token.
+         * Creates a new type token. 创建新类型标记
          *
-         * @param returnType     The represented method's raw return type.
-         * @param parameterTypes The represented method's raw parameter types.
+         * @param returnType     The represented method's raw return type. 表示方法的原始返回类型
+         * @param parameterTypes The represented method's raw parameter types. 表示方法的原始参数类型
          */
         public TypeToken(TypeDescription returnType, List<? extends TypeDescription> parameterTypes) {
             this.returnType = returnType;
@@ -1866,7 +1866,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         /**
-         * Returns this token's return type.
+         * Returns this token's return type. 返回此标记的返回类型
          *
          * @return This token's return type.
          */
@@ -1875,7 +1875,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         /**
-         * Returns this token's parameter types.
+         * Returns this token's parameter types. 返回此标记的参数类型
          *
          * @return This token's parameter types.
          */

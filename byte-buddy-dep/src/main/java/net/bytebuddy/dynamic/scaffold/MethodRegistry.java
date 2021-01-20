@@ -68,7 +68,7 @@ public interface MethodRegistry {
                      LatentMatcher<? super MethodDescription> ignoredMethods);
 
     /**
-     * A handler for implementing a method.
+     * A handler for implementing a method. 实现方法的处理程序
      */
     interface Handler extends InstrumentedType.Prepareable {
 
@@ -355,18 +355,18 @@ public interface MethodRegistry {
     }
 
     /**
-     * A default implementation of a method registry.
+     * A default implementation of a method registry. 方法注册的默认实现
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Default implements MethodRegistry {
 
         /**
-         * The list of currently registered entries in their application order.
+         * The list of currently registered entries in their application order. 应用程序顺序中当前已注册条目的列表
          */
         private final List<Entry> entries;
 
         /**
-         * Creates a new default method registry without entries.
+         * Creates a new default method registry without entries. 创建一个没有条目的新默认方法注册表
          */
         public Default() {
             entries = Collections.emptyList();
@@ -442,7 +442,7 @@ public interface MethodRegistry {
                         && methodDescription.isPublic()
                         && !(methodDescription.isAbstract() || methodDescription.isFinal())
                         && methodDescription.getDeclaringType().isPackagePrivate()) {
-                    // Visibility bridges are required for public classes that inherit a public method from a package-private class.
+                    // Visibility bridges are required for public classes that inherit a public method from a package-private class. 从包私有类继承公共方法的公共类需要可见性桥
                     implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription, node.getVisibility()));
                 }
                 methods.add(methodDescription);
@@ -576,7 +576,7 @@ public interface MethodRegistry {
         }
 
         /**
-         * A prepared version of a default method registry.
+         * A prepared version of a default method registry. 默认方法注册的准备版本
          */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class Prepared implements MethodRegistry.Prepared {
@@ -693,33 +693,33 @@ public interface MethodRegistry {
             }
 
             /**
-             * An entry of a prepared method registry.
+             * An entry of a prepared method registry. 准备好的方法注册项
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class Entry {
 
                 /**
-                 * The handler for implementing methods.
+                 * The handler for implementing methods. 实现方法的处理程序
                  */
                 private final Handler handler;
 
                 /**
-                 * A attribute appender factory for appending attributes for any implemented method.
+                 * A attribute appender factory for appending attributes for any implemented method. 属性附加器工厂，用于为任何实现的方法附加属性
                  */
                 private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
                 /**
-                 * The method this entry represents.
+                 * The method this entry represents. 此项表示的方法
                  */
                 private final MethodDescription methodDescription;
 
                 /**
-                 * The method's type tokens.
+                 * The method's type tokens. 方法的类型标记
                  */
                 private final Set<MethodDescription.TypeToken> typeTokens;
 
                 /**
-                 * The minimum required visibility of this method.
+                 * The minimum required visibility of this method. 此方法所需的最低可见性
                  */
                 private Visibility visibility;
 

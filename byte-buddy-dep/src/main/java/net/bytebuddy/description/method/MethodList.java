@@ -170,7 +170,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
     }
 
     /**
-     * A list of method descriptions for a list of detached tokens. For the returned method, each token is attached to its method representation.
+     * A list of method descriptions for a list of detached tokens. For the returned method, each token is attached to its method representation. 分离标记列表的方法描述列表。对于返回的方法，每个标记都附加到其方法表示
      */
     class ForTokens extends AbstractBase<MethodDescription.InDefinedShape> {
 
@@ -180,12 +180,12 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         private final TypeDescription declaringType;
 
         /**
-         * The list of method tokens to represent.
+         * The list of method tokens to represent. 要表示的方法标记的列表
          */
         private final List<? extends MethodDescription.Token> tokens;
 
         /**
-         * Creates a new list of method descriptions for a list of detached tokens.
+         * Creates a new list of method descriptions for a list of detached tokens. 为分离的标记列表创建新的方法描述列表
          *
          * @param declaringType The method's declaring type.
          * @param token         The list of method tokens to represent.
@@ -195,7 +195,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         /**
-         * Creates a new list of method descriptions for a list of detached tokens.
+         * Creates a new list of method descriptions for a list of detached tokens. 为分离的标记列表创建新的方法描述列表
          *
          * @param declaringType The method's declaring type.
          * @param tokens        The list of method tokens to represent.

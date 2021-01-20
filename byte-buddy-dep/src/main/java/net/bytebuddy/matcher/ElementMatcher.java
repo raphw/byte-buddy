@@ -72,7 +72,7 @@ public interface ElementMatcher<T> {
         }
 
         /**
-         * A conjunction matcher which only matches an element if both represented matchers constitute a match.
+         * A conjunction matcher which only matches an element if both represented matchers constitute a match. 一种连词匹配器，当两个表示的匹配器构成匹配时，它只匹配一个元素
          *
          * @param <W> The type of the object that is being matched.
          */

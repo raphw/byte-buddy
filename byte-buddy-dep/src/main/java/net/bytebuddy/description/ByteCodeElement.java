@@ -79,15 +79,15 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
     boolean isAccessibleTo(TypeDescription typeDescription);
 
     /**
-     * A type dependant describes an element that is an extension of a type definition, i.e. a field, method or method parameter.
+     * A type dependant describes an element that is an extension of a type definition, i.e. a field, method or method parameter. 类型依赖项描述了作为类型定义扩展的元素，即字段、方法或方法参数
      *
-     * @param <T> The type dependant's type.
-     * @param <S> The type dependant's token type.
+     * @param <T> The type dependant's type. 类型依赖项的类型
+     * @param <S> The type dependant's token type. 类型依赖项的令牌类型
      */
     interface TypeDependant<T extends TypeDependant<?, S>, S extends ByteCodeElement.Token<S>> {
 
         /**
-         * Returns this type dependant in its defined shape, i.e. the form it is declared in and without its type variable's resolved.
+         * Returns this type dependant in its defined shape, i.e. the form it is declared in and without its type variable's resolved. 以其定义的形状返回此类型相关项，即声明它的形式，而不解析其类型变量
          *
          * @return This type dependant in its defined shape.
          */

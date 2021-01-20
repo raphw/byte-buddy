@@ -253,18 +253,18 @@ public interface FieldLocator {
     }
 
     /**
-     * A field locator that looks up fields that are declared within a class's class hierarchy.
+     * A field locator that looks up fields that are declared within a class's class hierarchy. 一种字段定位器，用于查找在类的类层次结构中声明的字段
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ForClassHierarchy extends AbstractBase {
 
         /**
-         * The type for which to look up a field within its class hierarchy.
+         * The type for which to look up a field within its class hierarchy. 要在其类层次结构中查找字段的类型
          */
         private final TypeDescription typeDescription;
 
         /**
-         * Creates a field locator that looks up fields that are declared within a class's class hierarchy.
+         * Creates a field locator that looks up fields that are declared within a class's class hierarchy. 创建一个字段定位器，用于查找在类的类层次结构中声明的字段
          *
          * @param typeDescription The type for which to look up a field within its class hierarchy which is also the accessing type.
          */

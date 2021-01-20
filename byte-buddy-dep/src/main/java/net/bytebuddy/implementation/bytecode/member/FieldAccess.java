@@ -15,7 +15,7 @@ import org.objectweb.asm.Opcodes;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
- * An access representation to a given field.
+ * An access representation to a given field. 对给定字段的访问表示
  */
 public enum FieldAccess {
 
@@ -41,7 +41,7 @@ public enum FieldAccess {
 
     /**
      * The amount of operand slots this field access operation consumes when it is applied before eventually
-     * adding new values onto the operand stack.
+     * adding new values onto the operand stack. 在将新值最终添加到操作数堆栈之前应用此字段访问操作时所消耗的操作数插槽数
      */
     private final int targetSizeChange;
 
@@ -60,7 +60,7 @@ public enum FieldAccess {
     }
 
     /**
-     * Creates an accessor to read an enumeration value.
+     * Creates an accessor to read an enumeration value. 创建用于读取枚举值的访问器
      *
      * @param enumerationDescription The description of the enumeration.
      * @return A stack manipulation for reading the enumeration.
@@ -75,7 +75,7 @@ public enum FieldAccess {
     }
 
     /**
-     * Creates a field access representation for a given field.
+     * Creates a field access representation for a given field. 为给定字段创建字段访问表示
      *
      * @param fieldDescription The field to be accessed.
      * @return A field access definition for the given field.
@@ -90,8 +90,8 @@ public enum FieldAccess {
      * Creates a field access representation for a given field. If the field's return type derives from its declared shape, the value
      * is additionally casted to the generically resolved field. 为给定字段创建字段访问表示。如果字段的返回类型派生自其声明的形状，则该值将额外强制转换为一般解析的字段
      *
-     * @param fieldDescription The field to be accessed.
-     * @return A field access definition for the given field.
+     * @param fieldDescription The field to be accessed. 要访问的字段
+     * @return A field access definition for the given field. 给定字段的字段访问定义
      */
     public static Defined forField(FieldDescription fieldDescription) {
         FieldDescription.InDefinedShape declaredField = fieldDescription.asDefined();

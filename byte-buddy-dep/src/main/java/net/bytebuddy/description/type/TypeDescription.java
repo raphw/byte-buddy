@@ -1681,7 +1681,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 /**
                  * A substitutor that attaches type variables to a type variable source and replaces representations of
-                 * {@link TargetType} with a given declaring type.
+                 * {@link TargetType} with a given declaring type. 将类型变量附加到类型变量源并用给定的声明类型替换 TargetType 的表示的一种替换符
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 public static class ForAttachment extends Substitutor {
@@ -5851,8 +5851,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * Creates a lazy projection with a resolved erasure that retains the delegates type annotations. 创建具有解决的擦除的惰性投影，该投影保留委托类型注释
                  *
-                 * @param delegate The unresolved generic type.
-                 * @param visitor  The visitor to apply for resolving the generic type.
+                 * @param delegate The unresolved generic type. 未解析的泛型类型
+                 * @param visitor  The visitor to apply for resolving the generic type. 申请解析泛型类型的访问者
                  */
                 public WithResolvedErasure(Generic delegate, Visitor<? extends Generic> visitor) {
                     this(delegate, visitor, delegate);

@@ -9080,13 +9080,13 @@ public interface AgentBuilder {
                 }
 
                 /**
-                 * A resolution that performs a type transformation.
+                 * A resolution that performs a type transformation. 执行类型转换的解析
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 protected static class Resolution implements Transformation.Resolution.Decoratable {
 
                     /**
-                     * A description of the transformed type.
+                     * A description of the transformed type. 转换类型的描述
                      */
                     private final TypeDescription typeDescription;
 
@@ -9116,12 +9116,12 @@ public interface AgentBuilder {
                     private final TypePool typePool;
 
                     /**
-                     * The transformer to be applied.
+                     * The transformer to be applied. 要应用的转换器
                      */
                     private final Transformer transformer;
 
                     /**
-                     * {@code true} if this transformer serves as a decorator.
+                     * {@code true} if this transformer serves as a decorator. true -> 如果这个转换器起装饰作用
                      */
                     private final boolean decorator;
 
@@ -9255,27 +9255,27 @@ public interface AgentBuilder {
             }
 
             /**
-             * A compound transformation that applied several transformation in the given order and applies the first active transformation.
+             * A compound transformation that applied several transformation in the given order and applies the first active transformation. 一种复合变换，按给定的顺序应用若干变换并应用第一个有效变换
              */
             @HashCodeAndEqualsPlugin.Enhance
             class Compound implements Transformation {
 
                 /**
-                 * The list of transformations to apply in their application order.
+                 * The list of transformations to apply in their application order. 按应用程序顺序应用的转换列表
                  */
                 private final List<Transformation> transformations;
 
                 /**
-                 * Creates a new compound transformation.
+                 * Creates a new compound transformation. 创建新的复合变换
                  *
-                 * @param transformation An array of transformations to apply in their application order.
+                 * @param transformation An array of transformations to apply in their application order. 按应用程序顺序应用的一组转换
                  */
                 protected Compound(Transformation... transformation) {
                     this(Arrays.asList(transformation));
                 }
 
                 /**
-                 * Creates a new compound transformation.
+                 * Creates a new compound transformation. 创建新的复合变换
                  *
                  * @param transformations A list of transformations to apply in their application order.
                  */
