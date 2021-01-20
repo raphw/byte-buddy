@@ -49,14 +49,14 @@ public interface ConstructorStrategy {
     MethodRegistry inject(TypeDescription instrumentedType, MethodRegistry methodRegistry);
 
     /**
-     * Default implementations of constructor strategies. Any such strategy offers to additionally apply an {@link MethodAttributeAppender.Factory}.
+     * Default implementations of constructor strategies. Any such strategy offers to additionally apply an {@link MethodAttributeAppender.Factory}. 构造函数策略的默认实现。任何这样的策略都提供了一个 {@link MethodAttributeAppender.Factory}
      */
     enum Default implements ConstructorStrategy {
 
         /**
          * This strategy is adding no constructors such that the instrumented type will by default not have any. This
          * is legal by Java byte code requirements. However, if no constructor is added manually if this strategy is
-         * applied, the type is not constructable without using JVM non-public functionality.
+         * applied, the type is not constructable without using JVM non-public functionality. 此策略不添加构造函数，这样插入指令的类型在默认情况下将没有任何构造函数。对于Java字节码而言是合理的。但是，如果应用此策略时没有手动添加构造函数，则在不使用JVM非公共功能的情况下无法构造类型
          */
         NO_CONSTRUCTORS {
             @Override

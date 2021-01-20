@@ -47,14 +47,14 @@ public interface FieldDescription extends ByteCodeElement,
     int getActualModifiers();
 
     /**
-     * Returns a signature token representing this field.
+     * Returns a signature token representing this field. 返回表示此字段的签名令牌
      *
      * @return A signature token representing this field.
      */
     SignatureToken asSignatureToken();
 
     /**
-     * Represents a field description in its generic shape, i.e. in the shape it is defined by a generic or raw type.
+     * Represents a field description in its generic shape, i.e. in the shape it is defined by a generic or raw type. 以其泛型形状表示字段描述，即在由泛型或原始类型定义的形状中
      */
     interface InGenericShape extends FieldDescription {
 
@@ -63,7 +63,7 @@ public interface FieldDescription extends ByteCodeElement,
     }
 
     /**
-     * Represents a field in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved.
+     * Represents a field in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved. 以定义的形状表示字段，即以类定义的形式表示字段，而不解析其类型变量
      */
     interface InDefinedShape extends FieldDescription {
 
@@ -71,7 +71,7 @@ public interface FieldDescription extends ByteCodeElement,
         TypeDescription getDeclaringType();
 
         /**
-         * An abstract base implementation of a field description in its defined shape.
+         * An abstract base implementation of a field description in its defined shape. 字段描述的一种抽象的基本实现
          */
         abstract class AbstractBase extends FieldDescription.AbstractBase implements InDefinedShape {
 
@@ -83,7 +83,7 @@ public interface FieldDescription extends ByteCodeElement,
     }
 
     /**
-     * An abstract base implementation of a field description.
+     * An abstract base implementation of a field description. 字段描述的抽象基实现
      */
     abstract class AbstractBase extends ModifierReviewable.AbstractBase implements FieldDescription {
 
@@ -190,17 +190,17 @@ public interface FieldDescription extends ByteCodeElement,
     }
 
     /**
-     * An implementation of a field description for a loaded field.
+     * An implementation of a field description for a loaded field. 加载字段的字段描述的实现
      */
     class ForLoadedField extends InDefinedShape.AbstractBase {
 
         /**
-         * The represented loaded field.
+         * The represented loaded field. 表示的加载字段
          */
         private final Field field;
 
         /**
-         * Creates an immutable field description for a loaded field.
+         * Creates an immutable field description for a loaded field. 为加载的字段创建不可变的字段描述
          *
          * @param field The represented field.
          */
@@ -245,12 +245,12 @@ public interface FieldDescription extends ByteCodeElement,
 
     /**
      * A latent field description describes a field that is not attached to a declaring
-     * {@link TypeDescription}.
+     * {@link TypeDescription}. 潜在字段描述描述未附加到声明 TypeDescription 的字段
      */
     class Latent extends InDefinedShape.AbstractBase {
 
         /**
-         * The type for which this field is defined.
+         * The type for which this field is defined. 为其定义此字段的类型
          */
         private final TypeDescription declaringType;
 
@@ -275,7 +275,7 @@ public interface FieldDescription extends ByteCodeElement,
         private final List<? extends AnnotationDescription> declaredAnnotations;
 
         /**
-         * Creates a new latent field description. All provided types are attached to this instance before they are returned.
+         * Creates a new latent field description. All provided types are attached to this instance before they are returned. 创建新的潜在字段描述。所有提供的类型在返回之前都附加到此实例
          *
          * @param declaringType The declaring type of the field.
          * @param token         A token representing the field's shape.
@@ -289,7 +289,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         /**
-         * Creates a new latent field description. All provided types are attached to this instance before they are returned.
+         * Creates a new latent field description. All provided types are attached to this instance before they are returned. 创建新的潜在字段描述。所有提供的类型在返回之前都附加到此实例
          *
          * @param declaringType       The declaring type of the field.
          * @param fieldName           The name of the field.
@@ -336,12 +336,12 @@ public interface FieldDescription extends ByteCodeElement,
     }
 
     /**
-     * A field description that represents a given field but with a substituted field type.
+     * A field description that represents a given field but with a substituted field type. 一种字段描述，表示给定的字段，但具有替换字段类型
      */
     class TypeSubstituting extends AbstractBase implements InGenericShape {
 
         /**
-         * The declaring type of the field.
+         * The declaring type of the field. 字段的声明类型
          */
         private final TypeDescription.Generic declaringType;
 

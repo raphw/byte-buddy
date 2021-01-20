@@ -53,7 +53,7 @@ public interface TypeResolutionStrategy {
 
     /**
      * A type resolution strategy that applies all {@link LoadedTypeInitializer} after class loading using reflection. This implies that the initializers
-     * are executed <b>after</b> a type initializer is executed.
+     * are executed <b>after</b> a type initializer is executed. 一种类型解析策略，在使用反射加载类之后应用所有LoadedTypeInitializer。这意味着初始值设定项是在执行类型初始值设定项之后执行的
      */
     enum Passive implements TypeResolutionStrategy, Resolved {
 
@@ -86,7 +86,7 @@ public interface TypeResolutionStrategy {
 
     /**
      * A type resolution strategy that applies all {@link LoadedTypeInitializer} as a part of class loading using reflection. This implies that the initializers
-     * are executed <b>before</b> (as a first action of) a type initializer is executed.
+     * are executed <b>before</b> (as a first action of) a type initializer is executed. 一种类型解析策略，使用反射将所有 LoadedTypeInitializer 设定项作为类加载的一部分。这意味着在执行类型初始值设定项之前（作为类型初始值设定项的第一个操作）执行初始值设定项
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Active implements TypeResolutionStrategy {
@@ -97,7 +97,7 @@ public interface TypeResolutionStrategy {
         private final NexusAccessor nexusAccessor;
 
         /**
-         * Creates a new active type resolution strategy that uses a default nexus accessor.
+         * Creates a new active type resolution strategy that uses a default nexus accessor. 创建使用默认 nexus 访问器的新活动类型解析策略
          */
         public Active() {
             this(new NexusAccessor());

@@ -89,22 +89,22 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
         /**
          * Returns this type dependant in its defined shape, i.e. the form it is declared in and without its type variable's resolved. 以其定义的形状返回此类型相关项，即声明它的形式，而不解析其类型变量
          *
-         * @return This type dependant in its defined shape.
+         * @return This type dependant in its defined shape. 此类型依赖于其定义的形状
          */
         T asDefined();
 
         /**
          * Returns a token representative of this type dependant. All types that are matched by the supplied matcher are replaced by
-         * {@link net.bytebuddy.dynamic.TargetType} descriptions.
+         * {@link net.bytebuddy.dynamic.TargetType} descriptions. 返回表示此类型依赖项的标记。所提供的匹配器匹配的所有类型都将替换为 TargetType 描述
          *
-         * @param matcher A matcher to identify types to be replaced by {@link net.bytebuddy.dynamic.TargetType} descriptions.
+         * @param matcher A matcher to identify types to be replaced by {@link net.bytebuddy.dynamic.TargetType} descriptions. 用于标识要由TargetType描述替换的类型的匹配器
          * @return A token representative of this type dependant.
          */
         S asToken(ElementMatcher<? super TypeDescription> matcher);
     }
 
     /**
-     * A token representing a byte code element.
+     * A token representing a byte code element. 表示字节码元素的标记
      *
      * @param <T> The type of the implementation.
      */

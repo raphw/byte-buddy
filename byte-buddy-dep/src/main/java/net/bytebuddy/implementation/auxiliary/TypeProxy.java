@@ -74,10 +74,10 @@ public class TypeProxy implements AuxiliaryType {
     private final boolean serializableProxy;
 
     /**
-     * Creates a new type proxy.
+     * Creates a new type proxy. 创建新类型代理
      *
-     * @param proxiedType          The type this proxy should implement which can either be a non-final class or an interface.
-     * @param implementationTarget The implementation target this type proxy is created for.
+     * @param proxiedType          The type this proxy should implement which can either be a non-final class or an interface. 此代理应实现的类型，可以是非final类或接口
+     * @param implementationTarget The implementation target this type proxy is created for. 为其创建此类型代理的实现目标
      * @param invocationFactory    The invocation factory for creating special method invocations.
      * @param ignoreFinalizer      {@code true} if any finalizer methods should be ignored for proxying.
      * @param serializableProxy    Determines if the proxy should be serializable.
@@ -566,14 +566,14 @@ public class TypeProxy implements AuxiliaryType {
     protected class MethodCall implements Implementation {
 
         /**
-         * The method accessor factory to query for the super method invocation.
+         * The method accessor factory to query for the super method invocation. 要查询超级方法调用的方法访问器工厂
          */
         private final MethodAccessorFactory methodAccessorFactory;
 
         /**
-         * Creates a new method call implementation.
+         * Creates a new method call implementation. 创建新的方法调用实现
          *
-         * @param methodAccessorFactory The method accessor factory to query for the super method invocation.
+         * @param methodAccessorFactory The method accessor factory to query for the super method invocation. 要查询超级方法调用的方法访问器工厂
          */
         protected MethodCall(MethodAccessorFactory methodAccessorFactory) {
             this.methodAccessorFactory = methodAccessorFactory;

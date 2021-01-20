@@ -42,36 +42,36 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 /**
  * A method call proxy represents a class that is compiled against a particular method which can then be called whenever
  * either its {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()} method is called where the method
- * call proxy implements both interfaces.
+ * call proxy implements both interfaces. 方法调用代理表示针对特定方法编译的类，然后在调用其 call() 或 run() 方法时可以调用该类，其中方法调用代理实现两个接口
  * <p>&nbsp;</p>
  * In order to do so, the method call proxy instances are constructed by providing all the necessary information for
- * calling a particular method:
+ * calling a particular method: 为此，通过提供调用特定方法所需的所有信息来构造方法调用代理实例
  * <ol>
- * <li>If the target method is not {@code static}, the first argument should be an instance on which the method is called.</li>
- * <li>All arguments for the called method in the order in which they are required.</li>
+ * <li>If the target method is not {@code static}, the first argument should be an instance on which the method is called.</li> 如果目标方法不是静态的，那么第一个参数应该是调用该方法的实例
+ * <li>All arguments for the called method in the order in which they are required.</li> 被调用方法的所有参数按其所需的顺序排列
  * </ol>
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class MethodCallProxy implements AuxiliaryType {
 
     /**
-     * The prefix of the fields holding the original method invocation's arguments.
+     * The prefix of the fields holding the original method invocation's arguments. 包含原始方法调用参数的字段的前缀
      */
     private static final String FIELD_NAME_PREFIX = "argument";
 
     /**
-     * The special method invocation to invoke from the auxiliary type.
+     * The special method invocation to invoke from the auxiliary type. 从辅助类型调用的特殊方法调用
      */
     private final Implementation.SpecialMethodInvocation specialMethodInvocation;
 
     /**
-     * Determines if the generated proxy should be serializableProxy.
+     * Determines if the generated proxy should be serializableProxy. 确定生成的代理是否应为 serializableProxy
      */
     private final boolean serializableProxy;
 
     /**
      * The assigner to use for invoking a bridge method target where the parameter and return types need to be
-     * assigned.
+     * assigned. 用于调用需要指定参数和返回类型的桥接方法目标的赋值器
      */
     private final Assigner assigner;
 
@@ -87,7 +87,7 @@ public class MethodCallProxy implements AuxiliaryType {
     }
 
     /**
-     * Creates a new method call proxy for a given method.
+     * Creates a new method call proxy for a given method. 为给定方法创建新的方法调用代理
      *
      * @param specialMethodInvocation The special method invocation which should be invoked by this method call proxy.
      * @param serializableProxy       Determines if the generated proxy should be serializableProxy.
@@ -102,7 +102,7 @@ public class MethodCallProxy implements AuxiliaryType {
     }
 
     /**
-     * Creates a linked hash map of field names to their types where each field represents a parameter of the method.
+     * Creates a linked hash map of field names to their types where each field represents a parameter of the method. 创建字段名到其类型的链接哈希映射，其中每个字段表示方法的一个参数
      *
      * @param methodDescription The method to extract into fields.
      * @return A map of fields in the order they need to be loaded onto the operand stack for invoking the original
@@ -121,10 +121,10 @@ public class MethodCallProxy implements AuxiliaryType {
     }
 
     /**
-     * Creates a field name for a method parameter of a given index.
+     * Creates a field name for a method parameter of a given index. 为给定索引的方法参数创建字段名
      *
-     * @param index The index for which the field name is to be created.
-     * @return The name for the given parameter.
+     * @param index The index for which the field name is to be created. 要为其创建字段名的索引
+     * @return The name for the given parameter. 给定参数的名称
      */
     private static String fieldName(int index) {
         return FIELD_NAME_PREFIX + index;
@@ -153,7 +153,7 @@ public class MethodCallProxy implements AuxiliaryType {
     }
 
     /**
-     * A precomputed method graph that only displays the methods that are relevant for creating a method call proxy.
+     * A precomputed method graph that only displays the methods that are relevant for creating a method call proxy. 一种预计算的方法图，只显示与创建方法调用代理相关的方法
      */
     protected enum PrecomputedMethodGraph implements MethodGraph.Compiler {
 
@@ -168,7 +168,7 @@ public class MethodCallProxy implements AuxiliaryType {
         private final MethodGraph.Linked methodGraph;
 
         /**
-         * Creates the precomputed method graph.
+         * Creates the precomputed method graph. 创建预计算的方法图
          */
         @SuppressFBWarnings(value = "SE_BAD_FIELD_STORE", justification = "Precomputed method graph is not intended for serialization")
         PrecomputedMethodGraph() {
@@ -293,12 +293,12 @@ public class MethodCallProxy implements AuxiliaryType {
     protected static class MethodCall implements Implementation {
 
         /**
-         * The method that is accessed by the implemented method.
+         * The method that is accessed by the implemented method. 由实现的方法访问的方法
          */
         private final MethodDescription accessorMethod;
 
         /**
-         * The assigner to be used for invoking the accessor method.
+         * The assigner to be used for invoking the accessor method. 用于调用访问器方法的赋值器
          */
         private final Assigner assigner;
 
@@ -367,18 +367,18 @@ public class MethodCallProxy implements AuxiliaryType {
      * A stack manipulation that creates a {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy}
      * for a given method an pushes such an object onto the call stack. For this purpose, all arguments of the proxied method
      * are loaded onto the stack what is only possible if this instance is used from a method with an identical signature such
-     * as the target method itself. 创建 {@链接 net.bytebuddy.implementation.auxiliary.MethodCallProxy} 对于给定的方法，an将此类对象推送到调用堆栈上。为此，代理方法的所有参数都被加载到堆栈中，只有当此实例从具有相同签名的方法（如目标方法本身）中使用时，才有可能
+     * as the target method itself. 创建 {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy} 对于给定的方法，将此类对象推送到调用堆栈上。为此，代理方法的所有参数都被加载到堆栈中，只有当此实例从具有相同签名的方法（如目标方法本身）中使用时，才有可能
      */
     @HashCodeAndEqualsPlugin.Enhance
     public static class AssignableSignatureCall implements StackManipulation {
 
         /**
-         * The special method invocation to be proxied by this stack manipulation.
+         * The special method invocation to be proxied by this stack manipulation. 此堆栈操作要代理的特殊方法调用
          */
         private final Implementation.SpecialMethodInvocation specialMethodInvocation;
 
         /**
-         * Determines if the generated proxy should be serializableProxy.
+         * Determines if the generated proxy should be serializableProxy. 确定生成的代理是否应为 serializableProxy
          */
         private final boolean serializable;
 
