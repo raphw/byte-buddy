@@ -14,19 +14,19 @@ import java.util.Map;
 
 /**
  * An implementation target for redefining a given type while preserving the original methods within the
- * instrumented type.
+ * instrumented type. 一种实现目标，用于重新定义给定的类型，同时在插入指令的类型中保留原始方法
  * <p>&nbsp;</p>
- * Super method calls are merely emulated by this {@link Implementation.Target} in order
+ * Super method calls are merely emulated by this {@link Implementation.Target} in order  超级方法调用仅由这个 @link Implementation.Target} 模拟，以便保留用户在调用{@code Super}前缀方法时所期望的Java超级调用语义
  * to preserve Java's super call semantics a user would expect when invoking a {@code super}-prefixed method. This
  * means that original methods are either moved to renamed {@code private} methods which are never dispatched
  * virtually or they are invoked directly via the {@code INVOKESPECIAL} invocation to explicitly forbid a virtual
- * dispatch.
+ * dispatch. 这意味着原始方法要么被移动到重命名的{@code private}方法中，这些方法从来不会被虚拟调度，要么直接通过{@code INVOKESPECIAL}调用它们，以明确禁止虚拟调度
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class RebaseImplementationTarget extends Implementation.Target.AbstractBase {
 
     /**
-     * A mapping of the instrumented type's declared methods by each method's token.
+     * A mapping of the instrumented type's declared methods by each method's token. 由每个方法的标记对插桩类型的声明方法的映射
      */
     private final Map<MethodDescription.SignatureToken, MethodRebaseResolver.Resolution> rebaseableMethods;
 
@@ -169,7 +169,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     }
 
     /**
-     * A factory for creating a {@link RebaseImplementationTarget}.
+     * A factory for creating a {@link RebaseImplementationTarget}. 用于创建 {@link RebaseImplementationTarget} 的工厂
      */
     @HashCodeAndEqualsPlugin.Enhance
     public static class Factory implements Implementation.Target.Factory {

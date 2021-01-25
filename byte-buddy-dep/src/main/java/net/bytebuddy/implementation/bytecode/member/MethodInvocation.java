@@ -16,27 +16,27 @@ import org.objectweb.asm.Opcodes;
 import java.util.List;
 
 /**
- * A builder for a method invocation.
+ * A builder for a method invocation. 方法调用的生成器
  */
 public enum MethodInvocation {
 
     /**
-     * A virtual method invocation.
+     * A virtual method invocation. 虚拟方法调用
      */
     VIRTUAL(Opcodes.INVOKEVIRTUAL, Opcodes.H_INVOKEVIRTUAL, Opcodes.INVOKEVIRTUAL, Opcodes.H_INVOKEVIRTUAL),
 
     /**
-     * An interface-typed virtual method invocation.
+     * An interface-typed virtual method invocation. 接口类型的虚拟方法调用
      */
     INTERFACE(Opcodes.INVOKEINTERFACE, Opcodes.H_INVOKEINTERFACE, Opcodes.INVOKEINTERFACE, Opcodes.H_INVOKEINTERFACE),
 
     /**
-     * A static method invocation.
+     * A static method invocation. 静态方法调用
      */
     STATIC(Opcodes.INVOKESTATIC, Opcodes.H_INVOKESTATIC, Opcodes.INVOKESTATIC, Opcodes.H_INVOKESTATIC),
 
     /**
-     * A specialized pseudo-virtual method invocation for a non-constructor.
+     * A specialized pseudo-virtual method invocation for a non-constructor. 非构造函数的专用伪虚拟方法调用
      */
     SPECIAL(Opcodes.INVOKESPECIAL, Opcodes.H_INVOKESPECIAL, Opcodes.INVOKESPECIAL, Opcodes.H_INVOKESPECIAL),
 
@@ -91,10 +91,10 @@ public enum MethodInvocation {
     }
 
     /**
-     * Creates a method invocation with an implicitly determined invocation type.
-     * 使用隐式确定的调用类型创建方法调用
+     * Creates a method invocation with an implicitly determined invocation type. 使用隐式确定的调用类型创建方法调用
+     *
      * @param methodDescription The method to be invoked.
-     * @return A stack manipulation with implicitly determined invocation type.
+     * @return A stack manipulation with implicitly determined invocation type. 具有隐式确定的调用类型的堆栈操作
      */
     public static WithImplicitInvocationTargetType invoke(MethodDescription.InDefinedShape methodDescription) {
         if (methodDescription.isTypeInitializer()) {
@@ -174,20 +174,20 @@ public enum MethodInvocation {
 
     /**
      * Represents a method invocation where the invocation type (static, virtual, special, interface) is derived
-     * from the given method's description.
+     * from the given method's description. 表示从给定方法的描述派生调用类型（静态、虚拟、特殊、接口）的方法调用
      */
     public interface WithImplicitInvocationTargetType extends StackManipulation {
 
         /**
-         * Transforms this method invocation into a virtual (or interface) method invocation on the given type.
+         * Transforms this method invocation into a virtual (or interface) method invocation on the given type. 将此方法调用转换为给定类型上的虚拟（或接口）方法调用
          *
-         * @param invocationTarget The type on which the method is to be invoked virtually on.
+         * @param invocationTarget The type on which the method is to be invoked virtually on. 要在其上调用方法的类型
          * @return A stack manipulation representing this method invocation.
          */
         StackManipulation virtual(TypeDescription invocationTarget);
 
         /**
-         * Transforms this method invocation into a special invocation on the given type.
+         * Transforms this method invocation into a special invocation on the given type. 将此方法调用转换为对给定类型的特殊调用
          *
          * @param invocationTarget The type on which the method is to be invoked specially on.
          * @return A stack manipulation representing this method invocation.
@@ -197,7 +197,7 @@ public enum MethodInvocation {
         /**
          * Invokes the method as a bootstrap method to bind a call site with the given properties. Note that the
          * Java virtual machine currently only knows how to resolve bootstrap methods that link static methods
-         * or a constructor.
+         * or a constructor. 将该方法作为引导方法调用，以将调用站点与给定属性绑定。注意，Java虚拟机目前只知道如何解析链接静态方法或构造函数的引导方法
          *
          * @param methodName The name of the method to be bound.
          * @param returnType The return type of the method to be bound.
@@ -220,18 +220,18 @@ public enum MethodInvocation {
     }
 
     /**
-     * A method invocation of a generically resolved method.
+     * A method invocation of a generically resolved method. 泛型解析方法的方法调用
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class OfGenericMethod implements WithImplicitInvocationTargetType {
 
         /**
-         * The generically resolved return type of the method.
+         * The generically resolved return type of the method. 方法的一般解析返回类型
          */
         private final TypeDescription targetType;
 
         /**
-         * The invocation of the method in its defined shape.
+         * The invocation of the method in its defined shape. 以其定义的形状调用方法
          */
         private final WithImplicitInvocationTargetType invocation;
 
@@ -289,7 +289,7 @@ public enum MethodInvocation {
     }
 
     /**
-     * An implementation of a method invoking stack manipulation.
+     * An implementation of a method invoking stack manipulation. 调用堆栈操作的方法的实现
      */
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class Invocation implements WithImplicitInvocationTargetType {
@@ -305,8 +305,8 @@ public enum MethodInvocation {
         private final MethodDescription.InDefinedShape methodDescription;
 
         /**
-         * Creates an invocation of a given method on its declaring type as an invocation target.
-         * 在将给定方法声明为调用目标的类型上创建对该方法的调用
+         * Creates an invocation of a given method on its declaring type as an invocation target. 在将给定方法声明为调用目标的类型上创建对该方法的调用
+         *
          * @param methodDescription The method to be invoked.
          */
         protected Invocation(MethodDescription.InDefinedShape methodDescription) {
@@ -314,7 +314,7 @@ public enum MethodInvocation {
         }
 
         /**
-         * Creates an invocation of a given method on a given invocation target type.
+         * Creates an invocation of a given method on a given invocation target type. 在给定的调用目标类型上创建给定方法的调用
          *
          * @param methodDescription The method to be invoked.
          * @param typeDescription   The type on which this method is to be invoked.
@@ -383,23 +383,23 @@ public enum MethodInvocation {
     }
 
     /**
-     * Performs a dynamic method invocation of the given method.
+     * Performs a dynamic method invocation of the given method. 执行给定方法的动态方法调用
      */
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class DynamicInvocation implements StackManipulation {
 
         /**
-         * The internal name of the method that is to be bootstrapped.
+         * The internal name of the method that is to be bootstrapped. 要引导的方法的内部名称
          */
         private final String methodName;
 
         /**
-         * The return type of the method to be bootstrapped.
+         * The return type of the method to be bootstrapped. 要引导的方法的返回类型
          */
         private final TypeDescription returnType;
 
         /**
-         * The parameter types of the method to be bootstrapped.
+         * The parameter types of the method to be bootstrapped. 要引导的方法的参数类型
          */
         private final List<? extends TypeDescription> parameterTypes;
 
@@ -409,7 +409,7 @@ public enum MethodInvocation {
         private final MethodDescription.InDefinedShape bootstrapMethod;
 
         /**
-         * The list of arguments to be handed over to the bootstrap method.
+         * The list of arguments to be handed over to the bootstrap method. 要移交给引导方法的参数列表
          */
         private final List<?> arguments;
 
@@ -462,13 +462,13 @@ public enum MethodInvocation {
     }
 
     /**
-     * Performs a method invocation on a method handle with a polymorphic type signature.
+     * Performs a method invocation on a method handle with a polymorphic type signature. 对具有多态类型签名的方法句柄执行方法调用
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class HandleInvocation implements StackManipulation {
 
         /**
-         * The internal name of the method handle type.
+         * The internal name of the method handle type. 方法句柄类型的内部名称
          */
         private static final String METHOD_HANDLE = "java/lang/invoke/MethodHandle";
 
@@ -513,7 +513,7 @@ public enum MethodInvocation {
     }
 
     /**
-     * The type of method handle invocation.
+     * The type of method handle invocation. 方法句柄调用的类型
      */
     public enum HandleType {
 

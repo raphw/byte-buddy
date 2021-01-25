@@ -47,10 +47,10 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     }
 
     /**
-     * Resolves a special method invocation for a constructor invocation.
+     * Resolves a special method invocation for a constructor invocation. 解析构造函数调用的特殊方法调用
      *
-     * @param token A token describing the constructor to be invoked.
-     * @return A special method invocation for a constructor representing the given method token, if available.
+     * @param token A token describing the constructor to be invoked. 描述要调用的构造函数的标记
+     * @return A special method invocation for a constructor representing the given method token, if available. 表示给定方法令牌（如果可用）的构造函数的特殊方法调用
      */
     private Implementation.SpecialMethodInvocation invokeConstructor(MethodDescription.SignatureToken token) {
         TypeDescription.Generic superClass = instrumentedType.getSuperClass();

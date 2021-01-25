@@ -12,9 +12,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Implementations represent a list of method descriptions.
+ * Implementations represent a list of method descriptions. 实现表示方法描述的列表
  *
- * @param <T> The type of method descriptions represented by this list.
+ * @param <T> The type of method descriptions represented by this list. 此列表表示的方法描述的类型
  */
 public interface MethodList<T extends MethodDescription> extends FilterableList<T, MethodList<T>> {
 
@@ -67,24 +67,24 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
 
     /**
      * A method list implementation that returns all loaded byte code methods (methods and constructors) that
-     * are declared for a given type.
+     * are declared for a given type. 返回为给定类型声明的所有加载字节码方法（方法和构造函数）的方法列表实现
      */
     class ForLoadedMethods extends AbstractBase<MethodDescription.InDefinedShape> {
 
         /**
-         * The loaded methods that are represented by this method list.
+         * The loaded methods that are represented by this method list. 此方法列表表示的已加载方法
          */
         private final List<? extends Method> methods;
 
         /**
-         * The loaded constructors that are represented by this method list.
+         * The loaded constructors that are represented by this method list. 此方法列表表示的已加载构造函数
          */
         private final List<? extends Constructor<?>> constructors;
 
         /**
-         * Creates a new list for a loaded type. Method descriptions are created on demand.
+         * Creates a new list for a loaded type. Method descriptions are created on demand. 为加载的类型创建新列表。方法描述按需创建
          *
-         * @param type The type to be represented by this method list.
+         * @param type The type to be represented by this method list. 此方法列表要表示的类型
          */
         public ForLoadedMethods(Class<?> type) {
             this(type.getDeclaredConstructors(), type.getDeclaredMethods());
@@ -92,7 +92,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
 
         /**
          * Creates a method list that represents the given constructors and methods in their given order. The
-         * constructors are assigned the indices before the methods.
+         * constructors are assigned the indices before the methods. 创建一个方法列表，该列表按给定的顺序表示给定的构造函数和方法。构造函数在方法之前被分配了索引
          *
          * @param constructor The constructors to be represented by the method list.
          * @param method      The methods to be represented by the method list.
@@ -103,7 +103,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
 
         /**
          * Creates a method list that represents the given constructors and methods in their given order. The
-         * constructors are assigned the indices before the methods.
+         * constructors are assigned the indices before the methods. 创建一个方法列表，该列表按给定的顺序表示给定的构造函数和方法。构造函数在方法之前被分配了索引
          *
          * @param constructors The constructors to be represented by the method list.
          * @param methods      The methods to be represented by the method list.
@@ -128,9 +128,9 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
     }
 
     /**
-     * A method list that is a wrapper for a given list of method descriptions.
+     * A method list that is a wrapper for a given list of method descriptions. 一种方法列表，它是给定方法描述列表的包装器
      *
-     * @param <S> The type of method descriptions represented by this list.
+     * @param <S> The type of method descriptions represented by this list. 此列表表示的方法描述的类型
      */
     class Explicit<S extends MethodDescription> extends AbstractBase<S> {
 

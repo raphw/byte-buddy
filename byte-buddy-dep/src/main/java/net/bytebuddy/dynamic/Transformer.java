@@ -20,9 +20,9 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
- * A transformer is responsible for transforming an object into a compatible instance of the same type.
+ * A transformer is responsible for transforming an object into a compatible instance of the same type. 转换器负责将对象转换为同一类型的兼容实例
  *
- * @param <T> The type of the instance being transformed.
+ * @param <T> The type of the instance being transformed. 正在转换的实例的类型
  */
 public interface Transformer<T> {
 
@@ -36,7 +36,7 @@ public interface Transformer<T> {
     T transform(TypeDescription instrumentedType, T target);
 
     /**
-     * A non-operational transformer that returns the received instance.
+     * A non-operational transformer that returns the received instance. 返回接收到的实例的非操作转换器
      */
     enum NoOp implements Transformer<Object> {
 
@@ -46,7 +46,7 @@ public interface Transformer<T> {
         INSTANCE;
 
         /**
-         * Creates a transformer in a type-safe manner.
+         * Creates a transformer in a type-safe manner. 以类型安全的方式创建转换器
          *
          * @param <T> The type of the transformed object.
          * @return A non-operational transformer.
@@ -494,7 +494,7 @@ public interface Transformer<T> {
             /**
              * A visitor that attaches type variables based on the transformed method's type variables and the instrumented type. Binding type
              * variables directly for this method is not possible as type variables are already resolved for the instrumented type such
-             * that it is required to bind variables for the instrumented type directly.
+             * that it is required to bind variables for the instrumented type directly. 基于转换方法的类型变量和插入指令的类型附加类型变量的访问者。无法直接为此方法绑定类型变量，因为类型变量已为插入指令的类型解析，因此需要直接为插入指令的类型绑定变量
              */
             @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
             protected class AttachmentVisitor extends TypeDescription.Generic.Visitor.Substitutor.WithoutTypeSubstitution {

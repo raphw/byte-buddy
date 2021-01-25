@@ -24,38 +24,38 @@ import static net.bytebuddy.matcher.ElementMatchers.is;
 
 /**
  * A method rebase resolver is responsible for mapping methods of an instrumented type to an alternative signature.
- * This way a method can exist in two versions within a class:
+ * This way a method can exist in two versions within a class: 方法 rebase解析器 负责将检测类型的方法映射到备用签名。这样，一个方法可以在一个类中以两个版本存在
  * <ol>
- * <li>The rebased method which represents the original implementation as it is present in a class file.</li>
- * <li>An overridden method which implements user code which is still able to invoke the original, rebased method.</li>
+ * <li>The rebased method which represents the original implementation as it is present in a class file.</li> 在类文件中表示原始实现的rebased方法
+ * <li>An overridden method which implements user code which is still able to invoke the original, rebased method.</li> 一个重写的方法，它实现了用户代码，用户代码仍然能够调用原始的、重定基的方法
  * </ol>
  */
 public interface MethodRebaseResolver {
 
     /**
-     * Checks if a method is eligible for rebasing and resolves this possibly rebased method.
+     * Checks if a method is eligible for rebasing and resolves this possibly rebased method. 检查某个方法是否有资格重新调整，并解决此可能已重新调整的方法
      *
-     * @param methodDescription A description of the method to resolve.
-     * @return A resolution for the given method.
+     * @param methodDescription A description of the method to resolve. 解析方法的描述
+     * @return A resolution for the given method. 给定方法的解析
      */
     Resolution resolve(MethodDescription.InDefinedShape methodDescription);
 
     /**
-     * Returns a (potentially empty) list of auxiliary types that are required by this method rebase resolver.
+     * Returns a (potentially empty) list of auxiliary types that are required by this method rebase resolver. 返回此方法 rebase resolver 所需的辅助类型（可能为空）列表
      *
-     * @return A list of auxiliary types that are required by this method rebase resolver.
+     * @return A list of auxiliary types that are required by this method rebase resolver. 此方法所需的辅助类型的列表重新设置解析器的基础
      */
     List<DynamicType> getAuxiliaryTypes();
 
     /**
-     * Returns a map of all rebasable methods' signature tokens to their resolution.
+     * Returns a map of all rebasable methods' signature tokens to their resolution. 返回所有可再利用方法的签名标记到其解析的映射
      *
      * @return A map of all rebasable methods' signature tokens to their resolution.
      */
     Map<MethodDescription.SignatureToken, Resolution> asTokenMap();
 
     /**
-     * A method rebase resolver that preserves any method in its original form.
+     * A method rebase resolver that preserves any method in its original form. 将任何方法保留为其原始形式的方法重新基分解器
      */
     enum Disabled implements MethodRebaseResolver {
 
@@ -82,7 +82,7 @@ public interface MethodRebaseResolver {
     }
 
     /**
-     * A resolution for a method that was checked by a {@link MethodRebaseResolver}.
+     * A resolution for a method that was checked by a {@link MethodRebaseResolver}. 由{@link MethodRebaseResolver}检查的方法的解析
      */
     interface Resolution {
 
@@ -105,7 +105,7 @@ public interface MethodRebaseResolver {
          * stack manipulation that is returned from this method loads these arguments onto the operand stack. For
          * a non-rebased method, this method throws an {@link java.lang.IllegalArgumentException}.
          *
-         * @return A stack manipulation that loaded the additional arguments onto the stack, if any.
+         * @return A stack manipulation that loaded the additional arguments onto the stack, if any. 将附加参数加载到堆栈（如果有的话）的堆栈操作
          */
         StackManipulation getAdditionalArguments();
 
@@ -399,7 +399,7 @@ public interface MethodRebaseResolver {
     }
 
     /**
-     * A default implementation of a method rebase resolver.
+     * A default implementation of a method rebase resolver. 一种默认的方法实现
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Default implements MethodRebaseResolver {

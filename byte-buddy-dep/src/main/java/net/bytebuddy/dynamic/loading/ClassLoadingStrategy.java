@@ -9,7 +9,7 @@ import java.security.ProtectionDomain;
 import java.util.Map;
 
 /**
- * A strategy for loading a collection of types.
+ * A strategy for loading a collection of types. 就是新定义的类如何被动态的加载
  *
  * @param <T> The least specific type of class loader this strategy can apply to.
  */
@@ -42,13 +42,13 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
      */
     enum Default implements Configurable<ClassLoader> {
 
-        /**
-         * This strategy creates a new {@link net.bytebuddy.dynamic.loading.ByteArrayClassLoader} with the given
+        /** 默认会选择
+         * This strategy creates a new {@link net.bytebuddy.dynamic.loading.ByteArrayClassLoader} with the given 以传入的classLoader为parent，创建一个新的net.bytebuddy.dynamic.loading.ByteArrayClassLoader去加载
          * class loader as its parent. The byte array class loader is aware of a any dynamically created type and can
          * natively load the given classes. This allows to load classes with cyclic load-time dependencies since the
          * byte array class loader is queried on each encountered unknown class. Due to the encapsulation of the
          * classes that were loaded by a byte array class loader, this strategy will lead to the unloading of these
-         * classes once this class loader, its classes or any instances of these classes become unreachable.
+         * classes once this class loader, its classes or any instances of these classes become unreachable. 字节数组类加载器(ByteArrayClassLoader)知道任何动态创建的类型，并且可以以本地方法加载给定的类。由于字节数组类加载器是在每个遇到的未知类上查询的，因此这允许加载具有循环加载时间相关性的类。由于对字节数组类加载器加载的类的封装，一旦该类加载器，其类或这些类的任何实例变得不可访问，此策略将导致这些类的卸载
          */
         WRAPPER(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.LATENT, WrappingDispatcher.PARENT_FIRST)),
 

@@ -13,8 +13,8 @@ import org.objectweb.asm.Opcodes;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Allows accessing array values.
+/** 封装了数组与集合的字节码
+ * Allows accessing array values. 一个示例，可以看见它的定义把不同类型和对应的字节码指令进行了绑定 比如BYTE(Opcodes.BALOAD, Opcodes.BASTORE, StackSize.SINGLE)：Opcodes.BALOAD代表byte值的加载；Opcodes.BASTORE代表了byte值放入操作数栈的指令;StackSize.SINGLE代表了大小，single是4byte
  */
 public enum ArrayAccess {
 

@@ -84,7 +84,7 @@ public interface FilterableList<T, S extends FilterableList<T, S>> extends List<
     abstract class AbstractBase<T, S extends FilterableList<T, S>> extends AbstractList<T> implements FilterableList<T, S> {
 
         /**
-         * A convenience variable indicating the index of a list's only variable.
+         * A convenience variable indicating the index of a list's only variable. 一个方便变量，表示列表中唯一变量的索引
          */
         private static final int ONLY = 0;
 
@@ -116,7 +116,7 @@ public interface FilterableList<T, S extends FilterableList<T, S>> extends List<
         }
 
         /**
-         * Represents a list of values as an instance of this instance's list type.
+         * Represents a list of values as an instance of this instance's list type. 将值列表表示为此实例的列表类型的实例
          *
          * @param values The values to wrap in an instance of this list's type.
          * @return A wrapped instance of the given {@code values}.

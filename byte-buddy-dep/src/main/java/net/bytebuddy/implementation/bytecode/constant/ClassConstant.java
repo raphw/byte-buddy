@@ -11,7 +11,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 /**
- * Represents a constant representing any loaded Java {@link java.lang.Class}.
+ * Represents a constant representing any loaded Java {@link java.lang.Class}. 同collection类型，是封装了常量池类型  表示表示任何加载的Java{@link java.lang.Class}
  */
 public enum ClassConstant implements StackManipulation {
 

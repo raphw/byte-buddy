@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * A type resolution strategy is responsible for loading a class and for initializing its {@link LoadedTypeInitializer}s.
+ * A type resolution strategy is responsible for loading a class and for initializing its {@link LoadedTypeInitializer}s. 负责加载类并初始化它LoadedTypeInitializer的
  */
 public interface TypeResolutionStrategy {
 

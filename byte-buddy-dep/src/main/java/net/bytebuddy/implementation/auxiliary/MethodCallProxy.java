@@ -77,7 +77,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
     /**
      * Creates a new method call proxy for a given method and uses a default assigner for assigning the method's return
-     * value to either the {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()} method returns.
+     * value to either the {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()} method returns. 为给定方法创建一个新的方法调用代理，并使用默认赋值器将方法的返回值赋值给 {java.util.concurrent.Callable#call()} 或 {@link Runnable#run()}} 方法返回
      *
      * @param specialMethodInvocation The special method invocation which should be invoked by this method call proxy.
      * @param serializableProxy       Determines if the generated proxy should be serializableProxy.
@@ -129,7 +129,7 @@ public class MethodCallProxy implements AuxiliaryType {
     private static String fieldName(int index) {
         return FIELD_NAME_PREFIX + index;
     }
-
+    // make 方法的实现 : 生成了一个代理类
     @Override
     public DynamicType make(String auxiliaryTypeName,
                             ClassFileVersion classFileVersion,

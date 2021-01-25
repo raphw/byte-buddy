@@ -39,7 +39,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * This {@link Implementation} allows the invocation of a specified method while
- * providing explicit arguments to this method.
+ * providing explicit arguments to this method. 这个{@link Implementation}允许调用指定的方法，同时为这个方法提供显式参数
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class MethodCall implements Implementation.Composable {
@@ -109,10 +109,10 @@ public class MethodCall implements Implementation.Composable {
 
     /**
      * Invokes the given method. Without further specification, the method is invoked without any arguments on
-     * the instance of the instrumented class or statically, if the given method is {@code static}.
+     * the instance of the instrumented class or statically, if the given method is {@code static}. 调用具体的方法，就是指无需知道类名称，直接动态获取就行
      *
      * @param method The method to invoke.
-     * @return A method call implementation that invokes the given method without providing any arguments.
+     * @return A method call implementation that invokes the given method without providing any arguments. 调用给定方法而不提供任何参数的方法调用实现
      */
     public static WithoutSpecifiedTarget invoke(Method method) {
         return invoke(new MethodDescription.ForLoadedMethod(method));
@@ -120,15 +120,15 @@ public class MethodCall implements Implementation.Composable {
 
     /**
      * <p>
-     * Invokes the given constructor on the instance of the instrumented type.
+     * Invokes the given constructor on the instance of the instrumented type. 在插入指令类型的实例上调用给定的构造函数
      * </p>
      * <p>
-     * <b>Important</b>: A constructor invocation can only be applied within another constructor to invoke the super constructor or an auxiliary
-     * constructor. To construct a new instance, use {@link MethodCall#construct(Constructor)}.
+     * <b>Important</b>: A constructor invocation can only be applied within another constructor to invoke the super constructor or an auxiliary  构造函数调用只能在另一个构造函数中应用，以调用超级构造函数或辅助构造函数
+     * constructor. To construct a new instance, use {@link MethodCall#construct(Constructor)}. 构造新的实例，使用 {@link MethodCall#construct(Constructor)}
      * </p>
      *
-     * @param constructor The constructor to invoke.
-     * @return A method call implementation that invokes the given constructor without providing any arguments.
+     * @param constructor The constructor to invoke. 要调用的构造函数
+     * @return A method call implementation that invokes the given constructor without providing any arguments. 调用给定构造函数而不提供任何参数的方法调用实现
      */
     public static WithoutSpecifiedTarget invoke(Constructor<?> constructor) {
         return invoke(new MethodDescription.ForLoadedConstructor(constructor));
@@ -311,7 +311,7 @@ public class MethodCall implements Implementation.Composable {
 
     /**
      * Defines the given Java instances to be provided as arguments to the invoked method where the given
-     * instances are stored in the generated class's constant pool.
+     * instances are stored in the generated class's constant pool. 定义要作为被调用方法的参数提供的给定 Java 实例，其中给定实例存储在生成的类的常量池中
      *
      * @param javaConstant The Java instances to provide as arguments.
      * @return A method call that hands the provided arguments to the invoked method.
@@ -609,13 +609,13 @@ public class MethodCall implements Implementation.Composable {
     }
 
     /**
-     * A method locator is responsible for identifying the method that is to be invoked
+     * A method locator is responsible for identifying the method that is to be invoked 方法定位器负责标识将由 {@link net.bytebuddy.implementation.MethodCall} 调用的方法
      * by a {@link net.bytebuddy.implementation.MethodCall}.
      */
     public interface MethodLocator {
 
         /**
-         * Resolves the method to be invoked.
+         * Resolves the method to be invoked. 解析要调用的方法
          *
          * @param instrumentedType   The instrumented type.
          * @param targetType         The type the method is called on.
@@ -625,7 +625,7 @@ public class MethodCall implements Implementation.Composable {
         MethodDescription resolve(TypeDescription instrumentedType, TypeDescription targetType, MethodDescription instrumentedMethod);
 
         /**
-         * A method locator that simply returns the intercepted method.
+         * A method locator that simply returns the intercepted method. 只返回截获方法的方法定位器
          */
         enum ForInstrumentedMethod implements MethodLocator {
 
@@ -641,7 +641,7 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * Invokes a given method.
+         * Invokes a given method. 调用给定的方法
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForExplicitMethod implements MethodLocator {
@@ -707,12 +707,12 @@ public class MethodCall implements Implementation.Composable {
 
     /**
      * An argument loader is responsible for loading an argument for an invoked method
-     * onto the operand stack.
+     * onto the operand stack. 参数加载器负责将被调用方法的参数加载到操作数堆栈中
      */
     public interface ArgumentLoader {
 
         /**
-         * Loads the argument that is represented by this instance onto the operand stack.
+         * Loads the argument that is represented by this instance onto the operand stack. 将此实例表示的参数加载到操作数堆栈
          *
          * @param target   The target parameter.
          * @param assigner The assigner to be used.
@@ -722,12 +722,12 @@ public class MethodCall implements Implementation.Composable {
         StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing);
 
         /**
-         * A factory that produces {@link ArgumentLoader}s for a given instrumented method.
+         * A factory that produces {@link ArgumentLoader}s for a given instrumented method. 为给定的插入指令的方法生成 {@link ArgumentLoader} 的工厂
          */
         interface Factory {
 
             /**
-             * Prepares the instrumented type in order to allow the loading of the represented argument.
+             * Prepares the instrumented type in order to allow the loading of the represented argument. 准备插入指令的类型以允许加载所表示的参数
              *
              * @param instrumentedType The instrumented type.
              * @return The prepared instrumented type.
@@ -735,19 +735,19 @@ public class MethodCall implements Implementation.Composable {
             InstrumentedType prepare(InstrumentedType instrumentedType);
 
             /**
-             * Creates any number of argument loaders for an instrumentation.
+             * Creates any number of argument loaders for an instrumentation. 为检测创建任意数量的参数加载器
              *
-             * @param implementationTarget The implementation target.
-             * @param instrumentedType     The instrumented type.
+             * @param implementationTarget The implementation target. 实施目标
+             * @param instrumentedType     The instrumented type. 插入指令的类型
              * @param instrumentedMethod   The instrumented method.
-             * @param invokedMethod        The invoked method.
-             * @return Any number of argument loaders to supply for the method call.
+             * @param invokedMethod        The invoked method.  调用的方法
+             * @return Any number of argument loaders to supply for the method call. 为方法调用提供的任何数量的参数加载器
              */
             List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod);
         }
 
         /**
-         * An argument loader that loads the {@code null} value onto the operand stack.
+         * An argument loader that loads the {@code null} value onto the operand stack. 将{@code null}值加载到操作数堆栈的参数加载器
          */
         enum ForNullConstant implements ArgumentLoader, Factory {
 
@@ -776,7 +776,7 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * An argument loader that assigns the {@code this} reference to a parameter.
+         * An argument loader that assigns the {@code this} reference to a parameter. 将{@code this}引用分配给参数的参数加载器
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForThisReference implements ArgumentLoader {
@@ -807,7 +807,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             /**
-             * A factory for an argument loader that supplies the {@code this} value as an argument.
+             * A factory for an argument loader that supplies the {@code this} value as an argument. 参数加载器的工厂，提供{@code this}值作为参数
              */
             public enum Factory implements ArgumentLoader.Factory {
 
@@ -832,7 +832,7 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * Loads the instrumented type onto the operand stack.
+         * Loads the instrumented type onto the operand stack. 将插入指令的类型加载到操作数堆栈中
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForInstrumentedType implements ArgumentLoader {
@@ -863,7 +863,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             /**
-             * A factory for an argument loader that supplies the instrumented type as an argument.
+             * A factory for an argument loader that supplies the instrumented type as an argument. 参数加载器的工厂，提供插入指令的类型作为参数
              */
             public enum Factory implements ArgumentLoader.Factory {
 
@@ -885,13 +885,13 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * Loads a parameter of the instrumented method onto the operand stack.
+         * Loads a parameter of the instrumented method onto the operand stack. 将插入指令的方法的参数加载到操作数堆栈
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForMethodParameter implements ArgumentLoader {
 
             /**
-             * The index of the parameter to be loaded onto the operand stack.
+             * The index of the parameter to be loaded onto the operand stack. 要加载到操作数堆栈的参数的索引
              */
             private final int index;
 
@@ -924,7 +924,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             /**
-             * A factory for argument loaders that supplies all arguments of the instrumented method as arguments.
+             * A factory for argument loaders that supplies all arguments of the instrumented method as arguments. 参数加载器的工厂，它将插入指令的方法的所有参数作为参数提供
              */
             protected enum OfInstrumentedMethod implements ArgumentLoader.Factory {
 
@@ -949,7 +949,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             /**
-             * A factory for an argument loader that supplies a method parameter as an argument.
+             * A factory for an argument loader that supplies a method parameter as an argument. 提供方法参数作为参数的参数加载器的工厂
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class Factory implements ArgumentLoader.Factory {
@@ -984,7 +984,7 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * Loads an array containing all arguments of a method.
+         * Loads an array containing all arguments of a method. 加载包含方法的所有参数的数组
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForMethodParameterArray implements ArgumentLoader {
@@ -1029,7 +1029,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             /**
-             * A factory that creates an arguments loader that loads all parameters of the instrumented method contained in an array.
+             * A factory that creates an arguments loader that loads all parameters of the instrumented method contained in an array. 创建参数加载器的工厂，该加载器加载数组中包含的插入指令的方法的所有参数
              */
             public enum ForInstrumentedMethod implements ArgumentLoader.Factory {
 
@@ -1051,7 +1051,7 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * An argument loader that loads an element of a parameter of an array type.
+         * An argument loader that loads an element of a parameter of an array type. 加载数组类型参数的元素的参数加载器
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForMethodParameterArrayElement implements ArgumentLoader {

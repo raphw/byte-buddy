@@ -10,7 +10,7 @@ import org.objectweb.asm.MethodVisitor;
 
 /**
  * This implementation creates a method stub which does nothing but returning the default value of the return
- * type of the method. These default values are:
+ * type of the method. These default values are: 这个实现创建了一个方法存根，它只返回方法返回类型的默认值。这些默认值是
  * <ol>
  * <li>The value {@code 0} for all numeric type.</li>
  * <li>The null character for the {@code char} type.</li>

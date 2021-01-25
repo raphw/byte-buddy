@@ -572,7 +572,7 @@ public class MethodDelegation implements Implementation.Composable {
         Compiled compile(TypeDescription instrumentedType);
 
         /**
-         * A compiled implementation delegate.
+         * A compiled implementation delegate. 编译的实现委托
          */
         interface Compiled {
 
@@ -599,7 +599,7 @@ public class MethodDelegation implements Implementation.Composable {
             List<MethodDelegationBinder.Record> getRecords();
 
             /**
-             * A compiled implementation delegate for invoking a static method.
+             * A compiled implementation delegate for invoking a static method. 用于调用静态方法的已编译实现委托
              */
             @HashCodeAndEqualsPlugin.Enhance
             class ForStaticCall implements Compiled {
@@ -635,7 +635,7 @@ public class MethodDelegation implements Implementation.Composable {
             }
 
             /**
-             * A compiled implementation delegate that invokes methods on a field.
+             * A compiled implementation delegate that invokes methods on a field. 调用字段上方法的已编译实现委托
              */
             @HashCodeAndEqualsPlugin.Enhance
             class ForField implements Compiled {

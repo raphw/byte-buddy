@@ -6,12 +6,12 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * Duplicates a value that is lying on top of the stack.
+ * Duplicates a value that is lying on top of the stack. 复制位于堆栈顶部的值
  */
 public enum Duplication implements StackManipulation {
 
     /**
-     * A duplication of no values. This corresponds a no-op instruction.
+     * A duplication of no values. This corresponds a no-op instruction. 没有值的重复。这对应于不操作指令
      */
     ZERO(StackSize.ZERO, Opcodes.NOP) {
         @Override
@@ -26,7 +26,7 @@ public enum Duplication implements StackManipulation {
     },
 
     /**
-     * A duplication of a single-sized stack values.
+     * A duplication of a single-sized stack values. 单个大小的堆栈值的重复
      */
     SINGLE(StackSize.SINGLE, Opcodes.DUP) {
         @Override
@@ -43,7 +43,7 @@ public enum Duplication implements StackManipulation {
     },
 
     /**
-     * A duplication of a double-sized stack value.
+     * A duplication of a double-sized stack value. 两倍大小的堆栈值的副本
      */
     DOUBLE(StackSize.DOUBLE, Opcodes.DUP2) {
         @Override

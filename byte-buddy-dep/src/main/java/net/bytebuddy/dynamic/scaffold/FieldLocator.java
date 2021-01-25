@@ -10,7 +10,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * A field locator offers an interface for locating a field that is declared by a specified type.
+ * A field locator offers an interface for locating a field that is declared by a specified type. 字段定位器提供用于定位由指定类型声明的字段的接口
  */
 public interface FieldLocator {
 
@@ -145,18 +145,18 @@ public interface FieldLocator {
     }
 
     /**
-     * An abstract base implementation of a field locator.
+     * An abstract base implementation of a field locator. 字段定位器的抽象基实现
      */
     @HashCodeAndEqualsPlugin.Enhance
     abstract class AbstractBase implements FieldLocator {
 
         /**
-         * The type accessing the field.
+         * The type accessing the field. 访问字段的类型
          */
         protected final TypeDescription accessingType;
 
         /**
-         * Creates a new field locator.
+         * Creates a new field locator.  创建新的字段定位器
          *
          * @param accessingType The type accessing the field.
          */

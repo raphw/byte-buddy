@@ -34,7 +34,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * of these values.
  */
 public interface AnnotationDescription {
-
+    // 这个类位于description.annotation是对原先的javaannotation进行了封装  对于一个注解而言，注解，和注解的赋值
     /**
      * Indicates a nonexistent annotation in a type-safe manner.
      */
@@ -124,7 +124,7 @@ public interface AnnotationDescription {
     }
 
     /**
-     * An {@link java.lang.reflect.InvocationHandler} for implementing annotations.
+     * An {@link java.lang.reflect.InvocationHandler} for implementing annotations. java反射中的InvocationHandler。这个是封装注解的InvocationHandler
      *
      * @param <T> The type of the handled annotation.
      */
@@ -535,7 +535,7 @@ public interface AnnotationDescription {
     }
 
     /**
-     * A description of an already loaded annotation. 已经加载的注释的描述
+     * A description of an already loaded annotation. 代表一个早已经加载完成的注解
      *
      * @param <S> The type of the annotation. 注释的类型
      */
@@ -701,7 +701,7 @@ public interface AnnotationDescription {
     }
 
     /**
-     * A latent description of an annotation value that is defined explicitly.
+     * A latent description of an annotation value that is defined explicitly. 代表一个定义明确，但是还没有load的注解
      */
     class Latent extends AbstractBase {
 

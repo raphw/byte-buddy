@@ -56,21 +56,21 @@ import java.util.*;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * A type writer is a utility for writing an actual class file using the ASM library.
+ * A type writer is a utility for writing an actual class file using the ASM library. 类型编写器是使用ASM库编写实际类文件的实用工具
  *
- * @param <T> The best known loaded type for the dynamically created type.
+ * @param <T> The best known loaded type for the dynamically created type. 动态创建的类型的最著名的加载类型
  */
 public interface TypeWriter<T> {
 
     /**
      * A system property that indicates a folder for Byte Buddy to dump class files of all types that it creates.
      * If this property is not set, Byte Buddy does not dump any class files. This property is only read a single
-     * time which is why it must be set on application start-up.
+     * time which is why it must be set on application start-up. 一种系统属性，表示字节伙伴用来转储其创建的所有类型的类文件的文件夹。如果未设置此属性，则 ByteBuddy 不会转储任何类文件。此属性只能读取一次，因此必须在应用程序启动时设置
      */
     String DUMP_PROPERTY = "net.bytebuddy.dump";
 
     /**
-     * Creates the dynamic type that is described by this type writer.
+     * Creates the dynamic type that is described by this type writer. 创建此类型编写器描述的动态类型
      *
      * @param typeResolver The type resolution strategy to use.
      * @return An unloaded dynamic type that describes the created type.
@@ -78,7 +78,7 @@ public interface TypeWriter<T> {
     DynamicType.Unloaded<T> make(TypeResolutionStrategy.Resolved typeResolver);
 
     /**
-     * An field pool that allows a lookup for how to implement a field.
+     * An field pool that allows a lookup for how to implement a field. 允许查找如何实现字段的字段池
      */
     interface FieldPool {
 
@@ -299,7 +299,7 @@ public interface TypeWriter<T> {
     }
 
     /**
-     * An method pool that allows a lookup for how to implement a method.
+     * An method pool that allows a lookup for how to implement a method. 允许查找如何实现方法的方法池
      */
     interface MethodPool {
 
@@ -312,14 +312,14 @@ public interface TypeWriter<T> {
         Record target(MethodDescription methodDescription);
 
         /**
-         * An entry of a method pool that describes how a method is implemented.
+         * An entry of a method pool that describes how a method is implemented. 方法池的一个条目，描述如何实现一个方法
          *
          * @see net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool
          */
         interface Record {
 
             /**
-             * Returns the sort of this method instrumentation.
+             * Returns the sort of this method instrumentation. 返回此方法的类型
              *
              * @return The sort of this method instrumentation.
              */
@@ -327,21 +327,21 @@ public interface TypeWriter<T> {
 
             /**
              * Returns the method that is implemented where the returned method resembles a potential transformation. An implemented
-             * method is only defined if a method is not {@link Record.Sort#SKIPPED}.
+             * method is only defined if a method is not {@link Record.Sort#SKIPPED}. 返回在返回的方法类似于潜在转换的情况下实现的方法。只有在方法没有 {@link Record.Sort#SKIPPED} 时才定义实现的方法
              *
              * @return The implemented method.
              */
             MethodDescription getMethod();
 
             /**
-             * The visibility to enforce for this method.
+             * The visibility to enforce for this method. 此方法要强制的可见性
              *
              * @return The visibility to enforce for this method.
              */
             Visibility getVisibility();
 
             /**
-             * Prepends the given method appender to this entry.
+             * Prepends the given method appender to this entry. 将给定的方法追加器前置到此项v
              *
              * @param byteCodeAppender The byte code appender to prepend.
              * @return This entry with the given code prepended.
@@ -455,7 +455,7 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * A canonical implementation of a method that is not declared but inherited by the instrumented type.
+             * A canonical implementation of a method that is not declared but inherited by the instrumented type. 方法的规范实现，该方法未声明，但由插入指令的类型继承
              */
             @HashCodeAndEqualsPlugin.Enhance
             class ForNonImplementedMethod implements Record {
@@ -547,7 +547,7 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * Describes an entry that defines a method as byte code.
+                 * Describes an entry that defines a method as byte code. 描述将方法定义为字节码的条目
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 public static class WithBody extends ForDefinedMethod {
@@ -583,8 +583,8 @@ public interface TypeWriter<T> {
                     }
 
                     /**
-                     * Creates a new entry for a method that defines a method as byte code.
-                     * 为将方法定义为字节码的方法创建新条目
+                     * Creates a new entry for a method that defines a method as byte code. 为将方法定义为字节码的方法创建新条目
+                     *
                      * @param methodDescription       The implemented method.
                      * @param byteCodeAppender        The byte code appender to apply.
                      * @param methodAttributeAppender The method attribute appender to apply.
@@ -936,7 +936,7 @@ public interface TypeWriter<T> {
                     }
 
                     /**
-                     * A method describing a visibility bridge.
+                     * A method describing a visibility bridge. 一种描述可视桥的方法
                      */
                     protected static class VisibilityBridge extends MethodDescription.InDefinedShape.AbstractBase {
 
@@ -946,7 +946,7 @@ public interface TypeWriter<T> {
                         private final TypeDescription instrumentedType;
 
                         /**
-                         * The method that is the target of the bridge.
+                         * The method that is the target of the bridge. 桥梁的目标方法
                          */
                         private final MethodDescription bridgeTarget;
 
@@ -1316,25 +1316,25 @@ public interface TypeWriter<T> {
     }
 
     /**
-     * A default implementation of a {@link net.bytebuddy.dynamic.scaffold.TypeWriter}.
+     * A default implementation of a {@link net.bytebuddy.dynamic.scaffold.TypeWriter}. {@link net.bytebuddy.dynamic.scaffold.TypeWriter} 的默认实现
      *
-     * @param <S> The best known loaded type for the dynamically created type.
+     * @param <S> The best known loaded type for the dynamically created type. 动态创建的类型的最著名的加载类型
      */
     @HashCodeAndEqualsPlugin.Enhance
     abstract class Default<S> implements TypeWriter<S> {
 
         /**
-         * Indicates an empty reference in a class file which is expressed by {@code null}.
+         * Indicates an empty reference in a class file which is expressed by {@code null}. 指示由{@code null}表示的类文件中的空引用
          */
         private static final String NO_REFERENCE = null;
 
         /**
-         * A folder for dumping class files or {@code null} if no dump should be generated.
+         * A folder for dumping class files or {@code null} if no dump should be generated. 用于转储类文件的文件夹，如果不应生成转储，则使用{@code null}
          */
         protected static final String DUMP_FOLDER;
 
         /*
-         * Reads the dumping property that is set at program start up. This might cause an error because of security constraints.
+         * Reads the dumping property that is set at program start up. This might cause an error because of security constraints. 读取程序启动时设置的转储属性。由于安全限制，这可能会导致错误
          */
         static {
             String dumpFolder;
@@ -1347,92 +1347,92 @@ public interface TypeWriter<T> {
         }
 
         /**
-         * The instrumented type to be created.
+         * The instrumented type to be created. 要创建的插入指令的类型
          */
         protected final TypeDescription instrumentedType;
 
         /**
-         * The class file specified by the user.
+         * The class file specified by the user. 用户指定的类文件
          */
         protected final ClassFileVersion classFileVersion;
 
         /**
-         * The field pool to use.
+         * The field pool to use. 要使用的字段池
          */
         protected final FieldPool fieldPool;
 
         /**
-         * The explicit auxiliary types to add to the created type.
+         * The explicit auxiliary types to add to the created type. 要添加到已创建类型的显式辅助类型
          */
         protected final List<? extends DynamicType> auxiliaryTypes;
 
         /**
-         * The instrumented type's declared fields.
+         * The instrumented type's declared fields. 检测类型的声明字段
          */
         protected final FieldList<FieldDescription.InDefinedShape> fields;
 
         /**
-         * The instrumented type's methods that are declared or inherited.
+         * The instrumented type's methods that are declared or inherited. 声明或继承的检测类型的方法
          */
         protected final MethodList<?> methods;
 
         /**
-         * The instrumented methods relevant to this type creation.
+         * The instrumented methods relevant to this type creation. 与此类型创建相关的插入指令的方法
          */
         protected final MethodList<?> instrumentedMethods;
 
         /**
-         * The loaded type initializer to apply onto the created type after loading.
+         * The loaded type initializer to apply onto the created type after loading. 加载后要应用于已创建类型的已加载类型初始值设定项
          */
         protected final LoadedTypeInitializer loadedTypeInitializer;
 
         /**
-         * The type initializer to include in the created type's type initializer.
+         * The type initializer to include in the created type's type initializer. 要包含在已创建类型的类型初始值设定项中的类型初始值设定项
          */
         protected final TypeInitializer typeInitializer;
 
         /**
-         * The type attribute appender to apply onto the instrumented type.
+         * The type attribute appender to apply onto the instrumented type. 要应用于插入指令的类型的类型属性 appender
          */
         protected final TypeAttributeAppender typeAttributeAppender;
 
         /**
-         * The ASM visitor wrapper to apply onto the class writer.
+         * The ASM visitor wrapper to apply onto the class writer. 要应用于类编写器的 ASM 访问者包装器
          */
         protected final AsmVisitorWrapper asmVisitorWrapper;
 
         /**
-         * The annotation value filter factory to apply.
+         * The annotation value filter factory to apply. 要应用的注释值筛选器工厂
          */
         protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
 
         /**
-         * The annotation retention to apply.
+         * The annotation retention to apply. 要应用的注解保留
          */
         protected final AnnotationRetention annotationRetention;
 
         /**
-         * The naming strategy for auxiliary types to apply.
+         * The naming strategy for auxiliary types to apply. 要应用的辅助类型的命名策略
          */
         protected final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
         /**
-         * The implementation context factory to apply.
+         * The implementation context factory to apply. 要应用的实现上下文工厂
          */
         protected final Implementation.Context.Factory implementationContextFactory;
 
         /**
-         * Determines if a type should be explicitly validated.
+         * Determines if a type should be explicitly validated. 确定是否应显式验证类型
          */
         protected final TypeValidation typeValidation;
 
         /**
-         * The class writer strategy to use.
+         * The class writer strategy to use. 要使用的类编写器策略
          */
         protected final ClassWriterStrategy classWriterStrategy;
 
         /**
-         * The type pool to use for computing stack map frames, if required.
+         * The type pool to use for computing stack map frames, if required. 用于计算堆栈映射帧的类型池（如果需要）
          */
         protected final TypePool typePool;
 
@@ -1674,7 +1674,7 @@ public interface TypeWriter<T> {
         }
 
         /**
-         * Creates a type writer for decorating a type.
+         * Creates a type writer for decorating a type. 创建用于装饰类型的类型编写器
          *
          * @param instrumentedType             The instrumented type.
          * @param classFileVersion             The class file version to use when no explicit class file version is applied.
@@ -1732,7 +1732,7 @@ public interface TypeWriter<T> {
         }
 
         /**
-         * Creates an unresolved version of the dynamic type.
+         * Creates an unresolved version of the dynamic type. 创建动态类型的未解析版本
          *
          * @param typeInitializer The type initializer to use.
          * @return An unresolved type.
@@ -1751,7 +1751,7 @@ public interface TypeWriter<T> {
             private final byte[] binaryRepresentation;
 
             /**
-             * A list of auxiliary types for this unresolved type.
+             * A list of auxiliary types for this unresolved type. 此未解析类型的辅助类型列表
              */
             private final List<? extends DynamicType> auxiliaryTypes;
 
@@ -2831,19 +2831,19 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * A method validator for checking default values.
+             * A method validator for checking default values. 用于检查默认值的方法验证程序
              */
             protected class ValidatingMethodVisitor extends MethodVisitor {
 
                 /**
-                 * The name of the method being visited.
+                 * The name of the method being visited. 正在访问的方法的名称
                  */
                 private final String name;
 
                 /**
-                 * Creates a validating method visitor.
+                 * Creates a validating method visitor. 创建验证方法访问者
                  *
-                 * @param methodVisitor The method visitor to which any calls are delegated to.
+                 * @param methodVisitor The method visitor to which any calls are delegated to. 对其委派任何调用的方法访问者
                  * @param name          The name of the method being visited.
                  */
                 protected ValidatingMethodVisitor(MethodVisitor methodVisitor, String name) {
@@ -3205,25 +3205,25 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * An initialization handler is responsible for handling the creation of the type initializer.
+                 * An initialization handler is responsible for handling the creation of the type initializer. 初始化处理程序负责处理类型初始值设定项的创建
                  */
                 protected interface InitializationHandler {
 
                     /**
-                     * Invoked upon completion of writing the instrumented type.
+                     * Invoked upon completion of writing the instrumented type. 在完成编写插入指令的类型时调用
                      *
-                     * @param classVisitor          The class visitor to write any methods to.
+                     * @param classVisitor          The class visitor to write any methods to. 类访问者来编写任何方法
                      * @param implementationContext The implementation context to use.
                      */
                     void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext);
 
                     /**
-                     * An initialization handler that creates a new type initializer.
+                     * An initialization handler that creates a new type initializer. 创建新类型初始值设定项的初始化处理程序
                      */
                     class Creating extends TypeInitializer.Drain.Default implements InitializationHandler {
 
                         /**
-                         * Creates a new creating initialization handler.
+                         * Creates a new creating initialization handler. 创建新的创建初始化处理程序
                          *
                          * @param instrumentedType             The instrumented type.
                          * @param methodPool                   The method pool to use.
@@ -3242,7 +3242,7 @@ public interface TypeWriter<T> {
                     }
 
                     /**
-                     * An initialization handler that appends code to a previously visited type initializer.
+                     * An initialization handler that appends code to a previously visited type initializer. 将代码附加到以前访问的类型初始值设定项的初始化处理程序
                      */
                     abstract class Appending extends MethodVisitor implements InitializationHandler, TypeInitializer.Drain {
 
@@ -3252,12 +3252,12 @@ public interface TypeWriter<T> {
                         protected final TypeDescription instrumentedType;
 
                         /**
-                         * The method pool record for the type initializer.
+                         * The method pool record for the type initializer. 类型初始值设定项的方法池记录
                          */
                         protected final MethodPool.Record record;
 
                         /**
-                         * The used annotation value filter factory.
+                         * The used annotation value filter factory. 使用的注释值筛选器工厂
                          */
                         protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
 
@@ -3272,12 +3272,12 @@ public interface TypeWriter<T> {
                         protected int stackSize;
 
                         /**
-                         * The currently recorded local variable length.
+                         * The currently recorded local variable length. 当前记录的局部变量长度
                          */
                         protected int localVariableLength;
 
                         /**
-                         * Creates a new appending initialization handler.
+                         * Creates a new appending initialization handler. 创建新的附加初始化处理程序
                          *
                          * @param methodVisitor                The underlying method visitor.
                          * @param instrumentedType             The instrumented type.
@@ -3383,7 +3383,7 @@ public interface TypeWriter<T> {
                         }
 
                         /**
-                         * Invoked after the user code was visited.
+                         * Invoked after the user code was visited. 在访问用户代码后调用
                          */
                         protected abstract void onStart();
 
@@ -3405,7 +3405,7 @@ public interface TypeWriter<T> {
                         }
 
                         /**
-                         * Invoked after the user code was completed.
+                         * Invoked after the user code was completed. 在用户代码完成后调用
                          */
                         protected abstract void onEnd();
 
@@ -3442,7 +3442,7 @@ public interface TypeWriter<T> {
                             Object[] EMPTY = new Object[0];
 
                             /**
-                             * Informs this frame writer of an observed frame.
+                             * Informs this frame writer of an observed frame. 将观察到的帧通知此帧编写器
                              *
                              * @param type                The frame type.
                              * @param localVariableLength The length of the local variables array.
@@ -3457,7 +3457,7 @@ public interface TypeWriter<T> {
                             void emitFrame(MethodVisitor methodVisitor);
 
                             /**
-                             * A non-operational frame writer.
+                             * A non-operational frame writer. 一种不可操作的框架编写器
                              */
                             enum NoOp implements FrameWriter {
 
@@ -3478,7 +3478,7 @@ public interface TypeWriter<T> {
                             }
 
                             /**
-                             * A frame writer that creates an expanded frame.
+                             * A frame writer that creates an expanded frame. 创建扩展帧的帧编写器
                              */
                             enum Expanding implements FrameWriter {
 
@@ -3504,7 +3504,7 @@ public interface TypeWriter<T> {
                             class Active implements FrameWriter {
 
                                 /**
-                                 * The current length of the current local variable array.
+                                 * The current length of the current local variable array. 当前局部变量数组的当前长度
                                  */
                                 private int currentLocalVariableLength;
 
@@ -3580,12 +3580,12 @@ public interface TypeWriter<T> {
 
                             /**
                              * An initialization handler that appends code to a previously visited type initializer without allowing active
-                             * {@link TypeInitializer} registrations and without an active record.
+                             * {@link TypeInitializer} registrations and without an active record. 一种初始化处理程序，在不允许活动 {@link TypeInitializer} 注册且没有活动记录的情况下，将代码附加到以前访问过的类型初始值设定项
                              */
                             protected static class WithoutActiveRecord extends WithoutDrain {
 
                                 /**
-                                 * Creates a new appending initialization handler without a drain and without an active record.
+                                 * Creates a new appending initialization handler without a drain and without an active record. 创建一个新的附加初始化处理程序，该处理程序不带drain和活动记录
                                  *
                                  * @param methodVisitor                The underlying method visitor.
                                  * @param instrumentedType             The instrumented type.
@@ -3714,19 +3714,19 @@ public interface TypeWriter<T> {
                             }
 
                             /**
-                             * Invoked after completion of writing the type initializer.
+                             * Invoked after completion of writing the type initializer. 在完成类型初始值设定项的写入后调用
                              *
                              * @param implementationContext The implementation context to use.
                              */
                             protected abstract void afterComplete(Implementation.Context implementationContext);
 
                             /**
-                             * A code appending initialization handler with a drain that does not apply an explicit record.
+                             * A code appending initialization handler with a drain that does not apply an explicit record. 用不应用显式记录的排出来附加初始化处理程序的代码
                              */
                             protected static class WithoutActiveRecord extends WithDrain {
 
                                 /**
-                                 * Creates a new appending initialization handler with a drain and without an active record.
+                                 * Creates a new appending initialization handler with a drain and without an active record. 创建一个新的附加初始化处理程序，其中包含一个drain，但没有活动记录
                                  *
                                  * @param methodVisitor                The underlying method visitor.
                                  * @param instrumentedType             The instrumented type.
@@ -3751,12 +3751,12 @@ public interface TypeWriter<T> {
                             }
 
                             /**
-                             * A code appending initialization handler with a drain that applies an explicit record.
+                             * A code appending initialization handler with a drain that applies an explicit record. 用应用显式记录的漏极附加初始化处理程序的代码
                              */
                             protected static class WithActiveRecord extends WithDrain {
 
                                 /**
-                                 * A label indicating the beginning of the record's code.
+                                 * A label indicating the beginning of the record's code. 表示记录代码开头的标签
                                  */
                                 private final Label label;
 
@@ -4388,9 +4388,9 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * A default type writer that only applies a type decoration.
+             * A default type writer that only applies a type decoration. 只应用类型修饰的默认类型编写器
              *
-             * @param <V> The best known loaded type for the dynamically created type.
+             * @param <V> The best known loaded type for the dynamically created type. 动态创建的类型的最著名的加载类型
              */
             protected static class WithDecorationOnly<V> extends ForInlining<V> {
 
@@ -4461,7 +4461,7 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * A field list that only reads fields lazy to avoid an eager lookup since fields are often not required.
+                 * A field list that only reads fields lazy to avoid an eager lookup since fields are often not required. 一种只读取字段的字段列表，由于字段通常不是必需的，所以它可以避免快速查找
                  */
                 protected static class LazyFieldList extends FieldList.AbstractBase<FieldDescription.InDefinedShape> {
 
@@ -4600,7 +4600,7 @@ public interface TypeWriter<T> {
         }
 
         /**
-         * A type writer that creates a class file that is not based upon another, existing class.
+         * A type writer that creates a class file that is not based upon another, existing class. 一种类型编写器，用于创建一个不基于另一个现有类的类文件
          *
          * @param <U> The best known loaded type for the dynamically created type.
          */
@@ -4613,7 +4613,7 @@ public interface TypeWriter<T> {
             private final MethodPool methodPool;
 
             /**
-             * Creates a new default type writer for creating a new type that is not based on an existing class file.
+             * Creates a new default type writer for creating a new type that is not based on an existing class file. 创建新的默认类型编写器，用于创建不基于现有类文件的新类型
              *
              * @param instrumentedType             The instrumented type to be created.
              * @param classFileVersion             The class file version to write the instrumented type in and to apply when creating auxiliary types.
@@ -4751,7 +4751,7 @@ public interface TypeWriter<T> {
         }
 
         /**
-         * An action to write a class file to the dumping location.
+         * An action to write a class file to the dumping location. 将类文件写入转储位置的操作
          */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class ClassDumpAction implements PrivilegedExceptionAction<Void> {

@@ -20,7 +20,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * a method, its bridge methods, its resolution state and information on if it was made visible by a visibility bridge. 方法图表示从给定类型看到的一组方法的视图。任何方法都表示为一个节点，该节点表示一个方法、它的桥方法、它的解析状态以及有关它是否被可见性桥显示的信息
  */
 public interface MethodGraph {
-
+    // 代表了一个方法集合的关系视图 -> Compiler用来生成一个MethodGraph。不同Compiler生成不同的，有默认的
     /**
      * Locates a node in this graph which represents the provided method token. 在此图中查找表示提供的方法令牌的节点
      *
@@ -768,19 +768,19 @@ public interface MethodGraph {
 
             /**
              * A key represents a collection of methods within a method graph to later yield a node representing a collection of methods,
-             * i.e. a method representative including information on the required method bridges.
+             * i.e. a method representative including information on the required method bridges. 键表示方法图中的方法集合，以稍后产生表示方法集合的节点，即，包括关于所需方法桥的信息的方法代表
              *
-             * @param <S> The type of the token used for deciding on method equality.
+             * @param <S> The type of the token used for deciding on method equality. 用于确定方法相等性的标记的类型
              */
             protected abstract static class Key<S> {
 
                 /**
-                 * The internal name of the method this key identifies.
+                 * The internal name of the method this key identifies. 此键标识的方法的内部名称
                  */
                 protected final String internalName;
 
                 /**
-                 * The number of method parameters of the method this key identifies.
+                 * The number of method parameters of the method this key identifies. 此键标识的方法的方法参数数
                  */
                 protected final int parameterCount;
 
@@ -822,14 +822,14 @@ public interface MethodGraph {
 
                 /**
                  * A harmonized key represents a key where equality is decided based on tokens that are returned by a
-                 * {@link net.bytebuddy.dynamic.scaffold.MethodGraph.Compiler.Default.Harmonizer}.
+                 * {@link net.bytebuddy.dynamic.scaffold.MethodGraph.Compiler.Default.Harmonizer}. 协调密钥表示根据 {@link net.bytebuddy.dynamic.scaffold.MethodGraph.Compiler.Default.Harmonizer} 返回的令牌决定相等性的密钥
                  *
-                 * @param <V> The type of the tokens yielded by a harmonizer.
+                 * @param <V> The type of the tokens yielded by a harmonizer. 协调器产生的令牌类型
                  */
                 protected static class Harmonized<V> extends Key<V> {
 
                     /**
-                     * A mapping of identifiers to the type tokens they represent.
+                     * A mapping of identifiers to the type tokens they represent. 标识符到它们所表示的类型标记的映射
                      */
                     private final Map<V, Set<MethodDescription.TypeToken>> identifiers;
 
@@ -963,7 +963,7 @@ public interface MethodGraph {
                 }
 
                 /**
-                 * A store for collected methods that are identified by keys.
+                 * A store for collected methods that are identified by keys. 由键标识的已收集方法的存储区
                  *
                  * @param <V> The type of the token used for deciding on method equality.
                  */
@@ -971,7 +971,7 @@ public interface MethodGraph {
                 protected static class Store<V> {
 
                     /**
-                     * A mapping of harmonized keys to their represented entry.
+                     * A mapping of harmonized keys to their represented entry. 协调键到它们所代表的条目的映射
                      */
                     private final LinkedHashMap<Harmonized<V>, Entry<V>> entries;
 
@@ -983,7 +983,7 @@ public interface MethodGraph {
                     }
 
                     /**
-                     * Creates a new store representing the given entries.
+                     * Creates a new store representing the given entries. 创建表示给定项的新存储
                      *
                      * @param entries A mapping of harmonized keys to their represented entry.
                      */

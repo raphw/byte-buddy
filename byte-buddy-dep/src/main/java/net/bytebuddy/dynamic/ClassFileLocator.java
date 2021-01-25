@@ -26,7 +26,7 @@ import java.util.zip.ZipFile;
 import static net.bytebuddy.matcher.ElementMatchers.isChildOf;
 
 /**
- * Locates a class file or its byte array representation when it is given its type description.
+ * Locates a class file or its byte array representation when it is given its type description. 在给定类文件的类型描述时，查找类文件或其字节数组表示形式 -> 用来查找类文件，用来寻找类，并返回类定义byte[]，LocationStrategy核心就是如何使用ClassFileLocator这个类
  */
 public interface ClassFileLocator extends Closeable {
 
@@ -37,7 +37,7 @@ public interface ClassFileLocator extends Closeable {
 
     /**
      * Locates the class file for a given type and returns the binary data of the class file.
-     *
+     * 根据类的名称，返回一个Resolution。Resolutiong包含类的信息，比如isResolved代表是否找到，byte[] resolve()返回类的字节码定义
      * @param typeName The name of the type to locate a class file representation for.
      * @return Any binary representation of the type which might be illegal.
      * @throws java.io.IOException If reading a class file causes an error.
@@ -45,12 +45,12 @@ public interface ClassFileLocator extends Closeable {
     Resolution locate(String typeName) throws IOException;
 
     /**
-     * Represents a class file as binary data.
+     * Represents a class file as binary data.   ClassFileLocator的内部接口， Resolution代表类的二进制信息
      */
     interface Resolution {
 
         /**
-         * Checks if this binary representation is valid.
+         * Checks if this binary representation is valid. 检查是否存在这个类
          *
          * @return {@code true} if this binary representation is valid.
          */
@@ -58,14 +58,14 @@ public interface ClassFileLocator extends Closeable {
 
         /**
          * Finds the data of this binary representation. Calling this method is only legal for resolved instances.
-         * For non-resolved instances, an exception is thrown.
+         * For non-resolved instances, an exception is thrown. 找到类的定义，返回一个byte[]
          *
          * @return The requested binary data. The returned array must not be altered.
          */
         byte[] resolve();
 
         /**
-         * A canonical representation of an illegal binary representation.
+         * A canonical representation of an illegal binary representation. 找不到类时的Resolution实现类 可以看到，获取类的二进制信息时直接抛出异常
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Illegal implements Resolution {
@@ -96,7 +96,7 @@ public interface ClassFileLocator extends Closeable {
         }
 
         /**
-         * Represents a byte array as binary data.
+         * Represents a byte array as binary data. 找到类时的Resolution实现类 可以看到，获取类的二进制信息
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Explicit implements Resolution {
@@ -568,7 +568,7 @@ public interface ClassFileLocator extends Closeable {
     }
 
     /**
-     * A class file locator that locates classes within a Java <i>jar</i> file.
+     * A class file locator that locates classes within a Java <i>jar</i> file. 在jar包里面寻找class文件
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ForJarFile implements ClassFileLocator {
@@ -660,7 +660,7 @@ public interface ClassFileLocator extends Closeable {
             }
             return of(runtimeJar);
         }
-
+        // 可以看到 locate 方法在 jar 里需找类的方法
         @Override
         public Resolution locate(String typeName) throws IOException {
             ZipEntry zipEntry = jarFile.getEntry(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);

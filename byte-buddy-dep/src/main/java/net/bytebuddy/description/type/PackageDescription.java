@@ -6,7 +6,7 @@ import net.bytebuddy.description.annotation.AnnotationSource;
 import org.objectweb.asm.Opcodes;
 
 /**
- * A package description represents a Java package. 软件包描述表示Java软件包
+ * A package description represents a Java package. 软件包描述表示Java软件包  描述包的结构的类，典型的会在每个包底下创建package_info.java来存放包的信息
  */
 public interface PackageDescription extends NamedElement.WithRuntimeName, AnnotationSource {
 
@@ -26,7 +26,7 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
     PackageDescription UNDEFINED = null;
 
     /**
-     * Checks if this package contains the provided type. 检查此程序包是否包含提供的类型
+     * Checks if this package contains the provided type. 检查此程序包是否包含提供的类型  判断某个包内是否包含给定的类型
      *
      * @param typeDescription The type to examine.
      * @return {@code true} if the given type contains the provided type.

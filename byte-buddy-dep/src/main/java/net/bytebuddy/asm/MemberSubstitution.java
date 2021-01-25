@@ -1213,12 +1213,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
     }
 
     /**
-     * A method visitor that applies a substitution for matched methods.
+     * A method visitor that applies a substitution for matched methods. 对 匹配的方法 应用 替换的方法 访问者
      */
     protected static class SubstitutingMethodVisitor extends MethodVisitor {
 
         /**
-         * The method graph compiler to use.
+         * The method graph compiler to use. 图形编译器要使用的方法
          */
         private final MethodGraph.Compiler methodGraphCompiler;
 

@@ -182,7 +182,7 @@ public interface ParameterDescription extends AnnotationSource,
     }
 
     /**
-     * Description of a loaded parameter with support for the information exposed by {@code java.lang.reflect.Parameter}.
+     * Description of a loaded parameter with support for the information exposed by {@code java.lang.reflect.Parameter}. 加载参数的描述，支持 {@code java.lang.reflect.Parameter} 公开的信息
      *
      * @param <T> The type of the {@code java.lang.reflect.Executable} that this list represents.
      */
@@ -425,7 +425,7 @@ public interface ParameterDescription extends AnnotationSource,
         }
 
         /**
-         * A description of a loaded {@link Method} parameter for a modern VM.
+         * A description of a loaded {@link Method} parameter for a modern VM. 对现代虚拟机加载的{@link Method}参数的描述
          */
         protected static class OfMethod extends ForLoadedParameter<Method> {
 
@@ -822,7 +822,7 @@ public interface ParameterDescription extends AnnotationSource,
 
     /**
      * <p>
-     * A parameter description that represents a given parameter but with a substituted parameter type.
+     * A parameter description that represents a given parameter but with a substituted parameter type. 一种参数描述，表示给定的参数，但具有替换的参数类型
      * </p>
      * <p>
      * <b>Note</b>: The supplied visitor must assure to not substitute
@@ -831,17 +831,17 @@ public interface ParameterDescription extends AnnotationSource,
     class TypeSubstituting extends AbstractBase implements InGenericShape {
 
         /**
-         * The method that declares this type-substituted parameter.
+         * The method that declares this type-substituted parameter. 声明此类型的方法替换了参数
          */
         private final MethodDescription.InGenericShape declaringMethod;
 
         /**
-         * The represented parameter.
+         * The represented parameter. 表示的参数
          */
         private final ParameterDescription parameterDescription;
 
         /**
-         * A visitor that is applied to the parameter type.
+         * A visitor that is applied to the parameter type. 应用于参数类型的访问者
          */
         private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 

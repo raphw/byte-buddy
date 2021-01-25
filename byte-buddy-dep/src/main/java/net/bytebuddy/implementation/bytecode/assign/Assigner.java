@@ -32,9 +32,9 @@ public interface Assigner {
      */
     StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing);
 
-    /**
+    /** 指示类型的转化是静态的还是动态的。静态的意思是，调用前已经确定了。动态类型时，生成是才确定。默认值是动态生成
      * Indicates for a type assignment, if a type casting should be applied in case that two types are not statically assignable.
-     * Also, a dynamic typing indicates that void values are assignable to other types by assigning the target type's default value.
+     * Also, a dynamic typing indicates that void values are assignable to other types by assigning the target type's default value. 指示对于类型分配，在两个类型不可静态分配的情况下是否应应用类型转换。另外，动态类型表示通过指定目标类型的默认值，可以将void值指定给其他类型
      */
     enum Typing {
 

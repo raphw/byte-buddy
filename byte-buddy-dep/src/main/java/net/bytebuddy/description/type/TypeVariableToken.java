@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A tokenized representation of a type variable.
+ * A tokenized representation of a type variable. 类型变量的符号化表示 -> Token，真正的字节码 注意 getSymbol() 是继承自Generic,是针对泛型的，非泛型使用会报错
  */
 public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToken> {
 

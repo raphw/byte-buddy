@@ -3,7 +3,7 @@ package net.bytebuddy.description.modifier;
 import org.objectweb.asm.Opcodes;
 
 /**
- * Describes if a method allows varargs arguments.
+ * Describes if a method allows varargs arguments. 描述方法是否允许 varargs 参数
  */
 public enum MethodArguments implements ModifierContributor.ForMethod {
 

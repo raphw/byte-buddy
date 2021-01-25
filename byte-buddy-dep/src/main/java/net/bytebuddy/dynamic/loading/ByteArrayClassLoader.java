@@ -26,16 +26,16 @@ import java.util.concurrent.ConcurrentMap;
  * <p>
  * A {@link java.lang.ClassLoader} that is capable of loading explicitly defined classes. The class loader will free
  * any binary resources once a class that is defined by its binary data is loaded. This class loader is thread safe since
- * the class loading mechanics are only called from synchronized context.
+ * the class loading mechanics are only called from synchronized context. 一个能够加载显式定义的类的java.lang.ClassLoader。类加载器将释放加载由其二进制数据定义的类，则所有二进制资源。该类加载器是线程安全的，因为类加载机制仅从同步上下文中调用
  * </p>
  * <p>
  * <b>Note</b>: Instances of this class loader return URLs for their represented class loaders with the <i>bytebuddy</i> schema.
  * These URLs do not represent URIs as two classes with the same name yield identical URLs but might represents different byte
- * arrays.
+ * arrays. 注意：该类加载器的实例使用bytebuddy 模式返回其表示的类加载器的URL  这些URL不表示URI，因为两个具有相同名称的类产生相同的URL，但可能表示不同的字节数组
  * </p>
  * <p>
  * <b>Note</b>: Any class and package definition is performed using the creator's {@link AccessControlContext}.
- * </p>
+ * </p> 注意：任何类和包定义都是使用创建者的AccessControlContext执行的
  */
 public class ByteArrayClassLoader extends InjectionClassLoader {
 

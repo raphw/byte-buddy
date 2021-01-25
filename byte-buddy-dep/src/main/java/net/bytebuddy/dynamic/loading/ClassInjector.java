@@ -39,7 +39,7 @@ import java.util.jar.JarOutputStream;
  * <p>
  * <b>Important</b>: Byte Buddy does not supply privileges when injecting code. When using a {@link SecurityManager},
  * the user of this injector is responsible for providing access to non-public properties.
- * </p>
+ * </p> ClassInjector 将一个类，注入到java.lang.ClassLoader
  */
 public interface ClassInjector {
 

@@ -14,7 +14,7 @@ import java.util.List;
 public interface StackManipulation {
 
     /**
-     * Determines if this stack manipulation is valid.
+     * Determines if this stack manipulation is valid. 确定此堆栈操作是否有效
      *
      * @return If {@code false}, this manipulation cannot be applied and should throw an exception.
      */
@@ -23,14 +23,14 @@ public interface StackManipulation {
     /**
      * Applies the stack manipulation that is described by this instance. 应用此实例描述的堆栈操作
      *
-     * @param methodVisitor         The method visitor used to write the method implementation to.
+     * @param methodVisitor         The method visitor used to write the method implementation to. 用于将方法实现写入的方法访问者
      * @param implementationContext The context of the current implementation.
-     * @return The changes to the size of the operand stack that are implied by this stack manipulation.
+     * @return The changes to the size of the operand stack that are implied by this stack manipulation. 此堆栈操作所隐含的对操作数堆栈大小的更改
      */
     Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext);
 
     /**
-     * Canonical representation of an illegal stack manipulation.
+     * Canonical representation of an illegal stack manipulation. 非法堆栈操作的规范表示
      */
     enum Illegal implements StackManipulation {
 
@@ -73,21 +73,21 @@ public interface StackManipulation {
 
     /**
      * A description of the size change that is imposed by some
-     * {@link StackManipulation}.
+     * {@link StackManipulation}. 对某些 {@link StackManipulation} 施加的大小更改的描述
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Size {
 
         /**
          * The impact of any size operation onto the operand stack. This value can be negative if more values
-         * were consumed from the stack than added to it.
+         * were consumed from the stack than added to it. 任何大小操作对操作数堆栈的影响。如果从堆栈中消耗的值多于添加到堆栈中的值，则此值可能为负值
          */
         private final int sizeImpact;
 
         /**
          * The maximal size of stack slots this stack manipulation ever requires. If an operation for example pushes
          * five values onto the stack and subsequently consumes three operations, this value should still be five
-         * to express that a stack operation requires at least five slots in order to be applicable.
+         * to express that a stack operation requires at least five slots in order to be applicable. 此堆栈操作所需的最大堆栈插槽大小。例如，如果一个操作将五个值推送到堆栈上并随后使用三个操作，则该值仍应为五，以表示堆栈操作至少需要五个插槽才能适用
          */
         private final int maximalSize;
 
@@ -104,7 +104,7 @@ public interface StackManipulation {
         }
 
         /**
-         * Returns the size change on the operand stack that is represented by this instance.
+         * Returns the size change on the operand stack that is represented by this instance. 返回此实例表示的操作数堆栈的大小更改
          *
          * @return The size change on the operand stack that is represented by this instance.
          */

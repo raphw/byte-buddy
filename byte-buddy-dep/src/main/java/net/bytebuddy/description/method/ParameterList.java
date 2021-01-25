@@ -158,7 +158,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         /**
-         * A dispatcher for creating descriptions of parameter lists and for evaluating the size of an {@code java.lang.reflect.Executable}'s parameters.
+         * A dispatcher for creating descriptions of parameter lists and for evaluating the size of an {@code java.lang.reflect.Executable}'s parameters. 一种调度器，用于创建参数列表的描述和计算 {@code java.lang.reflect.Executable} 的参数
          */
         protected interface Dispatcher {
 

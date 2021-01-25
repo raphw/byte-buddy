@@ -15,7 +15,7 @@ import org.objectweb.asm.Opcodes;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
- * An access representation to a given field. 对给定字段的访问表示
+ * An access representation to a given field. 对给定字段的访问表示 类似，但是更复杂一点。代表了 field 和 method
  */
 public enum FieldAccess {
 
@@ -101,7 +101,7 @@ public enum FieldAccess {
     }
 
     /**
-     * Representation of a field access for which a getter and a setter can be created.
+     * Representation of a field access for which a getter and a setter can be created. 可以为其创建getter和setter的字段访问的表示
      */
     public interface Defined {
 
@@ -113,7 +113,7 @@ public enum FieldAccess {
         StackManipulation read();
 
         /**
-         * Creates a setter representation for a given field.
+         * Creates a setter representation for a given field. 为给定字段创建setter表示
          *
          * @return A stack manipulation representing the setting of a field value.
          */
@@ -121,7 +121,7 @@ public enum FieldAccess {
     }
 
     /**
-     * A dispatcher for implementing a generic read or write access on a field.
+     * A dispatcher for implementing a generic read or write access on a field. 一种调度器，用于实现对字段的通用读写访问
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class OfGenericField implements Defined {
@@ -200,7 +200,7 @@ public enum FieldAccess {
         }
 
         /**
-         * An abstract base implementation for accessing a field value.
+         * An abstract base implementation for accessing a field value. 用于访问字段值的抽象基本实现
          */
         private abstract class AbstractFieldInstruction implements StackManipulation {
 
@@ -219,14 +219,14 @@ public enum FieldAccess {
             }
 
             /**
-             * Returns the opcode for implementing the field access.
+             * Returns the opcode for implementing the field access. 返回用于实现字段访问的操作码
              *
              * @return The opcode for implementing the field access.
              */
             protected abstract int getOpcode();
 
             /**
-             * Resolves the actual size of this field access operation.
+             * Resolves the actual size of this field access operation. 解析此字段访问操作的实际大小
              *
              * @param fieldSize The size of the accessed field.
              * @return The size of the field access operation based on the field's size.
@@ -253,7 +253,7 @@ public enum FieldAccess {
         }
 
         /**
-         * A writing field access operation.
+         * A writing field access operation. 写入字段访问操作
          */
         @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class FieldPutInstruction extends AbstractFieldInstruction {

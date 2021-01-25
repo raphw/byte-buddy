@@ -33,13 +33,13 @@ import java.util.concurrent.ConcurrentMap;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
-/**
- * A type pool allows the retrieval of {@link TypeDescription} by its name.
+/** 一个TypePool 可以来存储这些TypeDescription，相当于一个池子
+ * A type pool allows the retrieval of {@link TypeDescription} by its name. 对于TypeDescription的缓存池。加载后的各种类型，可以放到Type pool中。这个类可以存放不实用classLoader加载的类。也就是说可以绕过jvm的记载机制直接从文件加载
  */
 public interface TypePool {
 
     /**
-     * Locates and describes the given type by its name.
+     * Locates and describes the given type by its name.  根据name，返回一个Resolution，用来记载寻找类
      *
      * @param name The name of the type to describe. The name is to be written as when calling {@link Object#toString()}
      *             on a loaded {@link java.lang.Class}.
@@ -54,12 +54,12 @@ public interface TypePool {
     void clear();
 
     /**
-     * A resolution of a {@link net.bytebuddy.pool.TypePool} which was queried for a description.
+     * A resolution of a {@link net.bytebuddy.pool.TypePool} which was queried for a description. A resolution of a {@link net.bytebuddy.pool.TypePool} which was queried for a description.
      */
     interface Resolution {
 
         /**
-         * Determines if this resolution represents a fully-resolved {@link TypeDescription}.
+         * Determines if this resolution represents a fully-resolved {@link TypeDescription}.  一个TypeDescription是否可以从文件中找到
          *
          * @return {@code true} if the queried type could be resolved.
          */
@@ -68,20 +68,20 @@ public interface TypePool {
         /**
          * Resolves this resolution to a {@link TypeDescription}. If this resolution is unresolved, this
          * method throws an exception either upon invoking this method or upon invoking at least one method
-         * of the returned type description.
+         * of the returned type description. 从文件中加载，并返回这个TypeDescription
          *
          * @return The type description that is represented by this resolution.
          */
         TypeDescription resolve();
 
         /**
-         * A simple resolution that represents a given {@link TypeDescription}.
+         * A simple resolution that represents a given {@link TypeDescription}. 表示给定{@link TypeDescription}的简单解析
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Simple implements Resolution {
 
             /**
-             * The represented type description.
+             * The represented type description. 表示的类型描述
              */
             private final TypeDescription typeDescription;
 
@@ -2856,7 +2856,7 @@ public interface TypePool {
 
             /**
              * A declaration context encapsulates information about whether a type was declared within another type
-             * or within a method of another type.
+             * or within a method of another type. 声明上下文封装了一个类型是在另一个类型中声明还是在另一个类型的方法中声明的信息
              */
             protected interface TypeContainment {
 
@@ -6271,7 +6271,7 @@ public interface TypePool {
             }
 
             /**
-             * A lazy representation of a method that resolves references to types only on demand.
+             * A lazy representation of a method that resolves references to types only on demand. 一种只按需解析对类型的引用的方法的惰性表示
              */
             private class LazyMethodDescription extends MethodDescription.InDefinedShape.AbstractBase {
 
@@ -6819,7 +6819,7 @@ public interface TypePool {
         }
 
         /**
-         * A type extractor reads a class file and collects data that is relevant to create a type description.
+         * A type extractor reads a class file and collects data that is relevant to create a type description. 类型提取器读取类文件并收集与创建类型描述相关的数据
          */
         protected class TypeExtractor extends ClassVisitor {
 
@@ -7237,7 +7237,7 @@ public interface TypePool {
 
             /**
              * A field extractor reads a field within a class file and collects data that is relevant
-             * to creating a related field description.
+             * to creating a related field description. 字段提取器读取类文件中的字段，并收集与创建相关字段描述相关的数据
              */
             protected class FieldExtractor extends FieldVisitor {
 
@@ -7324,7 +7324,7 @@ public interface TypePool {
 
             /**
              * A method extractor reads a method within a class file and collects data that is relevant
-             * to creating a related method description.
+             * to creating a related method description. 方法提取器读取类文件中的方法，并收集与创建相关方法描述相关的数据
              */
             protected class MethodExtractor extends MethodVisitor implements AnnotationRegistrant {
 
@@ -7587,7 +7587,7 @@ public interface TypePool {
     }
 
     /**
-     * A lazy facade of a type pool that delegates any lookups to another type pool only if another value than the type's name is looked up.
+     * A lazy facade of a type pool that delegates any lookups to another type pool only if another value than the type's name is looked up. 一种类型池的延迟外观，只有在查找了类型名以外的值时，才将任何查找委托给另一个类型池
      */
     @HashCodeAndEqualsPlugin.Enhance
     class LazyFacade extends AbstractBase {

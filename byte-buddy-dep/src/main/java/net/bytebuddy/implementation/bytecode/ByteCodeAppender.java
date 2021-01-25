@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
+/** Implementation提供一个code appender，可以被用来做方法的实现的委托调用, 同时任何的 Implementation 应该提供有意义的 equals 和 hashCode ，避免重复生成
  * An appender that generates the byte code for a given method. This is done by writing the byte code instructions to
  * the given ASM {@link org.objectweb.asm.MethodVisitor}. 为给定方法生成字节码的附加器。这是通过将字节码指令写入给定的ASM MethodVisitor来完成的
  * <p>&nbsp;</p>
@@ -139,7 +139,7 @@ public interface ByteCodeAppender {
 
     /**
      * A simple byte code appender that only represents a given array of
-     * {@link StackManipulation}s.
+     * {@link StackManipulation}s. 一个简单的字节码追加器，只表示给定的{@link StackManipulation}数组
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Simple implements ByteCodeAppender {
@@ -159,7 +159,7 @@ public interface ByteCodeAppender {
         }
 
         /**
-         * Creates a new simple byte code appender which represents the given stack manipulation.
+         * Creates a new simple byte code appender which represents the given stack manipulation. 创建一个新的简单字节码附加器，它表示给定的堆栈操作
          *
          * @param stackManipulations The stack manipulations to apply for this byte code appender in their application order.
          */

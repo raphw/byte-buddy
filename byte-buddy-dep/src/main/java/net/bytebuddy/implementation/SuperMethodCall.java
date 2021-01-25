@@ -11,9 +11,9 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import org.objectweb.asm.MethodVisitor;
 
 /**
- * This implementation will create a new method which simply calls its super method. If no such method is defined, 此实现将创建一个新方法，该方法简单地调用其super方法。 如果未定义此类方法，则将引发异常
+ * This implementation will create a new method which simply calls its super method. If no such method is defined,   此实现将创建一个新方法，该方法简单地调用其super方法。 如果未定义此类方法，则将引发异常
  * an exception will be thrown. Constructors are considered to have a super method if the direct super class defines 如果直接超类定义了具有相同签名的构造函数，则认为构造函数具有super方法
- * a constructor with an identical signature. Default methods are invoked as such if they are non-ambiguous. Static 如果默认方法是明确的，则将这样调用它们。 如果重新定义了定义静态方法的类型，则静态方法可以具有（伪）超级方法
+ * a constructor with an identical signature. Default methods are invoked as such if they are non-ambiguous. Static  如果默认方法是明确的，则将这样调用它们。 如果重新定义了定义静态方法的类型，则静态方法可以具有（伪）超级方法
  * methods can have a (pseudo) super method if a type that defines such a method is rebased. Rebased types can also
  * shadow constructors or methods of an actual super class. Besides implementing constructors, this implementation
  * is useful when a method of a super type is not supposed to be altered but should be equipped with additional
@@ -48,7 +48,7 @@ public enum SuperMethodCall implements Implementation.Composable {
     }
 
     /**
-     * A super method invocation where the return value is dropped instead of returning from the method.
+     * A super method invocation where the return value is dropped instead of returning from the method. 一种超级方法调用，其中返回值被丢弃，而不是从方法返回
      */
     protected enum WithoutReturn implements Implementation {
 

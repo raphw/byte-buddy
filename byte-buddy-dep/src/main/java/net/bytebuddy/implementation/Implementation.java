@@ -54,12 +54,12 @@ import java.util.*;
 public interface Implementation extends InstrumentedType.Prepareable {
 
     /**
-     * Creates a byte code appender that determines the implementation of the instrumented type's methods.
+     * Creates a byte code appender that determines the implementation of the instrumented type's methods. 创建字节码追加器，用于确定 插桩类型类型的方法的实现
      *
      * @param implementationTarget The target of the current implementation.
      * @return A byte code appender for implementing methods delegated to this implementation. This byte code appender
      * is also responsible for handling methods that were added by this implementation on the call to
-     * {@link Implementation#prepare(InstrumentedType)}. Target 是当前的 implementation，这个的意思是基于当前的implementation创建一个ByteCodeAppender
+     * {@link Implementation#prepare(InstrumentedType)}. Target 是当前的 implementation，这个的意思是基于当前的 implementation 创建一个 ByteCodeAppender
      */
     ByteCodeAppender appender(Target implementationTarget);
 
@@ -88,14 +88,14 @@ public interface Implementation extends InstrumentedType.Prepareable {
     /**
      * Represents an type-specific method invocation on the current instrumented type which is not legal from outside
      * the type such as a super method or default method invocation. Legal instances of special method invocations must
-     * be equal to one another if they represent the same invocation target.
+     * be equal to one another if they represent the same invocation target. 特殊的方法调用。比如class A 和 class B extends A。现在只有在B内才能调用super方法。但是可以通过修改字节码的方式，委托调用super方法。这就是特殊的方式调用，但不限于上面描述的场景
      */
     interface SpecialMethodInvocation extends StackManipulation {
 
         /**
          * Returns the method that represents this special method invocation. This method can be different even for
          * equal special method invocations, dependant on the method that was used to request such an invocation by the
-         * means of a {@link Implementation.Target}.
+         * means of a {@link Implementation.Target}. 返回表示此特殊方法调用的方法, 此方法甚至对于相同的特殊方法调用也可能不同，这取决于通过 {@link Implementation.Target} 请求此类调用所使用的方法
          *
          * @return The method description that describes this instances invocation target.
          */
@@ -234,7 +234,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
         }
     }
 
-    /**
+    /** 可以理解 Target 和 Implementation 一致
      * The target of an implementation. Implementation targets must be immutable and can be queried without altering
      * the implementation result. An implementation target provides information on the type that is to be created
      * where it is the implementation's responsibility to cache expensive computations, especially such computations
@@ -260,7 +260,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
         TypeDefinition getOriginType();
 
         /**
-         * Creates a special method invocation for invoking the super method of the given method.
+         * Creates a special method invocation for invoking the super method of the given method. 创建一个特殊的方法调用来调用给定方法的超级方法
          *
          * @param token A token of the method that is to be invoked as a super method.
          * @return The corresponding special method invocation which might be illegal if the requested invocation is not legal.
@@ -297,7 +297,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
         SpecialMethodInvocation invokeDominant(MethodDescription.SignatureToken token);
 
         /**
-         * A factory for creating an {@link Implementation.Target}.
+         * A factory for creating an {@link Implementation.Target}. 创建 {@link Implementation.Target} 的工厂
          */
         interface Factory {
 
@@ -313,23 +313,23 @@ public interface Implementation extends InstrumentedType.Prepareable {
         }
 
         /**
-         * An abstract base implementation for an {@link Implementation.Target}.
+         * An abstract base implementation for an {@link Implementation.Target}. {@link Implementation.Target} 的抽象基实现
          */
         @HashCodeAndEqualsPlugin.Enhance
         abstract class AbstractBase implements Target {
 
             /**
-             * The instrumented type.
+             * The instrumented type. 插桩类型
              */
             protected final TypeDescription instrumentedType;
 
             /**
-             * The instrumented type's method graph.
+             * The instrumented type's method graph. 插桩类型的方法图
              */
             protected final MethodGraph.Linked methodGraph;
 
             /**
-             * The default method invocation mode to apply.
+             * The default method invocation mode to apply. 要应用的默认方法调用模式
              */
             protected final DefaultMethodInvocation defaultMethodInvocation;
 
@@ -381,12 +381,12 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             /**
-             * Determines if default method invocations are possible.
+             * Determines if default method invocations are possible. 确定是否可以进行默认方法调用
              */
             protected enum DefaultMethodInvocation {
 
                 /**
-                 * Permits default method invocations, if an interface declaring a default method is possible.
+                 * Permits default method invocations, if an interface declaring a default method is possible. 如果接口可以声明默认方法，则允许默认方法调用
                  */
                 ENABLED {
                     @Override
@@ -408,7 +408,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 };
 
                 /**
-                 * Resolves a default method invocation depending on the class file version permitting such calls.
+                 * Resolves a default method invocation depending on the class file version permitting such calls. 根据允许此类调用的类文件版本解析默认方法调用
                  *
                  * @param classFileVersion The class file version to resolve for.
                  * @return A suitable default method invocation mode.
@@ -435,13 +435,13 @@ public interface Implementation extends InstrumentedType.Prepareable {
      * The context for an implementation application. An implementation context represents a mutable data structure
      * where any registration is irrevocable. Calling methods on an implementation context should be considered equally
      * sensitive as calling a {@link org.objectweb.asm.MethodVisitor}. As such, an implementation context and a
-     * {@link org.objectweb.asm.MethodVisitor} are complementary for creating an new Java type. 包含了一个 Implenentation有关的上下文信息
+     * {@link org.objectweb.asm.MethodVisitor} are complementary for creating an new Java type. 包含了一个 Implenentation 有关的上下文信息
      */
     interface Context extends MethodAccessorFactory {
 
         /**
          * Registers an auxiliary type as required for the current implementation. Registering a type will cause the
-         * creation of this type even if this type is not effectively used for the current implementation.
+         * creation of this type even if this type is not effectively used for the current implementation. 注册上下文信息，这个是子类的一个实现，不难看出 auxiliaryTypes 保存了所有辅助类的信息
          *
          * @param auxiliaryType The auxiliary type that is required for the current implementation.
          * @return A description of the registered auxiliary type.
@@ -451,7 +451,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
         /**
          * Caches a single value by storing it in form of a {@code private}, {@code final} and {@code static} field.
          * By caching values, expensive instance creations can be avoided and object identity can be preserved.
-         * The field is initiated in a generated class's static initializer.
+         * The field is initiated in a generated class's static initializer. 缓存 field 的定义
          *
          * @param fieldValue A stack manipulation for creating the value that is to be cached in a {@code static} field.
          *                   After executing the stack manipulation, exactly one value must be put onto the operand
@@ -479,7 +479,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
         /**
          * Represents an extractable view of an {@link Implementation.Context} which
-         * allows the retrieval of any registered auxiliary type.
+         * allows the retrieval of any registered auxiliary type. 表示允许检索任何已注册辅助类型的上下文的可提取视图
          */
         interface ExtractableView extends Context {
 
@@ -653,37 +653,37 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
         /**
          * A default implementation of an {@link Implementation.Context.ExtractableView}
-         * which serves as its own {@link MethodAccessorFactory}.
+         * which serves as its own {@link MethodAccessorFactory}. {@link Implementation.Context.ExtractableView} 的默认实现，用作自己的 {@link MethodAccessorFactory}
          */
         class Default extends ExtractableView.AbstractBase {
 
             /**
-             * The name suffix to be appended to an accessor method.
+             * The name suffix to be appended to an accessor method. 要附加到访问器方法的名称后缀
              */
             public static final String ACCESSOR_METHOD_SUFFIX = "accessor";
 
             /**
-             * The name prefix to be prepended to a field storing a cached value.
+             * The name prefix to be prepended to a field storing a cached value. 在存储缓存值的字段前面加上的名称前缀
              */
             public static final String FIELD_CACHE_PREFIX = "cachedValue";
 
             /**
-             * The naming strategy for naming auxiliary types that are registered.
+             * The naming strategy for naming auxiliary types that are registered. 用于命名已注册的辅助类型的命名策略
              */
             private final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
             /**
-             * The type initializer of the created instrumented type.
+             * The type initializer of the created instrumented type. 创建的插入指令类型的类型初始值设定项
              */
             private final TypeInitializer typeInitializer;
 
             /**
-             * The class file version to use for auxiliary classes.
+             * The class file version to use for auxiliary classes. 用于辅助类的类文件版本
              */
             private final ClassFileVersion auxiliaryClassFileVersion;
 
             /**
-             * A mapping of special method invocations to their accessor methods that each invoke their mapped invocation.
+             * A mapping of special method invocations to their accessor methods that each invoke their mapped invocation. 特殊方法调用到它们的访问器方法的映射，每个访问器方法调用它们映射的调用
              */
             private final Map<SpecialMethodInvocation, DelegationRecord> registeredAccessorMethods;
 
@@ -698,27 +698,27 @@ public interface Implementation extends InstrumentedType.Prepareable {
             private final Map<FieldDescription, DelegationRecord> registeredSetters;
 
             /**
-             * A map of registered auxiliary types to their dynamic type representation.
+             * A map of registered auxiliary types to their dynamic type representation. 已注册的辅助类型到其动态类型表示的映射
              */
             private final Map<AuxiliaryType, DynamicType> auxiliaryTypes;
 
             /**
-             * A map of already registered field caches to their field representation.
+             * A map of already registered field caches to their field representation. 已注册的字段缓存到其字段表示的映射
              */
             private final Map<FieldCacheEntry, FieldDescription.InDefinedShape> registeredFieldCacheEntries;
 
             /**
-             * A set of registered field cache entries.
+             * A set of registered field cache entries. 一组已注册的字段缓存项
              */
             private final Set<FieldDescription.InDefinedShape> registeredFieldCacheFields;
 
             /**
-             * A random suffix to append to the names of accessor methods.
+             * A random suffix to append to the names of accessor methods. 附加到访问器方法名称的随机后缀
              */
             private final String suffix;
 
             /**
-             * If {@code false}, the type initializer for this instance was already drained what prohibits the registration of additional cached field values.
+             * If {@code false}, the type initializer for this instance was already drained what prohibits the registration of additional cached field values. 如果{@code false}，则此实例的类型初始值设定项已耗尽禁止注册其他缓存字段值的内容
              */
             private boolean fieldCacheCanAppendEntries;
 
@@ -1248,7 +1248,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             /**
-             * An abstract method pool entry that delegates the implementation of a method to itself.
+             * An abstract method pool entry that delegates the implementation of a method to itself. 将方法的实现委托给自身的抽象方法池条目
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected abstract static class DelegationRecord extends TypeWriter.MethodPool.Record.ForDefinedMethod implements ByteCodeAppender {
@@ -1327,13 +1327,13 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
             /**
              * An implementation of a {@link TypeWriter.MethodPool.Record} for implementing
-             * an accessor method.
+             * an accessor method. {@link TypeWriter.MethodPool.Record} 的一种实现，用于实现访问器方法
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class AccessorMethodDelegation extends DelegationRecord {
 
                 /**
-                 * The stack manipulation that represents the requested special method invocation.
+                 * The stack manipulation that represents the requested special method invocation. 表示请求的特殊方法调用的堆栈操作
                  */
                 private final StackManipulation accessorMethodInvocation;
 
@@ -1385,7 +1385,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             /**
-             * An implementation for a field getter.
+             * An implementation for a field getter. 字段getter的实现
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class FieldGetterDelegation extends DelegationRecord {
@@ -1703,3 +1703,8 @@ public interface Implementation extends InstrumentedType.Prepareable {
         }
     }
 }
+// Implementation 负责把动态创建的类 Dynamic.type，转化为字节码。一个 Implementation 的使用可以按如下两步
+//
+// Implementation 能够去准备一个 instrumentedType，通过添加 field 和辅助类（以便于添加方法的的 Implementation。此外，LoadedTypeInitializer和 类型初始化的字节码，可以被注册为instrumentedType
+// Implementation 提供一个 code appender，可以被用来做方法的实现的委托调用。code appender也负责去提供在 step 1中添加的类型
+// 同时任何的Implementation应该提供有意义的equals和hashCode，避免重复生成

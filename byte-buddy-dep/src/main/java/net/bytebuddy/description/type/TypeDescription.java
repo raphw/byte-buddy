@@ -38,7 +38,7 @@ import static net.bytebuddy.matcher.ElementMatchers.is;
 
 /**
  * Implementations of this interface represent a Java type, i.e. a class or interface. Instances of this interface always
- * represent non-generic types of sort {@link Generic.Sort#NON_GENERIC}.
+ * represent non-generic types of sort {@link Generic.Sort#NON_GENERIC}. 集成 TypeDefinition，代表了封装了具体的类型实现    类型描述类，也是承载具体类型的定义
  */
 public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVariableSource {
 
@@ -95,7 +95,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     /**
      * Checks if this type is assignable from the type described by this instance, for example for
      * {@code class Foo} and {@code class Bar extends Foo}, this method would return {@code true} for
-     * {@code Foo.class.isAssignableFrom(Bar.class)}.
+     * {@code Foo.class.isAssignableFrom(Bar.class)}.  是否是从当前对象继承而来，包括当前。Foo和class Bar extends Foo，Foo.class.isAssignableFrom(Bar.class)返回true
      *
      * @param type The type of interest.
      * @return {@code true} if this type is assignable from {@code type}.
@@ -516,7 +516,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         MethodList<MethodDescription.InGenericShape> getDeclaredMethods();
 
         /**
-         * Applies a visitor to this generic type description.
+         * Applies a visitor to this generic type description. 将访问者应用于此泛型类型描述
          *
          * @param visitor The visitor to apply.
          * @param <T>     The value that this visitor yields.
@@ -526,7 +526,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         /**
          * A visitor that can be applied to a {@link Generic} for differentiating on the sort of the visited type.
-         * 可以应用于{@link Generic}的访问者，以区分访问类型的种类
+         * 可以应用于 {@link Generic} 的访问者，以区分访问类型的种类
          * @param <T> The visitor's return value's type. 访客返回值的类型
          */
         interface Visitor<T> {
@@ -607,7 +607,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
-            /**
+            /** 类型擦除，对传入的类型进行类型参数，遇到 wildcard type 抛出异常
              * A visitor that returns the erasure of any visited type. For wildcard types, an exception is thrown. 返回任何已擦除类型的擦除的访问者。 对于通配符类型，将引发异常
              */
             enum TypeErasing implements Visitor<Generic> {
@@ -643,7 +643,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
-            /**
+            /** 类型注解去除，去除一个类型所有注解类型
              * A visitor that strips all type annotations of all types. 剥离所有类型的所有类型注释的访问者
              */
             enum AnnotationStripper implements Visitor<Generic> {
@@ -687,7 +687,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 /**
-                 * Representation of a type variable without annotations.
+                 * Representation of a type variable without annotations. 不带注释的类型变量的表示
                  */
                 protected static class NonAnnotatedTypeVariable extends OfTypeVariable {
 
@@ -727,13 +727,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
-            /**
+            /** 一个Assigner负责把一个类型A转换成类型B。比如一个Assigner可以负责类型转化:装箱，把一个基本类型（int），转化为包转类(Integer);拆箱，正好相反
              * A visitor that determines the direct assignability of a type to another generic type. This visitor only checks
              * for strict assignability and does not perform any form of boxing or primitive type widening that are allowed
-             * in the Java language.
+             * in the Java language. 决定一个类型直接可分配给另一个泛型类型的访问者。这个访问者只检查严格的可分配性，不执行Java语言中允许的任何形式的装箱或原语类型扩展
              */
             enum Assigner implements Visitor<Assigner.Dispatcher> {
-
+                // 这里可以翻译为，归属于。前面也有isAssignableFrom，就是用来判断两个类型之间的关系。怎么判断呢，他用了一个模式分发，Dispatcher,逐层判断分发
                 /**
                  * The singleton instance.
                  */
@@ -1173,7 +1173,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * A validator for Java types that are defined for a specified type use within a Java class file.
+             * A validator for Java types that are defined for a specified type use within a Java class file. 用来在 class file 中校验格式是否正确
              */
             enum Validator implements Visitor<Boolean> {
 
@@ -1434,7 +1434,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * A visitor that reifies type descriptions if they represent raw types. 如果类型描述表示原始类型，则将其具体化的访问者
+             * A visitor that reifies type descriptions if they represent raw types. 如果类型描述表示原始类型，则将其具体化的访问者   纠正，如果一个类代码字节中的原本的类型（raw types），就是来纠正纠正，如果一个类代码字节中的原本的类型（raw types），就是来纠正
              */
             enum Reifying implements Visitor<Generic> {
 
@@ -1485,7 +1485,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * Visits a generic type and appends the discovered type to the supplied signature visitor. 访问泛型类型并将发现的类型附加到提供的签名访问者
+             * Visits a generic type and appends the discovered type to the supplied signature visitor. 访问泛型类型并将发现的类型附加到提供的签名访问者  -> 追加类型签名，将新的类型签名，添加到classfile文件中
              */
             @HashCodeAndEqualsPlugin.Enhance
             class ForSignatureVisitor implements Visitor<SignatureVisitor> {
@@ -1565,7 +1565,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 /**
-                 * Visits a parameter while visiting a generic type for delegating discoveries to a signature visitor.
+                 * Visits a parameter while visiting a generic type for delegating discoveries to a signature visitor. 访问泛型类型时访问参数，以便将发现委派给签名访问者
                  */
                 protected static class OfTypeArgument extends ForSignatureVisitor {
 
@@ -1619,7 +1619,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             /**
              * An abstract implementation of a visitor that substitutes generic types by replacing (nested)
-             * type variables and/or non-generic component types. 访问器的抽象实现，通过替换（嵌套）类型变量和/或非泛型组件类型来替换泛型类型
+             * type variables and/or non-generic component types. 访问器的抽象实现，通过替换（嵌套）类型变量和/或非泛型组件类型来替换泛型类型  -> 代替，用来代替原始的类型
              */
             abstract class Substitutor implements Visitor<Generic> {
 
@@ -1664,7 +1664,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 protected abstract Generic onSimpleType(Generic typeDescription);
 
                 /**
-                 * A {@link Substitutor} that only substitutes type variables but fully preserves non-generic type definitions.
+                 * A {@link Substitutor} that only substitutes type variables but fully preserves non-generic type definitions.   允许替换泛型，而不是非泛型
                  */
                 public abstract static class WithoutTypeSubstitution extends Substitutor {
 
@@ -1685,7 +1685,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 public static class ForAttachment extends Substitutor {
-
+                    // 定位一个成员，并且替代旧成员，后面操作这个成员
                     /**
                      * The declaring type which is filled in for {@link TargetType}.
                      */
@@ -1778,11 +1778,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A visitor for detaching a type from its declaration context by detaching type variables. This is achieved by
                  * detaching type variables and by replacing the declaring type which is identified by a provided {@link ElementMatcher}
-                 * with {@link TargetType}. 用于通过分离类型变量将类型从其声明上下文中分离的访问者。这是通过分离类型变量和用TargetType替换由提供的ElementMatcher标识的声明类型来实现的
+                 * with {@link TargetType}. 用于通过分离类型变量将类型从其声明上下文中分离的访问者。这是通过分离类型变量和用 TargetType 替换由提供的 ElementMatcher 标识的声明类型来实现的
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 public static class ForDetachment extends Substitutor {
-
+                    // 从他的declaration context中取消某个变量的锚定，这个是通过ElementMatcher提供的targetType来去匹配的
                     /**
                      * A type matcher for identifying the declaring type.
                      */
@@ -1798,8 +1798,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
 
                     /**
-                     * Returns a new detachment visitor that detaches any type matching the supplied type description.
-                     * 返回一个新的分离访问者，该访问者分离与提供的类型描述匹配的任何类型
+                     * Returns a new detachment visitor that detaches any type matching the supplied type description. 返回一个新的分离访问者，该访问者分离与提供的类型描述匹配的任何类型
+                     *
                      * @param typeDefinition The type to detach.
                      * @return A detachment visitor for the supplied type description.
                      */
@@ -1821,7 +1821,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 /**
-                 * A visitor for binding type variables to their values.
+                 * A visitor for binding type variables to their values. 为类型绑定一个值，赋值
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 public static class ForTypeVariableBinding extends WithoutTypeSubstitution {
@@ -1927,7 +1927,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 public static class ForTokenNormalization extends Substitutor {
-
+                    // 用一个符号 Token 代替所有的 targetType 位置
                     /**
                      * The type description to substitute all {@link TargetType} representations with.
                      */
@@ -1958,7 +1958,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             /**
              * A visitor that transforms any type into a raw type if declaring type is generified. If the declaring type is
-             * not generified, the original type description is returned.
+             * not generified, the original type description is returned.  代表原始类型，类似于擦除。比如List<String>就被会被转化为原始的类型List<T>
              */
             class ForRawType implements Visitor<Generic> {
 
@@ -2009,7 +2009,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * A visitor that reduces a detached generic type to its erasure.
+             * A visitor that reduces a detached generic type to its erasure.  接受参数，擦除与参数匹配的类型
              */
             @HashCodeAndEqualsPlugin.Enhance
             class Reducing implements Visitor<TypeDescription> {
@@ -2077,12 +2077,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
         }
 
-        /**
+        /** 一般说说一个泛型? extend T,或者一个类型class extends A implments。 所以函数中出现 LowerBound就是获取下边界的类型，upperBoundType就是获取上边界
          * An annotation reader is responsible for lazily evaluating type annotations if this language
          * feature is available on the current JVM. 如果当前JVM上具有此语言功能，则注解读取器负责延迟评估类型注释
          */
         interface AnnotationReader {
-
+            // 除了Type类型之外，java还提供了一种注解形式的类型，运行是标注在类型。AnnotationType。传统的JVM依旧靠着解析Type类型来处理class的类型。但是新的JVM依靠注解来驱动类型的解析
             /**
              * The dispatcher to use. 要使用的调度程序
              */
@@ -2093,7 +2093,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              *
              * @return The underlying annotated element.
              */
-            AnnotatedElement resolve();
+            AnnotatedElement resolve(); // 找到的意思
 
             /**
              * Returns the underlying type annotations as a list.
@@ -2108,7 +2108,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param index The wildcard bound's index.
              * @return An annotation reader for the underlying annotated upper bound.
              */
-            AnnotationReader ofWildcardUpperBoundType(int index);
+            AnnotationReader ofWildcardUpperBoundType(int index); // ofXXX 就是创建一个类动作    ForX X是某个接口的子类之一，针对谁的实现
 
             /**
              * Returns a reader for type annotations of an represented element's wildcard lower bound.
@@ -2284,7 +2284,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * A dispatcher for {@link AnnotationReader}s on a legacy VM that does not support type annotations. 不支持类型注释的旧版VM上的{@link AnnotationReader}的调度程序
                  */
                 enum ForLegacyVm implements Dispatcher {
-
+                    // 传统解析类的，比如识别一个接口类型
                     /**
                      * The singleton instance.
                      */
@@ -2341,7 +2341,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 class ForJava8CapableVm implements Dispatcher {
-
+                    // CreateAction -> 就是一个穿件ForJava8CapableVm的工厂，调用run，就产生一个ForJava8CapableVm
                     /**
                      * The {@code java.lang.Class#getAnnotatedSuperclass} method.
                      */
@@ -2600,7 +2600,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
 
                     /**
-                     * A delegating annotation reader for an annotated field variable.
+                     * A delegating annotation reader for an annotated field variable. 为带注释的字段变量委派注释读取器
                      */
                     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                     protected class AnnotatedFieldType extends Delegator {
@@ -2820,12 +2820,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * A delegating annotation reader that delegates all invocations to an annotation reader that wraps the previous one.
+             * A delegating annotation reader that delegates all invocations to an annotation reader that wraps the previous one.  委托模式，是个抽象类，实现了AnnotationReader，对每个方法委托调用
              */
             abstract class Delegator implements AnnotationReader {
 
                 /**
-                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
+                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call. 一个空数组，可用于指示无参数以避免在反射调用上进行分配
                  */
                 protected static final Object[] NO_ARGUMENTS = new Object[0];
 
@@ -3552,7 +3552,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * A latent description of a non-generic type.
+             * A latent description of a non-generic type. 一个潜在的类型描述。对于一个没有任何方法和任何field的类。可以想像得到创建一个类的时候，首先会创建一个空的对象。这个对象就是Latent
              */
             public static class Latent extends OfNonGenericType {
 
@@ -3860,7 +3860,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * A description of a loaded generic array type.
+             * A description of a loaded generic array type. 加载的泛型数组类型的描述
              */
             public static class ForLoadedType extends OfGenericArray {
 
@@ -3911,7 +3911,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * A latent implementation of a generic array type.
+             * A latent implementation of a generic array type. 泛型数组类型的潜在实现
              */
             public static class Latent extends OfGenericArray {
 
@@ -3949,7 +3949,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         /**
-         * A base implementation of a generic type description that represents a wildcard type.
+         * A base implementation of a generic type description that represents a wildcard type. 表示通配符类型的泛型类型描述的基本实现
          */
         abstract class OfWildcardType extends AbstractBase {
 
@@ -4822,7 +4822,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         /**
-         * A base implementation of a generic type description that represents a type variable.
+         * A base implementation of a generic type description that represents a type variable. 表示类型变量的泛型类型描述的基本实现
          */
         abstract class OfTypeVariable extends AbstractBase {
 
@@ -5271,7 +5271,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * A lazy projection of a generic type. Such projections allow to only read generic type information in case it is required. This
          * is meaningful as the Java virtual needs to process generic type information which requires extra resources. Also, this allows
-         * the extraction of non-generic type information even if the generic type information is invalid.
+         * the extraction of non-generic type information even if the generic type information is invalid. 泛型类型的延迟投影。这种投影只允许在需要时读取泛型类型信息。这是有意义的，因为Java虚拟机需要处理需要额外资源的泛型类型信息。此外，这允许提取非泛型类型信息，即使泛型类型信息无效
          */
         abstract class LazyProjection extends AbstractBase {
 
@@ -5776,27 +5776,27 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * A lazy projection of the parameter type of a {@link Method}.
+             * A lazy projection of the parameter type of a {@link Method}. {@link Method}的参数类型的延迟投影
              */
             public static class OfMethodParameter extends LazyProjection.WithEagerNavigation.OfAnnotatedElement {
 
                 /**
-                 * The method of which a parameter type is represented.
+                 * The method of which a parameter type is represented. 表示参数类型的方法
                  */
                 private final Method method;
 
                 /**
-                 * The parameter's index.
+                 * The parameter's index. 参数索引
                  */
                 private final int index;
 
                 /**
-                 * The erasures of the method's parameter types.
+                 * The erasures of the method's parameter types. 方法参数的擦除类型
                  */
                 private final Class<?>[] erasure;
 
                 /**
-                 * Creates a lazy projection of a constructor's parameter.
+                 * Creates a lazy projection of a constructor's parameter. 创建构造函数参数的延迟投影
                  *
                  * @param method  The method of which a parameter type is represented.
                  * @param index   The parameter's index.
@@ -6560,7 +6560,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     }
 
     /**
-     * An abstract base implementation of a type description.
+     * An abstract base implementation of a type description. 类型描述的抽象基实现
      */
     abstract class AbstractBase extends TypeVariableSource.AbstractBase implements TypeDescription {
 
@@ -6570,7 +6570,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public static final boolean RAW_TYPES;
 
         /*
-         * Reads the raw type property.
+         * Reads the raw type property. 读取原始类型属性
          */
         static {
             boolean rawTypes;
@@ -6584,7 +6584,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         /**
          * Checks if a specific type is assignable to another type where the source type must be a super
-         * type of the target type.
+         * type of the target type. 检查特定类型是否可分配给源类型必须是目标类型的超级类型的其他类型
          *
          * @param sourceType The source type to which another type is to be assigned to.
          * @param targetType The target type that is to be assigned to the source type.
@@ -7212,7 +7212,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     }
 
     /**
-     * A type description implementation that represents a loaded type. 表示已加载类型的类型描述实现
+     * A type description implementation that represents a loaded type. 表示已加载类型的类型描述实现  TypeDescription的内置实现类之一。为了描述类型。为了加速，预制了这么多基本类型
      */
     class ForLoadedType extends AbstractBase implements Serializable {
 
@@ -7294,7 +7294,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * Returns a new immutable type description for a loaded type. 返回一个已加载类型的新的不可变类型描述
          *
          * @param type The type to be represented by this type description. 该类型描述所表示的类型
-         * @return The type description representing the given type.
+         * @return The type description representing the given type. 表示给定类型的类型描述
          */
         public static TypeDescription of(Class<?> type) {
             TypeDescription typeDescription = TYPE_CACHE.get(type);
@@ -7718,7 +7718,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     }
 
     /**
-     * A projection for an array type based on an existing {@link TypeDescription}.
+     * A projection for an array type based on an existing {@link TypeDescription}.  对于数组，比如String[] 类型的映射。代表了一个数组类型。注意数组不是集合
      */
     class ArrayProjection extends AbstractBase {
 
@@ -8095,7 +8095,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     }
 
     /**
-     * A type representation of a package description.
+     * A type representation of a package description. 代表了一个包的描述
      */
     class ForPackageDescription extends AbstractBase.OfSimpleType {
 
@@ -8205,7 +8205,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     }
 
     /**
-     * A delegating type description that always attempts to load the super types of a delegate type.
+     * A delegating type description that always attempts to load the super types of a delegate type.  代表了这样的类型：总是企图去加载委托类的父类  名字也可以看出来，就是代表加载super类型的工具类的类型
      */
     class SuperTypeLoading extends AbstractBase {
 

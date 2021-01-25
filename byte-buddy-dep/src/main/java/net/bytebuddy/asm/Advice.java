@@ -139,7 +139,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper, Implementation {
 
     /**
-     * Indicates that no class reader is available to an advice method.
+     * Indicates that no class reader is available to an advice method. 指示通知方法没有可用的类读取器
      */
     private static final ClassReader UNDEFINED = null;
 

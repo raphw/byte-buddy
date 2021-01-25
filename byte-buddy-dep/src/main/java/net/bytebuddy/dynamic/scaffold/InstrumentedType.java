@@ -28,10 +28,10 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
 
 /**
  * Implementations of this interface represent an instrumented type that is subject to change. Implementations
- * should however be immutable and return new instance when its builder methods are invoked.
+ * should however be immutable and return new instance when its builder methods are invoked. 此接口的实现表示一个可更改的插入指令的类型。然而，实现应该是不可变的，并在调用其生成器方法时返回新实例
  */
 public interface InstrumentedType extends TypeDescription {
-
+    // 字节码生成器类型，代表了最后生成 Suject 对象，包含了字节码的结构等
     /**
      * Creates a new instrumented type that includes a new field.
      *
@@ -259,26 +259,26 @@ public interface InstrumentedType extends TypeDescription {
     }
 
     /**
-     * Implementations are able to prepare an {@link InstrumentedType}.
+     * Implementations are able to prepare an {@link InstrumentedType}. 实现能够准备一个 {@link InstrumentedType}
      */
     interface Prepareable {
 
         /**
-         * Prepares a given instrumented type.
+         * Prepares a given instrumented type. 准备给定的插桩类型
          *
-         * @param instrumentedType The instrumented type in its current form.
-         * @return The prepared instrumented type.
+         * @param instrumentedType The instrumented type in its current form. 当前形式的插桩类型
+         * @return The prepared instrumented type. 准备好的插桩类型
          */
         InstrumentedType prepare(InstrumentedType instrumentedType);
     }
 
     /**
-     * A factory for creating an {@link InstrumentedType}.
+     * A factory for creating an {@link InstrumentedType}. 用于创建 {@link InstrumentedType} 的工厂
      */
     interface Factory {
 
         /**
-         * Creates an instrumented type that represents the provided type.
+         * Creates an instrumented type that represents the provided type. 创建表示所提供类型的插桩类型
          *
          * @param typeDescription The type to represent.
          * @return An appropriate instrumented type.
@@ -286,7 +286,7 @@ public interface InstrumentedType extends TypeDescription {
         InstrumentedType.WithFlexibleName represent(TypeDescription typeDescription);
 
         /**
-         * Creates a new instrumented type as a subclass.
+         * Creates a new instrumented type as a subclass. 创建一个新的插桩类型作为子类
          *
          * @param name       The type's name.
          * @param modifiers  The type's modifiers.
@@ -296,12 +296,12 @@ public interface InstrumentedType extends TypeDescription {
         InstrumentedType.WithFlexibleName subclass(String name, int modifiers, TypeDescription.Generic superClass);
 
         /**
-         * Default implementations of instrumented type factories.
+         * Default implementations of instrumented type factories. 插桩类型工厂的默认实现
          */
         enum Default implements Factory {
 
             /**
-             * A factory for an instrumented type that allows to modify represented types.
+             * A factory for an instrumented type that allows to modify represented types. 插桩类型的工厂，允许修改表示的类型
              */
             MODIFIABLE {
                 @Override
@@ -330,7 +330,7 @@ public interface InstrumentedType extends TypeDescription {
             },
 
             /**
-             * A factory for an instrumented type that does not allow to modify represented types. 用于 instrumented 类型的工厂，不允许修改表示的类型
+             * A factory for an instrumented type that does not allow to modify represented types. 插桩类型的工厂，不允许修改表示的类型
              */
             FROZEN {
                 @Override
@@ -364,12 +364,12 @@ public interface InstrumentedType extends TypeDescription {
     }
 
     /**
-     * A default implementation of an instrumented type.
+     * A default implementation of an instrumented type. 插入指令类型的默认实现
      */
     class Default extends AbstractBase.OfSimpleType implements InstrumentedType.WithFlexibleName {
 
         /**
-         * A set containing all keywords of the Java programming language.
+         * A set containing all keywords of the Java programming language. 包含Java编程语言的所有关键字的集合
          */
         private static final Set<String> KEYWORDS = new HashSet<String>(Arrays.asList(
                 "abstract", "continue", "for", "new", "switch", "assert", "default", "goto", "package", "synchronized", "boolean",
@@ -380,57 +380,57 @@ public interface InstrumentedType extends TypeDescription {
         ));
 
         /**
-         * The binary name of the instrumented type.
+         * The binary name of the instrumented type. 插入指令的类型的二进制名称
          */
         private final String name;
 
         /**
-         * The modifiers of the instrumented type.
+         * The modifiers of the instrumented type. 插入指令类型的修饰符
          */
         private final int modifiers;
 
         /**
-         * The generic super type of the instrumented type.
+         * The generic super type of the instrumented type. 插入指令的类型的泛型超类型
          */
         private final Generic superClass;
 
         /**
-         * The instrumented type's type variables in their tokenized form.
+         * The instrumented type's type variables in their tokenized form. 插入指令的类型的类型变量的标记形式
          */
         private final List<? extends TypeVariableToken> typeVariables;
 
         /**
-         * A list of interfaces of the instrumented type.
+         * A list of interfaces of the instrumented type. 检测类型的接口列表
          */
         private final List<? extends Generic> interfaceTypes;
 
         /**
-         * A list of field tokens describing the fields of the instrumented type.
+         * A list of field tokens describing the fields of the instrumented type. 描述检测类型字段的字段标记列表
          */
         private final List<? extends FieldDescription.Token> fieldTokens;
 
         /**
-         * A list of method tokens describing the methods of the instrumented type.
+         * A list of method tokens describing the methods of the instrumented type. 描述检测类型的方法的方法标记的列表
          */
         private final List<? extends MethodDescription.Token> methodTokens;
 
         /**
-         * A list of annotations of the annotated type.
+         * A list of annotations of the annotated type. 注解类型的注解列表
          */
         private final List<? extends AnnotationDescription> annotationDescriptions;
 
         /**
-         * The type initializer of the instrumented type.
+         * The type initializer of the instrumented type. 插入指令的类型的类型初始值设定项
          */
         private final TypeInitializer typeInitializer;
 
         /**
-         * The loaded type initializer of the instrumented type.
+         * The loaded type initializer of the instrumented type. 插入指令类型的已加载类型初始值设定项
          */
         private final LoadedTypeInitializer loadedTypeInitializer;
 
         /**
-         * The declaring type of the instrumented type or {@code null} if no such type exists.
+         * The declaring type of the instrumented type or {@code null} if no such type exists. 插入指令的类型的声明类型，如果不存在此类类型，则为{@code null}
          */
         private final TypeDescription declaringType;
 
@@ -460,12 +460,12 @@ public interface InstrumentedType extends TypeDescription {
         private final boolean localClass;
 
         /**
-         * The nest host of this instrumented type or a description of {@link TargetType} if this type is its own nest host.
+         * The nest host of this instrumented type or a description of {@link TargetType} if this type is its own nest host. 此插入指令类型的嵌套主机或{@link TargetType}的描述（如果此类型是其自己的嵌套主机
          */
         private final TypeDescription nestHost;
 
         /**
-         * A list of all members of this types nest group excluding this type.
+         * A list of all members of this types nest group excluding this type. 此类型嵌套组中除此类型之外的所有成员的列表
          */
         private final List<? extends TypeDescription> nestMembers;
 
@@ -1363,7 +1363,7 @@ public interface InstrumentedType extends TypeDescription {
     }
 
     /**
-     * A frozen representation of an instrumented type of which the structure must not be modified.
+     * A frozen representation of an instrumented type of which the structure must not be modified. 不能修改其结构的已插入指令类型的冻结表示
      */
     class Frozen extends AbstractBase.OfSimpleType implements InstrumentedType.WithFlexibleName {
 
@@ -1596,3 +1596,6 @@ public interface InstrumentedType extends TypeDescription {
         }
     }
 }
+// 字节码本身一个 table 的结构
+// 这个 InstrumentedType 就是代表这个 table 的结构
+// 也包含了设置这个 table 的方法，比如withField（XXX），那么最后这个 InstrumentedType 就会被用来生成这样一个 class 文件

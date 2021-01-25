@@ -20,19 +20,19 @@ import java.util.*;
 /**
  * A class visitor wrapper is used in order to register an intermediate ASM {@link org.objectweb.asm.ClassVisitor} which
  * is applied to the main type created by a {@link net.bytebuddy.dynamic.DynamicType.Builder} but not
- * to any {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType}s, if any.
+ * to any {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType}s, if any. 类访问者包装器用于注册中间ASM {@link org.objectweb.asm.ClassVisitor} 应用于 {@link net.bytebuddy.dynamic.DynamicType.Builder} 但不是任何{@link net.bytebuddy.implementation.auxiliary.AuxiliaryType}, 如果有的话类访问者包装器用于注册中间ASM {@link org.objectweb.asm.ClassVisitor} 应用于 {@link net.bytebuddy.dynamic.DynamicType.Builder} 但不是任何{@link net.bytebuddy.implementation.auxiliary.AuxiliaryType}, 如果有的话
  */
 public interface AsmVisitorWrapper {
 
     /**
-     * Indicates that no flags should be set.
+     * Indicates that no flags should be set. 指示不应设置任何标志
      */
     int NO_FLAGS = 0;
 
     /**
      * Defines the flags that are provided to any {@code ClassWriter} when writing a class. Typically, this gives opportunity to instruct ASM
      * to compute stack map frames or the size of the local variables array and the operand stack. If no specific flags are required for
-     * applying this wrapper, the given value is to be returned.
+     * applying this wrapper, the given value is to be returned. 定义在编写类时提供给任何{@code ClassWriter}的标志。通常，这会让ASM有机会计算堆栈映射帧或局部变量数组和操作数堆栈的大小。如果应用此包装不需要特定的标志，则返回给定的值
      *
      * @param flags The currently set flags. This value should be combined (e.g. {@code flags | foo}) into the value that is returned by this wrapper.
      * @return The flags to be provided to the ASM {@code ClassWriter}.
@@ -42,7 +42,7 @@ public interface AsmVisitorWrapper {
     /**
      * Defines the flags that are provided to any {@code ClassReader} when reading a class if applicable. Typically, this gives opportunity to
      * instruct ASM to expand or skip frames and to skip code and debug information. If no specific flags are required for applying this
-     * wrapper, the given value is to be returned.
+     * wrapper, the given value is to be returned. 定义在读取类时提供给任何{@code ClassReader}的标志（如果适用）。通常，这样就有机会指示ASM展开或跳过帧，并跳过代码和调试信息。如果应用此包装不需要特定的标志，则返回给定的值
      *
      * @param flags The currently set flags. This value should be combined (e.g. {@code flags | foo}) into the value that is returned by this wrapper.
      * @return The flags to be provided to the ASM {@code ClassReader}.
@@ -106,7 +106,7 @@ public interface AsmVisitorWrapper {
     }
 
     /**
-     * An abstract base implementation of an ASM visitor wrapper that does not set any flags.
+     * An abstract base implementation of an ASM visitor wrapper that does not set any flags. ASM访问者包装器的抽象基本实现，不设置任何标志
      */
     abstract class AbstractBase implements AsmVisitorWrapper {
 
@@ -122,7 +122,7 @@ public interface AsmVisitorWrapper {
     }
 
     /**
-     * An ASM visitor wrapper that allows to wrap declared fields of the instrumented type with a {@link FieldVisitorWrapper}.
+     * An ASM visitor wrapper that allows to wrap declared fields of the instrumented type with a {@link FieldVisitorWrapper}. ASM 访问者包装器，允许使用 {@link FieldVisitorWrapper} 包装已检测类型的声明字段
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ForDeclaredFields extends AbstractBase {
@@ -162,11 +162,11 @@ public interface AsmVisitorWrapper {
 
         /**
          * Defines a new field visitor wrapper to be applied if the given field matcher is matched. Previously defined
-         * entries are applied before the given matcher is applied.
+         * entries are applied before the given matcher is applied. 如果给定的字段匹配器匹配，则定义要应用的新字段访问者包装器。在应用给定的匹配器之前应用先前定义的条目
          *
          * @param matcher              The matcher to identify fields to be wrapped.
          * @param fieldVisitorWrappers The field visitor wrapper to be applied if the given matcher is matched.
-         * @return A new ASM visitor wrapper that applied the given field visitor wrapper if the supplied matcher is matched.
+         * @return A new ASM visitor wrapper that applied the given field visitor wrapper if the supplied matcher is matched. 如果提供的匹配器匹配，则应用给定字段访问器包装的新ASM访问器包装
          */
         public ForDeclaredFields field(ElementMatcher<? super FieldDescription.InDefinedShape> matcher, List<? extends FieldVisitorWrapper> fieldVisitorWrappers) {
             return new ForDeclaredFields(CompoundList.of(entries, new Entry(matcher, fieldVisitorWrappers)));
@@ -189,7 +189,7 @@ public interface AsmVisitorWrapper {
         }
 
         /**
-         * A field visitor wrapper that allows for wrapping a {@link FieldVisitor} defining a declared field.
+         * A field visitor wrapper that allows for wrapping a {@link FieldVisitor} defining a declared field. 一种字段访问者包装器，允许包装定义声明字段的{@link FieldVisitor}
          */
         public interface FieldVisitorWrapper {
 
@@ -205,18 +205,18 @@ public interface AsmVisitorWrapper {
         }
 
         /**
-         * An entry describing a field visitor wrapper paired with a matcher for fields to be wrapped.
+         * An entry describing a field visitor wrapper paired with a matcher for fields to be wrapped. 描述字段访问者包装器的条目，与要包装的字段的匹配器配对
          */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class Entry implements ElementMatcher<FieldDescription.InDefinedShape>, FieldVisitorWrapper {
 
             /**
-             * The matcher to identify fields to be wrapped.
+             * The matcher to identify fields to be wrapped. 用于标识要包装的字段的匹配器
              */
             private final ElementMatcher<? super FieldDescription.InDefinedShape> matcher;
 
             /**
-             * The field visitor wrapper to be applied if the given matcher is matched.
+             * The field visitor wrapper to be applied if the given matcher is matched. 如果给定的匹配器匹配，则要应用的字段访问者包装器
              */
             private final List<? extends FieldVisitorWrapper> fieldVisitorWrappers;
 
@@ -246,7 +246,7 @@ public interface AsmVisitorWrapper {
         }
 
         /**
-         * A class visitor that applies the outer ASM visitor for identifying declared fields.
+         * A class visitor that applies the outer ASM visitor for identifying declared fields. 应用外部 ASM 访问器来标识声明字段的类访问器
          */
         protected class DispatchingVisitor extends ClassVisitor {
 
@@ -280,7 +280,7 @@ public interface AsmVisitorWrapper {
                 if (fieldVisitor != null && fieldDescription != null) {
                     for (Entry entry : entries) {
                         if (entry.matches(fieldDescription)) {
-                            fieldVisitor = entry.wrap(instrumentedType, fieldDescription, fieldVisitor);
+                            fieldVisitor = entry.wrap(instrumentedType, fieldDescription, fieldVisitor); // 使用 entry.wrap 最终将 fieldVisitor 委托给 FieldVisitorWrapper 接口 所以 FieldVisitorWrapper 的子类只要实现 FieldVisitorWrapper 的 wrap 方法，在其中定义具体的修改逻辑
                         }
                     }
                 }
@@ -291,17 +291,17 @@ public interface AsmVisitorWrapper {
 
     /**
      * <p>
-     * An ASM visitor wrapper that allows to wrap <b>declared methods</b> of the instrumented type with a {@link MethodVisitorWrapper}.
+     * An ASM visitor wrapper that allows to wrap <b>declared methods</b> of the instrumented type with a {@link MethodVisitorWrapper}. ASM访问者包装器，允许使用{@link MethodVisitorWrapper}包装已检测类型的已声明方法ASM访问者包装器，允许使用 {@link MethodVisitorWrapper} 包装已检测类型的已声明方法
      * </p>
      * <p>
-     * Note: Inherited methods are <b>not</b> matched by this visitor, even if they are intercepted by a normal interception.
+     * Note: Inherited methods are <b>not</b> matched by this visitor, even if they are intercepted by a normal interception. 注意：此访问者不匹配继承的方法，即使它们被正常拦截拦截
      * </p>
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ForDeclaredMethods implements AsmVisitorWrapper {
 
         /**
-         * The list of entries that describe matched methods in their application order.
+         * The list of entries that describe matched methods in their application order. 按应用程序顺序描述匹配方法的条目列表
          */
         private final List<Entry> entries;
 
@@ -337,7 +337,7 @@ public interface AsmVisitorWrapper {
 
         /**
          * Defines a new method visitor wrapper to be applied if the given method matcher is matched. Previously defined
-         * entries are applied before the given matcher is applied.
+         * entries are applied before the given matcher is applied. 如果给定的方法匹配器匹配，则定义要应用的新方法访问者包装器。在应用给定的匹配器之前应用先前定义的条目
          *
          * @param matcher              The matcher to identify methods to be wrapped.
          * @param methodVisitorWrapper The method visitor wrapper to be applied if the given matcher is matched.
@@ -349,7 +349,7 @@ public interface AsmVisitorWrapper {
 
         /**
          * Defines a new method visitor wrapper to be applied if the given method matcher is matched. Previously defined
-         * entries are applied before the given matcher is applied.
+         * entries are applied before the given matcher is applied. 如果给定的方法匹配器匹配，则定义要应用的新方法访问者包装器。在应用给定的匹配器之前应用先前定义的条目
          *
          * @param matcher               The matcher to identify methods to be wrapped.
          * @param methodVisitorWrappers The method visitor wrapper to be applied if the given matcher is matched.
@@ -438,7 +438,7 @@ public interface AsmVisitorWrapper {
         }
 
         /**
-         * An entry describing a method visitor wrapper paired with a matcher for fields to be wrapped.
+         * An entry describing a method visitor wrapper paired with a matcher for fields to be wrapped. 描述方法访问者包装器的条目，与要包装的字段的匹配器配对
          */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class Entry implements ElementMatcher<MethodDescription>, MethodVisitorWrapper {
@@ -575,7 +575,7 @@ public interface AsmVisitorWrapper {
     }
 
     /**
-     * An ordered, immutable chain of {@link AsmVisitorWrapper}s. AsmVisitorWrapper 链式
+     * An ordered, immutable chain of {@link AsmVisitorWrapper}s. 有序不变的链式 {@link AsmVisitorWrapper}
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Compound implements AsmVisitorWrapper {

@@ -1526,9 +1526,9 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches any method that is virtual, i.e. non-constructors that are non-static and non-private.
+     * Matches any method that is virtual, i.e. non-constructors that are non-static and non-private. 匹配任何虚拟方法，即非静态和非私有的非构造函数
      *
-     * @param <T> The type of the matched object.
+     * @param <T> The type of the matched object. 匹配对象的类型
      * @return A matcher for virtual methods.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isVirtual() {

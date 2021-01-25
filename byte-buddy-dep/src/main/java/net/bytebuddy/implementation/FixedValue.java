@@ -22,27 +22,28 @@ import org.objectweb.asm.Opcodes;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
- * This implementation returns a fixed value for a method. Other than the {@link net.bytebuddy.implementation.StubMethod}
+ * This implementation returns a fixed value for a method. Other than the {@link net.bytebuddy.implementation.StubMethod}  为method构造一个返回值。其他构造返回值得方法在net.bytebuddy.implementation.StubMethod
+ * 打桩，即允许根据参数预设要返回的值
  * implementation, this implementation allows to determine a specific value which must be assignable to the returning value
- * of any instrumented method. Otherwise, an exception will be thrown. Implementation的一个实现，用来修改原始方法，让其返回一个我们定义的值
- *
+ * of any instrumented method. Otherwise, an exception will be thrown. Implementation 的一个实现，用来修改原始方法，让其返回一个我们定义的值
+ * FixedValue 有两个 field -> assigner 和 typing 之前介绍过assigner是负责类型转换的，typing是决定是否强制装换的
  * @see FieldAccessor
  */
 @HashCodeAndEqualsPlugin.Enhance
 public abstract class FixedValue implements Implementation {
 
     /**
-     * The assigner that is used for assigning the fixed value to a method's return type. assigner是负责类型转换的
+     * The assigner that is used for assigning the fixed value to a method's return type. assigner 是负责类型转换的
      */
     protected final Assigner assigner;
 
     /**
-     * Indicates if dynamic type castings should be attempted for incompatible assignments. typing是决定是否强制装换的
+     * Indicates if dynamic type castings should be attempted for incompatible assignments. typing 是决定是否强制装换的
      */
     protected final Assigner.Typing typing;
 
     /**
-     * Creates a new fixed value implementation.
+     * Creates a new fixed value implementation. 创建新的固定值实现
      *
      * @param assigner The assigner to use for assigning the fixed value to the return type of the instrumented value.
      * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
@@ -474,13 +475,13 @@ public abstract class FixedValue implements Implementation {
 
     /**
      * A fixed value implementation that represents its fixed value as a value that is written to the instrumented
-     * class's constant pool.
+     * class's constant pool. 一种固定值实现，它将其固定值表示为写入检测类的常量池的值
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class ForPoolValue extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
 
         /**
-         * The stack manipulation which is responsible for loading the fixed value onto the operand stack.
+         * The stack manipulation which is responsible for loading the fixed value onto the operand stack. 负责将固定值加载到操作数堆栈的堆栈操作
          */
         private final StackManipulation valueLoadInstruction;
 
@@ -501,7 +502,7 @@ public abstract class FixedValue implements Implementation {
         }
 
         /**
-         * Creates a new constant pool fixed value implementation.
+         * Creates a new constant pool fixed value implementation. 创建新的常量池固定值实现
          *
          * @param valueLoadInstruction The instruction that is responsible for loading the constant pool value onto the
          *                             operand stack.
@@ -549,7 +550,7 @@ public abstract class FixedValue implements Implementation {
     }
 
     /**
-     * A fixed value implementation that represents its fixed value as a static field of the instrumented class.
+     * A fixed value implementation that represents its fixed value as a static field of the instrumented class. 一种固定值实现，它将其固定值表示为插装类的静态字段
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class ForValue extends FixedValue implements AssignerConfigurable {

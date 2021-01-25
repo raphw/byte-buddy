@@ -80,12 +80,12 @@ public interface MethodDelegationBinder {
 
     /**
      * Implementations are used as delegates for invoking a method that was bound
-     * using a {@link net.bytebuddy.implementation.bind.MethodDelegationBinder}.
+     * using a {@link net.bytebuddy.implementation.bind.MethodDelegationBinder}. 实现用作调用使用 {@link net.bytebuddy.implementation.bind.MethodDelegationBinder} 绑定的方法的委托
      */
     interface MethodInvoker {
 
         /**
-         * Creates a method invocation for a given method.
+         * Creates a method invocation for a given method. 为给定方法创建方法调用
          *
          * @param methodDescription The method to be invoked.
          * @return A stack manipulation encapsulating this method invocation.
@@ -94,7 +94,7 @@ public interface MethodDelegationBinder {
 
         /**
          * A simple method invocation that merely uses the most general form of method invocation as provided by
-         * {@link net.bytebuddy.implementation.bytecode.member.MethodInvocation}.
+         * {@link net.bytebuddy.implementation.bytecode.member.MethodInvocation}. 一个简单的方法调用，它只使用 {@link net.bytebuddy.implementation.bytecode.member.MethodInvocation} 提供的最通用的方法调用形式
          */
         enum Simple implements MethodInvoker {
 
@@ -288,7 +288,7 @@ public interface MethodDelegationBinder {
 
     /**
      * A binding attempt created by a
-     * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder}.
+     * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder}. {@link net.bytebuddy.implementation.bind.MethodDelegationBinder} 创建的绑定尝试
      */
     interface MethodBinding extends StackManipulation {
 
@@ -352,40 +352,40 @@ public interface MethodDelegationBinder {
         /**
          * A mutable builder that allows to compose a
          * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding}
-         * by adding parameter bindings incrementally.
+         * by adding parameter bindings incrementally. 一种可变的构建器，允许通过递增地添加参数绑定来组成 {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding}
          */
         class Builder {
 
             /**
-             * The method invoker for invoking the actual method that is bound.
+             * The method invoker for invoking the actual method that is bound. 用于调用绑定的实际方法的方法调用程序
              */
             private final MethodInvoker methodInvoker;
 
             /**
-             * The target method that for which a binding is to be constructed by this builder..
+             * The target method that for which a binding is to be constructed by this builder. 此生成器将为其构造绑定的目标方法
              */
             private final MethodDescription candidate;
 
             /**
-             * The current list of stack manipulations for loading values for each parameter onto the operand stack.
+             * The current list of stack manipulations for loading values for each parameter onto the operand stack. 用于将每个参数的值加载到操作数堆栈的堆栈操作的当前列表
              */
             private final List<StackManipulation> parameterStackManipulations;
 
             /**
-             * A mapping of identification tokens to the parameter index they were bound for.
+             * A mapping of identification tokens to the parameter index they were bound for. 标识标记到它们所绑定的参数索引的映射
              */
             private final LinkedHashMap<Object, Integer> registeredTargetIndices;
 
             /**
-             * The index of the next parameter that is to be bound.
+             * The index of the next parameter that is to be bound. 要绑定的下一个参数的索引
              */
             private int nextParameterIndex;
 
             /**
              * Creates a new builder for the binding of a given method.
              *
-             * @param methodInvoker The method invoker that is used to create the method invocation of the {@code target} method.
-             * @param candidate     The target method that is target of the binding.
+             * @param methodInvoker The method invoker that is used to create the method invocation of the {@code target} method. 用于创建{@code target}方法的方法调用的方法调用程序
+             * @param candidate     The target method that is target of the binding. 作为绑定目标的目标方法
              */
             public Builder(MethodInvoker methodInvoker, MethodDescription candidate) {
                 this.methodInvoker = methodInvoker;
@@ -396,7 +396,7 @@ public interface MethodDelegationBinder {
             }
 
             /**
-             * Appends a stack manipulation for the next parameter of the target method.
+             * Appends a stack manipulation for the next parameter of the target method. 为目标方法的下一个参数追加堆栈操作
              *
              * @param parameterBinding A binding representing the next subsequent parameter of the method.
              * @return {@code false} if the {@code parameterBindingToken} was already bound. A conflicting binding should
@@ -408,7 +408,7 @@ public interface MethodDelegationBinder {
             }
 
             /**
-             * Creates a binding that represents the bindings collected by this {@code Builder}.
+             * Creates a binding that represents the bindings collected by this {@code Builder}. 创建表示此 {@code Builder} 收集的绑定的绑定
              *
              * @param terminatingManipulation A stack manipulation that is applied after the method invocation.
              * @return A binding representing the parameter bindings collected by this builder.
@@ -941,7 +941,7 @@ public interface MethodDelegationBinder {
         enum Default implements TerminationHandler {
 
             /**
-             * A termination handler that returns the delegate method's return value.
+             * A termination handler that returns the delegate method's return value. 返回委托方法返回值的终止处理程序
              */
             RETURNING {
                 @Override

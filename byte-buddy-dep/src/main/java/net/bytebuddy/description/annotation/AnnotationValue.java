@@ -8,7 +8,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.util.*;
 
-/**
+/** 这个被代表的值不一定是要被找到的（有效的）。 比如可以包含一个不可获取的类型，未知的枚举类，或者不正确的注解
  * Representation of an unloaded annotation value where all values represent either:
  * <ul>
  * <li>Primitive values (as their wrappers), {@link String}s or arrays of primitive types or strings.</li>
@@ -18,9 +18,9 @@ import java.util.*;
  * </ul>
  * The represented values are not necessarily resolvable, i.e. can contain non-available types, unknown enumeration
  * constants or inconsistent annotations.
- *
+ * 注解自身有一堆属性值，这个类就是 代表了一个未加载(unloaded)的注解值。这个值的类型可以是： 基本类型（int，long等，等同他们的包装类），Strings 类型和，基本类型的数组; TypeDescription，或者一个TypeDescription数组; EnumerationDescription，枚举类型或者一个这样的数组; AnnotationDescription，注解类型或者一个这样的数组
  * @param <T> The represented value's unloaded type.
- * @param <S> The represented value's  loaded type.
+ * @param <S> The represented value's  loaded type. 注意接口定义public interface AnnotationValue<T, S> {} 是一个泛型，T 代表未加载(unloaded)的类型，S代表加载过(loaded)的类型
  */
 public interface AnnotationValue<T, S> {
 
@@ -292,36 +292,36 @@ public interface AnnotationValue<T, S> {
      * A loaded variant of an {@link AnnotationValue}. While
      * implementations of this value are required to be processed successfully by a
      * {@link java.lang.ClassLoader} they might still be unresolved. Typical errors on loading an annotation
-     * value are:
+     * value are: AnnotationValue的一个变形。代表一个需要被classLodaer去加载，但是还没有加载的一个类型。会抛出
      * <ul>
      * <li>{@link java.lang.annotation.IncompleteAnnotationException}: An annotation does not define a value
-     * even though no default value for a property is provided.</li>
+     * even though no default value for a property is provided.</li> java.lang.annotation.IncompleteAnnotationExceptio :注解的的变量没有赋值，也没有默认值，比如@Student{id=0}但是也要求{name="XXX"}时，没有赋值name的异常
      * <li>{@link java.lang.EnumConstantNotPresentException}: An annotation defines an unknown value for
-     * a known enumeration.</li>
+     * a known enumeration.</li> java.lang.EnumConstantNotPresentException : 不知道的枚举常量类型，比如用了定义之外的常量
      * <li>{@link java.lang.annotation.AnnotationTypeMismatchException}: An annotation property is not
-     * of the expected type.</li>
+     * of the expected type.</li> java.lang.annotation.AnnotationTypeMismatchException :annotation property类型不符合
      * </ul>
      * Implementations of this interface must implement methods for {@link Object#hashCode()} and
      * {@link Object#toString()} that resemble those used for the annotation values of an actual
      * {@link java.lang.annotation.Annotation} implementation. Also, instances must implement
      * {@link java.lang.Object#equals(Object)} to return {@code true} for other instances of
-     * this interface that represent the same annotation value.
+     * this interface that represent the same annotation value. 这个接口的实现必须要实现，Object.hashCode(),Object.toString()，因为这些都会被java.lang.annotation.Annotation的实现用到。也必须要重新实现hashCode(),equals()和toString()确保两个相同的代表同样annotation value值的实例相等
      *
      * @param <U> The represented value's type.
      */
     interface Loaded<U> {
 
         /**
-         * Returns the state of the represented loaded annotation value.
-         *
+         * Returns the state of the represented loaded annotation value. 获取状态
+         * 返回AnnotationValue的状态
          * @return The state represented by this instance.
          */
         State getState();
 
         /**
          * Resolves the value to the actual value of an annotation. Calling this method might throw a runtime
-         * exception if this value is either not defined or not resolved.
-         *
+         * exception if this value is either not defined or not resolved. 找到真实的注解value,找不到时抛出异常
+         * 注意这里的U 往往就是传入一个AnnotationValue类型
          * @return The actual annotation value represented by this instance.
          */
         U resolve();
@@ -337,7 +337,7 @@ public interface AnnotationValue<T, S> {
         <V> V resolve(Class<? extends V> type);
 
         /**
-         * Verifies if this loaded value represents the supplied loaded value.
+         * Verifies if this loaded value represents the supplied loaded value. 判断两个实例是否是同一个类型
          *
          * @param value A loaded annotation value.
          * @return {@code true} if the supplied annotation value is represented by this annotation value.
@@ -345,24 +345,24 @@ public interface AnnotationValue<T, S> {
         boolean represents(Object value);
 
         /**
-         * Represents the state of a {@link Loaded} annotation property.
+         * Represents the state of a {@link Loaded} annotation property. 枚举类，代表了值的类型
          */
         enum State {
 
             /**
              * An undefined annotation value describes an annotation property which is missing such that
-             * an {@link java.lang.annotation.IncompleteAnnotationException} would be thrown.
+             * an {@link java.lang.annotation.IncompleteAnnotationException} would be thrown.  未被定义，代表着注解的属性没有找到，并且抛出java.lang.annotation.IncompleteAnnotationException
              */
             UNDEFINED,
 
             /**
              * An unresolved annotation value describes an annotation property which does not represent a
-             * valid value but an exceptional state.
+             * valid value but an exceptional state. 代表着注解的属性者，不合法，但是处于一个异常状态
              */
             UNRESOLVED,
 
             /**
-             * A resolved annotation value describes an annotation property with an actual value.
+             * A resolved annotation value describes an annotation property with an actual value. 被解决，并以找到的真实的value代表
              */
             RESOLVED;
 
@@ -425,7 +425,7 @@ public interface AnnotationValue<T, S> {
     }
 
     /**
-     * Represents a primitive value, a {@link java.lang.String} or an array of the latter types.
+     * Represents a primitive value, a {@link java.lang.String} or an array of the latter types. 处理常量池的常量
      *
      * @param <U> The type where primitive values are represented by their boxed type.
      */
@@ -1188,7 +1188,7 @@ public interface AnnotationValue<T, S> {
     }
 
     /**
-     * A description of an {@link java.lang.annotation.Annotation} as a value of another annotation.
+     * A description of an {@link java.lang.annotation.Annotation} as a value of another annotation. 一个Annotation可以作为另外一个Annotation的属性值。就是代表了成员注解的类型
      *
      * @param <U> The type of the annotation.
      */

@@ -6,27 +6,27 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * Represents the size of a Java type on the operand stack.
+ * Represents the size of a Java type on the operand stack. 表示操作数堆栈上 Java 类型的大小
  */
 public enum StackSize {
 
     /**
-     * An empty stack size.
+     * An empty stack size. 空堆栈大小
      */
     ZERO(0),
 
     /**
-     * A single slot stack size.
+     * A single slot stack size. 单个插槽堆栈大小
      */
     SINGLE(1),
 
     /**
-     * A double slot stack size which is required by {@code long} and {@code double} values.
+     * A double slot stack size which is required by {@code long} and {@code double} values. {@code long}和{@code double}值所需的双时隙堆栈大小
      */
     DOUBLE(2);
 
     /**
-     * The size of the stack this instance represents.
+     * The size of the stack this instance represents. 此实例表示的堆栈的大小
      */
     private final int size;
 
@@ -40,7 +40,7 @@ public enum StackSize {
     }
 
     /**
-     * Finds the operand stack size of a given Java type.
+     * Finds the operand stack size of a given Java type. 查找给定Java类型的操作数堆栈大小
      *
      * @param type The type of interest.
      * @return The given type's operand stack size.
@@ -75,7 +75,7 @@ public enum StackSize {
     }
 
     /**
-     * Computes the stack size of all supplied types.
+     * Computes the stack size of all supplied types. 计算所有提供类型的堆栈大小
      *
      * @param typeDefinition The types for which to compute the size.
      * @return The total size of all types.
@@ -99,7 +99,7 @@ public enum StackSize {
     }
 
     /**
-     * The numeric value of this stack size representation.
+     * The numeric value of this stack size representation. 此堆栈大小表示的数值
      *
      * @return An integer representing the operand stack size.
      */
@@ -110,9 +110,9 @@ public enum StackSize {
     /**
      * Creates an instance of a
      * {@link StackManipulation.Size}
-     * that describes a stack growth of this size.
+     * that describes a stack growth of this size. 创建 {@link StackManipulation.Size} 它描述了这种大小的堆栈增长
      *
-     * @return A stack size growth by the size represented by this stack size.
+     * @return A stack size growth by the size represented by this stack size. 堆栈大小由该堆栈大小表示的大小增长
      */
     public StackManipulation.Size toIncreasingSize() {
         return new StackManipulation.Size(getSize(), getSize());
@@ -130,7 +130,7 @@ public enum StackSize {
     }
 
     /**
-     * Determines the maximum of two stack size representations.
+     * Determines the maximum of two stack size representations. 确定两个堆栈大小表示的最大值
      *
      * @param stackSize The other stack size representation.
      * @return The maximum of this and the other stack size.

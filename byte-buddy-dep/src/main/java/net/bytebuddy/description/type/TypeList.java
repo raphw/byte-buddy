@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Implementations represent a list of type descriptions.
+ * Implementations represent a list of type descriptions. 内置一个List包含对类型的集合。字节码中，很多区域是变长的。比如method区域，他的本地变量大小，和 栈深（stacksize）是编译时计算出来的 这就导致一个问题，我要插入一个方法，我必须要计算前面方法的本地变量表和栈深，进行累加，然后确认新method插入的位置。Byte buddy提供了一个结构TypeList,可以将多个类型组合，划分为一组。可以得到总的StakSize。这样我仅需和一个TypeList比较，而不是挨个计算
  */
 public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
@@ -224,7 +224,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         int getStackSize();
 
         /**
-         * An abstract base implementation of a generic type list.
+         * An abstract base implementation of a generic type list. 泛型类型列表的抽象基实现
          */
         abstract class AbstractBase extends FilterableList.AbstractBase<TypeDescription.Generic, Generic> implements Generic {
 

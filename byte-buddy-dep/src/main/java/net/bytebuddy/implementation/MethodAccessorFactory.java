@@ -7,7 +7,7 @@ import net.bytebuddy.description.modifier.Visibility;
 /**
  * A factory for creating method proxies for an auxiliary type. Such proxies are required to allow a type to
  * call methods of a second type that are usually not accessible for the first type. This strategy is also adapted
- * by the Java compiler that creates accessor methods for example to implement inner classes.
+ * by the Java compiler that creates accessor methods for example to implement inner classes. 为辅助类型创建方法代理的工厂。这样的代理需要允许一个类型调用第二个类型的方法，而第一个类型通常无法访问这些方法。Java编译器也采用了这种策略，例如，它创建了访问器方法来实现内部类
  */
 public interface MethodAccessorFactory {
 
@@ -15,7 +15,7 @@ public interface MethodAccessorFactory {
      * Registers an accessor method for a
      * {@link Implementation.SpecialMethodInvocation} which cannot itself be
      * triggered invoked directly from outside a type. The method is registered on the instrumented type
-     * with package-private visibility, similarly to a Java compiler's accessor methods.
+     * with package-private visibility, similarly to a Java compiler's accessor methods. 为 {@link Implementation.SpecialMethodInvocation} 注册访问器方法，该方法本身不能从类型外部直接触发或调用。该方法以包私有可见性在插入指令的类型上注册，类似于Java编译器的访问器方法
      *
      * @param specialMethodInvocation The special method invocation.
      * @param accessType              The required access type.

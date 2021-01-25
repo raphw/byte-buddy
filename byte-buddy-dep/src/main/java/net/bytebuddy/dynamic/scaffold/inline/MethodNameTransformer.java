@@ -5,7 +5,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.utility.RandomString;
 
 /**
- * A method name transformer provides a unique mapping of a method's name to an alternative name.
+ * A method name transformer provides a unique mapping of a method's name to an alternative name. 方法名称转换器提供方法名称到备用名称的唯一映射
  *
  * @see MethodRebaseResolver
  */
@@ -13,7 +13,7 @@ public interface MethodNameTransformer {
 
     /**
      * Transforms a method's name to an alternative name. This name must not be equal to any existing method of the
-     * created class.
+     * created class. 将方法名称转换为备用名称。此名称不能等于所创建类的任何现有方法
      *
      * @param methodDescription The original method.
      * @return The alternative name.
@@ -21,7 +21,7 @@ public interface MethodNameTransformer {
     String transform(MethodDescription methodDescription);
 
     /**
-     * A method name transformer that adds a fixed suffix to an original method name, separated by a {@code $}.
+     * A method name transformer that adds a fixed suffix to an original method name, separated by a {@code $}. 一种方法名转换器，它向原始方法名添加一个固定后缀，用{@code $}分隔
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Suffixing implements MethodNameTransformer {
@@ -61,7 +61,7 @@ public interface MethodNameTransformer {
     }
 
     /**
-     * A method name transformer that adds a fixed prefix to an original method name.
+     * A method name transformer that adds a fixed prefix to an original method name. 向原始方法名称添加固定前缀的方法名称转换器
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Prefixing implements MethodNameTransformer {

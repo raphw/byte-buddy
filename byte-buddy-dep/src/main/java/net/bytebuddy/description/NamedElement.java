@@ -1,7 +1,7 @@
 package net.bytebuddy.description;
 
 /**
- * Represents a Java element with a name.
+ * Represents a Java element with a name. 表示具有名称的Java元素
  */
 public interface NamedElement {
 

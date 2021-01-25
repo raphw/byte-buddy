@@ -46,14 +46,14 @@ public interface TypeInitializer extends ByteCodeAppender {
         /**
          * Applies the drain.
          *
-         * @param classVisitor          The class visitor to apply the initializer to.
-         * @param typeInitializer       The type initializer to write.
-         * @param implementationContext The corresponding implementation context.
+         * @param classVisitor          The class visitor to apply the initializer to. 要应用初始值设定项的类访问者
+         * @param typeInitializer       The type initializer to write. 要写入的类型初始值设定项
+         * @param implementationContext The corresponding implementation context. 相应的实现上下文
          */
         void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext);
 
         /**
-         * A default implementation of a type initializer drain that creates a initializer method.
+         * A default implementation of a type initializer drain that creates a initializer method. 创建初始值设定项方法的类型初始值设定项排出的默认实现
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Default implements Drain {
@@ -98,7 +98,7 @@ public interface TypeInitializer extends ByteCodeAppender {
     }
 
     /**
-     * Canonical implementation of a non-defined type initializer.
+     * Canonical implementation of a non-defined type initializer. 未定义类型初始值设定项的规范实现
      */
     enum None implements TypeInitializer {
 

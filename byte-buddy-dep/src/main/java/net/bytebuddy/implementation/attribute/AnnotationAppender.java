@@ -12,7 +12,7 @@ import java.lang.reflect.Array;
 import java.util.List;
 
 /**
- * Annotation appenders are capable of writing annotations to a specified target. 注释附加器能够将注释写入指定的目标
+ * Annotation appenders are capable of writing annotations to a specified target. 注释附加器能够将注释写入指定的目标  代表了字节码的属性
  */
 public interface AnnotationAppender {
 
@@ -220,7 +220,7 @@ public interface AnnotationAppender {
         }
 
         /**
-         * Handles the writing of a single annotation to an annotation visitor.
+         * Handles the writing of a single annotation to an annotation visitor. 处理向注释访问者写入单个注释的操作
          *
          * @param annotationVisitor     The annotation visitor the write process is to be applied on.
          * @param annotation            The annotation to be written.
@@ -236,7 +236,7 @@ public interface AnnotationAppender {
         }
 
         /**
-         * Performs the writing of a given annotation value to an annotation visitor.
+         * Performs the writing of a given annotation value to an annotation visitor. 将给定的注释值写入注释访问者
          *
          * @param annotationVisitor The annotation visitor the write process is to be applied on.
          * @param valueType         The type of the annotation value.
@@ -643,3 +643,14 @@ public interface AnnotationAppender {
         }
     }
 }
+
+// 比如method的字节码结构，它的属性就是一个表
+// method_info {
+//    u2             access_flags;
+//    u2             name_index;
+//    u2             descriptor_index;
+//    // 这里
+//    u2             attributes_count;
+//    attribute_info attributes[attributes_count];
+//    // 结束
+// }

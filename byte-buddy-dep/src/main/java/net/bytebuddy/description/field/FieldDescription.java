@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * Implementations of this interface describe a Java field. Implementations of this interface must provide meaningful
- * {@code equal(Object)} and {@code hashCode()} implementations.
+ * {@code equal(Object)} and {@code hashCode()} implementations. 这个接口的实现描述了一个Java字段。此接口的实现必须提供有意义的 {@code equal(Object)} 和 {@code hashCode()} 实现
  */
 public interface FieldDescription extends ByteCodeElement,
         ModifierReviewable.ForFieldDescription,
@@ -27,12 +27,12 @@ public interface FieldDescription extends ByteCodeElement,
         ByteCodeElement.TypeDependant<FieldDescription.InDefinedShape, FieldDescription.Token> {
 
     /**
-     * A representative of a field's non-set default value.
+     * A representative of a field's non-set default value. 字段未设置的默认值的代表
      */
     Object NO_DEFAULT_VALUE = null;
 
     /**
-     * Returns the type of the described field.
+     * Returns the type of the described field. 返回所描述字段的类型
      *
      * @return The type of the described field.
      */
@@ -40,7 +40,7 @@ public interface FieldDescription extends ByteCodeElement,
 
     /**
      * Returns the field's actual modifiers as it is present in a class file, i.e. its modifiers including
-     * a flag if this field is deprecated.
+     * a flag if this field is deprecated. 返回字段在类文件中的实际修饰符，即如果此字段已弃用，则返回包含标志的修饰符
      *
      * @return The field's actual modifiers.
      */
@@ -57,7 +57,7 @@ public interface FieldDescription extends ByteCodeElement,
      * Represents a field description in its generic shape, i.e. in the shape it is defined by a generic or raw type. 以其泛型形状表示字段描述，即在由泛型或原始类型定义的形状中
      */
     interface InGenericShape extends FieldDescription {
-
+        // 泛型 ，这个Field是泛型
         @Override
         TypeDescription.Generic getDeclaringType();
     }
@@ -66,7 +66,7 @@ public interface FieldDescription extends ByteCodeElement,
      * Represents a field in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved. 以定义的形状表示字段，即以类定义的形式表示字段，而不解析其类型变量
      */
     interface InDefinedShape extends FieldDescription {
-
+        // 代表了一个Filed描述符，但是仅仅是定义好了，他的类型信息还没有被加载
         @Override
         TypeDescription getDeclaringType();
 
@@ -339,7 +339,7 @@ public interface FieldDescription extends ByteCodeElement,
      * A field description that represents a given field but with a substituted field type. 一种字段描述，表示给定的字段，但具有替换字段类型
      */
     class TypeSubstituting extends AbstractBase implements InGenericShape {
-
+        // 进行类型替换
         /**
          * The declaring type of the field. 字段的声明类型
          */
@@ -402,7 +402,7 @@ public interface FieldDescription extends ByteCodeElement,
     }
 
     /**
-     * A token representing a field's properties detached from a type.
+     * A token representing a field's properties detached from a type. 和字节码的类
      */
     class Token implements ByteCodeElement.Token<Token> {
 

@@ -12,17 +12,17 @@ import java.util.concurrent.ConcurrentMap;
  * {@link net.bytebuddy.implementation.LoadedTypeInitializer}s. To do so, this class is to be loaded
  * by the system class loader in an explicit manner. Any instrumented class is then injected a code
  * block into its static type initializer that makes a call to this very same nexus which had the
- * loaded type initializer registered before hand.
+ * loaded type initializer registered before hand. Nexus是用于使用LoadedTypeInitializers 初始化类的全局调度程序 。为此，系统类加载器应以显式方式加载此类。然后，任何检测到的类都将一个代码块注入其静态类型初始化器中，该代码块调用此非常相似的联系，该Nexus已预先注册了已加载的类型初始化器
  * </p>
  * <p>
  * <b>Note</b>: Availability of the {@link Nexus} class and its injection into the system class loader
- * can be disabled entirely by setting the {@link Nexus#PROPERTY} system property to {@code false}.
+ * can be disabled entirely by setting the {@link Nexus#PROPERTY} system property to {@code false}. 注意：Nexus通过将PROPERTYsystem属性设置为，可以完全禁用类的可用性及其向系统类加载器的注入false
  * </p>
  * <p>
  * <b>Important</b>: The nexus must never be accessed directly but only by the {@link NexusAccessor}
  * which makes sure that the nexus is loaded by the system class loader. Otherwise, a class might not
  * be able to initialize itself if it is loaded by different class loader that does not have the
- * system class loader in its hierarchy.
+ * system class loader in its hierarchy. 重要提示：绝对不能直接访问nexus，而只能通过NexusAccessor 来确保系统类加载器已加载nexus。否则，如果某个类由另一个在其层次结构中没有系统类加载器的类加载器加载，则该类可能无法初始化自身重要提示：绝对不能直接访问nexus，而只能通过NexusAccessor 来确保系统类加载器已加载nexus。否则，如果某个类由另一个在其层次结构中没有系统类加载器的类加载器加载，则该类可能无法初始化自身
  * </p>
  */
 public class Nexus extends WeakReference<ClassLoader> {
@@ -45,12 +45,12 @@ public class Nexus extends WeakReference<ClassLoader> {
     private static final ConcurrentMap<Nexus, Object> TYPE_INITIALIZERS = new ConcurrentHashMap<Nexus, Object>();
 
     /**
-     * The name of a type for which a loaded type initializer is registered.
+     * The name of a type for which a loaded type initializer is registered. 为其注册加载的类型初始值设定项的类型的名称
      */
     private final String name;
 
     /**
-     * The class loader's hash code upon registration.
+     * The class loader's hash code upon registration. 注册时类加载器的hash code
      */
     private final int classLoaderHashCode;
 
@@ -102,7 +102,7 @@ public class Nexus extends WeakReference<ClassLoader> {
 
     /**
      * <p>
-     * Initializes a loaded type. This method must only be invoked via the system class loader.
+     * Initializes a loaded type. This method must only be invoked via the system class loader. 初始化加载的类型。此方法只能通过系统类加载器调用
      * </p>
      * <p>
      * <b>Important</b>: This method must never be called directly but only by using a {@link NexusAccessor.InitializationAppender} which enforces to
@@ -125,7 +125,7 @@ public class Nexus extends WeakReference<ClassLoader> {
 
     /**
      * <p>
-     * Registers a new loaded type initializer.
+     * Registers a new loaded type initializer. 注册新加载的类型初始值设定项
      * </p>
      * <p>
      * <b>Important</b>: This method must never be called directly but only by using a {@link NexusAccessor} which enforces to access this class
@@ -148,7 +148,7 @@ public class Nexus extends WeakReference<ClassLoader> {
     }
 
     /**
-     * <p>
+     * <p> 清除此关系中的所有过时条目。如果在初始化类之前收集了它们的类加载器，则条目被认为是过时的
      * Cleans any stale entries from this nexus. Entries are considered stale if their class loader was collected before a class was initialized.
      * </p>
      * <p>

@@ -7,7 +7,7 @@ import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 
 /**
  * A simple assigner that is capable of handling the casting of reference types. Primitives can only be assigned to
- * each other if they represent the same type.
+ * each other if they represent the same type. 能够处理引用类型转换的简单赋值器。只有表示相同类型的基元才能相互分配
  */
 public enum ReferenceTypeAwareAssigner implements Assigner {
 

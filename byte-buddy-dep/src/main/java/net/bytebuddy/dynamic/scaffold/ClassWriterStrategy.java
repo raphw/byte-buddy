@@ -11,7 +11,7 @@ import org.objectweb.asm.ClassWriter;
 public interface ClassWriterStrategy {
 
     /**
-     * Resolves a class writer.
+     * Resolves a class writer. 解析类编写器
      *
      * @param flags    The flags to set.
      * @param typePool A type pool for locating types.

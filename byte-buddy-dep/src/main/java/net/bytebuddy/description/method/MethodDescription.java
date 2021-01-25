@@ -38,7 +38,7 @@ import static net.bytebuddy.matcher.ElementMatchers.ofSort;
 
 /**
  * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this 这个接口的实现描述了一个Java方法，即方法或构造函数
- * interface must provide meaningful {@code equal(Object)} and {@code hashCode()} implementations. 此接口的实现必须提供有意义的equal(Object)和hashCode()实现
+ * interface must provide meaningful {@code equal(Object)} and {@code hashCode()} implementations. 此接口的实现必须提供有意义的 equal(Object) 和 hashCode() 实现
  */
 public interface MethodDescription extends TypeVariableSource,
         ModifierReviewable.ForMethodDescription,
@@ -525,10 +525,10 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         /**
-         * Checks if this method is a bootstrap method while expecting the supplied type as a type representation.
+         * Checks if this method is a bootstrap method while expecting the supplied type as a type representation. 检查此方法是否为引导方法，同时希望提供的类型作为类型表示
          *
-         * @param typeType The type of the bootstrap method's type representation.
-         * @return {@code true} if this method is a bootstrap method assuming the supplied type representation.
+         * @param typeType The type of the bootstrap method's type representation. 引导方法的类型表示的类型
+         * @return {@code true} if this method is a bootstrap method assuming the supplied type representation. 如果此方法是一个 bootstrap 方法，则假定提供了类型表示
          */
         private boolean isBootstrap(TypeDescription typeType) {
             TypeList parameterTypes = getParameters().asTypeList().asErasures();
@@ -861,7 +861,7 @@ public interface MethodDescription extends TypeVariableSource,
     }
 
     /**
-     * An implementation of a method description for a loaded constructor.
+     * An implementation of a method description for a loaded constructor. 对已加载构造函数的方法描述的实现
      */
     class ForLoadedConstructor extends InDefinedShape.AbstractBase {
 
@@ -971,7 +971,7 @@ public interface MethodDescription extends TypeVariableSource,
     }
 
     /**
-     * An implementation of a method description for a loaded method.
+     * An implementation of a method description for a loaded method. 加载方法的方法描述的实现
      */
     class ForLoadedMethod extends InDefinedShape.AbstractBase {
 
@@ -981,9 +981,9 @@ public interface MethodDescription extends TypeVariableSource,
         private final Method method;
 
         /**
-         * Creates a new immutable method description for a loaded method.
+         * Creates a new immutable method description for a loaded method. 为加载的方法创建新的不可变方法描述
          *
-         * @param method The loaded method to be represented by this method description.
+         * @param method The loaded method to be represented by this method description. 此方法描述要表示的已加载方法
          */
         public ForLoadedMethod(Method method) {
             this.method = method;
@@ -1111,12 +1111,12 @@ public interface MethodDescription extends TypeVariableSource,
 
     /**
      * A latent method description describes a method that is not attached to a declaring
-     * {@link TypeDescription}.
+     * {@link TypeDescription}. 潜在方法描述描述了一个没有附加到声明{@link TypeDescription}的方法
      */
     class Latent extends InDefinedShape.AbstractBase {
 
         /**
-         * The type that is declaring this method.
+         * The type that is declaring this method. 声明此方法的类型
          */
         private final TypeDescription declaringType;
 
@@ -1161,7 +1161,7 @@ public interface MethodDescription extends TypeVariableSource,
         private final AnnotationValue<?, ?> defaultValue;
 
         /**
-         * The receiver type of this method or {@code null} if the receiver type is defined implicitly.
+         * The receiver type of this method or {@code null} if the receiver type is defined implicitly. 此方法的接收器类型或{@code null}（如果接收器类型是隐式定义的）
          */
         private final TypeDescription.Generic receiverType;
 
@@ -1273,7 +1273,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         /**
-         * A method description that represents the type initializer.
+         * A method description that represents the type initializer. 表示类型初始值设定项的方法描述
          */
         public static class TypeInitializer extends InDefinedShape.AbstractBase {
 
@@ -1344,7 +1344,7 @@ public interface MethodDescription extends TypeVariableSource,
     class TypeSubstituting extends AbstractBase implements InGenericShape {
 
         /**
-         * The type that declares this type-substituted method.
+         * The type that declares this type-substituted method. 声明此类型替换方法的类型
          */
         private final TypeDescription.Generic declaringType;
 

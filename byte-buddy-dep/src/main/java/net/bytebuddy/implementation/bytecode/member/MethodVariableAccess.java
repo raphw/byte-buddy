@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A stack assignment that loads a method variable from a given index of the local variable array.
+ * A stack assignment that loads a method variable from a given index of the local variable array. 从局部变量数组的给定索引加载方法变量的堆栈赋值
  */
 public enum MethodVariableAccess {
 
@@ -41,27 +41,27 @@ public enum MethodVariableAccess {
     DOUBLE(Opcodes.DLOAD, Opcodes.DSTORE, StackSize.DOUBLE),
 
     /**
-     * The accessor handler for a reference type.
+     * The accessor handler for a reference type. 引用类型的访问器处理程序
      */
     REFERENCE(Opcodes.ALOAD, Opcodes.ASTORE, StackSize.SINGLE);
 
     /**
-     * The opcode for loading this variable type.
+     * The opcode for loading this variable type. 加载此变量类型的操作码
      */
     private final int loadOpcode;
 
     /**
-     * The opcode for storing a local variable type.
+     * The opcode for storing a local variable type. 用于存储局部变量类型的操作码
      */
     private final int storeOpcode;
 
     /**
-     * The size of the local variable on the JVM stack.
+     * The size of the local variable on the JVM stack. JVM堆栈上局部变量的大小
      */
     private final StackSize size;
 
     /**
-     * Creates a new method variable access for a given JVM type.
+     * Creates a new method variable access for a given JVM type. 为给定的JVM类型创建一个新的方法变量访问
      *
      * @param loadOpcode  The opcode for loading this variable type.
      * @param storeOpcode The opcode for storing this variable type.
@@ -74,7 +74,7 @@ public enum MethodVariableAccess {
     }
 
     /**
-     * Locates the correct accessor for a variable of a given type.
+     * Locates the correct accessor for a variable of a given type. 为给定类型的变量查找正确的访问器
      *
      * @param typeDefinition The type of the variable to be loaded.
      * @return An accessor for the given type.
@@ -109,18 +109,18 @@ public enum MethodVariableAccess {
 
     /**
      * Loads a reference to the {@code this} reference what is only meaningful for a non-static method.
-     * 加载对{@code this}引用的引用，该引用仅对非静态方法有意义
-     * @return A stack manipulation loading the {@code this} reference. 加载{@code this}引用的堆栈操作
+     * 加载对 {@code this} 引用的引用，该引用仅对非静态方法有意义
+     * @return A stack manipulation loading the {@code this} reference. 加载 {@code this} 引用的堆栈操作
      */
     public static StackManipulation loadThis() {
         return MethodVariableAccess.REFERENCE.loadFrom(0);
     }
 
     /**
-     * Creates a stack assignment for a reading given offset of the local variable array.
-     * 为局部变量数组的给定偏移量创建堆栈赋值
-     * @param offset The offset of the variable where {@code double} and {@code long} types count two slots.
-     * @return A stack manipulation representing the variable read.
+     * Creates a stack assignment for a reading given offset of the local variable array. 为局部变量数组的给定偏移量创建堆栈赋值
+     *
+     * @param offset The offset of the variable where {@code double} and {@code long} types count two slots. 变量的偏移量，其中{@code double}和{@code long}类型计数两个插槽
+     * @return A stack manipulation representing the variable read. 表示变量读的堆栈操作
      */
     public StackManipulation loadFrom(int offset) {
         return new OffsetLoading(offset);
@@ -151,7 +151,7 @@ public enum MethodVariableAccess {
     }
 
     /**
-     * Loads a parameter's value onto the operand stack.
+     * Loads a parameter's value onto the operand stack. 将参数值加载到操作数堆栈
      *
      * @param parameterDescription The parameter which to load onto the operand stack.
      * @return A stack manipulation loading a parameter onto the operand stack.
@@ -225,10 +225,10 @@ public enum MethodVariableAccess {
         }
 
         /**
-         * Prepends a reference to the {@code this} instance to the loaded parameters if the represented method is non-static.
+         * Prepends a reference to the {@code this} instance to the loaded parameters if the represented method is non-static. 如果表示的方法是非静态的，则将对{@code this}实例的引用前置到加载的参数
          *
          * @return A stack manipulation that loads all method parameters onto the operand stack while additionally loading a reference
-         * to {@code this} if the represented is non-static. Any potential parameter transformation is preserved.
+         * to {@code this} if the represented is non-static. Any potential parameter transformation is preserved. 一种堆栈操作，它将所有方法参数加载到操作数堆栈上，如果表示的是非静态的，则另外加载对{@code this}的引用。任何可能的参数变换都被保留
          */
         public StackManipulation prependThisReference() {
             return methodDescription.isStatic()
@@ -321,8 +321,8 @@ public enum MethodVariableAccess {
         private final int offset;
 
         /**
-         * Creates a new argument loading stack manipulation.
-         * 创建新的参数加载堆栈操作
+         * Creates a new argument loading stack manipulation. 创建新的参数加载堆栈操作
+         *
          * @param offset The offset of the local variable array from which the variable should be loaded.
          */
         protected OffsetLoading(int offset) {

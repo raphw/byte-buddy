@@ -4,45 +4,45 @@ import net.bytebuddy.description.modifier.*;
 import org.objectweb.asm.Opcodes;
 
 /**
- * Implementations of this interface can be described in terms of a Java modifier.
+ * Implementations of this interface can be described in terms of a Java modifier. 这个接口的实现可以用Java修饰符来描述
  */
 public interface ModifierReviewable {
 
     /**
-     * Representation of the default modifier.
+     * Representation of the default modifier. 默认修饰符的表示
      */
     int EMPTY_MASK = 0;
 
     /**
-     * Returns the modifier that is described by this object.
+     * Returns the modifier that is described by this object. 返回此对象所描述的修饰符
      *
      * @return The modifier that is described by this object.
      */
     int getModifiers();
 
     /**
-     * Specifies if the modifier described by this object is {@code final}.
+     * Specifies if the modifier described by this object is {@code final}. 指定此对象描述的修饰符是否为{@code final}
      *
      * @return {@code true} if the modifier described by this object is {@code final}.
      */
     boolean isFinal();
 
     /**
-     * Specifies if the modifier described by this object is synthetic.
+     * Specifies if the modifier described by this object is synthetic. 指定此对象描述的修改器是否为合成的
      *
      * @return {@code true} if the modifier described by this object is synthetic.
      */
     boolean isSynthetic();
 
     /**
-     * Returns this objects synthetic state.
+     * Returns this objects synthetic state. 返回此对象的合成状态
      *
      * @return This objects synthetic state.
      */
     SyntheticState getSyntheticState();
 
     /**
-     * A modifier reviewable for a {@link ByteCodeElement}, i.e. a type, a field or a method.
+     * A modifier reviewable for a {@link ByteCodeElement}, i.e. a type, a field or a method. 对{@link ByteCodeElement}可修改的修饰符，即类型、字段或方法
      */
     interface OfByteCodeElement extends ModifierReviewable {
 
@@ -289,7 +289,7 @@ public interface ModifierReviewable {
     }
 
     /**
-     * An abstract base implementation of a {@link ModifierReviewable} class.
+     * An abstract base implementation of a {@link ModifierReviewable} class. {@link ModifierReviewable} 类的抽象基实现
      */
     abstract class AbstractBase implements ForTypeDefinition, ForFieldDescription, ForMethodDescription, ForParameterDescription {
 

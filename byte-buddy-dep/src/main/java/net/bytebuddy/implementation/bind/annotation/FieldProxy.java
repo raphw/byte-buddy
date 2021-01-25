@@ -874,13 +874,13 @@ public @interface FieldProxy {
         }
 
         /**
-         * A proxy type for accessing a field either by a getter or a setter.
+         * A proxy type for accessing a field either by a getter or a setter. 由 getter 或 setter 访问字段的代理类型
          */
         @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class AccessorProxy implements AuxiliaryType, StackManipulation {
 
             /**
-             * The name of the field that stores the accessed instance if any.
+             * The name of the field that stores the accessed instance if any. 存储已访问实例（如果有）的字段的名称
              */
             protected static final String FIELD_NAME = "instance";
 

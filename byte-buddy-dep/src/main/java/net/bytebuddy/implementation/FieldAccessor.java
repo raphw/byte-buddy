@@ -19,7 +19,7 @@ import java.lang.reflect.Field;
 
 /**
  * <p>
- * Defines a method to access a given field by following the Java bean conventions for getters and setters:
+ * Defines a method to access a given field by following the Java bean conventions for getters and setters: 通过遵循getter和setter的Java bean约定，定义访问给定字段的方法
  * </p>
  * <ul>
  * <li>Getter: A method named {@code getFoo()} will be instrumented to read and return the value of a field {@code foo}
@@ -39,7 +39,7 @@ import java.lang.reflect.Field;
 public abstract class FieldAccessor implements Implementation {
 
     /**
-     * The field's location.
+     * The field's location. 字段的位置
      */
     protected final FieldLocation fieldLocation;
 
@@ -49,7 +49,7 @@ public abstract class FieldAccessor implements Implementation {
     protected final Assigner assigner;
 
     /**
-     * Indicates if dynamic type castings should be attempted for incompatible assignments.
+     * Indicates if dynamic type castings should be attempted for incompatible assignments. 指示是否应尝试对不兼容的分配进行动态类型转换
      */
     protected final Assigner.Typing typing;
 
@@ -67,10 +67,10 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * Defines a field accessor where any access is targeted to a field named {@code name}.
+     * Defines a field accessor where any access is targeted to a field named {@code name}. 定义一个字段访问器，其中任何访问都指向名为{@code name}的字段
      *
-     * @param name The name of the field to be accessed.
-     * @return A field accessor for a field of a given name.
+     * @param name The name of the field to be accessed. 要访问的字段的名称
+     * @return A field accessor for a field of a given name. 给定名称字段的字段访问器
      */
     public static OwnerTypeLocatable ofField(String name) {
         return of(new FieldNameExtractor.ForFixedValue(name));
@@ -79,7 +79,7 @@ public abstract class FieldAccessor implements Implementation {
     /**
      * Defines a field accessor where any access is targeted to a field that matches the methods
      * name with the Java specification for bean properties, i.e. a method {@code getFoo} or {@code setFoo(value)}
-     * will either read or write a field named {@code foo}.
+     * will either read or write a field named {@code foo}. 定义一个字段访问器，其中任何访问都指向与bean属性的Java规范匹配的方法名的字段，即方法{@code getFoo}或{@code setFoo(value)}将读取或写入名为{@code foo}的字段
      *
      * @return A field accessor that follows the Java naming conventions for bean properties.
      */
@@ -88,7 +88,7 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * Defines a custom strategy for determining the field that is accessed by this field accessor.
+     * Defines a custom strategy for determining the field that is accessed by this field accessor. 定义用于确定此字段访问器访问的字段的自定义策略
      *
      * @param fieldNameExtractor The field name extractor to use.
      * @return A field accessor using the given field name extractor.
@@ -98,7 +98,7 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * Defines a field accessor where the specified field is accessed. The field must be within the hierarchy of the instrumented type.
+     * Defines a field accessor where the specified field is accessed. The field must be within the hierarchy of the instrumented type. 定义访问指定字段的字段访问器。该字段必须位于检测类型的层次结构中
      *
      * @param field The field being accessed.
      * @return A field accessor for the given field.
@@ -130,7 +130,7 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * Creates a setter instruction.
+     * Creates a setter instruction. 创建setter指令
      *
      * @param fieldDescription     The field to set a value for.
      * @param parameterDescription The parameter for what value is to be set.
@@ -172,12 +172,12 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * A field location represents an identified field description which depends on the instrumented type and method.
+     * A field location represents an identified field description which depends on the instrumented type and method. 字段位置表示标识的字段描述，该描述取决于插入指令的类型和方法
      */
     protected interface FieldLocation {
 
         /**
-         * Specifies a field locator factory to use.
+         * Specifies a field locator factory to use. 指定要使用的字段定位器工厂
          *
          * @param fieldLocatorFactory The field locator factory to use.
          * @return An appropriate field location.
@@ -185,7 +185,7 @@ public abstract class FieldAccessor implements Implementation {
         FieldLocation with(FieldLocator.Factory fieldLocatorFactory);
 
         /**
-         * A prepared field location.
+         * A prepared field location. 准备好的现场位置
          *
          * @param instrumentedType The instrumented type.
          * @return A prepared field location.
@@ -207,7 +207,7 @@ public abstract class FieldAccessor implements Implementation {
         }
 
         /**
-         * An absolute field description representing a previously resolved field.
+         * An absolute field description representing a previously resolved field. 表示先前解析字段的绝对字段描述s
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Absolute implements FieldLocation, Prepared {
@@ -248,7 +248,7 @@ public abstract class FieldAccessor implements Implementation {
         }
 
         /**
-         * A relative field location where a field is located dynamically.
+         * A relative field location where a field is located dynamically. 字段动态定位的相对字段位置
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Relative implements FieldLocation {
@@ -334,12 +334,12 @@ public abstract class FieldAccessor implements Implementation {
 
     /**
      * A field name extractor is responsible for determining a field name to a method that is implemented
-     * to access this method.
+     * to access this method. 字段名提取器负责确定实现为访问此方法的方法的字段名
      */
     public interface FieldNameExtractor {
 
         /**
-         * Extracts a field name to be accessed by a getter or setter method.
+         * Extracts a field name to be accessed by a getter or setter method. 提取要由getter或setter方法访问的字段名
          *
          * @param methodDescription The method for which a field name is to be determined.
          * @return The name of the field to be accessed by this method.
@@ -377,7 +377,7 @@ public abstract class FieldAccessor implements Implementation {
         }
 
         /**
-         * A field name extractor that returns a fixed value.
+         * A field name extractor that returns a fixed value. 返回固定值的字段名提取器
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForFixedValue implements FieldNameExtractor {
@@ -404,16 +404,16 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * A field accessor that allows to define the access to be a field write of a given argument.
+     * A field accessor that allows to define the access to be a field write of a given argument. 允许将访问定义为给定参数的字段写入的字段访问器
      */
     public interface PropertyConfigurable extends Implementation {
 
         /**
          * Creates a field accessor for the described field that serves as a setter for the supplied parameter index. The instrumented
-         * method must return {@code void} or a chained instrumentation must be supplied.
+         * method must return {@code void} or a chained instrumentation must be supplied. 为所描述的字段创建字段访问器，该字段用作所提供参数索引的设置器。插入指令的方法必须返回{@code void}，或者必须提供链式插入指令
          *
-         * @param index The index of the parameter for which to set the field's value.
-         * @return An instrumentation that sets the parameter's value to the described field.
+         * @param index The index of the parameter for which to set the field's value. 要为其设置字段值的参数的索引
+         * @return An instrumentation that sets the parameter's value to the described field. 将参数值设置为所描述字段的指令插入
          */
         Implementation.Composable setsArgumentAt(int index);
     }
@@ -435,12 +435,12 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * A field accessor that can be configured to locate a field in a specific manner.
+     * A field accessor that can be configured to locate a field in a specific manner. 一种字段存取器，可配置为以特定方式定位字段
      */
     public interface OwnerTypeLocatable extends AssignerConfigurable {
 
         /**
-         * Determines that a field should only be considered when it was defined in a given type.
+         * Determines that a field should only be considered when it was defined in a given type. 确定只有在给定类型中定义字段时才应考虑该字段
          *
          * @param type The type to be considered.
          * @return This field accessor which will only considered fields that are defined in the given type.
@@ -467,7 +467,7 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * A field accessor for an implicit property where a getter or setter property is inferred from the signature.
+     * A field accessor for an implicit property where a getter or setter property is inferred from the signature. 隐式属性的字段访问器，其中从签名推断getter或setter属性
      */
     protected static class ForImplicitProperty extends FieldAccessor implements OwnerTypeLocatable {
 
@@ -525,7 +525,7 @@ public abstract class FieldAccessor implements Implementation {
         }
 
         /**
-         * An byte code appender for an field accessor implementation.
+         * An byte code appender for an field accessor implementation. 字段存取器实现的字节码追加器
          */
         @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class Appender implements ByteCodeAppender {
@@ -536,7 +536,7 @@ public abstract class FieldAccessor implements Implementation {
             private final FieldLocation.Prepared fieldLocation;
 
             /**
-             * Creates a new byte code appender for a field accessor implementation.
+             * Creates a new byte code appender for a field accessor implementation. 为字段访问器实现创建新的字节码追加器
              *
              * @param fieldLocation The field's location.
              */
@@ -628,12 +628,12 @@ public abstract class FieldAccessor implements Implementation {
         }
 
         /**
-         * A termination handler is responsible for handling a field accessor's return.
+         * A termination handler is responsible for handling a field accessor's return. 终止处理程序负责处理字段访问器的返回
          */
         protected enum TerminationHandler {
 
             /**
-             * Returns {@code void} or throws an exception if this is not the return type of the instrumented method.
+             * Returns {@code void} or throws an exception if this is not the return type of the instrumented method. 返回{@code void}或抛出异常（如果这不是插入指令的方法的返回类型）
              */
             RETURNING {
                 @Override
@@ -646,7 +646,7 @@ public abstract class FieldAccessor implements Implementation {
             },
 
             /**
-             * Does not return from the method at all.
+             * Does not return from the method at all. 完全不从方法返回
              */
             NON_OPERATIONAL {
                 @Override
@@ -656,16 +656,16 @@ public abstract class FieldAccessor implements Implementation {
             };
 
             /**
-             * Resolves the return instruction.
+             * Resolves the return instruction. 解析返回指令
              *
              * @param instrumentedMethod The instrumented method.
-             * @return An appropriate stack manipulation.
+             * @return An appropriate stack manipulation. 适当的堆栈操作
              */
             protected abstract StackManipulation resolve(MethodDescription instrumentedMethod);
         }
 
         /**
-         * An appender for a field accessor that sets a parameter of a given index.
+         * An appender for a field accessor that sets a parameter of a given index. 字段存取器的追加器，用于设置给定索引的参数
          */
         @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class Appender implements ByteCodeAppender {

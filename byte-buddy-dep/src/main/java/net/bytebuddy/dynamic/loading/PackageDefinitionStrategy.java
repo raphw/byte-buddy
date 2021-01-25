@@ -14,13 +14,13 @@ import java.util.jar.Manifest;
 
 /**
  * A package definer is responsible for defining a package's properties when a class of a new package is loaded. Also,
- * a package definer can choose not to define a package at all.
+ * a package definer can choose not to define a package at all. 负责定义包的属性，当一个包中的类被刚加载时。也可以选择在定义一个包时，不做什么
  */
 public interface PackageDefinitionStrategy {
 
     /**
      * Returns a package definition for a given package.
-     *
+     * Definition是 包的数据结构体，新定义的包会返回一个这样的对象
      * @param classLoader The class loader for which this package is being defined.
      * @param packageName The name of the package.
      * @param typeName    The name of the type being loaded that triggered the package definition.
@@ -408,7 +408,7 @@ public interface PackageDefinitionStrategy {
     }
 
     /**
-     * A package definer that reads a class loader's manifest file.
+     * A package definer that reads a class loader's manifest file. 读取jar包的META-INF/MANIFEST.MF
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ManifestReading implements PackageDefinitionStrategy {

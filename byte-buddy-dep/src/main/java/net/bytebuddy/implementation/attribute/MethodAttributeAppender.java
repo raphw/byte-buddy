@@ -15,23 +15,23 @@ import java.util.List;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.MethodVisitor}.
+ * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.MethodVisitor}. 将属性或注释写入给定ASM {@link org.objectweb.asm.MethodVisitor}
  */
 public interface MethodAttributeAppender {
 
     /**
-     * Applies this attribute appender to a given method visitor.
-     *
+     * Applies this attribute appender to a given method visitor. 将此属性 appender 应用于给定的方法访问器
+     * methodVisitor 就是 asm 用来生成类的接口；methodDescription 方法的定义；annotationValueFilter 就是注解的过滤器，可以过滤掉 methodDescription 不想要的注解
      * @param methodVisitor         The method visitor to which the attributes that are represented by this attribute
-     *                              appender are written to.
+     *                              appender are written to. 向其写入此属性附加器表示的属性的方法访问器
      * @param methodDescription     The description of the method for which the given method visitor creates an
-     *                              instrumentation for.
-     * @param annotationValueFilter The annotation value filter to apply when the annotations are written.
+     *                              instrumentation for. 对给定方法访问者为其创建插装的方法的描述
+     * @param annotationValueFilter The annotation value filter to apply when the annotations are written. 写入批注时要应用的批注值筛选器
      */
     void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter);
 
     /**
-     * A method attribute appender that does not append any attributes.
+     * A method attribute appender that does not append any attributes. 不附加任何属性的方法属性附加器
      */
     enum NoOp implements MethodAttributeAppender, Factory {
 
@@ -115,7 +115,7 @@ public interface MethodAttributeAppender {
     /**
      * <p>
      * Implementation of a method attribute appender that writes all annotations of the instrumented method to the
-     * method that is being created. This includes method and parameter annotations.
+     * method that is being created. This includes method and parameter annotations. 方法属性appender的实现，它将插入指令的方法的所有注释写入正在创建的方法。这包括方法和参数注释
      * </p>
      * <p>
      * <b>Important</b>: This attribute appender does not apply for annotation types within the {@code jdk.internal.} namespace

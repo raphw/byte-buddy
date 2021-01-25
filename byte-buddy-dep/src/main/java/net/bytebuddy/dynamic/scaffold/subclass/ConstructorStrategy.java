@@ -21,7 +21,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A constructor strategy is responsible for creating bootstrap constructors for a
- * {@link SubclassDynamicTypeBuilder}.
+ * {@link SubclassDynamicTypeBuilder}. 负责为任何给定的类创建一组预定义的构造函数
  *
  * @see net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default
  */
@@ -149,7 +149,7 @@ public interface ConstructorStrategy {
         /**
          * This strategy is adding all constructors of the instrumented type's super class where each constructor is
          * directly invoking its signature-equivalent super class constructor. A constructor is added for any constructor
-         * of the super class that is invokable and is declared as {@code public}. 此策略是添加 instrumented 类型超类的所有构造函数，其中每个构造函数都直接调用其签名等效的超级类构造函数。为超级类的任何构造函数添加一个构造函数，该类可调用并声明为{@code public}
+         * of the super class that is invokable and is declared as {@code public}. 此策略是添加插桩类型超类的所有构造函数，其中每个构造函数都直接调用其签名等效的超类构造函数。为超类的任何构造函数添加一个构造函数，该类可调用并声明为{@code public}
          */
         IMITATE_SUPER_CLASS_OPENING {
             @Override
@@ -202,8 +202,8 @@ public interface ConstructorStrategy {
         }
 
         /**
-         * Extracts the relevant method tokens of the instrumented type's constructors.
-         * 提取 instrumented 类型的构造函数的相关方法标记
+         * Extracts the relevant method tokens of the instrumented type's constructors. 提取插桩类型的构造函数的相关方法标记
+         *
          * @param instrumentedType The type for which to extract the constructors.
          * @return A list of relevant method tokens.
          */

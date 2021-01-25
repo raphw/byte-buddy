@@ -8,22 +8,22 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * A stack manipulation returning a value of a given type.
+ * A stack manipulation returning a value of a given type. 返回给定类型值的堆栈操作
  */
 public enum MethodReturn implements StackManipulation {
 
     /**
-     * The method return handler for returning a JVM-integer.
+     * The method return handler for returning a JVM-integer. 返回JVM整数的方法返回处理程序
      */
     INTEGER(Opcodes.IRETURN, StackSize.SINGLE),
 
     /**
-     * The method return handler for returning a {@code double}.
+     * The method return handler for returning a {@code double}. 返回{@code double}的方法返回处理程序
      */
     DOUBLE(Opcodes.DRETURN, StackSize.DOUBLE),
 
     /**
-     * The method return handler for returning a {@code float}.
+     * The method return handler for returning a {@code float}. 返回{@code float}的方法返回处理程序
      */
     FLOAT(Opcodes.FRETURN, StackSize.SINGLE),
 
@@ -33,12 +33,12 @@ public enum MethodReturn implements StackManipulation {
     LONG(Opcodes.LRETURN, StackSize.DOUBLE),
 
     /**
-     * The method return handler for returning {@code void}.
+     * The method return handler for returning {@code void}. 返回 {@code void} 的方法返回处理程序
      */
     VOID(Opcodes.RETURN, StackSize.ZERO),
 
     /**
-     * The method return handler for returning a reference type.
+     * The method return handler for returning a reference type. 用于返回引用类型的方法返回处理程序
      */
     REFERENCE(Opcodes.ARETURN, StackSize.SINGLE);
 
@@ -48,12 +48,12 @@ public enum MethodReturn implements StackManipulation {
     private final int returnOpcode;
 
     /**
-     * The operand stack size change that is implied by this operation.
+     * The operand stack size change that is implied by this operation. 此操作所暗示的操作数堆栈大小更改
      */
     private final Size size;
 
     /**
-     * Creates a new method return manipulation.
+     * Creates a new method return manipulation. 创建一个新的方法返回操作
      *
      * @param returnOpcode The opcode of this operation.
      * @param stackSize    The operand stack size change that is implied by this operation.
@@ -64,7 +64,7 @@ public enum MethodReturn implements StackManipulation {
     }
 
     /**
-     * Returns a method return corresponding to a given type.
+     * Returns a method return corresponding to a given type. 返回 给定类型对应的方法返回 基础类型或者参考
      *
      * @param typeDefinition The type to be returned.
      * @return The stack manipulation representing the method return.

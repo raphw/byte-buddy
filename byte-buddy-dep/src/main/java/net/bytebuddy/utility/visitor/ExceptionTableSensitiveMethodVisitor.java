@@ -5,7 +5,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
 /**
- * A {@link MethodVisitor} that adds a callback after visiting the exception table of a method.
+ * A {@link MethodVisitor} that adds a callback after visiting the exception table of a method. 一种 {@link MethodVisitor}，在访问方法的异常表之后添加回调
  */
 public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor {
 
@@ -15,7 +15,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
     private boolean trigger;
 
     /**
-     * Creates an exception table sensitive method visitor.
+     * Creates an exception table sensitive method visitor. 创建对异常表敏感的方法访问器
      *
      * @param api           The ASM API version.
      * @param methodVisitor The delegating method visitor.
@@ -38,7 +38,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
     /**
      * Invoked after the exception table was visited. Typically, the exception table is visited by ASM at the beginning
      * of a method. It is however possible that a user adds exception table entries at a later point. Normally, this is
-     * however not meaningful use of ASM.
+     * however not meaningful use of ASM. 在访问异常表后调用。通常，ASM在方法的开头访问异常表。但是，用户有可能在稍后添加异常表条目。但是，通常情况下，使用ASM是没有意义的
      */
     protected abstract void onAfterExceptionTable();
 
@@ -273,7 +273,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
     }
 
     /**
-     * Visits an instruction for creating a multidimensional array.
+     * Visits an instruction for creating a multidimensional array. 访问创建多维数组的指令
      *
      * @param descriptor The type descriptor of the array's component type.
      * @param dimensions The dimensions of the array.

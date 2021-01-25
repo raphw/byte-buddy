@@ -469,28 +469,28 @@ public interface MethodRegistry {
         }
 
         /**
-         * An entry of a default method registry.
+         * An entry of a default method registry. 默认方法注册表项
          */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class Entry implements LatentMatcher<MethodDescription> {
 
             /**
-             * The latent method matcher that this entry represents.
+             * The latent method matcher that this entry represents. 此项表示的潜在方法匹配器
              */
             private final LatentMatcher<? super MethodDescription> matcher;
 
             /**
-             * The handler to apply to all matched entries.
+             * The handler to apply to all matched entries. 要应用于所有匹配项的处理程序
              */
             private final Handler handler;
 
             /**
-             * A method attribute appender factory to apply to all entries.
+             * A method attribute appender factory to apply to all entries. 应用于所有项的方法属性appender工厂
              */
             private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
             /**
-             * The method transformer to be applied to implemented methods.
+             * The method transformer to be applied to implemented methods. 要应用于实现方法的方法转换器
              */
             private final Transformer<MethodDescription> transformer;
 

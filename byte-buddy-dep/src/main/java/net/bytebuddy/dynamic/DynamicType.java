@@ -40,9 +40,9 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * A dynamic type that is created at runtime, usually as the result of applying a
  * {@link net.bytebuddy.dynamic.DynamicType.Builder} or as the result of an
  * {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType}.
- * <p>&nbsp;</p>
+ * <p>&nbsp;</p> Byte Buddy对生成类的抽象。{@link net.bytebuddy.dynamic.DynamicType.Builder} 和 {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType} 的结果
  * Note that the {@link TypeDescription}s will represent their
- * unloaded forms and therefore differ from the loaded types, especially with regards to annotations.
+ * unloaded forms and therefore differ from the loaded types, especially with regards to annotations. 注意 TypeDescription代表着未加载的形式，因此不同于已加载类型，特别是关于注解
  */
 public interface DynamicType {
 
@@ -112,7 +112,7 @@ public interface DynamicType {
     boolean hasAliveLoadedTypeInitializers();
 
     /**
-     * <p>
+     * <p> 把dynamic类型保存到文件
      * Saves a dynamic type in a given folder using the Java class file format while respecting the naming conventions
      * for saving compiled Java classes. All auxiliary types, if any, are saved in the same directory. The resulting
      * folder structure will resemble the structure that is required for Java run times, i.e. each folder representing
@@ -133,7 +133,7 @@ public interface DynamicType {
     /**
      * Injects the types of this dynamic type into a given <i>jar</i> file. Any pre-existent type with the same name
      * is overridden during injection. The {@code target} file's folder must exist prior to calling this method. The
-     * file itself is overwritten or created depending on its prior existence.
+     * file itself is overwritten or created depending on its prior existence. 把一个类型注入到jar包中
      *
      * @param sourceJar The original jar file.
      * @param targetJar The {@code source} jar file with the injected contents.
@@ -155,7 +155,7 @@ public interface DynamicType {
     /**
      * Saves the contents of this dynamic type inside a <i>jar</i> file. The folder of the given {@code file} must
      * exist prior to calling this method. The jar file is created with a simple manifest that only contains a version
-     * number.
+     * number. 生成一个jar包
      *
      * @param file The target file to which the <i>jar</i> is written to.
      * @return The given {@code file}.
@@ -1023,7 +1023,7 @@ public interface DynamicType {
 
         /**
          * Defines the specified constructor to be declared by the instrumented type. Method parameters or parameter types, declared exceptions and
-         * type variables can be defined in subsequent steps.
+         * type variables can be defined in subsequent steps. 定义要由检测类型声明的指定构造函数。方法参数或参数类型、声明的异常和类型变量可以在后续步骤中定义
          *
          * @param modifierContributor The constructor's modifiers.
          * @return A builder that allows for further defining the constructor, either by adding more properties or by defining an implementation.
@@ -3270,9 +3270,9 @@ public interface DynamicType {
             }
 
             /**
-             * An adapter implementation of a dynamic type builder.
+             * An adapter implementation of a dynamic type builder. 动态类型生成器的适配器实现
              *
-             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of. 一种装入的类型，生成的类型被保证是其子类
              */
             @HashCodeAndEqualsPlugin.Enhance
             public abstract static class Adapter<U> extends AbstractBase<U> {
@@ -3293,27 +3293,27 @@ public interface DynamicType {
                 protected final MethodRegistry methodRegistry;
 
                 /**
-                 * The type attribute appender to apply onto the instrumented type.
+                 * The type attribute appender to apply onto the instrumented type. 要应用于插入指令的类型的类型属性appender
                  */
                 protected final TypeAttributeAppender typeAttributeAppender;
 
                 /**
-                 * The ASM visitor wrapper to apply onto the class writer.
+                 * The ASM visitor wrapper to apply onto the class writer. 要应用于类编写器的ASM访问者包装器
                  */
                 protected final AsmVisitorWrapper asmVisitorWrapper;
 
                 /**
-                 * The class file version to define auxiliary types in.
+                 * The class file version to define auxiliary types in. 要在其中定义辅助类型的类文件版本
                  */
                 protected final ClassFileVersion classFileVersion;
 
                 /**
-                 * The naming strategy for auxiliary types to apply.
+                 * The naming strategy for auxiliary types to apply. 要应用的辅助类型的命名策略
                  */
                 protected final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
                 /**
-                 * The annotation value filter factory to apply.
+                 * The annotation value filter factory to apply. 要应用的注释值筛选器工厂
                  */
                 protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
 
@@ -4618,10 +4618,10 @@ public interface DynamicType {
     }
 
     /**
-     * A dynamic type that has not yet been loaded by a given {@link java.lang.ClassLoader}.
+     * A dynamic type that has not yet been loaded by a given {@link java.lang.ClassLoader}. 尚未由给定 {@link java.lang.ClassLoader} 加载的动态类型
      *
      * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
-     *            type itself, an interface or the direct super class.
+     *            type itself, an interface or the direct super class. 由这个动态类型实现的最具体的已知加载类型，通常是类型本身、接口或直接超类
      */
     interface Unloaded<T> extends DynamicType {
 
@@ -4629,7 +4629,7 @@ public interface DynamicType {
          * Attempts to load this dynamic type including all of its auxiliary types, if any. If the class loader
          * is the bootstrap class loader, a new class loader is created for loading those types. If the class loader
          * is an instance of {@link InjectionClassLoader}, the class is injected. And otherwise, the types are injected
-         * into the provided class loader.
+         * into the provided class loader. 尝试加载此动态类型，包括其所有辅助类型（如果有）。如果类加载器是引导类加载器，那么将创建一个新的类加载器来加载这些类型。如果类加载器是{@link InjectionClassLoader}的实例，则类被注入。否则，类型将被注入到提供的类装入器中
          *
          * @param classLoader The class loader to use for this class loading.
          * @return This dynamic type in its loaded state.
@@ -4665,7 +4665,7 @@ public interface DynamicType {
     }
 
     /**
-     * A dynamic type that has been loaded into the running instance of the Java virtual machine.
+     * A dynamic type that has been loaded into the running instance of the Java virtual machine. 已加载到Java虚拟机的运行实例中的动态类型
      *
      * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
      *            type itself, an interface or the direct super class.
@@ -4694,7 +4694,7 @@ public interface DynamicType {
     }
 
     /**
-     * A default implementation of a dynamic type.
+     * A default implementation of a dynamic type. 动态类型的默认实现
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Default implements DynamicType {
@@ -5007,16 +5007,16 @@ public interface DynamicType {
         }
 
         /**
-         * A default implementation of a loaded dynamic type.
+         * A default implementation of a loaded dynamic type. 加载的动态类型的默认实现
          *
          * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
-         *            type itself, an interface or the direct super class.
+         *            type itself, an interface or the direct super class. 由这个动态类型实现的最具体的已知加载类型，通常是类型本身、接口或直接超类
          */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class Loaded<T> extends Default implements DynamicType.Loaded<T> {
 
             /**
-             * The loaded types for the given loaded dynamic type.
+             * The loaded types for the given loaded dynamic type. 给定加载动态类型的加载类型
              */
             private final Map<TypeDescription, Class<?>> loadedTypes;
 

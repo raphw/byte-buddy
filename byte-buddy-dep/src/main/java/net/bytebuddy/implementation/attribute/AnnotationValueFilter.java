@@ -51,12 +51,12 @@ public interface AnnotationValueFilter {
     }
 
     /**
-     * A default implementation of an annotation value filter that applies the same strategy for any type, field or method.
+     * A default implementation of an annotation value filter that applies the same strategy for any type, field or method. 注释值筛选器的默认实现，对任何类型、字段或方法应用相同的策略
      */
     enum Default implements AnnotationValueFilter, Factory {
 
         /**
-         * An annotation value filter where default values are skipped and not included in the class file.
+         * An annotation value filter where default values are skipped and not included in the class file. 一种注释值筛选器，其中跳过默认值，不包括在类文件中
          */
         SKIP_DEFAULTS {
             @Override
@@ -67,7 +67,7 @@ public interface AnnotationValueFilter {
         },
 
         /**
-         * An annotation value filter where default values are included in the class file.
+         * An annotation value filter where default values are included in the class file. 注释值过滤器，其中默认值包含在类文件中
          */
         APPEND_DEFAULTS {
             @Override
