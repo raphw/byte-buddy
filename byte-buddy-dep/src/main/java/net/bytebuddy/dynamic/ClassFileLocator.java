@@ -107,9 +107,9 @@ public interface ClassFileLocator extends Closeable {
             private final byte[] binaryRepresentation;
 
             /**
-             * Creates a new explicit resolution of a given array of binary data.
+             * Creates a new explicit resolution of a given array of binary data. 为给定的二进制数据数组创建新的显式解析
              *
-             * @param binaryRepresentation The binary data to represent. The array must not be modified.
+             * @param binaryRepresentation The binary data to represent. The array must not be modified. 要表示的二进制数据。不能修改数组要表示的二进制数据。不能修改数组
              */
             @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The array is not to be modified by contract")
             public Explicit(byte[] binaryRepresentation) {
@@ -221,7 +221,7 @@ public interface ClassFileLocator extends Closeable {
 
     /**
      * <p>
-     * A class file locator that queries a class loader for binary representations of class files.
+     * A class file locator that queries a class loader for binary representations of class files. 一种类文件定位器，用于查询类加载器中类文件的二进制表示形式
      * </p>
      * <p>
      * <b>Important</b>: Even when calling {@link Closeable#close()} on this class file locator, no underlying
@@ -270,10 +270,10 @@ public interface ClassFileLocator extends Closeable {
 
         /**
          * Attempts to create a binary representation of a loaded type by requesting data from its
-         * {@link java.lang.ClassLoader}.
+         * {@link java.lang.ClassLoader}. 尝试通过从其 {@link java.lang.ClassLoader} 请求数据来创建已加载类型的二进制表示。
          *
          * @param type The type of interest.
-         * @return The binary data to this type which might be illegal.
+         * @return The binary data to this type which might be illegal. 此类型的二进制数据可能是非法的
          */
         public static Resolution read(Class<?> type) {
             try {
@@ -297,7 +297,7 @@ public interface ClassFileLocator extends Closeable {
         }
 
         /**
-         * Locates the class file for the supplied type by requesting a resource from the class loader.
+         * Locates the class file for the supplied type by requesting a resource from the class loader. 通过从类加载器请求资源来定位所提供类型的类文件
          *
          * @param classLoader The class loader to query for the resource.
          * @param typeName    The name of the type for which to locate a class file.

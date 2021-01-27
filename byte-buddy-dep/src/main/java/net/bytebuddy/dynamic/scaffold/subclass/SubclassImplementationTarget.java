@@ -13,7 +13,7 @@ import static net.bytebuddy.matcher.ElementMatchers.hasSignature;
 import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 
 /**
- * An implementation target for creating a subclass of a given type.
+ * An implementation target for creating a subclass of a given type. 用于创建给定类型的子类的 implementation target
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class SubclassImplementationTarget extends Implementation.Target.AbstractBase {
@@ -82,12 +82,12 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
 
     /**
      * Responsible for identifying the origin type that an implementation target represents when
-     * {@link Implementation.Target#getOriginType()} is invoked.
+     * {@link Implementation.Target#getOriginType()} is invoked. 负责识别 {@link Implementation.Target#getOriginType()} 被调用时实现目标表示的源类型
      */
     public enum OriginTypeResolver {
 
         /**
-         * Identifies the super type of an instrumented type as the origin class.
+         * Identifies the super type of an instrumented type as the origin class. 将插桩类型的超类标识为原始类
          */
         SUPER_CLASS {
             @Override
@@ -97,7 +97,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         },
 
         /**
-         * Identifies the instrumented type as its own origin type.
+         * Identifies the instrumented type as its own origin type. 将插桩类型标识为其自己的源类型
          */
         LEVEL_TYPE {
             @Override
@@ -116,7 +116,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     }
 
     /**
-     * A factory for creating a {@link net.bytebuddy.dynamic.scaffold.subclass.SubclassImplementationTarget}.
+     * A factory for creating a {@link net.bytebuddy.dynamic.scaffold.subclass.SubclassImplementationTarget}. 创建 {@link net.bytebuddy.dynamic.scaffold.subclass.SubclassImplementationTarget} 的工厂类
      */
     public enum Factory implements Implementation.Target.Factory {
 

@@ -8,17 +8,17 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * <p>
+ * <p> 注入类装入器允许在创建类装入器之后注入类。只有当这个类装入器没有密封时，注入才可能
  * An injection class loader allows for the injection of a class after the class loader was created. Injection is only possible if this class loader is not sealed.
  * </p>
- * <p>
+ * <p> 不密封一个类加载器允许任何人获得对这个类加载器的引用时破坏包的封装
  * <b>Important</b>: Not sealing a class loader allows to break package encapsulation for anybody getting hold of a reference to this class loader.
  * </p>
  */
 public abstract class InjectionClassLoader extends ClassLoader {
 
     /**
-     * Indicates if this class loader is sealed, i.e. forbids runtime injection.
+     * Indicates if this class loader is sealed, i.e. forbids runtime injection. 指示此类装入器是否已密封，即禁止运行时注入
      */
     private final boolean sealed;
 
@@ -43,7 +43,7 @@ public abstract class InjectionClassLoader extends ClassLoader {
     }
 
     /**
-     * Defines a new type to be loaded by this class loader.
+     * Defines a new type to be loaded by this class loader. 定义要由该类加载器加载的新类型
      *
      * @param name                 The name of the type.
      * @param binaryRepresentation The type's binary representation.
@@ -55,7 +55,7 @@ public abstract class InjectionClassLoader extends ClassLoader {
     }
 
     /**
-     * Defines a group of types to be loaded by this class loader. If this class loader is sealed, an {@link IllegalStateException} is thrown.
+     * Defines a group of types to be loaded by this class loader. If this class loader is sealed, an {@link IllegalStateException} is thrown. 定义要由此类装入器装入的一组类型。如果这个类装入器是密封的，则抛出一个{@link IllegalStateException}
      *
      * @param typeDefinitions The types binary representations.
      * @return The mapping of defined classes or previously defined classes by their name.
@@ -69,7 +69,7 @@ public abstract class InjectionClassLoader extends ClassLoader {
     }
 
     /**
-     * Defines a group of types to be loaded by this class loader.
+     * Defines a group of types to be loaded by this class loader. 定义要由此类装入器装入的一组类型
      *
      * @param typeDefinitions The types binary representations.
      * @return The mapping of defined classes or previously defined classes by their name.
@@ -78,7 +78,7 @@ public abstract class InjectionClassLoader extends ClassLoader {
     protected abstract Map<String, Class<?>> doDefineClasses(Map<String, byte[]> typeDefinitions) throws ClassNotFoundException;
 
     /**
-     * A class loading strategy for adding a type to an injection class loader.
+     * A class loading strategy for adding a type to an injection class loader. 用于向注入类装入器添加类型的类装入策略
      */
     public enum Strategy implements ClassLoadingStrategy<InjectionClassLoader> {
 

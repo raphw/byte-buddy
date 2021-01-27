@@ -35,17 +35,17 @@ import java.util.concurrent.ConcurrentMap;
  * </p>
  * <p>
  * <b>Note</b>: Any class and package definition is performed using the creator's {@link AccessControlContext}.
- * </p> 注意：任何类和包定义都是使用创建者的AccessControlContext执行的
+ * </p> 注意：任何类和包定义都是使用创建者的 {@link AccessControlContext} 执行的
  */
 public class ByteArrayClassLoader extends InjectionClassLoader {
 
     /**
-     * The schema for URLs that represent a class file of byte array class loaders.
+     * The schema for URLs that represent a class file of byte array class loaders. 表示字节数组类装入器类文件的URL的架构
      */
     public static final String URL_SCHEMA = "bytebuddy";
 
     /**
-     * Indicates that an array should be included from its first index. Improves the source code readability.
+     * Indicates that an array should be included from its first index. Improves the source code readability. 指示应从数组的第一个索引中包含数组。提高了源代码的可读性
      */
     private static final int FROM_BEGINNING = 0;
 
@@ -55,7 +55,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     private static final Class<?> UNLOADED_TYPE = null;
 
     /**
-     * Indicates that a URL does not exist to improve code readability.
+     * Indicates that a URL does not exist to improve code readability. 指示不存在用于提高代码可读性的URL
      */
     private static final URL NO_URL = null;
 
@@ -236,11 +236,11 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     }
 
     /**
-     * Loads a given set of class descriptions and their binary representations.
+     * Loads a given set of class descriptions and their binary representations. 加载一组给定的类描述及其二进制表示
      *
      * @param classLoader The parent class loader.
      * @param types       The unloaded types to be loaded.
-     * @return A map of the given type descriptions pointing to their loaded representations.
+     * @return A map of the given type descriptions pointing to their loaded representations. 给定类型描述的映射，指向它们加载的表示
      */
     public static Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
         return load(classLoader,
@@ -253,7 +253,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     }
 
     /**
-     * Loads a given set of class descriptions and their binary representations.
+     * Loads a given set of class descriptions and their binary representations. 加载一组给定的类描述及其二进制表示
      *
      * @param classLoader               The parent class loader.
      * @param types                     The unloaded types to be loaded.
@@ -541,7 +541,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     }
 
     /**
-     * An action for defining a located class that is not yet loaded.
+     * An action for defining a located class that is not yet loaded. 用于定义尚未加载的已定位类的操作
      */
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class ClassDefinitionAction implements PrivilegedAction<Class<?>> {
@@ -594,7 +594,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     }
 
     /**
-     * A package lookup strategy for locating a package by name.
+     * A package lookup strategy for locating a package by name. 一种按名称查找包的包查找策略
      */
     protected interface PackageLookupStrategy {
 
@@ -683,12 +683,12 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
 
     /**
      * A persistence handler decides on whether the byte array that represents a loaded class is exposed by
-     * the {@link java.lang.ClassLoader#getResourceAsStream(String)} method.
+     * the {@link java.lang.ClassLoader#getResourceAsStream(String)} method. 持久性处理程序决定 {@link java.lang.ClassLoader#getResourceAsStream(String)} 方法是否公开表示加载类的字节数组
      */
     public enum PersistenceHandler {
 
         /**
-         * The manifest persistence handler retains all class file representations and makes them accessible.
+         * The manifest persistence handler retains all class file representations and makes them accessible. 清单持久性处理程序保留所有类文件表示，并使它们可访问
          */
         MANIFEST(true) {
             @Override
@@ -718,7 +718,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
 
         /**
          * The latent persistence handler hides all class file representations and does not make them accessible
-         * even before they are loaded.
+         * even before they are loaded. 潜在持久性处理程序隐藏所有类文件表示，即使在加载它们之前也不使它们可访问
          */
         LATENT(false) {
             @Override
@@ -738,7 +738,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         };
 
         /**
-         * The suffix of files in the Java class file format.
+         * The suffix of files in the Java class file format. Java类文件格式中文件的后缀
          */
         private static final String CLASS_FILE_SUFFIX = ".class";
 
@@ -912,17 +912,17 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     /**
      * <p>
      * A {@link net.bytebuddy.dynamic.loading.ByteArrayClassLoader} which applies child-first semantics for the
-     * given type definitions.
+     * given type definitions. 对给定的类型定义应用子优先语义的 {@link net.bytebuddy.dynamic.loading.ByteArrayClassLoader}
      * </p>
      * <p>
      * <b>Important</b>: Package definitions remain their parent-first semantics as loaded package definitions do not expose their class loaders.
-     * Also, it is not possible to make this class or its subclass parallel-capable as the loading strategy is overridden.
+     * Also, it is not possible to make this class or its subclass parallel-capable as the loading strategy is overridden. 包定义仍然是它们的父级优先语义，因为加载的包定义不公开它们的类加载器。此外，由于加载策略被重写，因此不可能使此类或其子类具有并行功能
      * </p>
      */
     public static class ChildFirst extends ByteArrayClassLoader {
 
         /**
-         * The suffix of files in the Java class file format.
+         * The suffix of files in the Java class file format. Java类文件格式中文件的后缀
          */
         private static final String CLASS_FILE_SUFFIX = ".class";
 
@@ -971,7 +971,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         }
 
         /**
-         * Creates a new child-first byte array class loader.
+         * Creates a new child-first byte array class loader. 创建新的 child-first 字节数组类装入器
          *
          * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
          * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
@@ -1047,7 +1047,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         }
 
         /**
-         * Loads a given set of class descriptions and their binary representations using a child-first class loader.
+         * Loads a given set of class descriptions and their binary representations using a child-first class loader. 使用一个子类装入器装入一组给定的类描述及其二进制表示
          *
          * @param classLoader The parent class loader.
          * @param types       The unloaded types to be loaded.
@@ -1064,7 +1064,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         }
 
         /**
-         * Loads a given set of class descriptions and their binary representations using a child-first class loader.
+         * Loads a given set of class descriptions and their binary representations using a child-first class loader. 使用一个子类装入器装入一组给定的类描述及其二进制表示
          *
          * @param classLoader               The parent class loader.
          * @param types                     The unloaded types to be loaded.
@@ -1073,7 +1073,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param packageDefinitionStrategy The package definer to be queried for package definitions.
          * @param forbidExisting            {@code true} if the class loading should throw an exception if a class was already loaded by a parent class loader.
          * @param sealed                    {@code true} if the class loader should be sealed.
-         * @return A map of the given type descriptions pointing to their loaded representations.
+         * @return A map of the given type descriptions pointing to their loaded representations. 给定类型描述的映射，指向它们加载的表示
          */
         @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
         public static Map<TypeDescription, Class<?>> load(ClassLoader classLoader,
@@ -1125,7 +1125,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 } catch (ClassNotFoundException exception) {
                     // If an unknown class is loaded, this implementation causes the findClass method of this instance
                     // to be triggered twice. This is however of minor importance because this would result in a
-                    // ClassNotFoundException what does not alter the outcome.
+                    // ClassNotFoundException what does not alter the outcome. 如果加载了未知类，则此实现会导致此实例的findClass方法被触发两次。然而，这是次要的，因为这将导致一个ClassNotFoundException，它不会改变结果
                     return super.loadClass(name, resolve);
                 }
             }
@@ -1136,7 +1136,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             URL url = persistenceHandler.url(name, typeDefinitions);
             // If a class resource is defined by this class loader but it is not defined in a manifest manner,
             // the resource of the parent class loader should be shadowed by 'null'. Note that the delegation
-            // model causes a redundant query to the persistent handler but renders a correct result.
+            // model causes a redundant query to the persistent handler but renders a correct result. 如果一个类资源是由这个类加载器定义的，但是它不是以清单方式定义的，那么父类加载器的资源应该被“null”隐藏。请注意，委托模型会导致对持久处理程序进行冗余查询，但会呈现正确的结果
             return url != null || isShadowed(name)
                     ? url
                     : super.getResource(name);
@@ -1151,16 +1151,16 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         }
 
         /**
-         * Checks if a resource name represents a class file of a class that was loaded by this class loader.
+         * Checks if a resource name represents a class file of a class that was loaded by this class loader. 检查资源名称是否表示该类加载器加载的类的类文件
          *
-         * @param resourceName The resource name of the class to be exposed as its class file.
-         * @return {@code true} if this class represents a class that is being loaded by this class loader.
+         * @param resourceName The resource name of the class to be exposed as its class file. 要作为其类文件公开的类的资源名称
+         * @return {@code true} if this class represents a class that is being loaded by this class loader. {@code true} 如果这个类表示这个类装入器正在装入的类
          */
         private boolean isShadowed(String resourceName) {
             if (persistenceHandler.isManifest() || !resourceName.endsWith(CLASS_FILE_SUFFIX)) {
                 return false;
             }
-            // This synchronization is required to avoid a racing condition to the actual class loading.
+            // This synchronization is required to avoid a racing condition to the actual class loading. 这种同步是必要的，以避免赛车条件的实际类加载
             synchronized (this) {
                 String typeName = resourceName.replace('/', '.').substring(0, resourceName.length() - CLASS_FILE_SUFFIX.length());
                 if (typeDefinitions.containsKey(typeName)) {
@@ -1172,17 +1172,17 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         }
 
         /**
-         * An enumeration that prepends an element to another enumeration and skips the last element of the provided enumeration.
+         * An enumeration that prepends an element to another enumeration and skips the last element of the provided enumeration. 一种枚举，将一个元素置于另一个枚举之前，并跳过所提供枚举的最后一个元素
          */
         protected static class PrependingEnumeration implements Enumeration<URL> {
 
             /**
-             * The next element to return from this enumeration or {@code null} if such an element does not exist.
+             * The next element to return from this enumeration or {@code null} if such an element does not exist. 从这个枚举返回的下一个元素，或者{@code null}（如果这样的元素不存在）
              */
             private URL nextElement;
 
             /**
-             * The enumeration from which the next elements should be pulled.
+             * The enumeration from which the next elements should be pulled. 应从中提取下一个元素的枚举
              */
             private final Enumeration<URL> enumeration;
 

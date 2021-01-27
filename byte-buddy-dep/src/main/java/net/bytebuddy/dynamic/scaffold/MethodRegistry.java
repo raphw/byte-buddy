@@ -26,13 +26,13 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 public interface MethodRegistry {
 
     /**
-     * Prepends the given method definition to this method registry, i.e. this configuration is applied first.
+     * Prepends the given method definition to this method registry, i.e. this configuration is applied first. 将给定的方法定义前置到此方法注册表，即首先应用此配置
      *
-     * @param methodMatcher            A matcher to identify any method that this definition concerns.
-     * @param handler                  The handler to instrument any matched method.
-     * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
-     * @param transformer              The method transformer to be applied to implemented methods.
-     * @return An adapted version of this method registry.
+     * @param methodMatcher            A matcher to identify any method that this definition concerns. 用于标识此定义所涉及的任何方法的匹配器
+     * @param handler                  The handler to instrument any matched method. 对任何匹配方法进行指桩的处理程序
+     * @param attributeAppenderFactory A method attribute appender to apply to any matched method. 应用于任何匹配方法的方法属性附加器
+     * @param transformer              The method transformer to be applied to implemented methods. 要应用于实现方法的方法转换器
+     * @return An adapted version of this method registry. 此方法注册表的改编版本
      */
     MethodRegistry prepend(LatentMatcher<? super MethodDescription> methodMatcher,
                            Handler handler,
@@ -40,7 +40,7 @@ public interface MethodRegistry {
                            Transformer<MethodDescription> transformer);
 
     /**
-     * Appends the given method definition to this method registry, i.e. this configuration is applied last.
+     * Appends the given method definition to this method registry, i.e. this configuration is applied last. 将给定的方法定义附加到此方法注册表，即此配置最后应用
      *
      * @param methodMatcher            A matcher to identify all entries that are to be matched.
      * @param handler                  The handler to instrument any matched method.
@@ -54,11 +54,11 @@ public interface MethodRegistry {
                           Transformer<MethodDescription> transformer);
 
     /**
-     * Prepares this method registry.
-     * 准备此方法注册表
-     * @param instrumentedType    The instrumented type that should be created.
-     * @param methodGraphCompiler The method graph compiler to be used for analyzing the fully assembled instrumented type.
-     * @param typeValidation      Determines if a type should be explicitly validated.
+     * Prepares this method registry. 准备此方法注册
+     *
+     * @param instrumentedType    The instrumented type that should be created. 应创建的插桩类型
+     * @param methodGraphCompiler The method graph compiler to be used for analyzing the fully assembled instrumented type. 用于分析完全组装的插入指令类型的方法图编译器
+     * @param typeValidation      Determines if a type should be explicitly validated. 确定是否应显式验证类型
      * @param ignoredMethods      A filter that only matches methods that should be instrumented.
      * @return A prepared version of this method registry.
      */
@@ -75,13 +75,13 @@ public interface MethodRegistry {
         /**
          * Compiles this handler.
          *
-         * @param implementationTarget The implementation target to compile this handler for.
+         * @param implementationTarget The implementation target to compile this handler for. 编译此处理程序的 implementation target
          * @return A compiled handler.
          */
         Handler.Compiled compile(Implementation.Target implementationTarget);
 
         /**
-         * A handler for defining an abstract or native method.
+         * A handler for defining an abstract or native method. 用于定义抽象或本机方法的处理器
          */
         enum ForAbstractMethod implements Handler, Compiled {
 
@@ -107,7 +107,7 @@ public interface MethodRegistry {
         }
 
         /**
-         * A handler for implementing a visibility bridge.
+         * A handler for implementing a visibility bridge. 用于实现可见性桥的处理器
          */
         enum ForVisibilityBridge implements Handler {
 
@@ -127,18 +127,18 @@ public interface MethodRegistry {
             }
 
             /**
-             * A compiled handler for a visibility bridge handler.
+             * A compiled handler for a visibility bridge handler. 可见性桥处理程序的已编译处理程序
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class Compiled implements Handler.Compiled {
 
                 /**
-                 * The instrumented type.
+                 * The instrumented type. 插桩类型
                  */
                 private final TypeDescription instrumentedType;
 
                 /**
-                 * Creates a new compiled handler for a visibility bridge.
+                 * Creates a new compiled handler for a visibility bridge. 为可见性桥创建新的已编译处理程序
                  *
                  * @param instrumentedType The instrumented type.
                  */
@@ -154,23 +154,23 @@ public interface MethodRegistry {
         }
 
         /**
-         * A compiled handler for implementing a method. 用于实现方法的编译处理程序
+         * A compiled handler for implementing a method. 用于实现方法的编译处理器
          */
         interface Compiled {
 
             /**
              * Assembles this compiled entry with a method attribute appender. 使用方法属性附加器将此编译后的条目组装在一起
              *
-             * @param methodDescription The method description to apply with this handler.
-             * @param attributeAppender The method attribute appender to apply together with this handler.
-             * @param visibility        The represented method's minimum visibility.
-             * @return A method pool entry representing this handler and the given attribute appender.
+             * @param methodDescription The method description to apply with this handler. 要应用于此处理程序的方法描述
+             * @param attributeAppender The method attribute appender to apply together with this handler. 要与此处理程序一起应用的方法属性附加器
+             * @param visibility        The represented method's minimum visibility. 表示方法的最小可见性
+             * @return A method pool entry representing this handler and the given attribute appender. 表示此处理程序和给定属性附加器的方法池条目
              */
             TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility);
         }
 
         /**
-         * A handler for a method that is implemented as byte code. 作为字节码实现的方法的处理程序
+         * A handler for a method that is implemented as byte code. 作为字节码实现的方法的处理器
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForImplementation implements Handler {
@@ -211,7 +211,7 @@ public interface MethodRegistry {
                 private final ByteCodeAppender byteCodeAppender;
 
                 /**
-                 * Creates a new compiled handler for a method implementation. 为方法实现创建一个新的编译处理程序
+                 * Creates a new compiled handler for a method implementation. 为方法实现创建一个新的编译处理器
                  *
                  * @param byteCodeAppender The byte code appender to apply.
                  */
@@ -227,7 +227,7 @@ public interface MethodRegistry {
         }
 
         /**
-         * A handler for defining a default annotation value for a method.
+         * A handler for defining a default annotation value for a method. 用于定义方法的默认注释值的处理程序
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForAnnotationValue implements Handler, Compiled {
@@ -363,7 +363,7 @@ public interface MethodRegistry {
         /**
          * The list of currently registered entries in their application order. 应用程序顺序中当前已注册条目的列表
          */
-        private final List<Entry> entries;
+        private final List<Entry> entries; // 作用于匹配方法的操作处理
 
         /**
          * Creates a new default method registry without entries. 创建一个没有条目的新默认方法注册表
@@ -402,20 +402,20 @@ public interface MethodRegistry {
                                                MethodGraph.Compiler methodGraphCompiler,
                                                TypeValidation typeValidation,
                                                LatentMatcher<? super MethodDescription> ignoredMethods) {
-            LinkedHashMap<MethodDescription, Prepared.Entry> implementations = new LinkedHashMap<MethodDescription, Prepared.Entry>();
+            LinkedHashMap<MethodDescription, Prepared.Entry> implementations = new LinkedHashMap<MethodDescription, Prepared.Entry>(); // 需要额外处理的新增方法，比如 MethodDelegation, 桥可见性等导致的方法增加
             Set<Handler> handlers = new HashSet<Handler>();
             MethodList<?> helperMethods = instrumentedType.getDeclaredMethods();
             for (Entry entry : entries) {
                 if (handlers.add(entry.getHandler())) {
-                    instrumentedType = entry.getHandler().prepare(instrumentedType);
+                    instrumentedType = entry.getHandler().prepare(instrumentedType); // 应用于 添加一些额外的方法
                     ElementMatcher<? super MethodDescription> handledMethods = noneOf(helperMethods);
-                    helperMethods = instrumentedType.getDeclaredMethods();
-                    for (MethodDescription helperMethod : helperMethods.filter(handledMethods)) {
+                    helperMethods = instrumentedType.getDeclaredMethods(); // 重新获取一次，该 插桩类型的 声明方法，至少会跟上 for 循环外的方法一致，可能会更多
+                    for (MethodDescription helperMethod : helperMethods.filter(handledMethods)) {  // 过滤掉之前就已经存在的方法，找出新增加的方法
                         implementations.put(helperMethod, entry.asSupplementaryEntry(helperMethod));
                     }
                 }
             }
-            MethodGraph.Linked methodGraph = methodGraphCompiler.compile(instrumentedType);
+            MethodGraph.Linked methodGraph = methodGraphCompiler.compile(instrumentedType); // 获取该方法所有的方法，包括继承或者实现父类（接口）的所有方法 不包括本类型的构造函数
             // Casting required for Java 6 compiler.
             ElementMatcher<? super MethodDescription> relevanceMatcher = (ElementMatcher<? super MethodDescription>) not(anyOf(implementations.keySet()))
                     .and(returns(isVisibleTo(instrumentedType)))
@@ -827,50 +827,50 @@ public interface MethodRegistry {
         }
 
         /**
-         * A compiled version of a default method registry.
+         * A compiled version of a default method registry. 默认方法注册表的编译版本
          */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class Compiled implements MethodRegistry.Compiled {
 
             /**
-             * The instrumented type.
+             * The instrumented type. 插桩类型
              */
             private final TypeDescription instrumentedType;
 
             /**
-             * The loaded type initializer of the instrumented type.
+             * The loaded type initializer of the instrumented type. 插桩类型的已加载类型初始值设定项
              */
             private final LoadedTypeInitializer loadedTypeInitializer;
 
             /**
-             * The type initializer of the instrumented type.
+             * The type initializer of the instrumented type. 插桩类型的类型初始值设定项
              */
             private final TypeInitializer typeInitializer;
 
             /**
-             * The declared or virtually inherited methods of this type.
+             * The declared or virtually inherited methods of this type. 此类型的声明或实际继承的方法
              */
             private final MethodList<?> methods;
 
             /**
-             * A map of all method descriptions mapped to their handling entries.
+             * A map of all method descriptions mapped to their handling entries. 映射到其处理项的所有方法描述的映射
              */
             private final LinkedHashMap<MethodDescription, Entry> implementations;
 
             /**
-             * {@code true} if the created type supports bridge methods.
+             * {@code true} if the created type supports bridge methods. {@code true} 如果创建的类型支持桥方法
              */
             private final boolean supportsBridges;
 
             /**
-             * Creates a new compiled version of a default method registry.
-             * 创建默认方法注册表的新编译版本
+             * Creates a new compiled version of a default method registry. 创建默认方法注册表的新编译版本
+             *
              * @param instrumentedType      The instrumented type.
              * @param loadedTypeInitializer The loaded type initializer of the instrumented type.
              * @param typeInitializer       The type initializer of the instrumented type.
              * @param methods               The declared or virtually inherited methods of this type.
              * @param implementations       A map of all method descriptions mapped to their handling entries. 所有方法描述的映射，映射到它们的处理条目
-             * @param supportsBridges       {@code true} if the created type supports bridge methods.
+             * @param supportsBridges       {@code true} if the created type supports bridge methods. {@code true} 如果创建的类型支持桥方法
              */
             protected Compiled(TypeDescription instrumentedType,
                                LoadedTypeInitializer loadedTypeInitializer,
@@ -915,23 +915,23 @@ public interface MethodRegistry {
             public Record target(MethodDescription methodDescription) {
                 Entry entry = implementations.get(methodDescription);
                 return entry == null
-                        ? new Record.ForNonImplementedMethod(methodDescription)
-                        : entry.bind(instrumentedType, supportsBridges);
+                        ? new Record.ForNonImplementedMethod(methodDescription) // 如果没有在 implementations 缓存中找到相关的实现项，则意味着不需要进行额外增强
+                        : entry.bind(instrumentedType, supportsBridges); // 组装相应的方法实现格式
             }
 
             /**
-             * An entry of a compiled method registry.
+             * An entry of a compiled method registry. 已编译方法注册的一个条目
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class Entry {
 
                 /**
-                 * The handler to be used for implementing a method.
+                 * The handler to be used for implementing a method. 用于实现一个方法的处理器
                  */
                 private final Handler.Compiled handler;
 
                 /**
-                 * The attribute appender of a compiled method.
+                 * The attribute appender of a compiled method. 编译方法的属性附加器
                  */
                 private final MethodAttributeAppender attributeAppender;
 

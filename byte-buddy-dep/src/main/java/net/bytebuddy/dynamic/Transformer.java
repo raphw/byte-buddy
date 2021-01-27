@@ -27,10 +27,10 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 public interface Transformer<T> {
 
     /**
-     * Transforms the supplied target.
+     * Transforms the supplied target. 转换提供的目标
      *
-     * @param instrumentedType The instrumented type that declares the target being transformed.
-     * @param target           The target entity that is being transformed.
+     * @param instrumentedType The instrumented type that declares the target being transformed. 声明要转换的目标的检测类型
+     * @param target           The target entity that is being transformed. 正在转换的目标实体
      * @return The transformed instance.
      */
     T transform(TypeDescription instrumentedType, T target);
@@ -63,13 +63,13 @@ public interface Transformer<T> {
     }
 
     /**
-     * A transformer for a field that delegates to another transformer that transforms a {@link net.bytebuddy.description.field.FieldDescription.Token}.
+     * A transformer for a field that delegates to another transformer that transforms a {@link net.bytebuddy.description.field.FieldDescription.Token}. 一个字段的转换器，它委托给另一个转换 {@link net.bytebuddy.description.field.FieldDescription.Token}.、
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ForField implements Transformer<FieldDescription> {
 
         /**
-         * The token transformer to apply to a transformed field.
+         * The token transformer to apply to a transformed field. 应用于变换字段的令牌转换器
          */
         private final Transformer<FieldDescription.Token> transformer;
 
@@ -140,7 +140,7 @@ public interface Transformer<T> {
         }
 
         /**
-         * An implementation of a transformed field.
+         * An implementation of a transformed field. 变换字段的实现
          */
         protected static class TransformedField extends FieldDescription.AbstractBase {
 
@@ -215,7 +215,7 @@ public interface Transformer<T> {
     }
 
     /**
-     * A transformer for a field that delegates to another transformer that transforms a {@link net.bytebuddy.description.method.MethodDescription.Token}.
+     * A transformer for a field that delegates to another transformer that transforms a {@link net.bytebuddy.description.method.MethodDescription.Token}. 一个字段的转换器，它委托给另一个转换 {@link net.bytebuddy.description.method.MethodDescription.Token} 的转换器
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ForMethod implements Transformer<MethodDescription> {

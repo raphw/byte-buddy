@@ -403,11 +403,11 @@ public class ByteBuddy {
 
     /**
      * <p>
-     * Creates a new, plain interface type.
+     * Creates a new, plain interface type. 创建新的普通接口类型
      * </p>
      * <p>
      * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
-     * types, a external cache or {@link TypeCache} should be used.
+     * types, a external cache or {@link TypeCache} should be used. Byte Buddy不会缓存以前的子类，但会尝试生成新的子类。对于缓存类型，应该使用外部缓存或{@link TypeCache}
      * </p>
      *
      * @return A type builder that creates a new interface type.
@@ -418,7 +418,7 @@ public class ByteBuddy {
 
     /**
      * <p>
-     * Creates a new interface type that extends the provided interface.
+     * Creates a new interface type that extends the provided interface. 创建扩展所提供接口的新接口类型
      * </p>
      * <p>
      * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables or an owner type.
@@ -558,7 +558,7 @@ public class ByteBuddy {
     /**
      * <p>
      * Creates a new {@link Annotation} type. Annotation properties are implemented as non-static, public methods with the
-     * property type being defined as the return type.
+     * property type being defined as the return type. 创建新的{@link Annotation}类型。注释属性被实现为非静态的公共方法，属性类型被定义为返回类型
      * </p>
      * <p>
      * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
@@ -647,7 +647,7 @@ public class ByteBuddy {
     /**
      * <p>
      * Redefines the given type where any intercepted method that is declared by the redefined type is fully replaced
-     * by the new implementation.
+     * by the new implementation. 重新定义给定的类型，其中由重新定义的类型声明的任何截获方法都被新实现完全替换
      * </p>
      * <p>
      * The class file of the redefined type is located by querying the redefined type's class loader by name. For specifying an
@@ -672,14 +672,14 @@ public class ByteBuddy {
     /**
      * <p>
      * Redefines the given type where any intercepted method that is declared by the redefined type is fully replaced
-     * by the new implementation.
+     * by the new implementation. 重新定义给定的类型，其中由重新定义的类型声明的任何截获方法都被新实现完全替换
      * </p>
      * <p>
-     * <b>Note</b>: When a user redefines a class with the purpose of reloading this class using a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy},
-     * it is important that no fields or methods are added to the redefined class. Note that some {@link Implementation}s implicitly add fields or methods.
-     * Finally, Byte Buddy might be forced to add a method if a redefined class already defines a class initializer. This can be disabled by setting
+     * <b>Note</b>: When a user redefines a class with the purpose of reloading this class using a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy}, 当用户为了使用 {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy} 重新加载此类而重新定义类时，重要的是不要向重新定义的类中添加任何字段或方法。
+     * it is important that no fields or methods are added to the redefined class. Note that some {@link Implementation}s implicitly add fields or methods. 请注意，有些 {@link Implementation} 会隐式地添加字段或方法
+     * Finally, Byte Buddy might be forced to add a method if a redefined class already defines a class initializer. This can be disabled by setting 最后，如果重定义的类已经定义了类初始值设定项，那么Byte Buddy可能会被迫添加一个方法
      * {@link ByteBuddy#with(Implementation.Context.Factory)} to use a {@link net.bytebuddy.implementation.Implementation.Context.Disabled.Factory}
-     * where the class initializer is retained <i>as is</i>.
+     * where the class initializer is retained <i>as is</i>. 可以通过将{@link ByteBuddy#with(Implementation.Context.Factory)}使用{@link net.bytebuddy.implementation.Implementation.Context.Disabled.Factory} 类初始值设定项按原样保留
      * </p>
      *
      * @param type             The type that is being redefined.
@@ -694,7 +694,7 @@ public class ByteBuddy {
     /**
      * <p>
      * Redefines the given type where any intercepted method that is declared by the redefined type is fully replaced
-     * by the new implementation.
+     * by the new implementation. 重新定义给定的类型，其中由重新定义的类型声明的任何截获方法都被新实现完全替换
      * </p>
      * <p>
      * <b>Note</b>: When a user redefines a class with the purpose of reloading this class using a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy},

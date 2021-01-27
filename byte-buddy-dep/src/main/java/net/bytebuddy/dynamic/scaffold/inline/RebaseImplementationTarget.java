@@ -101,12 +101,12 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
 
     /**
      * A {@link Implementation.SpecialMethodInvocation} which invokes a rebased method
-     * as given by a {@link MethodRebaseResolver}.
+     * as given by a {@link MethodRebaseResolver}. 一个 {@link Implementation.SpecialMethodInvocation}，它调用 {@link MethodRebaseResolver} 给定的一个rebased方法。
      */
     protected static class RebasedMethodInvocation extends Implementation.SpecialMethodInvocation.AbstractBase {
 
         /**
-         * The method to invoke via a special method invocation.
+         * The method to invoke via a special method invocation. 通过特殊方法调用调用的方法
          */
         private final MethodDescription methodDescription;
 

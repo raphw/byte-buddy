@@ -69,11 +69,11 @@ public interface NamingStrategy {
     }
 
     /**
-     * A naming strategy that creates a name by concatenating:
+     * A naming strategy that creates a name by concatenating: 通过连接以下项创建名称的命名策略
      * <ol>
-     * <li>The super classes package and name</li>
-     * <li>A given suffix string</li>
-     * <li>A random number</li>
+     * <li>The super classes package and name</li> 超类包和名称
+     * <li>A given suffix string</li> 给定的后缀字符串
+     * <li>A random number</li> 随机数
      * </ol>
      * Between all these elements, a {@code $} sign is included into the name to improve readability. As an exception,
      * types that subclass classes from the {@code java.**} packages are prefixed with a given package. This is
@@ -183,7 +183,7 @@ public interface NamingStrategy {
         }
 
         /**
-         * A base name resolver is responsible for resolving a name onto which the suffix is appended.
+         * A base name resolver is responsible for resolving a name onto which the suffix is appended. 基本名称解析程序负责解析附加了后缀的名称
          */
         public interface BaseNameResolver {
 

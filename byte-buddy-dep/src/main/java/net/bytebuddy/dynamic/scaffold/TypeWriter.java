@@ -56,7 +56,7 @@ import java.util.*;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * A type writer is a utility for writing an actual class file using the ASM library. 类型编写器是使用ASM库编写实际类文件的实用工具
+ * A type writer is a utility for writing an actual class file using the ASM library. 类型编写器是使用 ASM 库编写实际类文件的实用工具
  *
  * @param <T> The best known loaded type for the dynamically created type. 动态创建的类型的最著名的加载类型
  */
@@ -304,10 +304,10 @@ public interface TypeWriter<T> {
     interface MethodPool {
 
         /**
-         * Looks up a handler entry for a given method.
+         * Looks up a handler entry for a given method. 查找给定方法的处理程序条目
          *
-         * @param methodDescription The method being processed.
-         * @return A handler entry for the given method.
+         * @param methodDescription The method being processed. 正在处理的方法
+         * @return A handler entry for the given method. 给定方法的处理程序项
          */
         Record target(MethodDescription methodDescription);
 
@@ -321,7 +321,7 @@ public interface TypeWriter<T> {
             /**
              * Returns the sort of this method instrumentation. 返回此方法的类型
              *
-             * @return The sort of this method instrumentation.
+             * @return The sort of this method instrumentation. 这种方法的类型
              */
             Sort getSort();
 
@@ -336,20 +336,20 @@ public interface TypeWriter<T> {
             /**
              * The visibility to enforce for this method. 此方法要强制的可见性
              *
-             * @return The visibility to enforce for this method.
+             * @return The visibility to enforce for this method. 此方法要强制的可见性
              */
             Visibility getVisibility();
 
             /**
-             * Prepends the given method appender to this entry. 将给定的方法追加器前置到此项v
+             * Prepends the given method appender to this entry. 将给定的方法追加器前置到此项，根据积累的字节码附加器完成对应记录的字节码的写入
              *
-             * @param byteCodeAppender The byte code appender to prepend.
-             * @return This entry with the given code prepended.
+             * @param byteCodeAppender The byte code appender to prepend. 要前置的字节码追加器
+             * @return This entry with the given code prepended. 此条目前面带有给定代码
              */
             Record prepend(ByteCodeAppender byteCodeAppender);
 
             /**
-             * Applies this method entry. This method can always be called and might be a no-op.
+             * Applies this method entry. This method can always be called and might be a no-op. 应用此方法项。此方法总是可以调用的，并且可能是禁止操作的
              *
              * @param classVisitor                 The class visitor to which this entry should be applied.
              * @param implementationContext        The implementation context to which this entry should be applied.
@@ -359,7 +359,7 @@ public interface TypeWriter<T> {
 
             /**
              * Applies the head of this entry. Applying an entry is only possible if a method is defined, i.e. the sort of this entry is not
-             * {@link Record.Sort#SKIPPED}.
+             * {@link Record.Sort#SKIPPED}. 应用此条目的标题。只有在定义了方法的情况下才能应用条目，即该条目的类型不是 {@link Record.Sort#SKIPPED}
              *
              * @param methodVisitor The method visitor to which this entry should be applied.
              */
@@ -648,7 +648,7 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * Describes an entry that defines a method but without byte code and without an annotation value.
+                 * Describes an entry that defines a method but without byte code and without an annotation value. 描述定义方法但没有字节码和注释值的项
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 public static class WithoutBody extends ForDefinedMethod {
@@ -723,7 +723,7 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * Describes an entry that defines a method with a default annotation value.
+                 * Describes an entry that defines a method with a default annotation value. 描述用默认注释值定义方法的条目
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 public static class WithAnnotationDefaultValue extends ForDefinedMethod {
@@ -1626,10 +1626,10 @@ public interface TypeWriter<T> {
          * @param typeValidation               Determines if a type should be explicitly validated.
          * @param classWriterStrategy          The class writer strategy to use.
          * @param typePool                     The type pool to use for computing stack map frames, if required.
-         * @param originalType                 The original type that is being redefined or rebased.
-         * @param classFileLocator             The class file locator for locating the original type's class file.
-         * @param methodRebaseResolver         The method rebase resolver to use for rebasing names.
-         * @param <U>                          A loaded type that the instrumented type guarantees to subclass.
+         * @param originalType                 The original type that is being redefined or rebased. 正在重新定义或重设基准的原始类型
+         * @param classFileLocator             The class file locator for locating the original type's class file. 用于定位原始类型的类文件的类文件定位器
+         * @param methodRebaseResolver         The method rebase resolver to use for rebasing names. 用于重新设置名称的方法重新设置解析器的基础
+         * @param <U>                          A loaded type that the instrumented type guarantees to subclass. 插桩类型保证为子类的已加载类型
          * @return A suitable type writer.
          */
         public static <U> TypeWriter<U> forRebasing(MethodRegistry.Prepared methodRegistry,
@@ -2298,22 +2298,22 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * Represents the constraint of an interface type.
+                 * Represents the constraint of an interface type. 表示接口类型的约束
                  */
                 enum ForInterface implements Constraint {
 
                     /**
-                     * An interface type with the constrains for the Java versions 5 to 7.
+                     * An interface type with the constrains for the Java versions 5 to 7. 具有Java版本5到7的约束的接口类型
                      */
                     CLASSIC(true),
 
                     /**
-                     * An interface type with the constrains for the Java versions 8+.
+                     * An interface type with the constrains for the Java versions 8+. 具有Java版本8+的约束的接口类型
                      */
                     JAVA_8(false);
 
                     /**
-                     * {@code true} if this instance represents a classic interface type (pre Java 8).
+                     * {@code true} if this instance represents a classic interface type (pre Java 8). {@code true}如果此实例表示经典接口类型(Java8之前)
                      */
                     private final boolean classic;
 
@@ -2917,7 +2917,7 @@ public interface TypeWriter<T> {
         }
 
         /**
-         * A type writer that inlines the created type into an existing class file.
+         * A type writer that inlines the created type into an existing class file. 将创建的类型内联到现有类文件中的类型编写器
          *
          * @param <U> The best known loaded type for the dynamically created type.
          */
@@ -3037,7 +3037,7 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * Creates a class visitor which weaves all changes and additions on the fly.
+             * Creates a class visitor which weaves all changes and additions on the fly. 创建一个类访问者，动态地组织所有更改和添加
              *
              * @param classVisitor    The class visitor to which this entry is to be written to.
              * @param typeInitializer The type initializer to apply.
@@ -3814,7 +3814,7 @@ public interface TypeWriter<T> {
                     private final TypeInitializer typeInitializer;
 
                     /**
-                     * A context registry to register the lazily created implementation context to.
+                     * A context registry to register the lazily created implementation context to. 将延迟创建的实现上下文注册到的上下文注册表
                      */
                     private final ContextRegistry contextRegistry;
 
@@ -3834,12 +3834,12 @@ public interface TypeWriter<T> {
                     private final LinkedHashMap<String, FieldDescription> declarableFields;
 
                     /**
-                     * A mapping of methods to write by a concatenation of internal name and descriptor.
+                     * A mapping of methods to write by a concatenation of internal name and descriptor. 通过连接内部名称和描述符来编写的方法的映射
                      */
                     private final LinkedHashMap<String, MethodDescription> declarableMethods;
 
                     /**
-                     * A set of internal names of all nest members not yet defined by this type. If this type is not a nest host, this set is empty.
+                     * A set of internal names of all nest members not yet defined by this type. If this type is not a nest host, this set is empty. 尚未由该类型定义的所有嵌套成员的一组内部名称。如果此类型不是嵌套主机，则此集合为空
                      */
                     private final Set<String> nestMembers;
 
@@ -4179,7 +4179,7 @@ public interface TypeWriter<T> {
 
                     /**
                      * A field visitor that obtains all attributes and annotations of a field that is found in the
-                     * class file but that discards all code.
+                     * class file but that discards all code. 一种字段访问器，它获取在类文件中找到的字段的所有属性和注释，但丢弃所有代码
                      */
                     protected class AttributeObtainingFieldVisitor extends FieldVisitor {
 
@@ -4222,7 +4222,7 @@ public interface TypeWriter<T> {
 
                     /**
                      * A method visitor that preserves the code of a method in the class file by copying it into a rebased
-                     * method while copying all attributes and annotations to the actual method.
+                     * method while copying all attributes and annotations to the actual method. 一种方法访问者，通过将类文件中某个方法的代码复制到一个重基方法中，同时将所有属性和注释复制到实际方法中，从而在类文件中保留该方法的代码
                      */
                     protected class CodePreservingMethodVisitor extends MethodVisitor {
 
@@ -4313,12 +4313,12 @@ public interface TypeWriter<T> {
 
                     /**
                      * A method visitor that obtains all attributes and annotations of a method that is found in the
-                     * class file but that discards all code.
+                     * class file but that discards all code. 一种方法访问程序，它获取在类文件中找到的方法的所有属性和注释，但丢弃所有代码
                      */
                     protected class AttributeObtainingMethodVisitor extends MethodVisitor {
 
                         /**
-                         * The method visitor to which the actual method is to be written to.
+                         * The method visitor to which the actual method is to be written to. 要写入实际方法的方法访问器
                          */
                         private final MethodVisitor actualMethodVisitor;
 

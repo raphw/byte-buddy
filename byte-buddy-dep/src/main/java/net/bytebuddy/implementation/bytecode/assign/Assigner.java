@@ -17,7 +17,7 @@ import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAware
 public interface Assigner {
 
     /**
-     * A default assigner that can handle {@code void}, primitive types and references.
+     * A default assigner that can handle {@code void}, primitive types and references. 可以处理{@code void}、基元类型和引用的默认赋值器
      */
     Assigner DEFAULT = new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
 

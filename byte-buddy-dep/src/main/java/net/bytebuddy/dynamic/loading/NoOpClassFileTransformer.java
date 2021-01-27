@@ -6,7 +6,7 @@ import java.lang.instrument.ClassFileTransformer;
 import java.security.ProtectionDomain;
 
 /**
- * A class file transformer that does not apply a transformation.
+ * A class file transformer that does not apply a transformation. 不应用转换的类文件转换器
  */
 public enum NoOpClassFileTransformer implements ClassFileTransformer {
 

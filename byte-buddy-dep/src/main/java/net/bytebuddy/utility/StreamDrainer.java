@@ -55,7 +55,7 @@ public class StreamDrainer {
     }
 
     /**
-     * Drains an input stream into a byte array. The given input stream is not closed.
+     * Drains an input stream into a byte array. The given input stream is not closed. 将输入流排入字节数组。给定的输入流未关闭
      *
      * @param inputStream The input stream to drain.
      * @return A byte array containing the content of the input stream.

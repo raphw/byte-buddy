@@ -350,7 +350,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     }
 
     /**
-     * A locator for the executing VM's Java version.
+     * A locator for the executing VM's Java version. 执行 VM 的 Java 版本的定位器
      */
     protected interface VersionLocator {
 

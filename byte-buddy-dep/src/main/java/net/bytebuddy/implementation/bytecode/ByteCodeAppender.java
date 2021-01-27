@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/** Implementation提供一个code appender，可以被用来做方法的实现的委托调用, 同时任何的 Implementation 应该提供有意义的 equals 和 hashCode ，避免重复生成
+/** Implementation 提供一个code appender，可以被用来做方法的实现的委托调用, 同时任何的 Implementation 应该提供有意义的 equals 和 hashCode，避免重复生成   就是由一系列的 指令码 + 操作数 等组合所组成，也就意味着最终还是依靠 ByteCodeAppender 完成相应的字节插入
  * An appender that generates the byte code for a given method. This is done by writing the byte code instructions to
- * the given ASM {@link org.objectweb.asm.MethodVisitor}. 为给定方法生成字节码的附加器。这是通过将字节码指令写入给定的ASM MethodVisitor来完成的
+ * the given ASM {@link org.objectweb.asm.MethodVisitor}. 为给定方法生成字节码的附加器。这是通过将字节码指令写入给定的 ASM MethodVisitor 来完成的
  * <p>&nbsp;</p>
  * The {@code ByteCodeAppender} is not allowed to write
  * annotations to the method or call the {@link org.objectweb.asm.MethodVisitor#visitCode()},
@@ -23,11 +23,11 @@ import java.util.List;
 public interface ByteCodeAppender {
 
     /**
-     * Applies this byte code appender to a type creation process. 将此字节码追加器应用于类型创建过程
+     * Applies this byte code appender to a type creation process. 将此字节码追加器应用于 类创建过程
      *
-     * @param methodVisitor         The method visitor to which the byte code appender writes its code to.
-     * @param implementationContext The implementation context of the current type creation process.
-     * @param instrumentedMethod    The method that is the target of the instrumentation.
+     * @param methodVisitor         The method visitor to which the byte code appender writes its code to. 字节码附加程序将其代码写入的方法访问程序
+     * @param implementationContext The implementation context of the current type creation process. 当前类创建过程的实现上下文
+     * @param instrumentedMethod    The method that is the target of the instrumentation. 插桩目标的方法
      * @return The required size for the applied byte code to run.
      */
     Size apply(MethodVisitor methodVisitor,
@@ -52,7 +52,7 @@ public interface ByteCodeAppender {
         private final int localVariableSize;
 
         /**
-         * @param operandStackSize  The operand stack size that is required for running given byte code. 运行给定字节码所需的操作数堆栈大小
+         * @param operandStackSize  The operand stack size that is required for running given byte code.        运行给定字节码所需的操作数堆栈大小
          * @param localVariableSize The local variable array size that is required for running given byte code. 运行给定字节码所需的局部变量数组大小
          */
         public Size(int operandStackSize, int localVariableSize) {
@@ -139,7 +139,7 @@ public interface ByteCodeAppender {
 
     /**
      * A simple byte code appender that only represents a given array of
-     * {@link StackManipulation}s. 一个简单的字节码追加器，只表示给定的{@link StackManipulation}数组
+     * {@link StackManipulation}s. 一个简单的字节码追加器，只表示给定的 {@link StackManipulation} 数组
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Simple implements ByteCodeAppender {
@@ -161,7 +161,7 @@ public interface ByteCodeAppender {
         /**
          * Creates a new simple byte code appender which represents the given stack manipulation. 创建一个新的简单字节码附加器，它表示给定的堆栈操作
          *
-         * @param stackManipulations The stack manipulations to apply for this byte code appender in their application order.
+         * @param stackManipulations The stack manipulations to apply for this byte code appender in their application order. 按应用程序顺序应用于此字节码附加器的堆栈操作
          */
         public Simple(List<? extends StackManipulation> stackManipulations) {
             this.stackManipulation = new StackManipulation.Compound(stackManipulations);

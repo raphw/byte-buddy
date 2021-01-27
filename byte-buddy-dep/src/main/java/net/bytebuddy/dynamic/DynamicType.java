@@ -1401,15 +1401,15 @@ public interface DynamicType {
         /**
          * A builder for a field definition.
          *
-         * @param <S> A loaded type that the built type is guaranteed to be a subclass of.
+         * @param <S> A loaded type that the built type is guaranteed to be a subclass of. 一种装入的类型，生成的类型被保证是其子类
          */
         interface FieldDefinition<S> {
 
             /**
-             * Annotates the previously defined or matched field with the supplied annotations.
+             * Annotates the previously defined or matched field with the supplied annotations. 注释先前定义或匹配的字段，用所提供的注释
              *
-             * @param annotation The annotations to declare on the previously defined or matched field.
-             * @return A new builder that is equal to this builder but with the given annotations declared
+             * @param annotation The annotations to declare on the previously defined or matched field. 要在先前定义或匹配的字段上声明的注释
+             * @return A new builder that is equal to this builder but with the given annotations declared 与此生成器相等但声明了给定注释的新生成器
              * on the previously defined or matched field.
              */
             FieldDefinition.Optional<S> annotateField(Annotation... annotation);
@@ -1578,9 +1578,9 @@ public interface DynamicType {
             interface Optional<U> extends FieldDefinition<U>, Builder<U> {
 
                 /**
-                 * A builder for an optional field definition that allows for defining a value.
+                 * A builder for an optional field definition that allows for defining a value. 允许定义值的可选字段定义的生成器
                  *
-                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of. 一种装入的类型，生成的类型被保证是其子类
                  */
                 interface Valuable<V> extends FieldDefinition.Valuable<V>, Optional<V> {
 
@@ -1871,7 +1871,7 @@ public interface DynamicType {
             }
 
             /**
-             * A builder for defining an implementation of a method.
+             * A builder for defining an implementation of a method. 用于定义方法实现的生成器
              *
              * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
              */
@@ -1879,7 +1879,7 @@ public interface DynamicType {
 
                 /**
                  * Implements the previously defined or matched method by the supplied implementation. A method interception
-                 * is typically implemented in one of the following ways:
+                 * is typically implemented in one of the following ways: 由提供的实现 实现先前定义或匹配的方法。方法拦截通常通过以下方式之一实现
                  * <ol>
                  * <li>If a method is declared by the instrumented type and the type builder creates a subclass or redefinition,
                  * any preexisting method is replaced by the given implementation. Any previously defined implementation is lost.</li>
@@ -1899,7 +1899,7 @@ public interface DynamicType {
                 MethodDefinition.ReceiverTypeDefinition<U> intercept(Implementation implementation);
 
                 /**
-                 * Defines the previously defined or matched method to be {@code abstract}.
+                 * Defines the previously defined or matched method to be {@code abstract}. 将先前定义或匹配的方法定义为{@code abstract}
                  *
                  * @return A new builder where the previously defined or matched method is implemented to be abstract.
                  */
@@ -2670,9 +2670,9 @@ public interface DynamicType {
             }
 
             /**
-             * An abstract base implementation of a method definition.
+             * An abstract base implementation of a method definition. 方法定义的抽象基实现
              *
-             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of. 一种装入的类型，生成的类型被保证是其子类
              */
             abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements MethodDefinition<U> {
 
@@ -2707,25 +2707,25 @@ public interface DynamicType {
                 }
 
                 /**
-                 * An adapter implementation of a method definition.
+                 * An adapter implementation of a method definition. 方法定义的适配器实现
                  *
-                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of. 一种装入的类型，生成的类型被保证是其子类
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 protected abstract static class Adapter<V> extends MethodDefinition.ReceiverTypeDefinition.AbstractBase<V> {
 
                     /**
-                     * The handler that determines how a method is implemented.
+                     * The handler that determines how a method is implemented. 确定如何实现方法的处理程序
                      */
                     protected final MethodRegistry.Handler handler;
 
                     /**
-                     * The method attribute appender factory to apply onto the method that is currently being implemented.
+                     * The method attribute appender factory to apply onto the method that is currently being implemented. 要应用于当前正在实现的方法的方法属性附加工厂
                      */
                     protected final MethodAttributeAppender.Factory methodAttributeAppenderFactory;
 
                     /**
-                     * The transformer to apply onto the method that is currently being implemented.
+                     * The transformer to apply onto the method that is currently being implemented. 要应用于当前正在实现的方法的转换器
                      */
                     protected final Transformer<MethodDescription> transformer;
 
@@ -2771,9 +2771,9 @@ public interface DynamicType {
         }
 
         /**
-         * An abstract base implementation of a dynamic type builder.
+         * An abstract base implementation of a dynamic type builder. 动态类型生成器的抽象基实现
          *
-         * @param <S> A loaded type that the built type is guaranteed to be a subclass of.
+         * @param <S> A loaded type that the built type is guaranteed to be a subclass of. 一种装入的类型，生成的类型被保证是其子类
          */
         abstract class AbstractBase<S> implements Builder<S> {
 
@@ -3115,9 +3115,9 @@ public interface DynamicType {
             }
 
             /**
-             * A delegator for a dynamic type builder delegating all invocations to another dynamic type builder.
+             * A delegator for a dynamic type builder delegating all invocations to another dynamic type builder. 动态类型生成器的委托器，将所有调用委托给另一个动态类型生成器
              *
-             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of. 一种装入的类型，生成的类型被保证是其子类
              */
             public abstract static class Delegator<U> extends AbstractBase<U> {
 
@@ -4315,7 +4315,7 @@ public interface DynamicType {
                     }
 
                     /**
-                     * An annotation adapter for a method definition.
+                     * An annotation adapter for a method definition. 方法定义的注释适配器
                      */
                     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                     protected class AnnotationAdapter extends MethodDefinition.AbstractBase.Adapter<U> {
@@ -4323,7 +4323,7 @@ public interface DynamicType {
                         /**
                          * Creates a new annotation adapter.
                          *
-                         * @param handler The handler that determines how a method is implemented.
+                         * @param handler The handler that determines how a method is implemented. 确定如何实现方法的处理程序
                          */
                         protected AnnotationAdapter(MethodRegistry.Handler handler) {
                             this(handler,
@@ -4455,10 +4455,10 @@ public interface DynamicType {
                     }
 
                     /**
-                     * Materializes the method definition with the supplied handler.
-                     * 通过提供的处理程序具体化方法定义
-                     * @param handler The handler that implements any method matched by this instances matcher.
-                     * @return A method definition where any matched method is implemented by the supplied handler.
+                     * Materializes the method definition with the supplied handler. 通过提供的处理程序具体化方法定义
+                     *
+                     * @param handler The handler that implements any method matched by this instances matcher. 实现与此实例匹配器匹配的任何方法的处理程序
+                     * @return A method definition where any matched method is implemented by the supplied handler. 一种方法定义，其中任何匹配的方法都由提供的处理程序实现
                      */
                     private MethodDefinition.ReceiverTypeDefinition<U> materialize(MethodRegistry.Handler handler) {
                         return new AnnotationAdapter(handler);

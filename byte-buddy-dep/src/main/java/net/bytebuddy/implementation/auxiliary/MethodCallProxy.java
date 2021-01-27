@@ -79,8 +79,8 @@ public class MethodCallProxy implements AuxiliaryType {
      * Creates a new method call proxy for a given method and uses a default assigner for assigning the method's return
      * value to either the {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()} method returns. 为给定方法创建一个新的方法调用代理，并使用默认赋值器将方法的返回值赋值给 {java.util.concurrent.Callable#call()} 或 {@link Runnable#run()}} 方法返回
      *
-     * @param specialMethodInvocation The special method invocation which should be invoked by this method call proxy.
-     * @param serializableProxy       Determines if the generated proxy should be serializableProxy.
+     * @param specialMethodInvocation The special method invocation which should be invoked by this method call proxy. 此方法调用代理应该调用的特殊方法调用
+     * @param serializableProxy       Determines if the generated proxy should be serializableProxy. 确定生成的代理是否应为serializableProxy
      */
     public MethodCallProxy(Implementation.SpecialMethodInvocation specialMethodInvocation, boolean serializableProxy) {
         this(specialMethodInvocation, serializableProxy, Assigner.DEFAULT);
@@ -287,7 +287,7 @@ public class MethodCallProxy implements AuxiliaryType {
     }
 
     /**
-     * An implementation for a method of a {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy}.
+     * An implementation for a method of a {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy}. {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy} 方法的实现
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class MethodCall implements Implementation {
@@ -303,10 +303,10 @@ public class MethodCallProxy implements AuxiliaryType {
         private final Assigner assigner;
 
         /**
-         * Creates a new method call implementation.
+         * Creates a new method call implementation. 创建新的方法调用实现
          *
-         * @param accessorMethod The method that is accessed by the implemented method.
-         * @param assigner       The assigner to be used for invoking the accessor method.
+         * @param accessorMethod The method that is accessed by the implemented method. 由实现的方法访问的方法
+         * @param assigner       The assigner to be used for invoking the accessor method. 用于调用访问器方法的赋值器
          */
         protected MethodCall(MethodDescription accessorMethod, Assigner assigner) {
             this.accessorMethod = accessorMethod;

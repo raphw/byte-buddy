@@ -83,7 +83,7 @@ public interface ClassWriterStrategy {
         }
 
         /**
-         * Creates a new frame computing class writer.
+         * Creates a new frame computing class writer. 创建一个新的框架计算类编写器
          *
          * @param classReader The class reader from which the original class is read.
          * @param flags       The flags to be handed to the writer.

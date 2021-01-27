@@ -50,10 +50,10 @@ public class OpenedClassReader {
     }
 
     /**
-     * Creates a class reader for the given binary representation of a class file.
+     * Creates a class reader for the given binary representation of a class file. 为类文件的给定二进制表示形式创建类读取器
      *
-     * @param binaryRepresentation The binary representation of a class file to read.
-     * @return An appropriate class reader.
+     * @param binaryRepresentation The binary representation of a class file to read. 要读取的类文件的二进制表示
+     * @return An appropriate class reader. 一个合适的类读取器
      */
     public static ClassReader of(byte[] binaryRepresentation) {
         if (EXPERIMENTAL) {

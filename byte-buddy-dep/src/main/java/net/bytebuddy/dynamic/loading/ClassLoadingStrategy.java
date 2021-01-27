@@ -16,7 +16,7 @@ import java.util.Map;
 public interface ClassLoadingStrategy<T extends ClassLoader> {
 
     /**
-     * A type-safe constant representing the bootstrap class loader which is represented by {@code null} within Java.
+     * A type-safe constant representing the bootstrap class loader which is represented by {@code null} within Java. 一个类型安全常量，表示引导类装入器，在Java中由 {@code null} 表示
      */
     ClassLoader BOOTSTRAP_LOADER = null;
 

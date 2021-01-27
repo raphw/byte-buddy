@@ -163,7 +163,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     TypeDescription getDeclaringType();
 
     /**
-     * Returns a list of types that are declared by this type excluding anonymous classes.
+     * Returns a list of types that are declared by this type excluding anonymous classes. 返回此类型声明的类型列表，不包括匿名类
      *
      * @return A list of types that are declared within this type.
      */

@@ -137,7 +137,7 @@ public interface PackageDefinitionStrategy {
         boolean isCompatibleTo(Package definedPackage);
 
         /**
-         * A canonical implementation of an undefined package.
+         * A canonical implementation of an undefined package. 未定义包的规范实现
          */
         enum Undefined implements Definition {
 
@@ -193,7 +193,7 @@ public interface PackageDefinitionStrategy {
         }
 
         /**
-         * A package definer that defines packages without any meta data.
+         * A package definer that defines packages without any meta data. 一个包定义器，它定义没有任何元数据的包
          */
         enum Trivial implements Definition {
 

@@ -7,7 +7,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * Represents a stack manipulation to load a {@code null} pointer onto the operand stack.
+ * Represents a stack manipulation to load a {@code null} pointer onto the operand stack. 表示将{@code null}指针加载到操作数堆栈上的堆栈操作
  */
 public enum NullConstant implements StackManipulation {
 

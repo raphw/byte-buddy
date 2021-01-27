@@ -56,9 +56,9 @@ public interface ConstructorStrategy {
         /**
          * This strategy is adding no constructors such that the instrumented type will by default not have any. This
          * is legal by Java byte code requirements. However, if no constructor is added manually if this strategy is
-         * applied, the type is not constructable without using JVM non-public functionality. 此策略不添加构造函数，这样插入指令的类型在默认情况下将没有任何构造函数。对于Java字节码而言是合理的。但是，如果应用此策略时没有手动添加构造函数，则在不使用JVM非公共功能的情况下无法构造类型
+         * applied, the type is not constructable without using JVM non-public functionality. 此策略不添加构造函数，这样 插桩类型 在默认情况下将没有任何构造函数。对于Java字节码而言是合理的。但是，如果应用此策略时没有手动添加构造函数，则在不使用JVM非公共功能的情况下无法构造类型
          */
-        NO_CONSTRUCTORS {
+        NO_CONSTRUCTORS { // 也就意味着必须手动添加构造函数
             @Override
             protected List<MethodDescription.Token> doExtractConstructors(TypeDescription superClass) {
                 return Collections.emptyList();
@@ -74,7 +74,7 @@ public interface ConstructorStrategy {
          * This strategy is adding a default constructor that calls it's super types default constructor. If no such
          * constructor is defined by the super class, an {@link IllegalArgumentException} is thrown. Note that the default
          * constructor needs to be visible to its sub type for this strategy to work. The declared default constructor of
-         * the created class is declared public and without annotations.
+         * the created class is declared public and without annotations. 这个策略是添加一个默认构造函数来调用它的超类型默认构造函数。如果超类没有定义这样的构造函数，则抛出{@link IllegalArgumentException}。请注意，默认构造函数需要对其子类型可见，才能使此策略正常工作。所创建类的声明的默认构造函数被声明为public，并且没有注释
          */
         DEFAULT_CONSTRUCTOR {
             @Override
@@ -103,7 +103,7 @@ public interface ConstructorStrategy {
          * This strategy is adding all constructors of the instrumented type's super class where each constructor is
          * directly invoking its signature-equivalent super class constructor. Only constructors that are visible to the
          * instrumented type are added, i.e. package-private constructors are only added if the super type is defined
-         * in the same package as the instrumented type and private constructors are always skipped.
+         * in the same package as the instrumented type and private constructors are always skipped. 此策略是添加插桩类型的超类的所有构造函数，其中每个构造函数直接调用其签名等价的超类构造函数。只添加对插桩类型可见的构造函数，即仅当超级类型与插桩类型在同一个包中定义并且始终跳过私有构造函数时，才添加包私有构造函数
          */
         IMITATE_SUPER_CLASS {
             @Override
@@ -126,7 +126,7 @@ public interface ConstructorStrategy {
         /**
          * This strategy is adding all constructors of the instrumented type's super class where each constructor is
          * directly invoking its signature-equivalent super class constructor. Only {@code public} constructors are
-         * added.
+         * added. 此策略是添加插桩类型的超类的所有构造函数，其中每个构造函数直接调用其签名等价的超类构造函数。只添加{@code public}构造函数
          */
         IMITATE_SUPER_CLASS_PUBLIC {
             @Override

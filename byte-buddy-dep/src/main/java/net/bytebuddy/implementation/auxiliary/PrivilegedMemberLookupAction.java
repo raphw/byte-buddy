@@ -24,7 +24,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
- * A {@link PrivilegedExceptionAction} to lookup a method constant using an {@link java.security.AccessController}.
+ * A {@link PrivilegedExceptionAction} to lookup a method constant using an {@link java.security.AccessController}. {@link PrivilegedExceptionAction} 使用 {@link java.security.AccessController} 查找方法常量
  */
 public enum PrivilegedMemberLookupAction implements AuxiliaryType {
 
@@ -49,12 +49,12 @@ public enum PrivilegedMemberLookupAction implements AuxiliaryType {
     FOR_DECLARED_CONSTRUCTOR("getDeclaredConstructor", "parameters", Class[].class);
 
     /**
-     * The name of the field that holds the type instance to look the method up from.
+     * The name of the field that holds the type instance to look the method up from. 保存要从中查找方法的类型实例的字段的名称
      */
     private static final String TYPE_FIELD = "type";
 
     /**
-     * The default constructor of the {@link Object} class.
+     * The default constructor of the {@link Object} class. {@link Object} 类的默认构造函数
      */
     private static final MethodDescription.InDefinedShape DEFAULT_CONSTRUCTOR = TypeDescription.OBJECT.getDeclaredMethods()
             .filter(isConstructor())
@@ -66,12 +66,12 @@ public enum PrivilegedMemberLookupAction implements AuxiliaryType {
     private final MethodDescription.InDefinedShape methodDescription;
 
     /**
-     * A mapping of field names to their types in a fixed iteration order.
+     * A mapping of field names to their types in a fixed iteration order. 以固定的迭代顺序将字段名映射到其类型
      */
     private final Map<String, Class<?>> fields;
 
     /**
-     * Creates a privileged method constant action with one argument.
+     * Creates a privileged method constant action with one argument. 使用一个参数创建特权方法常量操作
      *
      * @param name  The name of the method.
      * @param field The name of a field to define.
@@ -87,7 +87,7 @@ public enum PrivilegedMemberLookupAction implements AuxiliaryType {
     }
 
     /**
-     * Creates a privileged method constant action with one argument.
+     * Creates a privileged method constant action with one argument. 使用一个参数创建特权方法常量操作
      *
      * @param name        The name of the method.
      * @param firstField  The name of the first field to define.
@@ -107,10 +107,10 @@ public enum PrivilegedMemberLookupAction implements AuxiliaryType {
     }
 
     /**
-     * Returns an auxiliary type for loading the supplied method description as a constant.
+     * Returns an auxiliary type for loading the supplied method description as a constant. 返回用于将提供的方法描述作为常量加载的辅助类型
      *
-     * @param methodDescription The method description to represent as a constant.
-     * @return An appropriate auxiliary type.
+     * @param methodDescription The method description to represent as a constant. 表示为常量的方法描述
+     * @return An appropriate auxiliary type. 适当的辅助类型
      */
     public static AuxiliaryType of(MethodDescription methodDescription) {
         if (methodDescription.isConstructor()) {

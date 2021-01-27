@@ -145,7 +145,7 @@ public interface LatentMatcher<T> {
     }
 
     /**
-     * A latent matcher where the method token is being attached to the supplied type description before matching.
+     * A latent matcher where the method token is being attached to the supplied type description before matching. 一种潜在的匹配器，其中方法标记在匹配之前附加到提供的类型描述
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ForMethodToken implements LatentMatcher<MethodDescription> {

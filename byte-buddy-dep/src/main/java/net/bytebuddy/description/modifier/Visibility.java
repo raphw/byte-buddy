@@ -3,7 +3,7 @@ package net.bytebuddy.description.modifier;
 import org.objectweb.asm.Opcodes;
 
 /**
- * Describes a type's, field's or a method's visibility.
+ * Describes a type's, field's or a method's visibility. 描述类型、字段或方法的可见性
  */
 public enum Visibility implements ModifierContributor.ForType, ModifierContributor.ForMethod, ModifierContributor.ForField {
 

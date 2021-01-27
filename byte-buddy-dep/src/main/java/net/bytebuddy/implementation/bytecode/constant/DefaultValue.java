@@ -6,7 +6,7 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import org.objectweb.asm.MethodVisitor;
 
 /**
- * Represents a stack assignment that loads the default value of a given type onto the stack.
+ * Represents a stack assignment that loads the default value of a given type onto the stack. 表示将给定类型的默认值加载到堆栈的堆栈分配
  */
 public enum DefaultValue implements StackManipulation {
 
@@ -57,9 +57,9 @@ public enum DefaultValue implements StackManipulation {
     }
 
     /**
-     * Creates a stack assignment that loads the default value for a given type.
+     * Creates a stack assignment that loads the default value for a given type. 创建为给定类型加载默认值的堆栈赋值
      *
-     * @param typeDefinition The type for which a default value should be loaded onto the operand stack.
+     * @param typeDefinition The type for which a default value should be loaded onto the operand stack. 应将其默认值加载到操作数堆栈的类型
      * @return A stack manipulation loading the default value for the given type.
      */
     public static StackManipulation of(TypeDefinition typeDefinition) {

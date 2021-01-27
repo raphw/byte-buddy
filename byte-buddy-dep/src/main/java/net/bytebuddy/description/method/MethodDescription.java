@@ -1273,19 +1273,19 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         /**
-         * A method description that represents the type initializer. 表示类型初始值设定项的方法描述
+         * A method description that represents the type initializer. 表示类初始化器的方法描述 <clinit>
          */
         public static class TypeInitializer extends InDefinedShape.AbstractBase {
 
             /**
-             * The type for which the type initializer should be represented.
+             * The type for which the type initializer should be represented. 应为其表示类型初始值设定项的类型
              */
             private final TypeDescription typeDescription;
 
             /**
-             * Creates a new method description representing the type initializer.
+             * Creates a new method description representing the type initializer. 创建表示类型初始值设定项的新方法描述
              *
-             * @param typeDescription The type for which the type initializer should be represented.
+             * @param typeDescription The type for which the type initializer should be represented. 应为其表示类型初始值设定项的类型
              */
             public TypeInitializer(TypeDescription typeDescription) {
                 this.typeDescription = typeDescription;
@@ -1669,7 +1669,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         /**
-         * Creates a signature token that represents the method that is represented by this token.
+         * Creates a signature token that represents the method that is represented by this token. 创建表示此标记所表示的方法的签名标记
          *
          * @param declaringType The declaring type of the method that this token represents.
          * @return A signature token representing this token.

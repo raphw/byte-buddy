@@ -67,13 +67,13 @@ public interface FieldRegistry {
     }
 
     /**
-     * An immutable default implementation of a field registry.
+     * An immutable default implementation of a field registry. 字段注册的不可变默认实现
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Default implements FieldRegistry {
 
         /**
-         * This registries entries.
+         * This registries entries. 注册条目
          */
         private final List<Entry> entries;
 

@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * <p>
- * A cache for storing types without strongly referencing any class loader or type.
+ * A cache for storing types without strongly referencing any class loader or type. 用于存储类型而不强引用任何类加载器或类型的缓存
  * </p>
  * <p>
  * <b>Note</b>: In order to clean obsolete class loader references from the map, {@link TypeCache#expungeStaleEntries()} must be called
@@ -121,7 +121,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     }
 
     /**
-     * Finds an existing type or inserts a new one if the previous type was not found.
+     * Finds an existing type or inserts a new one if the previous type was not found. 查找现有类型，如果找不到以前的类型，则插入新类型
      *
      * @param classLoader The class loader for which this type is stored.
      * @param key         The key for the type in question.

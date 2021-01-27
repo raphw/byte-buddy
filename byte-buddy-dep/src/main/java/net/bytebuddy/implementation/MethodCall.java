@@ -39,7 +39,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * This {@link Implementation} allows the invocation of a specified method while
- * providing explicit arguments to this method. 这个{@link Implementation}允许调用指定的方法，同时为这个方法提供显式参数
+ * providing explicit arguments to this method. 这个 {@link Implementation} 允许调用指定的方法，同时为这个方法提供显式参数
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class MethodCall implements Implementation.Composable {
@@ -55,7 +55,7 @@ public class MethodCall implements Implementation.Composable {
     protected final TargetHandler targetHandler;
 
     /**
-     * The argument loader to load arguments onto the operand stack in their application order.
+     * The argument loader to load arguments onto the operand stack in their application order. 参数加载器，用于按应用程序顺序将参数加载到操作数堆栈
      */
     protected final List<ArgumentLoader.Factory> argumentLoaders;
 
@@ -75,7 +75,7 @@ public class MethodCall implements Implementation.Composable {
     protected final Assigner assigner;
 
     /**
-     * Indicates if dynamic type castings should be attempted for incompatible assignments.
+     * Indicates if dynamic type castings should be attempted for incompatible assignments. 指示是否应尝试对不兼容的分配进行动态类型转换
      */
     protected final Assigner.Typing typing;
 
@@ -138,22 +138,22 @@ public class MethodCall implements Implementation.Composable {
      * <p>
      * Invokes the given method. If the method description describes a constructor, it is automatically invoked as
      * a special method invocation on the instance of the instrumented type. The same is true for {@code private}
-     * methods. Finally, {@code static} methods are invoked statically.
+     * methods. Finally, {@code static} methods are invoked statically. 调用给定的方法。如果方法描述描述了一个构造函数，那么它将作为一个特殊的方法调用在插入指令类型的实例上自动调用。{@code private}方法也是如此。最后，静态调用{@code static}方法
      * </p>
      * <p>
      * <b>Important</b>: A constructor invocation can only be applied within another constructor to invoke the super constructor or an auxiliary
-     * constructor. To construct a new instance, use {@link MethodCall#construct(MethodDescription)}.
+     * constructor. To construct a new instance, use {@link MethodCall#construct(MethodDescription)}. 构造函数调用只能在另一个构造函数中应用，以调用父构造函数或辅助构造函数。要构造新实例，请使用 {@link MethodCall#construct(MethodDescription)}
      * </p>
      *
      * @param methodDescription The method to invoke.
-     * @return A method call implementation that invokes the given method without providing any arguments.
+     * @return A method call implementation that invokes the given method without providing any arguments. 调用给定方法而不提供任何参数的方法调用实现
      */
     public static WithoutSpecifiedTarget invoke(MethodDescription methodDescription) {
         return invoke(new MethodLocator.ForExplicitMethod(methodDescription));
     }
 
     /**
-     * Invokes a unique virtual method of the instrumented type that is matched by the specified matcher.
+     * Invokes a unique virtual method of the instrumented type that is matched by the specified matcher. 调用由指定匹配器匹配的检测类型的唯一虚拟方法
      *
      * @param matcher The matcher to identify the method to invoke.
      * @return A method call for the uniquely identified method.
@@ -163,23 +163,23 @@ public class MethodCall implements Implementation.Composable {
     }
 
     /**
-     * Invokes a unique virtual method of the instrumented type that is matched by the specified matcher.
+     * Invokes a unique virtual method of the instrumented type that is matched by the specified matcher. 调用由指定匹配器匹配的检测类型的唯一虚拟方法
      *
-     * @param matcher             The matcher to identify the method to invoke.
-     * @param methodGraphCompiler The method graph compiler to use.
-     * @return A method call for the uniquely identified method.
+     * @param matcher             The matcher to identify the method to invoke. 用于标识要调用的方法的匹配器
+     * @param methodGraphCompiler The method graph compiler to use. 图形编译器要使用的方法
+     * @return A method call for the uniquely identified method. 唯一标识方法的方法调用
      */
     public static WithoutSpecifiedTarget invoke(ElementMatcher<? super MethodDescription> matcher, MethodGraph.Compiler methodGraphCompiler) {
         return invoke(new MethodLocator.ForElementMatcher(matcher, methodGraphCompiler));
     }
 
     /**
-     * Invokes a method using the provided method locator.
+     * Invokes a method using the provided method locator. 使用提供的方法定位器调用方法
      *
      * @param methodLocator The method locator to apply for locating the method to invoke given the instrumented
-     *                      method.
+     *                      method. 应用于定位 给定插桩方法 调用的方法的方法定位器
      * @return A method call implementation that uses the provided method locator for resolving the method
-     * to be invoked.
+     * to be invoked. 一种方法调用实现，它使用提供的方法定位器来解析要调用的方法
      */
     public static WithoutSpecifiedTarget invoke(MethodLocator methodLocator) {
         return new WithoutSpecifiedTarget(methodLocator);
@@ -557,11 +557,11 @@ public class MethodCall implements Implementation.Composable {
      * is also used for assigning the invoked method's return value to the return type of the instrumented method,
      * if this method is not chained with
      * {@link net.bytebuddy.implementation.MethodCall#andThen(Implementation)} such
-     * that a return value of this method call is discarded.
+     * that a return value of this method call is discarded. 定义用于将值分配给所调用方法的参数的赋值器。如果此方法未与 {@link net.bytebuddy.implementation.MethodCall#andThen(Implementation)} 链接，从而丢弃此方法调用的返回值，则此赋值器还用于将调用方法的返回值赋给插入指令的方法的返回类型
      *
      * @param assigner The assigner to use.
-     * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
-     * @return This method call using the provided assigner.
+     * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments. 指示是否应尝试对不兼容的分配进行动态类型转换
+     * @return This method call using the provided assigner. 此方法使用提供的赋值器调用
      */
     public Implementation.Composable withAssigner(Assigner assigner, Assigner.Typing typing) {
         return new MethodCall(methodLocator,
@@ -652,7 +652,7 @@ public class MethodCall implements Implementation.Composable {
             private final MethodDescription methodDescription;
 
             /**
-             * Creates a new method locator for a given method.
+             * Creates a new method locator for a given method. 为给定方法创建新的方法定位器
              *
              * @param methodDescription The method to be invoked.
              */
@@ -1537,20 +1537,20 @@ public class MethodCall implements Implementation.Composable {
 
     /**
      * A target handler is responsible for invoking a method for a
-     * {@link net.bytebuddy.implementation.MethodCall}.
+     * {@link net.bytebuddy.implementation.MethodCall}. 目标处理程序负责调用 {@link net.bytebuddy.implementation.MethodCall} 的方法
      */
     protected interface TargetHandler extends InstrumentedType.Prepareable {
 
         /**
-         * Creates a stack manipulation that represents the method's invocation.
+         * Creates a stack manipulation that represents the method's invocation. 创建表示方法调用的堆栈操作
          *
-         * @param implementationTarget The implementation target.
-         * @param invokedMethod        The method to be invoked.
-         * @param instrumentedMethod   The instrumented method.
+         * @param implementationTarget The implementation target. 实现目标
+         * @param invokedMethod        The method to be invoked. 要调用的方法
+         * @param instrumentedMethod   The instrumented method.  被插桩方法
          * @param instrumentedType     The instrumented type.  @return A stack manipulation that invokes the method.
          * @param assigner             The assigner to use.
          * @param typing               The typing to apply.
-         * @return A stack manipulation that loads the method target onto the operand stack.
+         * @return A stack manipulation that loads the method target onto the operand stack. 将方法目标加载到操作数堆栈的堆栈操作
          */
         StackManipulation resolve(Target implementationTarget,
                                   MethodDescription invokedMethod,
@@ -1570,7 +1570,7 @@ public class MethodCall implements Implementation.Composable {
 
         /**
          * A target handler that invokes a method either on the instance of the instrumented
-         * type or as a static method.
+         * type or as a static method. 在插桩类型的实例上或作为静态方法调用方法的目标处理程序
          */
         enum ForSelfOrStaticInvocation implements TargetHandler {
 
@@ -1615,7 +1615,7 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * Invokes a method in order to construct a new instance.
+         * Invokes a method in order to construct a new instance. 调用方法以构造新实例
          */
         enum ForConstructingInvocation implements TargetHandler {
 
@@ -1647,7 +1647,7 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * A target handler that invokes a method on an instance that is stored in a static field.
+         * A target handler that invokes a method on an instance that is stored in a static field. 对存储在静态字段中的实例调用方法的目标处理程序
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForValue implements TargetHandler {
@@ -1718,7 +1718,7 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * Creates a target handler that stores the instance to invoke a method on in an instance field.
+         * Creates a target handler that stores the instance to invoke a method on in an instance field. 创建一个目标处理程序，该处理程序在实例字段中存储要调用方法的实例
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForField implements TargetHandler {
@@ -1790,7 +1790,7 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * A target handler that loads the parameter of the given index as the target object.
+         * A target handler that loads the parameter of the given index as the target object. 将给定索引的参数作为目标对象加载的目标处理程序
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForMethodParameter implements TargetHandler {
@@ -1842,7 +1842,7 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * A target handler that executes the method and uses it's return value as the target object.
+         * A target handler that executes the method and uses it's return value as the target object. 执行方法并将其返回值用作目标对象的目标处理程序
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForMethodCall implements TargetHandler {
@@ -1895,7 +1895,7 @@ public class MethodCall implements Implementation.Composable {
 
     /**
      * A method invoker is responsible for creating a method invocation that is to be applied by a
-     * {@link net.bytebuddy.implementation.MethodCall}.
+     * {@link net.bytebuddy.implementation.MethodCall}. 方法调用程序负责创建 {@link net.bytebuddy.implementation.MethodCall} 应用的方法调用
      */
     protected interface MethodInvoker {
 
@@ -1931,7 +1931,7 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * Applies a virtual invocation on a given type.
+         * Applies a virtual invocation on a given type. 对给定类型应用虚拟调用
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForVirtualInvocation implements MethodInvoker {
@@ -1972,7 +1972,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             /**
-             * A method invoker for a virtual method that uses an implicit target type.
+             * A method invoker for a virtual method that uses an implicit target type. 使用隐式目标类型的虚拟方法的方法调用程序
              */
             public enum WithImplicitType implements MethodInvoker {
 
@@ -2042,7 +2042,7 @@ public class MethodCall implements Implementation.Composable {
 
     /**
      * A termination handler is responsible to handle the return value of a method that is invoked via a
-     * {@link net.bytebuddy.implementation.MethodCall}.
+     * {@link net.bytebuddy.implementation.MethodCall}. 终止处理程序负责处理通过 {@link net.bytebuddy.implementation.MethodCall} 调用的方法的返回值
      */
     protected enum TerminationHandler {
 
@@ -2063,7 +2063,7 @@ public class MethodCall implements Implementation.Composable {
         },
 
         /**
-         * A termination handler that drops the invoked method's return value.
+         * A termination handler that drops the invoked method's return value. 删除被调用方法返回值的终止处理程序
          */
         DROPPING {
             @Override
@@ -2094,7 +2094,7 @@ public class MethodCall implements Implementation.Composable {
      * an invocation method. Some methods can for example be invoked both virtually or as a super method invocation.
      * Similarly, interface methods can be invoked virtually or as an explicit invocation of a default method. If
      * no explicit invocation type is set, a method is always invoked virtually unless the method
-     * represents a static methods or a constructor.
+     * represents a static methods or a constructor. 表示调用方法而不指定调用方法的 {@link net.bytebuddy.implementation.MethodCall}。例如，有些方法可以虚拟调用，也可以作为超级方法调用。类似地，接口方法可以虚拟调用，也可以作为默认方法的显式调用。如果未设置显式调用类型，则始终虚拟调用方法，除非该方法表示静态方法或构造函数
      */
     public static class WithoutSpecifiedTarget extends MethodCall {
 

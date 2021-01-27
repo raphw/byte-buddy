@@ -80,7 +80,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     /**
-     * Creates a new type builder for creating a subclass.
+     * Creates a new type builder for creating a subclass. 创建用于创建子类的新类型生成器
      *
      * @param instrumentedType             An instrumented type representing the subclass.
      * @param fieldRegistry                The field pool to use.

@@ -1342,7 +1342,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         /**
-         * Checks if a Java identifier is valid.
+         * Checks if a Java identifier is valid. 检查 Java 标识符是否有效
          *
          * @param identifier The identifier to check for validity.
          * @return {@code true} if the given identifier is valid.
@@ -1378,7 +1378,7 @@ public interface InstrumentedType extends TypeDescription {
         private final LoadedTypeInitializer loadedTypeInitializer;
 
         /**
-         * Creates a new frozen representation of an instrumented type.
+         * Creates a new frozen representation of an instrumented type. 创建插桩类型的新冻结表示
          *
          * @param typeDescription       The represented type description.
          * @param loadedTypeInitializer The type's loaded type initializer.

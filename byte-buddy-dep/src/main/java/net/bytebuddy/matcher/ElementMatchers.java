@@ -1516,7 +1516,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Only matches method descriptions that represent a {@link java.lang.Class} type initializer.
+     * Only matches method descriptions that represent a {@link java.lang.Class} type initializer. 只匹配表示 {@link java.lang.Class} 类型初始值设定项的方法描述
      *
      * @param <T> The type of the matched object.
      * @return A matcher that only matches method descriptions that represent the type initializer.
