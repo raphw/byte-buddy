@@ -784,9 +784,9 @@ assertThat(foo.m(), is("bar"));
     copies of the original methods for any rebased class such that class rebasing does not work for the
     <code>ClassReloadingStrategy</code>. Also, class redefinition does not work for classes with an explicit class
     initializer method (a static block within a class) because this initializer needs to be copied into an extra method
-    as well. There are however <a href="http://openjdk.java.net/jeps/159">plans to extend HotSwap in the future</a>
-    and Byte Buddy stands ready to promptly use this feature, once it is hopefully implemented. In the mean time, Byte
-    Buddy's HotSwap support can be used for corner-cases where it seems useful. Otherwise, class rebasing and
+    as well. Unfortunately OpenJDK has withdrawn from <a href="http://openjdk.java.net/jeps/159">extending HotSwap
+    functionality</a>, so there is no way to work around this limitation using the HotSwap feature. In the mean time,
+    Byte Buddy's HotSwap support can be used for corner-cases where it seems useful. Otherwise, class rebasing and
     redefinition can be a convenient feature when enhancing existing classes from for example a build script.
 </p>
 
