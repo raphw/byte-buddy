@@ -48,10 +48,10 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
     <T> T accept(Visitor<T> visitor);
 
     /**
-     * Checks if this type variable source has a generic declaration. This means:
+     * Checks if this type variable source has a generic declaration. This means: 检查此类型变量源是否具有泛型声明。这意味着
      * <ul>
-     * <li>A type declares type variables or is an inner class of a type with a generic declaration.</li>
-     * <li>A method declares at least one type variable.</li>
+     * <li>A type declares type variables or is an inner class of a type with a generic declaration.</li> 类型声明类型变量或是具有泛型声明的类型的内部类
+     * <li>A method declares at least one type variable.</li> 方法至少声明一个类型变量
      * </ul>
      *
      * @return {@code true} if this type code element has a generic declaration.

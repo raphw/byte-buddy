@@ -1687,12 +1687,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 public static class ForAttachment extends Substitutor {
                     // 定位一个成员，并且替代旧成员，后面操作这个成员
                     /**
-                     * The declaring type which is filled in for {@link TargetType}.
+                     * The declaring type which is filled in for {@link TargetType}. 为{@link TargetType}填写的声明类型
                      */
                     private final TypeDescription declaringType;
 
                     /**
-                     * The source which is used for locating type variables.
+                     * The source which is used for locating type variables. 用于定位类型变量的源
                      */
                     private final TypeVariableSource typeVariableSource;
 
@@ -1721,7 +1721,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * Attaches all types to the given field description. 将所有类型附加到给定的字段说明
                      *
                      * @param fieldDescription The field description to which visited types should be attached to. 访问类型应附加到的字段说明
-                     * @return A substitutor that attaches visited types to the given field's type context.
+                     * @return A substitutor that attaches visited types to the given field's type context. 将访问的类型附加到给定字段的类型上下文的替换符
                      */
                     public static ForAttachment of(FieldDescription fieldDescription) {
                         return new ForAttachment(fieldDescription.getDeclaringType(), fieldDescription.getDeclaringType().asErasure());
@@ -4948,17 +4948,17 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * Implementation of a symbolic type variable.
+             * Implementation of a symbolic type variable. 符号类型变量的实现
              */
             public static class Symbolic extends Generic.AbstractBase {
 
                 /**
-                 * The symbol of the symbolic type variable.
+                 * The symbol of the symbolic type variable. 符号类型变量的符号
                  */
                 private final String symbol;
 
                 /**
-                 * The annotation source to query for the declared annotations.
+                 * The annotation source to query for the declared annotations. 注解源用于查询声明的注解
                  */
                 private final AnnotationSource annotationSource;
 
@@ -5391,7 +5391,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * A lazy projection of a type with a lazy resolution of super class and interface types. A lazy navigation
              * must only be used for describing types that are guaranteed to define a super class and interface types,
              * i.e. non-generic types and parameterized types. Lazy navigation can also be applied to array types where
-             * the usage does however make little sense as those properties are never generic.
+             * the usage does however make little sense as those properties are never generic. 具有超类和接口类型的延迟解析的类型的延迟投影。惰性导航只能用于描述保证定义超类和接口类型的类型，即非泛型类型和参数化类型。惰性导航也可以应用于数组类型，但是这些类型的用法没有什么意义，因为这些属性从来都不是泛型的
              */
             public abstract static class WithLazyNavigation extends LazyProjection {
 
@@ -5776,7 +5776,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * A lazy projection of the parameter type of a {@link Method}. {@link Method}的参数类型的延迟投影
+             * A lazy projection of the parameter type of a {@link Method}. {@link Method}的参数类型的延迟映射
              */
             public static class OfMethodParameter extends LazyProjection.WithEagerNavigation.OfAnnotatedElement {
 
@@ -5889,7 +5889,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         /**
-         * A builder for creating describing a generic type as a {@link Generic}.
+         * A builder for creating describing a generic type as a {@link Generic}. 用于创建将泛型类型描述为 {@link generic} 的生成器
          */
         @HashCodeAndEqualsPlugin.Enhance
         abstract class Builder {
@@ -6596,7 +6596,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             if (sourceType.equals(targetType)) {
                 return true;
             }
-            // (2) For arrays, there are special assignment rules.
+            // (2) For arrays, there are special assignment rules. 对于数组，有特殊的赋值规则
             if (targetType.isArray()) {
                 return sourceType.isArray()
                         ? isAssignable(sourceType.getComponentType(), targetType.getComponentType())
@@ -7571,7 +7571,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         /**
-         * A dispatcher for using methods of {@link Class} that are not declared for Java 6.
+         * A dispatcher for using methods of {@link Class} that are not declared for Java 6. 用于使用未为Java6声明的 {@link Class} 方法的调度器
          */
         protected interface Dispatcher {
 
@@ -7623,7 +7623,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * A dispatcher for a legacy VM.
+             * A dispatcher for a legacy VM. 旧VM的调度器
              */
             enum ForLegacyVm implements Dispatcher {
 
@@ -7943,7 +7943,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
     /**
      * <p>
-     * A latent type description for a type without methods or fields.
+     * A latent type description for a type without methods or fields. 没有方法或字段的类型的潜在类描述
      * </p>
      * <p>
      * <b>Important</b>: This type does not define most of its properties and should only be used as a simple placeholder. For more
@@ -8205,7 +8205,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     }
 
     /**
-     * A delegating type description that always attempts to load the super types of a delegate type.  代表了这样的类型：总是企图去加载委托类的父类  名字也可以看出来，就是代表加载super类型的工具类的类型
+     * A delegating type description that always attempts to load the super types of a delegate type.  代表了这样的类型：总是企图去加载委托类的父类  名字也可以看出来，就是代表加载super类的工具类的类型
      */
     class SuperTypeLoading extends AbstractBase {
 
@@ -8408,7 +8408,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         /**
-         * A type projection that attempts to load any super type of the delegate type.
+         * A type projection that attempts to load any super type of the delegate type. 试图加载委托类型的任何超类的类型投影
          */
         protected static class ClassLoadingTypeProjection extends TypeDescription.Generic.LazyProjection {
 
@@ -8494,7 +8494,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         /**
-         * A type list that attempts loading any type.
+         * A type list that attempts loading any type. 尝试加载任何类型的类型列表
          */
         protected static class ClassLoadingTypeList extends TypeList.Generic.AbstractBase {
 
@@ -8538,3 +8538,21 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
     }
 }
+/**
+ * java -- JVM的符号引用和直接引用
+ * 在JVM中类加载过程中，在解析阶段，Java虚拟机会把类的二级制数据中的符号引用替换为直接引用
+ *
+ * 1.符号引用（Symbolic References）：
+ * 　　符号引用以一组符号来描述所引用的目标，符号可以是任何形式的字面量，只要使用时能够无歧义的定位到目标即可。例如，在Class文件中它以CONSTANT_Class_info、CONSTANT_Fieldref_info、CONSTANT_Methodref_info等类型的常量出现。
+ * 符号引用与虚拟机的内存布局无关，引用的目标并不一定加载到内存中。在Java中，一个java类将会编译成一个class文件。在编译时，java类并不知道所引用的类的实际地址，因此只能使用符号引用来代替。
+ * 比如org.simple.People类引用了org.simple.Language类，在编译时People类并不知道Language类的实际内存地址，因此只能使用符号org.simple.Language（假设是这个，当然实际中是由类似于CONSTANT_Class_info的常量来表示的）来表示Language类的地址。
+ * 各种虚拟机实现的内存布局可能有所不同，但是它们能接受的符号引用都是一致的，因为符号引用的字面量形式明确定义在Java虚拟机规范的Class文件格式中
+ *
+ *
+ * 2.直接引用：
+ *  直接引用可以是
+ * （1）直接指向目标的指针（比如，指向“类型”【Class对象】、类变量、类方法的直接引用可能是指向方法区的指针）
+ * （2）相对偏移量（比如，指向实例变量、实例方法的直接引用都是偏移量）
+ * （3）一个能间接定位到目标的句柄
+ * 直接引用是和虚拟机的布局相关的，同一个符号引用在不同的虚拟机实例上翻译出来的直接引用一般不会相同。如果有了直接引用，那引用的目标必定已经被加载入内存中了
+ */

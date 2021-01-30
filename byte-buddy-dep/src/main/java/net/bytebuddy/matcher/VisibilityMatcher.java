@@ -5,7 +5,7 @@ import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDescription;
 
 /**
- * An element matcher that validates that a given byte code element is visible to a given type.
+ * An element matcher that validates that a given byte code element is visible to a given type. 验证给定字节码元素对给定类型可见的元素匹配器
  *
  * @param <T>The type of the matched entity.
  */
@@ -13,7 +13,7 @@ import net.bytebuddy.description.type.TypeDescription;
 public class VisibilityMatcher<T extends ByteCodeElement> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
-     * The type that is to be checked for its viewing rights.
+     * The type that is to be checked for its viewing rights. 要检查其查看权限的类型
      */
     private final TypeDescription typeDescription;
 

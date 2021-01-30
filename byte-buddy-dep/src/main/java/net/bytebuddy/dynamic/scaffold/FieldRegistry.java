@@ -164,7 +164,7 @@ public interface FieldRegistry {
             }
 
             /**
-             * Returns the field attribute appender factory to apply on any matched field.
+             * Returns the field attribute appender factory to apply on any matched field. 返回要应用于任何匹配字段的字段属性appender factory
              *
              * @return The field attribute appender factory to apply on any matched field.
              */
@@ -278,11 +278,11 @@ public interface FieldRegistry {
                 }
 
                 /**
-                 * Binds this entry to the provided field description.
+                 * Binds this entry to the provided field description. 将此条目绑定到提供的字段描述
                  *
                  * @param instrumentedType The instrumented type for which this entry applies.
                  * @param fieldDescription The field description to be bound to this entry.
-                 * @return A record representing the binding of this entry to the provided field.
+                 * @return A record representing the binding of this entry to the provided field. 表示此项与所提供字段绑定的记录
                  */
                 protected Record bind(TypeDescription instrumentedType, FieldDescription fieldDescription) {
                     return new Record.ForExplicitField(fieldAttributeAppender, defaultValue, transformer.transform(instrumentedType, fieldDescription));

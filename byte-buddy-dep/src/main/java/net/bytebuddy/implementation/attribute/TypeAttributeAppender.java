@@ -42,7 +42,7 @@ public interface TypeAttributeAppender {
     }
 
     /**
-     * An attribute appender that writes all annotations that are found on a given target type to the  一种属性追加器，它将在给定目标类型上找到的所有注解写入应用此类型属性追加器的检测类型
+     * An attribute appender that writes all annotations that are found on a given target type to the  一种属性追加器，它将在给定目标类型上找到的所有注解写入应用此类型属性追加器的插桩类
      * instrumented type this type attribute appender is applied onto. The visibility for the annotation
      * will be inferred from the annotations' {@link java.lang.annotation.RetentionPolicy}.
      */
@@ -54,7 +54,7 @@ public interface TypeAttributeAppender {
         INSTANCE;
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) { // 依次 类的typeVariable, 超类的注解属性，然后是接口，本类的所有的注解属性
             AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
             annotationAppender = AnnotationAppender.ForTypeAnnotations.ofTypeVariable(annotationAppender,
                     annotationValueFilter,

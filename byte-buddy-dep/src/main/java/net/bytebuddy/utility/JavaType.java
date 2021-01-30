@@ -11,7 +11,7 @@ import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Member;
 
 /**
- * Representations of Java types that do not exist in Java 6 but that have a special meaning to the JVM.
+ * Representations of Java types that do not exist in Java 6 but that have a special meaning to the JVM. Java6中不存在但对JVM有特殊意义的Java类型的表示
  */
 public enum JavaType {
 

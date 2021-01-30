@@ -206,23 +206,23 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * A record for a rich field with attributes and a potential default value.
+             * A record for a rich field with attributes and a potential default value. 具有属性和潜在默认值的丰富字段的记录
              */
             @HashCodeAndEqualsPlugin.Enhance
             class ForExplicitField implements Record {
 
                 /**
-                 * The attribute appender for the field.
+                 * The attribute appender for the field. 字段的属性追加器
                  */
                 private final FieldAttributeAppender attributeAppender;
 
                 /**
-                 * The field's default value.
+                 * The field's default value. 字段默认值
                  */
                 private final Object defaultValue;
 
                 /**
-                 * The implemented field.
+                 * The implemented field. 实现字段
                  */
                 private final FieldDescription fieldDescription;
 
@@ -455,7 +455,7 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * A canonical implementation of a method that is not declared but inherited by the instrumented type. 方法的规范实现，该方法未声明，但由插入指令的类型继承
+             * A canonical implementation of a method that is not declared but inherited by the instrumented type. 方法的规范实现，该方法未声明，但由插桩类继承
              */
             @HashCodeAndEqualsPlugin.Enhance
             class ForNonImplementedMethod implements Record {
@@ -1064,12 +1064,12 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * Wraps the given record in an accessor bridge wrapper if necessary. 如有必要，将给定记录包装在存取器网桥包装器中
+                 * Wraps the given record in an accessor bridge wrapper if necessary. 如有必要，将给定记录包装在访问桥包装器中
                  *
                  * @param delegate          The delegate for implementing the bridge's target.
                  * @param instrumentedType  The instrumented type that defines the bridge methods and the bridge target.
                  * @param bridgeTarget      The bridge methods' target methods.
-                 * @param bridgeTypes       A collection of all tokens representing all bridge methods.
+                 * @param bridgeTypes       A collection of all tokens representing all bridge methods. 表示所有桥接方法的所有标记的集合
                  * @param attributeAppender The attribute appender being applied for the bridge target.
                  * @return The given record wrapped by a bridge method wrapper if necessary.
                  */
@@ -1367,17 +1367,17 @@ public interface TypeWriter<T> {
         protected final List<? extends DynamicType> auxiliaryTypes;
 
         /**
-         * The instrumented type's declared fields. 检测类型的声明字段
+         * The instrumented type's declared fields. 插桩类的声明字段
          */
         protected final FieldList<FieldDescription.InDefinedShape> fields;
 
         /**
-         * The instrumented type's methods that are declared or inherited. 声明或继承的检测类型的方法
+         * The instrumented type's methods that are declared or inherited. 声明或继承得到的插桩类方法
          */
         protected final MethodList<?> methods;
 
         /**
-         * The instrumented methods relevant to this type creation. 与此类型创建相关的插入指令的方法
+         * The instrumented methods relevant to this type creation. 与此类型创建相关的插桩方法
          */
         protected final MethodList<?> instrumentedMethods;
 

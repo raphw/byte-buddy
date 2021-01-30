@@ -57,7 +57,7 @@ public interface FieldDescription extends ByteCodeElement,
      * Represents a field description in its generic shape, i.e. in the shape it is defined by a generic or raw type. 以其泛型形状表示字段描述，即在由泛型或原始类型定义的形状中
      */
     interface InGenericShape extends FieldDescription {
-        // 泛型 ，这个Field是泛型
+        // 泛型 ，这个 Field 是泛型
         @Override
         TypeDescription.Generic getDeclaringType();
     }

@@ -125,7 +125,7 @@ public interface MethodAttributeAppender {
     enum ForInstrumentedMethod implements MethodAttributeAppender, Factory {
 
         /**
-         * Appends all annotations of the instrumented method but not the annotations of the method's receiver type if such a type exists.
+         * Appends all annotations of the instrumented method but not the annotations of the method's receiver type if such a type exists. 追加插桩方法的所有注解，但不追加方法的接收器类型（如果存在此类类型）的注解
          */
         EXCLUDING_RECEIVER {
             @Override
@@ -138,7 +138,7 @@ public interface MethodAttributeAppender {
 
         /**
          * <p>
-         * Appends all annotations of the instrumented method including the annotations of the method's receiver type if such a type exists.
+         * Appends all annotations of the instrumented method including the annotations of the method's receiver type if such a type exists. 追加插桩方法的所有注解，包括方法的接收器类型（如果存在）的注解
          * </p>
          * <p>
          * If a method is overridden, the annotations can be misplaced if the overriding class does not expose a similar structure to

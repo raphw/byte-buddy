@@ -33,8 +33,8 @@ import java.util.concurrent.ConcurrentMap;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
-/** 一个TypePool 可以来存储这些TypeDescription，相当于一个池子
- * A type pool allows the retrieval of {@link TypeDescription} by its name. 对于TypeDescription的缓存池。加载后的各种类型，可以放到Type pool中。这个类可以存放不实用classLoader加载的类。也就是说可以绕过jvm的记载机制直接从文件加载
+/** 一个 TypePool 可以来存储这些 TypeDescription，相当于一个池子
+ * A type pool allows the retrieval of {@link TypeDescription} by its name. 对于 TypeDescription 的缓存池。加载后的各种类型，可以放到TypePool中。这个类可以存放不使用classLoader加载的类。也就是说可以绕过jvm的记载机制直接从文件加载
  */
 public interface TypePool {
 
@@ -42,9 +42,9 @@ public interface TypePool {
      * Locates and describes the given type by its name.  根据name，返回一个Resolution，用来记载寻找类
      *
      * @param name The name of the type to describe. The name is to be written as when calling {@link Object#toString()}
-     *             on a loaded {@link java.lang.Class}.
+     *             on a loaded {@link java.lang.Class}. 要描述的类型的名称，当在加载的 {@link java.lang.Class} 调用 {@link Object#toString()}时，名称将写为
      * @return A resolution of the type to describe. If the type to be described was found, the returned
-     * {@link net.bytebuddy.pool.TypePool.Resolution} represents this type. Otherwise, an illegal resolution is returned.
+     * {@link net.bytebuddy.pool.TypePool.Resolution} represents this type. Otherwise, an illegal resolution is returned. 要描述的类型的解析。如果找到要描述的类型，则返回的 {@link net.bytebuddy.pool.TypePool.Resolution} 表示此类型。否则，将返回非法解析
      */
     Resolution describe(String name);
 
@@ -138,7 +138,7 @@ public interface TypePool {
     }
 
     /**
-     * A cache provider for a {@link net.bytebuddy.pool.TypePool}.
+     * A cache provider for a {@link net.bytebuddy.pool.TypePool}. {@link net.bytebuddy.pool.TypePool} 的缓存提供
      */
     interface CacheProvider {
 
@@ -246,7 +246,7 @@ public interface TypePool {
     }
 
     /**
-     * An empty type pool that cannot describe any type.
+     * An empty type pool that cannot describe any type. 不能描述任何类型的空类型池
      */
     enum Empty implements TypePool {
 
@@ -268,7 +268,7 @@ public interface TypePool {
 
     /**
      * A base implementation of a {@link net.bytebuddy.pool.TypePool} that is managing a cache provider and
-     * that handles the description of array and primitive types.
+     * that handles the description of array and primitive types. {@link net.bytebuddy.pool.TypePool} 的一种基本实现，用于管理缓存提供程序并处理数组和基元类型的描述
      */
     @HashCodeAndEqualsPlugin.Enhance
     abstract class AbstractBase implements TypePool {
@@ -378,7 +378,7 @@ public interface TypePool {
         /**
          * Implements a hierarchical view of type pools, similarly to class loader hierarchies. For every lookup, the parent type pool
          * is asked first if it can resolve a type. Only if the parent (and potentially its parents) are unable to resolve a type,
-         * this instance is queried for a type description.
+         * this instance is queried for a type description. 实现类型池的层次结构视图，类似于类装入器层次结构。对于每个查找，首先询问父类型池是否可以解析类型。只有当父级（可能还有它的父级）无法解析类型时，才会查询此实例以获取类型描述
          */
         @HashCodeAndEqualsPlugin.Enhance
         public abstract static class Hierarchical extends AbstractBase {
@@ -947,7 +947,7 @@ public interface TypePool {
     /**
      * <p>
      * A default implementation of a {@link net.bytebuddy.pool.TypePool} that models binary data in the Java byte code format
-     * into a {@link TypeDescription}. The data lookup is delegated to a {@link net.bytebuddy.dynamic.ClassFileLocator}.
+     * into a {@link TypeDescription}. The data lookup is delegated to a {@link net.bytebuddy.dynamic.ClassFileLocator}. {@link net.bytebuddy.pool.TypePool} 的默认实现，将Java字节码格式的二进制数据建模为 {@link TypeDescription}。数据查找委托给 {@link net.bytebuddy.dynamic.ClassFileLocator}
      * </p>
      * <p>
      * {@link Resolution}s that are produced by this type pool are either fully resolved or not resolved at all.

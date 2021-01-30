@@ -31,10 +31,10 @@ public class TypeCasting implements StackManipulation {
     }
 
     /**
-     * Creates a casting to the given, non-primitive type.
+     * Creates a casting to the given, non-primitive type. 创建对给定的非基元类型的强制转换
      *
      * @param typeDefinition The type to which a value should be casted.
-     * @return A stack manipulation that represents the casting.
+     * @return A stack manipulation that represents the casting. 表示转换的堆栈操作
      */
     public static StackManipulation to(TypeDefinition typeDefinition) {
         if (typeDefinition.isPrimitive()) {

@@ -53,7 +53,7 @@ public interface TypeResolutionStrategy {
 
     /**
      * A type resolution strategy that applies all {@link LoadedTypeInitializer} after class loading using reflection. This implies that the initializers
-     * are executed <b>after</b> a type initializer is executed. 一种类型解析策略，在使用反射加载类之后应用所有LoadedTypeInitializer。这意味着初始值设定项是在执行类型初始值设定项之后执行的
+     * are executed <b>after</b> a type initializer is executed. 一种类型解析策略，在使用反射加载类之后应用所有 LoadedTypeInitializer。这意味着初始化器是在执行类初始值设定项之后执行的
      */
     enum Passive implements TypeResolutionStrategy, Resolved {
 

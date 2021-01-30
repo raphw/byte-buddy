@@ -428,7 +428,7 @@ public interface MethodGraph {
             private final Merger merger;
 
             /**
-             * A visitor to apply to all type descriptions before analyzing their methods or resolving super types. 在分析方法或解析超级类型之前应用于所有类型描述的访问者
+             * A visitor to apply to all type descriptions before analyzing their methods or resolving super types. 在分析方法或解析超类之前应用于所有类描述的访问者
              */
             private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 

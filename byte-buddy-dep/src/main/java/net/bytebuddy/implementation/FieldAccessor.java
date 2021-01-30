@@ -294,7 +294,7 @@ public abstract class FieldAccessor implements Implementation {
             }
 
             /**
-             * A prepared version of a field location.
+             * A prepared version of a field location. 字段位置的准备版本
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class Prepared implements FieldLocation.Prepared {

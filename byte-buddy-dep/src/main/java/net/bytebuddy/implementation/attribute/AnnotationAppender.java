@@ -167,20 +167,20 @@ public interface AnnotationAppender {
         }
 
         /**
-         * Target for an annotation that is written to a Java field.
+         * Target for an annotation that is written to a Java field. 写入Java字段注解的目标
          */
         @HashCodeAndEqualsPlugin.Enhance
         class OnField implements Target {
 
             /**
-             * The field visitor to write the annotation to.
+             * The field visitor to write the annotation to. 借助 fieldVisitor 完成对应字段属性的写入
              */
             private final FieldVisitor fieldVisitor;
 
             /**
              * Creates a new wrapper for a Java field.
              *
-             * @param fieldVisitor The ASM field visitor to which the annotations are appended to.
+             * @param fieldVisitor The ASM field visitor to which the annotations are appended to. 附加注释的 ASM 字段访问器
              */
             public OnField(FieldVisitor fieldVisitor) {
                 this.fieldVisitor = fieldVisitor;
@@ -281,11 +281,11 @@ public interface AnnotationAppender {
         }
 
         /**
-         * Tries to append a given annotation by reflectively reading an annotation.
+         * Tries to append a given annotation by reflectively reading an annotation. 尝试通过反射读取注解来附加给定注解
          *
-         * @param annotation            The annotation to be written.
-         * @param visible               {@code true} if this annotation should be treated as visible at runtime.
-         * @param annotationValueFilter The annotation value filter to apply.
+         * @param annotation            The annotation to be written. 要写的注解
+         * @param visible               {@code true} if this annotation should be treated as visible at runtime. {@code true} 如果此注释应在运行时视为可见
+         * @param annotationValueFilter The annotation value filter to apply. 要应用的注解值过滤器
          */
         private void doAppend(AnnotationDescription annotation, boolean visible, AnnotationValueFilter annotationValueFilter) {
             handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation, annotationValueFilter);
@@ -420,7 +420,7 @@ public interface AnnotationAppender {
         }
 
         /**
-         * Creates a type annotation appender for a type annotations of a super class type. 为超类类型的类型注释创建类型注释追加器
+         * Creates a type annotation appender for a type annotations of a super class type. 为超类的类型注释创建类型注释追加器
          *
          * @param annotationAppender    The annotation appender to write any type annotation to.
          * @param annotationValueFilter The annotation value filter to apply.
@@ -446,11 +446,11 @@ public interface AnnotationAppender {
         }
 
         /**
-         * Creates a type annotation appender for type annotations of a field's type.
+         * Creates a type annotation appender for type annotations of a field's type. 为字段类型的类注解创建类注解附加器
          *
-         * @param annotationAppender    The annotation appender to write any type annotation to.
-         * @param annotationValueFilter The annotation value filter to apply.
-         * @return A visitor for appending type annotations of a field's type.
+         * @param annotationAppender    The annotation appender to write any type annotation to. 要向其写入任何类注解的注解附加器
+         * @param annotationValueFilter The annotation value filter to apply.  要应用的注释值过滤器
+         * @return A visitor for appending type annotations of a field's type. 用于附加字段类型的类注解访问者
          */
         public static TypeDescription.Generic.Visitor<AnnotationAppender> ofFieldType(AnnotationAppender annotationAppender,
                                                                                       AnnotationValueFilter annotationValueFilter) {
@@ -628,7 +628,7 @@ public interface AnnotationAppender {
         }
 
         /**
-         * Writes all annotations of the supplied type to this instance's annotation appender.
+         * Writes all annotations of the supplied type to this instance's annotation appender. 将所提供类型的所有注解写入此实例的批注附加器
          *
          * @param typeDescription The type of what all annotations should be written of.
          * @param typePath        The type path to use.

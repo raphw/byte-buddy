@@ -50,7 +50,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
     ParameterList<ParameterDescription.InDefinedShape> asDefined();
 
     /**
-     * Checks if all parameters in this list define both an explicit name and an explicit modifier.
+     * Checks if all parameters in this list define both an explicit name and an explicit modifier. 检查此列表中的所有参数是否同时定义显式名称和显式修饰符
      *
      * @return {@code true} if all parameters in this list define both an explicit name and an explicit modifier.
      */
@@ -240,12 +240,12 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             class ForJava8CapableVm implements Dispatcher {
 
                 /**
-                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
+                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call. 一个空数组，可用于指示无参数以避免在反射调用上进行分配
                  */
                 private static final Object[] NO_ARGUMENTS = new Object[0];
 
                 /**
-                 * The {@code java.lang.reflect.Executable#getParameterCount()} method.
+                 * The {@code java.lang.reflect.Executable#getParameterCount()} method. {@code java.lang.reflect.Executable#getParameterCount()} 方法
                  */
                 private final Method getParameterCount;
 
@@ -302,14 +302,14 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         /**
-         * Describes the list of {@link Method} parameters on a modern VM.
+         * Describes the list of {@link Method} parameters on a modern VM. 描述现代虚拟机上的 {@link Method} 参数列表
          */
         protected static class OfMethod extends ForLoadedExecutable<Method> {
 
             /**
              * Creates a new description of the parameters of a method.
              *
-             * @param method The method that is represented by this instance.
+             * @param method The method that is represented by this instance. 此实例表示的方法
              */
             protected OfMethod(Method method) {
                 super(method);

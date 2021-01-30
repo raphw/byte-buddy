@@ -100,7 +100,7 @@ public enum Duplication implements StackManipulation {
     }
 
     /**
-     * Creates a duplication that flips the stack's top value over the second stack element.
+     * Creates a duplication that flips the stack's top value over the second stack element. 创建一个复制，将堆栈的顶值翻转到第二个堆栈元素上
      *
      * @param typeDefinition The type of the second element on the operand stack.
      * @return A stack manipulation that represents such a duplication flip.

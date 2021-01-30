@@ -93,9 +93,9 @@ public interface Transformer<T> {
         }
 
         /**
-         * Creates a field transformer that patches the transformed field by the given modifier contributors.
+         * Creates a field transformer that patches the transformed field by the given modifier contributors. 创建一个字段变换器，该变换器通过给定的修改符来修补变换的字段
          *
-         * @param modifierContributors The modifier contributors to apply.
+         * @param modifierContributors The modifier contributors to apply. 要应用的修饰符
          * @return A suitable field transformer.
          */
         public static Transformer<FieldDescription> withModifiers(List<? extends ModifierContributor.ForField> modifierContributors) {

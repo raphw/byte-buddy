@@ -108,8 +108,8 @@ public enum MethodVariableAccess {
     }
 
     /**
-     * Loads a reference to the {@code this} reference what is only meaningful for a non-static method.
-     * 加载对 {@code this} 引用的引用，该引用仅对非静态方法有意义
+     * Loads a reference to the {@code this} reference what is only meaningful for a non-static method. 加载对 {@code this} 引用的引用，该引用仅对非静态方法有意义
+     *
      * @return A stack manipulation loading the {@code this} reference. 加载 {@code this} 引用的堆栈操作
      */
     public static StackManipulation loadThis() {

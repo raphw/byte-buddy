@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.FieldVisitor}.
+/** 也就是说，附属附加器 1 收集相关属性和注解，2 借助 ASM 完成对应的收集数据的写入
+ * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.FieldVisitor}. 向给定ASM {@link org.objectweb.asm.FieldVisitor} 写入属性或注解的附加程序
  */
 public interface FieldAttributeAppender {
 
@@ -107,7 +107,7 @@ public interface FieldAttributeAppender {
     }
 
     /**
-     * An attribute appender that writes all annotations that are declared on a field.
+     * An attribute appender that writes all annotations that are declared on a field. 一种属性追加器，用于写入字段声明的所有注解
      */
     enum ForInstrumentedField implements FieldAttributeAppender, Factory {
 

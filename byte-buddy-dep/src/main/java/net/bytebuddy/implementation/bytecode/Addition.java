@@ -5,7 +5,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * A stack manipulation that adds to numbers on the operand stack.
+ * A stack manipulation that adds to numbers on the operand stack. 对操作数堆栈上的数字进行相加的堆栈操作
  */
 public enum Addition implements StackManipulation {
 

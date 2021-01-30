@@ -24,16 +24,16 @@ import static net.bytebuddy.matcher.ElementMatchers.isMethod;
 
 /**
  * <p>
- * A visitor wrapper that removes fields or methods that match a given {@link ElementMatcher}.
+ * A visitor wrapper that removes fields or methods that match a given {@link ElementMatcher}. 移除与给定 {@link ElementMatcher} 匹配的字段或方法的访问者包装器
  * </p>
  * <p>
  * <b>Important</b>: This matcher is not capable of removing synthetic bridge methods which will be retained if they are
  * declared by the same class. As bridge methods only invoke an overridden method, the dispatch should however not be
- * influenced by their retention.
+ * influenced by their retention. 此匹配器无法删除合成桥方法，如果合成桥方法由同一类声明，则将保留这些方法。由于网桥方法只调用重写的方法，因此分派不应受到其保留的影响
  * </p>
  * <p>
  * <b>Important</b>: The removal of the method is not reflected in the created {@link net.bytebuddy.dynamic.DynamicType}'s
- * type description of the instrumented type.
+ * type description of the instrumented type. 方法的删除不会反映在已检测类型的已创建 {@link net.bytebuddy.dynamic.DynamicType} 类型描述中
  * </p>
  */
 @HashCodeAndEqualsPlugin.Enhance

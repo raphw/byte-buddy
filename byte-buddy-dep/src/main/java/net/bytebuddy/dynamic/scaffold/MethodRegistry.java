@@ -404,8 +404,8 @@ public interface MethodRegistry {
                                                LatentMatcher<? super MethodDescription> ignoredMethods) {
             LinkedHashMap<MethodDescription, Prepared.Entry> implementations = new LinkedHashMap<MethodDescription, Prepared.Entry>(); // 需要额外处理的新增方法，比如 MethodDelegation, 桥可见性等导致的方法增加
             Set<Handler> handlers = new HashSet<Handler>();
-            MethodList<?> helperMethods = instrumentedType.getDeclaredMethods();
-            for (Entry entry : entries) {
+            MethodList<?> helperMethods = instrumentedType.getDeclaredMethods(); // 只是单纯的 插桩类 声明的方法
+            for (Entry entry : entries) { // 遍历对原生方法的匹配处理项，可能delegation，可能往已存在方法中添加额外的处理等操作
                 if (handlers.add(entry.getHandler())) {
                     instrumentedType = entry.getHandler().prepare(instrumentedType); // 应用于 添加一些额外的方法
                     ElementMatcher<? super MethodDescription> handledMethods = noneOf(helperMethods);
@@ -427,7 +427,7 @@ public interface MethodRegistry {
                 boolean visibilityBridge = instrumentedType.isPublic() && !instrumentedType.isInterface();
                 if (relevanceMatcher.matches(methodDescription)) {
                     for (Entry entry : entries) {
-                        if (entry.resolve(instrumentedType).matches(methodDescription)) {
+                        if (entry.resolve(instrumentedType).matches(methodDescription)) {  // 如果 entry 的 match 匹配了对应的方法，就将该方法以及对应的实现 保存
                             implementations.put(methodDescription, entry.asPreparedEntry(instrumentedType,
                                     methodDescription,
                                     node.getMethodTypes(),
@@ -449,7 +449,7 @@ public interface MethodRegistry {
             }
             for (MethodDescription methodDescription : CompoundList.of(
                     instrumentedType.getDeclaredMethods().filter(not(isVirtual()).and(relevanceMatcher)),
-                    new MethodDescription.Latent.TypeInitializer(instrumentedType))) {
+                    new MethodDescription.Latent.TypeInitializer(instrumentedType))) {  // 获取 <init> 以及 <clinit>
                 for (Entry entry : entries) {
                     if (entry.resolve(instrumentedType).matches(methodDescription)) {
                         implementations.put(methodDescription, entry.asPreparedEntry(instrumentedType, methodDescription, methodDescription.getVisibility()));
@@ -666,8 +666,8 @@ public interface MethodRegistry {
                 Map<MethodAttributeAppender.Factory, MethodAttributeAppender> attributeAppenderCache = new HashMap<MethodAttributeAppender.Factory, MethodAttributeAppender>();
                 LinkedHashMap<MethodDescription, Compiled.Entry> entries = new LinkedHashMap<MethodDescription, Compiled.Entry>();
                 Implementation.Target implementationTarget = implementationTargetFactory.make(instrumentedType, methodGraph, classFileVersion);
-                for (Map.Entry<MethodDescription, Entry> entry : implementations.entrySet()) {
-                    Handler.Compiled cachedHandler = compilationCache.get(entry.getValue().getHandler());
+                for (Map.Entry<MethodDescription, Entry> entry : implementations.entrySet()) { // 遍历需要重新实现的 implementations
+                    Handler.Compiled cachedHandler = compilationCache.get(entry.getValue().getHandler()); // 获取 重新组装的 各种实现 比如 MethodCall appender 之类的，而最终的实现都是靠 ByteCodeAppender 托底
                     if (cachedHandler == null) {
                         cachedHandler = entry.getValue().getHandler().compile(implementationTarget);
                         compilationCache.put(entry.getValue().getHandler(), cachedHandler);
@@ -990,7 +990,7 @@ public interface MethodRegistry {
                     if (bridgeMethod && !supportsBridges) {
                         return new Record.ForNonImplementedMethod(methodDescription);
                     }
-                    Record record = handler.assemble(methodDescription, attributeAppender, visibility);
+                    Record record = handler.assemble(methodDescription, attributeAppender, visibility); // 将涉及到的方法字节码都绑定在一起，比如本身的方法描述，方法属性，方法可见行之类的实例数据
                     return supportsBridges
                             ? TypeWriter.MethodPool.Record.AccessBridgeWrapper.of(record, instrumentedType, methodDescription, bridgeTypes, attributeAppender)
                             : record;

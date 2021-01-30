@@ -1857,7 +1857,7 @@ public interface DynamicType {
                 MethodDefinition<U> receiverType(TypeDescription.Generic receiverType);
 
                 /**
-                 * An abstract base implementation of a method definition that can accept a receiver type.
+                 * An abstract base implementation of a method definition that can accept a receiver type. 可以接受接收器类型的方法定义的抽象基实现
                  *
                  * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                  */

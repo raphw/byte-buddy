@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * Implementations of this interface explicitly initialize a loaded type. Usually, such implementations inject runtime
- * context into an instrumented type which cannot be defined by the means of the Java class file format. 此接口的实现显式初始化加载的类型。通常，这样的实现将运行时上下文注入到一个不能通过Java类文件格式定义的插装类型中
+ * context into an instrumented type which cannot be defined by the means of the Java class file format. 此接口的实现显式初始化加载的类型。通常，这样的实现将运行时上下文注入到一个不能通过Java类文件格式定义的插装类中
  */
 public interface LoadedTypeInitializer {
 
@@ -29,14 +29,14 @@ public interface LoadedTypeInitializer {
     /**
      * Indicates if this initializer is alive and needs to be invoked. This is only meant as a mark. A loaded type
      * initializer that is not alive might still be called and must therefore not throw an exception but rather
-     * provide an empty implementation.
+     * provide an empty implementation. 指示此初始化器是否处于活动状态并需要调用。这只是一个标记。可能仍会调用未激活的已加载类型初始化器，因此不能引发异常，而是提供空实现
      *
      * @return {@code true} if this initializer is alive.
      */
     boolean isAlive();
 
     /**
-     * A loaded type initializer that does not do anything.
+     * A loaded type initializer that does not do anything. 不执行任何操作的已加载类型初始值设定项
      */
     enum NoOp implements LoadedTypeInitializer {
 

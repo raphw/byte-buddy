@@ -194,8 +194,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     /**
-     * Applies this builder's constructor strategy to the given instrumented type.
-     * 将此构建器的构造函数策略应用于给定的 instrumented 类型
+     * Applies this builder's constructor strategy to the given instrumented type. 将此构建器的构造函数策略应用于给定的 instrumented 类型
+     *
      * @param instrumentedType The instrumented type to apply the constructor onto.
      * @return The instrumented type with the constructor strategy applied onto.
      */
@@ -209,7 +209,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     /**
-     * A matcher that locates all methods that are overridable and not ignored or that are directly defined on the instrumented type.
+     * A matcher that locates all methods that are overridable and not ignored or that are directly defined on the instrumented type. 定位所有可重写且不被忽略或直接在插入指令的类型上定义的方法的匹配器
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class InstrumentableMatcher implements LatentMatcher<MethodDescription> {
@@ -220,7 +220,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         private final LatentMatcher<? super MethodDescription> ignoredMethods;
 
         /**
-         * Creates a latent method matcher that matches all methods that are to be instrumented by a {@link SubclassDynamicTypeBuilder}.
+         * Creates a latent method matcher that matches all methods that are to be instrumented by a {@link SubclassDynamicTypeBuilder}. 创建一个潜在的方法匹配器，它匹配 {@link SubclassDynamicTypeBuilder} 要检测的所有方法.
          *
          * @param ignoredMethods A matcher for the ignored methods.
          */

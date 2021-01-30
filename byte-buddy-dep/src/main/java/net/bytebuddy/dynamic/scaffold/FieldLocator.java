@@ -15,7 +15,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 public interface FieldLocator {
 
     /**
-     * Locates a field with the given name and throws an exception if no such type exists.
+     * Locates a field with the given name and throws an exception if no such type exists. 查找具有给定名称的字段，如果不存在此类类型，则引发异常
      *
      * @param name The name of the field to locate.
      * @return A resolution for a field lookup.
@@ -73,13 +73,13 @@ public interface FieldLocator {
         }
 
         /**
-         * A simple implementation for a field resolution.
+         * A simple implementation for a field resolution. 字段解析的简单实现
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Simple implements Resolution {
 
             /**
-             * A description of the located field.
+             * A description of the located field. 定位字段的描述
              */
             private final FieldDescription fieldDescription;
 
@@ -105,21 +105,21 @@ public interface FieldLocator {
     }
 
     /**
-     * A factory for creating a {@link FieldLocator}.
+     * A factory for creating a {@link FieldLocator}. 用于创建 {@link FieldLocator} 的工厂
      */
     interface Factory {
 
         /**
-         * Creates a field locator for a given type.
+         * Creates a field locator for a given type. 为给定类型创建字段定位器
          *
-         * @param typeDescription The type for which to create a field locator.
-         * @return A suitable field locator.
+         * @param typeDescription The type for which to create a field locator. 要为其创建字段定位器的类型
+         * @return A suitable field locator. 合适的字段定位器
          */
         FieldLocator make(TypeDescription typeDescription);
     }
 
     /**
-     * A field locator that never discovers a field.
+     * A field locator that never discovers a field. 永远不会发现一个字段的字段定位器
      */
     enum NoOp implements FieldLocator, Factory {
 
@@ -181,16 +181,16 @@ public interface FieldLocator {
         }
 
         /**
-         * Locates fields that match the given matcher.
+         * Locates fields that match the given matcher. 查找与给定匹配器匹配的字段
          *
-         * @param matcher The matcher that identifies fields of interest.
+         * @param matcher The matcher that identifies fields of interest. 识别关注字段的匹配器
          * @return A list of fields that match the specified matcher.
          */
         protected abstract FieldList<?> locate(ElementMatcher<? super FieldDescription> matcher);
     }
 
     /**
-     * A field locator that only looks up fields that are declared by a specific type.
+     * A field locator that only looks up fields that are declared by a specific type. 只查找由特定类型声明字段的字段定位器。
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ForExactType extends AbstractBase {
@@ -273,7 +273,7 @@ public interface FieldLocator {
         }
 
         /**
-         * Creates a field locator that looks up fields that are declared within a class's class hierarchy.
+         * Creates a field locator that looks up fields that are declared within a class's class hierarchy. 在类层次结构中声明的字段中进行查找的定位器
          *
          * @param typeDescription The type for which to look up a field within its class hierarchy.
          * @param accessingType   The accessing type.
@@ -295,7 +295,7 @@ public interface FieldLocator {
         }
 
         /**
-         * A factory for creating a {@link ForClassHierarchy}.
+         * A factory for creating a {@link ForClassHierarchy}. 用于创建 {@link ForClassHierarchy} 的工厂
          */
         public enum Factory implements FieldLocator.Factory {
 
@@ -312,7 +312,7 @@ public interface FieldLocator {
     }
 
     /**
-     * A field locator that only locates fields in the top-level type.
+     * A field locator that only locates fields in the top-level type. 仅定位顶级类型字段的字段定位器
      */
     class ForTopLevelType extends AbstractBase {
 

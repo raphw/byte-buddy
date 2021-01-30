@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Description of the parameter of a Java method or constructor.
+ * Description of the parameter of a Java method or constructor. Java方法或构造函数的参数说明
  */
 public interface ParameterDescription extends AnnotationSource,
         NamedElement.WithRuntimeName,
@@ -32,7 +32,7 @@ public interface ParameterDescription extends AnnotationSource,
         ByteCodeElement.TypeDependant<ParameterDescription.InDefinedShape, ParameterDescription.Token> {
 
     /**
-     * The prefix for names of an unnamed parameter.
+     * The prefix for names of an unnamed parameter. 未命名参数名称的前缀
      */
     String NAME_PREFIX = "arg";
 
@@ -59,7 +59,7 @@ public interface ParameterDescription extends AnnotationSource,
 
     /**
      * Checks if this parameter has an explicit modifier. A parameter without a modifier is simply treated as
-     * if it had a modifier of zero.
+     * if it had a modifier of zero. 检查此参数是否有显式修饰符。没有修饰符的参数被简单地当作修饰符为零
      *
      * @return {@code true} if this parameter defines explicit modifiers.
      */
@@ -73,7 +73,7 @@ public interface ParameterDescription extends AnnotationSource,
     int getOffset();
 
     /**
-     * Represents a parameter description in its generic shape, i.e. in the shape it is defined by a generic or raw type.
+     * Represents a parameter description in its generic shape, i.e. in the shape it is defined by a generic or raw type. 表示泛型形状中的参数描述，即在由泛型或原始类型定义的形状中
      */
     interface InGenericShape extends ParameterDescription {
 
@@ -82,7 +82,7 @@ public interface ParameterDescription extends AnnotationSource,
     }
 
     /**
-     * Represents a parameter in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved.
+     * Represents a parameter in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved. 以其定义的形状表示参数，即以类定义的形式表示参数，而不解析其类型变量
      */
     interface InDefinedShape extends ParameterDescription {
 
@@ -90,7 +90,7 @@ public interface ParameterDescription extends AnnotationSource,
         MethodDescription.InDefinedShape getDeclaringMethod();
 
         /**
-         * An abstract base implementation of a parameter description in its defined shape.
+         * An abstract base implementation of a parameter description in its defined shape. 参数描述的一种抽象的基本实现
          */
         abstract class AbstractBase extends ParameterDescription.AbstractBase implements InDefinedShape {
 
@@ -102,7 +102,7 @@ public interface ParameterDescription extends AnnotationSource,
     }
 
     /**
-     * A base implementation of a method parameter description.
+     * A base implementation of a method parameter description. 方法参数描述的基本实现
      */
     abstract class AbstractBase extends ModifierReviewable.AbstractBase implements ParameterDescription {
 
@@ -184,17 +184,17 @@ public interface ParameterDescription extends AnnotationSource,
     /**
      * Description of a loaded parameter with support for the information exposed by {@code java.lang.reflect.Parameter}. 加载参数的描述，支持 {@code java.lang.reflect.Parameter} 公开的信息
      *
-     * @param <T> The type of the {@code java.lang.reflect.Executable} that this list represents.
+     * @param <T> The type of the {@code java.lang.reflect.Executable} that this list represents. 此列表表示的 {@code java.lang.reflect.Executable} 的类型
      */
     abstract class ForLoadedParameter<T extends AccessibleObject> extends InDefinedShape.AbstractBase {
 
         /**
-         * A dispatcher for reading properties from {@code java.lang.reflect.Executable} instances.
+         * A dispatcher for reading properties from {@code java.lang.reflect.Executable} instances. 分发器用于从 {@code java.lang.reflect.Executable} 实例中读取属性
          */
         private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
         /**
-         * The {@code java.lang.reflect.Executable} for which the parameter types are described.
+         * The {@code java.lang.reflect.Executable} for which the parameter types are described. 描述参数类型的 {@code java.lang.reflect.Executable}
          */
         protected final T executable;
 
@@ -242,7 +242,7 @@ public interface ParameterDescription extends AnnotationSource,
         }
 
         /**
-         * A dispatcher creating parameter descriptions based on the API that is available for the current JVM.
+         * A dispatcher creating parameter descriptions based on the API that is available for the current JVM. 基于当前JVM可用的API创建参数描述的调度器
          */
         protected interface Dispatcher {
 
@@ -912,7 +912,7 @@ public interface ParameterDescription extends AnnotationSource,
     }
 
     /**
-     * A token representing a parameter's properties detached from a type.
+     * A token representing a parameter's properties detached from a type. 表示从类型分离的参数属性的标记
      */
     class Token implements ByteCodeElement.Token<Token> {
 
@@ -957,7 +957,7 @@ public interface ParameterDescription extends AnnotationSource,
         }
 
         /**
-         * Creates a new parameter token without an explicit name or an explicit modifier. The parameter type must be represented in its detached format.
+         * Creates a new parameter token without an explicit name or an explicit modifier. The parameter type must be represented in its detached format. 创建没有显式名称或显式修饰符的新参数标记。参数类型必须以其分离格式表示
          *
          * @param type        The type of the represented parameter.
          * @param annotations The annotations of the parameter.

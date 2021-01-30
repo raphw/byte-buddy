@@ -11,7 +11,7 @@ import java.util.List;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * A latent matcher that resolves an {@link ElementMatcher} after supplying a type description.
+ * A latent matcher that resolves an {@link ElementMatcher} after supplying a type description. 提供类型描述后解析 {@link ElementMatcher} 的潜在匹配器
  *
  * @param <T> The type of the matched element.
  */
@@ -93,7 +93,7 @@ public interface LatentMatcher<T> {
     }
 
     /**
-     * A latent matcher where the field token is being attached to the supplied type description before matching.
+     * A latent matcher where the field token is being attached to the supplied type description before matching. 一种潜在的匹配器，在匹配之前字段标记被附加到提供的类型描述
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ForFieldToken implements LatentMatcher<FieldDescription> {

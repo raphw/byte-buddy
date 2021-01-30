@@ -6,7 +6,7 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 
 /**
- * This assigner is able to handle non-{@code void}, primitive types. This means:
+ * This assigner is able to handle non-{@code void}, primitive types. This means: 该赋值器能够处理非{@code void}，基本类型，这也就意味着
  * <ol>
  * <li>If a primitive type is assigned to a non-primitive type, it will attempt to widen the source type into the
  * target type.</li>

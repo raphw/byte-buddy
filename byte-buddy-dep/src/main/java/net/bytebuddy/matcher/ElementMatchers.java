@@ -827,7 +827,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link ByteCodeElement} that is visible to a given {@link TypeDescription}.
+     * Matches a {@link ByteCodeElement} that is visible to a given {@link TypeDescription}. 匹配给定 {@link TypeDescription} 可见的 {@link ByteCodeElement}
      *
      * @param type The type that a matched byte code element is expected to be visible to.
      * @param <T>  The type of the matched object.

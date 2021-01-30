@@ -170,7 +170,7 @@ public enum FieldAccess {
     }
 
     /**
-     * A dispatcher for implementing a non-generic read or write access on a field. 一种调度程序，用于实现对字段的非通用读或写访问
+     * A dispatcher for implementing a non-generic read or write access on a field. 一种调度器，用于实现对字段的非通用读或写访问
      */
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class AccessDispatcher implements Defined {
