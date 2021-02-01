@@ -26,6 +26,11 @@ public class ByteBuddyTaskExtension extends AbstractByteBuddyTaskExtension<ByteB
     private IncrementalResolver incrementalResolver;
 
     /**
+     * {@code true} if the class path is considered to be incremental.
+     */
+    private boolean incrementalClassPath;
+
+    /**
      * Creates a new Byte Buddy task extension.
      */
     public ByteBuddyTaskExtension() {
@@ -50,8 +55,34 @@ public class ByteBuddyTaskExtension extends AbstractByteBuddyTaskExtension<ByteB
         this.incrementalResolver = incrementalResolver;
     }
 
+    /**
+     * Returns {@code true} if the class path should be considered incremental. By default, the class path
+     * is considered non-incremental where all classes are retransformed if the class path changes.
+     *
+     * @return {@code true} if the class path should be considered incremental.
+     */
+    public boolean isIncrementalClassPath() {
+        return incrementalClassPath;
+    }
+
+    /**
+     * Sets the class path to be incremental or non-incremental.
+     *
+     * @param incrementalClassPath {@code true} if the class path is to be considered incremental.
+     */
+    public void setIncrementalClassPath(boolean incrementalClassPath) {
+        this.incrementalClassPath = incrementalClassPath;
+    }
+
     @Override
     protected void doConfigure(ByteBuddyTask task) {
         task.setIncrementalResolver(getIncrementalResolver());
+    }
+
+    @Override
+    protected Class<? extends ByteBuddyTask> toType() {
+        return incrementalClassPath
+                ? ByteBuddyTask.WithIncrementalClassPath.class
+                : ByteBuddyTask.class;
     }
 }

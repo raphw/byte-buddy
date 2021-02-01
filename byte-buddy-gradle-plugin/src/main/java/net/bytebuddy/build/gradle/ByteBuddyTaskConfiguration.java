@@ -50,7 +50,7 @@ public class ByteBuddyTaskConfiguration extends AbstractByteBuddyTaskConfigurati
      * @param setDestinationDir       The {@code org.gradle.api.tasks.compile.AbstractCompile#setDestinationDir} method.
      */
     public ByteBuddyTaskConfiguration(String name, SourceSet sourceSet, Method getDestinationDirectory, Method setDestinationDir) {
-        super(name, sourceSet, ByteBuddyTask.class);
+        super(name, sourceSet);
         this.getDestinationDirectory = getDestinationDirectory;
         this.setDestinationDir = setDestinationDir;
     }

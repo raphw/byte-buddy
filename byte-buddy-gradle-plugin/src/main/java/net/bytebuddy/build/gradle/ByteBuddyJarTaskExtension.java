@@ -24,4 +24,9 @@ public class ByteBuddyJarTaskExtension extends AbstractByteBuddyTaskExtension<By
     protected void doConfigure(ByteBuddyJarTask task) {
         /* do nothing */
     }
+
+    @Override
+    protected Class<ByteBuddyJarTask> toType() {
+        return ByteBuddyJarTask.class;
+    }
 }

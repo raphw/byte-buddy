@@ -213,4 +213,21 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
             }
         }
     }
+
+    /**
+     * A Byte Buddy task with an incremental class path.
+     */
+    public abstract static class WithIncrementalClassPath extends ByteBuddyTask {
+
+        @Incremental
+        @CompileClasspath
+        @Override
+        public abstract ConfigurableFileCollection getClassPath();
+
+        /**
+         * Creates a new Byte Buddy task with an incremental class path.
+         */
+        @Inject
+        public WithIncrementalClassPath() { }
+    }
 }

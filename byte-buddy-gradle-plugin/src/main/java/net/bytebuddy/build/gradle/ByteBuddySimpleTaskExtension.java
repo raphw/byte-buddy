@@ -24,4 +24,9 @@ public class ByteBuddySimpleTaskExtension extends AbstractByteBuddyTaskExtension
     protected void doConfigure(ByteBuddySimpleTask task) {
         /* do nothing */
     }
+
+    @Override
+    protected Class<ByteBuddySimpleTask> toType() {
+        return ByteBuddySimpleTask.class;
+    }
 }

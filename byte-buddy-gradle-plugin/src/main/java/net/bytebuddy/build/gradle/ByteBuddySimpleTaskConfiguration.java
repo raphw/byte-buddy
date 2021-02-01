@@ -35,7 +35,7 @@ public class ByteBuddySimpleTaskConfiguration extends AbstractByteBuddyTaskConfi
      * @param sourceSet The source set for which the task chain is being configured.
      */
     public ByteBuddySimpleTaskConfiguration(String name, SourceSet sourceSet) {
-        super(name, sourceSet, ByteBuddySimpleTask.class);
+        super(name, sourceSet);
     }
 
     @Override

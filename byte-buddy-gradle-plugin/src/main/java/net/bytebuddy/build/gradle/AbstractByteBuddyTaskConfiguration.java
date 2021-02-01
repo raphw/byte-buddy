@@ -51,21 +51,14 @@ public abstract class AbstractByteBuddyTaskConfiguration<
     private final SourceSet sourceSet;
 
     /**
-     * The type of the Byte Buddy task.
-     */
-    private final Class<T> type;
-
-    /**
      * Creates a new abstract Byte Buddy task configuration.
      *
      * @param name      The name of the task.
      * @param sourceSet The source set for which the task chain is being configured.
-     * @param type      The type of the Byte Buddy task.
      */
-    protected AbstractByteBuddyTaskConfiguration(String name, SourceSet sourceSet, Class<T> type) {
+    protected AbstractByteBuddyTaskConfiguration(String name, SourceSet sourceSet) {
         this.name = name;
         this.sourceSet = sourceSet;
-        this.type = type;
     }
 
     /**
@@ -79,7 +72,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
         } else {
             project.getLogger().debug("Configuring Byte Buddy task for source set '{}' as '{}'", sourceSet.getName(), name);
             JavaCompile compileTask = (JavaCompile) project.getTasks().getByName(sourceSet.getCompileJavaTaskName());
-            T byteBuddyTask = project.getTasks().create(name, type);
+            T byteBuddyTask = project.getTasks().create(name, extension.toType());
             byteBuddyTask.setGroup("Byte Buddy");
             byteBuddyTask.setDescription("Transforms the classes compiled by " + compileTask.getName());
             byteBuddyTask.dependsOn(compileTask);

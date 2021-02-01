@@ -272,4 +272,11 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         task.setThreads(getThreads());
         doConfigure(task);
     }
+
+    /**
+     * Returns the type of the Byte Buddy task.
+     *
+     * @return The type of the Byte Buddy task.
+     */
+    protected abstract Class<? extends T> toType();
 }
