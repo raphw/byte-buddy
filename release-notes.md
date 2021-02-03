@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 3. February 2021: version 1.10.20
+
+- Reuse simple but commonly used matchers as constants to avoid repeated allocation.
+- Allow build plugins to be discovered from a plugin's class path.
+- Do not use cached version of classes that are currently transformed.
+- Allow using an incremental class path for build plugins in Gradle.
+- Fix filter applied to declared, non-virtual methods in `MethodCall`.
+
 ### 21. December 2020: version 1.10.19
 
 - Fix constructor type resolution in `MethodCall`.
