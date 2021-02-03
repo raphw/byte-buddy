@@ -18,9 +18,9 @@
             <passphrase>${gpg.passphrase}</passphrase>
         </server>
         <server>
-            <id>bintray</id>
-            <username>${bintray.username}</username>
-            <password>${bintray.password}</password>
+            <id>central</id>
+            <username>${central.username}</username>
+            <password>${central.password}</password>
         </server>
     </servers>
 </settings>

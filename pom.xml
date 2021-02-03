@@ -60,6 +60,7 @@
         <bytecode.test.version>1.6</bytecode.test.version>
         <pitest.target>net.bytebuddy</pitest.target>
         <asm.url>https://asm.ow2.io</asm.url>
+        <nexus.url>https://oss.sonatype.org</nexus.url>
         <version.asm>9.0</version.asm>
         <version.junit>4.13.1</version.junit>
         <version.mockito>2.23.0</version.mockito>
@@ -68,6 +69,7 @@
         <version.plugin.compiler>3.8.0</version.plugin.compiler>
         <version.plugin.install>2.5.2</version.plugin.install>
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
+        <version.plugin.staging>1.6.8</version.plugin.staging>
         <version.plugin.javadoc>2.10.4</version.plugin.javadoc>
         <version.plugin.source>3.0.1</version.plugin.source>
         <version.plugin.shade>3.2.4</version.plugin.shade>
@@ -260,6 +262,18 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- Setup plugin for deployment to Maven Central. -->
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>${version.plugin.staging}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>central</serverId>
+                    <nexusUrl>${nexus.url}</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
         </plugins>
 
         <pluginManagement>
@@ -354,9 +368,13 @@
     </reporting>
 
     <distributionManagement>
+        <snapshotRepository>
+            <id>central</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
         <repository>
-            <id>bintray</id>
-            <url>https://api.bintray.com/maven/raphw/maven/ByteBuddy</url>
+            <id>central</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
 
