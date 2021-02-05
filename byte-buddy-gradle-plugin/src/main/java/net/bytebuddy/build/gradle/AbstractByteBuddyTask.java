@@ -76,9 +76,12 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     private boolean extendedParsing;
 
     /**
-     * {@code true} if plugins should be discovered from the class loader.
+     * Determines if the build should discover Byte Buddy build plugins on this Maven plugin's class loader.
+     * Discovered plugins are stored by their name in the <i>/META-INF/net.bytebuddy/build.plugins</i> file
+     * where each line contains the fully qualified class name. Discovered plugins are not provided with any
+     * explicit constructor arguments.
      */
-    private boolean discover;
+    private Discovery discovery;
 
     /**
      * The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
@@ -225,23 +228,24 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
         this.extendedParsing = extendedParsing;
     }
 
+
     /**
-     * Returns {@code true} if plugins should be discovered from the class loader.
+     * Determines the discovery for finding plugins on the class path.
      *
-     * @return {@code true} if plugins should be discovered from the class loader.
+     * @return The discovery for finding plugins on the class path.
      */
     @Input
-    public boolean isDiscover() {
-        return discover;
+    public Discovery getDiscovery() {
+        return discovery;
     }
 
     /**
-     * Determines if plugins should be discovered from the class loader.
+     * Determines the discovery being used for finding plugins on the class path.
      *
-     * @param discover {@code true} if plugins should be discovered from the class loader.
+     * @param discovery The discovery for finding plugins on the class path.
      */
-    public void setDiscover(boolean discover) {
-        this.discover = discover;
+    public void setDiscovery(Discovery discovery) {
+        this.discovery = discovery;
     }
 
     /**
@@ -296,10 +300,12 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
             throw new IllegalStateException("Source and target cannot be equal: " + source());
         }
         List<Transformation> transformations = new ArrayList<Transformation>(getTransformations());
-        if (isDiscover()) {
+        if (discovery.isDiscover(transformations)) {
             Set<String> undiscoverable = new HashSet<String>();
-            for (Transformation transformation : transformations) {
-                undiscoverable.add(transformation.getPlugin().getName());
+            if (discovery.isRecordConfiguration()) {
+                for (Transformation transformation : transformations) {
+                    undiscoverable.add(transformation.getPlugin().getName());
+                }
             }
             Enumeration<URL> plugins = getClass().getClassLoader().getResources("META-INF/net.bytebuddy/build.plugins");
             while (plugins.hasMoreElements()) {

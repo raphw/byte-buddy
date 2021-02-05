@@ -183,8 +183,8 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * where each line contains the fully qualified class name. Discovered plugins are not provided with any
      * explicit constructor arguments.
      */
-    @Parameter(defaultValue = "true", required = true)
-    public boolean discover;
+    @Parameter(defaultValue = "EMPTY", required = true)
+    public Discovery discovery;
 
     /**
      * Indicates the amount of threads used for parallel type processing or {@code 0} for serial processing.
@@ -211,10 +211,12 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         if (transformations != null) {
             for (Transformation transformation : transformations) {
                 transformers.add(new Transformer.ForConfiguredPlugin(transformation));
-                undiscoverable.add(transformation.getPlugin());
+                if (discovery.isRecordConfiguration()) {
+                    undiscoverable.add(transformation.getPlugin());
+                }
             }
         }
-        if (discover) {
+        if (discovery.isDiscover(transformers)) {
             try {
                 Enumeration<URL> plugins = ByteBuddyMojo.class.getClassLoader().getResources("META-INF/net.bytebuddy/build.plugins");
                 while (plugins.hasMoreElements()) {

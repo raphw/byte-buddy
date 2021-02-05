@@ -303,7 +303,7 @@ public class ByteBuddyMojoTest {
             } finally {
                 out.close();
             }
-            ByteBuddyMojo mojo = (ByteBuddyMojo) mojoRule.lookupMojo(goal, pom); // TODO: fix project instance
+            ByteBuddyMojo mojo = (ByteBuddyMojo) mojoRule.lookupMojo(goal, pom);
             if (goal.equals("transform")) {
                 project.getBuild().setOutputDirectory(folder.getAbsolutePath());
             } else if (goal.equals("transform-test")) {
@@ -312,6 +312,7 @@ public class ByteBuddyMojoTest {
                 throw new AssertionError("Unknown goal: " + goal);
             }
             mojoRule.setVariableValueToObject(mojo, "repositorySystem", repositorySystem);
+            mojoRule.setVariableValueToObject(mojo, "discovery", Discovery.EMPTY);
             project.setGroupId(FOO);
             project.setArtifactId(BAR);
             project.setVersion(QUX);
