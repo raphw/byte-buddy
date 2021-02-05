@@ -7,7 +7,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * A stack manipulation for creating an <i>undefined</i> type on which a constructor is to be called.
+ * A stack manipulation for creating an <i>undefined</i> type on which a constructor is to be called. 一种堆栈操作，用于创建一个未定义的类型，在该类型上调用构造函数
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class TypeCreation implements StackManipulation {

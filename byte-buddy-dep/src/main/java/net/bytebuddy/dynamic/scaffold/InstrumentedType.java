@@ -264,10 +264,10 @@ public interface InstrumentedType extends TypeDescription {
     interface Prepareable {
 
         /**
-         * Prepares a given instrumented type. 准备给定的插桩类型
+         * Prepares a given instrumented type. 准备给定的插桩类
          *
-         * @param instrumentedType The instrumented type in its current form. 当前形式的插桩类型
-         * @return The prepared instrumented type. 准备好的插桩类型
+         * @param instrumentedType The instrumented type in its current form. 当前形式的插桩类
+         * @return The prepared instrumented type. 准备好的插桩类
          */
         InstrumentedType prepare(InstrumentedType instrumentedType);
     }
@@ -296,12 +296,12 @@ public interface InstrumentedType extends TypeDescription {
         InstrumentedType.WithFlexibleName subclass(String name, int modifiers, TypeDescription.Generic superClass);
 
         /**
-         * Default implementations of instrumented type factories. 插桩类型工厂的默认实现
+         * Default implementations of instrumented type factories. 插桩类工厂的默认实现
          */
         enum Default implements Factory {
 
             /**
-             * A factory for an instrumented type that allows to modify represented types. 插桩类型的工厂，允许修改表示的类型
+             * A factory for an instrumented type that allows to modify represented types. 插桩类的工厂，允许修改表示的类型
              */
             MODIFIABLE {
                 @Override
@@ -330,7 +330,7 @@ public interface InstrumentedType extends TypeDescription {
             },
 
             /**
-             * A factory for an instrumented type that does not allow to modify represented types. 插桩类型的工厂，不允许修改表示的类型
+             * A factory for an instrumented type that does not allow to modify represented types. 插桩类的工厂，不允许修改表示的类型
              */
             FROZEN {
                 @Override
@@ -364,7 +364,7 @@ public interface InstrumentedType extends TypeDescription {
     }
 
     /**
-     * A default implementation of an instrumented type. 插入指令类型的默认实现
+     * A default implementation of an instrumented type. 插桩类的默认实现
      */
     class Default extends AbstractBase.OfSimpleType implements InstrumentedType.WithFlexibleName {
 
@@ -1363,7 +1363,7 @@ public interface InstrumentedType extends TypeDescription {
     }
 
     /**
-     * A frozen representation of an instrumented type of which the structure must not be modified. 不能修改其结构的已插入指令类型的冻结表示
+     * A frozen representation of an instrumented type of which the structure must not be modified. 不能修改其结构的已插桩类的冻结表示
      */
     class Frozen extends AbstractBase.OfSimpleType implements InstrumentedType.WithFlexibleName {
 

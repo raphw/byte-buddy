@@ -201,7 +201,7 @@ public enum MethodVariableAccess {
          * Creates a new method loading stack manipulation. 创建加载堆栈操作的新方法
          *
          * @param methodDescription  The method for which all parameters are loaded onto the operand stack.
-         * @param typeCastingHandler A type casting handler which is capable of transforming all method parameters.
+         * @param typeCastingHandler A type casting handler which is capable of transforming all method parameters. 能够转换所有方法参数的类型转换处理程序
          */
         protected MethodLoading(MethodDescription methodDescription, TypeCastingHandler typeCastingHandler) {
             this.methodDescription = methodDescription;

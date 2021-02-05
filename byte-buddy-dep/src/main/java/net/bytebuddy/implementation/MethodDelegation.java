@@ -39,14 +39,14 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * customized by invoking the {@code MethodDelegation}'s several builder methods.
  * <h3>Without any customization, the method delegation will work as follows:</h3>
  * <span style="text-decoration: underline">Binding an instrumented method to a given delegate method</span>
- * <p>&nbsp;</p>
+ * <p>&nbsp;</p> 方法将被一个参数一个参数地绑定
  * A method will be bound parameter by parameter. Considering a method {@code Foo#bar} being bound to a method
- * {@code Qux#baz}, the method delegation will be decided on basis of the following annotations:
+ * {@code Qux#baz}, the method delegation will be decided on basis of the following annotations: 考虑到方法 {@code Foo#bar} 绑定到方法 {@code Qux#baz} ，将根据以下注释决定方法委托
  * <ul>
- * <li>{@link net.bytebuddy.implementation.bind.annotation.Argument}:
+ * <li>{@link net.bytebuddy.implementation.bind.annotation.Argument}: 此注解将 {@code Foo#bar} 的 {@code n} 第个参数绑定到用此注解注释的 {@code Qux#baz} 参数，其中 {@code n} 是 {@code @Argument} 注释的强制参数
  * This annotation will bind the {@code n}-th parameter of {@code Foo#bar} to that parameter of {@code Qux#baz}that
  * is annotated with this annotation where {@code n} is the obligatory argument of the {@code @Argument} annotation.</li>
- * <li>{@link net.bytebuddy.implementation.bind.annotation.AllArguments}:
+ * <li>{@link net.bytebuddy.implementation.bind.annotation.AllArguments}: 此注解将 {@code Foo#bar} 的所有参数的集合分配给用 {@code AllArguments} 注解的 {@code Qux#baz} 的参数
  * This annotation will assign a collection of all parameters of {@code Foo#bar} to that parameter of {@code Qux#baz}
  * that is annotated with {@code AllArguments}.</li>
  * <li>{@link net.bytebuddy.implementation.bind.annotation.This}: A parameter
@@ -329,7 +329,7 @@ public class MethodDelegation implements Implementation.Composable {
         return withDefaultConfiguration().to(target, fieldName, methodGraphCompiler);
     }
 
-    /**
+    /** 委托任何拦截方法来调用由所提供类型的实例或者其任何超类声明的非{@code static} 方法，要被视为有效的委托目标，方法必须对插桩类可见以及可访问。如果方法的声明类型是public或与插桩类在同一个包中，并且方法是 public 或 非private且插桩类在同一包中，则会出现这种情况，如果委托的目标是插桩类型，则只能将私有方法用作委托目标
      * Delegates any intercepted method to invoke a non-{@code static} method that is declared by the supplied type's instance or any
      * of its super types. To be considered a valid delegation target, a method must be visible and accessible to the instrumented type.
      * This is the case if the method's declaring type is either public or in the same package as the instrumented type and if the method

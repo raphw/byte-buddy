@@ -232,7 +232,7 @@ public class ByteBuddy {
      * <p>
      * When extending a class, Byte Buddy imitates all visible constructors of the subclassed type. Any constructor is implemented
      * to only invoke its super type constructor of equal signature. Another behavior can be specified by supplying an explicit
-     * {@link ConstructorStrategy} by {@link ByteBuddy#subclass(Class, ConstructorStrategy)}. 当扩展一个类时，Byte Buddy会模仿子类类型的所有可见构造函数。任何构造函数的实现都只调用其等签名的超类型构造函数。另一个行为可以通过{@link ByteBuddy#subclass(Class, ConstructorStrategy)}提供显式的{@link ConstructorStrategy}来指定
+     * {@link ConstructorStrategy} by {@link ByteBuddy#subclass(Class, ConstructorStrategy)}. 当扩展一个类时，Byte Buddy会模仿子类类型的所有可见构造函数。任何构造函数的实现都只调用其等签名的超类型构造函数。另一个行为可以通过 {@link ByteBuddy#subclass(Class, ConstructorStrategy)} 提供显式的 {@link ConstructorStrategy} 来指定
      * </p>
      * <p>
      * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables or an owner type. 如果这些方法声明类型变量或所有者类型，则这些方法在泛化状态下实现所提供的类型
@@ -1208,7 +1208,7 @@ public class ByteBuddy {
     }
 
     /**
-     * An implementation fo the {@code values} method of an enumeration type.
+     * An implementation fo the {@code values} method of an enumeration type. 枚举类型的 {@code values} 方法的实现
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class EnumerationImplementation implements Implementation {
@@ -1272,7 +1272,7 @@ public class ByteBuddy {
         }
 
         /**
-         * A byte code appender for the {@code values} method of any enumeration type.
+         * A byte code appender for the {@code values} method of any enumeration type. 任何枚举类型的 {@code values} 方法的字节码追加器
          */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class ValuesMethodAppender implements ByteCodeAppender {
@@ -1305,13 +1305,13 @@ public class ByteBuddy {
         }
 
         /**
-         * A byte code appender for the type initializer of any enumeration type.
+         * A byte code appender for the type initializer of any enumeration type. 任何枚举类型的类初始化器的字节码追加器
          */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class InitializationAppender implements ByteCodeAppender {
 
             /**
-             * The values of the enumeration that is being created.
+             * The values of the enumeration that is being created. 正要被创建的枚举值
              */
             private final List<String> values;
 

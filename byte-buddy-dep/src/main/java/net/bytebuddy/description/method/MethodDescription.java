@@ -291,7 +291,7 @@ public interface MethodDescription extends TypeVariableSource,
     boolean isBridgeCompatible(TypeToken typeToken);
 
     /**
-     * Represents a method description in its generic shape, i.e. in the shape it is defined by a generic or raw type.
+     * Represents a method description in its generic shape, i.e. in the shape it is defined by a generic or raw type. 表示泛型形状中的方法描述，即在由泛型或原始类型定义的形状中
      */
     interface InGenericShape extends MethodDescription {
 
@@ -472,18 +472,18 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return (isVirtual() || getDeclaringType().asErasure().isVisibleTo(typeDescription))
-                    && (isPublic()
-                    || typeDescription.equals(getDeclaringType().asErasure())
-                    || isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription)
-                    || !isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure()));
+            return (isVirtual() || getDeclaringType().asErasure().isVisibleTo(typeDescription)) // 是否是 Virtual
+                    && (isPublic() // 是 public
+                    || typeDescription.equals(getDeclaringType().asErasure()) // 不是 public 但是类相同
+                    || isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription) // 不是 public 且两者类并不相同，但是是 protected 且 声明类 isAssignableFrom typeDescription
+                    || !isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure())); // 上面都不满足的话，不是 private 且相同的包
         }
 
         @Override
         public boolean isAccessibleTo(TypeDescription typeDescription) {
-            return (isVirtual() || getDeclaringType().asErasure().isVisibleTo(typeDescription))
-                    && (isPublic()
-                    || typeDescription.equals(getDeclaringType().asErasure())
+            return (isVirtual() || getDeclaringType().asErasure().isVisibleTo(typeDescription)) // 是否是 Virtual
+                    && (isPublic() // 是 public
+                    || typeDescription.equals(getDeclaringType().asErasure()) // 不是 public 但是类相同
                     || !isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure()))
                     || isPrivate() && typeDescription.isNestMateOf(getDeclaringType().asErasure());
         }
@@ -861,7 +861,7 @@ public interface MethodDescription extends TypeVariableSource,
     }
 
     /**
-     * An implementation of a method description for a loaded constructor. 对已加载构造函数的方法描述的实现
+     * An implementation of a method description for a loaded constructor. 对已加载构造函数的方法描述的实现 既然已经加载了 就直接使用 Constructor java 自带的
      */
     class ForLoadedConstructor extends InDefinedShape.AbstractBase {
 
@@ -971,7 +971,7 @@ public interface MethodDescription extends TypeVariableSource,
     }
 
     /**
-     * An implementation of a method description for a loaded method. 加载方法的方法描述的实现
+     * An implementation of a method description for a loaded method. 加载方法的方法描述的实现  加载的方法就直接使用 Method java 自带的类进行描述即可
      */
     class ForLoadedMethod extends InDefinedShape.AbstractBase {
 
@@ -1448,7 +1448,7 @@ public interface MethodDescription extends TypeVariableSource,
     }
 
     /**
-     * A token representing a method's properties detached from a type. 表示方法的属性与类型分离的令牌
+     * A token representing a method's properties detached from a type. 表示方法的属性与类型分离的标记
      */
     class Token implements ByteCodeElement.Token<Token> {
 

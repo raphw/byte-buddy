@@ -2859,7 +2859,7 @@ public interface AgentBuilder {
 
         /**
          * An initialization strategy that adds a code block to an instrumented type's type initializer which
-         * then calls a specific class that is responsible for the explicit initialization.
+         * then calls a specific class that is responsible for the explicit initialization. 一种初始化策略，它向插桩类的类型初始化器添加一个代码块，然后该类型的类型初始值设定项调用负责显式初始化的特定类
          */
         @HashCodeAndEqualsPlugin.Enhance
         abstract class SelfInjection implements InitializationStrategy {
@@ -2987,7 +2987,7 @@ public interface AgentBuilder {
             /**
              * A form of self-injection where auxiliary types that are annotated by
              * {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType.SignatureRelevant} of the instrumented type are loaded lazily and
-             * any other auxiliary type is loaded eagerly.
+             * any other auxiliary type is loaded eagerly. 自注入的一种形式，其中由插桩类的 {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType.SignatureRelevant} 注释的辅助类被延迟加载，而任何其他辅助类被急切加载
              */
             public static class Split extends SelfInjection {
 

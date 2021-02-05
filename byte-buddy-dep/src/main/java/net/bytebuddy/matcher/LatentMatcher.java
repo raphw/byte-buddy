@@ -118,7 +118,7 @@ public interface LatentMatcher<T> {
         }
 
         /**
-         * A resolved matcher of a latent field matcher for a field token.
+         * A resolved matcher of a latent field matcher for a field token. 字段标记的潜在字段匹配器的已解析匹配器
          */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class ResolvedMatcher implements ElementMatcher<FieldDescription> {

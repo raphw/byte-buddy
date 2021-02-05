@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/** Implementation 提供一个code appender，可以被用来做方法的实现的委托调用, 同时任何的 Implementation 应该提供有意义的 equals 和 hashCode，避免重复生成   就是由一系列的 指令码 + 操作数 等组合所组成，也就意味着最终还是依靠 ByteCodeAppender 完成相应的字节插入
+/** Implementation 提供一个 code appender，可以被用来做方法的实现的委托调用, 同时任何的 Implementation 应该提供有意义的 equals 和 hashCode，避免重复生成   就是由一系列的 指令码 + 操作数 等组合所组成，也就意味着最终还是依靠 ByteCodeAppender 完成相应的字节插入
  * An appender that generates the byte code for a given method. This is done by writing the byte code instructions to
  * the given ASM {@link org.objectweb.asm.MethodVisitor}. 为给定方法生成字节码的附加器。这是通过将字节码指令写入给定的 ASM MethodVisitor 来完成的
  * <p>&nbsp;</p>

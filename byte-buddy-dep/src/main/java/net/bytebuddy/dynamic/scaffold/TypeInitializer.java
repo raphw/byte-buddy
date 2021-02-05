@@ -53,7 +53,7 @@ public interface TypeInitializer extends ByteCodeAppender {
         void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext);
 
         /**
-         * A default implementation of a type initializer drain that creates a initializer method. 创建初始值设定项方法 的 类型初始值设定项 drain 的默认实现
+         * A default implementation of a type initializer drain that creates a initializer method. 创建初始值设定项方法 的    类型初始值设定项 drain 的默认实现
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Default implements Drain {
@@ -66,7 +66,7 @@ public interface TypeInitializer extends ByteCodeAppender {
             /**
              * The method pool to use. 要使用的方法池
              */
-            protected final TypeWriter.MethodPool methodPool;
+            protected final TypeWriter.MethodPool methodPool; // 已经编译完之后的类方法集合，其中包括 所有的方法，依旧需要实现的方法
 
             /**
              * The annotation value filter factory to use.

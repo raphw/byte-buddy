@@ -40,8 +40,8 @@ import java.util.*;
  * <ol>
  * <li>The implementation is able to prepare an instrumented type by adding fields and/or helper methods that are
  * required for the methods implemented by this implementation. Furthermore,
- * {@link LoadedTypeInitializer}s  and byte code for the type initializer can be registered for the instrumented
- * type.</li> Implementation 能够去准备一个 instrumentedType，通过添加 field 和 辅助类（ 以便于添加方法的的 Implementation。此外，LoadedTypeInitializer 和 类型初始化的字节码，可以被注册为 instrumentedType
+ * {@link LoadedTypeInitializer}s and byte code for the type initializer can be registered for the instrumented
+ * type.</li> Implementation 能够去准备一个instrumentedType，通过添加 field 和 辅助类（ 以便于添加方法的的 Implementation。此外，LoadedTypeInitializer 和 类型初始化的字节码，可以被注册为 instrumentedType
  * <li>Any implementation is required to supply a byte code appender that is responsible for providing the byte code
  * to the instrumented methods that were delegated to this implementation. This byte code appender is also
  * be responsible for providing implementations for the methods added in step <i>1</i>.</li>
@@ -54,10 +54,10 @@ import java.util.*;
 public interface Implementation extends InstrumentedType.Prepareable {
 
     /**
-     * Creates a byte code appender that determines the implementation of the instrumented type's methods. 创建字节码追加器，用于确定 插桩类型 方法的实现
+     * Creates a byte code appender that determines the implementation of the instrumented type's methods. 创建字节码追加器，用于确定插桩类方法的实现，确定
      *
      * @param implementationTarget The target of the current implementation. 当前实现的目标
-     * @return A byte code appender for implementing methods delegated to this implementation. This byte code appender
+     * @return A byte code appender for implementing methods delegated to this implementation. This byte code appender  这个字节码附加器还负责处理这个实现在调用 {@link Implementation#prepare(InstrumentedType)} 时添加的方法
      * is also responsible for handling methods that were added by this implementation on the call to
      * {@link Implementation#prepare(InstrumentedType)}. Target 是当前的 implementation，这个的意思是基于当前的 implementation 创建一个 ByteCodeAppender
      */
@@ -479,12 +479,12 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
         /**
          * Represents an extractable view of an {@link Implementation.Context} which
-         * allows the retrieval of any registered auxiliary type. 表示 {@link Implementation.Context} 的可提取视图，该视图允许检索任何已注册的辅助类型
+         * allows the retrieval of any registered auxiliary type. 表示 {@link Implementation.Context} 的可提取视图，该视图允许检索任何已注册的辅助类
          */
         interface ExtractableView extends Context {
 
             /**
-             * Returns {@code true} if this implementation context permits the registration of any implicit type initializers.
+             * Returns {@code true} if this implementation context permits the registration of any implicit type initializers. 如果此实现上下文允许注册任何隐式类型初始值设定项，则返回{@code true}
              *
              * @return {@code true} if this implementation context permits the registration of any implicit type initializers.
              */
@@ -718,18 +718,18 @@ public interface Implementation extends InstrumentedType.Prepareable {
             private final String suffix;
 
             /**
-             * If {@code false}, the type initializer for this instance was already drained what prohibits the registration of additional cached field values. 如果{@code false}，则此实例的类型初始值设定项已耗尽禁止注册其他缓存字段值的内容
+             * If {@code false}, the type initializer for this instance was already drained what prohibits the registration of additional cached field values. 如果{@code false}，则此实例的类初始化器已耗尽禁止注册其他缓存字段值的内容
              */
             private boolean fieldCacheCanAppendEntries;
 
             /**
              * Creates a new default implementation context. 创建新的默认实现上下文
              *
-             * @param instrumentedType            The description of the type that is currently subject of creation.
-             * @param classFileVersion            The class file version of the created class.
-             * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type.
-             * @param typeInitializer             The type initializer of the created instrumented type.
-             * @param auxiliaryClassFileVersion   The class file version to use for auxiliary classes.
+             * @param instrumentedType            The description of the type that is currently subject of creation. 当前要创建的类型的描述
+             * @param classFileVersion            The class file version of the created class. 所创建类的类文件版本
+             * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type. 命名辅助类型的命名策略
+             * @param typeInitializer             The type initializer of the created instrumented type. 创建的插桩类的类型初始值设定项
+             * @param auxiliaryClassFileVersion   The class file version to use for auxiliary classes. 用于辅助类的类文件版本
              */
             protected Default(TypeDescription instrumentedType,
                               ClassFileVersion classFileVersion,
@@ -911,17 +911,17 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
             /**
              * A field cache entry for uniquely identifying a cached field. A cached field is described by the stack
-             * manipulation that loads the field's value onto the operand stack and the type of the field.
+             * manipulation that loads the field's value onto the operand stack and the type of the field. 用于唯一标识缓存字段的字段缓存项。缓存字段是通过堆栈操作来描述的，堆栈操作将字段的值加载到操作数堆栈和字段的类型
              */
             protected static class FieldCacheEntry implements StackManipulation {
 
                 /**
-                 * The field value that is represented by this field cache entry.
+                 * The field value that is represented by this field cache entry. 此字段缓存项表示的字段值
                  */
                 private final StackManipulation fieldValue;
 
                 /**
-                 * The field type that is represented by this field cache entry.
+                 * The field type that is represented by this field cache entry. 此字段缓存项表示的字段类型
                  */
                 private final TypeDescription fieldType;
 
@@ -937,7 +937,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 }
 
                 /**
-                 * Returns a stack manipulation where the represented value is stored in the given field.
+                 * Returns a stack manipulation where the represented value is stored in the given field. 返回堆栈操作，其中表示的值存储在给定字段中
                  *
                  * @param fieldDescription A static field in which the value is to be stored.
                  * @return A byte code appender that represents this storage.
@@ -985,7 +985,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             /**
-             * A base implementation of a method that accesses a property of an instrumented type.
+             * A base implementation of a method that accesses a property of an instrumented type. 访问插桩类属性的方法的基本实现
              */
             protected abstract static class AbstractPropertyAccessorMethod extends MethodDescription.InDefinedShape.AbstractBase {
 
@@ -1005,7 +1005,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             /**
-             * A description of an accessor method to access another method from outside the instrumented type.
+             * A description of an accessor method to access another method from outside the instrumented type. 访问器方法的描述，用于从插桩类外部访问另一方法
              */
             protected static class AccessorMethod extends AbstractPropertyAccessorMethod {
 
@@ -1086,7 +1086,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             /**
-             * A description of a field getter method.
+             * A description of a field getter method. 字段 getter 方法的描述
              */
             protected static class FieldGetter extends AbstractPropertyAccessorMethod {
 
@@ -1167,7 +1167,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             /**
-             * A description of a field setter method.
+             * A description of a field setter method. 字段 setter 方法的描述
              */
             protected static class FieldSetter extends AbstractPropertyAccessorMethod {
 
@@ -1275,7 +1275,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 }
 
                 /**
-                 * Returns this delegation record with the minimal visibility represented by the supplied access type.
+                 * Returns this delegation record with the minimal visibility represented by the supplied access type. 以所提供的访问类表示的最小可见性返回此委派记录
                  *
                  * @param accessType The access type to enforce.
                  * @return A new version of this delegation record with the minimal implied visibility.
@@ -1385,7 +1385,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             /**
-             * An implementation for a field getter. 字段getter的实现
+             * An implementation for a field getter. 字段 getter 的实现
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class FieldGetterDelegation extends DelegationRecord {
@@ -1438,7 +1438,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             /**
-             * An implementation for a field setter.
+             * An implementation for a field setter. 字段 setter 的实现
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class FieldSetterDelegation extends DelegationRecord {
@@ -1489,7 +1489,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             /**
-             * A factory for creating a {@link net.bytebuddy.implementation.Implementation.Context.Default}.
+             * A factory for creating a {@link net.bytebuddy.implementation.Implementation.Context.Default}. 创建 {@link net.bytebuddy.implementation.Implementation.Context.Default} 工厂
              */
             public enum Factory implements ExtractableView.Factory {
 
@@ -1663,7 +1663,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
     }
 
     /**
-     * A simple implementation that does not register any members with the instrumented type.
+     * A simple implementation that does not register any members with the instrumented type. 一个简单的实现，它不向插桩类注册任何成员
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Simple implements Implementation {
@@ -1704,6 +1704,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
     }
 }
 // Implementation 负责把动态创建的类 Dynamic.type，转化为字节码。一个 Implementation 的使用可以按如下两步
-// Implementation 能够去准备一个 instrumentedType，通过添加 field 和辅助类（以便于添加方法的的 Implementation。此外，LoadedTypeInitializer和 类型初始化的字节码，可以被注册为instrumentedType
+// Implementation 能够去准备一个 instrumentedType，通过添加 field 和辅助类（以便于添加方法的的 Implementation。此外，LoadedTypeInitializer 和 类型初始化的字节码，可以被注册为instrumentedType
 // Implementation 提供一个 code appender，可以被用来做方法的实现的委托调用。code appender也负责去提供在 step 1中添加的类型
 // 同时任何的Implementation应该提供有意义的equals和hashCode，避免重复生成

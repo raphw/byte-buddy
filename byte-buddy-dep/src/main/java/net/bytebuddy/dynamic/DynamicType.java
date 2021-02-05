@@ -42,7 +42,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType}.
  * <p>&nbsp;</p> Byte Buddy对生成类的抽象。{@link net.bytebuddy.dynamic.DynamicType.Builder} 和 {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType} 的结果
  * Note that the {@link TypeDescription}s will represent their
- * unloaded forms and therefore differ from the loaded types, especially with regards to annotations. 注意 TypeDescription代表着未加载的形式，因此不同于已加载类型，特别是关于注解
+ * unloaded forms and therefore differ from the loaded types, especially with regards to annotations. 注意 {@link TypeDescription} 代表着未加载的形式，因此不同于已加载类型，特别是关于注解
  */
 public interface DynamicType {
 
@@ -52,7 +52,7 @@ public interface DynamicType {
      * </p>
      * <p>
      * <b>Note</b>: This description will most likely differ from the binary representation of this type. Normally,
-     * annotations and intercepted methods are not added to this type description.
+     * annotations and intercepted methods are not added to this type description. 这种描述可能不同于这种类的二进制表示，通常，注解和拦截的方法不回添加到此类型描述中
      * </p>
      *
      * @return A description of this dynamic type.
@@ -61,7 +61,7 @@ public interface DynamicType {
 
     /**
      * Returns a byte array representing this dynamic type. This byte array might be reused by this dynamic type and
-     * must therefore not be altered.
+     * must therefore not be altered. 返回表示此动态类型的字节数组。此字节数组可能被此动态类型重用，因此不能更改
      *
      * @return A byte array of the type's binary representation.
      */
@@ -4637,7 +4637,7 @@ public interface DynamicType {
         Loaded<T> load(ClassLoader classLoader);
 
         /**
-         * Attempts to load this dynamic type including all of its auxiliary types, if any.
+         * Attempts to load this dynamic type including all of its auxiliary types, if any. 尝试加载此动态类型，包括其所有辅助类型（如果有）
          *
          * @param classLoader          The class loader to use for this class loading.
          * @param classLoadingStrategy The class loader strategy which should be used for this class loading.
@@ -4673,7 +4673,7 @@ public interface DynamicType {
     interface Loaded<T> extends DynamicType {
 
         /**
-         * Returns the loaded main class.
+         * Returns the loaded main class. 返回加载的主类
          *
          * @return A loaded class representation of this dynamic type.
          */
@@ -4947,13 +4947,13 @@ public interface DynamicType {
          * A default implementation of an unloaded dynamic type. 不加载动态类型的默认实现
          *
          * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
-         *            type itself, an interface or the direct super class.
+         *            type itself, an interface or the direct super class. 由这个动态类型实现的最具体的已知加载类型，通常是类型本身、接口或直接超类
          */
         @HashCodeAndEqualsPlugin.Enhance
         public static class Unloaded<T> extends Default implements DynamicType.Unloaded<T> {
 
             /**
-             * The type resolution strategy to use for initializing the dynamic type.
+             * The type resolution strategy to use for initializing the dynamic type. 用于初始化动态类型的类型解析策略
              */
             private final TypeResolutionStrategy.Resolved typeResolutionStrategy;
 

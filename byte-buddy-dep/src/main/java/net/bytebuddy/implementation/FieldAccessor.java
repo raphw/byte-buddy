@@ -19,7 +19,7 @@ import java.lang.reflect.Field;
 
 /**
  * <p>
- * Defines a method to access a given field by following the Java bean conventions for getters and setters: 通过遵循getter和setter的Java bean约定，定义访问给定字段的方法
+ * Defines a method to access a given field by following the Java bean conventions for getters and setters: 通过遵循 getter 和 setter 的 Java bean 约定，定义访问给定字段的方法
  * </p>
  * <ul>
  * <li>Getter: A method named {@code getFoo()} will be instrumented to read and return the value of a field {@code foo}
@@ -148,7 +148,7 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * Checks a field access and loads the {@code this} instance if necessary.
+     * Checks a field access and loads the {@code this} instance if necessary. 检查字段访问并在必要时加载 {@code this} 实例
      *
      * @param fieldDescription   The field to get a value
      * @param instrumentedMethod The instrumented method.
@@ -419,7 +419,7 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * A field accessor that can be configured to use a given assigner and runtime type use configuration.
+     * A field accessor that can be configured to use a given assigner and runtime type use configuration. 一种字段存取器，可以配置为使用给定的赋值器和运行时类型使用配置
      */
     public interface AssignerConfigurable extends PropertyConfigurable {
 
@@ -564,7 +564,7 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * A field accessor that sets a parameters value of a given index.
+     * A field accessor that sets a parameters value of a given index. 设置给定索引的参数值的字段存取器
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class ForParameterSetter extends FieldAccessor implements Implementation.Composable {

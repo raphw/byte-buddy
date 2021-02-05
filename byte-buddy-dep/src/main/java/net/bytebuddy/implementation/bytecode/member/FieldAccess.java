@@ -15,17 +15,17 @@ import org.objectweb.asm.Opcodes;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
- * An access representation to a given field. 对给定字段的访问表示 类似，但是更复杂一点。代表了 field 和 method
+ * An access representation to a given field. 对给定字段的访问表示   类似，但是更复杂一点。代表了 field 和 method
  */
 public enum FieldAccess {
 
     /**
-     * The representation of field access to a static field.
+     * The representation of field access to a static field. 对静态字段的字段访问的表示
      */
     STATIC(Opcodes.PUTSTATIC, Opcodes.GETSTATIC, StackSize.ZERO),
 
     /**
-     * The representation of field access to an instance field.
+     * The representation of field access to an instance field. 对实例字段的字段访问的表示
      */
     INSTANCE(Opcodes.PUTFIELD, Opcodes.GETFIELD, StackSize.SINGLE);
 
@@ -101,12 +101,12 @@ public enum FieldAccess {
     }
 
     /**
-     * Representation of a field access for which a getter and a setter can be created. 可以为其创建getter和setter的字段访问的表示
+     * Representation of a field access for which a getter and a setter can be created. 可以为其创建 getter 和 setter 的字段访问的表示
      */
     public interface Defined {
 
         /**
-         * Creates a getter representation for a given field.
+         * Creates a getter representation for a given field. 为给定字段创建getter表示
          *
          * @return A stack manipulation representing the retrieval of a field value.
          */
@@ -127,12 +127,12 @@ public enum FieldAccess {
     protected static class OfGenericField implements Defined {
 
         /**
-         * The resolved generic field type.
+         * The resolved generic field type. 解析的泛型字段类型
          */
         private final TypeDefinition targetType;
 
         /**
-         * An accessor for the field in its defined shape.
+         * An accessor for the field in its defined shape. 字段定义形状的访问器
          */
         private final Defined defined;
 
@@ -148,7 +148,7 @@ public enum FieldAccess {
         }
 
         /**
-         * Creates a generic access dispatcher for a given field.
+         * Creates a generic access dispatcher for a given field. 为给定字段创建通用访问调度器
          *
          * @param fieldDescription The field that is being accessed.
          * @param fieldAccess      A field accessor for the field in its defined shape.

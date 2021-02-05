@@ -11,7 +11,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * This class is responsible for loading any {@code int} constant onto the operand stack. Note that within the JVM,
  * {@code boolean}, {@code byte}, {@code short} and {@code char} values are represented by integers and can therefore
- * be loaded by using this class.
+ * be loaded by using this class. 此类负责将任何 {@code int} 常量加载到操作数堆栈中。请注意，在 JVM 中，{@code boolean}、{@code byte}、{@code short} 和 {@code char} 值由整数表示，因此可以使用此类进行加载
  */
 public enum IntegerConstant implements StackManipulation {
 
@@ -80,9 +80,9 @@ public enum IntegerConstant implements StackManipulation {
     }
 
     /**
-     * Creates a stack manipulation for loading an {@code int} value onto the stack.
+     * Creates a stack manipulation for loading an {@code int} value onto the stack. 创建用于将 {@code int} 值加载到堆栈的堆栈操作
      * <p>&nbsp;</p>
-     * This is achieved either by invoking a constant opcode, if any, or by creating a binary push operation.
+     * This is achieved either by invoking a constant opcode, if any, or by creating a binary push operation. 这可以通过调用常量操作码（如果有的话）或创建二进制推送操作来实现
      *
      * @param value The {@code int} (or {@code byte}, {@code short}, {@code char}) value to load onto the stack.
      * @return A stack manipulation for loading the given value.
@@ -127,7 +127,7 @@ public enum IntegerConstant implements StackManipulation {
 
     /**
      * A stack manipulation that loads a JVM-integer value by a {@code BIPUSH} operation which is
-     * legal for single byte integer values. 栈操作通过BIPUSH操作加载JVM整数值，该操作对单字节整数值合法
+     * legal for single byte integer values. 栈操作通过 {@code BIPUSH} 操作加载 JVM 整数值，该操作对单字节整数值合法
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class SingleBytePush implements StackManipulation {
@@ -138,8 +138,8 @@ public enum IntegerConstant implements StackManipulation {
         private final byte value;
 
         /**
-         * Creates a new {@code BIPUSH} stack manipulation for the given value.
-         * 为给定值创建一个新的{@code BIPUSH}堆栈操作
+         * Creates a new {@code BIPUSH} stack manipulation for the given value. 为给定值创建一个新的 {@code BIPUSH} 堆栈操作
+         *
          * @param value The single byte value to be loaded onto the operand stack.
          */
         protected SingleBytePush(byte value) {
@@ -160,18 +160,18 @@ public enum IntegerConstant implements StackManipulation {
 
     /**
      * A stack manipulation that loads a JVM-integer value by a {@code SIPUSH} operation which is
-     * legal for up to two byte integer values.
+     * legal for up to two byte integer values. 一种堆栈操作，通过 {@code SIPUSH} 操作加载 JVM 整数值，该操作对最多两个字节的整数值是合法的
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class TwoBytePush implements StackManipulation {
 
         /**
-         * The two byte value to be loaded onto the operand stack.
+         * The two byte value to be loaded onto the operand stack. 要加载到操作数堆栈的两字节值
          */
         private final short value;
 
         /**
-         * Creates a new {@code SIPUSH} stack manipulation for the given value.
+         * Creates a new {@code SIPUSH} stack manipulation for the given value. 要加载到操作数堆栈的两字节值
          *
          * @param value The two byte value to be loaded onto the operand stack.
          */

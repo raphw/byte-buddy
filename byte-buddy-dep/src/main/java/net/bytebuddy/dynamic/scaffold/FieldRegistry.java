@@ -105,7 +105,7 @@ public interface FieldRegistry {
         }
 
         @Override
-        public FieldRegistry.Compiled compile(TypeDescription instrumentedType) {
+        public FieldRegistry.Compiled compile(TypeDescription instrumentedType) { // 基于注册的 字段操作条目，完成相关转换成编译之后的 字段操作条目
             List<Compiled.Entry> entries = new ArrayList<Compiled.Entry>(this.entries.size());
             Map<FieldAttributeAppender.Factory, FieldAttributeAppender> fieldAttributeAppenders = new HashMap<FieldAttributeAppender.Factory, FieldAttributeAppender>();
             for (Entry entry : this.entries) {

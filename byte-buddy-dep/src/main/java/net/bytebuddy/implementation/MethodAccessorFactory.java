@@ -7,7 +7,7 @@ import net.bytebuddy.description.modifier.Visibility;
 /**
  * A factory for creating method proxies for an auxiliary type. Such proxies are required to allow a type to
  * call methods of a second type that are usually not accessible for the first type. This strategy is also adapted
- * by the Java compiler that creates accessor methods for example to implement inner classes. 为辅助类型创建方法代理的工厂。这样的代理需要允许一个类型调用第二个类型的方法，而第一个类型通常无法访问这些方法。Java编译器也采用了这种策略，例如，它创建了访问器方法来实现内部类
+ * by the Java compiler that creates accessor methods for example to implement inner classes. 为辅助类型创建方法代理的工厂。这样的代理需要允许一个类调用第二个类的方法，而第一个类通常无法访问这些方法。Java编译器也采用了这种策略，例如，它创建了访问器方法来实现内部类
  */
 public interface MethodAccessorFactory {
 
@@ -48,22 +48,22 @@ public interface MethodAccessorFactory {
     MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription, AccessType accessType);
 
     /**
-     * Indicates the type of access to an accessor method.
+     * Indicates the type of access to an accessor method. 指示访问器方法的访问类型
      */
     enum AccessType {
 
         /**
-         * An access with {@code public visibility}.
+         * An access with {@code public visibility}. 具有 {@code public visibility} 的访问
          */
         PUBLIC(Visibility.PUBLIC),
 
         /**
-         * An access with default visibility.
+         * An access with default visibility. 具有默认可见性的访问
          */
         DEFAULT(Visibility.PACKAGE_PRIVATE);
 
         /**
-         * The implied visibility.
+         * The implied visibility. 隐含的可见性
          */
         private final Visibility visibility;
 
@@ -87,7 +87,7 @@ public interface MethodAccessorFactory {
     }
 
     /**
-     * A method accessor factory that forbids any accessor registration.
+     * A method accessor factory that forbids any accessor registration. 禁止任何访问器注册的方法访问器工厂
      */
     enum Illegal implements MethodAccessorFactory {
 

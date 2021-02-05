@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * A type resolution strategy is responsible for loading a class and for initializing its {@link LoadedTypeInitializer}s. 负责加载类并初始化它LoadedTypeInitializer的
+ * A type resolution strategy is responsible for loading a class and for initializing its {@link LoadedTypeInitializer}s. 负责加载类并初始化它 LoadedTypeInitializer 的
  */
 public interface TypeResolutionStrategy {
 
@@ -170,7 +170,7 @@ public interface TypeResolutionStrategy {
     }
 
     /**
-     * A type resolution strategy that does not apply any {@link LoadedTypeInitializer}s but only loads all types.
+     * A type resolution strategy that does not apply any {@link LoadedTypeInitializer}s but only loads all types. 一种类型解析策略，它不应用任何 {@link LoadedTypeInitializer}，而只加载所有类型
      */
     enum Lazy implements TypeResolutionStrategy, Resolved {
 
@@ -198,7 +198,7 @@ public interface TypeResolutionStrategy {
     }
 
     /**
-     * A type resolution strategy that does not allow for explicit loading of a class and that does not inject any code into the type initializer.
+     * A type resolution strategy that does not allow for explicit loading of a class and that does not inject any code into the type initializer. 一种类型解析策略，不允许显式加载类，也不向类初始化器中注入任何代码
      */
     enum Disabled implements TypeResolutionStrategy, Resolved {
 

@@ -119,7 +119,7 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
         T accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor);
 
         /**
-         * A list of tokens. 令牌列表   token -> 代表真实的字节码  ASM 的 CoreAPI 接受 ClassVister 遍历 class 字节码。 Token也是类似的，被用来遍历字节码。  一个 Token 就是一个字节码元素
+         * A list of tokens. 标记列表   token -> 代表真实的字节码  ASM 的 CoreAPI 接受 ClassVister 遍历 class 字节码。 Token也是类似的，被用来遍历字节码。  一个 Token 就是一个字节码元素
          *
          * @param <S> The actual token type.
          */
@@ -131,7 +131,7 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
             private final List<? extends S> tokens;
 
             /**
-             * Creates a list of tokens. 创建令牌列表
+             * Creates a list of tokens. 创建标记列表
              *
              * @param token The tokens that this list represents. 此列表表示的标记
              */
@@ -141,7 +141,7 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
             }
 
             /**
-             * Creates a list of tokens. 创建令牌列表
+             * Creates a list of tokens. 创建标记列表
              *
              * @param tokens The tokens that this list represents. 此列表表示的标记
              */
@@ -150,7 +150,7 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
             }
 
             /**
-             * Transforms all tokens that are represented by this list. 转换此列表表示的所有标记  accept 方法，接受一个visitor，作为下一个类型的参数。这是访问者模式
+             * Transforms all tokens that are represented by this list. 转换此列表表示的所有标记  accept 方法，接受一个visitor，作为下一个类型的参数。这是组合 + 访问者模式
              *
              * @param visitor The visitor to apply to all tokens. 应用所有的令牌的访问者
              * @return A list containing the transformed tokens.  包含已转换标记的令牌
@@ -180,3 +180,5 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
         }
     }
 }
+// 词法分析是计算机科学中将字符序列转换为标记（token）序列的过程。从输入字符流中生成标记的过程叫作标记化（tokenization），在这个过程中，词法分析器还会对标记进行分类
+// 在最开始词法分析阶段，所有的符号（字符串如:string, 自定义或是语法需要的符号如=,>,{，}，）都作为后续编译的基本单位，称作token  token 也就可以称为词法单元

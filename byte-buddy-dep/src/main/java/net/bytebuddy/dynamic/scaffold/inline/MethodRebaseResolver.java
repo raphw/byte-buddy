@@ -426,10 +426,10 @@ public interface MethodRebaseResolver {
         }
 
         /**
-         * Creates a new method rebase resolver.
+         * Creates a new method rebase resolver. 此方法主要是对需要进行 rebase 的方法进行预处理，如何处理？对需要进行 rebase 对方法保留，只不过，需要在之前方法进行重命名
          *
          * @param instrumentedType            The instrumented type.
-         * @param rebaseableMethodTokens      Tokens describing all methods that can possibly be rebased.
+         * @param rebaseableMethodTokens      Tokens describing all methods that can possibly be rebased. 描述所有可能被重定基的方法的标记
          * @param classFileVersion            The class file version for the instrumentation.
          * @param auxiliaryTypeNamingStrategy The naming strategy for naming a potential auxiliary type.
          * @param methodNameTransformer       A transformer for method names.

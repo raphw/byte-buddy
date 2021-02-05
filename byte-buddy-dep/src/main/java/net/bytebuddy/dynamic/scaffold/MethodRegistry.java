@@ -264,7 +264,7 @@ public interface MethodRegistry {
     }
 
     /**
-     * A method registry that fully prepared the instrumented type. 完全准备插入指令的类型的方法注册表
+     * A method registry that fully prepared the instrumented type. 完全准备插桩类的方法注册表
      */
     interface Prepared {
 
@@ -314,7 +314,7 @@ public interface MethodRegistry {
     }
 
     /**
-     * A compiled version of a method registry.
+     * A compiled version of a method registry. 方法注册表的编译版本
      */
     interface Compiled extends TypeWriter.MethodPool {
 
@@ -363,7 +363,7 @@ public interface MethodRegistry {
         /**
          * The list of currently registered entries in their application order. 应用程序顺序中当前已注册条目的列表
          */
-        private final List<Entry> entries; // 作用于匹配方法的操作处理
+        private final List<Entry> entries; // 作用于匹配方法的操作处理  被用于插桩方法的匹配拦截操作，主要的作用是在遍历插桩类的声明方法时，进行 matcher，然后 handler
 
         /**
          * Creates a new default method registry without entries. 创建一个没有条目的新默认方法注册表
@@ -401,7 +401,7 @@ public interface MethodRegistry {
         public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType,
                                                MethodGraph.Compiler methodGraphCompiler,
                                                TypeValidation typeValidation,
-                                               LatentMatcher<? super MethodDescription> ignoredMethods) {
+                                               LatentMatcher<? super MethodDescription> ignoredMethods) { // ignoredMethods 只是本插桩类声明的类的匹配方法，不包括实现或继承得到的类
             LinkedHashMap<MethodDescription, Prepared.Entry> implementations = new LinkedHashMap<MethodDescription, Prepared.Entry>(); // 需要额外处理的新增方法，比如 MethodDelegation, 桥可见性等导致的方法增加
             Set<Handler> handlers = new HashSet<Handler>();
             MethodList<?> helperMethods = instrumentedType.getDeclaredMethods(); // 只是单纯的 插桩类 声明的方法
@@ -999,3 +999,9 @@ public interface MethodRegistry {
         }
     }
 }
+// net.bytebuddy.dynamic.scaffold.MethodRegistry.Default.Compiled.Entry.bind 这个方法只要是将 编译完成的条目，变成 Method条目
+// 可是，反观 method entry
+// 实现起来就是
+// visibility methodDescription + attributeAppender {
+// handler -> 其实也就是方法体
+// }

@@ -116,10 +116,10 @@ public enum MethodInvocation {
 
     /**
      * Creates a method invocation with an implicitly determined invocation type. If the method's return type derives from its declared shape, the value
-     * is additionally casted to the value of the generically resolved method. 使用隐式确定的调用类型创建方法调用。如果方法的返回类型派生自其声明的形状，则该值将额外强制转换为常规解析方法的值
+     * is additionally casted to the value of the generically resolved method. 使用隐式确定的调用类创建方法调用。如果方法的返回类派生自其声明的形状，则该值将额外强制转换为常规解析方法的值
      *
-     * @param methodDescription The method to be invoked.
-     * @return A stack manipulation with implicitly determined invocation type.
+     * @param methodDescription The method to be invoked. 要调用的方法
+     * @return A stack manipulation with implicitly determined invocation type. 具有隐式确定的调用类的堆栈操作
      */
     public static WithImplicitInvocationTargetType invoke(MethodDescription methodDescription) {
         MethodDescription.InDefinedShape declaredMethod = methodDescription.asDefined();
@@ -211,10 +211,10 @@ public enum MethodInvocation {
                                   List<?> arguments);
 
         /**
-         * Invokes the method via a {@code MethodHandle}.
+         * Invokes the method via a {@code MethodHandle}. 通过 {@code MethodHandle} 调用方法
          *
          * @param type The type of invocation.
-         * @return A stack manipulation that represents a method call of the specified method via a method handle.
+         * @return A stack manipulation that represents a method call of the specified method via a method handle. 通过方法句柄表示指定方法的方法调用的堆栈操作
          */
         StackManipulation onHandle(HandleType type);
     }

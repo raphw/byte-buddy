@@ -478,7 +478,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
 
         /**
          * Locates a handler which is responsible for processing the given parameter. If no explicit handler can
-         * be located, a fallback handler is provided.
+         * be located, a fallback handler is provided. 查找负责处理给定参数的处理程序。如果找不到显式处理程序，则提供回退处理程序
          *
          * @param target The target parameter being handled.
          * @return A handler for processing the parameter with the given annotations.
@@ -521,7 +521,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
 
             /**
              * An unbound handler is a fallback for returning an illegal binding for parameters for which no parameter
-             * binder could be located.
+             * binder could be located. 未绑定处理程序是一种回退，用于为找不到参数绑定器的参数返回非法绑定
              */
             @HashCodeAndEqualsPlugin.Enhance
             class Unbound implements Handler {

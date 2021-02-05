@@ -30,7 +30,7 @@ import java.util.Collections;
 
 /**
  * The Nexus accessor is creating a VM-global singleton {@link Nexus} such that it can be seen by all class loaders of
- * a virtual machine. Furthermore, it provides an API to access this global instance.
+ * a virtual machine. Furthermore, it provides an API to access this global instance. Nexus访问器正在创建VM全局单例{@link Nexus}，这样虚拟机的所有类装入器都可以看到它。此外，它还提供了一个API来访问这个全局实例
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class NexusAccessor {
@@ -100,7 +100,7 @@ public class NexusAccessor {
     }
 
     /**
-     * An initialization appender that looks up a loaded type initializer from Byte Buddy's {@link Nexus}.
+     * An initialization appender that looks up a loaded type initializer from Byte Buddy's {@link Nexus}. 从Byte Buddy的 {@link Nexus} 中查找已加载类初始化器的初始化附加程序
      */
     @HashCodeAndEqualsPlugin.Enhance
     public static class InitializationAppender implements ByteCodeAppender {
@@ -113,7 +113,7 @@ public class NexusAccessor {
         /**
          * Creates a new initialization appender.
          *
-         * @param identification The id used for identifying the loaded type initializer that was added to the {@link Nexus}.
+         * @param identification The id used for identifying the loaded type initializer that was added to the {@link Nexus}. 用于标识添加到 {@link Nexus} 的已加载类初始化器的id
          */
         public InitializationAppender(int identification) {
             this.identification = identification;

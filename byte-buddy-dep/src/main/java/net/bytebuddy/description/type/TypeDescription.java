@@ -7227,7 +7227,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
         /**
-         * A cache of type descriptions for commonly used types to avoid unnecessary allocations. 常用类型的类型描述的缓存，以避免不必要的分配
+         * A cache of type descriptions for commonly used types to avoid unnecessary allocations. 常用类的类描述缓存，以避免不必要的分配
          */
         @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION_PKGPROTECT", justification = "This collection is not exposed.")
         private static final Map<Class<?>, TypeDescription> TYPE_CACHE;
@@ -7268,16 +7268,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * Creates a new immutable type description for a loaded type. This constructor should not normally be used.
          * Use {@link ForLoadedType#of(Class)} instead. 为加载的类型创建一个新的不可变类型描述。 通常不应该使用此构造函数。 请改用{@link ForLoadedType#of(Class))}
          *
-         * @param type The type to be represented by this type description.
+         * @param type The type to be represented by this type description. 此类型描述要表示的类型
          */
         public ForLoadedType(Class<?> type) {
             this.type = type;
         }
 
         /**
-         * Returns the type's actual name where it is taken into consideration that this type might be loaded anonymously.
+         * Returns the type's actual name where it is taken into consideration that this type might be loaded anonymously. 返回类型的实际名称，其中考虑到可以匿名加载此类型
          * In this case, the remainder of the types name is suffixed by {@code /<id>} which is removed when using this method
-         * but is retained when calling {@link Class#getName()}.
+         * but is retained when calling {@link Class#getName()}. 在本例中，类型名称的其余部分以{@code/<id>}作为后缀，在使用此方法时删除该后缀，但在调用{@link Class#getName()}时保留该后缀
          *
          * @param type The type for which to resolve its name.
          * @return The type's actual name.
@@ -7291,7 +7291,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         /**
-         * Returns a new immutable type description for a loaded type. 返回一个已加载类型的新的不可变类型描述
+         * Returns a new immutable type description for a loaded type. 返回一个已加载类的新的不可变类描述
          *
          * @param type The type to be represented by this type description. 该类型描述所表示的类型
          * @return The type description representing the given type. 表示给定类型的类型描述

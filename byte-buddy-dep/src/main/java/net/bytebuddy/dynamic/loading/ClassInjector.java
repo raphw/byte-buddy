@@ -44,7 +44,7 @@ import java.util.jar.JarOutputStream;
 public interface ClassInjector {
 
     /**
-     * Determines the default behavior for type injections when a type is already loaded.
+     * Determines the default behavior for type injections when a type is already loaded. 确定已加载类型时类型注入的默认行为
      */
     boolean ALLOW_EXISTING_TYPES = false;
 

@@ -6,7 +6,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 /**
- * A class writer strategy is responsible for the creation of a {@link ClassWriter} when creating a type. 创建类型时，类编写器策略负责创建{@link ClassWriter}
+ * A class writer strategy is responsible for the creation of a {@link ClassWriter} when creating a type. 创建类型时，类编写器策略负责创建 {@link ClassWriter}
  */
 public interface ClassWriterStrategy {
 

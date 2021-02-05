@@ -37,7 +37,7 @@ public class VoidAwareAssigner implements Assigner {
     }
 
     @Override
-    public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
+    public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) { // 这里做了一次转换，这里的source 其实是代理的，target 是被代理的
         if (source.represents(void.class) && target.represents(void.class)) {
             return StackManipulation.Trivial.INSTANCE;
         } else if (source.represents(void.class) /* && target != void.class */) {

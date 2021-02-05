@@ -42,7 +42,7 @@ public interface ModifierReviewable {
     SyntheticState getSyntheticState();
 
     /**
-     * A modifier reviewable for a {@link ByteCodeElement}, i.e. a type, a field or a method. 对{@link ByteCodeElement}可修改的修饰符，即类型、字段或方法
+     * A modifier reviewable for a {@link ByteCodeElement}, i.e. a type, a field or a method. 对 {@link ByteCodeElement} 可修改的修饰符，即类型、字段或方法
      */
     interface OfByteCodeElement extends ModifierReviewable {
 
@@ -105,7 +105,7 @@ public interface ModifierReviewable {
 
     /**
      * A modifier reviewable for a byte code element that can be abstract, i.e. a {@link net.bytebuddy.description.type.TypeDescription}
-     * or a {@link net.bytebuddy.description.method.MethodDescription}.
+     * or a {@link net.bytebuddy.description.method.MethodDescription}. 一种可对抽象字节码元素进行修改的修饰符，比如 {@link net.bytebuddy.description.type.TypeDescription} 或者 {@link net.bytebuddy.description.method.MethodDescription}
      */
     interface OfAbstraction extends OfByteCodeElement {
 

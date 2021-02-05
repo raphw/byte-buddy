@@ -14,14 +14,14 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import java.lang.annotation.*;
 
 /**
- * Parameters that are annotated with this annotation will be assigned the value of the parameter of the source method
- * with the given parameter. For example, if source method {@code foo(String, Integer)} is bound to target method
- * {@code bar(@Argument(1) Integer)}, the second parameter of {@code foo} will be bound to the first argument of
+ * Parameters that are annotated with this annotation will be assigned the value of the parameter of the source method  使用此注解进行注释的参数将被指定具有给定参数的源方法的参数值
+ * with the given parameter. For example, if source method {@code foo(String, Integer)} is bound to target method       例如，如果源方法 {@code foo(String, Integer)} 绑定到目标方法 {@code bar(@Argument(1) Integer)}
+ * {@code bar(@Argument(1) Integer)}, the second parameter of {@code foo} will be bound to the first argument of        {@code foo} 的第二个参数将绑定到 {@code bar} 的第一个参数
  * {@code bar}.
- * <p>&nbsp;</p>
+ * <p>&nbsp;</p> 如果源方法的参数少于{@link Argument#value()}指定的参数，携带此参数注释的方法被排除在此特定源方法的可能绑定候选列表中
  * If a source method has less parameters than specified by {@link Argument#value()}, the method carrying this parameter
  * annotation is excluded from the list of possible binding candidates to this particular source method. The same happens,
- * if the source method parameter at the specified index is not assignable to the annotated parameter.
+ * if the source method parameter at the specified index is not assignable to the annotated parameter. 如果指定索引处的源方法参数不可赋值给带注释的参数，也会发生同样的情况
  *
  * @see net.bytebuddy.implementation.MethodDelegation
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
@@ -33,7 +33,7 @@ import java.lang.annotation.*;
 public @interface Argument {
 
     /**
-     * The index of the parameter of the source method that should be bound to this parameter.
+     * The index of the parameter of the source method that should be bound to this parameter. 应绑定到此参数的源方法的参数的索引
      *
      * @return The required parameter index.
      */
@@ -48,7 +48,7 @@ public @interface Argument {
      * method would be considered as dominant over the {@code bar} method because of its more specific argument type. As
      * a side effect, only one parameter of any target method can be bound to a source method parameter with a given
      * index unless the {@link net.bytebuddy.implementation.bind.annotation.Argument.BindingMechanic#ANONYMOUS}
-     * option is used for any other binding.
+     * option is used for any other binding. 作为副作用，任何目标方法的一个参数只能绑定到具有给定索引的源方法参数，除非 {@link net.bytebuddy.implementation.bind.annotation.Argument.BindingMechanic#ANONYMOUS} 选项用于任何其他绑定
      *
      * @return The binding type that should be applied to this parameter binding.
      * @see net.bytebuddy.implementation.bind.ArgumentTypeResolver
@@ -56,7 +56,7 @@ public @interface Argument {
     BindingMechanic bindingMechanic() default BindingMechanic.UNIQUE;
 
     /**
-     * Determines if a parameter binding should be considered for resolving ambiguous method bindings.
+     * Determines if a parameter binding should be considered for resolving ambiguous method bindings. 确定在解析不明确的方法绑定时是否应考虑参数绑定
      *
      * @see Argument#bindingMechanic()
      * @see net.bytebuddy.implementation.bind.ArgumentTypeResolver
@@ -66,7 +66,7 @@ public @interface Argument {
         /**
          * The binding is unique, i.e. only one such binding must be present among all parameters of a method. As a
          * consequence, the binding can be latter identified by an
-         * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}.
+         * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}.  绑定是唯一的，即一个方法的所有参数中只能存在一个这样的绑定。因此，绑定可以由 {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver} 标识
          */
         UNIQUE {
             @Override
@@ -86,7 +86,7 @@ public @interface Argument {
         },
 
         /**
-         * The binding is anonymous, i.e. it can be present on several parameters of the same method.
+         * The binding is anonymous, i.e. it can be present on several parameters of the same method. 绑定是匿名的，即它可以出现在同一方法的多个参数上
          */
         ANONYMOUS {
             @Override
@@ -124,7 +124,7 @@ public @interface Argument {
     /**
      * A binder for handling the
      * {@link net.bytebuddy.implementation.bind.annotation.Argument}
-     * annotation.
+     * annotation. 处理 {@link net.bytebuddy.implementation.bind.annotation.Argument} 注解的绑定器
      *
      * @see TargetMethodAnnotationDrivenBinder
      */

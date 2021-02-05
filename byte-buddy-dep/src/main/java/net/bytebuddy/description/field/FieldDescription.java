@@ -531,7 +531,7 @@ public interface FieldDescription extends ByteCodeElement,
     }
 
     /**
-     * A token that uniquely identifies a field by its name and type erasure.
+     * A token that uniquely identifies a field by its name and type erasure. 通过字段的名称和类型擦除来唯一标识 字段 的 标记
      */
     class SignatureToken {
 
