@@ -18,6 +18,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaType;
+import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -1371,6 +1372,22 @@ public class AdviceTest {
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField("exception").getBoolean(null), is(true));
+    }
+
+    @Test
+    public void testExceptionRethrowing() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ExceptionWriterSample.class)
+                .visit(Advice.to(ExceptionWriterTest.class).withExceptionHandler(Advice.ExceptionHandler.Default.RETHROWING).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause().getClass().getName(), is(ExceptionWriterSample.class.getName()));
+        }
     }
 
     @Test

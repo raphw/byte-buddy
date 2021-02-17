@@ -6455,6 +6455,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException("Cannot locate Throwable::printStackTrace");
                     }
                 }
+            },
+
+            /**
+             * An exception handler that rethrows any suppressed {@link Throwable}. Normally, it is preferable to avoid suppression
+             * altogether rather then to rethrow them. It can however be desired to make this behavior configurable where using this
+             * handler allows to effectively disable the suppression.
+             */
+            RETHROWING {
+                /** {@inheritDoc} */
+                public StackManipulation resolve(MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
+                    return Throw.INSTANCE;
+                }
             }
         }
 
