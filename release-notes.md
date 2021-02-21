@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 21. February 2021: version 1.10.21
+
+- Update ASM and add support for Java 17.
+- Make plugin discoveribility configurable.
+- Add advice suppression handler for rethrowing.
+
 ### 3. February 2021: version 1.10.20
 
 - Reuse simple but commonly used matchers as constants to avoid repeated allocation.
