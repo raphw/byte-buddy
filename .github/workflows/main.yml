@@ -26,7 +26,7 @@ jobs:
         run: |
           . ./.github/scripts/install-jdk.sh --feature ea --os linux-x64
           export MAVEN_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED"
-          ./mvnw verify -Pjava17
+          ./mvnw verify -Pjava17 -Dnet.bytebuddy.experimental=true
         continue-on-error: true
   hotspot-supported:
     name: HotSpot (supported)
@@ -56,12 +56,6 @@ jobs:
       fail-fast: false
       matrix:
         java: [7, 9, 10, 12, 13, 14]
-        experimental: [ false ]
-        include:
-          - java: 16-ea
-            experimental: true
-          - java: 17-ea
-            experimental: true
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
