@@ -124,7 +124,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     /**
      * The class file version of Java 17.
      */
-    public static final ClassFileVersion JAVA_V17 = new ClassFileVersion(Opcodes.V16 + 1);
+    public static final ClassFileVersion JAVA_V17 = new ClassFileVersion(Opcodes.V17);
 
     /**
      * A version locator for the executing JVM.
