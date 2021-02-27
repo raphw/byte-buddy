@@ -227,10 +227,6 @@ Getting support
 
 The use of Byte Buddy is free and does not require the purchase of a license. To get the most out of the library or to secure an easy start, it is however possible to purchase training, development hours or support plans. Rates are dependent on the scope and duration of an engagement. Please get in touch with <rafael.wth@gmail.com> for further information.
 
-#### GitHub Sponsors ####
-
-Sponsorship via GitHub is easy to set up and is available for different plans. For more information, visit the [GitHub sponsors page of the author of the library](https://github.com/sponsors/raphw/).
-
 #### Tidelift ####
 
 Byte Buddy is [listed on Tidelift](https://tidelift.com/subscription/pkg/maven-net-bytebuddy-byte-buddy?utm_source=byte-buddy&utm_medium=referral). If you are not using Byte Buddy to an extent where you want to purchase explicit support and want to support the open source community in general, please consider a subscription.
