@@ -2172,7 +2172,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Resolves the field being bound.
              *
-             * @param instrumentedType The instrumented type.
+             * @param instrumentedType   The instrumented type.
              * @param instrumentedMethod The instrumented method.
              * @return The field being bound.
              */
@@ -3801,6 +3801,60 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         factory = Factory.of(annotationType, value);
                     }
                     return factory.make(target, annotation, adviceType);
+                }
+            }
+
+            /**
+             * Uses dynamic method invocation for binding an annotated parameter to a value.
+             *
+             * @param <T> The annotation type this factory binds.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            public static class OfDynamicInvocation<T extends Annotation> implements OffsetMapping.Factory<T> {
+
+                /**
+                 * The annotation type.
+                 */
+                private final Class<T> annotationType;
+
+                /**
+                 * The bootstrap method or constructor.
+                 */
+                private final MethodDescription.InDefinedShape bootstrapMethod;
+
+                /**
+                 * The arguments to the bootstrap method.
+                 */
+                private final List<?> arguments;
+
+                /**
+                 * Creates a new factory for a dynamic invocation.
+                 *
+                 * @param annotationType  The annotation type.
+                 * @param bootstrapMethod The bootstrap method or constructor.
+                 * @param arguments       The arguments to the bootstrap method.
+                 */
+                public OfDynamicInvocation(Class<T> annotationType, MethodDescription.InDefinedShape bootstrapMethod, List<?> arguments) {
+                    this.annotationType = annotationType;
+                    this.bootstrapMethod = bootstrapMethod;
+                    this.arguments = arguments;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Class<T> getAnnotationType() {
+                    return annotationType;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, AdviceType adviceType) {
+                    return new ForStackManipulation(MethodInvocation.invoke(bootstrapMethod).dynamic(bootstrapMethod.getInternalName(),
+                            target.getType().asErasure(),
+                            null, // TODO: Extract method, check it's valid. Maybe add method to "TypeDescription"?
+                            arguments), target.getType(), target.getType(), Assigner.Typing.STATIC);
                 }
             }
         }
@@ -11454,6 +11508,84 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         public <T extends Annotation> WithCustomMapping bind(Class<T> type, StackManipulation stackManipulation, TypeDescription.Generic targetType) {
             return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, stackManipulation, targetType));
+        }
+
+        /**
+         * Binds the supplied annotation to a dynamically bootstrapped value.
+         *
+         * @param type            The type of the annotation being bound.
+         * @param bootstrapMethod The bootstrap method returning the call site.
+         * @param argument        The arguments supplied to the bootstrap method.
+         * @param <T>             The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Method bootstrapMethod, Object... argument) {
+            return bindDynamic(type, bootstrapMethod, Arrays.asList(argument));
+        }
+
+        /**
+         * Binds the supplied annotation to a dynamically bootstrapped value.
+         *
+         * @param type            The type of the annotation being bound.
+         * @param bootstrapMethod The bootstrap method returning the call site.
+         * @param arguments       The arguments supplied to the bootstrap method.
+         * @param <T>             The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Method bootstrapMethod, List<?> arguments) {
+            return bindDynamic(type, new MethodDescription.ForLoadedMethod(bootstrapMethod), arguments);
+        }
+
+        /**
+         * Binds the supplied annotation to a dynamically bootstrapped value.
+         *
+         * @param type            The type of the annotation being bound.
+         * @param bootstrapMethod The bootstrap constructor returning the call site.
+         * @param argument        The arguments supplied to the bootstrap method.
+         * @param <T>             The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Constructor<?> bootstrapMethod, Object... argument) {
+            return bindDynamic(type, bootstrapMethod, Arrays.asList(argument));
+        }
+
+        /**
+         * Binds the supplied annotation to a dynamically bootstrapped value.
+         *
+         * @param type            The type of the annotation being bound.
+         * @param bootstrapMethod The bootstrap constructor returning the call site.
+         * @param arguments       The arguments supplied to the bootstrap method.
+         * @param <T>             The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Constructor<?> bootstrapMethod, List<?> arguments) {
+            return bindDynamic(type, new MethodDescription.ForLoadedConstructor(bootstrapMethod), arguments);
+        }
+
+        /**
+         * Binds the supplied annotation to a dynamically bootstrapped value.
+         *
+         * @param type            The type of the annotation being bound.
+         * @param bootstrapMethod The bootstrap method or constructor returning the call site.
+         * @param argument        The arguments supplied to the bootstrap method.
+         * @param <T>             The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, MethodDescription.InDefinedShape bootstrapMethod, Object... argument) {
+            return bindDynamic(type, bootstrapMethod, Arrays.asList(argument));
+        }
+
+        /**
+         * Binds the supplied annotation to a dynamically bootstrapped value.
+         *
+         * @param type            The type of the annotation being bound.
+         * @param bootstrapMethod The bootstrap method or constructor returning the call site.
+         * @param arguments       The arguments supplied to the bootstrap method.
+         * @param <T>             The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, MethodDescription.InDefinedShape bootstrapMethod, List<?> arguments) {
+            return bind(new OffsetMapping.ForStackManipulation.OfDynamicInvocation<T>(type, bootstrapMethod, arguments));
         }
 
         /**
