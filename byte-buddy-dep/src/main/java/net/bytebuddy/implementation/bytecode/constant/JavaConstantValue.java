@@ -18,7 +18,6 @@ package net.bytebuddy.implementation.bytecode.constant;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.JavaConstant;
 import org.objectweb.asm.MethodVisitor;
 
@@ -54,6 +53,6 @@ public class JavaConstantValue implements StackManipulation {
      */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitLdcInsn(javaConstant.asConstantPoolValue());
-        return StackSize.SINGLE.toIncreasingSize();
+        return javaConstant.getType().getStackSize().toIncreasingSize();
     }
 }

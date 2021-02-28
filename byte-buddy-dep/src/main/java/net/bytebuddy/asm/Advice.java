@@ -11419,6 +11419,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
+         * Binds the supplied annotation to the given Java constant.
+         *
+         * @param type         The type of the annotation being bound.
+         * @param javaConstant The Java constant that is bound.
+         * @param <T>          The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bind(Class<T> type, JavaConstant javaConstant) {
+            return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, new JavaConstantValue(javaConstant), javaConstant.getType().asGenericType()));
+        }
+
+        /**
          * Binds the supplied annotation to the annotation's property of the specified name.
          *
          * @param type              The type of the annotation being bound.

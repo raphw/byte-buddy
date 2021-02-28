@@ -1,7 +1,9 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.JavaConstant;
 import org.junit.Rule;
@@ -25,6 +27,9 @@ public class JavaConstantValueTest {
     private JavaConstant javaConstant;
 
     @Mock
+    private TypeDescription typeDescription;
+
+    @Mock
     private MethodVisitor methodVisitor;
 
     @Mock
@@ -33,11 +38,14 @@ public class JavaConstantValueTest {
     @Test
     public void testMethodHandle() throws Exception {
         when(javaConstant.asConstantPoolValue()).thenReturn(FOO);
+        when(javaConstant.getType()).thenReturn(typeDescription);
+        when(typeDescription.getStackSize()).thenReturn(StackSize.SINGLE);
         StackManipulation stackManipulation = new JavaConstantValue(javaConstant);
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         verify(javaConstant).asConstantPoolValue();
+        verify(javaConstant).getType();
         verifyNoMoreInteractions(javaConstant);
         verify(methodVisitor).visitLdcInsn(FOO);
         verifyNoMoreInteractions(methodVisitor);
