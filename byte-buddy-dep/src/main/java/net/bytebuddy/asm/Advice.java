@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -27,10 +28,12 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.SuperMethodCall;
@@ -62,10 +65,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
-import static net.bytebuddy.matcher.ElementMatchers.isGetter;
-import static net.bytebuddy.matcher.ElementMatchers.isSetter;
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * <p>
@@ -3851,9 +3851,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * {@inheritDoc}
                  */
                 public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, AdviceType adviceType) {
-                    return new ForStackManipulation(MethodInvocation.invoke(bootstrapMethod).dynamic(bootstrapMethod.getInternalName(),
+                    if (!target.getType().isInterface()) {
+                        throw new IllegalArgumentException(target.getType() + " is not an interface");
+                    } else if (!target.getType().getInterfaces().isEmpty()) {
+                        throw new IllegalArgumentException(target.getType() + " must not extend other interfaces");
+                    } else if (!target.getType().isPublic()) {
+                        throw new IllegalArgumentException(target.getType() + " is mot public");
+                    }
+                    MethodList<?> methodCandidates = target.getType().getDeclaredMethods().filter(isAbstract());
+                    if (methodCandidates.size() != 1) {
+                        throw new IllegalArgumentException(target.getType() + " must declare exactly one abstract method");
+                    }
+                    return new ForStackManipulation(MethodInvocation.invoke(bootstrapMethod).dynamic(methodCandidates.getOnly().getInternalName(),
                             target.getType().asErasure(),
-                            null, // TODO: Extract method, check it's valid. Maybe add method to "TypeDescription"?
+                            methodCandidates.getOnly().getParameters().asTypeList().asErasures(),
                             arguments), target.getType(), target.getType(), Assigner.Typing.STATIC);
                 }
             }
@@ -11511,16 +11522,138 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * Binds the supplied annotation to a dynamically bootstrapped value.
+         * Binds the supplied annotation as a lambda expression via the JVM's lambda metafactory.
          *
-         * @param type            The type of the annotation being bound.
-         * @param bootstrapMethod The bootstrap method returning the call site.
-         * @param argument        The arguments supplied to the bootstrap method.
-         * @param <T>             The annotation type.
+         * @param type                The type of the annotation being bound.
+         * @param constructor         The constructor being bound as the lambda expression's implementation.
+         * @param functionalInterface The functional interface that represents the lambda expression.
+         * @param <T>                 The annotation type.
          * @return A new builder for an advice that considers the supplied annotation during binding.
          */
-        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Method bootstrapMethod, Object... argument) {
-            return bindDynamic(type, bootstrapMethod, Arrays.asList(argument));
+        public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type,
+                                                                   Constructor<?> constructor,
+                                                                   Class<?> functionalInterface) {
+            return bindLambda(type,
+                    new MethodDescription.ForLoadedConstructor(constructor),
+                    TypeDescription.ForLoadedType.of(functionalInterface));
+        }
+
+        /**
+         * Binds the supplied annotation as a lambda expression via the JVM's lambda metafactory.
+         *
+         * @param type                The type of the annotation being bound.
+         * @param constructor         The constructor being bound as the lambda expression's implementation.
+         * @param functionalInterface The functional interface that represents the lambda expression.
+         * @param methodGraphCompiler The method graph compiler that resolves the functional method of the function interface.
+         * @param <T>                 The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type,
+                                                                   Constructor<?> constructor,
+                                                                   Class<?> functionalInterface,
+                                                                   MethodGraph.Compiler methodGraphCompiler) {
+            return bindLambda(type,
+                    new MethodDescription.ForLoadedConstructor(constructor),
+                    TypeDescription.ForLoadedType.of(functionalInterface),
+                    methodGraphCompiler);
+        }
+
+        /**
+         * Binds the supplied annotation as a lambda expression via the JVM's lambda metafactory.
+         *
+         * @param type                The type of the annotation being bound.
+         * @param method              The method being bound as the lambda expression's implementation.
+         * @param functionalInterface The functional interface that represents the lambda expression.
+         * @param <T>                 The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type,
+                                                                   Method method,
+                                                                   Class<?> functionalInterface) {
+            return bindLambda(type,
+                    new MethodDescription.ForLoadedMethod(method),
+                    TypeDescription.ForLoadedType.of(functionalInterface));
+        }
+
+        /**
+         * Binds the supplied annotation as a lambda expression via the JVM's lambda metafactory.
+         *
+         * @param type                The type of the annotation being bound.
+         * @param method              The method being bound as the lambda expression's implementation.
+         * @param functionalInterface The functional interface that represents the lambda expression.
+         * @param methodGraphCompiler The method graph compiler that resolves the functional method of the function interface.
+         * @param <T>                 The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type,
+                                                                   Method method,
+                                                                   Class<?> functionalInterface,
+                                                                   MethodGraph.Compiler methodGraphCompiler) {
+            return bindLambda(type,
+                    new MethodDescription.ForLoadedMethod(method),
+                    TypeDescription.ForLoadedType.of(functionalInterface),
+                    methodGraphCompiler);
+        }
+
+        /**
+         * Binds the supplied annotation as a lambda expression via the JVM's lambda metafactory.
+         *
+         * @param type                The type of the annotation being bound.
+         * @param methodDescription   The method or constructor being bound as the lambda expression's implementation.
+         * @param functionalInterface The functional interface that represents the lambda expression.
+         * @param <T>                 The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type,
+                                                                   MethodDescription.InDefinedShape methodDescription,
+                                                                   TypeDescription functionalInterface) {
+            return bindLambda(type, methodDescription, functionalInterface, MethodGraph.Compiler.DEFAULT);
+        }
+
+        /**
+         * Binds the supplied annotation as a lambda expression via the JVM's lambda metafactory.
+         *
+         * @param type                The type of the annotation being bound.
+         * @param methodDescription   The method or constuctor being bound as the lambda expression's implementation.
+         * @param functionalInterface The functional interface that represents the lambda expression.
+         * @param methodGraphCompiler The method graph compiler that resolves the functional method of the function interface.
+         * @param <T>                 The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type,
+                                                                   MethodDescription.InDefinedShape methodDescription,
+                                                                   TypeDescription functionalInterface,
+                                                                   MethodGraph.Compiler methodGraphCompiler) {
+            if (!functionalInterface.isInterface()) {
+                throw new IllegalArgumentException(functionalInterface + " is not an interface type");
+            }
+            MethodList<?> methods = methodGraphCompiler.compile(functionalInterface)
+                    .listNodes()
+                    .asMethodList()
+                    .filter(isAbstract());
+            if (methods.size() != 1) {
+                throw new IllegalArgumentException(functionalInterface + " does not define exactly one abstract method: " + methods);
+            }
+            return bindDynamic(type, new MethodDescription.Latent(new TypeDescription.Latent("java.lang.invoke.LambdaMetafactory",
+                            Opcodes.ACC_PUBLIC,
+                            TypeDescription.Generic.OBJECT),
+                            "metafactory",
+                            Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
+                            Collections.<TypeVariableToken>emptyList(),
+                            JavaType.CALL_SITE.getTypeStub().asGenericType(),
+                            Arrays.asList(new ParameterDescription.Token(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().asGenericType()),
+                                    new ParameterDescription.Token(TypeDescription.STRING.asGenericType()),
+                                    new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
+                                    new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
+                                    new ParameterDescription.Token(JavaType.METHOD_HANDLE.getTypeStub().asGenericType()),
+                                    new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType())),
+                            Collections.<TypeDescription.Generic>emptyList(),
+                            Collections.<AnnotationDescription>emptyList(),
+                            AnnotationValue.UNDEFINED,
+                            TypeDescription.Generic.UNDEFINED),
+                    JavaConstant.MethodType.of(methods.asDefined().getOnly()),
+                    JavaConstant.MethodHandle.of(methodDescription),
+                    JavaConstant.MethodType.of(methods.asDefined().getOnly()));
         }
 
         /**
@@ -11528,12 +11661,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          *
          * @param type            The type of the annotation being bound.
          * @param bootstrapMethod The bootstrap method returning the call site.
-         * @param arguments       The arguments supplied to the bootstrap method.
+         * @param constant        The arguments supplied to the bootstrap method.
          * @param <T>             The annotation type.
          * @return A new builder for an advice that considers the supplied annotation during binding.
          */
-        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Method bootstrapMethod, List<?> arguments) {
-            return bindDynamic(type, new MethodDescription.ForLoadedMethod(bootstrapMethod), arguments);
+        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Method bootstrapMethod, Object... constant) {
+            return bindDynamic(type, bootstrapMethod, Arrays.asList(constant));
+        }
+
+        /**
+         * Binds the supplied annotation to a dynamically bootstrapped value.
+         *
+         * @param type            The type of the annotation being bound.
+         * @param bootstrapMethod The bootstrap method returning the call site.
+         * @param constants       The arguments supplied to the bootstrap method.
+         * @param <T>             The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Method bootstrapMethod, List<?> constants) {
+            return bindDynamic(type, new MethodDescription.ForLoadedMethod(bootstrapMethod), constants);
         }
 
         /**
@@ -11541,12 +11687,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          *
          * @param type            The type of the annotation being bound.
          * @param bootstrapMethod The bootstrap constructor returning the call site.
-         * @param argument        The arguments supplied to the bootstrap method.
+         * @param constant        The arguments supplied to the bootstrap method.
          * @param <T>             The annotation type.
          * @return A new builder for an advice that considers the supplied annotation during binding.
          */
-        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Constructor<?> bootstrapMethod, Object... argument) {
-            return bindDynamic(type, bootstrapMethod, Arrays.asList(argument));
+        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Constructor<?> bootstrapMethod, Object... constant) {
+            return bindDynamic(type, bootstrapMethod, Arrays.asList(constant));
         }
 
         /**
@@ -11554,12 +11700,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          *
          * @param type            The type of the annotation being bound.
          * @param bootstrapMethod The bootstrap constructor returning the call site.
-         * @param arguments       The arguments supplied to the bootstrap method.
+         * @param constants       The arguments supplied to the bootstrap method.
          * @param <T>             The annotation type.
          * @return A new builder for an advice that considers the supplied annotation during binding.
          */
-        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Constructor<?> bootstrapMethod, List<?> arguments) {
-            return bindDynamic(type, new MethodDescription.ForLoadedConstructor(bootstrapMethod), arguments);
+        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Constructor<?> bootstrapMethod, List<?> constants) {
+            return bindDynamic(type, new MethodDescription.ForLoadedConstructor(bootstrapMethod), constants);
         }
 
         /**
@@ -11567,12 +11713,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          *
          * @param type            The type of the annotation being bound.
          * @param bootstrapMethod The bootstrap method or constructor returning the call site.
-         * @param argument        The arguments supplied to the bootstrap method.
+         * @param constant        The arguments supplied to the bootstrap method.
          * @param <T>             The annotation type.
          * @return A new builder for an advice that considers the supplied annotation during binding.
          */
-        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, MethodDescription.InDefinedShape bootstrapMethod, Object... argument) {
-            return bindDynamic(type, bootstrapMethod, Arrays.asList(argument));
+        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, MethodDescription.InDefinedShape bootstrapMethod, Object... constant) {
+            return bindDynamic(type, bootstrapMethod, Arrays.asList(constant));
         }
 
         /**
@@ -11580,11 +11726,36 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          *
          * @param type            The type of the annotation being bound.
          * @param bootstrapMethod The bootstrap method or constructor returning the call site.
-         * @param arguments       The arguments supplied to the bootstrap method.
+         * @param constants       The arguments supplied to the bootstrap method.
          * @param <T>             The annotation type.
          * @return A new builder for an advice that considers the supplied annotation during binding.
          */
-        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, MethodDescription.InDefinedShape bootstrapMethod, List<?> arguments) {
+        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, MethodDescription.InDefinedShape bootstrapMethod, List<?> constants) {
+            List<Object> arguments = new ArrayList<Object>(constants.size());
+            List<TypeDescription> types = new ArrayList<TypeDescription>(constants.size());
+            for (Object constant : constants) {
+                if (constant instanceof JavaConstant) {
+                    arguments.add(((JavaConstant) constant).asConstantPoolValue());
+                    types.add(((JavaConstant) constant).getType());
+                } else if (constant instanceof TypeDescription) {
+                    arguments.add(Type.getType(((TypeDescription) constant).getDescriptor()));
+                    types.add(TypeDescription.CLASS);
+                } else {
+                    arguments.add(constant);
+                    TypeDescription typeDescription = TypeDescription.ForLoadedType.of(constant.getClass()).asUnboxed();
+                    types.add(typeDescription);
+                    if (JavaType.METHOD_TYPE.isInstance(constant) || JavaType.METHOD_HANDLE.isInstance(constant)) {
+                        throw new IllegalArgumentException("Must be represented as a JavaConstant instance: " + constant);
+                    } else if (constant instanceof Class<?>) {
+                        throw new IllegalArgumentException("Must be represented as a TypeDescription instance: " + constant);
+                    } else if (!typeDescription.isCompileTimeConstant()) {
+                        throw new IllegalArgumentException("Not a compile-time constant: " + constant);
+                    }
+                }
+            }
+            if (!bootstrapMethod.isInvokeBootstrap(types)) {
+                throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrapMethod + " for " + arguments);
+            }
             return bind(new OffsetMapping.ForStackManipulation.OfDynamicInvocation<T>(type, bootstrapMethod, arguments));
         }
 

@@ -5454,7 +5454,7 @@ public interface TypeWriter<T> {
                             new LazyFieldList(instrumentedType),
                             methods,
                             new MethodList.Empty<MethodDescription>(),
-                            new RecordComponentList.Empty<RecordComponentDescription.InDefinedShape>(), // TODO
+                            new RecordComponentList.Empty<RecordComponentDescription.InDefinedShape>(),
                             LoadedTypeInitializer.NoOp.INSTANCE,
                             TypeInitializer.None.INSTANCE,
                             typeAttributeAppender,

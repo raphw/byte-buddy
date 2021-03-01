@@ -32,6 +32,8 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -39,6 +41,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import static junit.framework.TestCase.fail;
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
@@ -1544,6 +1547,38 @@ public class AdviceTest {
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER)
                 .getLoaded();
         assertThat(type.getMethod(BAR).invoke(type.getConstructor().newInstance()), is((Object) false));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(value = 7, target = Sample.class)
+    public void testAdviceDynamicInvocation() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bindDynamic(Custom.class,
+                        Class.forName("net.bytebuddy.test.precompiled.DynamicSampleBootstrap").getMethod("callable",
+                                JavaType.METHOD_HANDLES_LOOKUP.load(),
+                                String.class,
+                                JavaType.METHOD_TYPE.load(),
+                                String.class),
+                        FOO).to(CustomDynamicAdvice.class).on(named(FOO)))
+                .make()
+                .load(Sample.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getMethod(FOO).invoke(type.getConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(value = 8, target = Sample.class)
+    public void testAdviceDynamicLambdaInvocation() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bindLambda(Custom.class,
+                        Sample.class.getMethod("baz"),
+                        Callable.class).to(CustomDynamicAdvice.class).on(named(FOO)))
+                .make()
+                .load(Sample.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getMethod(FOO).invoke(type.getConstructor().newInstance()), is((Object) FOO));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -3391,6 +3426,18 @@ public class AdviceTest {
         @Advice.OnMethodExit
         private static void advice(@Custom Map<String, String> value) {
             if (value.size() != 1 && !value.get(FOO).equals(BAR)) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CustomDynamicAdvice {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit
+        private static void advice(@Custom Callable<String> callable) throws Exception {
+            if (!callable.call().equals(FOO)) {
                 throw new AssertionError();
             }
         }
