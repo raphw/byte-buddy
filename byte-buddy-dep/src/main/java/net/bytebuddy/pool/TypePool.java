@@ -1053,20 +1053,20 @@ public interface TypePool {
         }
 
         /**
-         * Determines the granularity of the class file parsing that is conducted by a {@link net.bytebuddy.pool.TypePool.Default}.
+         * Determines the granularity of the class file parsing that is conducted by a {@link net.bytebuddy.pool.TypePool.Default}. 确定 {@link net.bytebuddy.pool.TypePool.Default} 执行的类文件解析的粒度
          */
         public enum ReaderMode {
 
             /**
              * The extended reader mode parses the code segment of each method in order to detect parameter names
-             * that are only stored in a method's debugging information but are not explicitly included.
+             * that are only stored in a method's debugging information but are not explicitly included. 扩展读取器模式解析每个方法的代码段，以便检测仅存储在方法调试信息中但未显式包含的参数名
              */
             EXTENDED(ClassReader.SKIP_FRAMES),
 
             /**
              * The fast reader mode skips the code segment of each method and cannot detect parameter names that are
              * only contained within the debugging information. This mode still detects explicitly included method
-             * parameter names.
+             * parameter names. 快速读取器模式跳过每个方法的代码段，无法检测仅包含在调试信息中的参数名。此模式仍然检测显式包含的方法参数名称
              */
             FAST(ClassReader.SKIP_CODE);
 
@@ -1106,7 +1106,7 @@ public interface TypePool {
         /**
          * <p>
          * A variant of {@link TypePool.Default} that resolves type descriptions lazily. A lazy resolution respects this type
-         * pool's {@link CacheProvider} but requeries this cache pool for every access of a property of a {@link TypeDescription}.
+         * pool's {@link CacheProvider} but requeries this cache pool for every access of a property of a {@link TypeDescription}. {@link TypePool.Default}的一个变体，它延迟解析类型描述。 延迟解析会尊重此类型池的{@link CacheProvider}，但对于{@link TypeDescription}属性的每次访问都会重新查询此缓存池
          * </p>
          * <p>
          * {@link Resolution}s of this type pool are only fully resolved if a property that is not the type's name is required.
@@ -1193,7 +1193,7 @@ public interface TypePool {
             }
 
             /**
-             * A lazy resolution of a type that the enclosing type pool attempts to resolve.
+             * A lazy resolution of a type that the enclosing type pool attempts to resolve. 封闭类型池尝试解析的惰性解析
              */
             @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
             protected class LazyResolution implements Resolution {
@@ -1224,7 +1224,7 @@ public interface TypePool {
             }
 
             /**
-             * A lazy type description that resolves any property that is not the name only when requested.
+             * A lazy type description that resolves any property that is not the name only when requested. 延迟类型描述，仅当请求时才解析不是名称的任何属性
              */
             protected class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType.WithDelegation {
 

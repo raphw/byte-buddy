@@ -7100,7 +7100,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * An implementation of a type description that delegates all properties but the type's name to a delegate.
+             * An implementation of a type description that delegates all properties but the type's name to a delegate. 类型描述的实现，将除类型名称之外的所有属性委托给委托
              */
             public abstract static class WithDelegation extends OfSimpleType {
 

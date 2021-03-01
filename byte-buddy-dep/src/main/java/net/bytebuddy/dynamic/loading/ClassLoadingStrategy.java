@@ -26,19 +26,19 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
     ProtectionDomain NO_PROTECTION_DOMAIN = null;
 
     /**
-     * Loads a given collection of classes given their binary representation.
+     * Loads a given collection of classes given their binary representation. 加载给定二进制表示形式的类的给定集合
      *
-     * @param classLoader The class loader to used for loading the classes.
+     * @param classLoader The class loader to used for loading the classes. 用于加载类的类加载器
      * @param types       Byte array representations of the types to be loaded mapped by their descriptions,
      *                    where an iteration order defines an order in which they are supposed to be loaded,
-     *                    if relevant.
+     *                    if relevant. 要加载类型的字节数组表示形式由它们的描述映射，其中迭代顺序定义了它们应该加载的顺序（如果相关）
      * @return A collection of the loaded classes which will be initialized in the iteration order of the
      * returned collection.
      */
     Map<TypeDescription, Class<?>> load(T classLoader, Map<TypeDescription, byte[]> types);
 
     /**
-     * This class contains implementations of default class loading strategies.
+     * This class contains implementations of default class loading strategies. 此类包含默认类加载策略的实现
      */
     enum Default implements Configurable<ClassLoader> {
 
@@ -55,7 +55,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         /**
          * The strategy is identical to {@link ClassLoadingStrategy.Default#WRAPPER} but exposes
          * the byte arrays that represent a class by {@link java.lang.ClassLoader#getResourceAsStream(String)}. For
-         * this purpose, all class files are persisted as byte arrays withing the wrapping class loader.
+         * this purpose, all class files are persisted as byte arrays withing the wrapping class loader. 该策略与 {@link ClassLoadingStrategy.Default#WRAPPER} 相同，但通过 {@link java.lang.ClassLoader#getResourceAsStream(String)} 公开表示类的字节数组。为此，使用包装类装入器将所有类文件持久化为字节数组
          */
         WRAPPER_PERSISTENT(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.MANIFEST, WrappingDispatcher.PARENT_FIRST)),
 

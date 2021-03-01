@@ -432,7 +432,7 @@ public interface AnnotationAppender {
         }
 
         /**
-         * Creates a type annotation appender for type annotations of an interface type.
+         * Creates a type annotation appender for type annotations of an interface type. 为接口类型的类型注解创建类型注解附加器
          *
          * @param annotationAppender    The annotation appender to write any type annotation to.
          * @param annotationValueFilter The annotation value filter to apply.

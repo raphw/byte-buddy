@@ -63,7 +63,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     }
 
     /**
-     * Resolves a special method invocation for a non-constructor invocation.
+     * Resolves a special method invocation for a non-constructor invocation. 解析非构造函数调用的特殊方法调用
      *
      * @param token A token describing the method to be invoked.
      * @return A special method invocation for a method representing the given method token, if available.

@@ -990,7 +990,7 @@ public interface MethodRegistry {
                     if (bridgeMethod && !supportsBridges) {
                         return new Record.ForNonImplementedMethod(methodDescription);
                     }
-                    Record record = handler.assemble(methodDescription, attributeAppender, visibility); // 将涉及到的方法字节码都绑定在一起，比如本身的方法描述，方法属性，方法可见行之类的实例数据
+                    Record record = handler.assemble(methodDescription, attributeAppender, visibility); // 将涉及到的方法字节码都绑定在一起，比如本身的方法描述，方法属性，方法可见性 之类的实例数据
                     return supportsBridges
                             ? TypeWriter.MethodPool.Record.AccessBridgeWrapper.of(record, instrumentedType, methodDescription, bridgeTypes, attributeAppender)
                             : record;

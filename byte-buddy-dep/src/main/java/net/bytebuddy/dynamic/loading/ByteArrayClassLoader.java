@@ -70,7 +70,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     protected static final SynchronizationStrategy.Initializable SYNCHRONIZATION_STRATEGY = AccessController.doPrivileged(SynchronizationStrategy.CreationAction.INSTANCE);
 
     /**
-     * A mutable map of type names mapped to their binary representation.
+     * A mutable map of type names mapped to their binary representation. 映射到二进制表示的类型名的可变映射
      */
     protected final ConcurrentMap<String, byte[]> typeDefinitions;
 
@@ -80,7 +80,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     protected final PersistenceHandler persistenceHandler;
 
     /**
-     * The protection domain to apply. Might be {@code null} when referencing the default protection domain.
+     * The protection domain to apply. Might be {@code null} when referencing the default protection domain. 要应用的保护域。引用默认保护域时可能为{@code null}
      */
     protected final ProtectionDomain protectionDomain;
 
