@@ -20,6 +20,7 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.matcher.ElementMatcher;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
 
@@ -47,6 +48,19 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
  * </p>
  */
 public class MultipleParentClassLoader extends InjectionClassLoader {
+
+    /*
+     * Register class loader as parallel capable if the current VM supports it.
+     */
+    static {
+        try {
+            Method method = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
+            method.setAccessible(true);
+            method.invoke(null);
+        } catch (Throwable ignored) {
+            /* do nothing */
+        }
+    }
 
     /**
      * The parents of this class loader in their application order.

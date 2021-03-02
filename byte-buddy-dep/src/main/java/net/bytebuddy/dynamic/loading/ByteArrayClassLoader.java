@@ -27,6 +27,8 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.*;
@@ -84,6 +86,19 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * The synchronization engine for the executing JVM.
      */
     protected static final SynchronizationStrategy.Initializable SYNCHRONIZATION_STRATEGY = AccessController.doPrivileged(SynchronizationStrategy.CreationAction.INSTANCE);
+
+    /*
+     * Register class loader as parallel capable if the current VM supports it.
+     */
+    static {
+        try {
+            Method method = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
+            method.setAccessible(true);
+            method.invoke(null);
+        } catch (Throwable ignored) {
+            /* do nothing */
+        }
+    }
 
     /**
      * A mutable map of type names mapped to their binary representation.
@@ -981,6 +996,19 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * The suffix of files in the Java class file format.
          */
         private static final String CLASS_FILE_SUFFIX = ".class";
+
+        /*
+         * Register class loader as parallel capable if the current VM supports it.
+         */
+        static {
+            try {
+                Method method = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
+                method.setAccessible(true);
+                method.invoke(null);
+            } catch (Throwable ignored) {
+                /* do nothing */
+            }
+        }
 
         /**
          * Creates a new child-first byte array class loader.

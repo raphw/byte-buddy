@@ -17,6 +17,7 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.description.type.TypeDescription;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -31,6 +32,19 @@ import java.util.Map;
  * </p>
  */
 public abstract class InjectionClassLoader extends ClassLoader {
+
+    /*
+     * Register class loader as parallel capable if the current VM supports it.
+     */
+    static {
+        try {
+            Method method = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
+            method.setAccessible(true);
+            method.invoke(null);
+        } catch (Throwable ignored) {
+            /* do nothing */
+        }
+    }
 
     /**
      * Indicates if this class loader is sealed, i.e. forbids runtime injection.
