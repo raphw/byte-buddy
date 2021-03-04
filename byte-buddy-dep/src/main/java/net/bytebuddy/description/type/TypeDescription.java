@@ -403,7 +403,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
     /**
      * Indicates if this type represents a compile-time constant, i.e. {@code int}, {@code long}, {@code float}, {@code double},
-     * {@link String}, {@link Class} or {@code java.lang.invoke.MethodHandle} or {@code java.lang.invoke.MethodType}.
+     * {@link String}, {@link Class} or {@code java.lang.invoke.MethodHandle} or {@code java.lang.invoke.MethodType}. Since Java 11's
+     * *constantdynamic* any type can be considered a constant value; this method does however only consider classical compile time
+     * constants.
      *
      * @return {@code true} if this type represents a compile-time constant.
      */

@@ -28,6 +28,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.TargetType;
@@ -3662,14 +3663,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
                         JavaConstant constant = JavaConstant.MethodHandle.ofLoaded(value);
                         stackManipulation = new JavaConstantValue(constant);
-                        typeDescription = constant.getType();
+                        typeDescription = constant.getTypeDescription();
                     } else if (JavaType.METHOD_TYPE.isInstance(value)) {
                         JavaConstant constant = JavaConstant.MethodType.ofLoaded(value);
                         stackManipulation = new JavaConstantValue(constant);
-                        typeDescription = constant.getType();
+                        typeDescription = constant.getTypeDescription();
                     } else if (value instanceof JavaConstant) {
                         stackManipulation = new JavaConstantValue((JavaConstant) value);
-                        typeDescription = ((JavaConstant) value).getType();
+                        typeDescription = ((JavaConstant) value).getTypeDescription();
                     } else {
                         throw new IllegalStateException("Not a constant value: " + value);
                     }
@@ -3825,7 +3826,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * The arguments to the bootstrap method.
                  */
-                private final List<?> arguments;
+                private final List<? extends JavaConstant> arguments;
 
                 /**
                  * Creates a new factory for a dynamic invocation.
@@ -3834,7 +3835,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param bootstrapMethod The bootstrap method or constructor.
                  * @param arguments       The arguments to the bootstrap method.
                  */
-                public OfDynamicInvocation(Class<T> annotationType, MethodDescription.InDefinedShape bootstrapMethod, List<?> arguments) {
+                public OfDynamicInvocation(Class<T> annotationType, MethodDescription.InDefinedShape bootstrapMethod, List<? extends JavaConstant> arguments) {
                     this.annotationType = annotationType;
                     this.bootstrapMethod = bootstrapMethod;
                     this.arguments = arguments;
@@ -11492,7 +11493,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation during binding.
          */
         public <T extends Annotation> WithCustomMapping bind(Class<T> type, JavaConstant javaConstant) {
-            return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, new JavaConstantValue(javaConstant), javaConstant.getType().asGenericType()));
+            return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, new JavaConstantValue(javaConstant), javaConstant.getTypeDescription().asGenericType()));
         }
 
         /**
@@ -11731,29 +11732,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation during binding.
          */
         public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, MethodDescription.InDefinedShape bootstrapMethod, List<?> constants) {
-            List<Object> arguments = new ArrayList<Object>(constants.size());
-            List<TypeDescription> types = new ArrayList<TypeDescription>(constants.size());
-            for (Object constant : constants) {
-                if (constant instanceof JavaConstant) {
-                    arguments.add(((JavaConstant) constant).asConstantPoolValue());
-                    types.add(((JavaConstant) constant).getType());
-                } else if (constant instanceof TypeDescription) {
-                    arguments.add(Type.getType(((TypeDescription) constant).getDescriptor()));
-                    types.add(TypeDescription.CLASS);
-                } else {
-                    arguments.add(constant);
-                    TypeDescription typeDescription = TypeDescription.ForLoadedType.of(constant.getClass()).asUnboxed();
-                    types.add(typeDescription);
-                    if (JavaType.METHOD_TYPE.isInstance(constant) || JavaType.METHOD_HANDLE.isInstance(constant)) {
-                        throw new IllegalArgumentException("Must be represented as a JavaConstant instance: " + constant);
-                    } else if (constant instanceof Class<?>) {
-                        throw new IllegalArgumentException("Must be represented as a TypeDescription instance: " + constant);
-                    } else if (!typeDescription.isCompileTimeConstant()) {
-                        throw new IllegalArgumentException("Not a compile-time constant: " + constant);
-                    }
-                }
-            }
-            if (!bootstrapMethod.isInvokeBootstrap(types)) {
+            List<JavaConstant> arguments = JavaConstant.Simple.wrap(constants);
+            if (!bootstrapMethod.isInvokeBootstrap(TypeList.Explicit.of(arguments))) {
                 throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrapMethod + " for " + arguments);
             }
             return bind(new OffsetMapping.ForStackManipulation.OfDynamicInvocation<T>(type, bootstrapMethod, arguments));

@@ -172,7 +172,7 @@ public abstract class FixedValue implements Implementation {
      * @return An implementation for the given {@code value}.
      */
     public static AssignerConfigurable value(JavaConstant fixedValue) {
-        return new ForPoolValue(new JavaConstantValue(fixedValue), fixedValue.getType());
+        return new ForPoolValue(new JavaConstantValue(fixedValue), fixedValue.getTypeDescription());
     }
 
     /**

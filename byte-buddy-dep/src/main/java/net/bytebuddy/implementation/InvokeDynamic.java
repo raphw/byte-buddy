@@ -46,7 +46,6 @@ import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -73,7 +72,7 @@ public class InvokeDynamic implements Implementation.Composable {
     /**
      * The arguments that are provided to the bootstrap method.
      */
-    protected final List<?> arguments;
+    protected final List<? extends JavaConstant> arguments;
 
     /**
      * The target provided that identifies the method to be bootstrapped.
@@ -106,7 +105,7 @@ public class InvokeDynamic implements Implementation.Composable {
      * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
     protected InvokeDynamic(MethodDescription.InDefinedShape bootstrap,
-                            List<?> arguments,
+                            List<? extends JavaConstant> arguments,
                             InvocationProvider invocationProvider,
                             TerminationHandler terminationHandler,
                             Assigner assigner,
@@ -206,29 +205,8 @@ public class InvokeDynamic implements Implementation.Composable {
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
     public static WithImplicitTarget bootstrap(MethodDescription.InDefinedShape bootstrap, List<?> constants) {
-        List<Object> arguments = new ArrayList<Object>(constants.size());
-        List<TypeDescription> types = new ArrayList<TypeDescription>(constants.size());
-        for (Object constant : constants) {
-            if (constant instanceof JavaConstant) {
-                arguments.add(((JavaConstant) constant).asConstantPoolValue());
-                types.add(((JavaConstant) constant).getType());
-            } else if (constant instanceof TypeDescription) {
-                arguments.add(Type.getType(((TypeDescription) constant).getDescriptor()));
-                types.add(TypeDescription.CLASS);
-            } else {
-                arguments.add(constant);
-                TypeDescription typeDescription = TypeDescription.ForLoadedType.of(constant.getClass()).asUnboxed();
-                types.add(typeDescription);
-                if (JavaType.METHOD_TYPE.isInstance(constant) || JavaType.METHOD_HANDLE.isInstance(constant)) {
-                    throw new IllegalArgumentException("Must be represented as a JavaConstant instance: " + constant);
-                } else if (constant instanceof Class<?>) {
-                    throw new IllegalArgumentException("Must be represented as a TypeDescription instance: " + constant);
-                } else if (!typeDescription.isCompileTimeConstant()) {
-                    throw new IllegalArgumentException("Not a compile-time constant: " + constant);
-                }
-            }
-        }
-        if (!bootstrap.isInvokeBootstrap(types)) {
+        List<JavaConstant> arguments = JavaConstant.Simple.wrap(constants);
+        if (!bootstrap.isInvokeBootstrap(TypeList.Explicit.of(arguments))) {
             throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrap + " for " + arguments);
         }
         return new WithImplicitTarget(bootstrap,
@@ -2175,7 +2153,7 @@ public class InvokeDynamic implements Implementation.Composable {
                  * {@inheritDoc}
                  */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(new JavaConstantValue(javaConstant), javaConstant.getType());
+                    return new Resolved.Simple(new JavaConstantValue(javaConstant), javaConstant.getTypeDescription());
                 }
 
                 /**
@@ -2547,7 +2525,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
         protected AbstractDelegator(MethodDescription.InDefinedShape bootstrap,
-                                    List<?> arguments,
+                                    List<? extends JavaConstant> arguments,
                                     InvocationProvider invocationProvider,
                                     TerminationHandler terminationHandler,
                                     Assigner assigner,
@@ -2790,7 +2768,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
         protected WithImplicitArguments(MethodDescription.InDefinedShape bootstrap,
-                                        List<?> arguments,
+                                        List<? extends JavaConstant> arguments,
                                         InvocationProvider invocationProvider,
                                         TerminationHandler terminationHandler,
                                         Assigner assigner,
@@ -2853,7 +2831,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
         protected WithImplicitTarget(MethodDescription.InDefinedShape bootstrap,
-                                     List<?> arguments,
+                                     List<? extends JavaConstant> arguments,
                                      InvocationProvider invocationProvider,
                                      TerminationHandler terminationHandler,
                                      Assigner assigner,
@@ -2962,7 +2940,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
         protected WithImplicitType(MethodDescription.InDefinedShape bootstrap,
-                                   List<?> arguments,
+                                   List<? extends JavaConstant> arguments,
                                    InvocationProvider invocationProvider,
                                    TerminationHandler terminationHandler,
                                    Assigner assigner,
@@ -3016,7 +2994,7 @@ public class InvokeDynamic implements Implementation.Composable {
              * @param value              The value that is supplied as the next argument to the bootstrapped method.
              */
             protected OfInstance(MethodDescription.InDefinedShape bootstrap,
-                                 List<?> arguments,
+                                 List<? extends JavaConstant> arguments,
                                  InvocationProvider invocationProvider,
                                  TerminationHandler terminationHandler,
                                  Assigner assigner,
@@ -3074,7 +3052,7 @@ public class InvokeDynamic implements Implementation.Composable {
              * @param index              The index of of the argument to supply to the bootstrapped method.
              */
             protected OfArgument(MethodDescription.InDefinedShape bootstrap,
-                                 List<?> arguments,
+                                 List<? extends JavaConstant> arguments,
                                  InvocationProvider invocationProvider,
                                  TerminationHandler terminationHandler,
                                  Assigner assigner,
@@ -3134,7 +3112,7 @@ public class InvokeDynamic implements Implementation.Composable {
              * @param fieldLocatorFactory The field locator factory to use.
              */
             protected OfField(MethodDescription.InDefinedShape bootstrap,
-                              List<?> arguments,
+                              List<? extends JavaConstant> arguments,
                               InvocationProvider invocationProvider,
                               TerminationHandler terminationHandler,
                               Assigner assigner,

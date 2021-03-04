@@ -336,7 +336,7 @@ public class MethodCall implements Implementation.Composable {
     public MethodCall with(JavaConstant... javaConstant) {
         List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(javaConstant.length);
         for (JavaConstant aJavaConstant : javaConstant) {
-            argumentLoaders.add(new ArgumentLoader.ForStackManipulation(new JavaConstantValue(aJavaConstant), aJavaConstant.getType()));
+            argumentLoaders.add(new ArgumentLoader.ForStackManipulation(new JavaConstantValue(aJavaConstant), aJavaConstant.getTypeDescription()));
         }
         return with(argumentLoaders);
     }
@@ -1845,7 +1845,7 @@ public class MethodCall implements Implementation.Composable {
                 } else if (JavaType.METHOD_TYPE.isInstance(value)) {
                     return new ForStackManipulation(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)), JavaType.METHOD_TYPE.getTypeStub());
                 } else if (value instanceof JavaConstant) {
-                    return new ForStackManipulation(new JavaConstantValue((JavaConstant) value), ((JavaConstant) value).getType());
+                    return new ForStackManipulation(new JavaConstantValue((JavaConstant) value), ((JavaConstant) value).getTypeDescription());
                 } else {
                     return new ForInstance.Factory(value);
                 }

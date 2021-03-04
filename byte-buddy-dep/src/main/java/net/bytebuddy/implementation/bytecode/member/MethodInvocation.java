@@ -24,6 +24,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
+import net.bytebuddy.utility.JavaConstant;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -173,7 +174,7 @@ public enum MethodInvocation {
         public StackManipulation dynamic(String methodName,
                                          TypeDescription returnType,
                                          List<? extends TypeDescription> methodType,
-                                         List<?> arguments) {
+                                         List<? extends JavaConstant> arguments) {
             return Illegal.INSTANCE;
         }
 
@@ -235,7 +236,7 @@ public enum MethodInvocation {
         StackManipulation dynamic(String methodName,
                                   TypeDescription returnType,
                                   List<? extends TypeDescription> methodType,
-                                  List<?> arguments);
+                                  List<? extends JavaConstant> arguments);
 
         /**
          * Invokes the method via a {@code MethodHandle}.
@@ -301,7 +302,7 @@ public enum MethodInvocation {
         /**
          * {@inheritDoc}
          */
-        public StackManipulation dynamic(String methodName, TypeDescription returnType, List<? extends TypeDescription> methodType, List<?> arguments) {
+        public StackManipulation dynamic(String methodName, TypeDescription returnType, List<? extends TypeDescription> methodType, List<? extends JavaConstant> arguments) {
             return invocation.dynamic(methodName, returnType, methodType, arguments);
         }
 
@@ -419,7 +420,7 @@ public enum MethodInvocation {
         public StackManipulation dynamic(String methodName,
                                          TypeDescription returnType,
                                          List<? extends TypeDescription> methodType,
-                                         List<?> arguments) {
+                                         List<? extends JavaConstant> arguments) {
             return methodDescription.isInvokeBootstrap()
                     ? new DynamicInvocation(methodName, returnType, new TypeList.Explicit(methodType), methodDescription.asDefined(), arguments)
                     : Illegal.INSTANCE;
@@ -462,7 +463,7 @@ public enum MethodInvocation {
         /**
          * The list of arguments to be handed over to the bootstrap method.
          */
-        private final List<?> arguments;
+        private final List<? extends JavaConstant> arguments;
 
         /**
          * Creates a new dynamic method invocation.
@@ -477,7 +478,7 @@ public enum MethodInvocation {
                                  TypeDescription returnType,
                                  List<? extends TypeDescription> parameterTypes,
                                  MethodDescription.InDefinedShape bootstrapMethod,
-                                 List<?> arguments) {
+                                 List<? extends JavaConstant> arguments) {
             this.methodName = methodName;
             this.returnType = returnType;
             this.parameterTypes = parameterTypes;
@@ -501,6 +502,11 @@ public enum MethodInvocation {
                 stringBuilder.append(parameterType.getDescriptor());
             }
             String methodDescriptor = stringBuilder.append(')').append(returnType.getDescriptor()).toString();
+            Object[] constant = new Object[arguments.size()];
+            int index = 0;
+            for (JavaConstant argument : arguments) {
+                constant[index++] = argument.asConstantPoolValue();
+            }
             methodVisitor.visitInvokeDynamicInsn(methodName,
                     methodDescriptor,
                     new Handle(handle == legacyHandle || implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V11)
@@ -510,7 +516,7 @@ public enum MethodInvocation {
                             bootstrapMethod.getInternalName(),
                             bootstrapMethod.getDescriptor(),
                             bootstrapMethod.getDeclaringType().isInterface()),
-                    arguments.toArray(new Object[0]));
+                    constant);
             int stackSize = returnType.getStackSize().getSize() - StackSize.of(parameterTypes);
             return new Size(stackSize, Math.max(stackSize, 0));
         }

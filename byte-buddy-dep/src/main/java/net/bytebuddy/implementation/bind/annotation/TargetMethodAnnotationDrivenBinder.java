@@ -288,7 +288,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
                 } else if (value instanceof JavaConstant) {
                     stackManipulation = new JavaConstantValue((JavaConstant) value);
-                    suppliedType = ((JavaConstant) value).getType();
+                    suppliedType = ((JavaConstant) value).getTypeDescription();
                 } else {
                     throw new IllegalStateException("Not able to save in class's constant pool: " + value);
                 }

@@ -53,7 +53,131 @@ public interface JavaConstant {
      *
      * @return A description of the type of the represented instance or at least a stub.
      */
-    TypeDescription getType();
+    TypeDescription getTypeDescription();
+
+    /**
+     * Represents a simple Java constant, either a primitive constant, a {@link String} or a {@link Class}.
+     */
+    class Simple implements JavaConstant {
+
+        /**
+         * The represented constant pool value.
+         */
+        private final Object value;
+
+        /**
+         * A description of the type of the constant.
+         */
+        private final TypeDescription typeDescription;
+
+        /**
+         * Creates a simple Java constant.
+         * @param value           The represented constant pool value.
+         * @param typeDescription A description of the type of the constant.
+         */
+        protected Simple(Object value, TypeDescription typeDescription) {
+            this.value = value;
+            this.typeDescription = typeDescription;
+        }
+
+        /**
+         * Resolves a loaded Java value to a Java constant representation.
+         *
+         * @param value The value to represent.
+         * @return An appropriate Java constant representation.
+         */
+        public static JavaConstant ofLoaded(Object value) {
+            if (value instanceof Integer) {
+                return new Simple(value, TypeDescription.ForLoadedType.of(int.class));
+            } else if (value instanceof Long) {
+                return new Simple(value, TypeDescription.ForLoadedType.of(long.class));
+            } else if (value instanceof Float) {
+                return new Simple(value, TypeDescription.ForLoadedType.of(float.class));
+            } else if (value instanceof Double) {
+                return new Simple(value, TypeDescription.ForLoadedType.of(double.class));
+            } else if (value instanceof String) {
+                return new Simple(value, TypeDescription.STRING);
+            } else if (value instanceof Class<?>) {
+                return new Simple(Type.getType((Class<?>) value), TypeDescription.CLASS);
+            } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
+                return MethodHandle.ofLoaded(value);
+            } else if (JavaType.METHOD_TYPE.isInstance(value)) {
+                return MethodType.ofLoaded(value);
+            } else {
+                throw new IllegalArgumentException("Not a loaded Java constant value: " + value);
+            }
+        }
+
+        /**
+         * Returns a Java constant representation for a {@link TypeDescription}.
+         *
+         * @param typeDescription The type to represent as a constant.
+         * @return An appropriate Java constant representation.
+         */
+        public static JavaConstant of(TypeDescription typeDescription) {
+            return new Simple(typeDescription, TypeDescription.CLASS);
+        }
+
+        /**
+         * Wraps a value representing a loaded or unloaded constant as {@link JavaConstant} instance.
+         *
+         * @param value The value to wrap.
+         * @return A wrapped Java constant.
+         */
+        public static JavaConstant wrap(Object value) {
+            if (value instanceof JavaConstant) {
+                return (JavaConstant) value;
+            } else if (value instanceof TypeDescription) {
+                return of((TypeDescription) value);
+            } else {
+                return ofLoaded(value);
+            }
+        }
+
+        /**
+         * Wraps a list of either loaded or unloaded constant representations as {@link JavaConstant} instances.
+         *
+         * @param values The values to wrap.
+         * @return A list of wrapped Java constants.
+         */
+        public static List<JavaConstant> wrap(List<?> values) {
+            List<JavaConstant> constants = new ArrayList<JavaConstant>(values.size());
+            for (Object value : values) {
+                constants.add(wrap(value));
+            }
+            return constants;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Object asConstantPoolValue() {
+            return value;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeDescription getTypeDescription() {
+            return typeDescription;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = value.hashCode();
+            result = 31 * result + typeDescription.hashCode();
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            Simple simple = (Simple) object;
+            if (!value.equals(simple.value)) return false;
+            return typeDescription.equals(simple.typeDescription);
+        }
+    }
 
     /**
      * Represents a {@code java.lang.invoke.MethodType} object.
@@ -266,7 +390,7 @@ public interface JavaConstant {
         /**
          * {@inheritDoc}
          */
-        public TypeDescription getType() {
+        public TypeDescription getTypeDescription() {
             return JavaType.METHOD_TYPE.getTypeStub();
         }
 
@@ -637,7 +761,7 @@ public interface JavaConstant {
         /**
          * {@inheritDoc}
          */
-        public TypeDescription getType() {
+        public TypeDescription getTypeDescription() {
             return JavaType.METHOD_HANDLE.getTypeStub();
         }
 
@@ -1609,12 +1733,12 @@ public interface JavaConstant {
                 : methodDescription.getParameters().size() + (methodDescription.isStatic() || methodDescription.isConstructor() ? 0 : 1) != constants.size()) {
                 throw new IllegalArgumentException("Cannot assign " + constants + " to " + methodDescription);
             }
-            List<Object> arguments = new ArrayList<Object>(constants.size());
-            arguments.add(new Handle(methodDescription.isConstructor() ? Opcodes.H_NEWINVOKESPECIAL : Opcodes.H_INVOKESTATIC,
+            Object[] argument = new Object[constants.size() + 1];
+            argument[0] = new Handle(methodDescription.isConstructor() ? Opcodes.H_NEWINVOKESPECIAL : Opcodes.H_INVOKESTATIC,
                     methodDescription.getDeclaringType().getInternalName(),
                     methodDescription.getInternalName(),
                     methodDescription.getDescriptor(),
-                    methodDescription.getDeclaringType().isInterface()));
+                    methodDescription.getDeclaringType().isInterface());
             List<TypeDescription> parameters = (methodDescription.isStatic() || methodDescription.isConstructor()
                     ? methodDescription.getParameters().asTypeList().asErasures()
                     : CompoundList.of(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList().asErasures()));
@@ -1626,28 +1750,13 @@ public interface JavaConstant {
             } else {
                 iterator = parameters.iterator();
             }
+            int index = 0;
             for (Object constant : constants) {
-                TypeDescription typeDescription;
-                if (constant instanceof JavaConstant) {
-                    arguments.add(((JavaConstant) constant).asConstantPoolValue());
-                    typeDescription = ((JavaConstant) constant).getType();
-                } else if (constant instanceof TypeDescription) {
-                    arguments.add(Type.getType(((TypeDescription) constant).getDescriptor()));
-                    typeDescription = TypeDescription.CLASS;
-                } else {
-                    arguments.add(constant);
-                    typeDescription = TypeDescription.ForLoadedType.of(constant.getClass()).asUnboxed();
-                    if (JavaType.METHOD_TYPE.isInstance(constant) || JavaType.METHOD_HANDLE.isInstance(constant)) {
-                        throw new IllegalArgumentException("Must be represented as a JavaConstant instance: " + constant);
-                    } else if (constant instanceof Class<?>) {
-                        throw new IllegalArgumentException("Must be represented as a TypeDescription instance: " + constant);
-                    } else if (!typeDescription.isCompileTimeConstant()) {
-                        throw new IllegalArgumentException("Not a compile-time constant: " + constant);
-                    }
-                }
-                if (!typeDescription.isAssignableTo(iterator.next())) {
+                JavaConstant wrapped = Simple.wrap(constant);
+                if (!wrapped.getTypeDescription().isAssignableTo(iterator.next())) {
                     throw new IllegalArgumentException("Cannot assign " + constants + " to " + methodDescription);
                 }
+                argument[++index] = wrapped.asConstantPoolValue();
             }
             return new Dynamic(new ConstantDynamic("invoke",
                     (methodDescription.isConstructor()
@@ -1658,7 +1767,7 @@ public interface JavaConstant {
                             "invoke",
                             "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;",
                             false),
-                    arguments.toArray()), methodDescription.isConstructor() ? methodDescription.getDeclaringType() : methodDescription.getReturnType().asErasure());
+                    argument), methodDescription.isConstructor() ? methodDescription.getDeclaringType() : methodDescription.getReturnType().asErasure());
         }
 
         /**
@@ -1804,30 +1913,16 @@ public interface JavaConstant {
             if (name.length() == 0 || name.contains(".")) {
                 throw new IllegalArgumentException("Not a valid field name: " + name);
             }
-            List<Object> arguments = new ArrayList<Object>(constants.size());
+            Object[] argument = new Object[constants.size()];
             List<TypeDescription> types = new ArrayList<TypeDescription>(constants.size());
+            int index = 0;
             for (Object constant : constants) {
-                if (constant instanceof JavaConstant) {
-                    arguments.add(((JavaConstant) constant).asConstantPoolValue());
-                    types.add(((JavaConstant) constant).getType());
-                } else if (constant instanceof TypeDescription) {
-                    arguments.add(Type.getType(((TypeDescription) constant).getDescriptor()));
-                    types.add(TypeDescription.CLASS);
-                } else {
-                    arguments.add(constant);
-                    TypeDescription typeDescription = TypeDescription.ForLoadedType.of(constant.getClass()).asUnboxed();
-                    types.add(typeDescription);
-                    if (JavaType.METHOD_TYPE.isInstance(constant) || JavaType.METHOD_HANDLE.isInstance(constant)) {
-                        throw new IllegalArgumentException("Must be represented as a JavaConstant instance: " + constant);
-                    } else if (constant instanceof Class<?>) {
-                        throw new IllegalArgumentException("Must be represented as a TypeDescription instance: " + constant);
-                    } else if (!typeDescription.isCompileTimeConstant()) {
-                        throw new IllegalArgumentException("Not a compile-time constant: " + constant);
-                    }
-                }
+                JavaConstant wrapped = JavaConstant.Simple.wrap(constant);
+                argument[index++] = wrapped.asConstantPoolValue();
+                types.add(wrapped.getTypeDescription());
             }
             if (!bootstrap.isConstantBootstrap(types)) {
-                throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrap + " for " + arguments);
+                throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrap + " for " + Arrays.asList(argument));
             }
             return new Dynamic(new ConstantDynamic(name,
                     (bootstrap.isConstructor()
@@ -1838,7 +1933,7 @@ public interface JavaConstant {
                             bootstrap.getInternalName(),
                             bootstrap.getDescriptor(),
                             false),
-                    arguments.toArray()),
+                    argument),
                     bootstrap.isConstructor()
                             ? bootstrap.getDeclaringType()
                             : bootstrap.getReturnType().asErasure());
@@ -1890,7 +1985,7 @@ public interface JavaConstant {
         /**
          * {@inheritDoc}
          */
-        public TypeDescription getType() {
+        public TypeDescription getTypeDescription() {
             return typeDescription;
         }
 

@@ -26,6 +26,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
+import net.bytebuddy.utility.JavaConstant;
 import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
@@ -176,6 +177,20 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
          */
         public Explicit(List<? extends TypeDescription> typeDescriptions) {
             this.typeDescriptions = typeDescriptions;
+        }
+
+        /**
+         * Returns a list of types of the supplied Java constants.
+         *
+         * @param constants The Java constants to represent as type descriptions.
+         * @return A list of type descriptions for the supplied constants.
+         */
+        public static TypeList of(List<? extends JavaConstant> constants) {
+            List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(constants.size());
+            for (JavaConstant constant : constants) {
+                typeDescriptions.add(constant.getTypeDescription());
+            }
+            return new Explicit(typeDescriptions);
         }
 
         /**

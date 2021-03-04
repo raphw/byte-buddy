@@ -5,6 +5,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.utility.JavaConstant;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -117,12 +118,12 @@ public class MethodInvocationGenericTest {
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).dynamic(FOO,
                 otherType,
                 Collections.<TypeDescription>emptyList(),
-                Collections.emptyList());
+                Collections.<JavaConstant>emptyList());
         assertThat(stackManipulation.isValid(), is(true));
         assertThat(stackManipulation, hasPrototype(MethodInvocation.invoke(declaredMethod).dynamic(FOO,
                 otherType,
                 Collections.<TypeDescription>emptyList(),
-                Collections.emptyList())));
+                Collections.<JavaConstant>emptyList())));
     }
 
     @Test
@@ -132,12 +133,12 @@ public class MethodInvocationGenericTest {
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).dynamic(FOO,
                 otherType,
                 Collections.<TypeDescription>emptyList(),
-                Collections.emptyList());
+                Collections.<JavaConstant>emptyList());
         assertThat(stackManipulation.isValid(), is(true));
         assertThat(stackManipulation, hasPrototype(MethodInvocation.invoke(declaredMethod).dynamic(FOO,
                 otherType,
                 Collections.<TypeDescription>emptyList(),
-                Collections.emptyList())));
+                Collections.<JavaConstant>emptyList())));
     }
 
     @Test

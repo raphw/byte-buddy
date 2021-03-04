@@ -1649,7 +1649,7 @@ public class ByteBuddy {
          */
         public ByteCodeAppender appender(Target implementationTarget) {
             StringBuilder stringBuilder = new StringBuilder();
-            List<Object> methodHandles = new ArrayList<Object>(implementationTarget.getInstrumentedType().getRecordComponents().size());
+            List<JavaConstant> methodHandles = new ArrayList<JavaConstant>(implementationTarget.getInstrumentedType().getRecordComponents().size());
             for (RecordComponentDescription.InDefinedShape recordComponent : implementationTarget.getInstrumentedType().getRecordComponents()) {
                 if (stringBuilder.length() > 0) {
                     stringBuilder.append(";");
@@ -1657,7 +1657,7 @@ public class ByteBuddy {
                 stringBuilder.append(recordComponent.getActualName());
                 methodHandles.add(JavaConstant.MethodHandle.ofGetter(implementationTarget.getInstrumentedType().getDeclaredFields()
                         .filter(named(recordComponent.getActualName()))
-                        .getOnly()).asConstantPoolValue());
+                        .getOnly()));
             }
             return new ByteCodeAppender.Simple(MethodVariableAccess.loadThis(),
                     stackManipulation,
@@ -1672,7 +1672,7 @@ public class ByteBuddy {
                                     TypeDescription.ArrayProjection.of(JavaType.METHOD_HANDLE.getTypeStub()).asGenericType())))).dynamic(name,
                             returnType,
                             CompoundList.of(implementationTarget.getInstrumentedType(), arguments),
-                            CompoundList.of(Arrays.asList(org.objectweb.asm.Type.getType(implementationTarget.getInstrumentedType().getDescriptor()), stringBuilder.toString()), methodHandles)),
+                            CompoundList.of(Arrays.asList(JavaConstant.Simple.of(implementationTarget.getInstrumentedType()), JavaConstant.Simple.ofLoaded(stringBuilder.toString())), methodHandles)),
                     MethodReturn.of(returnType));
         }
 

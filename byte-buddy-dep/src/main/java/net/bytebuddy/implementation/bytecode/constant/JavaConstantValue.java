@@ -53,6 +53,6 @@ public class JavaConstantValue implements StackManipulation {
      */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitLdcInsn(javaConstant.asConstantPoolValue());
-        return javaConstant.getType().getStackSize().toIncreasingSize();
+        return javaConstant.getTypeDescription().getStackSize().toIncreasingSize();
     }
 }

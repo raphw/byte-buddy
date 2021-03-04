@@ -17,6 +17,7 @@ public class MethodInvocationOtherTest {
 
     private static final String FOO = "foo";
 
+    @SuppressWarnings("unchecked")
     @Test(expected = IllegalStateException.class)
     public void testIllegal() throws Exception {
         assertThat(MethodInvocation.IllegalInvocation.INSTANCE.isValid(), is(false));

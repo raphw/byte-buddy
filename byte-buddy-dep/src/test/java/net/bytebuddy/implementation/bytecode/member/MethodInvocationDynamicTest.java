@@ -7,6 +7,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.utility.JavaConstant;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,7 +45,10 @@ public class MethodInvocationDynamicTest {
     private MethodVisitor methodVisitor;
 
     @Mock
-    private Object argument;
+    private JavaConstant argument;
+
+    @Mock
+    private Object provided;
 
     @Before
     public void setUp() throws Exception {
@@ -60,6 +64,7 @@ public class MethodInvocationDynamicTest {
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(declaringType.getInternalName()).thenReturn(BAR);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, firstType, secondType));
+        when(argument.asConstantPoolValue()).thenReturn(provided);
     }
 
     @Test
@@ -72,7 +77,7 @@ public class MethodInvocationDynamicTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
-        verify(methodVisitor).visitInvokeDynamicInsn(FOO, "(" + FOO + BAR + ")" + QUX, new Handle(Opcodes.H_INVOKESTATIC, BAR, QUX, BAZ, false), argument);
+        verify(methodVisitor).visitInvokeDynamicInsn(FOO, "(" + FOO + BAR + ")" + QUX, new Handle(Opcodes.H_INVOKESTATIC, BAR, QUX, BAZ, false), provided);
     }
 
     @Test
@@ -85,7 +90,7 @@ public class MethodInvocationDynamicTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
-        verify(methodVisitor).visitInvokeDynamicInsn(FOO, "(" + FOO + BAR + ")" + QUX, new Handle(Opcodes.H_NEWINVOKESPECIAL, BAR, QUX, BAZ, false), argument);
+        verify(methodVisitor).visitInvokeDynamicInsn(FOO, "(" + FOO + BAR + ")" + QUX, new Handle(Opcodes.H_NEWINVOKESPECIAL, BAR, QUX, BAZ, false), provided);
     }
 
     @Test

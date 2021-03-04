@@ -725,7 +725,7 @@ public abstract class FieldAccessor implements Implementation {
          * {@inheritDoc}
          */
         public Composable setsValue(JavaConstant constant) {
-            return setsValue(new JavaConstantValue(constant), constant.getType().asGenericType());
+            return setsValue(new JavaConstantValue(constant), constant.getTypeDescription().asGenericType());
         }
 
         /**
