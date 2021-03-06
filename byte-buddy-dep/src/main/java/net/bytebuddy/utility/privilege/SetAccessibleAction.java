@@ -6,7 +6,7 @@ import java.lang.reflect.AccessibleObject;
 import java.security.PrivilegedAction;
 
 /**
- * An action for making an {@link AccessibleObject} accessible.
+ * An action for making an {@link AccessibleObject} accessible. 使{@link AccessibleObject}可访问的操作
  *
  * @param <T> The type of the accessible object.
  */

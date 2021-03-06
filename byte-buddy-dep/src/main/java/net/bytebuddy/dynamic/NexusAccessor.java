@@ -100,7 +100,7 @@ public class NexusAccessor {
     }
 
     /**
-     * An initialization appender that looks up a loaded type initializer from Byte Buddy's {@link Nexus}. 从Byte Buddy的 {@link Nexus} 中查找已加载类初始化器的初始化附加程序
+     * An initialization appender that looks up a loaded type initializer from Byte Buddy's {@link Nexus}. 从ByteBuddy的 {@link Nexus} 中查找已加载类初始化器的初始化附加程序
      */
     @HashCodeAndEqualsPlugin.Enhance
     public static class InitializationAppender implements ByteCodeAppender {
@@ -149,7 +149,7 @@ public class NexusAccessor {
     }
 
     /**
-     * A dispatcher for registering type initializers in the {@link Nexus}.
+     * A dispatcher for registering type initializers in the {@link Nexus}. 用于在 {@link Nexus} 中注册类型初始值设定项的调度程序
      */
     protected interface Dispatcher {
 
@@ -183,7 +183,7 @@ public class NexusAccessor {
                       LoadedTypeInitializer loadedTypeInitializer);
 
         /**
-         * Creates a new dispatcher for accessing a {@link Nexus}.
+         * Creates a new dispatcher for accessing a {@link Nexus}. 创建用于访问{@link Nexus}的新调度程序
          */
         enum CreationAction implements PrivilegedAction<Dispatcher> {
 
@@ -218,7 +218,7 @@ public class NexusAccessor {
         }
 
         /**
-         * An enabled dispatcher for registering a type initializer in a {@link Nexus}.
+         * An enabled dispatcher for registering a type initializer in a {@link Nexus}. 已启用的调度程序，用于在{@link Nexus}中注册类型初始值设定项
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Available implements Dispatcher {

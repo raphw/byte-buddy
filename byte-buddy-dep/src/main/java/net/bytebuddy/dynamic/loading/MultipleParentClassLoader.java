@@ -16,7 +16,7 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
  * This {@link java.lang.ClassLoader} is capable of loading classes from multiple parents. This class loader       此{@link java.lang.ClassLoader}能够从多个父级加载类。此类加载程序隐式地将bootstrap定义为其直接父级，因为所有类加载程序都需要它此{@link java.lang.ClassLoader}能够从多个父级加载类。此类加载程序隐式地将bootstrap定义为其直接父级，因为所有类加载程序都需要它
  * implicitly defines the bootstrap class loader to be its direct parent as it is required for all class loaders.
  * This can be useful when creating a type that inherits a super type and interfaces that are defined by different,
- * non-compatible class loaders. 当创建继承超级类型和由不同的非兼容类加载器定义的接口的类型时，这很有用。
+ * non-compatible class loaders. 当创建继承超类和由不同的非兼容类加载器定义的接口的类型时，这很有用。
  * 注意：该类加载器的实例可以多次与其父级具有相同的类加载器，直接或间接地由共享公共父类加载器的多个父级间接实现。根据定义，这意味着引导类加载器是该类加载器的父级的{@code＃（直接父级）+1}倍。
  * 对于{@link java.lang.ClassLoader＃getResources（java.lang.String）}方法，这意味着该类加载器
  * 通过多次表示同一个类加载器，可能多次返回相同的url。

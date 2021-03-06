@@ -44,7 +44,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
     }
 
     /**
-     * Returns a representation of the supplied type's {@code java.lang.Module} or {@code null} if the current VM does not support modules.
+     * Returns a representation of the supplied type's {@code java.lang.Module} or {@code null} if the current VM does not support modules. 返回所提供类型的{@code java.lang.Module}或{@code null}如果当前虚拟机不支持模块
      *
      * @param type The type for which to describe the module.
      * @return A representation of the type's module or {@code null} if the current VM does not support modules.

@@ -225,7 +225,7 @@ public interface ClassFileLocator extends Closeable {
      * </p>
      * <p>
      * <b>Important</b>: Even when calling {@link Closeable#close()} on this class file locator, no underlying
-     * class loader is closed if it implements the {@link Closeable} interface as this is typically not intended.
+     * class loader is closed if it implements the {@link Closeable} interface as this is typically not intended. 即使在此类文件定位器上调用{@link Closeable#close()}时，如果实现{@link Closeable}接口，则不会关闭任何底层类加载器，因为这通常是不需要的
      * </p>
      */
     @HashCodeAndEqualsPlugin.Enhance

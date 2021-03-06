@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A utility for draining the contents of an {@link java.io.InputStream} into a {@code byte} array.
+ * A utility for draining the contents of an {@link java.io.InputStream} into a {@code byte} array. 一个实用程序，用于将{@link java.io.InputStream}的内容排入{@code byte}数组
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class StreamDrainer {

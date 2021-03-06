@@ -34,11 +34,11 @@ import java.util.jar.JarOutputStream;
 /**
  * <p>
  * A class injector is capable of injecting classes into a {@link java.lang.ClassLoader} without
- * requiring the class loader to being able to explicitly look up these classes.
+ * requiring the class loader to being able to explicitly look up these classes. 类注入器将类注入 {@link java.lang.ClassLoader}，而无需类装入器能够显式的查找这些类
  * </p>
  * <p>
  * <b>Important</b>: Byte Buddy does not supply privileges when injecting code. When using a {@link SecurityManager},
- * the user of this injector is responsible for providing access to non-public properties.
+ * the user of this injector is responsible for providing access to non-public properties. ByteBuddy 在注入代码时不提供特权。使用 {@link SecurityManager} 时，此注入器的用户负责提供对非公共属性的访问
  * </p> ClassInjector 将一个类，注入到java.lang.ClassLoader
  */
 public interface ClassInjector {
@@ -57,13 +57,13 @@ public interface ClassInjector {
     Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types);
 
     /**
-     * A class injector that uses reflective method calls.
+     * A class injector that uses reflective method calls. 使用反射方法调用的类注入器
      */
     @HashCodeAndEqualsPlugin.Enhance
     class UsingReflection implements ClassInjector {
 
         /**
-         * The dispatcher to use for accessing a class loader via reflection.
+         * The dispatcher to use for accessing a class loader via reflection. 用于通过反射访问类加载器的调度器
          */
         private static final Dispatcher.Initializable DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
@@ -100,7 +100,7 @@ public interface ClassInjector {
 
         /**
          * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link PackageDefinitionStrategy} where the
-         * injection of existent classes does not trigger an error.
+         * injection of existent classes does not trigger an error. 使用 给定的{@link java.lang.ClassLoader}和默认的{@link PackageDefinitionStrategy}创建一个新的注入器，其中注入现有类不会触发错误
          *
          * @param classLoader      The {@link java.lang.ClassLoader} into which new class definitions are to be injected. Must not be the bootstrap loader.
          * @param protectionDomain The protection domain to apply during class definition.
@@ -357,7 +357,7 @@ public interface ClassInjector {
             }
 
             /**
-             * A creation action for a dispatcher.
+             * A creation action for a dispatcher. 调度器的创建操作
              */
             enum CreationAction implements PrivilegedAction<Initializable> {
 
@@ -437,7 +437,7 @@ public interface ClassInjector {
                  */
                 protected static Initializable make() throws Exception {
                     Method getPackage;
-                    if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
+                    if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM. 避免在Java8J9VM中意外查找同名方法
                         try {
                             getPackage = ClassLoader.class.getMethod("getDefinedPackage", String.class);
                         } catch (NoSuchMethodException ignored) {
@@ -561,13 +561,13 @@ public interface ClassInjector {
                 }
 
                 /**
-                 * A resolved class dispatcher for a class injector on a VM running at least Java 7.
+                 * A resolved class dispatcher for a class injector on a VM running at least Java 7. 在至少运行Java7的VM上为类注入器解析的类调度程序
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 protected static class ForJava7CapableVm extends Direct {
 
                     /**
-                     * An instance of {@code ClassLoader#getClassLoadingLock(String)}.
+                     * An instance of {@code ClassLoader#getClassLoadingLock(String)}. {@code ClassLoader#getClassLoadingLock(String)}的实例
                      */
                     private final Method getClassLoadingLock;
 
@@ -1162,10 +1162,10 @@ public interface ClassInjector {
 
     /**
      * <p>
-     * A class injector that uses a {@code java.lang.invoke.MethodHandles$Lookup} object for defining a class.
+     * A class injector that uses a {@code java.lang.invoke.MethodHandles$Lookup} object for defining a class. 使用 {@code java.lang.invoke.MethodHandles$Lookup} 对象定义类的类注入器
      * </p>
      * <p>
-     * <b>Important</b>: This functionality is only available starting from Java 9.
+     * <b>Important</b>: This functionality is only available starting from Java 9. 此功能仅从Java9开始提供
      * </p>
      */
     @HashCodeAndEqualsPlugin.Enhance
@@ -1744,7 +1744,7 @@ public interface ClassInjector {
 
     /**
      * A class injector using a {@link java.lang.instrument.Instrumentation} to append to either the boot classpath
-     * or the system class path.
+     * or the system class path. 一种类注入器，使用 {@link java.lang.instrument.Instrumentation} 附加到启动类路径或系统类路径
      */
     @HashCodeAndEqualsPlugin.Enhance
     class UsingInstrumentation implements ClassInjector {
@@ -1765,17 +1765,17 @@ public interface ClassInjector {
         private final Instrumentation instrumentation;
 
         /**
-         * A representation of the target path to which classes are to be appended.
+         * A representation of the target path to which classes are to be appended. 类要附加到的目标路径的表示
          */
         private final Target target;
 
         /**
-         * The folder to be used for storing jar files.
+         * The folder to be used for storing jar files. 用于存储jar文件的文件夹
          */
         private final File folder;
 
         /**
-         * A random string generator for creating file names.
+         * A random string generator for creating file names. 用于创建文件名的随机字符串生成器
          */
         private final RandomString randomString;
 
@@ -1839,12 +1839,12 @@ public interface ClassInjector {
         }
 
         /**
-         * A representation of the target to which Java classes should be appended to.
+         * A representation of the target to which Java classes should be appended to. Java类应该附加到的目标的表示
          */
         public enum Target {
 
             /**
-             * Representation of the bootstrap class loader.
+             * Representation of the bootstrap class loader. 引导类加载器的表示
              */
             BOOTSTRAP {
                 @Override
@@ -1854,7 +1854,7 @@ public interface ClassInjector {
             },
 
             /**
-             * Representation of the system class loader.
+             * Representation of the system class loader. 系统类加载器的表示
              */
             SYSTEM {
                 @Override

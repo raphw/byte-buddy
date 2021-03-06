@@ -8376,7 +8376,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         /**
-         * A class loading delegate is responsible for resolving a type given a class loader and a type name.
+         * A class loading delegate is responsible for resolving a type given a class loader and a type name. 给定类装入器和类型名称，类装入委托负责解析类型
          */
         public interface ClassLoadingDelegate {
 

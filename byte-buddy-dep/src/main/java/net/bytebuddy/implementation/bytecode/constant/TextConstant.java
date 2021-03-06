@@ -7,13 +7,13 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import org.objectweb.asm.MethodVisitor;
 
 /**
- * Represents a {@link java.lang.String} value that is stored in a type's constant pool.
+ * Represents a {@link java.lang.String} value that is stored in a type's constant pool. 表示存储在类型的常量池中的{@link java.lang.String}值
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class TextConstant implements StackManipulation {
 
     /**
-     * The text value to load onto the operand stack.
+     * The text value to load onto the operand stack. 要加载到操作数堆栈上的文本值
      */
     private final String text;
 

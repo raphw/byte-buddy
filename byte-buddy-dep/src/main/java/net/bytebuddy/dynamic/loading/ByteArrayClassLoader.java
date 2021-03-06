@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentMap;
  * <p>
  * <b>Note</b>: Instances of this class loader return URLs for their represented class loaders with the <i>bytebuddy</i> schema.
  * These URLs do not represent URIs as two classes with the same name yield identical URLs but might represents different byte
- * arrays. 注意：该类加载器的实例使用bytebuddy 模式返回其表示的类加载器的URL  这些URL不表示URI，因为两个具有相同名称的类产生相同的URL，但可能表示不同的字节数组
+ * arrays. 注意：该类加载器的实例使用 bytebuddy 模式返回其表示的类加载器的URL  这些URL不表示URI，因为两个具有相同名称的类产生相同的URL，但可能表示不同的字节数组
  * </p>
  * <p>
  * <b>Note</b>: Any class and package definition is performed using the creator's {@link AccessControlContext}.
@@ -65,7 +65,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     private static final PackageLookupStrategy PACKAGE_LOOKUP_STRATEGY = AccessController.doPrivileged(PackageLookupStrategy.CreationAction.INSTANCE);
 
     /**
-     * The synchronization engine for the executing JVM.
+     * The synchronization engine for the executing JVM. 执行JVM的同步引擎
      */
     protected static final SynchronizationStrategy.Initializable SYNCHRONIZATION_STRATEGY = AccessController.doPrivileged(SynchronizationStrategy.CreationAction.INSTANCE);
 
@@ -75,7 +75,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     protected final ConcurrentMap<String, byte[]> typeDefinitions;
 
     /**
-     * The persistence handler of this class loader.
+     * The persistence handler of this class loader. 这个类加载器的持久性处理程序
      */
     protected final PersistenceHandler persistenceHandler;
 
@@ -202,7 +202,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * Creates a new class loader for a given definition of classes.
      *
      * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
-     * @param sealed                    {@code true} if this class loader is sealed.
+     * @param sealed                    {@code true} if this class loader is sealed. true -> 如果这个类装入器是密封的
      * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
      * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
      * @param packageDefinitionStrategy The package definer to be queried for package definitions.
@@ -226,7 +226,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     }
 
     /**
-     * Resolves a method handle in the scope of the {@link ByteArrayClassLoader} class.
+     * Resolves a method handle in the scope of the {@link ByteArrayClassLoader} class. 解析{@link ByteArrayClassLoader}类作用域中的方法句柄
      *
      * @return A method handle for this class.
      * @throws Exception If the method handle facility is not supported by the current virtual machine.
@@ -257,7 +257,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      *
      * @param classLoader               The parent class loader.
      * @param types                     The unloaded types to be loaded.
-     * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
+     * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain. 要应用的保护域，其中{@code null}引用隐式保护域
      * @param persistenceHandler        The persistence handler of the created class loader.
      * @param packageDefinitionStrategy The package definer to be queried for package definitions.
      * @param forbidExisting            {@code true} if the class loading should throw an exception if a class was already loaded by a parent class loader.
@@ -366,12 +366,12 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     }
 
     /**
-     * An engine for receiving a <i>class loading lock</i> when loading a class.
+     * An engine for receiving a <i>class loading lock</i> when loading a class. 装载一个类时接收一个类装载锁的引擎
      */
     protected interface SynchronizationStrategy {
 
         /**
-         * Receives the class loading lock.
+         * Receives the class loading lock. 接收类加载锁
          *
          * @param name        The name of the class being loaded.
          * @param classLoader The class loader loading the class.
@@ -380,7 +380,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         Object getClassLoadingLock(ByteArrayClassLoader classLoader, String name);
 
         /**
-         * An uninitialized synchronization strategy.
+         * An uninitialized synchronization strategy. 未初始化的同步策略
          */
         interface Initializable {
 
@@ -393,7 +393,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         }
 
         /**
-         * A creation action for a synchronization strategy.
+         * A creation action for a synchronization strategy. 同步策略的创建操作
          */
         enum CreationAction implements PrivilegedAction<Initializable> {
 
@@ -425,7 +425,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         }
 
         /**
-         * A synchronization engine for a VM that is not aware of parallel-capable class loaders.
+         * A synchronization engine for a VM that is not aware of parallel-capable class loaders. VM的同步引擎，它不知道具有并行能力的类装入器
          */
         enum ForLegacyVm implements SynchronizationStrategy, Initializable {
 
@@ -446,7 +446,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         }
 
         /**
-         * A synchronization engine for a VM that is aware of parallel-capable class loaders.
+         * A synchronization engine for a VM that is aware of parallel-capable class loaders. VM的同步引擎，它知道具有并行能力的类装入器
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForJava7CapableVm implements SynchronizationStrategy, Initializable {
@@ -489,7 +489,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         }
 
         /**
-         * A synchronization engine for a VM that is aware of parallel-capable class loaders using method handles to respect module boundaries.
+         * A synchronization engine for a VM that is aware of parallel-capable class loaders using method handles to respect module boundaries. VM的同步引擎，它知道支持并行的类装入器使用方法句柄来尊重模块边界
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForJava8CapableVm implements SynchronizationStrategy, Initializable {
@@ -743,12 +743,12 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         private static final String CLASS_FILE_SUFFIX = ".class";
 
         /**
-         * {@code true} if this persistence handler represents manifest class file storage.
+         * {@code true} if this persistence handler represents manifest class file storage. 如果此持久性处理程序表示清单类文件存储
          */
         private final boolean manifest;
 
         /**
-         * Creates a new persistence handler.
+         * Creates a new persistence handler. 创建新的持久性处理程序
          *
          * @param manifest {@code true} if this persistence handler represents manifest class file storage.
          */
@@ -757,7 +757,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         }
 
         /**
-         * Checks if this persistence handler represents manifest class file storage.
+         * Checks if this persistence handler represents manifest class file storage. 检查此持久性处理程序是否表示清单类文件存储
          *
          * @return {@code true} if this persistence handler represents manifest class file storage.
          */
@@ -775,7 +775,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         protected abstract byte[] lookup(String name, ConcurrentMap<String, byte[]> typeDefinitions);
 
         /**
-         * Returns a URL representing a class file.
+         * Returns a URL representing a class file. 返回表示类文件的URL
          *
          * @param resourceName    The name of the requested resource.
          * @param typeDefinitions A mapping of byte arrays by their type names.
@@ -784,7 +784,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         protected abstract URL url(String resourceName, ConcurrentMap<String, byte[]> typeDefinitions);
 
         /**
-         * Removes the binary representation of the supplied type if this class loader is latent.
+         * Removes the binary representation of the supplied type if this class loader is latent. 如果类装入器是潜在的，则删除所提供类型的二进制表示形式
          *
          * @param name            The name of the type.
          * @param typeDefinitions A mapping of byte arrays by their type names.
@@ -792,7 +792,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         protected abstract void release(String name, ConcurrentMap<String, byte[]> typeDefinitions);
 
         /**
-         * An action to define a URL that represents a class file.
+         * An action to define a URL that represents a class file. 定义表示类文件的URL的操作
          */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class UrlDefinitionAction implements PrivilegedAction<URL> {
@@ -818,7 +818,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             private final String typeName;
 
             /**
-             * The binary representation of the type's class file.
+             * The binary representation of the type's class file. 类型的类文件二进制表示形式
              */
             private final byte[] binaryRepresentation;
 

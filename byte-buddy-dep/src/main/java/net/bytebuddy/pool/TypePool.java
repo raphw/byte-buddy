@@ -368,7 +368,7 @@ public interface TypePool {
         }
 
         /**
-         * Determines a resolution to a non-primitive, non-array type.
+         * Determines a resolution to a non-primitive, non-array type. 对于非原始类型，非数组类型的解析
          *
          * @param name The name of the type to describe.
          * @return A resolution to the type to describe.
@@ -950,7 +950,7 @@ public interface TypePool {
      * into a {@link TypeDescription}. The data lookup is delegated to a {@link net.bytebuddy.dynamic.ClassFileLocator}. {@link net.bytebuddy.pool.TypePool} 的默认实现，将Java字节码格式的二进制数据建模为 {@link TypeDescription}。数据查找委托给 {@link net.bytebuddy.dynamic.ClassFileLocator}
      * </p>
      * <p>
-     * {@link Resolution}s that are produced by this type pool are either fully resolved or not resolved at all.
+     * {@link Resolution}s that are produced by this type pool are either fully resolved or not resolved at all. 此类型池产生的{@link Resolution}要么完全解析，要么根本不解析
      * </p>
      */
     @HashCodeAndEqualsPlugin.Enhance
@@ -1040,7 +1040,7 @@ public interface TypePool {
         }
 
         /**
-         * Parses a binary representation and transforms it into a type description.
+         * Parses a binary representation and transforms it into a type description. 解析二进制表示形式并将其转换为类型描述
          *
          * @param binaryRepresentation The binary data to be parsed.
          * @return A type description of the binary data.
@@ -2513,7 +2513,7 @@ public interface TypePool {
 
         /**
          * A type description that looks up any referenced {@link net.bytebuddy.description.ByteCodeElement} or
-         * {@link AnnotationDescription} by querying a type pool at lookup time.
+         * {@link AnnotationDescription} by querying a type pool at lookup time. 通过在查找时查询类型池来查找任何引用的{@link net.bytebuddy.description.ByteCodeElement}或{@link AnnotationDescription}的类型描述
          */
         protected static class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType {
 
@@ -6824,7 +6824,7 @@ public interface TypePool {
         protected class TypeExtractor extends ClassVisitor {
 
             /**
-             * A mask that cuts off pseudo flags beyond the second byte that are inserted by ASM.
+             * A mask that cuts off pseudo flags beyond the second byte that are inserted by ASM. 一个掩码，可将伪标志截断为超出 ASM 插入的第二个字节
              */
             private static final int REAL_MODIFIER_MASK = 0xFFFF;
 
@@ -7040,9 +7040,9 @@ public interface TypePool {
 
             /**
              * Creates a type description from all data that is currently collected. This method should only be invoked
-             * after a class file was parsed fully.
+             * after a class file was parsed fully. 根据当前收集的所有数据创建类型描述。 仅在完全解析了类文件之后才调用此方法
              *
-             * @return A type description reflecting the data that was collected by this instance.
+             * @return A type description reflecting the data that was collected by this instance. 类型描述，反映此实例收集的数据
              */
             protected TypeDescription toTypeDescription() {
                 return new LazyTypeDescription(Default.this,

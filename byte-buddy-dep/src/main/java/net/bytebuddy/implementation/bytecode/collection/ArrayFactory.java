@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * A {@link net.bytebuddy.implementation.bytecode.collection.CollectionFactory} that is capable of
- * creating an array of a given type with any number of given values.
+ * creating an array of a given type with any number of given values. 一个{@link net.bytebuddy.implementation.bytecode.collection.CollectionFactory}，它能够创建具有任意数量的给定值的给定类型的数组
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class ArrayFactory implements CollectionFactory {
@@ -26,7 +26,7 @@ public class ArrayFactory implements CollectionFactory {
 
     /**
      * The array creator delegate that supplies suitable opcodes for the creation of an array and the storage of
-     * values inside it.
+     * values inside it. 数组创建者委托为数组的创建及其内部值的存储提供合适的操作码
      */
     private final ArrayCreator arrayCreator;
 
@@ -105,25 +105,25 @@ public class ArrayFactory implements CollectionFactory {
 
     /**
      * An array creator is responsible for providing correct byte code instructions for creating an array
-     * and for storing values into it.
+     * and for storing values into it. 数组创建者负责提供正确的字节码指令，以创建数组并将值存储到其中
      */
     protected interface ArrayCreator extends StackManipulation {
 
         /**
          * The creation of an array consumes one slot on the operand stack and adds a new value to it.
-         * Therefore, the operand stack's size is not altered.
+         * Therefore, the operand stack's size is not altered. 数组的创建会占用操作数堆栈上的一个插槽，并为其添加一个新值。 因此，操作数堆栈的大小不会改变
          */
         StackManipulation.Size ARRAY_CREATION_SIZE_CHANGE = StackSize.ZERO.toDecreasingSize();
 
         /**
-         * The opcode instruction for storing a value of the component type inside an array.
+         * The opcode instruction for storing a value of the component type inside an array. 用于在数组内部存储组件类型的值的操作码指令
          *
          * @return The correct storage opcode for the represented type.
          */
         int getStorageOpcode();
 
         /**
-         * An array creator implementation for primitive types.
+         * An array creator implementation for primitive types. 原始类型的数组创建器实现
          */
         enum ForPrimitiveType implements ArrayCreator {
 
@@ -168,12 +168,12 @@ public class ArrayFactory implements CollectionFactory {
             DOUBLE(Opcodes.T_DOUBLE, Opcodes.DASTORE);
 
             /**
-             * The opcode for creating an array of this type.
+             * The opcode for creating an array of this type. 用于创建此类型的数组的操作码
              */
             private final int creationOpcode;
 
             /**
-             * The opcode for storing a value in an array of this type.
+             * The opcode for storing a value in an array of this type. 用于在此类型的数组中存储值的操作码
              */
             private final int storageOpcode;
 
@@ -206,7 +206,7 @@ public class ArrayFactory implements CollectionFactory {
         }
 
         /**
-         * An array creator implementation for reference types.
+         * An array creator implementation for reference types. 引用类型的数组创建器实现
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForReferenceType implements ArrayCreator {

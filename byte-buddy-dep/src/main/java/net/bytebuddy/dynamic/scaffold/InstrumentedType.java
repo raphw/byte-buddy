@@ -291,7 +291,7 @@ public interface InstrumentedType extends TypeDescription {
          * @param name       The type's name.
          * @param modifiers  The type's modifiers.
          * @param superClass The type's super class.
-         * @return A new instrumented type representing a subclass of the given parameters.
+         * @return A new instrumented type representing a subclass of the given parameters. 一种新的插桩类型，表示给定参数的子类
          */
         InstrumentedType.WithFlexibleName subclass(String name, int modifiers, TypeDescription.Generic superClass);
 

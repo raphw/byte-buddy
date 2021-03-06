@@ -61,7 +61,7 @@ public interface PackageDefinitionStrategy {
     }
 
     /**
-     * A definition of a package.
+     * A definition of a package. 包的定义
      */
     interface Definition {
 
@@ -259,7 +259,7 @@ public interface PackageDefinitionStrategy {
         }
 
         /**
-         * A simple package definition where any property is represented by a value.
+         * A simple package definition where any property is represented by a value. 一个简单的包定义，其中任何属性都由一个值表示
          */
         class Simple implements Definition {
 
@@ -506,7 +506,7 @@ public interface PackageDefinitionStrategy {
         public interface SealBaseLocator {
 
             /**
-             * Locates the URL that should be used for sealing a package.
+             * Locates the URL that should be used for sealing a package. 找到用于密封包装的URL
              *
              * @param classLoader The class loader loading the package.
              * @param typeName    The name of the type being loaded that triggered the package definition.
@@ -575,13 +575,13 @@ public interface PackageDefinitionStrategy {
 
             /**
              * A seal base locator that imitates the behavior of a {@link java.net.URLClassLoader}, i.e. tries
-             * to deduct the base from a class's resource URL.
+             * to deduct the base from a class's resource URL. 一个密封基本定位器，它模仿{@link java.net.URLClassLoader}的行为，即试图从类的资源URL中推导出基本
              */
             @HashCodeAndEqualsPlugin.Enhance
             class ForTypeResourceUrl implements SealBaseLocator {
 
                 /**
-                 * An index to indicate to a {@link String} manipulation that the initial slash should be excluded.
+                 * An index to indicate to a {@link String} manipulation that the initial slash should be excluded. 指示 {@link String} 操作的索引，应将初始斜杠排除在外
                  */
                 private static final int EXCLUDE_INITIAL_SLASH = 1;
 

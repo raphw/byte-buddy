@@ -3013,7 +3013,7 @@ public interface AgentBuilder {
                 }
 
                 /**
-                 * A dispatcher for the {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection.Split} strategy.
+                 * A dispatcher for the {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection.Split} strategy. {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection.Split} 策略的调度程序
                  */
                 protected static class Dispatcher extends SelfInjection.Dispatcher {
 
@@ -3171,15 +3171,15 @@ public interface AgentBuilder {
     }
 
     /**
-     * A description strategy is responsible for resolving a {@link TypeDescription} when transforming or retransforming/-defining a type.
+     * A description strategy is responsible for resolving a {@link TypeDescription} when transforming or retransforming/-defining a type. 描述策略负责在转换或重新转换/定义类型时解析{@link TypeDescription}
      */
     interface DescriptionStrategy {
 
         /**
-         * Indicates if this description strategy makes use of loaded type information and yields a different type description if no loaded type is available.
+         * Indicates if this description strategy makes use of loaded type information and yields a different type description if no loaded type is available. 指示该描述策略是否使用了加载的类型信息，如果没有加载的类型，则产生不同的类型描述指示该描述策略是否使用了加载的类型信息，如果没有加载的类型，则产生不同的类型描述
          *
          * @return {@code true} if this description strategy prefers loaded type information when describing a type and only uses a type pool
-         * if loaded type information is not available.
+         * if loaded type information is not available. 如果该描述策略在描述类型时优先使用已加载的类型信息，而在加载的类型信息不可用时才使用类型池
          */
         boolean isLoadedFirst();
 
@@ -3197,12 +3197,12 @@ public interface AgentBuilder {
         TypeDescription apply(String typeName, Class<?> type, TypePool typePool, CircularityLock circularityLock, ClassLoader classLoader, JavaModule module);
 
         /**
-         * Default implementations of a {@link DescriptionStrategy}.
+         * Default implementations of a {@link DescriptionStrategy}. {@link DescriptionStrategy}的默认实现
          */
         enum Default implements DescriptionStrategy {
 
             /**
-             * A description type strategy represents a type as a {@link net.bytebuddy.description.type.TypeDescription.ForLoadedType} if a
+             * A description type strategy represents a type as a {@link net.bytebuddy.description.type.TypeDescription.ForLoadedType} if a  如果在一个类型上应用了重转换或重定义，则描述类型策略将一个类型表示为{@link net.bytebuddy.description.type.TypeDescription.ForLoadedType}
              * retransformation or redefinition is applied on a type. Using a loaded type typically results in better performance as no
              * I/O is required for resolving type descriptions. However, any interaction with the type is carried out via the Java reflection
              * API. Using the reflection API triggers eager loading of any type that is part of a method or field signature. If any of these
@@ -3314,7 +3314,7 @@ public interface AgentBuilder {
              * Creates a description strategy that uses this strategy but loads any super type asynchronously. Super types are loaded via
              * another thread supplied by the executor service to enforce the instrumentation of any such super type. It is recommended
              * to allow the executor service to create new threads without bound as class loading blocks any thread until all super types
-             * were instrumented.
+             * were instrumented. 创建一个使用此策略但异步加载任何超类型的描述策略。超类型通过executor服务提供的另一个线程加载，以强制任何此类超类型的插装。建议允许executor服务在不绑定的情况下创建新线程，因为类加载会阻塞任何线程，直到所有超类型都被插装
              *
              * @param executorService The executor service to use.
              * @return This description strategy where all super types are loaded asynchronously during the instrumentation.
@@ -3404,14 +3404,14 @@ public interface AgentBuilder {
             /**
              * <p>
              * A description strategy that enforces the loading of any super type of a type description but delegates the actual type description
-             * to another description strategy.
+             * to another description strategy. 一种描述策略，强制加载类型描述的任何超类型，但将实际的类型描述委托给另一种描述策略
              * </p>
              * <p>
              * <b>Note</b>: This description strategy delegates class loading to another thread in order to enforce the instrumentation of any
              * unloaded super type. This requires the executor service to supply at least as many threads as the deepest type hierarchy within the
              * application minus one for the instrumented type as class loading blocks any thread until all of its super types are loaded. These
              * threads are typically short lived which predestines the use of a {@link Executors#newCachedThreadPool()} without any upper bound
-             * for the maximum number of created threads.
+             * for the maximum number of created threads. 此描述策略将类装入委托给另一个线程，以便强制任何已卸载超类型的插装。这要求executor服务提供的线程数量至少与应用程序中最深类型层次结构的线程数量相等，减去插装类型的线程数量，因为类加载会阻塞任何线程，直到其所有超类型都加载完毕。这些线程通常是短期的，预先使用{@link Executors#newCachedThreadPool()}，而没有创建最大线程数的上限
              * </p>
              * <p>
              * <b>Important</b>: This strategy can dead-lock under two circumstances:
@@ -3474,18 +3474,18 @@ public interface AgentBuilder {
                 }
 
                 /**
-                 * A class loading delegate that delegates loading of the super type to another thread.
+                 * A class loading delegate that delegates loading of the super type to another thread. 类加载委托，它将超类型的加载委托给另一个线程
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 protected static class ThreadSwitchingClassLoadingDelegate implements TypeDescription.SuperTypeLoading.ClassLoadingDelegate {
 
                     /**
-                     * The executor service to delegate class loading to.
+                     * The executor service to delegate class loading to. 要委托类加载的执行程序服务
                      */
                     private final ExecutorService executorService;
 
                     /**
-                     * Creates a new thread-switching class loading delegate.
+                     * Creates a new thread-switching class loading delegate. 创建一个新的线程切换类加载委托
                      *
                      * @param executorService The executor service to delegate class loading to.
                      */
@@ -3596,7 +3596,7 @@ public interface AgentBuilder {
     }
 
     /**
-     * A strategy for creating a {@link ClassFileLocator} when instrumenting a type.
+     * A strategy for creating a {@link ClassFileLocator} when instrumenting a type. 在插桩类型的时候创建 {@link ClassFileLocator} 策略
      */
     interface LocationStrategy {
 
@@ -3626,12 +3626,12 @@ public interface AgentBuilder {
         }
 
         /**
-         * A location strategy that locates class files by querying an instrumented type's {@link ClassLoader}.
+         * A location strategy that locates class files by querying an instrumented type's {@link ClassLoader}. 一种定位策略，通过查询插入指令的类型的{@link ClassLoader}来定位类文件
          */
         enum ForClassLoader implements LocationStrategy {
 
             /**
-             * A location strategy that keeps a strong reference to the class loader the created class file locator represents.
+             * A location strategy that keeps a strong reference to the class loader the created class file locator represents. 一种定位策略，它保持对所创建的类文件定位器所表示的类装入器的强引用
              */
             STRONG {
                 @Override
@@ -3641,8 +3641,8 @@ public interface AgentBuilder {
             },
 
             /**
-             * A location strategy that keeps a weak reference to the class loader the created class file locator represents.
-             * As a consequence, any returned class file locator stops working once the represented class loader is garbage collected.
+             * A location strategy that keeps a weak reference to the class loader the created class file locator represents. 一种定位策略，它保持对所创建的类文件定位器所表示的类装入器的弱引用
+             * As a consequence, any returned class file locator stops working once the represented class loader is garbage collected.  因此，一旦所表示的类装入器被垃圾收集，任何返回的类文件定位器都将停止工作
              */
             WEAK {
                 @Override
@@ -3652,7 +3652,7 @@ public interface AgentBuilder {
             };
 
             /**
-             * Adds additional location strategies as fallbacks to this location strategy.
+             * Adds additional location strategies as fallbacks to this location strategy. 将其他位置策略作为回退添加到此位置策略
              *
              * @param classFileLocator The class file locators to query if this location strategy cannot locate a class file.
              * @return A compound location strategy that first applies this location strategy and then queries the supplied class file locators.
@@ -4369,7 +4369,7 @@ public interface AgentBuilder {
 
         /**
          * Applies this redefinition strategy by submitting all loaded types to redefinition. If this redefinition strategy is disabled,
-         * this method is non-operational.
+         * this method is non-operational. 通过将所有加载的类型提交给重定义来应用这个重定义策略。如果禁用此重定义策略，则此方法不可操作
          *
          * @param instrumentation               The instrumentation instance to use.
          * @param listener                      The listener to notify on transformations.

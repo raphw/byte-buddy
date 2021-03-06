@@ -7,7 +7,7 @@ import org.objectweb.asm.Opcodes;
 import java.security.AccessController;
 
 /**
- * A {@link ClassReader} that does not apply a class file version check if the {@code net.bytebuddy.experimental} property is set.
+ * A {@link ClassReader} that does not apply a class file version check if the {@code net.bytebuddy.experimental} property is set. 不应用类文件版本的{@link ClassReader}检查是否设置了{@code net.bytebuddy.experimental}属性
  */
 public class OpenedClassReader {
 

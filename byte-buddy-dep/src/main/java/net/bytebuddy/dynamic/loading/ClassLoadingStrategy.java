@@ -75,24 +75,24 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         /**
          * The strategy is identical to {@link ClassLoadingStrategy.Default#CHILD_FIRST} but
          * exposes the byte arrays that represent a class by {@link java.lang.ClassLoader#getResourceAsStream(String)}.
-         * For this purpose, all class files are persisted as byte arrays withing the wrapping class loader.
+         * For this purpose, all class files are persisted as byte arrays withing the wrapping class loader. 该策略与{@link ClassLoadingStrategy.Default#CHILD_FIRST} 相同，但通过 {@link java.lang.ClassLoader#getResourceAsStream(String)} 公开表示类的字节数组，为此，使用包装类装入器将所有类文件持久化为字节数组
          */
         CHILD_FIRST_PERSISTENT(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.MANIFEST, WrappingDispatcher.CHILD_FIRST)),
 
         /**
          * <p>
-         * This strategy does not create a new class loader but injects all classes into the given {@link java.lang.ClassLoader}
-         * by reflective access. This prevents the loading of classes with cyclic load-time dependencies but avoids the
-         * creation of an additional class loader. The advantage of this strategy is that the loaded classes will have
+         * This strategy does not create a new class loader but injects all classes into the given {@link java.lang.ClassLoader}  此策略不创建新的类装入器，而是通过反射访问将所有类注入到给定的  {@link java.lang.ClassLoader} 中
+         * by reflective access. This prevents the loading of classes with cyclic load-time dependencies but avoids the           这可以防止加载具有循环加载时间依赖关系的类，但可以避免创建额外的类加载器
+         * creation of an additional class loader. The advantage of this strategy is that the loaded classes will have            此策略的优点是，加载的类将拥有对类装入器的包中的其他类的包私有访问权，这些类将被注入到使用包装类装入器时不允许的包中
          * package-private access to other classes within their package of the class loader into which they are
          * injected what is not permitted when the wrapper class loader is used. This strategy is implemented using a
          * {@link net.bytebuddy.dynamic.loading.ClassInjector.UsingReflection}. Note that this strategy usually yields
-         * a better runtime performance.
+         * a better runtime performance.  这个策略是使用 {@link net.bytebuddy.dynamic.loading.ClassInjector.UsingReflection} 实现的。注意，这种策略通常会产生更好的运行时性能
          * </p>
          * <p>
          * <b>Important</b>: Class injection requires access to JVM internal methods that are sealed by security managers and the
          * Java Platform module system. Since Java 11, access to these methods is no longer feasible unless those packages
-         * are explicitly opened.
+         * are explicitly opened. 类注入需要访问由安全管理器和ava平台模块系统密封的JVM内部方法。自Java11以来，除非显式打开这些包，否则对这些方法的访问就不再可行
          * </p>
          * <p>
          * <b>Note</b>: This class loader does not define packages for injected classes by default. Therefore, calls to
@@ -103,12 +103,12 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         INJECTION(new InjectionDispatcher());
 
         /**
-         * The default behavior when attempting to load a type that was already loaded.
+         * The default behavior when attempting to load a type that was already loaded. 尝试加载已加载的类型时的默认行为
          */
         private static final boolean DEFAULT_FORBID_EXISTING = true;
 
         /**
-         * The dispatcher to be used when loading a class.
+         * The dispatcher to be used when loading a class. 加载类时要使用的调度程序
          */
         private final Configurable<ClassLoader> dispatcher;
 
