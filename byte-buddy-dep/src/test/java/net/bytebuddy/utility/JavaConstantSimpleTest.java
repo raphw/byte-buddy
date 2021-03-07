@@ -49,6 +49,4 @@ public class JavaConstantSimpleTest {
     public void testTypeMatchesConstant() {
         assertThat(JavaConstant.Simple.wrap(value).getTypeDescription(), is(typeDescription));
     }
-
-    // TODO: Test for records and sealed types!
 }
