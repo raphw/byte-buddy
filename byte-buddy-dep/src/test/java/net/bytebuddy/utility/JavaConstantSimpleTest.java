@@ -24,7 +24,8 @@ public class JavaConstantSimpleTest {
             {0d, TypeDescription.ForLoadedType.of(double.class), 0d},
             {"foo", TypeDescription.STRING, "foo"},
             {Object.class, TypeDescription.CLASS, Type.getType(Object.class)},
-            {TypeDescription.OBJECT, TypeDescription.CLASS, Type.getType(Object.class)}
+            {TypeDescription.OBJECT, TypeDescription.CLASS, Type.getType(Object.class)},
+            {JavaConstant.Simple.ofLoaded(0), TypeDescription.ForLoadedType.of(int.class), 0}
         });
     }
 
