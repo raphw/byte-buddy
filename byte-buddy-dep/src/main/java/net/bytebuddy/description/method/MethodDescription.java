@@ -592,10 +592,10 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * Checks if this method is a bootstrap method while expecting the supplied type as a type representation.
          *
-         * @param selfType The type of the bootstrap method's type representation.
+         * @param bootstrapped The type of the bootstrap method's type representation.
          * @return {@code true} if this method is a bootstrap method assuming the supplied type representation.
          */
-        private boolean isBootstrap(TypeDescription selfType) {
+        private boolean isBootstrap(TypeDescription bootstrapped) {
             TypeList parameterTypes = getParameters().asTypeList().asErasures();
             switch (parameterTypes.size()) {
                 case 0:
@@ -608,11 +608,11 @@ public interface MethodDescription extends TypeVariableSource,
                 case 3:
                     return JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
                             && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
-                            && (parameterTypes.get(2).represents(Object[].class) || parameterTypes.get(2).isAssignableFrom(selfType));
+                            && (parameterTypes.get(2).isArray() && parameterTypes.get(2).getComponentType().isAssignableFrom(bootstrapped) || parameterTypes.get(2).isAssignableFrom(bootstrapped));
                 default:
                     return JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
                             && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
-                            && parameterTypes.get(2).isAssignableFrom(selfType);
+                            && parameterTypes.get(2).isAssignableFrom(bootstrapped);
             }
         }
 
@@ -620,28 +620,39 @@ public interface MethodDescription extends TypeVariableSource,
          * Checks if this method is a bootstrap method given the supplied arguments. This method does not implement a full check but assumes that
          * {@link MethodDescription.AbstractBase#isBootstrap(TypeDescription)} is invoked, as well.
          *
-         * @param types The types of the explicit arguments that are supplied to the bootstrap method.
+         * @param arguments The types of the explicit arguments that are supplied to the bootstrap method.
          * @return {@code true} if this method is a bootstrap method for the supplied arguments.
          */
-        private boolean isBootstrap(List<? extends TypeDefinition> types) {
+        private boolean isBootstrapping(List<? extends TypeDefinition> arguments) {
             TypeList targets = getParameters().asTypeList().asErasures();
             if (targets.size() < 4) {
-                return types.isEmpty() || targets.get(targets.size() - 1).represents(Object[].class);
+                if (arguments.isEmpty()) {
+                    return true;
+                } else if (targets.get(targets.size() - 1).isArray()) {
+                    for (TypeDefinition argument : arguments) {
+                        if (!argument.asErasure().isAssignableTo(targets.get(targets.size() - 1).getComponentType())) {
+                            return false;
+                        }
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
             } else {
                 Iterator<TypeDescription> iterator = targets.subList(3, targets.size()).iterator();
-                for (TypeDefinition type : types) {
+                for (TypeDefinition type : arguments) {
                     if (!iterator.hasNext()) {
                         return false;
                     }
                     TypeDescription target = iterator.next();
-                    if (!iterator.hasNext() && target.represents(Object[].class)) {
+                    if (!iterator.hasNext() && target.isArray()) {
                         return true;
                     } else if (!type.asErasure().isAssignableTo(target)) {
                         return false;
                     }
                 }
                 if (iterator.hasNext()) {
-                    return iterator.next().represents(Object[].class) && !iterator.hasNext();
+                    return iterator.next().isArray() && !iterator.hasNext();
                 } else {
                     return true;
                 }
@@ -665,7 +676,7 @@ public interface MethodDescription extends TypeVariableSource,
          * {@inheritDoc}
          */
         public boolean isInvokeBootstrap(List<? extends TypeDefinition> arguments) {
-            return isInvokeBootstrap() && isBootstrap(arguments);
+            return isInvokeBootstrap() && isBootstrapping(arguments);
         }
 
         /**
@@ -679,7 +690,7 @@ public interface MethodDescription extends TypeVariableSource,
          * {@inheritDoc}
          */
         public boolean isConstantBootstrap(List<? extends TypeDefinition> arguments) {
-            return isConstantBootstrap() && isBootstrap(arguments);
+            return isConstantBootstrap() && isBootstrapping(arguments);
         }
 
         /**
