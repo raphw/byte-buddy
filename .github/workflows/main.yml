@@ -50,6 +50,28 @@ jobs:
           architecture: x64
       - name: Build project
         run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
+  hotspot-32:
+    name: HotSpot (32 bit)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04, windows-2019]
+        java: 8
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+          architecture: x84
+      - name: Build project
+        run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
   hotspot-unsupported:
     name: HotSpot (unsupported)
     strategy:

@@ -1040,7 +1040,7 @@ public interface VirtualMachine {
                                 if (!library.GetExitCodeThread(thread, exitCode)) {
                                     throw new Win32Exception(Native.getLastError());
                                 } else if (exitCode.getValue() != 0) {
-                                    throw new IllegalStateException("Target could not dispatch command successfully");
+                                    throw new IllegalStateException("Target VM could not dispatch command successfully: " + exitCode.getValue());
                                 }
                                 if (!Kernel32.INSTANCE.ConnectNamedPipe(pipe, null)) {
                                     int code = Native.getLastError();
