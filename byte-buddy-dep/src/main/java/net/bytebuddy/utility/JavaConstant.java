@@ -115,7 +115,7 @@ public interface JavaConstant {
          * @return An appropriate Java constant representation.
          */
         public static JavaConstant of(TypeDescription typeDescription) {
-            return new Simple(typeDescription, TypeDescription.CLASS);
+            return new Simple(Type.getType(typeDescription.getDescriptor()), TypeDescription.CLASS);
         }
 
         /**
