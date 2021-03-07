@@ -36,6 +36,7 @@ typedef struct {
 
 /**
  * Executes the attachment on the remote thread. This method is executed on the target JVM and must not reference any addresses unknown to that address.
+ *
  * @param argument The argument provided by the JVM executing the attachment.
  * @return The result of the attachment.
  */
@@ -61,6 +62,7 @@ DWORD WINAPI execute_remote_attach
 
 /**
  * Allocates the code to execute on the remote machine.
+ *
  * @param process The process handle of the remote process to which to attach.
  * @return A pointer to the allocated code or {@code NULL} if the allocation failed.
  */
@@ -80,6 +82,7 @@ LPVOID allocate_remote_code
 
 /**
  * Allocates the argument to the remote execution.
+ *
  * @param process A handle to the remote process to which to attach.
  * @param pipe The name of the pipe to which the attachment result is written
  * @param argument0 The first argument to provide to the {@code JVM_EnqueueOperation}.
