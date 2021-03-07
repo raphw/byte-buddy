@@ -12,6 +12,7 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
@@ -25,6 +26,9 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ByteBuddyTest {
+
+    @Rule
+    public JavaVersionRule javaVersionRule = new JavaVersionRule();
 
     @Test(expected = IllegalArgumentException.class)
     public void testEnumWithoutValuesIsIllegal() throws Exception {
