@@ -805,8 +805,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    @JavaVersionRule.Enforce(14)
-    @Ignore("javac does not currently add type annotation meta data correctly")
+    @JavaVersionRule.Enforce(16)
     public void testRecordComponentsAccessor() throws Exception {
         Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.SampleRecord");
         @SuppressWarnings("unchecked")
@@ -829,8 +828,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    @JavaVersionRule.Enforce(14)
-    @Ignore("javac does not currently add type annotation meta data correctly")
+    @JavaVersionRule.Enforce(16)
     public void testRecordComponentsConstructorParameter() throws Exception {
         Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.SampleRecord");
         @SuppressWarnings("unchecked")

@@ -5,7 +5,6 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -86,14 +85,14 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Test
     @Override
-    @Ignore("The OpenJDK reflection API does not currently support generic receiver types")
+    @JavaVersionRule.Enforce(16)
     public void testGenericTypeAnnotationReceiverTypeOnMethod() throws Exception {
         super.testGenericTypeAnnotationReceiverTypeOnMethod();
     }
 
     @Test
     @Override
-    @Ignore("The OpenJDK reflection API does not currently support generic receiver types")
+    @JavaVersionRule.Enforce(16)
     public void testGenericNestedTypeAnnotationReceiverTypeOnMethod() throws Exception {
         super.testGenericNestedTypeAnnotationReceiverTypeOnMethod();
     }
@@ -107,14 +106,14 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Test
     @Override
-    @Ignore("The OpenJDK reflection API does not currently support generic receiver types")
+    @JavaVersionRule.Enforce(16)
     public void testGenericInnerTypeAnnotationReceiverTypeOnConstructor() throws Exception {
         super.testGenericInnerTypeAnnotationReceiverTypeOnConstructor();
     }
 
     @Test
     @Override
-    @Ignore("The OpenJDK reflection API does not currently support generic receiver types")
+    @JavaVersionRule.Enforce(16)
     public void testGenericInnerTypeAnnotationReceiverTypeOnMethod() throws Exception {
         super.testGenericInnerTypeAnnotationReceiverTypeOnMethod();
     }
