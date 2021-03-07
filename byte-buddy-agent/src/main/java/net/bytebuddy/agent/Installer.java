@@ -29,7 +29,6 @@ public class Installer {
      * of the Byte Buddy agent as this class might be loaded by a different class loader than the system class
      * loader.
      */
-    @SuppressWarnings("unused")
     private static volatile Instrumentation instrumentation;
 
     /**
@@ -79,7 +78,6 @@ public class Installer {
      * @param arguments       The unused agent arguments.
      * @param instrumentation The instrumentation instance.
      */
-    @SuppressWarnings("unused")
     public static void agentmain(String arguments, Instrumentation instrumentation) {
         Installer.instrumentation = instrumentation;
     }
