@@ -8852,7 +8852,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             Object[] recordComponent = RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getRecordComponents(type);
             return recordComponent == null
                     ? new RecordComponentList.Empty<RecordComponentDescription.InDefinedShape>()
-                    : new RecordComponentList.ForLoadedRecordComponents();
+                    : new RecordComponentList.ForLoadedRecordComponents(recordComponent);
         }
 
         /**

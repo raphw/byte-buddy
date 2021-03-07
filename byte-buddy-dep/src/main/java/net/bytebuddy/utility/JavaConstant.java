@@ -755,7 +755,11 @@ public interface JavaConstant {
          * {@inheritDoc}
          */
         public Object asConstantPoolValue() {
-            return new Handle(getHandleType().getIdentifier(), getOwnerType().getInternalName(), getName(), getDescriptor(), getOwnerType().isInterface());
+            return new Handle(getHandleType().getIdentifier(),
+                    getOwnerType().getInternalName(),
+                    getName(),
+                    getDescriptor(),
+                    getOwnerType().isInterface());
         }
 
         /**
@@ -817,6 +821,9 @@ public interface JavaConstant {
          */
         public String getDescriptor() {
             switch (handleType) {
+            case GET_FIELD:
+            case GET_STATIC_FIELD:
+                return returnType.getDescriptor();
             case PUT_FIELD:
             case PUT_STATIC_FIELD:
                 return parameterTypes.get(0).getDescriptor();

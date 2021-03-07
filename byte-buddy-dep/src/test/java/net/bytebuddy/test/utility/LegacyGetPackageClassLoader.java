@@ -15,6 +15,7 @@ public class LegacyGetPackageClassLoader extends URLClassLoader {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     protected Package definePackage(String name, Manifest man, URL url) throws IllegalArgumentException {
         if (getPackage(name) != null) {
             throw new IllegalArgumentException(name);

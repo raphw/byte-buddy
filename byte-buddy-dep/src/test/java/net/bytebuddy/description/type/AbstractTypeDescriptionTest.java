@@ -754,8 +754,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    @JavaVersionRule.Enforce(14)
-    @Ignore("Requires preview features")
+    @JavaVersionRule.Enforce(16)
     public void testRecordComponents() throws Exception {
         Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.SampleRecord");
         assertThat(describe(sampleRecord).isRecord(), is(true));
@@ -783,8 +782,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    @JavaVersionRule.Enforce(14)
-    @Ignore("Requires preview features")
+    @JavaVersionRule.Enforce(16)
     public void testRecordComponentsField() throws Exception {
         Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.SampleRecord");
         @SuppressWarnings("unchecked")

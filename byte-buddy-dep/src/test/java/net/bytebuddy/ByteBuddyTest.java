@@ -9,6 +9,8 @@ import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.test.utility.DebuggingWrapper;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -69,11 +71,10 @@ public class ByteBuddyTest {
     }
 
     @Test
-    @Ignore("Requires preview feature enabling")
+    @JavaVersionRule.Enforce(16)
     public void testRecordWithoutMember() throws Exception {
         Class<?> type = new ByteBuddy()
-                .with(TypeValidation.DISABLED)
-                .with(ClassFileVersion.JAVA_V14.asPreviewVersion())
+                .with(ClassFileVersion.JAVA_V16)
                 .makeRecord()
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -87,11 +88,10 @@ public class ByteBuddyTest {
     }
 
     @Test
-    @Ignore("Requires preview feature enabling")
+    @JavaVersionRule.Enforce(16)
     public void testRecordWithMember() throws Exception {
         Class<?> type = new ByteBuddy()
-                .with(TypeValidation.DISABLED)
-                .with(ClassFileVersion.JAVA_V14.asPreviewVersion())
+                .with(ClassFileVersion.JAVA_V16)
                 .makeRecord()
                 .defineRecordComponent("foo", String.class)
                 .make()
