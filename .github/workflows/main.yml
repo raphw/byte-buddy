@@ -56,7 +56,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-18.04, windows-2019]
-        java: 8
+        java: [8]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
