@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 9. Mars 2021: version 1.10.22
+
+- Refactor `JavaConstant` API and fix handle resolution.
+- Adjust bootstrap method validation to account for possible dynamic constants.
+- Make class loaders parallel capable.
+- Correct code for attaching to Windows VMs with 32 bit.
+- Allow configuration for Gradle plugin to consider class path as incremental. 
+
 ### 21. February 2021: version 1.10.21
 
 - Update ASM and add support for Java 17.
