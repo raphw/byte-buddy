@@ -69,7 +69,7 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java }}
-          architecture: x84
+          architecture: x86
       - name: Build project
         run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
   hotspot-unsupported:
