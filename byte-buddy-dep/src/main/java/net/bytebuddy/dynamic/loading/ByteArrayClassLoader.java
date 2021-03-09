@@ -89,6 +89,14 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * Register class loader as parallel capable if the current VM supports it.
      */
     static {
+        doRegisterAsParallelCapable();
+    }
+
+    /**
+     * Registers class loader as parallel capable if possible.
+     */
+    @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Must be invoked from targeting ClassLoader class.")
+    private static void doRegisterAsParallelCapable() {
         try {
             Method method = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
             method.setAccessible(true);
@@ -999,6 +1007,14 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * Register class loader as parallel capable if the current VM supports it.
          */
         static {
+            doRegisterAsParallelCapable();
+        }
+
+        /**
+         * Registers class loader as parallel capable if possible.
+         */
+        @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Must be invoked from targeting ClassLoader class.")
+        private static void doRegisterAsParallelCapable() {
             try {
                 Method method = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
                 method.setAccessible(true);
