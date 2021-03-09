@@ -19,7 +19,6 @@ import net.bytebuddy.build.Plugin;
 import net.bytebuddy.build.gradle.api.*;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.tasks.InputDirectory;
-import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
@@ -69,7 +68,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
      *
      * @return The class path to supply to the plugin engine.
      */
-    @InputFiles
+    @Incremental
     @CompileClasspath
     public abstract ConfigurableFileCollection getClassPath();
 
