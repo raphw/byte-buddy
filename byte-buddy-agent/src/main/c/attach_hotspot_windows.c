@@ -15,7 +15,8 @@
  */
 #include <windows.h>
 
-#define ENQUEUE_ERROR 0xffff
+#define OPEN_JVM_ERROR 200
+#define GET_ENQUEUE_FUNCTION_ERROR 201
 #define CODE_SIZE (SIZE_T) 1024
 #define MAX_ARGUMENT 1024
 
@@ -28,6 +29,7 @@ typedef struct {
     GetProcAddress_t GetProcAddress;
     char library[32];
     char command[32];
+    char commandFallback[32];
     char pipe[MAX_PATH];
     char argument[4][MAX_ARGUMENT];
 } EnqueueOperation;
@@ -45,17 +47,21 @@ DWORD WINAPI execute_remote_attach
 {
     EnqueueOperation *operation = (EnqueueOperation *) argument;
     HMODULE library = operation->GetModuleHandleA(operation->library);
-    if (library != NULL) {
-        JVM_EnqueueOperation_t JVM_EnqueueOperation = (JVM_EnqueueOperation_t) operation->GetProcAddress(library, operation->command);
-        if (JVM_EnqueueOperation != NULL) {
-            return (DWORD) JVM_EnqueueOperation(operation->argument[0],
-                                                operation->argument[1],
-                                                operation->argument[2],
-                                                operation->argument[3],
-                                                operation->pipe);
-        }
+    if (library == NULL) {
+        return OPEN_JVM_ERROR;
     }
-    return ENQUEUE_ERROR;
+    JVM_EnqueueOperation_t JVM_EnqueueOperation = (JVM_EnqueueOperation_t) operation->GetProcAddress(library, operation->command);
+    if (JVM_EnqueueOperation == NULL) {
+        JVM_EnqueueOperation = (JVM_EnqueueOperation_t) operation->GetProcAddress(library, operation->commandFallback);
+    }
+    if (JVM_EnqueueOperation == NULL) {
+        return GET_ENQUEUE_FUNCTION_ERROR;
+    }
+    return (DWORD) JVM_EnqueueOperation(operation->argument[0],
+                                        operation->argument[1],
+                                        operation->argument[2],
+                                        operation->argument[3],
+                                        operation->pipe);
 }
 
 #pragma check_stack
@@ -106,6 +112,7 @@ LPVOID allocate_remote_argument
     operation.GetProcAddress = GetProcAddress;
     strcpy(operation.library, "jvm");
     strcpy(operation.command, "JVM_EnqueueOperation");
+    strcpy(operation.commandFallback, "_JVM_EnqueueOperation@20");
     strcpy(operation.pipe, pipe);
     strcpy(operation.argument[0], argument0 == NULL ? "" : argument0);
     strcpy(operation.argument[1], argument1 == NULL ? "" : argument1);
