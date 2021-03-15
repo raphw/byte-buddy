@@ -19,10 +19,7 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.SimpleRemapper;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarEntry;
@@ -120,8 +117,25 @@ public class GradleTypeTransformer {
         }
         if (!jar.delete()) {
             throw new IllegalStateException("Could not delete " + jar);
-        } else if (!temporary.renameTo(jar)) {
-            throw new IllegalStateException("Could not rename " + temporary + " to " + jar);
+        } else if (!temporary.renameTo(jar)) { // copy file as a fallback
+            InputStream inputStream = new FileInputStream(temporary);
+            try {
+                FileOutputStream outputStream = new FileOutputStream(jar);
+                try {
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, length);
+                    }
+                } finally {
+                    outputStream.close();
+                }
+            } finally {
+                inputStream.close();
+            }
+            if (!temporary.delete()) {
+                throw new IllegalStateException("Could not delete " + temporary);
+            }
         }
     }
 
