@@ -2300,6 +2300,7 @@ public class AgentBuilderDefaultTest {
                 mock(AgentBuilder.ClassFileBufferStrategy.class),
                 mock(AgentBuilder.InstallationListener.class),
                 mock(AgentBuilder.RawMatcher.class),
+                mock(AgentBuilder.RedefinitionStrategy.ResubmissionEnforcer.class),
                 mock(List.class),
                 new AgentBuilder.CircularityLock.Default())
                 .transform(mock(ClassLoader.class),
@@ -2333,6 +2334,7 @@ public class AgentBuilderDefaultTest {
                 mock(AgentBuilder.ClassFileBufferStrategy.class),
                 mock(AgentBuilder.InstallationListener.class),
                 mock(AgentBuilder.RawMatcher.class),
+                mock(AgentBuilder.RedefinitionStrategy.ResubmissionEnforcer.class),
                 Collections.<AgentBuilder.Default.Transformation>emptyList(),
                 new AgentBuilder.Default.CircularityLock.Default());
         final ClassLoader classLoader = mock(ClassLoader.class);
@@ -2372,6 +2374,7 @@ public class AgentBuilderDefaultTest {
                 mock(AgentBuilder.ClassFileBufferStrategy.class),
                 mock(AgentBuilder.InstallationListener.class),
                 mock(AgentBuilder.RawMatcher.class),
+                mock(AgentBuilder.RedefinitionStrategy.ResubmissionEnforcer.class),
                 Collections.<AgentBuilder.Default.Transformation>emptyList(),
                 new AgentBuilder.CircularityLock.Default());
         final ClassLoader classLoader = mock(ClassLoader.class);
@@ -2496,6 +2499,13 @@ public class AgentBuilderDefaultTest {
         new AgentBuilder.Default()
                 .with(AgentBuilder.RedefinitionStrategy.DISABLED)
                 .withResubmission(mock(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testRetransformationEnforcedDisabledNotEnabledResubmission() throws Exception {
+        new AgentBuilder.Default()
+                .with(AgentBuilder.RedefinitionStrategy.DISABLED)
+                .withEnforcedResubmission(mock(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.class));
     }
 
     public static class Foo {

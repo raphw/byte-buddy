@@ -42,7 +42,7 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
     @Rule
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
-    @Rule
+    //@Rule
     public MethodRule integrationRule = new IntegrationRule();
 
     private ClassLoader classLoader;
@@ -90,12 +90,50 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
     }
 
     @Test
-    public void testResubmissionCancelationNonOperational() throws Exception {
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @IntegrationRule.Enforce
+    public void testEnforcedResubmission() throws Exception {
+        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
+        final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+        try {
+            assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+            ClassFileTransformer classFileTransformer = new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.DISABLED))
+                    .ignore(none())
+                    .with(AgentBuilder.Listener.StreamWriting.toSystemOut().withTransformationsOnly())
+                    .disableClassFormatChanges()
+                    .with(AgentBuilder.LocationStrategy.NoOp.INSTANCE)
+                    .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                    .withEnforcedResubmission(new AgentBuilder.RedefinitionStrategy.ResubmissionScheduler() {
+                        public boolean isAlive() {
+                            return true;
+                        }
+
+                        public Cancelable schedule(final Runnable job) {
+                            return new Cancelable.ForFuture(scheduledExecutorService.scheduleWithFixedDelay(job, TIMEOUT, TIMEOUT, TimeUnit.SECONDS));
+                        }
+                    })
+                    .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new SampleTransformer())
+                    .installOnByteBuddyAgent();
+            try {
+                Class<?> type = classLoader.loadClass(SimpleType.class.getName());
+                Thread.sleep(TimeUnit.SECONDS.toMillis(TIMEOUT * 3));
+                assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
+            } finally {
+                assertThat(ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer), is(true));
+            }
+        } finally {
+            scheduledExecutorService.shutdown();
+        }
+    }
+
+    @Test
+    public void testResubmissionCancellationNonOperational() throws Exception {
         AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.Cancelable.NoOp.INSTANCE.cancel();
     }
 
     @Test
-    public void testResubmissionCancelationForFuture() throws Exception {
+    public void testResubmissionCancellationForFuture() throws Exception {
         Future<?> future = mock(Future.class);
         new AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.Cancelable.ForFuture(future).cancel();
         verify(future).cancel(true);

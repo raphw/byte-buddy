@@ -898,6 +898,24 @@ public interface AgentBuilder {
                                       ElementMatcher<? super ClassLoader> classLoaderFilter);
 
         /**
+         * Enforces resubmission for any non-loaded class.
+         *
+         * @param resubmissionScheduler A scheduler which is responsible for scheduling the resubmission job.
+         * @return A new instance of this agent builder that applies enforced resubmission.
+         */
+        AgentBuilder withEnforcedResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler);
+
+        /**
+         * Enforces resubmission for any non-loaded class where the class's class loader matches the supplied matcher.
+         *
+         * @param resubmissionScheduler A scheduler which is responsible for scheduling the resubmission job.
+         * @param classLoaderFilter     A filter to exclude class loader instances from resubmission before applying it.
+         * @return A new instance of this agent builder that applies enforced resubmission.
+         */
+        AgentBuilder withEnforcedResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler,
+                                              ElementMatcher<? super ClassLoader> classLoaderFilter);
+
+        /**
          * An agent builder configuration strategy that allows the definition of a discovery strategy.
          */
         interface WithImplicitDiscoveryStrategy extends RedefinitionListenable {
@@ -6313,7 +6331,7 @@ public interface AgentBuilder {
                                           RedefinitionStrategy redefinitionStrategy,
                                           BatchAllocator redefinitionBatchAllocator,
                                           Listener redefinitionBatchListener) {
-                    return new Installation(listener, installationListener);
+                    return new Installation(listener, installationListener, ResubmissionEnforcer.Disabled.INSTANCE);
                 }
             }
 
@@ -6378,9 +6396,10 @@ public interface AgentBuilder {
                                         redefinitionStrategy,
                                         redefinitionBatchAllocator,
                                         redefinitionBatchListener,
-                                        types), installationListener));
+                                        types), installationListener),
+                                ResubmissionEnforcer.Disabled.INSTANCE);
                     } else {
-                        return new Installation(listener, installationListener);
+                        return new Installation(listener, installationListener, ResubmissionEnforcer.Disabled.INSTANCE);
                     }
                 }
 
@@ -6776,6 +6795,66 @@ public interface AgentBuilder {
             }
 
             /**
+             * An enforcing resubmission strategy.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class Enforced implements ResubmissionStrategy {
+
+                /**
+                 * A scheduler that is responsible for resubmission of types.
+                 */
+                private final ResubmissionScheduler resubmissionScheduler;
+
+                /**
+                 * A filter to suppress class loaders, for example after they become inactive.
+                 */
+                private final ElementMatcher<? super ClassLoader> classLoaderFilter;
+
+                /**
+                 * Creates a new enforcing resubmission strategu.
+                 *
+                 * @param resubmissionScheduler A scheduler that is responsible for resubmission of types.
+                 * @param classLoaderFilter     A filter to suppress class loaders, for example after they become inactive.
+                 */
+                protected Enforced(ResubmissionScheduler resubmissionScheduler, ElementMatcher<? super ClassLoader> classLoaderFilter) {
+                    this.resubmissionScheduler = resubmissionScheduler;
+                    this.classLoaderFilter = classLoaderFilter;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Installation apply(Instrumentation instrumentation,
+                                          LocationStrategy locationStrategy,
+                                          AgentBuilder.Listener listener,
+                                          InstallationListener installationListener,
+                                          CircularityLock circularityLock,
+                                          RawMatcher matcher,
+                                          RedefinitionStrategy redefinitionStrategy,
+                                          BatchAllocator redefinitionBatchAllocator,
+                                          Listener redefinitionBatchListener) {
+                    if (redefinitionStrategy.isEnabled() && resubmissionScheduler.isAlive()) {
+                        ConcurrentMap<Enabled.StorageKey, Set<String>> types = new ConcurrentHashMap<Enabled.StorageKey, Set<String>>();
+                        return new Installation(listener,
+                                new InstallationListener.Compound(new Enabled.ResubmissionInstallationListener(resubmissionScheduler,
+                                    instrumentation,
+                                    locationStrategy,
+                                    listener,
+                                    circularityLock,
+                                    matcher,
+                                    ElementMatchers.<ClassLoader>none(),
+                                    redefinitionStrategy,
+                                    redefinitionBatchAllocator,
+                                    redefinitionBatchListener,
+                                    types), installationListener),
+                                new ResubmissionEnforcer.Enabled(classLoaderFilter, types));
+                    } else {
+                        return new Installation(listener, installationListener, ResubmissionEnforcer.Disabled.INSTANCE);
+                    }
+                }
+            }
+
+            /**
              * Represents an installation of a resubmission strategy.
              */
             @HashCodeAndEqualsPlugin.Enhance
@@ -6792,14 +6871,21 @@ public interface AgentBuilder {
                 private final InstallationListener installationListener;
 
                 /**
+                 * The resubmission enforcer to apply.
+                 */
+                private final ResubmissionEnforcer resubmissionEnforcer;
+
+                /**
                  * Creates a new installation.
                  *
                  * @param listener             The listener to apply.
                  * @param installationListener The installation listener to apply.
+                 * @param resubmissionEnforcer The resubmission enforcer to apply.
                  */
-                protected Installation(AgentBuilder.Listener listener, InstallationListener installationListener) {
+                protected Installation(AgentBuilder.Listener listener, InstallationListener installationListener, ResubmissionEnforcer resubmissionEnforcer) {
                     this.listener = listener;
                     this.installationListener = installationListener;
+                    this.resubmissionEnforcer = resubmissionEnforcer;
                 }
 
                 /**
@@ -6818,6 +6904,98 @@ public interface AgentBuilder {
                  */
                 protected InstallationListener getInstallationListener() {
                     return installationListener;
+                }
+
+                /**
+                 * Returns the resubmission enforcer to apply.
+                 *
+                 * @return The resubmission enforcer to apply.
+                 */
+                protected ResubmissionEnforcer getResubmissionEnforcer() {
+                    return resubmissionEnforcer;
+                }
+            }
+        }
+
+        /**
+         * A resubmission enforcer determines if a non-loaded class should be scheduled for resubmission or be treated upon first load.
+         */
+        protected interface ResubmissionEnforcer {
+
+            /**
+             * Returns {@code true} if a class should be scheduled for resubmission.
+             *
+             * @param classLoader         The class loader of the instrumented class.
+             * @param name                The name of the instrumented class.
+             * @param classBeingRedefined The class to be redefined or {@code null} if the current type is loaded for the first time.
+             * @return {@code true} if the class should be scheduled for resubmission.
+             */
+            boolean isEnforced(ClassLoader classLoader, String name, Class<?> classBeingRedefined);
+
+            /**
+             * A resubmission enforcer that does not consider non-loaded classes.
+             */
+            enum Disabled implements ResubmissionEnforcer {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isEnforced(ClassLoader classLoader, String name, Class<?> classBeingRedefined) {
+                    return false;
+                }
+            }
+
+            /**
+             * A resubmission enforcer that schedules non-loaded classes for resubmission.
+             */
+            class Enabled implements ResubmissionEnforcer {
+
+                /**
+                 * A filter to exclude class loader instances from resubmission before applying it.
+                 */
+                private final ElementMatcher<? super ClassLoader> classLoaderFilter;
+
+                /**
+                 *  A map of class loaders to their types to resubmit.
+                 */
+                private final ConcurrentMap<ResubmissionStrategy.Enabled.StorageKey, Set<String>> types;
+
+                /**
+                 * Creates a new enabled resubmission enforcer.
+                 *
+                 * @param classLoaderFilter A filter to exclude class loader instances from resubmission before applying it.
+                 * @param types             A map of class loaders to their types to resubmit.
+                 */
+                protected Enabled(ElementMatcher<? super ClassLoader> classLoaderFilter,
+                                  ConcurrentMap<ResubmissionStrategy.Enabled.StorageKey, Set<String>> types) {
+                    this.classLoaderFilter = classLoaderFilter;
+                    this.types = types;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Use of unrelated key is intended for avoiding unnecessary weak reference")
+                public boolean isEnforced(ClassLoader classLoader, String name, Class<?> classBeingRedefined) {
+                    if (classBeingRedefined == null && !classLoaderFilter.matches(classLoader)) {
+                        Set<String> types = this.types.get(new ResubmissionStrategy.Enabled.LookupKey(classLoader));
+                        if (types == null) {
+                            types = new ResubmissionStrategy.Enabled.ResubmissionListener.ConcurrentHashSet<String>();
+                            Set<String> previous = this.types.putIfAbsent(new ResubmissionStrategy.Enabled.StorageKey(classLoader), types);
+                            if (previous != null) {
+                                types = previous;
+                            }
+                        }
+                        types.add(name);
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
             }
         }
@@ -9455,7 +9633,7 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer makeRaw() {
-            return makeRaw(listener, InstallationListener.NoOp.INSTANCE);
+            return makeRaw(listener, InstallationListener.NoOp.INSTANCE, RedefinitionStrategy.ResubmissionEnforcer.Disabled.INSTANCE);
         }
 
         /**
@@ -9463,9 +9641,12 @@ public interface AgentBuilder {
          *
          * @param listener             The listener to supply.
          * @param installationListener The installation listener to notify.
+         * @param resubmissionEnforcer The resubmission enforcer to use.
          * @return The resettable class file transformer to use.
          */
-        private ResettableClassFileTransformer makeRaw(Listener listener, InstallationListener installationListener) {
+        private ResettableClassFileTransformer makeRaw(Listener listener,
+                                                       InstallationListener installationListener,
+                                                       RedefinitionStrategy.ResubmissionEnforcer resubmissionEnforcer) {
             return ExecutingTransformer.FACTORY.make(byteBuddy,
                     listener,
                     poolStrategy,
@@ -9480,6 +9661,7 @@ public interface AgentBuilder {
                     classFileBufferStrategy,
                     installationListener,
                     ignoreMatcher,
+                    resubmissionEnforcer,
                     transformations,
                     circularityLock);
         }
@@ -9565,7 +9747,8 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener);
             ResettableClassFileTransformer classFileTransformer = transformerDecorator.decorate(makeRaw(installation.getListener(),
-                    installation.getInstallationListener()));
+                    installation.getInstallationListener(),
+                    installation.getResubmissionEnforcer()));
             installation.getInstallationListener().onBeforeInstall(instrumentation, classFileTransformer);
             try {
                 DISPATCHER.addTransformer(instrumentation, classFileTransformer, redefinitionStrategy.isRetransforming());
@@ -10215,6 +10398,11 @@ public interface AgentBuilder {
             private final RawMatcher ignoreMatcher;
 
             /**
+             * The resubmission enforcer to use.
+             */
+            private final RedefinitionStrategy.ResubmissionEnforcer resubmissionEnforcer;
+
+            /**
              * The transformations to apply on non-ignored types.
              */
             private final List<Transformation> transformations;
@@ -10246,6 +10434,7 @@ public interface AgentBuilder {
              * @param installationListener          The installation listener to notify.
              * @param classFileBufferStrategy       The class file buffer strategy to use.
              * @param ignoreMatcher                 Identifies types that should not be instrumented.
+             * @param resubmissionEnforcer          The resubmission enforcer to use.
              * @param transformations               The transformations to apply on non-ignored types.
              * @param circularityLock               The circularity lock to use.
              */
@@ -10263,6 +10452,7 @@ public interface AgentBuilder {
                                         ClassFileBufferStrategy classFileBufferStrategy,
                                         InstallationListener installationListener,
                                         RawMatcher ignoreMatcher,
+                                        RedefinitionStrategy.ResubmissionEnforcer resubmissionEnforcer,
                                         List<Transformation> transformations,
                                         CircularityLock circularityLock) {
                 this.byteBuddy = byteBuddy;
@@ -10279,6 +10469,7 @@ public interface AgentBuilder {
                 this.classFileBufferStrategy = classFileBufferStrategy;
                 this.installationListener = installationListener;
                 this.ignoreMatcher = ignoreMatcher;
+                this.resubmissionEnforcer = resubmissionEnforcer;
                 this.transformations = transformations;
                 this.circularityLock = circularityLock;
                 accessControlContext = AccessController.getContext();
@@ -10362,6 +10553,9 @@ public interface AgentBuilder {
                     return NO_TRANSFORMATION;
                 }
                 String name = internalTypeName.replace('/', '.');
+                if (resubmissionEnforcer.isEnforced(classLoader, name, classBeingRedefined)) {
+                    return NO_TRANSFORMATION;
+                }
                 try {
                     listener.onDiscovery(name, classLoader, module, classBeingRedefined != null);
                     ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileBufferStrategy.resolve(name,
@@ -10507,6 +10701,7 @@ public interface AgentBuilder {
                  * @param classFileBufferStrategy       The class file buffer strategy to use.
                  * @param installationListener          The installation listener to notify.
                  * @param ignoreMatcher                 Identifies types that should not be instrumented.
+                 * @param resubmissionEnforcer          The resubmission enforcer to use.
                  * @param transformations               The transformations to apply on non-ignored types.
                  * @param circularityLock               The circularity lock to use.
                  * @return A class file transformer for the current VM that supports the API of the current VM.
@@ -10525,6 +10720,7 @@ public interface AgentBuilder {
                                                     ClassFileBufferStrategy classFileBufferStrategy,
                                                     InstallationListener installationListener,
                                                     RawMatcher ignoreMatcher,
+                                                    RedefinitionStrategy.ResubmissionEnforcer resubmissionEnforcer,
                                                     List<Transformation> transformations,
                                                     CircularityLock circularityLock);
 
@@ -10574,6 +10770,7 @@ public interface AgentBuilder {
                                             ClassFileBufferStrategy.class,
                                             InstallationListener.class,
                                             RawMatcher.class,
+                                            RedefinitionStrategy.ResubmissionEnforcer.class,
                                             List.class,
                                             CircularityLock.class));
                         } catch (Exception ignored) {
@@ -10622,6 +10819,7 @@ public interface AgentBuilder {
                                                                ClassFileBufferStrategy classFileBufferStrategy,
                                                                InstallationListener installationListener,
                                                                RawMatcher ignoreMatcher,
+                                                               RedefinitionStrategy.ResubmissionEnforcer resubmissionEnforcer,
                                                                List<Transformation> transformations,
                                                                CircularityLock circularityLock) {
                         try {
@@ -10639,6 +10837,7 @@ public interface AgentBuilder {
                                     classFileBufferStrategy,
                                     installationListener,
                                     ignoreMatcher,
+                                    resubmissionEnforcer,
                                     transformations,
                                     circularityLock);
                         } catch (IllegalAccessException exception) {
@@ -10678,6 +10877,7 @@ public interface AgentBuilder {
                                                                ClassFileBufferStrategy classFileBufferStrategy,
                                                                InstallationListener installationListener,
                                                                RawMatcher ignoreMatcher,
+                                                               RedefinitionStrategy.ResubmissionEnforcer resubmissionEnforcer,
                                                                List<Transformation> transformations,
                                                                CircularityLock circularityLock) {
                         return new ExecutingTransformer(byteBuddy,
@@ -10694,6 +10894,7 @@ public interface AgentBuilder {
                                 classFileBufferStrategy,
                                 installationListener,
                                 ignoreMatcher,
+                                resubmissionEnforcer,
                                 transformations,
                                 circularityLock);
                     }
@@ -11395,6 +11596,45 @@ public interface AgentBuilder {
                         redefinitionBatchAllocator,
                         redefinitionListener,
                         new RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher, classLoaderFilter),
+                        injectionStrategy,
+                        lambdaInstrumentationStrategy,
+                        descriptionStrategy,
+                        fallbackStrategy,
+                        classFileBufferStrategy,
+                        installationListener,
+                        ignoreMatcher,
+                        transformations);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public AgentBuilder withEnforcedResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler) {
+                return withEnforcedResubmission(resubmissionScheduler, ElementMatchers.<ClassLoader>none());
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public AgentBuilder withEnforcedResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler,
+                                                         ElementMatcher<? super ClassLoader> classLoaderFilter) {
+                if (!redefinitionStrategy.isEnabled()) {
+                    throw new IllegalStateException("Cannot enable redefinition resubmission when redefinition is disabled");
+                }
+                return new Redefining(byteBuddy,
+                        listener,
+                        circularityLock,
+                        poolStrategy,
+                        typeStrategy,
+                        locationStrategy,
+                        nativeMethodStrategy,
+                        transformerDecorator,
+                        initializationStrategy,
+                        redefinitionStrategy,
+                        redefinitionDiscoveryStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener,
+                        new RedefinitionStrategy.ResubmissionStrategy.Enforced(resubmissionScheduler, classLoaderFilter),
                         injectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
