@@ -75,7 +75,7 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
                             return new Cancelable.ForFuture(scheduledExecutorService.scheduleWithFixedDelay(job, TIMEOUT, TIMEOUT, TimeUnit.SECONDS));
                         }
                     })
-                    .resubmitAll()
+                    .resubmitOnError()
                     .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new SampleTransformer())
                     .installOnByteBuddyAgent();
             try {
