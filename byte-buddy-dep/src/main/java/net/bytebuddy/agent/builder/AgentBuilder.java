@@ -820,18 +820,27 @@ public interface AgentBuilder {
             WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher);
 
             WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher,
-                                                          ElementMatcher<String> typeNameFilter);
+                                                          ElementMatcher<String> typeNameMatcher);
 
             WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher,
-                                                          ElementMatcher<String> typeNameFilter,
-                                                          ElementMatcher<? super ClassLoader> classLoaderFilter);
+                                                          ElementMatcher<String> typeNameMatcher,
+                                                          ElementMatcher<? super ClassLoader> classLoaderMatcher);
+
+            WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher,
+                                                          ElementMatcher<String> typeNameMatcher,
+                                                          ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                                                          ElementMatcher<? super JavaModule> javaModuleMatcher);
 
             WithResubmissionSpecification resubmitAlways();
 
-            WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameFilter);
+            WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameMatcher);
 
-            WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameFilter,
-                                                         ElementMatcher<? super ClassLoader> classLoaderFilter);
+            WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameMatcher,
+                                                         ElementMatcher<? super ClassLoader> classLoaderMatcher);
+
+            WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameMatcher,
+                                                         ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                                                         ElementMatcher<? super JavaModule> javaModuleMatcher);
         }
 
         interface WithResubmissionSpecification extends WithoutResubmissionSpecification, AgentBuilder {
@@ -11620,7 +11629,7 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher,
-                                                                     ElementMatcher<String> typeNameFilter) {
+                                                                     ElementMatcher<String> typeNameMatcher) {
                     return resubmitOnError(ElementMatchers.<Throwable>any(), ElementMatchers.<String>any(), ElementMatchers.<ClassLoader>any());
                 }
 
@@ -11628,8 +11637,18 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher,
-                                                                     ElementMatcher<String> typeNameFilter,
-                                                                     ElementMatcher<? super ClassLoader> classLoaderFilter) {
+                                                                     ElementMatcher<String> typeNameMatcher,
+                                                                     ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+                    return resubmitOnError(ElementMatchers.<Throwable>any(), ElementMatchers.<String>any(), ElementMatchers.<ClassLoader>any(), ElementMatchers.<JavaModule>any());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher,
+                                                                     ElementMatcher<String> typeNameMatcher,
+                                                                     ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                                                                     ElementMatcher<? super JavaModule> javaModuleMatcher) {
                     return null;
                 }
 
@@ -11643,15 +11662,24 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameFilter) {
+                public WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameMatcher) {
                     return resubmitAlways(ElementMatchers.<String>any(), ElementMatchers.<ClassLoader>any());
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameFilter,
-                                                                    ElementMatcher<? super ClassLoader> classLoaderFilter) {
+                public WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameMatcher,
+                                                                    ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+                    return resubmitAlways(ElementMatchers.<String>any(), ElementMatchers.<ClassLoader>any(), ElementMatchers.<JavaModule>any());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameMatcher,
+                                                                    ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                                                                    ElementMatcher<? super JavaModule> javaModuleMatcher) {
                     return null;
                 }
             }
