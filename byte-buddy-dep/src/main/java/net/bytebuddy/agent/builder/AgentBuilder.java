@@ -6351,7 +6351,7 @@ public interface AgentBuilder {
                      * {@inheritDoc}
                      */
                     @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Use of unrelated key is intended for avoiding unnecessary weak reference")
-                    public boolean isEnforced(ClassLoader classLoader, String typeName, Class<?> classBeingRedefined) {
+                    public boolean isEnforced(String typeName, ClassLoader classLoader, JavaModule module, Class<?> classBeingRedefined) {
                         if (classBeingRedefined == null) { // TODO: Filter
                             Set<String> types = this.types.get(new LookupKey(classLoader));
                             if (types == null) {
@@ -6830,12 +6830,13 @@ public interface AgentBuilder {
             /**
              * Returns {@code true} if a class should be scheduled for resubmission.
              *
+             * @param typeName            The name of the instrumented class.
              * @param classLoader         The class loader of the instrumented class.
-             * @param typeName                The name of the instrumented class.
+             * @param module              The module of the instrumented class or {@code null} if the module system is not supported.
              * @param classBeingRedefined The class to be redefined or {@code null} if the current type is loaded for the first time.
              * @return {@code true} if the class should be scheduled for resubmission.
              */
-            boolean isEnforced(ClassLoader classLoader, String typeName, Class<?> classBeingRedefined);
+            boolean isEnforced(String typeName, ClassLoader classLoader, JavaModule module, Class<?> classBeingRedefined);
 
             /**
              * A resubmission enforcer that does not consider non-loaded classes.
@@ -6850,7 +6851,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean isEnforced(ClassLoader classLoader, String typeName, Class<?> classBeingRedefined) {
+                public boolean isEnforced(String typeName, ClassLoader classLoader, JavaModule module, Class<?> classBeingRedefined) {
                     return false;
                 }
             }
@@ -11590,7 +11591,7 @@ public interface AgentBuilder {
                             redefinitionDiscoveryStrategy,
                             redefinitionBatchAllocator,
                             redefinitionListener,
-                            redefinitionResubmissionStrategy, // TODO: define
+                            new RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler), // TODO: matchers
                             injectionStrategy,
                             lambdaInstrumentationStrategy,
                             descriptionStrategy,
