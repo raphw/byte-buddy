@@ -781,60 +781,6 @@ public interface AgentBuilder {
          * @return A chained matcher.
          */
         T or(RawMatcher rawMatcher);
-
-        /**
-         * An abstract base implementation of a matchable.
-         *
-         * @param <S> The type that is produced by chaining a matcher.
-         */
-        abstract class AbstractBase<S extends Matchable<S>> implements Matchable<S> {
-
-            /**
-             * {@inheritDoc}
-             */
-            public S and(ElementMatcher<? super TypeDescription> typeMatcher) {
-                return and(typeMatcher, any());
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public S and(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-                return and(typeMatcher, classLoaderMatcher, any());
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public S and(ElementMatcher<? super TypeDescription> typeMatcher,
-                         ElementMatcher<? super ClassLoader> classLoaderMatcher,
-                         ElementMatcher<? super JavaModule> moduleMatcher) {
-                return and(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher));
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public S or(ElementMatcher<? super TypeDescription> typeMatcher) {
-                return or(typeMatcher, any());
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public S or(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-                return or(typeMatcher, classLoaderMatcher, any());
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public S or(ElementMatcher<? super TypeDescription> typeMatcher,
-                        ElementMatcher<? super ClassLoader> classLoaderMatcher,
-                        ElementMatcher<? super JavaModule> moduleMatcher) {
-                return or(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher));
-            }
-        }
     }
 
     /**
@@ -6286,13 +6232,14 @@ public interface AgentBuilder {
                                RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
                                RedefinitionStrategy.Listener redefinitionBatchListener);
 
-            class XMatcher {
+            @HashCodeAndEqualsPlugin.Enhance
+            class TypeNameAndClassLoaderMatcher {
 
                 private final ElementMatcher<String> typeNameMatcher;
 
                 private final ElementMatcher<? super ClassLoader> classLoaderMatcher;
 
-                protected XMatcher(ElementMatcher<String> typeNameMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+                protected TypeNameAndClassLoaderMatcher(ElementMatcher<String> typeNameMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
                     this.typeNameMatcher = typeNameMatcher;
                     this.classLoaderMatcher = classLoaderMatcher;
                 }
@@ -6817,7 +6764,6 @@ public interface AgentBuilder {
                                     listener,
                                     circularityLock,
                                     matcher,
-                                    ElementMatchers.<ClassLoader>none(),
                                     redefinitionStrategy,
                                     redefinitionBatchAllocator,
                                     redefinitionBatchListener,
@@ -11018,10 +10964,8 @@ public interface AgentBuilder {
 
         /**
          * An abstract implementation of an agent builder that delegates all invocation to another instance.
-         *
-         * @param <T> The type that is produced by chaining a matcher.
          */
-        protected abstract class Delegator<T extends Matchable<T>> extends Matchable.AbstractBase<T> implements AgentBuilder {
+        protected abstract static class Delegator implements AgentBuilder {
 
             /**
              * Materializes the currently described {@link net.bytebuddy.agent.builder.AgentBuilder}.
@@ -11221,7 +11165,6 @@ public interface AgentBuilder {
                 return materialize().type(typeMatcher, classLoaderMatcher, moduleMatcher);
             }
 
-
             /**
              * {@inheritDoc}
              */
@@ -11293,13 +11236,67 @@ public interface AgentBuilder {
             public ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer) {
                 return materialize().patchOnByteBuddyAgent(classFileTransformer);
             }
+
+            /**
+             * An abstract base implementation of a matchable.
+             *
+             * @param <S> The type that is produced by chaining a matcher.
+             */
+            protected abstract static class Matchable<S extends AgentBuilder.Matchable<S>> extends Delegator implements AgentBuilder.Matchable<S> {
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public S and(ElementMatcher<? super TypeDescription> typeMatcher) {
+                    return and(typeMatcher, any());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public S and(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+                    return and(typeMatcher, classLoaderMatcher, any());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public S and(ElementMatcher<? super TypeDescription> typeMatcher,
+                             ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                             ElementMatcher<? super JavaModule> moduleMatcher) {
+                    return and(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public S or(ElementMatcher<? super TypeDescription> typeMatcher) {
+                    return or(typeMatcher, any());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public S or(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+                    return or(typeMatcher, classLoaderMatcher, any());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public S or(ElementMatcher<? super TypeDescription> typeMatcher,
+                            ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                            ElementMatcher<? super JavaModule> moduleMatcher) {
+                    return or(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher));
+                }
+            }
         }
 
         /**
          * A delegator transformer for further precising what types to ignore.
          */
         @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-        protected class Ignoring extends Delegator<Ignored> implements Ignored {
+        protected class Ignoring extends Delegator.Matchable<Ignored> implements Ignored {
 
             /**
              * A matcher for identifying types that should not be instrumented.
@@ -11353,6 +11350,97 @@ public interface AgentBuilder {
              */
             public Ignored or(RawMatcher rawMatcher) {
                 return new Ignoring(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher));
+            }
+        }
+
+        /**
+         * A helper class that describes a {@link net.bytebuddy.agent.builder.AgentBuilder.Default} after supplying
+         * a {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} such that one or several
+         * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s can be supplied.
+         */
+        @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+        protected class Transforming extends Delegator.Matchable<Identified.Narrowable> implements Identified.Extendable, Identified.Narrowable {
+
+            /**
+             * The supplied raw matcher.
+             */
+            private final RawMatcher rawMatcher;
+
+            /**
+             * The supplied transformer.
+             */
+            private final List<Transformer> transformers;
+
+            /**
+             * {@code true} if this transformer is a terminal transformation.
+             */
+            private final boolean terminal;
+
+            /**
+             * Creates a new matched default agent builder.
+             *
+             * @param rawMatcher   The supplied raw matcher.
+             * @param transformers The transformers to apply.
+             * @param terminal     {@code true} if this transformer is a terminal transformation.
+             */
+            protected Transforming(RawMatcher rawMatcher, List<Transformer> transformers, boolean terminal) {
+                this.rawMatcher = rawMatcher;
+                this.transformers = transformers;
+                this.terminal = terminal;
+            }
+
+            @Override
+            protected AgentBuilder materialize() {
+                return new Default(byteBuddy,
+                        listener,
+                        circularityLock,
+                        poolStrategy,
+                        typeStrategy,
+                        locationStrategy,
+                        nativeMethodStrategy,
+                        transformerDecorator,
+                        initializationStrategy,
+                        redefinitionStrategy,
+                        redefinitionDiscoveryStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener,
+                        redefinitionResubmissionStrategy,
+                        injectionStrategy,
+                        lambdaInstrumentationStrategy,
+                        descriptionStrategy,
+                        fallbackStrategy,
+                        classFileBufferStrategy,
+                        installationListener,
+                        ignoreMatcher,
+                        CompoundList.of(transformations, new Transformation(rawMatcher, transformers, terminal)));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Identified.Extendable transform(Transformer transformer) {
+                return new Transforming(rawMatcher, CompoundList.of(this.transformers, transformer), terminal);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public AgentBuilder asTerminalTransformation() {
+                return new Transforming(rawMatcher, transformers, true);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Narrowable and(RawMatcher rawMatcher) {
+                return new Transforming(new RawMatcher.Conjunction(this.rawMatcher, rawMatcher), transformers, terminal);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Narrowable or(RawMatcher rawMatcher) {
+                return new Transforming(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher), transformers, terminal);
             }
         }
 
@@ -11616,96 +11704,54 @@ public interface AgentBuilder {
                         ignoreMatcher,
                         transformations);
             }
-        }
 
-        /**
-         * A helper class that describes a {@link net.bytebuddy.agent.builder.AgentBuilder.Default} after supplying
-         * a {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} such that one or several
-         * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s can be supplied.
-         */
-        @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-        protected class Transforming extends Delegator<Identified.Narrowable> implements Identified.Extendable, Identified.Narrowable {
+            protected static class WithResubmission extends Default {
 
-            /**
-             * The supplied raw matcher.
-             */
-            private final RawMatcher rawMatcher;
-
-            /**
-             * The supplied transformer.
-             */
-            private final List<Transformer> transformers;
-
-            /**
-             * {@code true} if this transformer is a terminal transformation.
-             */
-            private final boolean terminal;
-
-            /**
-             * Creates a new matched default agent builder.
-             *
-             * @param rawMatcher   The supplied raw matcher.
-             * @param transformers The transformers to apply.
-             * @param terminal     {@code true} if this transformer is a terminal transformation.
-             */
-            protected Transforming(RawMatcher rawMatcher, List<Transformer> transformers, boolean terminal) {
-                this.rawMatcher = rawMatcher;
-                this.transformers = transformers;
-                this.terminal = terminal;
-            }
-
-            @Override
-            protected AgentBuilder materialize() {
-                return new Default(byteBuddy,
-                        listener,
-                        circularityLock,
-                        poolStrategy,
-                        typeStrategy,
-                        locationStrategy,
-                        nativeMethodStrategy,
-                        transformerDecorator,
-                        initializationStrategy,
-                        redefinitionStrategy,
-                        redefinitionDiscoveryStrategy,
-                        redefinitionBatchAllocator,
-                        redefinitionListener,
-                        redefinitionResubmissionStrategy,
-                        injectionStrategy,
-                        lambdaInstrumentationStrategy,
-                        descriptionStrategy,
-                        fallbackStrategy,
-                        classFileBufferStrategy,
-                        installationListener,
-                        ignoreMatcher,
-                        CompoundList.of(transformations, new Transformation(rawMatcher, transformers, terminal)));
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public Identified.Extendable transform(Transformer transformer) {
-                return new Transforming(rawMatcher, CompoundList.of(this.transformers, transformer), terminal);
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public AgentBuilder asTerminalTransformation() {
-                return new Transforming(rawMatcher, transformers, true);
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public Narrowable and(RawMatcher rawMatcher) {
-                return new Transforming(new RawMatcher.Conjunction(this.rawMatcher, rawMatcher), transformers, terminal);
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public Narrowable or(RawMatcher rawMatcher) {
-                return new Transforming(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher), transformers, terminal);
+                protected WithResubmission(ByteBuddy byteBuddy,
+                                           Listener listener,
+                                           CircularityLock circularityLock,
+                                           PoolStrategy poolStrategy,
+                                           TypeStrategy typeStrategy,
+                                           LocationStrategy locationStrategy,
+                                           NativeMethodStrategy nativeMethodStrategy,
+                                           TransformerDecorator transformerDecorator,
+                                           InitializationStrategy initializationStrategy,
+                                           RedefinitionStrategy redefinitionStrategy,
+                                           RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
+                                           RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                           RedefinitionStrategy.Listener redefinitionListener,
+                                           RedefinitionStrategy.ResubmissionStrategy redefinitionResubmissionStrategy,
+                                           InjectionStrategy injectionStrategy,
+                                           LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
+                                           DescriptionStrategy descriptionStrategy,
+                                           FallbackStrategy fallbackStrategy,
+                                           ClassFileBufferStrategy classFileBufferStrategy,
+                                           InstallationListener installationListener,
+                                           RawMatcher ignoreMatcher,
+                                           List<Transformation> transformations) {
+                    super(byteBuddy,
+                            listener,
+                            circularityLock,
+                            poolStrategy,
+                            typeStrategy,
+                            locationStrategy,
+                            nativeMethodStrategy,
+                            transformerDecorator,
+                            initializationStrategy,
+                            redefinitionStrategy,
+                            redefinitionDiscoveryStrategy,
+                            redefinitionBatchAllocator,
+                            redefinitionListener,
+                            redefinitionResubmissionStrategy,
+                            injectionStrategy,
+                            lambdaInstrumentationStrategy,
+                            descriptionStrategy,
+                            fallbackStrategy,
+                            classFileBufferStrategy,
+                            installationListener,
+                            ignoreMatcher,
+                            transformations);
+                }
             }
         }
     }
