@@ -811,40 +811,488 @@ public interface AgentBuilder {
          */
         RedefinitionListenable with(RedefinitionStrategy.Listener redefinitionListener);
 
+        /**
+         * Specifies resubmission for given unloaded types or types that fail upon an exception during instrumentation.
+         *
+         * @param resubmissionScheduler The resubmission scheduler to use.
+         * @return A new builder to determine what types should be resubmitted given the supplied resubmission scheduler.
+         */
         WithoutResubmissionSpecification withResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler);
 
+        /**
+         * A matcher that determines if types should be resubmitted if it is not yet loaded and if an exception is raised.
+         */
+        interface ResubmissionOnErrorMatcher {
+
+            /**
+             * Returns {@code true} if a type should be resubmitted if it is not yet loaded and an exception occurs during instrumentation.
+             *
+             * @param throwable   The exception being raised.
+             * @param typeName    The name of the instrumented type.
+             * @param classLoader The class loader of the instrumented type or {@code null} if the type is loaded by the bootstrap class loader.
+             * @param module      The module of the instrumented type or {@code null} if the current VM does not support modules.
+             * @return {@code true} if the type should be resubmitted.
+             */
+            boolean matches(Throwable throwable, String typeName, ClassLoader classLoader, JavaModule module);
+
+            /**
+             * A trivial matcher for resubmission upon an exception.
+             */
+            enum Trivial implements ResubmissionOnErrorMatcher {
+
+                /**
+                 * Always matches a type.
+                 */
+                MATCHING(true),
+
+                /**
+                 * Never matches a type.
+                 */
+                NON_MATCHING(false);
+
+                /**
+                 * {@code true} if this matcher is matching.
+                 */
+                private final boolean matching;
+
+                /**
+                 * Creates a new trivial matcher for a resubmission upon an exception.
+                 *
+                 * @param matching {@code true} if this matcher is matching.
+                 */
+                Trivial(boolean matching) {
+                    this.matching = matching;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean matches(Throwable throwable, String typeName, ClassLoader classLoader, JavaModule module) {
+                    return matching;
+                }
+            }
+
+            /**
+             * A matcher for resubmission upon an error that matches both of the supplied delegate matchers.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class Conjunction implements ResubmissionOnErrorMatcher {
+
+                /**
+                 * The first matcher to evaluate.
+                 */
+                private final ResubmissionOnErrorMatcher left;
+
+                /**
+                 * The second matcher to evaluate.
+                 */
+                private final ResubmissionOnErrorMatcher right;
+
+                /**
+                 * Creates a new conjunction for a resubmission matcher upon an error.
+                 *
+                 * @param left  The first matcher that is evaluated.
+                 * @param right The second matcher that is evaluated.
+                 */
+                public Conjunction(ResubmissionOnErrorMatcher left, ResubmissionOnErrorMatcher right) {
+                    this.left = left;
+                    this.right = right;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean matches(Throwable throwable, String typeName, ClassLoader classLoader, JavaModule module) {
+                    return left.matches(throwable, typeName, classLoader, module) && right.matches(throwable, typeName, classLoader, module);
+                }
+            }
+
+            /**
+             * A matcher for resubmission upon an error that matches either of the supplied delegate matchers.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class Disjunction implements ResubmissionOnErrorMatcher {
+
+                /**
+                 * The first matcher to evaluate.
+                 */
+                private final ResubmissionOnErrorMatcher left;
+
+                /**
+                 * The second matcher to evaluate.
+                 */
+                private final ResubmissionOnErrorMatcher right;
+
+                /**
+                 * Creates a new disjunction for a resubmission matcher upon an error.
+                 *
+                 * @param left  The first matcher that is evaluated.
+                 * @param right The second matcher that is evaluated.
+                 */
+                public Disjunction(ResubmissionOnErrorMatcher left, ResubmissionOnErrorMatcher right) {
+                    this.left = left;
+                    this.right = right;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean matches(Throwable throwable, String typeName, ClassLoader classLoader, JavaModule module) {
+                    return left.matches(throwable, typeName, classLoader, module) || right.matches(throwable, typeName, classLoader, module);
+                }
+            }
+
+            /**
+             * A matcher for resubmission upon error that uses element matchers for each argument to determine a resubmission.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForElementMatchers implements ResubmissionOnErrorMatcher {
+
+                /**
+                 * The matcher to use for the exception that was caused.
+                 */
+                private final ElementMatcher<? super Throwable> exceptionMatcher;
+
+                /**
+                 * The matcher to use for the instrumented type's name.
+                 */
+                private final ElementMatcher<String> typeNameMatcher;
+
+                /**
+                 * The matcher to use for the instrumented type's class loader.
+                 */
+                private final ElementMatcher<? super ClassLoader> classLoaderMatcher;
+
+                /**
+                 * The matcher to use for the instrumented type's module.
+                 */
+                private final ElementMatcher<? super JavaModule> moduleMatcher;
+
+                /**
+                 * Creates a new matcher for resubmission upon an exception that is using element matchers.
+                 *
+                 * @param exceptionMatcher   The matcher to use for the exception that was caused.
+                 * @param typeNameMatcher    The matcher to use for the instrumented type's name.
+                 * @param classLoaderMatcher The matcher to use for the instrumented type's class loader.
+                 * @param moduleMatcher      The matcher to use for the instrumented type's module.
+                 */
+                public ForElementMatchers(ElementMatcher<? super Throwable> exceptionMatcher,
+                                          ElementMatcher<String> typeNameMatcher,
+                                          ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                                          ElementMatcher<? super JavaModule> moduleMatcher) {
+                    this.exceptionMatcher = exceptionMatcher;
+                    this.typeNameMatcher = typeNameMatcher;
+                    this.classLoaderMatcher = classLoaderMatcher;
+                    this.moduleMatcher = moduleMatcher;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean matches(Throwable throwable, String typeName, ClassLoader classLoader, JavaModule module) {
+                    return exceptionMatcher.matches(throwable)
+                            && typeNameMatcher.matches(typeName)
+                            && classLoaderMatcher.matches(classLoader)
+                            && moduleMatcher.matches(module);
+                }
+            }
+        }
+
+        /**
+         * A matcher that determines if types should be resubmitted if it is not yet loaded.
+         */
+        interface ResubmissionImmediateMatcher {
+
+            /**
+             * Returns {@code true} if a type should be resubmitted if it is not yet loaded.
+             *
+             * @param typeName    The name of the instrumented type.
+             * @param classLoader The class loader of the instrumented type or {@code null} if the type is loaded by the bootstrap class loader.
+             * @param module      The module of the instrumented type or {@code null} if the current VM does not support modules.
+             * @return {@code true} if the type should be resubmitted.
+             */
+            boolean matches(String typeName, ClassLoader classLoader, JavaModule module);
+
+            /**
+             * A trivial matcher for immediate resubmission.
+             */
+            enum Trivial implements ResubmissionImmediateMatcher {
+
+                /**
+                 * Always matches a type.
+                 */
+                MATCHING(true),
+
+                /**
+                 * Never matches a type.
+                 */
+                NON_MATCHING(false);
+
+                /**
+                 * {@code true} if this matcher is matching.
+                 */
+                private final boolean matching;
+
+                /**
+                 * Creates a new trivial matcher for immediate resubmission.
+                 *
+                 * @param matching {@code true} if this matcher is matching.
+                 */
+                Trivial(boolean matching) {
+                    this.matching = matching;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean matches(String typeName, ClassLoader classLoader, JavaModule module) {
+                    return matching;
+                }
+            }
+
+            /**
+             * A matcher for immediate resubmission that matches both of the supplied delegate matchers.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class Conjunction implements ResubmissionImmediateMatcher {
+
+                /**
+                 * The first matcher that is evaluated.
+                 */
+                private final ResubmissionImmediateMatcher left;
+
+                /**
+                 * The second matcher that is evaluated.
+                 */
+                private final ResubmissionImmediateMatcher right;
+
+                /**
+                 * Creates a new conjunction for an immediate resubmission matcher.
+                 *
+                 * @param left  The first matcher that is evaluated.
+                 * @param right The second matcher that is evaluated.
+                 */
+                public Conjunction(ResubmissionImmediateMatcher left, ResubmissionImmediateMatcher right) {
+                    this.left = left;
+                    this.right = right;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean matches(String typeName, ClassLoader classLoader, JavaModule module) {
+                    return left.matches(typeName, classLoader, module) && right.matches(typeName, classLoader, module);
+                }
+            }
+
+            /**
+             * A matcher for immediate resubmission that matches either of the supplied delegate matchers.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class Disjunction implements ResubmissionImmediateMatcher {
+
+                /**
+                 * The first matcher that is evaluated.
+                 */
+                private final ResubmissionImmediateMatcher left;
+
+                /**
+                 * The second matcher that is evaluated.
+                 */
+                private final ResubmissionImmediateMatcher right;
+
+                /**
+                 * Creates a new disjunction for an immediate resubmission matcher.
+                 *
+                 * @param left  The first matcher that is evaluated.
+                 * @param right The second matcher that is evaluated.
+                 */
+                public Disjunction(ResubmissionImmediateMatcher left, ResubmissionImmediateMatcher right) {
+                    this.left = left;
+                    this.right = right;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean matches(String typeName, ClassLoader classLoader, JavaModule module) {
+                    return left.matches(typeName, classLoader, module) || right.matches(typeName, classLoader, module);
+                }
+            }
+
+            /**
+             * A matcher for immediate resubmission that uses element matchers for each argument to determine a resubmission.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForElementMatchers implements ResubmissionImmediateMatcher {
+
+                /**
+                 * The matcher to use for the instrumented type's name.
+                 */
+                private final ElementMatcher<String> typeNameMatcher;
+
+                /**
+                 * The matcher to use for the instrumented type's class loader.
+                 */
+                private final ElementMatcher<? super ClassLoader> classLoaderMatcher;
+
+                /**
+                 * The matcher to use for the instrumented type's module.
+                 */
+                private final ElementMatcher<? super JavaModule> moduleMatcher;
+
+                /**
+                 * Creates a new matcher for immediate resubmission that is using element matchers.
+                 *
+                 * @param typeNameMatcher    The matcher to use for the instrumented type's name.
+                 * @param classLoaderMatcher The matcher to use for the instrumented type's class loader.
+                 * @param moduleMatcher      The matcher to use for the instrumented type's module.
+                 */
+                public ForElementMatchers(ElementMatcher<String> typeNameMatcher,
+                                          ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                                          ElementMatcher<? super JavaModule> moduleMatcher) {
+                    this.typeNameMatcher = typeNameMatcher;
+                    this.classLoaderMatcher = classLoaderMatcher;
+                    this.moduleMatcher = moduleMatcher;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean matches(String typeName, ClassLoader classLoader, JavaModule module) {
+                    return typeNameMatcher.matches(typeName)
+                            && classLoaderMatcher.matches(classLoader)
+                            && moduleMatcher.matches(module);
+                }
+            }
+        }
+
+        /**
+         * An {@link AgentBuilder} specification that requires a resubmission specification.
+         */
         interface WithoutResubmissionSpecification {
 
+            /**
+             * Specifies that transformations of unloaded types that yield an error are resubmitted as transformation of the
+             * loaded type.
+             *
+             * @return A new agent builder that allows for further resubmission specifications.
+             */
             WithResubmissionSpecification resubmitOnError();
 
+            /**
+             * Specifies that transformations of unloaded types that yield an error are resubmitted as transformation of the
+             * loaded type, given that the specified matcher matches the type in question.
+             *
+             * @param exceptionMatcher Determines if a type should be resubmitted upon a given exception.
+             * @return A new agent builder that allows for further resubmission specifications.
+             */
             WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher);
 
+            /**
+             * Specifies that transformations of unloaded types that yield an error are resubmitted as transformation of the
+             * loaded type, given that the specified matchers match the type in question.
+             *
+             * @param exceptionMatcher Determines if a type should be resubmitted upon a given exception.
+             * @param typeNameMatcher  Determines if a type should be resubmitted if the type has a given name.
+             * @return A new agent builder that allows for further resubmission specifications.
+             */
             WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher,
                                                           ElementMatcher<String> typeNameMatcher);
 
+            /**
+             * Specifies that transformations of unloaded types that yield an error are resubmitted as transformation of the
+             * loaded type, given that the specified matchers match the type in question.
+             *
+             * @param exceptionMatcher   Determines if a type should be resubmitted upon a given exception.
+             * @param typeNameMatcher    Determines if a type should be resubmitted if the type has a given name.
+             * @param classLoaderMatcher Determines if a type should be resubmitted upon being loaded by a given class loader.
+             * @return A new agent builder that allows for further resubmission specifications.
+             */
             WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher,
                                                           ElementMatcher<String> typeNameMatcher,
                                                           ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
+            /**
+             * Specifies that transformations of unloaded types that yield an error are resubmitted as transformation of the
+             * loaded type, given that the specified matchers match the type in question.
+             *
+             * @param exceptionMatcher   Determines if a type should be resubmitted upon a given exception.
+             * @param typeNameMatcher    Determines if a type should be resubmitted if the type has a given name.
+             * @param classLoaderMatcher Determines if a type should be resubmitted upon being loaded by a given class loader.
+             * @param moduleMatcher      Determines if a type should be resubmitted upon a given Java module.
+             * @return A new agent builder that allows for further resubmission specifications.
+             */
             WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher,
                                                           ElementMatcher<String> typeNameMatcher,
                                                           ElementMatcher<? super ClassLoader> classLoaderMatcher,
-                                                          ElementMatcher<? super JavaModule> javaModuleMatcher);
+                                                          ElementMatcher<? super JavaModule> moduleMatcher);
 
-            WithResubmissionSpecification resubmitAlways();
+            /**
+             * Specifies that transformations of unloaded types that yield an error are resubmitted as transformation of the
+             * loaded type, given that the specified matcher matches the type in question.
+             *
+             * @param matcher Determines if a type should be resubmitted.
+             * @return A new agent builder that allows for further resubmission specifications.
+             */
+            WithResubmissionSpecification resubmitOnError(ResubmissionOnErrorMatcher matcher);
 
-            WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameMatcher);
+            /**
+             * Specifies that transformations of unloaded types should not be transformed when they are loaded for the first
+             * time but should rather be resubmitted after they are loaded.
+             *
+             * @return A new agent builder that allows for further resubmission specifications.
+             */
+            WithResubmissionSpecification resubmitImmediate();
 
-            WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameMatcher,
-                                                         ElementMatcher<? super ClassLoader> classLoaderMatcher);
+            /**
+             * Specifies that transformations of unloaded types should not be transformed when they are loaded for the first
+             * time but should rather be resubmitted after they are loaded.
+             *
+             * @param typeNameMatcher Determines if a type should be resubmitted if the type has a given name.
+             * @return A new agent builder that allows for further resubmission specifications.
+             */
+            WithResubmissionSpecification resubmitImmediate(ElementMatcher<String> typeNameMatcher);
 
-            WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameMatcher,
-                                                         ElementMatcher<? super ClassLoader> classLoaderMatcher,
-                                                         ElementMatcher<? super JavaModule> javaModuleMatcher);
+            /**
+             * Specifies that transformations of unloaded types should not be transformed when they are loaded for the first
+             * time but should rather be resubmitted after they are loaded.
+             *
+             * @param typeNameMatcher    Determines if a type should be resubmitted if the type has a given name.
+             * @param classLoaderMatcher Determines if a type should be resubmitted upon being loaded by a given class loader.
+             * @return A new agent builder that allows for further resubmission specifications.
+             */
+            WithResubmissionSpecification resubmitImmediate(ElementMatcher<String> typeNameMatcher,
+                                                            ElementMatcher<? super ClassLoader> classLoaderMatcher);
+
+            /**
+             * Specifies that transformations of unloaded types should not be transformed when they are loaded for the first
+             * time but should rather be resubmitted after they are loaded.
+             *
+             * @param typeNameMatcher    Determines if a type should be resubmitted if the type has a given name.
+             * @param classLoaderMatcher Determines if a type should be resubmitted upon being loaded by a given class loader.
+             * @param moduleMatcher      Determines if a type should be resubmitted upon a given Java module.
+             * @return A new agent builder that allows for further resubmission specifications.
+             */
+            WithResubmissionSpecification resubmitImmediate(ElementMatcher<String> typeNameMatcher,
+                                                            ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                                                            ElementMatcher<? super JavaModule> moduleMatcher);
+
+            /**
+             * Specifies that transformations of unloaded types should not be transformed when they are loaded for the first
+             * time but should rather be resubmitted after they are loaded.
+             *
+             * @param matcher Determines if a type should be resubmitted.
+             * @return A new agent builder that allows for further resubmission specifications.
+             */
+            WithResubmissionSpecification resubmitImmediate(ResubmissionImmediateMatcher matcher);
         }
 
+        /**
+         * A complete but extendable resubmission specification.
+         */
         interface WithResubmissionSpecification extends WithoutResubmissionSpecification, AgentBuilder {
-            /* empty */
+            /* union type */
         }
 
         /**
@@ -3450,7 +3898,7 @@ public interface AgentBuilder {
         /**
          * Describes the given type.
          *
-         * @param name        The binary name of the type to describe.
+         * @param name            The binary name of the type to describe.
          * @param type            The type that is being redefined, if a redefinition is applied or {@code null} if no redefined type is available.
          * @param typePool        The type pool to use for locating a type if required.
          * @param classLoader     The type's class loader where {@code null} represents the bootstrap class loader.
@@ -6279,12 +6727,28 @@ public interface AgentBuilder {
                 private final ResubmissionScheduler resubmissionScheduler;
 
                 /**
+                 * A matcher to determine resubmissions on errors.
+                 */
+                private final RedefinitionListenable.ResubmissionOnErrorMatcher resubmissionOnErrorMatcher;
+
+                /**
+                 * A matcher to determine resubmissions without errors.
+                 */
+                private final RedefinitionListenable.ResubmissionImmediateMatcher resubmissionImmediateMatcher;
+
+                /**
                  * Creates a new enabled resubmission strategy.
                  *
-                 * @param resubmissionScheduler A scheduler that is responsible for resubmission of types.
+                 * @param resubmissionScheduler        A scheduler that is responsible for resubmission of types.
+                 * @param resubmissionOnErrorMatcher   A matcher to determine resubmissions on errors.
+                 * @param resubmissionImmediateMatcher A matcher to determine resubmissions without errors.
                  */
-                protected Enabled(ResubmissionScheduler resubmissionScheduler) {
+                protected Enabled(ResubmissionScheduler resubmissionScheduler,
+                                  RedefinitionListenable.ResubmissionOnErrorMatcher resubmissionOnErrorMatcher,
+                                  RedefinitionListenable.ResubmissionImmediateMatcher resubmissionImmediateMatcher) {
                     this.resubmissionScheduler = resubmissionScheduler;
+                    this.resubmissionOnErrorMatcher = resubmissionOnErrorMatcher;
+                    this.resubmissionImmediateMatcher = resubmissionImmediateMatcher;
                 }
 
                 /**
@@ -6301,7 +6765,7 @@ public interface AgentBuilder {
                                           RedefinitionStrategy.Listener redefinitionBatchListener) {
                     if (resubmissionScheduler.isAlive()) {
                         ConcurrentMap<StorageKey, Set<String>> types = new ConcurrentHashMap<StorageKey, Set<String>>();
-                        Resubmitter resubmitter = new Resubmitter(types);
+                        Resubmitter resubmitter = new Resubmitter(resubmissionOnErrorMatcher, resubmissionImmediateMatcher, types);
                         return new Installation(new AgentBuilder.Listener.Compound(resubmitter, listener),
                                 new InstallationListener.Compound(new ResubmissionInstallationListener(resubmissionScheduler,
                                         instrumentation,
@@ -6325,6 +6789,16 @@ public interface AgentBuilder {
                 protected static class Resubmitter extends AgentBuilder.Listener.Adapter implements ResubmissionEnforcer {
 
                     /**
+                     * A matcher to determine resubmissions on errors.
+                     */
+                    private final RedefinitionListenable.ResubmissionOnErrorMatcher resubmissionOnErrorMatcher;
+
+                    /**
+                     * A matcher to determine resubmissions without errors.
+                     */
+                    private final RedefinitionListenable.ResubmissionImmediateMatcher resubmissionImmediateMatcher;
+
+                    /**
                      * A map of class loaders to their types to resubmit.
                      */
                     private final ConcurrentMap<StorageKey, Set<String>> types;
@@ -6332,9 +6806,15 @@ public interface AgentBuilder {
                     /**
                      * Creates a new resubmitter.
                      *
-                     * @param types   A map of class loaders to their types to resubmit.
+                     * @param resubmissionOnErrorMatcher   A matcher to determine resubmissions on errors.
+                     * @param resubmissionImmediateMatcher A matcher to determine resubmissions without errors.
+                     * @param types                        A map of class loaders to their types to resubmit.
                      */
-                    protected Resubmitter(ConcurrentMap<StorageKey, Set<String>> types) {
+                    protected Resubmitter(RedefinitionListenable.ResubmissionOnErrorMatcher resubmissionOnErrorMatcher,
+                                          RedefinitionListenable.ResubmissionImmediateMatcher resubmissionImmediateMatcher,
+                                          ConcurrentMap<StorageKey, Set<String>> types) {
+                        this.resubmissionOnErrorMatcher = resubmissionOnErrorMatcher;
+                        this.resubmissionImmediateMatcher = resubmissionImmediateMatcher;
                         this.types = types;
                     }
 
@@ -6343,7 +6823,7 @@ public interface AgentBuilder {
                      */
                     @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Use of unrelated key is intended for avoiding unnecessary weak reference")
                     public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
-                        if (!loaded) { // TODO: Filer
+                        if (!loaded && resubmissionOnErrorMatcher.matches(throwable, typeName, classLoader, module)) {
                             Set<String> types = this.types.get(new LookupKey(classLoader));
                             if (types == null) {
                                 types = new ConcurrentHashSet<String>();
@@ -6361,7 +6841,7 @@ public interface AgentBuilder {
                      */
                     @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Use of unrelated key is intended for avoiding unnecessary weak reference")
                     public boolean isEnforced(String typeName, ClassLoader classLoader, JavaModule module, Class<?> classBeingRedefined) {
-                        if (classBeingRedefined == null) { // TODO: Filter
+                        if (classBeingRedefined == null && resubmissionImmediateMatcher.matches(typeName, classLoader, module)) {
                             Set<String> types = this.types.get(new LookupKey(classLoader));
                             if (types == null) {
                                 types = new ConcurrentHashSet<String>();
@@ -6705,65 +7185,6 @@ public interface AgentBuilder {
                         } else {
                             return false;
                         }
-                    }
-                }
-            }
-
-            /**
-             * An enforcing resubmission strategy.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class Enforced implements ResubmissionStrategy {
-
-                /**
-                 * A scheduler that is responsible for resubmission of types.
-                 */
-                private final ResubmissionScheduler resubmissionScheduler;
-
-                /**
-                 * A filter to suppress class loaders, for example after they become inactive.
-                 */
-                private final ElementMatcher<? super ClassLoader> classLoaderFilter;
-
-                /**
-                 * Creates a new enforcing resubmission strategu.
-                 *
-                 * @param resubmissionScheduler A scheduler that is responsible for resubmission of types.
-                 * @param classLoaderFilter     A filter to suppress class loaders, for example after they become inactive.
-                 */
-                protected Enforced(ResubmissionScheduler resubmissionScheduler, ElementMatcher<? super ClassLoader> classLoaderFilter) {
-                    this.resubmissionScheduler = resubmissionScheduler;
-                    this.classLoaderFilter = classLoaderFilter;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Installation apply(Instrumentation instrumentation,
-                                          LocationStrategy locationStrategy,
-                                          AgentBuilder.Listener listener,
-                                          InstallationListener installationListener,
-                                          CircularityLock circularityLock,
-                                          RawMatcher matcher,
-                                          RedefinitionStrategy redefinitionStrategy,
-                                          BatchAllocator redefinitionBatchAllocator,
-                                          Listener redefinitionBatchListener) {
-                    if (redefinitionStrategy.isEnabled() && resubmissionScheduler.isAlive()) {
-                        ConcurrentMap<Enabled.StorageKey, Set<String>> types = new ConcurrentHashMap<Enabled.StorageKey, Set<String>>();
-                        return new Installation(listener,
-                                new InstallationListener.Compound(new Enabled.ResubmissionInstallationListener(resubmissionScheduler,
-                                    instrumentation,
-                                    locationStrategy,
-                                    listener,
-                                    circularityLock,
-                                    matcher,
-                                    redefinitionStrategy,
-                                    redefinitionBatchAllocator,
-                                    redefinitionBatchListener,
-                                    types), installationListener),
-                                new ResubmissionEnforcer.Enabled(classLoaderFilter, types));
-                    } else {
-                        return new Installation(listener, installationListener, ResubmissionEnforcer.Disabled.INSTANCE);
                     }
                 }
             }
@@ -10356,6 +10777,8 @@ public interface AgentBuilder {
                                 classBeingRedefined,
                                 protectionDomain,
                                 binaryRepresentation), accessControlContext);
+                    } catch (Throwable ignored) {
+                        return NO_TRANSFORMATION;
                     } finally {
                         circularityLock.release();
                     }
@@ -10390,6 +10813,8 @@ public interface AgentBuilder {
                                 classBeingRedefined,
                                 protectionDomain,
                                 binaryRepresentation), accessControlContext);
+                    } catch (Throwable ignored) {
+                        return NO_TRANSFORMATION;
                     } finally {
                         circularityLock.release();
                     }
@@ -10419,7 +10844,16 @@ public interface AgentBuilder {
                     return NO_TRANSFORMATION;
                 }
                 String name = internalTypeName.replace('/', '.');
-                if (resubmissionEnforcer.isEnforced(classLoader, name, classBeingRedefined)) {
+                try {
+                    if (resubmissionEnforcer.isEnforced(name, classLoader, module, classBeingRedefined)) {
+                        return NO_TRANSFORMATION;
+                    }
+                } catch (Throwable throwable) {
+                    try {
+                        listener.onDiscovery(name, classLoader, module, classBeingRedefined != null);
+                    } finally {
+                        listener.onError(name, classLoader, module, classBeingRedefined != null, throwable);
+                    }
                     return NO_TRANSFORMATION;
                 }
                 try {
@@ -10452,7 +10886,7 @@ public interface AgentBuilder {
              *
              * @param module              The instrumented class's Java module in its wrapped form or {@code null} if the current VM does not support modules.
              * @param classLoader         The instrumented class's class loader.
-             * @param name            The binary name of the instrumented class.
+             * @param name                The binary name of the instrumented class.
              * @param classBeingRedefined The loaded {@link Class} being redefined or {@code null} if no such class exists.
              * @param loaded              {@code true} if the instrumented type is loaded.
              * @param protectionDomain    The instrumented type's protection domain.
@@ -11574,15 +12008,44 @@ public interface AgentBuilder {
                 if (!redefinitionStrategy.isEnabled()) {
                     throw new IllegalStateException("Cannot enable resubmission when redefinition is disabled");
                 }
-                return new WithResubmission(resubmissionScheduler);
+                return new WithResubmission(resubmissionScheduler,
+                        ResubmissionOnErrorMatcher.Trivial.NON_MATCHING,
+                        ResubmissionImmediateMatcher.Trivial.NON_MATCHING);
             }
 
-            protected class WithResubmission extends Delegator implements WithoutResubmissionSpecification {
+            /**
+             * A delegator that applies a resubmission.
+             */
+            protected class WithResubmission extends Delegator implements WithResubmissionSpecification {
 
+                /**
+                 * The resubmission scheduler to use.
+                 */
                 private final RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler;
 
-                protected WithResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler) {
+                /**
+                 * A matcher to determine resubmissions on errors.
+                 */
+                private final ResubmissionOnErrorMatcher resubmissionOnErrorMatcher;
+
+                /**
+                 * A matcher to determine resubmissions without errors.
+                 */
+                private final ResubmissionImmediateMatcher resubmissionImmediateMatcher;
+
+                /**
+                 * Creates a new delegator that applies resubmissions.
+                 *
+                 * @param resubmissionScheduler        The resubmission scheduler to use.
+                 * @param resubmissionOnErrorMatcher   A matcher to determine resubmissions on errors.
+                 * @param resubmissionImmediateMatcher A matcher to determine resubmissions without errors.
+                 */
+                protected WithResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler,
+                                           ResubmissionOnErrorMatcher resubmissionOnErrorMatcher,
+                                           ResubmissionImmediateMatcher resubmissionImmediateMatcher) {
                     this.resubmissionScheduler = resubmissionScheduler;
+                    this.resubmissionOnErrorMatcher = resubmissionOnErrorMatcher;
+                    this.resubmissionImmediateMatcher = resubmissionImmediateMatcher;
                 }
 
                 @Override
@@ -11600,7 +12063,7 @@ public interface AgentBuilder {
                             redefinitionDiscoveryStrategy,
                             redefinitionBatchAllocator,
                             redefinitionListener,
-                            new RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler), // TODO: matchers
+                            new RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, resubmissionOnErrorMatcher, resubmissionImmediateMatcher),
                             injectionStrategy,
                             lambdaInstrumentationStrategy,
                             descriptionStrategy,
@@ -11648,39 +12111,57 @@ public interface AgentBuilder {
                 public WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher,
                                                                      ElementMatcher<String> typeNameMatcher,
                                                                      ElementMatcher<? super ClassLoader> classLoaderMatcher,
-                                                                     ElementMatcher<? super JavaModule> javaModuleMatcher) {
-                    return null;
+                                                                     ElementMatcher<? super JavaModule> moduleMatcher) {
+                    return resubmitOnError(new ResubmissionOnErrorMatcher.ForElementMatchers(exceptionMatcher, typeNameMatcher, classLoaderMatcher, moduleMatcher));
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public WithResubmissionSpecification resubmitAlways() {
-                    return resubmitAlways(ElementMatchers.<String>any());
+                public WithResubmissionSpecification resubmitOnError(ResubmissionOnErrorMatcher matcher) {
+                    return new WithResubmission(resubmissionScheduler,
+                            new ResubmissionOnErrorMatcher.Disjunction(resubmissionOnErrorMatcher, matcher),
+                            resubmissionImmediateMatcher);
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameMatcher) {
-                    return resubmitAlways(ElementMatchers.<String>any(), ElementMatchers.<ClassLoader>any());
+                public WithResubmissionSpecification resubmitImmediate() {
+                    return resubmitImmediate(ElementMatchers.<String>any());
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameMatcher,
-                                                                    ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-                    return resubmitAlways(ElementMatchers.<String>any(), ElementMatchers.<ClassLoader>any(), ElementMatchers.<JavaModule>any());
+                public WithResubmissionSpecification resubmitImmediate(ElementMatcher<String> typeNameMatcher) {
+                    return resubmitImmediate(ElementMatchers.<String>any(), ElementMatchers.<ClassLoader>any());
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public WithResubmissionSpecification resubmitAlways(ElementMatcher<String> typeNameMatcher,
-                                                                    ElementMatcher<? super ClassLoader> classLoaderMatcher,
-                                                                    ElementMatcher<? super JavaModule> javaModuleMatcher) {
-                    return null;
+                public WithResubmissionSpecification resubmitImmediate(ElementMatcher<String> typeNameMatcher,
+                                                                       ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+                    return resubmitImmediate(ElementMatchers.<String>any(), ElementMatchers.<ClassLoader>any(), ElementMatchers.<JavaModule>any());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public WithResubmissionSpecification resubmitImmediate(ElementMatcher<String> typeNameMatcher,
+                                                                       ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                                                                       ElementMatcher<? super JavaModule> moduleMatcher) {
+                    return resubmitImmediate(new ResubmissionImmediateMatcher.ForElementMatchers(typeNameMatcher, classLoaderMatcher, moduleMatcher));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public WithResubmissionSpecification resubmitImmediate(ResubmissionImmediateMatcher matcher) {
+                    return new WithResubmission(resubmissionScheduler,
+                            resubmissionOnErrorMatcher,
+                            new ResubmissionImmediateMatcher.Disjunction(resubmissionImmediateMatcher, matcher));
                 }
             }
         }

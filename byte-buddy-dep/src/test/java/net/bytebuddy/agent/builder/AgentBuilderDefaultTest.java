@@ -2501,13 +2501,6 @@ public class AgentBuilderDefaultTest {
                 .withResubmission(mock(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.class));
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testRetransformationEnforcedDisabledNotEnabledResubmission() throws Exception {
-        new AgentBuilder.Default()
-                .with(AgentBuilder.RedefinitionStrategy.DISABLED)
-                .withEnforcedResubmission(mock(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.class));
-    }
-
     public static class Foo {
         /* empty */
     }

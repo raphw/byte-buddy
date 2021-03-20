@@ -105,7 +105,7 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
                     .disableClassFormatChanges()
                     .with(AgentBuilder.LocationStrategy.NoOp.INSTANCE)
                     .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                    .withEnforcedResubmission(new AgentBuilder.RedefinitionStrategy.ResubmissionScheduler() {
+                    .withResubmission(new AgentBuilder.RedefinitionStrategy.ResubmissionScheduler() {
                         public boolean isAlive() {
                             return true;
                         }
@@ -113,7 +113,7 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
                         public Cancelable schedule(final Runnable job) {
                             return new Cancelable.ForFuture(scheduledExecutorService.scheduleWithFixedDelay(job, TIMEOUT, TIMEOUT, TimeUnit.SECONDS));
                         }
-                    })
+                    }).resubmitImmediate()
                     .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new SampleTransformer())
                     .installOnByteBuddyAgent();
             try {
