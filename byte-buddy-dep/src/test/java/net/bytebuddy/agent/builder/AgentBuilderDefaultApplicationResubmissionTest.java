@@ -42,7 +42,7 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
     @Rule
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
-    //@Rule
+    @Rule
     public MethodRule integrationRule = new IntegrationRule();
 
     private ClassLoader classLoader;
