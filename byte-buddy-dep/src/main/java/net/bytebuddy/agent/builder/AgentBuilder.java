@@ -5132,7 +5132,13 @@ public interface AgentBuilder {
             }
 
             @Override
-            protected Collector make() {
+            protected Collector make(RawMatcher matcher,
+                                     PoolStrategy poolStrategy,
+                                     LocationStrategy locationStrategy,
+                                     DescriptionStrategy descriptionStrategy,
+                                     AgentBuilder.Listener listener,
+                                     FallbackStrategy fallbackStrategy,
+                                     CircularityLock circularityLock) {
                 throw new IllegalStateException("A disabled redefinition strategy cannot create a collector");
             }
         },
@@ -5162,8 +5168,20 @@ public interface AgentBuilder {
             }
 
             @Override
-            protected Collector make() {
-                return new Collector.ForRedefinition();
+            protected Collector make(RawMatcher matcher,
+                                     PoolStrategy poolStrategy,
+                                     LocationStrategy locationStrategy,
+                                     DescriptionStrategy descriptionStrategy,
+                                     AgentBuilder.Listener listener,
+                                     FallbackStrategy fallbackStrategy,
+                                     CircularityLock circularityLock) {
+                return new Collector.ForRedefinition(matcher,
+                        poolStrategy,
+                        locationStrategy,
+                        descriptionStrategy,
+                        listener,
+                        fallbackStrategy,
+                        circularityLock);
             }
         },
 
@@ -5191,9 +5209,22 @@ public interface AgentBuilder {
                 }
             }
 
+
             @Override
-            protected Collector make() {
-                return new Collector.ForRetransformation();
+            protected Collector make(RawMatcher matcher,
+                                     PoolStrategy poolStrategy,
+                                     LocationStrategy locationStrategy,
+                                     DescriptionStrategy descriptionStrategy,
+                                     AgentBuilder.Listener listener,
+                                     FallbackStrategy fallbackStrategy,
+                                     CircularityLock circularityLock) {
+                return new Collector.ForRetransformation(matcher,
+                        poolStrategy,
+                        locationStrategy,
+                        descriptionStrategy,
+                        listener,
+                        fallbackStrategy,
+                        circularityLock);
             }
         };
 
@@ -5254,7 +5285,13 @@ public interface AgentBuilder {
          *
          * @return A new collector for collecting already loaded classes for transformation.
          */
-        protected abstract Collector make();
+        protected abstract Collector make(RawMatcher matcher,
+                                          PoolStrategy poolStrategy,
+                                          LocationStrategy locationStrategy,
+                                          DescriptionStrategy descriptionStrategy,
+                                          AgentBuilder.Listener listener,
+                                          FallbackStrategy fallbackStrategy,
+                                          CircularityLock circularityLock);
 
         /**
          * Applies this redefinition strategy by submitting all loaded types to redefinition. If this redefinition strategy is disabled,
@@ -5289,48 +5326,18 @@ public interface AgentBuilder {
             check(instrumentation);
             int batch = RedefinitionStrategy.BatchAllocator.FIRST_BATCH;
             for (Iterable<Class<?>> types : redefinitionDiscoveryStrategy.resolve(instrumentation)) {
-                RedefinitionStrategy.Collector collector = make();
+                RedefinitionStrategy.Collector collector = make(matcher,
+                        poolStrategy,
+                        locationStrategy,
+                        descriptionStrategy,
+                        listener,
+                        fallbackStrategy,
+                        circularityLock);
                 for (Class<?> type : types) {
                     if (type == null || type.isArray() || !lambdaInstrumentationStrategy.isInstrumented(type)) {
                         continue;
                     }
-                    JavaModule module = JavaModule.ofType(type);
-                    try {
-                        TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
-                        try {
-                            collector.consider(matcher,
-                                    listener,
-                                    descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool, circularityLock, type.getClassLoader(), module),
-                                    type,
-                                    type,
-                                    module,
-                                    !DISPATCHER.isModifiableClass(instrumentation, type));
-                        } catch (Throwable throwable) {
-                            if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
-                                collector.consider(matcher,
-                                        listener,
-                                        typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(),
-                                        type,
-                                        module);
-                            } else {
-                                throw throwable;
-                            }
-                        }
-                    } catch (Throwable throwable) {
-                        try {
-                            try {
-                                listener.onDiscovery(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
-                            } finally {
-                                try {
-                                    listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED, throwable);
-                                } finally {
-                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
-                                }
-                            }
-                        } catch (Throwable ignored) {
-                            // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
-                        }
-                    }
+                    collector.consider(type, DISPATCHER.isModifiableClass(instrumentation, type));
                 }
                 batch = collector.apply(instrumentation, circularityLock, locationStrategy, listener, redefinitionBatchAllocator, redefinitionListener, batch);
             }
@@ -6680,7 +6687,10 @@ public interface AgentBuilder {
              * @return A potentially modified listener to apply.
              */
             Installation apply(Instrumentation instrumentation,
+                               PoolStrategy poolStrategy,
                                LocationStrategy locationStrategy,
+                               DescriptionStrategy descriptionStrategy,
+                               FallbackStrategy fallbackStrategy,
                                AgentBuilder.Listener listener,
                                InstallationListener installationListener,
                                CircularityLock circularityLock,
@@ -6703,14 +6713,17 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public Installation apply(Instrumentation instrumentation,
+                                          PoolStrategy poolStrategy,
                                           LocationStrategy locationStrategy,
+                                          DescriptionStrategy descriptionStrategy,
+                                          FallbackStrategy fallbackStrategy,
                                           AgentBuilder.Listener listener,
                                           InstallationListener installationListener,
                                           CircularityLock circularityLock,
                                           RawMatcher matcher,
                                           RedefinitionStrategy redefinitionStrategy,
-                                          BatchAllocator redefinitionBatchAllocator,
-                                          Listener redefinitionBatchListener) {
+                                          RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                          RedefinitionStrategy.Listener redefinitionBatchListener) {
                     return new Installation(listener, installationListener, ResubmissionEnforcer.Disabled.INSTANCE);
                 }
             }
@@ -6755,7 +6768,10 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public Installation apply(Instrumentation instrumentation,
+                                          PoolStrategy poolStrategy,
                                           LocationStrategy locationStrategy,
+                                          DescriptionStrategy descriptionStrategy,
+                                          FallbackStrategy fallbackStrategy,
                                           AgentBuilder.Listener listener,
                                           InstallationListener installationListener,
                                           CircularityLock circularityLock,
@@ -6767,9 +6783,12 @@ public interface AgentBuilder {
                         ConcurrentMap<StorageKey, Set<String>> types = new ConcurrentHashMap<StorageKey, Set<String>>();
                         Resubmitter resubmitter = new Resubmitter(resubmissionOnErrorMatcher, resubmissionImmediateMatcher, types);
                         return new Installation(new AgentBuilder.Listener.Compound(resubmitter, listener),
-                                new InstallationListener.Compound(new ResubmissionInstallationListener(resubmissionScheduler,
-                                        instrumentation,
+                                new InstallationListener.Compound(new ResubmissionInstallationListener(instrumentation,
+                                        resubmissionScheduler,
+                                        poolStrategy,
                                         locationStrategy,
+                                        descriptionStrategy,
+                                        fallbackStrategy,
                                         listener,
                                         circularityLock,
                                         matcher,
@@ -6908,19 +6927,25 @@ public interface AgentBuilder {
                 protected static class ResubmissionInstallationListener extends AgentBuilder.InstallationListener.Adapter implements Runnable {
 
                     /**
-                     * The resubmission scheduler to use.
-                     */
-                    private final ResubmissionScheduler resubmissionScheduler;
-
-                    /**
                      * The instrumentation instance to use.
                      */
                     private final Instrumentation instrumentation;
 
                     /**
+                     * The resubmission scheduler to use.
+                     */
+                    private final ResubmissionScheduler resubmissionScheduler;
+
+                    /**
                      * The location strategy to use.
                      */
                     private final LocationStrategy locationStrategy;
+
+                    private final PoolStrategy poolStrategy;
+
+                    private final DescriptionStrategy descriptionStrategy;
+
+                    private final FallbackStrategy fallbackStrategy;
 
                     /**
                      * The listener to use.
@@ -6976,9 +7001,12 @@ public interface AgentBuilder {
                      * @param redefinitionBatchListener  The batch listener to notify.
                      * @param types                      A map of class loaders to their types to resubmit.
                      */
-                    protected ResubmissionInstallationListener(ResubmissionScheduler resubmissionScheduler,
-                                                               Instrumentation instrumentation,
+                    protected ResubmissionInstallationListener(Instrumentation instrumentation,
+                                                               ResubmissionScheduler resubmissionScheduler,
+                                                               PoolStrategy poolStrategy,
                                                                LocationStrategy locationStrategy,
+                                                               DescriptionStrategy descriptionStrategy,
+                                                               FallbackStrategy fallbackStrategy,
                                                                AgentBuilder.Listener listener,
                                                                CircularityLock circularityLock,
                                                                RawMatcher matcher,
@@ -6986,9 +7014,12 @@ public interface AgentBuilder {
                                                                BatchAllocator redefinitionBatchAllocator,
                                                                Listener redefinitionBatchListener,
                                                                ConcurrentMap<StorageKey, Set<String>> types) {
-                        this.resubmissionScheduler = resubmissionScheduler;
                         this.instrumentation = instrumentation;
+                        this.resubmissionScheduler = resubmissionScheduler;
+                        this.poolStrategy = poolStrategy;
                         this.locationStrategy = locationStrategy;
+                        this.descriptionStrategy = descriptionStrategy;
+                        this.fallbackStrategy = fallbackStrategy;
                         this.listener = listener;
                         this.circularityLock = circularityLock;
                         this.matcher = matcher;
@@ -7017,7 +7048,13 @@ public interface AgentBuilder {
                     public void run() {
                         boolean release = circularityLock.acquire();
                         try {
-                            RedefinitionStrategy.Collector collector = redefinitionStrategy.make();
+                            RedefinitionStrategy.Collector collector = redefinitionStrategy.make(matcher,
+                                    poolStrategy,
+                                    locationStrategy,
+                                    descriptionStrategy,
+                                    listener,
+                                    fallbackStrategy,
+                                    circularityLock);
                             Iterator<Map.Entry<StorageKey, Set<String>>> entries = types.entrySet().iterator();
                             while (entries.hasNext()) {
                                 if (Thread.interrupted()) {
@@ -7033,35 +7070,7 @@ public interface AgentBuilder {
                                         }
                                         try {
                                             Class<?> type = Class.forName(iterator.next(), false, classLoader);
-                                            try {
-                                                collector.consider(matcher,
-                                                        listener,
-                                                        TypeDescription.ForLoadedType.of(type),
-                                                        type,
-                                                        type,
-                                                        JavaModule.ofType(type),
-                                                        !DISPATCHER.isModifiableClass(instrumentation, type));
-                                            } catch (Throwable throwable) {
-                                                try {
-                                                    listener.onDiscovery(TypeDescription.ForLoadedType.getName(type),
-                                                            type.getClassLoader(),
-                                                            JavaModule.ofType(type),
-                                                            AgentBuilder.Listener.LOADED);
-                                                } finally {
-                                                    try {
-                                                        listener.onError(TypeDescription.ForLoadedType.getName(type),
-                                                                type.getClassLoader(),
-                                                                JavaModule.ofType(type),
-                                                                AgentBuilder.Listener.LOADED,
-                                                                throwable);
-                                                    } finally {
-                                                        listener.onComplete(TypeDescription.ForLoadedType.getName(type),
-                                                                type.getClassLoader(),
-                                                                JavaModule.ofType(type),
-                                                                AgentBuilder.Listener.LOADED);
-                                                    }
-                                                }
-                                            }
+                                            collector.consider(type, DISPATCHER.isModifiableClass(instrumentation, type));
                                         } catch (Throwable ignored) {
                                             /* do nothing */
                                         } finally {
@@ -7455,10 +7464,19 @@ public interface AgentBuilder {
          */
         protected abstract static class Collector {
 
-            /**
-             * A representation for a non-available loaded type.
-             */
-            private static final Class<?> NO_LOADED_TYPE = null;
+            private final RawMatcher matcher;
+
+            private final PoolStrategy poolStrategy;
+
+            private final LocationStrategy locationStrategy;
+
+            private final DescriptionStrategy descriptionStrategy;
+
+            private final AgentBuilder.Listener listener;
+
+            private final FallbackStrategy fallbackStrategy;
+
+            private final CircularityLock circularityLock;
 
             /**
              * All types that were collected for redefinition.
@@ -7467,26 +7485,71 @@ public interface AgentBuilder {
 
             /**
              * Creates a new collector.
+             * @param matcher
+             * @param poolStrategy
+             * @param locationStrategy
+             * @param descriptionStrategy
+             * @param listener
+             * @param fallbackStrategy
+             * @param circularityLock
              */
-            protected Collector() {
+            protected Collector(RawMatcher matcher,
+                                PoolStrategy poolStrategy,
+                                LocationStrategy locationStrategy,
+                                DescriptionStrategy descriptionStrategy,
+                                AgentBuilder.Listener listener,
+                                FallbackStrategy fallbackStrategy,
+                                CircularityLock circularityLock) {
+                this.matcher = matcher;
+                this.poolStrategy = poolStrategy;
+                this.locationStrategy = locationStrategy;
+                this.descriptionStrategy = descriptionStrategy;
+                this.listener = listener;
+                this.fallbackStrategy = fallbackStrategy;
+                this.circularityLock = circularityLock;
                 types = new ArrayList<Class<?>>();
             }
 
-            /**
-             * Does consider the retransformation or redefinition of a loaded type without a loaded type representation.
-             *
-             * @param matcher         The type matcher to apply.
-             * @param listener        The listener to apply during the consideration.
-             * @param typeDescription The type description of the type being considered.
-             * @param type            The loaded type being considered.
-             * @param module          The type's Java module or {@code null} if the current VM does not support modules.
-             */
-            protected void consider(RawMatcher matcher,
-                                    AgentBuilder.Listener listener,
-                                    TypeDescription typeDescription,
-                                    Class<?> type,
-                                    JavaModule module) {
-                consider(matcher, listener, typeDescription, type, NO_LOADED_TYPE, module, false);
+            protected void consider(Class<?> type, boolean modifiable) {
+                JavaModule module = JavaModule.ofType(type);
+                try {
+                    TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
+                    try {
+                        doConsider(matcher,
+                                listener,
+                                descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool, circularityLock, type.getClassLoader(), module),
+                                type,
+                                type,
+                                module,
+                                modifiable);
+                    } catch (Throwable throwable) {
+                        if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
+                            doConsider(matcher,
+                                    listener,
+                                    typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(),
+                                    type,
+                                    null,
+                                    module,
+                                    true);
+                        } else {
+                            throw throwable;
+                        }
+                    }
+                } catch (Throwable throwable) {
+                    try {
+                        try {
+                            listener.onDiscovery(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
+                        } finally {
+                            try {
+                                listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED, throwable);
+                            } finally {
+                                listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
+                            }
+                        }
+                    } catch (Throwable ignored) {
+                        // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
+                    }
+                }
             }
 
             /**
@@ -7498,16 +7561,16 @@ public interface AgentBuilder {
              * @param type                The loaded type being considered.
              * @param classBeingRedefined The loaded type being considered or {@code null} if it should be considered non-available.
              * @param module              The type's Java module or {@code null} if the current VM does not support modules.
-             * @param unmodifiable        {@code true} if the current type should be considered unmodifiable.
+             * @param modifiable          {@code true} if the current type is considered modifiable.
              */
-            protected void consider(RawMatcher matcher,
+            private void doConsider(RawMatcher matcher,
                                     AgentBuilder.Listener listener,
                                     TypeDescription typeDescription,
                                     Class<?> type,
                                     Class<?> classBeingRedefined,
                                     JavaModule module,
-                                    boolean unmodifiable) {
-                if (unmodifiable || !matcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())) {
+                                    boolean modifiable) {
+                if (!modifiable || !matcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())) {
                     try {
                         try {
                             listener.onDiscovery(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, classBeingRedefined != null);
@@ -7651,6 +7714,16 @@ public interface AgentBuilder {
              */
             protected static class ForRedefinition extends Collector {
 
+                protected ForRedefinition(RawMatcher matcher,
+                                          PoolStrategy poolStrategy,
+                                          LocationStrategy locationStrategy,
+                                          DescriptionStrategy descriptionStrategy,
+                                          AgentBuilder.Listener listener,
+                                          FallbackStrategy fallbackStrategy,
+                                          CircularityLock circularityLock) {
+                    super(matcher, poolStrategy, locationStrategy, descriptionStrategy, listener, fallbackStrategy, circularityLock);
+                }
+
                 @Override
                 protected void doApply(Instrumentation instrumentation,
                                        CircularityLock circularityLock,
@@ -7695,6 +7768,16 @@ public interface AgentBuilder {
              * A collector that applies a <b>retransformation</b> of already loaded classes.
              */
             protected static class ForRetransformation extends Collector {
+
+                protected ForRetransformation(RawMatcher matcher,
+                                              PoolStrategy poolStrategy,
+                                              LocationStrategy locationStrategy,
+                                              DescriptionStrategy descriptionStrategy,
+                                              AgentBuilder.Listener listener,
+                                              FallbackStrategy fallbackStrategy,
+                                              CircularityLock circularityLock) {
+                    super(matcher, poolStrategy, locationStrategy, descriptionStrategy, listener, fallbackStrategy, circularityLock);
+                }
 
                 @Override
                 protected void doApply(Instrumentation instrumentation,
@@ -10012,7 +10095,10 @@ public interface AgentBuilder {
          */
         private ResettableClassFileTransformer doInstall(Instrumentation instrumentation, RawMatcher matcher) {
             RedefinitionStrategy.ResubmissionStrategy.Installation installation = redefinitionResubmissionStrategy.apply(instrumentation,
+                    poolStrategy,
                     locationStrategy,
+                    descriptionStrategy,
+                    fallbackStrategy,
                     listener,
                     installationListener,
                     circularityLock,
