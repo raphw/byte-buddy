@@ -101,7 +101,6 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
             assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
             ClassFileTransformer classFileTransformer = new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.DISABLED))
                     .ignore(none())
-                    .with(AgentBuilder.Listener.StreamWriting.toSystemOut().withTransformationsOnly())
                     .disableClassFormatChanges()
                     .with(AgentBuilder.LocationStrategy.NoOp.INSTANCE)
                     .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)

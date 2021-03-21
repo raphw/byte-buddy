@@ -5283,6 +5283,13 @@ public interface AgentBuilder {
         /**
          * Creates a collector instance that is responsible for collecting loaded classes for potential retransformation.
          *
+         * @param matcher             The matcher to identify what types to redefine.
+         * @param poolStrategy        The pool strategy to use.
+         * @param locationStrategy    The location strategy to use.
+         * @param descriptionStrategy The description strategy for resolving type descriptions for types.
+         * @param listener            The listener to notify on transformations.
+         * @param fallbackStrategy    The fallback strategy to apply.
+         * @param circularityLock     The circularity lock to use.
          * @return A new collector for collecting already loaded classes for transformation.
          */
         protected abstract Collector make(RawMatcher matcher,
@@ -6676,7 +6683,10 @@ public interface AgentBuilder {
              * Invoked upon installation of an agent builder.
              *
              * @param instrumentation            The instrumentation instance to use.
+             * @param poolStrategy               The pool strategy to use.
              * @param locationStrategy           The location strategy to use.
+             * @param descriptionStrategy        The description strategy to use.
+             * @param fallbackStrategy           The fallback strategy to use.
              * @param listener                   The listener to use.
              * @param installationListener       The installation listener to use.
              * @param circularityLock            The circularity lock to use.
@@ -6941,10 +6951,19 @@ public interface AgentBuilder {
                      */
                     private final LocationStrategy locationStrategy;
 
+                    /**
+                     * The pool strategy to use.
+                     */
                     private final PoolStrategy poolStrategy;
 
+                    /**
+                     * The description strategy to use.
+                     */
                     private final DescriptionStrategy descriptionStrategy;
 
+                    /**
+                     * The fallback strategy to use.
+                     */
                     private final FallbackStrategy fallbackStrategy;
 
                     /**
@@ -6992,7 +7011,10 @@ public interface AgentBuilder {
                      *
                      * @param resubmissionScheduler      The resubmission scheduler to use.
                      * @param instrumentation            The instrumentation instance to use.
+                     * @param poolStrategy               The pool strategy to use.
                      * @param locationStrategy           The location strategy to use.
+                     * @param descriptionStrategy        The description strategy to use.
+                     * @param fallbackStrategy           The fallback strategy to use.
                      * @param listener                   The listener to use.
                      * @param circularityLock            The circularity lock to use.
                      * @param matcher                    The matcher to apply for analyzing if a type is to be resubmitted.
@@ -7464,18 +7486,39 @@ public interface AgentBuilder {
          */
         protected abstract static class Collector {
 
+            /**
+             * The matcher to identify what types to redefine.
+             */
             private final RawMatcher matcher;
 
+            /**
+             * The pool strategy to use.
+             */
             private final PoolStrategy poolStrategy;
 
+            /**
+             * The location strategy to use.
+             */
             private final LocationStrategy locationStrategy;
 
+            /**
+             * The description strategy for resolving type descriptions for types.
+             */
             private final DescriptionStrategy descriptionStrategy;
 
+            /**
+             * The listener to notify on transformations.
+             */
             private final AgentBuilder.Listener listener;
 
+            /**
+             * The fallback strategy to apply.
+             */
             private final FallbackStrategy fallbackStrategy;
 
+            /**
+             * The circularity lock to use.
+             */
             private final CircularityLock circularityLock;
 
             /**
@@ -7485,13 +7528,14 @@ public interface AgentBuilder {
 
             /**
              * Creates a new collector.
-             * @param matcher
-             * @param poolStrategy
-             * @param locationStrategy
-             * @param descriptionStrategy
-             * @param listener
-             * @param fallbackStrategy
-             * @param circularityLock
+             *
+             * @param matcher             The matcher to identify what types to redefine.
+             * @param poolStrategy        The pool strategy to use.
+             * @param locationStrategy    The location strategy to use.
+             * @param descriptionStrategy The description strategy for resolving type descriptions for types.
+             * @param listener            The listener to notify on transformations.
+             * @param fallbackStrategy    The fallback strategy to apply.
+             * @param circularityLock     The circularity lock to use.
              */
             protected Collector(RawMatcher matcher,
                                 PoolStrategy poolStrategy,
@@ -7510,6 +7554,12 @@ public interface AgentBuilder {
                 types = new ArrayList<Class<?>>();
             }
 
+            /**
+             * Considers a loaded class for collection.
+             *
+             * @param type       The loaded type being considered.
+             * @param modifiable {@code true} if the considered type is considered modifiable.
+             */
             protected void consider(Class<?> type, boolean modifiable) {
                 JavaModule module = JavaModule.ofType(type);
                 try {
@@ -7561,7 +7611,7 @@ public interface AgentBuilder {
              * @param type                The loaded type being considered.
              * @param classBeingRedefined The loaded type being considered or {@code null} if it should be considered non-available.
              * @param module              The type's Java module or {@code null} if the current VM does not support modules.
-             * @param modifiable          {@code true} if the current type is considered modifiable.
+             * @param modifiable          {@code true} if the considered type is considered modifiable.
              */
             private void doConsider(RawMatcher matcher,
                                     AgentBuilder.Listener listener,
@@ -7714,6 +7764,17 @@ public interface AgentBuilder {
              */
             protected static class ForRedefinition extends Collector {
 
+                /**
+                 * Creates a new collector for redefinition.
+                 *
+                 * @param matcher             The matcher to identify what types to redefine.
+                 * @param poolStrategy        The pool strategy to use.
+                 * @param locationStrategy    The location strategy to use.
+                 * @param descriptionStrategy The description strategy for resolving type descriptions for types.
+                 * @param listener            The listener to notify on transformations.
+                 * @param fallbackStrategy    The fallback strategy to apply.
+                 * @param circularityLock     The circularity lock to use.
+                 */
                 protected ForRedefinition(RawMatcher matcher,
                                           PoolStrategy poolStrategy,
                                           LocationStrategy locationStrategy,
@@ -7769,6 +7830,17 @@ public interface AgentBuilder {
              */
             protected static class ForRetransformation extends Collector {
 
+                /**
+                 * Creates a collector to apply a retransformation.
+                 *
+                 * @param matcher             The matcher to identify what types to redefine.
+                 * @param poolStrategy        The pool strategy to use.
+                 * @param locationStrategy    The location strategy to use.
+                 * @param descriptionStrategy The description strategy for resolving type descriptions for types.
+                 * @param listener            The listener to notify on transformations.
+                 * @param fallbackStrategy    The fallback strategy to apply.
+                 * @param circularityLock     The circularity lock to use.
+                 */
                 protected ForRetransformation(RawMatcher matcher,
                                               PoolStrategy poolStrategy,
                                               LocationStrategy locationStrategy,
@@ -9069,7 +9141,7 @@ public interface AgentBuilder {
         protected final CircularityLock circularityLock;
 
         /**
-         * The type locator to use.
+         * The pool strategy to use.
          */
         protected final PoolStrategy poolStrategy;
 
@@ -9215,7 +9287,7 @@ public interface AgentBuilder {
          * @param byteBuddy                        The Byte Buddy instance to be used.
          * @param listener                         The listener to notify on transformations.
          * @param circularityLock                  The circularity lock to use.
-         * @param poolStrategy                     The type locator to use.
+         * @param poolStrategy                     The pool strategy to use.
          * @param typeStrategy                     The definition handler to use.
          * @param locationStrategy                 The location strategy to use.
          * @param nativeMethodStrategy             The native method strategy to apply.
@@ -10693,7 +10765,7 @@ public interface AgentBuilder {
             private final ByteBuddy byteBuddy;
 
             /**
-             * The type locator to use.
+             * The pool strategy to use.
              */
             private final PoolStrategy poolStrategy;
 
@@ -10782,7 +10854,7 @@ public interface AgentBuilder {
              *
              * @param byteBuddy                     The Byte Buddy instance to be used.
              * @param listener                      The listener to notify on transformations.
-             * @param poolStrategy                  The type locator to use.
+             * @param poolStrategy                  The pool strategy to use.
              * @param typeStrategy                  The definition handler to use.
              * @param locationStrategy              The location strategy to use.
              * @param nativeMethodStrategy          The native method strategy to apply.
@@ -11062,7 +11134,7 @@ public interface AgentBuilder {
                  *
                  * @param byteBuddy                     The Byte Buddy instance to be used.
                  * @param listener                      The listener to notify on transformations.
-                 * @param poolStrategy                  The type locator to use.
+                 * @param poolStrategy                  The pool strategy to use.
                  * @param typeStrategy                  The definition handler to use.
                  * @param locationStrategy              The location strategy to use.
                  * @param nativeMethodStrategy          The native method strategy to apply.
@@ -11907,7 +11979,7 @@ public interface AgentBuilder {
              * @param byteBuddy                        The Byte Buddy instance to be used.
              * @param listener                         The listener to notify on transformations.
              * @param circularityLock                  The circularity lock to use.
-             * @param poolStrategy                     The type locator to use.
+             * @param poolStrategy                     The pool strategy to use.
              * @param typeStrategy                     The definition handler to use.
              * @param locationStrategy                 The location strategy to use.
              * @param nativeMethodStrategy             The native method strategy to apply.
