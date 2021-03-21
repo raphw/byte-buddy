@@ -5112,17 +5112,8 @@ public interface AgentBuilder {
         DISABLED(false, false) {
             @Override
             public void apply(Instrumentation instrumentation,
-                              AgentBuilder.Listener listener,
-                              CircularityLock circularityLock,
-                              PoolStrategy poolStrategy,
-                              LocationStrategy locationStrategy,
-                              DiscoveryStrategy discoveryStrategy,
-                              BatchAllocator redefinitionBatchAllocator,
-                              Listener redefinitionListener,
-                              LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
-                              DescriptionStrategy descriptionStrategy,
-                              FallbackStrategy fallbackStrategy,
-                              RawMatcher matcher) {
+                              PoolStrategy poolStrategy, LocationStrategy locationStrategy, DescriptionStrategy descriptionStrategy, FallbackStrategy fallbackStrategy, DiscoveryStrategy discoveryStrategy, LambdaInstrumentationStrategy lambdaInstrumentationStrategy, AgentBuilder.Listener listener,
+                              Listener redefinitionListener, RawMatcher matcher, BatchAllocator redefinitionBatchAllocator, CircularityLock circularityLock) {
                 /* do nothing */
             }
 
@@ -5302,33 +5293,32 @@ public interface AgentBuilder {
         /**
          * Applies this redefinition strategy by submitting all loaded types to redefinition. If this redefinition strategy is disabled,
          * this method is non-operational.
-         *
          * @param instrumentation               The instrumentation instance to use.
-         * @param listener                      The listener to notify on transformations.
-         * @param circularityLock               The circularity lock to use.
          * @param poolStrategy                  The type locator to use.
          * @param locationStrategy              The location strategy to use.
-         * @param redefinitionDiscoveryStrategy The discovery strategy for loaded types to be redefined.
-         * @param redefinitionBatchAllocator    The batch allocator for the redefinition strategy to apply.
-         * @param redefinitionListener          The redefinition listener for the redefinition strategy to apply.
-         * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
-         *                                      instrumentation of classes that represent lambda expressions.
          * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
          * @param fallbackStrategy              The fallback strategy to apply.
+         * @param redefinitionDiscoveryStrategy The discovery strategy for loaded types to be redefined.
+         * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
+*                                      instrumentation of classes that represent lambda expressions.
+         * @param listener                      The listener to notify on transformations.
+         * @param redefinitionListener          The redefinition listener for the redefinition strategy to apply.
          * @param matcher                       The matcher to identify what types to redefine.
+         * @param redefinitionBatchAllocator    The batch allocator for the redefinition strategy to apply.
+         * @param circularityLock               The circularity lock to use.
          */
         protected void apply(Instrumentation instrumentation,
-                             AgentBuilder.Listener listener,
-                             CircularityLock circularityLock,
                              PoolStrategy poolStrategy,
                              LocationStrategy locationStrategy,
-                             DiscoveryStrategy redefinitionDiscoveryStrategy,
-                             BatchAllocator redefinitionBatchAllocator,
-                             Listener redefinitionListener,
-                             LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                              DescriptionStrategy descriptionStrategy,
                              FallbackStrategy fallbackStrategy,
-                             RawMatcher matcher) {
+                             DiscoveryStrategy redefinitionDiscoveryStrategy,
+                             LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
+                             AgentBuilder.Listener listener,
+                             Listener redefinitionListener,
+                             RawMatcher matcher,
+                             BatchAllocator redefinitionBatchAllocator,
+                             CircularityLock circularityLock) {
             check(instrumentation);
             int batch = RedefinitionStrategy.BatchAllocator.FIRST_BATCH;
             for (Iterable<Class<?>> types : redefinitionDiscoveryStrategy.resolve(instrumentation)) {
@@ -10165,17 +10155,17 @@ public interface AgentBuilder {
                 nativeMethodStrategy.apply(instrumentation, classFileTransformer);
                 lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
                 redefinitionStrategy.apply(instrumentation,
-                        installation.getListener(),
-                        circularityLock,
                         poolStrategy,
                         locationStrategy,
-                        redefinitionDiscoveryStrategy,
-                        redefinitionBatchAllocator,
-                        redefinitionListener,
-                        lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
-                        matcher);
+                        redefinitionDiscoveryStrategy,
+                        lambdaInstrumentationStrategy,
+                        installation.getListener(),
+                        redefinitionListener,
+                        matcher,
+                        redefinitionBatchAllocator,
+                        circularityLock);
             } catch (Throwable throwable) {
                 throwable = installation.getInstallationListener().onError(instrumentation, classFileTransformer, throwable);
                 if (throwable != null) {
@@ -11082,17 +11072,17 @@ public interface AgentBuilder {
                                               RedefinitionStrategy.Listener redefinitionListener) {
                 if (instrumentation.removeTransformer(classFileTransformer)) {
                     redefinitionStrategy.apply(instrumentation,
-                            Listener.NoOp.INSTANCE,
-                            CircularityLock.Inactive.INSTANCE,
                             poolStrategy,
                             locationStrategy,
-                            redefinitionDiscoveryStrategy,
-                            redefinitionBatchAllocator,
-                            redefinitionListener,
-                            lambdaInstrumentationStrategy,
                             descriptionStrategy,
                             fallbackStrategy,
-                            new Transformation.SimpleMatcher(ignoreMatcher, transformations));
+                            redefinitionDiscoveryStrategy,
+                            lambdaInstrumentationStrategy,
+                            Listener.NoOp.INSTANCE,
+                            redefinitionListener,
+                            new Transformation.SimpleMatcher(ignoreMatcher, transformations),
+                            redefinitionBatchAllocator,
+                            CircularityLock.Inactive.INSTANCE);
                     installationListener.onReset(instrumentation, classFileTransformer);
                     return true;
                 } else {
