@@ -5132,12 +5132,12 @@ public interface AgentBuilder {
             }
 
             @Override
-            protected Collector make(RawMatcher matcher,
-                                     PoolStrategy poolStrategy,
+            protected Collector make(PoolStrategy poolStrategy,
                                      LocationStrategy locationStrategy,
                                      DescriptionStrategy descriptionStrategy,
-                                     AgentBuilder.Listener listener,
                                      FallbackStrategy fallbackStrategy,
+                                     AgentBuilder.Listener listener,
+                                     RawMatcher matcher,
                                      CircularityLock circularityLock) {
                 throw new IllegalStateException("A disabled redefinition strategy cannot create a collector");
             }
@@ -5168,12 +5168,12 @@ public interface AgentBuilder {
             }
 
             @Override
-            protected Collector make(RawMatcher matcher,
-                                     PoolStrategy poolStrategy,
+            protected Collector make(PoolStrategy poolStrategy,
                                      LocationStrategy locationStrategy,
                                      DescriptionStrategy descriptionStrategy,
-                                     AgentBuilder.Listener listener,
                                      FallbackStrategy fallbackStrategy,
+                                     AgentBuilder.Listener listener,
+                                     RawMatcher matcher,
                                      CircularityLock circularityLock) {
                 return new Collector.ForRedefinition(matcher,
                         poolStrategy,
@@ -5209,14 +5209,13 @@ public interface AgentBuilder {
                 }
             }
 
-
             @Override
-            protected Collector make(RawMatcher matcher,
-                                     PoolStrategy poolStrategy,
+            protected Collector make(PoolStrategy poolStrategy,
                                      LocationStrategy locationStrategy,
                                      DescriptionStrategy descriptionStrategy,
-                                     AgentBuilder.Listener listener,
                                      FallbackStrategy fallbackStrategy,
+                                     AgentBuilder.Listener listener,
+                                     RawMatcher matcher,
                                      CircularityLock circularityLock) {
                 return new Collector.ForRetransformation(matcher,
                         poolStrategy,
@@ -5283,21 +5282,21 @@ public interface AgentBuilder {
         /**
          * Creates a collector instance that is responsible for collecting loaded classes for potential retransformation.
          *
-         * @param matcher             The matcher to identify what types to redefine.
          * @param poolStrategy        The pool strategy to use.
          * @param locationStrategy    The location strategy to use.
          * @param descriptionStrategy The description strategy for resolving type descriptions for types.
-         * @param listener            The listener to notify on transformations.
          * @param fallbackStrategy    The fallback strategy to apply.
+         * @param listener            The listener to notify on transformations.
+         * @param matcher             The matcher to identify what types to redefine.
          * @param circularityLock     The circularity lock to use.
          * @return A new collector for collecting already loaded classes for transformation.
          */
-        protected abstract Collector make(RawMatcher matcher,
-                                          PoolStrategy poolStrategy,
+        protected abstract Collector make(PoolStrategy poolStrategy,
                                           LocationStrategy locationStrategy,
                                           DescriptionStrategy descriptionStrategy,
-                                          AgentBuilder.Listener listener,
                                           FallbackStrategy fallbackStrategy,
+                                          AgentBuilder.Listener listener,
+                                          RawMatcher matcher,
                                           CircularityLock circularityLock);
 
         /**
@@ -5333,12 +5332,12 @@ public interface AgentBuilder {
             check(instrumentation);
             int batch = RedefinitionStrategy.BatchAllocator.FIRST_BATCH;
             for (Iterable<Class<?>> types : redefinitionDiscoveryStrategy.resolve(instrumentation)) {
-                RedefinitionStrategy.Collector collector = make(matcher,
-                        poolStrategy,
+                RedefinitionStrategy.Collector collector = make(poolStrategy,
                         locationStrategy,
                         descriptionStrategy,
-                        listener,
                         fallbackStrategy,
+                        listener,
+                        matcher,
                         circularityLock);
                 for (Class<?> type : types) {
                     if (type == null || type.isArray() || !lambdaInstrumentationStrategy.isInstrumented(type)) {
@@ -5346,7 +5345,7 @@ public interface AgentBuilder {
                     }
                     collector.consider(type, DISPATCHER.isModifiableClass(instrumentation, type));
                 }
-                batch = collector.apply(instrumentation, circularityLock, locationStrategy, listener, redefinitionBatchAllocator, redefinitionListener, batch);
+                batch = collector.apply(instrumentation, redefinitionBatchAllocator, redefinitionListener, batch);
             }
         }
 
@@ -7070,12 +7069,12 @@ public interface AgentBuilder {
                     public void run() {
                         boolean release = circularityLock.acquire();
                         try {
-                            RedefinitionStrategy.Collector collector = redefinitionStrategy.make(matcher,
-                                    poolStrategy,
+                            RedefinitionStrategy.Collector collector = redefinitionStrategy.make(poolStrategy,
                                     locationStrategy,
                                     descriptionStrategy,
-                                    listener,
                                     fallbackStrategy,
+                                    listener,
+                                    matcher,
                                     circularityLock);
                             Iterator<Map.Entry<StorageKey, Set<String>>> entries = types.entrySet().iterator();
                             while (entries.hasNext()) {
@@ -7104,9 +7103,6 @@ public interface AgentBuilder {
                                 }
                             }
                             collector.apply(instrumentation,
-                                    circularityLock,
-                                    locationStrategy,
-                                    listener,
                                     redefinitionBatchAllocator,
                                     redefinitionBatchListener,
                                     BatchAllocator.FIRST_BATCH);
@@ -7499,7 +7495,7 @@ public interface AgentBuilder {
             /**
              * The location strategy to use.
              */
-            private final LocationStrategy locationStrategy;
+            protected final LocationStrategy locationStrategy;
 
             /**
              * The description strategy for resolving type descriptions for types.
@@ -7509,7 +7505,7 @@ public interface AgentBuilder {
             /**
              * The listener to notify on transformations.
              */
-            private final AgentBuilder.Listener listener;
+            protected final AgentBuilder.Listener listener;
 
             /**
              * The fallback strategy to apply.
@@ -7519,7 +7515,7 @@ public interface AgentBuilder {
             /**
              * The circularity lock to use.
              */
-            private final CircularityLock circularityLock;
+            protected final CircularityLock circularityLock;
 
             /**
              * All types that were collected for redefinition.
@@ -7642,18 +7638,12 @@ public interface AgentBuilder {
              * Applies all types that this collector collected.
              *
              * @param instrumentation            The instrumentation instance to apply changes to.
-             * @param circularityLock            The circularity lock to use.
-             * @param locationStrategy           The location strategy to use.
-             * @param listener                   The listener to use.
              * @param redefinitionBatchAllocator The redefinition batch allocator to use.
              * @param redefinitionListener       The redefinition listener to use.
              * @param batch                      The next batch's index.
              * @return The next batch's index after this application.
              */
             protected int apply(Instrumentation instrumentation,
-                                CircularityLock circularityLock,
-                                LocationStrategy locationStrategy,
-                                AgentBuilder.Listener listener,
                                 BatchAllocator redefinitionBatchAllocator,
                                 Listener redefinitionListener,
                                 int batch) {
@@ -7663,7 +7653,7 @@ public interface AgentBuilder {
                     List<Class<?>> types = prependableIterator.next();
                     redefinitionListener.onBatch(batch, types, this.types);
                     try {
-                        doApply(instrumentation, circularityLock, types, locationStrategy, listener);
+                        doApply(instrumentation, types);
                     } catch (Throwable throwable) {
                         prependableIterator.prepend(redefinitionListener.onError(batch, types, throwable, this.types));
                         failures.put(types, throwable);
@@ -7678,18 +7668,12 @@ public interface AgentBuilder {
              * Applies this collector.
              *
              * @param instrumentation  The instrumentation instance to apply the transformation for.
-             * @param circularityLock  The circularity lock to use.
              * @param types            The types of the current patch to transform.
-             * @param locationStrategy The location strategy to use.
-             * @param listener         the listener to notify.
              * @throws UnmodifiableClassException If a class is not modifiable.
              * @throws ClassNotFoundException     If a class could not be found.
              */
             protected abstract void doApply(Instrumentation instrumentation,
-                                            CircularityLock circularityLock,
-                                            List<Class<?>> types,
-                                            LocationStrategy locationStrategy,
-                                            AgentBuilder.Listener listener) throws UnmodifiableClassException, ClassNotFoundException;
+                                            List<Class<?>> types) throws UnmodifiableClassException, ClassNotFoundException;
 
             /**
              * An iterator that allows prepending of iterables to be applied previous to another iterator.
@@ -7787,10 +7771,7 @@ public interface AgentBuilder {
 
                 @Override
                 protected void doApply(Instrumentation instrumentation,
-                                       CircularityLock circularityLock,
-                                       List<Class<?>> types,
-                                       LocationStrategy locationStrategy,
-                                       AgentBuilder.Listener listener) throws UnmodifiableClassException, ClassNotFoundException {
+                                       List<Class<?>> types) throws UnmodifiableClassException, ClassNotFoundException {
                     List<ClassDefinition> classDefinitions = new ArrayList<ClassDefinition>(types.size());
                     for (Class<?> type : types) {
                         try {
@@ -7853,10 +7834,7 @@ public interface AgentBuilder {
 
                 @Override
                 protected void doApply(Instrumentation instrumentation,
-                                       CircularityLock circularityLock,
-                                       List<Class<?>> types,
-                                       LocationStrategy locationStrategy,
-                                       AgentBuilder.Listener listener) throws UnmodifiableClassException {
+                                       List<Class<?>> types) throws UnmodifiableClassException {
                     if (!types.isEmpty()) {
                         circularityLock.release();
                         try {
