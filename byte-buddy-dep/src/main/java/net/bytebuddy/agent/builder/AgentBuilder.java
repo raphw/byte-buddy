@@ -7017,8 +7017,8 @@ public interface AgentBuilder {
                     public void run() {
                         boolean release = circularityLock.acquire();
                         try {
+                            RedefinitionStrategy.Collector collector = redefinitionStrategy.make();
                             Iterator<Map.Entry<StorageKey, Set<String>>> entries = types.entrySet().iterator();
-                            List<Class<?>> types = new ArrayList<Class<?>>();
                             while (entries.hasNext()) {
                                 if (Thread.interrupted()) {
                                     return;
@@ -7034,13 +7034,13 @@ public interface AgentBuilder {
                                         try {
                                             Class<?> type = Class.forName(iterator.next(), false, classLoader);
                                             try {
-                                                if (DISPATCHER.isModifiableClass(instrumentation, type) && matcher.matches(TypeDescription.ForLoadedType.of(type),
-                                                        type.getClassLoader(),
-                                                        JavaModule.ofType(type),
+                                                collector.consider(matcher,
+                                                        listener,
+                                                        TypeDescription.ForLoadedType.of(type),
                                                         type,
-                                                        type.getProtectionDomain())) {
-                                                    types.add(type);
-                                                }
+                                                        type,
+                                                        JavaModule.ofType(type),
+                                                        !DISPATCHER.isModifiableClass(instrumentation, type));
                                             } catch (Throwable throwable) {
                                                 try {
                                                     listener.onDiscovery(TypeDescription.ForLoadedType.getName(type),
@@ -7072,17 +7072,13 @@ public interface AgentBuilder {
                                     entries.remove();
                                 }
                             }
-                            if (!types.isEmpty()) {
-                                RedefinitionStrategy.Collector collector = redefinitionStrategy.make();
-                                collector.include(types);
-                                collector.apply(instrumentation,
-                                        circularityLock,
-                                        locationStrategy,
-                                        listener,
-                                        redefinitionBatchAllocator,
-                                        redefinitionBatchListener,
-                                        BatchAllocator.FIRST_BATCH);
-                            }
+                            collector.apply(instrumentation,
+                                    circularityLock,
+                                    locationStrategy,
+                                    listener,
+                                    redefinitionBatchAllocator,
+                                    redefinitionBatchListener,
+                                    BatchAllocator.FIRST_BATCH);
                         } finally {
                             if (release) {
                                 circularityLock.release();
@@ -7527,15 +7523,6 @@ public interface AgentBuilder {
                 } else {
                     types.add(type);
                 }
-            }
-
-            /**
-             * Includes all the supplied types in this collector.
-             *
-             * @param types The types to include.
-             */
-            protected void include(List<Class<?>> types) {
-                this.types.addAll(types);
             }
 
             /**
