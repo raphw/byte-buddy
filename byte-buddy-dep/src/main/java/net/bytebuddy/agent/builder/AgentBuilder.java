@@ -12198,7 +12198,7 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher) {
-                    return resubmitOnError(ElementMatchers.<Throwable>any(), ElementMatchers.<String>any());
+                    return resubmitOnError(exceptionMatcher, ElementMatchers.<String>any());
                 }
 
                 /**
@@ -12206,7 +12206,7 @@ public interface AgentBuilder {
                  */
                 public WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher,
                                                                      ElementMatcher<String> typeNameMatcher) {
-                    return resubmitOnError(ElementMatchers.<Throwable>any(), ElementMatchers.<String>any(), ElementMatchers.<ClassLoader>any());
+                    return resubmitOnError(exceptionMatcher, typeNameMatcher, ElementMatchers.<ClassLoader>any());
                 }
 
                 /**
@@ -12215,7 +12215,7 @@ public interface AgentBuilder {
                 public WithResubmissionSpecification resubmitOnError(ElementMatcher<? super Throwable> exceptionMatcher,
                                                                      ElementMatcher<String> typeNameMatcher,
                                                                      ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-                    return resubmitOnError(ElementMatchers.<Throwable>any(), ElementMatchers.<String>any(), ElementMatchers.<ClassLoader>any(), ElementMatchers.<JavaModule>any());
+                    return resubmitOnError(exceptionMatcher, typeNameMatcher, classLoaderMatcher, ElementMatchers.<JavaModule>any());
                 }
 
                 /**
@@ -12248,7 +12248,7 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public WithResubmissionSpecification resubmitImmediate(ElementMatcher<String> typeNameMatcher) {
-                    return resubmitImmediate(ElementMatchers.<String>any(), ElementMatchers.<ClassLoader>any());
+                    return resubmitImmediate(typeNameMatcher, ElementMatchers.<ClassLoader>any());
                 }
 
                 /**
@@ -12256,7 +12256,7 @@ public interface AgentBuilder {
                  */
                 public WithResubmissionSpecification resubmitImmediate(ElementMatcher<String> typeNameMatcher,
                                                                        ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-                    return resubmitImmediate(ElementMatchers.<String>any(), ElementMatchers.<ClassLoader>any(), ElementMatchers.<JavaModule>any());
+                    return resubmitImmediate(typeNameMatcher, classLoaderMatcher, ElementMatchers.<JavaModule>any());
                 }
 
                 /**
