@@ -3795,7 +3795,7 @@ public interface AgentBuilder {
         }
 
         /**
-         * An injection strategy that uses {@code sun.misc.Unsafe} to inject classes.
+         * An injection strategy that uses {@code sun.misc.Unsafe} or {@code jdk.internal.misc.Unsafe} to inject classes.
          */
         enum UsingUnsafe implements InjectionStrategy {
 
@@ -12208,7 +12208,6 @@ public interface AgentBuilder {
                                                                      ElementMatcher<String> typeNameMatcher) {
                     return resubmitOnError(exceptionMatcher, typeNameMatcher, ElementMatchers.<ClassLoader>any());
                 }
-
                 /**
                  * {@inheritDoc}
                  */

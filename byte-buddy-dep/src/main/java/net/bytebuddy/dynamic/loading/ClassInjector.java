@@ -1782,7 +1782,7 @@ public interface ClassInjector {
     }
 
     /**
-     * A class injector that uses {@code sun.misc.Unsafe} to inject classes.
+     * A class injector that uses {@code sun.misc.Unsafe} or {@code jdk.internal.misc.Unsafe} to inject classes.
      */
     @HashCodeAndEqualsPlugin.Enhance
     class UsingUnsafe extends AbstractBase {
@@ -1916,7 +1916,7 @@ public interface ClassInjector {
         }
 
         /**
-         * A dispatcher for using {@code sun.misc.Unsafe}.
+         * A dispatcher for using {@code sun.misc.Unsafe} or {@code jdk.internal.misc.Unsafe}.
          */
         protected interface Dispatcher {
 
@@ -2037,20 +2037,20 @@ public interface ClassInjector {
             class Enabled implements Dispatcher, Initializable {
 
                 /**
-                 * An instance of {@code sun.misc.Unsafe}.
+                 * An instance of {@code sun.misc.Unsafe} or {@code jdk.internal.misc.Unsafe}.
                  */
                 private final Object unsafe;
 
                 /**
-                 * The {@code sun.misc.Unsafe#defineClass} method.
+                 * The {@code sun.misc.Unsafe#defineClass} or {@code jdk.internal.misc.Unsafe#defineClass} method.
                  */
                 private final Method defineClass;
 
                 /**
                  * Creates an enabled dispatcher.
                  *
-                 * @param unsafe      An instance of {@code sun.misc.Unsafe}.
-                 * @param defineClass The {@code sun.misc.Unsafe#defineClass} method.
+                 * @param unsafe      An instance of {@code sun.misc.Unsafe} or {@code jdk.internal.misc.Unsafe}.
+                 * @param defineClass The {@code sun.misc.Unsafe#defineClass} or {@code jdk.internal.misc.Unsafe#defineClass} method.
                  */
                 protected Enabled(Object unsafe, Method defineClass) {
                     this.unsafe = unsafe;
