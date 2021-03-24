@@ -1274,6 +1274,66 @@ public class MethodCallTest {
                 .intercept(MethodCall.invoke(Object.class.getConstructor()))
                 .make();
     }
+    
+    @Test
+    public void testConstructorCallResultIntoMethod() throws Exception {
+        DynamicType.Loaded<ConstructorResult> loaded = new ByteBuddy()
+                .subclass(ConstructorResult.class)
+                .method(ElementMatchers.named(FOO))
+                .intercept(MethodCall.invoke(ElementMatchers.named("method"))
+                        .withMethodCall(MethodCall.construct(ConstructorResult.Target.class.getConstructor())))
+                .make()
+                .load(ConstructorResult.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredMethod(FOO), not(nullValue(Method.class)));
+        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        ConstructorResult instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ConstructorResult.class)));
+        assertThat(instance, instanceOf(ConstructorResult.class));
+        assertThat(instance.foo(), instanceOf(ConstructorResult.Target.class));
+    }
+    
+    @Test
+    public void testConstructorCallResultIntoField() throws Exception {
+        DynamicType.Loaded<ConstructorResult> loaded = new ByteBuddy()
+                .subclass(ConstructorResult.class)
+                .method(ElementMatchers.named(FOO))
+                .intercept(MethodCall.construct(ConstructorResult.Target.class.getConstructor())
+                        .setsField(ElementMatchers.named("field"))
+                        .andThen(FieldAccessor.ofField("field")))
+                .make()
+                .load(ConstructorResult.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredMethod(FOO), not(nullValue(Method.class)));
+        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        ConstructorResult instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ConstructorResult.class)));
+        assertThat(instance, instanceOf(ConstructorResult.class));
+        ConstructorResult.Target foo = instance.foo();
+        assertThat(foo, instanceOf(ConstructorResult.Target.class));
+        assertThat(instance.field, equalTo(foo));
+    }
+    
+    public static class ConstructorResult {
+        
+        public Target field;
+        
+        public Target method(Target args) {
+            return args;
+        }
+        
+        public Target foo() {
+            return null;
+        }
+        
+        public static class Target {
+        
+        }
+    }
 
     public static class SimpleMethod {
 
