@@ -3096,7 +3096,9 @@ public class MethodCall implements Implementation.Composable {
              * {@inheritDoc}
              */
             public StackManipulation toStackManipulation(MethodDescription invokedMethod, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = assigner.assign(invokedMethod.getReturnType(), fieldDescription.getType(), typing);
+                StackManipulation stackManipulation = assigner.assign(invokedMethod.isConstructor()
+                        ? invokedMethod.getDeclaringType().asGenericType()
+                        : invokedMethod.getReturnType(), fieldDescription.getType(), typing);
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign result of " + invokedMethod + " to " + fieldDescription);
                 }
