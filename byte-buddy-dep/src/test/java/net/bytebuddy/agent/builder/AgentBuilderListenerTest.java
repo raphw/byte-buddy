@@ -128,7 +128,7 @@ public class AgentBuilderListenerTest {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
         listener.onDiscovery(FOO, classLoader, module, LOADED);
-        verify(printStream).printf("[Byte Buddy] DISCOVERY %s [%s, %s, loaded=%b]%n", FOO, classLoader, module, LOADED);
+        verify(printStream).printf("[Byte Buddy] DISCOVERY %s [%s, %s, %s, loaded=%b]%n", FOO, classLoader, module, Thread.currentThread(), LOADED);
         verifyNoMoreInteractions(printStream);
     }
 
@@ -137,7 +137,7 @@ public class AgentBuilderListenerTest {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
         listener.onTransformation(typeDescription, classLoader, module, LOADED, dynamicType);
-        verify(printStream).printf("[Byte Buddy] TRANSFORM %s [%s, %s, loaded=%b]%n", FOO, classLoader, module, LOADED);
+        verify(printStream).printf("[Byte Buddy] TRANSFORM %s [%s, %s, %s, loaded=%b]%n", FOO, classLoader, module, Thread.currentThread(), LOADED);
         verifyNoMoreInteractions(printStream);
     }
 
@@ -146,7 +146,7 @@ public class AgentBuilderListenerTest {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
         listener.onError(FOO, classLoader, module, LOADED, throwable);
-        verify(printStream).printf("[Byte Buddy] ERROR %s [%s, %s, loaded=%b]%n", FOO, classLoader, module, LOADED);
+        verify(printStream).printf("[Byte Buddy] ERROR %s [%s, %s, %s, loaded=%b]%n", FOO, classLoader, module, Thread.currentThread(), LOADED);
         verifyNoMoreInteractions(printStream);
         verify(throwable).printStackTrace(printStream);
         verifyNoMoreInteractions(throwable);
@@ -157,7 +157,7 @@ public class AgentBuilderListenerTest {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
         listener.onComplete(FOO, classLoader, module, LOADED);
-        verify(printStream).printf("[Byte Buddy] COMPLETE %s [%s, %s, loaded=%b]%n", FOO, classLoader, module, LOADED);
+        verify(printStream).printf("[Byte Buddy] COMPLETE %s [%s, %s, %s, loaded=%b]%n", FOO, classLoader, module, Thread.currentThread(), LOADED);
         verifyNoMoreInteractions(printStream);
     }
 
@@ -166,7 +166,7 @@ public class AgentBuilderListenerTest {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
         listener.onIgnored(typeDescription, classLoader, module, LOADED);
-        verify(printStream).printf("[Byte Buddy] IGNORE %s [%s, %s, loaded=%b]%n", FOO, classLoader, module, LOADED);
+        verify(printStream).printf("[Byte Buddy] IGNORE %s [%s, %s, %s, loaded=%b]%n", FOO, classLoader, module, Thread.currentThread(), LOADED);
         verifyNoMoreInteractions(printStream);
     }
 
