@@ -1597,6 +1597,16 @@ public final class ElementMatchers {
     }
 
     /**
+     * Matches a Java <i>main</i> method as an application entry point.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that matches a Java <i>main</i> method.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isMain() {
+        return named("main").and(takesArguments(String[].class)).and(returns(TypeDescription.VOID).and(isStatic()).and(isPublic()));
+    }
+
+    /**
      * Only matches the {@link Object#finalize()} method if it was not overridden.
      *
      * @param <T> The type of the matched object.

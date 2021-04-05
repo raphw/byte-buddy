@@ -936,6 +936,14 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testIsMain() throws Exception {
+        assertThat(ElementMatchers.isMain()
+                .matches(new MethodDescription.ForLoadedMethod(MainMethod.class.getDeclaredMethod("main", String[].class))), is(true));
+        assertThat(ElementMatchers.isFinalizer()
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
+    }
+
+    @Test
     public void testIsDefaultFinalizer() throws Exception {
         assertThat(ElementMatchers.isDefaultFinalizer()
                 .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("finalize"))), is(true));
@@ -1425,7 +1433,6 @@ public class ElementMatchersTest {
         public Object clone(int someArgument) {
             return null;
         }
-
     }
 
     @SuppressWarnings("unused")
@@ -1546,6 +1553,13 @@ public class ElementMatchersTest {
         @OtherAnnotation
         void method() {
 
+        }
+    }
+
+    private static class MainMethod {
+
+        public static void main(String[] args) {
+            /* empty */
         }
     }
 
