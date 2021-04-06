@@ -250,8 +250,9 @@ public abstract class InvocationHandlerAdapter implements Implementation.Composa
                 cached ? methodConstant.cached() : methodConstant,
                 ArrayFactory.forType(TypeDescription.Generic.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(INVOCATION_HANDLER_TYPE.getDeclaredMethods().filter(isAbstract()).getOnly()),
-                assigner.assign(TypeDescription.Generic.OBJECT, instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
-                returning ? MethodReturn.of(instrumentedMethod.getReturnType()) : Removal.of(instrumentedMethod.getReturnType())
+                returning ? new StackManipulation.Compound(assigner.assign(TypeDescription.Generic.OBJECT,
+                        instrumentedMethod.getReturnType(),
+                        Assigner.Typing.DYNAMIC), MethodReturn.of(instrumentedMethod.getReturnType())) : Removal.SINGLE
         ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }
