@@ -23,6 +23,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
@@ -46,7 +47,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * to also intercept method calls to non-interface methods.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public abstract class InvocationHandlerAdapter implements Implementation {
+public abstract class InvocationHandlerAdapter implements Implementation.Composable {
 
     /**
      * A type description of the {@link InvocationHandler}.
@@ -74,15 +75,19 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     private static final boolean PRIVILEGED = true;
 
     /**
+     * Indicates that a handler is returning its return value.
+     */
+    private static final boolean RETURNING = true;
+
+    /**
+     * Indicates that a handler is dropping its return value.
+     */
+    private static final boolean DROPPING = false;
+
+    /**
      * The name of the field for storing an invocation handler.
      */
     protected final String fieldName;
-
-    /**
-     * The assigner that is used for assigning the return invocation handler's return value to the
-     * intercepted method's return value.
-     */
-    protected final Assigner assigner;
 
     /**
      * Determines if the {@link java.lang.reflect.Method} instances that are handed to the intercepted methods are
@@ -96,18 +101,31 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     protected final boolean privileged;
 
     /**
+     * Determines if this implementation is returning the result value or is dropping it.
+     */
+    protected final boolean returning;
+
+    /**
+     * The assigner that is used for assigning the return invocation handler's return value to the
+     * intercepted method's return value.
+     */
+    protected final Assigner assigner;
+
+    /**
      * Creates a new invocation handler for a given field.
      *
      * @param fieldName  The name of the field.
      * @param cached     Determines if the {@link java.lang.reflect.Method} instances that are handed to the
      *                   intercepted methods are cached in {@code static} fields.
      * @param privileged Determines if the {@link java.lang.reflect.Method} instances are retrieved by using an {@link java.security.AccessController}.
+     * @param returning  Determines if this implementation is returning the result value or is dropping it.
      * @param assigner   The assigner to apply when defining this implementation.
      */
-    protected InvocationHandlerAdapter(String fieldName, boolean cached, boolean privileged, Assigner assigner) {
+    protected InvocationHandlerAdapter(String fieldName, boolean cached, boolean privileged, boolean returning, Assigner assigner) {
         this.fieldName = fieldName;
         this.cached = cached;
         this.privileged = privileged;
+        this.returning = returning;
         this.assigner = assigner;
     }
 
@@ -131,7 +149,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to the given invocation handler.
      */
     public static InvocationHandlerAdapter of(InvocationHandler invocationHandler, String fieldName) {
-        return new ForInstance(fieldName, CACHED, UNPRIVILEGED, Assigner.DEFAULT, invocationHandler);
+        return new ForInstance(fieldName, CACHED, UNPRIVILEGED, RETURNING, Assigner.DEFAULT, invocationHandler);
     }
 
     /**
@@ -158,7 +176,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to an instance field of the given name.
      */
     public static InvocationHandlerAdapter toField(String name, FieldLocator.Factory fieldLocatorFactory) {
-        return new ForField(name, CACHED, UNPRIVILEGED, Assigner.DEFAULT, fieldLocatorFactory);
+        return new ForField(name, CACHED, UNPRIVILEGED, RETURNING, Assigner.DEFAULT, fieldLocatorFactory);
     }
 
     /**
@@ -219,8 +237,8 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                                           MethodDescription instrumentedMethod,
                                           StackManipulation preparingManipulation,
                                           FieldDescription fieldDescription) {
-        if (instrumentedMethod.isStatic()) {
-            throw new IllegalStateException("It is not possible to apply an invocation handler onto the static method " + instrumentedMethod);
+        if (instrumentedMethod.isStatic() || instrumentedMethod.isConstructor()) {
+            throw new IllegalStateException("It is not possible to apply an invocation handler onto the static method or constructor " + instrumentedMethod);
         }
         MethodConstant.CanCache methodConstant = privileged
                 ? MethodConstant.ofPrivileged(instrumentedMethod.asDefined())
@@ -233,7 +251,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 ArrayFactory.forType(TypeDescription.Generic.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(INVOCATION_HANDLER_TYPE.getDeclaredMethods().filter(isAbstract()).getOnly()),
                 assigner.assign(TypeDescription.Generic.OBJECT, instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
-                MethodReturn.of(instrumentedMethod.getReturnType())
+                returning ? MethodReturn.of(instrumentedMethod.getReturnType()) : Removal.of(instrumentedMethod.getReturnType())
         ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }
@@ -242,7 +260,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * Allows for the configuration of an {@link net.bytebuddy.implementation.bytecode.assign.Assigner}
      * of an {@link net.bytebuddy.implementation.InvocationHandlerAdapter}.
      */
-    public interface AssignerConfigurable extends Implementation {
+    public interface AssignerConfigurable extends Implementation.Composable {
 
         /**
          * Configures an assigner to use with this invocation handler adapter.
@@ -250,7 +268,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
          * @param assigner The assigner to apply when defining this implementation.
          * @return This instrumentation with the given {@code assigner} configured.
          */
-        Implementation withAssigner(Assigner assigner);
+        Implementation.Composable withAssigner(Assigner assigner);
     }
 
     /**
@@ -293,27 +311,42 @@ public abstract class InvocationHandlerAdapter implements Implementation {
          *                          intercepted methods are cached in {@code static} fields.
          * @param privileged        Determines if the {@link java.lang.reflect.Method} instances are retrieved by
          *                          using an {@link java.security.AccessController}.
+         * @param returning         Determines if this implementation is returning the result value or is dropping it.
          * @param assigner          The assigner to apply when defining this implementation.
          * @param invocationHandler The invocation handler to which all method calls are delegated.
          */
-        protected ForInstance(String fieldName, boolean cached, boolean privileged, Assigner assigner, InvocationHandler invocationHandler) {
-            super(fieldName, cached, privileged, assigner);
+        protected ForInstance(String fieldName, boolean cached, boolean privileged, boolean returning, Assigner assigner, InvocationHandler invocationHandler) {
+            super(fieldName, cached, privileged, returning, assigner);
             this.invocationHandler = invocationHandler;
         }
 
         @Override
         public WithoutPrivilegeConfiguration withoutMethodCache() {
-            return new ForInstance(fieldName, UNCACHED, privileged, assigner, invocationHandler);
+            return new ForInstance(fieldName, UNCACHED, privileged, returning, assigner, invocationHandler);
         }
 
         @Override
-        public Implementation withAssigner(Assigner assigner) {
-            return new ForInstance(fieldName, cached, privileged, assigner, invocationHandler);
+        public Implementation.Composable withAssigner(Assigner assigner) {
+            return new ForInstance(fieldName, cached, privileged, returning, assigner, invocationHandler);
         }
 
         @Override
         public AssignerConfigurable withPrivilegedLookup() {
-            return new ForInstance(fieldName, cached, PRIVILEGED, assigner, invocationHandler);
+            return new ForInstance(fieldName, cached, PRIVILEGED, returning, assigner, invocationHandler);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Implementation andThen(Implementation implementation) {
+            return new Compound(new ForInstance(fieldName, cached, privileged, DROPPING, assigner, invocationHandler), implementation);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Composable andThen(Composable implementation) {
+            return new Compound.Composable(new ForInstance(fieldName, cached, privileged, DROPPING, assigner, invocationHandler), implementation);
         }
 
         /**
@@ -387,27 +420,42 @@ public abstract class InvocationHandlerAdapter implements Implementation {
          *                            intercepted methods are cached in {@code static} fields.
          * @param privileged          Determines if the {@link java.lang.reflect.Method} instances are retrieved by using
          *                            an {@link java.security.AccessController}.
+         * @param returning           Determines if this implementation is returning the result value or is dropping it.
          * @param assigner            The assigner to apply when defining this implementation.
          * @param fieldLocatorFactory The field locator factory to use.
          */
-        protected ForField(String fieldName, boolean cached, boolean privileged, Assigner assigner, FieldLocator.Factory fieldLocatorFactory) {
-            super(fieldName, cached, privileged, assigner);
+        protected ForField(String fieldName, boolean cached, boolean privileged, boolean returning, Assigner assigner, FieldLocator.Factory fieldLocatorFactory) {
+            super(fieldName, cached, privileged, returning, assigner);
             this.fieldLocatorFactory = fieldLocatorFactory;
         }
 
         @Override
         public WithoutPrivilegeConfiguration withoutMethodCache() {
-            return new ForField(fieldName, UNCACHED, privileged, assigner, fieldLocatorFactory);
+            return new ForField(fieldName, UNCACHED, privileged, returning, assigner, fieldLocatorFactory);
         }
 
         @Override
-        public Implementation withAssigner(Assigner assigner) {
-            return new ForField(fieldName, cached, privileged, assigner, fieldLocatorFactory);
+        public Implementation.Composable withAssigner(Assigner assigner) {
+            return new ForField(fieldName, cached, privileged, returning, assigner, fieldLocatorFactory);
         }
 
         @Override
         public AssignerConfigurable withPrivilegedLookup() {
-            return new ForField(fieldName, cached, PRIVILEGED, assigner, fieldLocatorFactory);
+            return new ForField(fieldName, cached, PRIVILEGED, returning, assigner, fieldLocatorFactory);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Implementation andThen(Implementation implementation) {
+            return new Compound(new ForField(fieldName, cached, privileged, DROPPING, assigner, fieldLocatorFactory), implementation);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Composable andThen(Composable implementation) {
+            return new Compound.Composable(new ForField(fieldName, cached, privileged, DROPPING, assigner, fieldLocatorFactory), implementation);
         }
 
         /**
