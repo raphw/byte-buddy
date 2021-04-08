@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
@@ -61,7 +62,7 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
 
     @Test
     public void testSingletonIsEquivalentToNewInstance() {
-        assertThat(MethodSortMatcher.of(sort), is((ElementMatcher.Junction<MethodDescription>) new MethodSortMatcher<MethodDescription>(sort)));
+        assertThat(MethodSortMatcher.of(sort), hasPrototype((ElementMatcher.Junction<MethodDescription>) new MethodSortMatcher<MethodDescription>(sort)));
     }
 
     private enum MockImplementation {

@@ -2,6 +2,7 @@ package net.bytebuddy.matcher;
 
 import org.junit.Test;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -24,6 +25,6 @@ public class NullMatcherTest extends AbstractElementMatcherTest<NullMatcher<?>> 
 
     @Test
     public void testSingletonIsEquivalentToNewInstance() {
-        assertThat(NullMatcher.make(), is((ElementMatcher.Junction<Object>) new NullMatcher<Object>()));
+        assertThat(NullMatcher.make(), hasPrototype((ElementMatcher.Junction<Object>) new NullMatcher<Object>()));
     }
 }

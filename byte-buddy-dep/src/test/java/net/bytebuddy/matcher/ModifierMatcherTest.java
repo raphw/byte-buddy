@@ -10,6 +10,7 @@ import org.objectweb.asm.Opcodes;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -76,6 +77,6 @@ public class ModifierMatcherTest extends AbstractElementMatcherTest<ModifierMatc
 
     @Test
     public void testSingletonEquivalentToNewInstance() {
-        assertThat(ModifierMatcher.of(mode), is((ElementMatcher.Junction<ModifierReviewable>) new ModifierMatcher<ModifierReviewable>(mode)));
+        assertThat(ModifierMatcher.of(mode), hasPrototype((ElementMatcher.Junction<ModifierReviewable>) new ModifierMatcher<ModifierReviewable>(mode)));
     }
 }

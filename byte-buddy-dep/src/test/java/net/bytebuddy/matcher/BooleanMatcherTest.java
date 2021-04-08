@@ -2,6 +2,7 @@ package net.bytebuddy.matcher;
 
 import org.junit.Test;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -36,7 +37,7 @@ public class BooleanMatcherTest extends AbstractElementMatcherTest<BooleanMatche
 
     @Test
     public void testSingletonEquivalentToNewInstance() {
-        assertThat(BooleanMatcher.of(true), is((ElementMatcher.Junction<Object>) new BooleanMatcher<Object>(true)));
-        assertThat(BooleanMatcher.of(false), is((ElementMatcher.Junction<Object>) new BooleanMatcher<Object>(false)));
+        assertThat(BooleanMatcher.of(true), hasPrototype((ElementMatcher.Junction<Object>) new BooleanMatcher<Object>(true)));
+        assertThat(BooleanMatcher.of(false), hasPrototype((ElementMatcher.Junction<Object>) new BooleanMatcher<Object>(false)));
     }
 }
