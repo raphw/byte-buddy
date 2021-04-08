@@ -132,8 +132,8 @@ public class VirtualMachineForOpenJ9Test {
                     attachmentThread.setName("attachment-thread-emulation");
                     attachmentThread.start();
                     try {
-                        VirtualMachine.ForOpenJ9.attach(Integer.toString(PROCESS_ID), 5000, dispatcher).detach();
-                        attachmentThread.join(5000);
+                        VirtualMachine.ForOpenJ9.attach(Integer.toString(PROCESS_ID), 10000, dispatcher).detach();
+                        attachmentThread.join(10000);
                     } catch (RuntimeException exception) {
                         Throwable throwable = error.get();
                         if (throwable == null) {
