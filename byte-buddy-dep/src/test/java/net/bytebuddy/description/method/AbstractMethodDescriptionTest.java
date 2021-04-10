@@ -2,6 +2,7 @@ package net.bytebuddy.description.method;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.TypeVariableSource;
+import net.bytebuddy.description.annotation.AbstractAnnotationDescriptionTest;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -12,6 +13,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.test.packaging.MethodDescriptionTestHelper;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -808,6 +810,13 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(methods.filter(named("enum_property_array")).getOnly().isDefaultValue(AnnotationValue.ForDescriptionArray.<Enum>of(TypeDescription.ForLoadedType.of(Object.class), new EnumerationDescription[]{enumerationDescription})), is(false));
     }
 
+    @Test
+    public void testEnumConstructorAnnotation() throws Exception {
+        MethodDescription.InDefinedShape constructor = describe(EnumConstructorAnnotationSample.class.getDeclaredConstructor(String.class, int.class, Void.class));
+        assertThat(constructor.getParameters().get(2).getDeclaredAnnotations().size(), is(1));
+        assertThat(constructor.getParameters().get(2).getDeclaredAnnotations().get(0).getAnnotationType().represents(SampleAnnotation.class), is(true));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     private @interface SampleAnnotation {
         /* empty */
@@ -821,7 +830,7 @@ public abstract class AbstractMethodDescriptionTest {
     private abstract static class Sample {
 
         Sample(final Void argument) {
-
+            /* do nothing */
         }
 
         @SampleAnnotation
@@ -1014,5 +1023,15 @@ public abstract class AbstractMethodDescriptionTest {
     @Retention(RetentionPolicy.RUNTIME)
     public @interface SyntheticMarker {
         /* empty */
+    }
+
+    private enum EnumConstructorAnnotationSample {
+
+        INSTANCE(null);
+
+        @SuppressWarnings("unused")
+        EnumConstructorAnnotationSample(@SampleAnnotation Void ignored) {
+            /* empty */
+        }
     }
 }
