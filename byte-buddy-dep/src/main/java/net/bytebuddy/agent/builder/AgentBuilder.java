@@ -1525,21 +1525,29 @@ public interface AgentBuilder {
             }
         }
 
+
         /**
-         * A conjunction of two raw matchers.
+         * A composition of two raw matchers.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class Conjunction implements RawMatcher {
+        class Composite implements RawMatcher {
+
+            private static final int AND = 0;
+            private static final int OR = 1;
+
+            public static Composite and(RawMatcher left, RawMatcher right) {
+                return new Composite(AND, left, right);
+            }
+
+            public static Composite or(RawMatcher left, RawMatcher right) {
+                return new Composite(OR, left, right);
+            }
 
             /**
-             * The left matcher which is applied first.
+             * The matchers will be applied in order
              */
-            private final RawMatcher left;
-
-            /**
-             * The right matcher which is applied second.
-             */
-            private final RawMatcher right;
+            private final List<RawMatcher> matchers;
+            private final int op;
 
             /**
              * Creates a new conjunction of two raw matchers.
@@ -1547,9 +1555,11 @@ public interface AgentBuilder {
              * @param left  The left matcher which is applied first.
              * @param right The right matcher which is applied second.
              */
-            protected Conjunction(RawMatcher left, RawMatcher right) {
-                this.left = left;
-                this.right = right;
+            private Composite(int op, RawMatcher left, RawMatcher right) {
+                this.op = op;
+                this.matchers = new ArrayList<RawMatcher>();
+                addOrDecompose(left, op, matchers);
+                addOrDecompose(right, op, matchers);
             }
 
             /**
@@ -1560,48 +1570,28 @@ public interface AgentBuilder {
                                    JavaModule module,
                                    Class<?> classBeingRedefined,
                                    ProtectionDomain protectionDomain) {
-                return left.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
-                        && right.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
-            }
-        }
-
-        /**
-         * A disjunction of two raw matchers.
-         */
-        @HashCodeAndEqualsPlugin.Enhance
-        class Disjunction implements RawMatcher {
-
-            /**
-             * The left matcher which is applied first.
-             */
-            private final RawMatcher left;
-
-            /**
-             * The right matcher which is applied second.
-             */
-            private final RawMatcher right;
-
-            /**
-             * Creates a new disjunction of two raw matchers.
-             *
-             * @param left  The left matcher which is applied first.
-             * @param right The right matcher which is applied second.
-             */
-            protected Disjunction(RawMatcher left, RawMatcher right) {
-                this.left = left;
-                this.right = right;
+                for (RawMatcher matcher : matchers) {
+                    boolean matches = matcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
+                    if (!matches && op == AND) {
+                        return false;
+                    } else if (matches && op == OR) {
+                        return true;
+                    }
+                }
+                return op == AND;
             }
 
-            /**
-             * {@inheritDoc}
-             */
-            public boolean matches(TypeDescription typeDescription,
-                                   ClassLoader classLoader,
-                                   JavaModule module,
-                                   Class<?> classBeingRedefined,
-                                   ProtectionDomain protectionDomain) {
-                return left.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
-                        || right.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
+            private static void addOrDecompose(RawMatcher matcher, int op, List<RawMatcher> matchers) {
+                if (matcher instanceof Composite) {
+                    Composite composite = (Composite) matcher;
+                    if (composite.op == op) {
+                        matchers.addAll(composite.matchers);
+                    } else {
+                        matchers.add(matcher);
+                    }
+                } else {
+                    matchers.add(matcher);
+                }
             }
         }
 
@@ -9240,7 +9230,7 @@ public interface AgentBuilder {
                     FallbackStrategy.ByThrowableType.ofOptionalTypes(),
                     ClassFileBufferStrategy.Default.RETAINING,
                     InstallationListener.NoOp.INSTANCE,
-                    new RawMatcher.Disjunction(
+                    RawMatcher.Composite.or(
                             new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader().or(isExtensionClassLoader())),
                             new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.")
                                     .and(not(ElementMatchers.nameStartsWith(NamingStrategy.SuffixingRandom.BYTE_BUDDY_RENAME_PACKAGE + ".")))
@@ -11834,14 +11824,14 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public Ignored and(RawMatcher rawMatcher) {
-                return new Ignoring(new RawMatcher.Conjunction(this.rawMatcher, rawMatcher));
+                return new Ignoring(RawMatcher.Composite.and(this.rawMatcher, rawMatcher));
             }
 
             /**
              * {@inheritDoc}
              */
             public Ignored or(RawMatcher rawMatcher) {
-                return new Ignoring(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher));
+                return new Ignoring(RawMatcher.Composite.or(this.rawMatcher, rawMatcher));
             }
         }
 
@@ -11925,14 +11915,14 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public Narrowable and(RawMatcher rawMatcher) {
-                return new Transforming(new RawMatcher.Conjunction(this.rawMatcher, rawMatcher), transformers, terminal);
+                return new Transforming(RawMatcher.Composite.and(this.rawMatcher, rawMatcher), transformers, terminal);
             }
 
             /**
              * {@inheritDoc}
              */
             public Narrowable or(RawMatcher rawMatcher) {
-                return new Transforming(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher), transformers, terminal);
+                return new Transforming(RawMatcher.Composite.or(this.rawMatcher, rawMatcher), transformers, terminal);
             }
         }
 

@@ -10,6 +10,8 @@ import org.mockito.Mock;
 
 import java.security.ProtectionDomain;
 
+import static net.bytebuddy.agent.builder.AgentBuilder.RawMatcher.Trivial.MATCHING;
+import static net.bytebuddy.agent.builder.AgentBuilder.RawMatcher.Trivial.NON_MATCHING;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.*;
 import static org.mockito.Mockito.*;
@@ -38,7 +40,7 @@ public class AgentBuilderRawMatcherDisjunctionTest {
     public void testMatches() throws Exception {
         when(left.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(true);
         when(right.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(true);
-        AgentBuilder.RawMatcher rawMatcher = new AgentBuilder.RawMatcher.Disjunction(left, right);
+        AgentBuilder.RawMatcher rawMatcher = AgentBuilder.RawMatcher.Composite.or(left, right);
         assertThat(rawMatcher.matches(typeDescription, classLoader, module, Foo.class, protectionDomain), is(true));
         verify(left).matches(typeDescription, classLoader, module, Foo.class, protectionDomain);
         verifyNoMoreInteractions(left);
@@ -46,10 +48,58 @@ public class AgentBuilderRawMatcherDisjunctionTest {
     }
 
     @Test
+    public void testMatchesInlinedLeft() throws Exception {
+        when(left.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(true);
+        when(right.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(true);
+        AgentBuilder.RawMatcher leaf = AgentBuilder.RawMatcher.Composite.or(left, right);
+        AgentBuilder.RawMatcher rawMatcher = AgentBuilder.RawMatcher.Composite.or(leaf, NON_MATCHING);
+        assertThat(rawMatcher.matches(typeDescription, classLoader, module, Foo.class, protectionDomain), is(true));
+        verify(left).matches(typeDescription, classLoader, module, Foo.class, protectionDomain);
+        verifyNoMoreInteractions(left);
+        verifyZeroInteractions(right);
+    }
+
+    @Test
+    public void testMatchesInlinedRight() throws Exception {
+        when(left.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(true);
+        when(right.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(true);
+        AgentBuilder.RawMatcher leaf = AgentBuilder.RawMatcher.Composite.or(left, right);
+        AgentBuilder.RawMatcher rawMatcher = AgentBuilder.RawMatcher.Composite.or(NON_MATCHING, leaf);
+        assertThat(rawMatcher.matches(typeDescription, classLoader, module, Foo.class, protectionDomain), is(true));
+        verify(left).matches(typeDescription, classLoader, module, Foo.class, protectionDomain);
+        verifyNoMoreInteractions(left);
+        verifyZeroInteractions(right);
+    }
+
+    @Test
+    public void testMatchesInlinedLeftShortCircuit() throws Exception {
+        when(left.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(true);
+        when(right.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(true);
+        AgentBuilder.RawMatcher leaf = AgentBuilder.RawMatcher.Composite.or(left, right);
+        AgentBuilder.RawMatcher rawMatcher = AgentBuilder.RawMatcher.Composite.or(MATCHING, leaf);
+        assertThat(rawMatcher.matches(typeDescription, classLoader, module, Foo.class, protectionDomain), is(true));
+        verifyNoMoreInteractions(left);
+        verifyZeroInteractions(right);
+    }
+
+    @Test
+    public void testNotMatchesInlinedLeft() throws Exception {
+        when(left.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(false);
+        when(right.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(false);
+        AgentBuilder.RawMatcher leaf = AgentBuilder.RawMatcher.Composite.or(left, right);
+        AgentBuilder.RawMatcher rawMatcher = AgentBuilder.RawMatcher.Composite.or(leaf, NON_MATCHING);
+        assertThat(rawMatcher.matches(typeDescription, classLoader, module, Foo.class, protectionDomain), is(false));
+        verify(left).matches(typeDescription, classLoader, module, Foo.class, protectionDomain);
+        verifyNoMoreInteractions(left);
+        verify(right).matches(typeDescription, classLoader, module, Foo.class, protectionDomain);
+        verifyZeroInteractions(right);
+    }
+
+    @Test
     public void testNotMatchesLeft() throws Exception {
         when(left.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(true);
         when(right.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(false);
-        AgentBuilder.RawMatcher rawMatcher = new AgentBuilder.RawMatcher.Disjunction(left, right);
+        AgentBuilder.RawMatcher rawMatcher = AgentBuilder.RawMatcher.Composite.or(left, right);
         assertThat(rawMatcher.matches(typeDescription, classLoader, module, Foo.class, protectionDomain), is(true));
         verify(left).matches(typeDescription, classLoader, module, Foo.class, protectionDomain);
         verifyNoMoreInteractions(left);
@@ -60,7 +110,7 @@ public class AgentBuilderRawMatcherDisjunctionTest {
     public void testNotMatchesRight() throws Exception {
         when(left.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(false);
         when(right.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(true);
-        AgentBuilder.RawMatcher rawMatcher = new AgentBuilder.RawMatcher.Disjunction(left, right);
+        AgentBuilder.RawMatcher rawMatcher = AgentBuilder.RawMatcher.Composite.or(left, right);
         assertThat(rawMatcher.matches(typeDescription, classLoader, module, Foo.class, protectionDomain), is(true));
         verify(left).matches(typeDescription, classLoader, module, Foo.class, protectionDomain);
         verifyNoMoreInteractions(left);
@@ -72,7 +122,7 @@ public class AgentBuilderRawMatcherDisjunctionTest {
     public void testNotMatchesEither() throws Exception {
         when(left.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(false);
         when(right.matches(typeDescription, classLoader, module, Foo.class, protectionDomain)).thenReturn(false);
-        AgentBuilder.RawMatcher rawMatcher = new AgentBuilder.RawMatcher.Disjunction(left, right);
+        AgentBuilder.RawMatcher rawMatcher = AgentBuilder.RawMatcher.Composite.or(left, right);
         assertThat(rawMatcher.matches(typeDescription, classLoader, module, Foo.class, protectionDomain), is(false));
         verify(left).matches(typeDescription, classLoader, module, Foo.class, protectionDomain);
         verifyNoMoreInteractions(left);
