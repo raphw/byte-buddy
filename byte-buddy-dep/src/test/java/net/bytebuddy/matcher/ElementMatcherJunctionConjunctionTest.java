@@ -56,4 +56,80 @@ public class ElementMatcherJunctionConjunctionTest extends AbstractElementMatche
     public void testToString() {
         assertThat(new ElementMatcher.Junction.Conjunction<Object>(first, second).toString(), CoreMatchers.containsString(" and "));
     }
+
+    @Test
+    public void testInlineLeftMatches() {
+        Object target = new Object();
+        when(first.matches(target)).thenReturn(true);
+        when(second.matches(target)).thenReturn(true);
+        ElementMatcher.Junction.Conjunction<Object> leaf = new ElementMatcher.Junction.Conjunction<Object>(first, ElementMatchers.any());
+        assertThat(new ElementMatcher.Junction.Conjunction<Object>(leaf, second).matches(target), is(true));
+        verify(first).matches(target);
+        verifyNoMoreInteractions(first);
+        verify(second).matches(target);
+        verifyNoMoreInteractions(second);
+    }
+
+    @Test
+    public void testInlineRightMatches() {
+        Object target = new Object();
+        when(first.matches(target)).thenReturn(true);
+        when(second.matches(target)).thenReturn(true);
+        ElementMatcher.Junction.Conjunction<Object> leaf = new ElementMatcher.Junction.Conjunction<Object>(second, ElementMatchers.any());
+        assertThat(new ElementMatcher.Junction.Conjunction<Object>(first, leaf).matches(target), is(true));
+        verify(first).matches(target);
+        verifyNoMoreInteractions(first);
+        verify(second).matches(target);
+        verifyNoMoreInteractions(second);
+    }
+
+    @Test
+    public void testInlineLeftNotMatches() {
+        Object target = new Object();
+        when(first.matches(target)).thenReturn(true);
+        when(second.matches(target)).thenReturn(false);
+        ElementMatcher.Junction.Conjunction<Object> leaf = new ElementMatcher.Junction.Conjunction<Object>(first, ElementMatchers.any());
+        assertThat(new ElementMatcher.Junction.Conjunction<Object>(leaf, second).matches(target), is(false));
+        verify(first).matches(target);
+        verifyNoMoreInteractions(first);
+        verify(second).matches(target);
+        verifyNoMoreInteractions(second);
+    }
+
+    @Test
+    public void testInlineLeftChildNotMatches() {
+        Object target = new Object();
+        when(first.matches(target)).thenReturn(true);
+        when(second.matches(target)).thenReturn(true);
+        ElementMatcher.Junction.Conjunction<Object> leaf = new ElementMatcher.Junction.Conjunction<Object>(first, ElementMatchers.none());
+        assertThat(new ElementMatcher.Junction.Conjunction<Object>(leaf, second).matches(target), is(false));
+        verify(first).matches(target);
+        verifyNoMoreInteractions(first);
+        verifyNoMoreInteractions(second);
+    }
+
+    @Test
+    public void testInlineRightNotMatches() {
+        Object target = new Object();
+        when(first.matches(target)).thenReturn(true);
+        when(second.matches(target)).thenReturn(false);
+        ElementMatcher.Junction.Conjunction<Object> leaf = new ElementMatcher.Junction.Conjunction<Object>(second, ElementMatchers.any());
+        assertThat(new ElementMatcher.Junction.Conjunction<Object>(first, leaf).matches(target), is(false));
+        verify(first).matches(target);
+        verifyNoMoreInteractions(first);
+        verify(second).matches(target);
+        verifyNoMoreInteractions(second);
+    }
+
+    @Test
+    public void testInlineRightChildNotMatches() {
+        Object target = new Object();
+        when(first.matches(target)).thenReturn(true);
+        when(second.matches(target)).thenReturn(true);
+        ElementMatcher.Junction.Conjunction<Object> leaf = new ElementMatcher.Junction.Conjunction<Object>(ElementMatchers.none(), second);
+        assertThat(new ElementMatcher.Junction.Conjunction<Object>(first, leaf).matches(target), is(false));
+        verify(first).matches(target);
+        verifyNoMoreInteractions(first);
+        verifyNoMoreInteractions(second);
+    }
 }
