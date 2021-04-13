@@ -879,31 +879,45 @@ public interface AgentBuilder {
             class Conjunction implements ResubmissionOnErrorMatcher {
 
                 /**
-                 * The first matcher to evaluate.
+                 * The represented matchers in their application order.
                  */
-                private final ResubmissionOnErrorMatcher left;
-
-                /**
-                 * The second matcher to evaluate.
-                 */
-                private final ResubmissionOnErrorMatcher right;
+                private final List<ResubmissionOnErrorMatcher> matchers;
 
                 /**
                  * Creates a new conjunction for a resubmission matcher upon an error.
                  *
-                 * @param left  The first matcher that is evaluated.
-                 * @param right The second matcher that is evaluated.
+                 * @param matcher The represented matchers in their application order.
                  */
-                public Conjunction(ResubmissionOnErrorMatcher left, ResubmissionOnErrorMatcher right) {
-                    this.left = left;
-                    this.right = right;
+                public Conjunction(ResubmissionOnErrorMatcher... matcher) {
+                    this(Arrays.asList(matcher));
+                }
+
+                /**
+                 * Creates a new conjunction for a resubmission matcher upon an error.
+                 *
+                 * @param matchers The represented matchers in their application order.
+                 */
+                public Conjunction(List<? extends ResubmissionOnErrorMatcher> matchers) {
+                    this.matchers = new ArrayList<ResubmissionOnErrorMatcher>(matchers.size());
+                    for (ResubmissionOnErrorMatcher matcher : matchers) {
+                        if (matcher instanceof Conjunction) {
+                            this.matchers.addAll(((Conjunction) matcher).matchers);
+                        } else if (matcher != Trivial.MATCHING) {
+                            this.matchers.add(matcher);
+                        }
+                    }
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public boolean matches(Throwable throwable, String typeName, ClassLoader classLoader, JavaModule module) {
-                    return left.matches(throwable, typeName, classLoader, module) && right.matches(throwable, typeName, classLoader, module);
+                    for (ResubmissionOnErrorMatcher matcher : matchers) {
+                        if (!matcher.matches(throwable, typeName, classLoader, module)) {
+                            return false;
+                        }
+                    }
+                    return true;
                 }
             }
 
@@ -914,31 +928,45 @@ public interface AgentBuilder {
             class Disjunction implements ResubmissionOnErrorMatcher {
 
                 /**
-                 * The first matcher to evaluate.
+                 * The represented matchers in their application order.
                  */
-                private final ResubmissionOnErrorMatcher left;
-
-                /**
-                 * The second matcher to evaluate.
-                 */
-                private final ResubmissionOnErrorMatcher right;
+                private final List<ResubmissionOnErrorMatcher> matchers;
 
                 /**
                  * Creates a new disjunction for a resubmission matcher upon an error.
                  *
-                 * @param left  The first matcher that is evaluated.
-                 * @param right The second matcher that is evaluated.
+                 * @param matcher The represented matchers in their application order.
                  */
-                public Disjunction(ResubmissionOnErrorMatcher left, ResubmissionOnErrorMatcher right) {
-                    this.left = left;
-                    this.right = right;
+                public Disjunction(ResubmissionOnErrorMatcher... matcher) {
+                    this(Arrays.asList(matcher));
+                }
+
+                /**
+                 * Creates a new conjunction for a resubmission matcher upon an error.
+                 *
+                 * @param matchers The represented matchers in their application order.
+                 */
+                public Disjunction(List<? extends ResubmissionOnErrorMatcher> matchers) {
+                    this.matchers = new ArrayList<ResubmissionOnErrorMatcher>(matchers.size());
+                    for (ResubmissionOnErrorMatcher matcher : matchers) {
+                        if (matcher instanceof Disjunction) {
+                            this.matchers.addAll(((Disjunction) matcher).matchers);
+                        } else if (matcher != Trivial.NON_MATCHING) {
+                            this.matchers.add(matcher);
+                        }
+                    }
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public boolean matches(Throwable throwable, String typeName, ClassLoader classLoader, JavaModule module) {
-                    return left.matches(throwable, typeName, classLoader, module) || right.matches(throwable, typeName, classLoader, module);
+                    for (ResubmissionOnErrorMatcher matcher : matchers) {
+                        if (matcher.matches(throwable, typeName, classLoader, module)) {
+                            return true;
+                        }
+                    }
+                    return false;
                 }
             }
 
@@ -1057,31 +1085,45 @@ public interface AgentBuilder {
             class Conjunction implements ResubmissionImmediateMatcher {
 
                 /**
-                 * The first matcher that is evaluated.
+                 * The matchers in their application order.
                  */
-                private final ResubmissionImmediateMatcher left;
-
-                /**
-                 * The second matcher that is evaluated.
-                 */
-                private final ResubmissionImmediateMatcher right;
+                private final List<ResubmissionImmediateMatcher> matchers;
 
                 /**
                  * Creates a new conjunction for an immediate resubmission matcher.
                  *
-                 * @param left  The first matcher that is evaluated.
-                 * @param right The second matcher that is evaluated.
+                 * @param matcher The matchers in their application order.
                  */
-                public Conjunction(ResubmissionImmediateMatcher left, ResubmissionImmediateMatcher right) {
-                    this.left = left;
-                    this.right = right;
+                public Conjunction(ResubmissionImmediateMatcher... matcher) {
+                    this(Arrays.asList(matcher));
+                }
+
+                /**
+                 * Creates a new conjunction for an immediate resubmission matcher.
+                 *
+                 * @param matchers The matchers in their application order.
+                 */
+                public Conjunction(List<? extends ResubmissionImmediateMatcher> matchers) {
+                    this.matchers = new ArrayList<ResubmissionImmediateMatcher>(matchers.size());
+                    for (ResubmissionImmediateMatcher matcher : matchers) {
+                        if (matcher instanceof Conjunction) {
+                            this.matchers.addAll(((Conjunction) matcher).matchers);
+                        } else if (matcher != Trivial.NON_MATCHING) {
+                            this.matchers.add(matcher);
+                        }
+                    }
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public boolean matches(String typeName, ClassLoader classLoader, JavaModule module) {
-                    return left.matches(typeName, classLoader, module) && right.matches(typeName, classLoader, module);
+                    for (ResubmissionImmediateMatcher matcher : matchers) {
+                        if (!matcher.matches(typeName, classLoader, module)) {
+                            return false;
+                        }
+                    }
+                    return true;
                 }
             }
 
@@ -1092,31 +1134,45 @@ public interface AgentBuilder {
             class Disjunction implements ResubmissionImmediateMatcher {
 
                 /**
-                 * The first matcher that is evaluated.
+                 * The matchers in their application order.
                  */
-                private final ResubmissionImmediateMatcher left;
+                private final List<ResubmissionImmediateMatcher> matchers;
 
                 /**
-                 * The second matcher that is evaluated.
+                 * Creates a new conjunction for an immediate resubmission matcher.
+                 *
+                 * @param matcher The matchers in their application order.
                  */
-                private final ResubmissionImmediateMatcher right;
+                public Disjunction(ResubmissionImmediateMatcher... matcher) {
+                    this(Arrays.asList(matcher));
+                }
 
                 /**
                  * Creates a new disjunction for an immediate resubmission matcher.
                  *
-                 * @param left  The first matcher that is evaluated.
-                 * @param right The second matcher that is evaluated.
+                 * @param matchers The matchers in their application order.
                  */
-                public Disjunction(ResubmissionImmediateMatcher left, ResubmissionImmediateMatcher right) {
-                    this.left = left;
-                    this.right = right;
+                public Disjunction(List<? extends ResubmissionImmediateMatcher> matchers) {
+                    this.matchers = new ArrayList<ResubmissionImmediateMatcher>(matchers.size());
+                    for (ResubmissionImmediateMatcher matcher : matchers) {
+                        if (matcher instanceof Disjunction) {
+                            this.matchers.addAll(((Disjunction) matcher).matchers);
+                        } else if (matcher != Trivial.NON_MATCHING) {
+                            this.matchers.add(matcher);
+                        }
+                    }
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public boolean matches(String typeName, ClassLoader classLoader, JavaModule module) {
-                    return left.matches(typeName, classLoader, module) || right.matches(typeName, classLoader, module);
+                    for (ResubmissionImmediateMatcher matcher : matchers) {
+                        if (matcher.matches(typeName, classLoader, module)) {
+                            return true;
+                        }
+                    }
+                    return false;
                 }
             }
 
@@ -1532,24 +1588,33 @@ public interface AgentBuilder {
         class Conjunction implements RawMatcher {
 
             /**
-             * The left matcher which is applied first.
+             * The matchers to apply in their application order.
              */
-            private final RawMatcher left;
-
-            /**
-             * The right matcher which is applied second.
-             */
-            private final RawMatcher right;
+            private final List<RawMatcher> matchers;
 
             /**
              * Creates a new conjunction of two raw matchers.
              *
-             * @param left  The left matcher which is applied first.
-             * @param right The right matcher which is applied second.
+             * @param matcher The matchers to apply in their application order.
              */
-            protected Conjunction(RawMatcher left, RawMatcher right) {
-                this.left = left;
-                this.right = right;
+            protected Conjunction(RawMatcher... matcher) {
+                this(Arrays.asList(matcher));
+            }
+
+            /**
+             * Creates a new conjunction of two raw matchers.
+             *
+             * @param matchers The matchers to apply in their application order.
+             */
+            protected Conjunction(List<? extends RawMatcher> matchers) {
+                this.matchers = new ArrayList<RawMatcher>(matchers.size());
+                for (RawMatcher matcher : matchers) {
+                    if (matcher instanceof Conjunction) {
+                        this.matchers.addAll(((Conjunction) matcher).matchers);
+                    } else if (matcher != Trivial.MATCHING) {
+                        this.matchers.add(matcher);
+                    }
+                }
             }
 
             /**
@@ -1560,8 +1625,12 @@ public interface AgentBuilder {
                                    JavaModule module,
                                    Class<?> classBeingRedefined,
                                    ProtectionDomain protectionDomain) {
-                return left.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
-                        && right.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
+                for (RawMatcher matcher : matchers) {
+                    if (!matcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                        return false;
+                    }
+                }
+                return true;
             }
         }
 
@@ -1572,24 +1641,33 @@ public interface AgentBuilder {
         class Disjunction implements RawMatcher {
 
             /**
-             * The left matcher which is applied first.
+             * The matchers to apply in their application order.
              */
-            private final RawMatcher left;
+            private final List<RawMatcher> matchers;
 
             /**
-             * The right matcher which is applied second.
-             */
-            private final RawMatcher right;
-
-            /**
-             * Creates a new disjunction of two raw matchers.
+             * Creates a new conjunction of two raw matchers.
              *
-             * @param left  The left matcher which is applied first.
-             * @param right The right matcher which is applied second.
+             * @param matcher The matchers to apply in their application order.
              */
-            protected Disjunction(RawMatcher left, RawMatcher right) {
-                this.left = left;
-                this.right = right;
+            protected Disjunction(RawMatcher... matcher) {
+                this(Arrays.asList(matcher));
+            }
+
+            /**
+             * Creates a new conjunction of two raw matchers.
+             *
+             * @param matchers The matchers to apply in their application order.
+             */
+            protected Disjunction(List<? extends RawMatcher> matchers) {
+                this.matchers = new ArrayList<RawMatcher>(matchers.size());
+                for (RawMatcher matcher : matchers) {
+                    if (matcher instanceof Disjunction) {
+                        this.matchers.addAll(((Disjunction) matcher).matchers);
+                    } else if (matcher != Trivial.NON_MATCHING) {
+                        this.matchers.add(matcher);
+                    }
+                }
             }
 
             /**
@@ -1600,8 +1678,12 @@ public interface AgentBuilder {
                                    JavaModule module,
                                    Class<?> classBeingRedefined,
                                    ProtectionDomain protectionDomain) {
-                return left.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
-                        || right.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
+                for (RawMatcher matcher : matchers) {
+                    if (matcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                        return true;
+                    }
+                }
+                return false;
             }
         }
 

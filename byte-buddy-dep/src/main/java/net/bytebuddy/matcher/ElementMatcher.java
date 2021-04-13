@@ -17,6 +17,10 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * An element matcher is used as a predicate for identifying code elements such as types, methods, fields or
  * annotations. They are similar to Java 8's {@code Predicate}s but compatible to Java 6 and Java 7 and represent
@@ -78,6 +82,7 @@ public interface ElementMatcher<T> {
             /**
              * {@inheritDoc}
              */
+            @SuppressWarnings("unchecked") // In absence of @SafeVarargs
             public <U extends V> Junction<U> and(ElementMatcher<? super U> other) {
                 return new Conjunction<U>(this, other);
             }
@@ -85,6 +90,7 @@ public interface ElementMatcher<T> {
             /**
              * {@inheritDoc}
              */
+            @SuppressWarnings("unchecked") // In absence of @SafeVarargs
             public <U extends V> Junction<U> or(ElementMatcher<? super U> other) {
                 return new Disjunction<U>(this, other);
             }
@@ -101,30 +107,60 @@ public interface ElementMatcher<T> {
             /**
              * The element matchers that constitute this conjunction.
              */
-            private final ElementMatcher<? super W> left, right;
+            private final List<ElementMatcher<? super W>> matchers;
 
             /**
              * Creates a new conjunction matcher.
              *
-             * @param left  The first matcher to consult for a match.
-             * @param right The second matcher to consult for a match. This matcher is only consulted
-             *              if the {@code first} matcher constituted a match.
+             * @param matcher The represented matchers in application order.
              */
-            public Conjunction(ElementMatcher<? super W> left, ElementMatcher<? super W> right) {
-                this.left = left;
-                this.right = right;
+            @SuppressWarnings("unchecked") // In absence of @SafeVarargs
+            public Conjunction(ElementMatcher<? super W>... matcher) {
+                this(Arrays.asList(matcher));
+            }
+
+            /**
+             * Creates a new conjunction matcher.
+             *
+             * @param matchers The represented matchers in application order.
+             */
+            @SuppressWarnings("unchecked")
+            public Conjunction(List<ElementMatcher<? super W>> matchers) {
+                this.matchers = new ArrayList<ElementMatcher<? super W>>(matchers.size());
+                for (ElementMatcher<? super W> matcher : matchers) {
+                    if (matcher instanceof Conjunction<?>) {
+                        this.matchers.addAll(((Conjunction<Object>) matcher).matchers);
+                    } else {
+                        this.matchers.add(matcher);
+                    }
+                }
             }
 
             /**
              * {@inheritDoc}
              */
             public boolean matches(W target) {
-                return left.matches(target) && right.matches(target);
+                for (ElementMatcher<? super W> matcher : matchers) {
+                    if (!matcher.matches(target)) {
+                        return false;
+                    }
+                }
+                return true;
             }
 
             @Override
             public String toString() {
-                return "(" + left + " and " + right + ')';
+                StringBuilder stringBuilder = new StringBuilder("(");
+                boolean first = true;
+                for (ElementMatcher<? super W> matcher : matchers) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        stringBuilder.append(" and ");
+                    }
+                    stringBuilder.append(matcher);
+                }
+                return stringBuilder.append(")").toString();
             }
         }
 
@@ -139,30 +175,60 @@ public interface ElementMatcher<T> {
             /**
              * The element matchers that constitute this disjunction.
              */
-            private final ElementMatcher<? super W> left, right;
+            private final List<ElementMatcher<? super W>> matchers;
 
             /**
              * Creates a new disjunction matcher.
              *
-             * @param left  The first matcher to consult for a match.
-             * @param right The second matcher to consult for a match. This matcher is only consulted
-             *              if the {@code first} matcher did not already constitute a match.
+             * @param matcher The represented matchers in application order.
              */
-            public Disjunction(ElementMatcher<? super W> left, ElementMatcher<? super W> right) {
-                this.left = left;
-                this.right = right;
+            @SuppressWarnings("unchecked") // In absence of @SafeVarargs
+            public Disjunction(ElementMatcher<? super W>... matcher) {
+                this(Arrays.asList(matcher));
+            }
+
+            /**
+             * Creates a new disjunction matcher.
+             *
+             * @param matchers The represented matchers in application order.
+             */
+            @SuppressWarnings("unchecked")
+            public Disjunction(List<ElementMatcher<? super W>> matchers) {
+                this.matchers = new ArrayList<ElementMatcher<? super W>>(matchers.size());
+                for (ElementMatcher<? super W> matcher : matchers) {
+                    if (matcher instanceof Disjunction<?>) {
+                        this.matchers.addAll(((Disjunction<Object>) matcher).matchers);
+                    } else {
+                        this.matchers.add(matcher);
+                    }
+                }
             }
 
             /**
              * {@inheritDoc}
              */
             public boolean matches(W target) {
-                return left.matches(target) || right.matches(target);
+                for (ElementMatcher<? super W> matcher : matchers) {
+                    if (matcher.matches(target)) {
+                        return true;
+                    }
+                }
+                return false;
             }
 
             @Override
             public String toString() {
-                return "(" + left + " or " + right + ')';
+                StringBuilder stringBuilder = new StringBuilder("(");
+                boolean first = true;
+                for (ElementMatcher<? super W> matcher : matchers) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        stringBuilder.append(" or ");
+                    }
+                    stringBuilder.append(matcher);
+                }
+                return stringBuilder.append(")").toString();
             }
         }
     }

@@ -50,7 +50,7 @@ public class BooleanMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
     /**
      * The predefined result.
      */
-    private final boolean matches;
+    protected final boolean matches;
 
     /**
      * Creates a new boolean element matcher.
