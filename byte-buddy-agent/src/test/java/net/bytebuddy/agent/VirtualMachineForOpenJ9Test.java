@@ -1,8 +1,11 @@
 package net.bytebuddy.agent;
 
+import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -24,6 +27,9 @@ public class VirtualMachineForOpenJ9Test {
     private static final String FOO = "foo", BAR = "bar";
 
     private static final int PROCESS_ID = 42, USER_ID = 84, VM_ID = 168;
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private File temporaryFolder, attachFolder;
 
@@ -50,6 +56,7 @@ public class VirtualMachineForOpenJ9Test {
     }
 
     @Test(timeout = 10000L)
+    @JavaVersionRule.Enforce(7) // Fails sometimes on Java 6 due to timeout issues that are difficult to reproduce and solve.
     public void testAttachment() throws Throwable {
         final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
         VirtualMachine.ForOpenJ9.Dispatcher dispatcher = mock(VirtualMachine.ForOpenJ9.Dispatcher.class);
