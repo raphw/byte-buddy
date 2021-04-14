@@ -2332,9 +2332,18 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         targetType = targetType.getComponentType();
                         arity++;
                     } while (targetType.isArray());
-                    return TargetType.resolve(targetType.getSort().isTypeVariable()
-                            ? TypeDescription.ArrayProjection.of(declaringType.findVariable(targetType.getSymbol()).asErasure(), arity)
-                            : genericArray.asErasure(), declaringType);
+                    if (targetType.getSort().isTypeVariable()) {
+                        for (TypeVariableToken typeVariableToken : typeVariableTokens) {
+                            if (targetType.getSymbol().equals(typeVariableToken.getSymbol())) {
+                                return TypeDescription.ArrayProjection.of(typeVariableToken.getBounds().get(0).accept(this), arity);
+                            }
+                        }
+                        return TargetType.resolve(TypeDescription.ArrayProjection.of(
+                                declaringType.findVariable(targetType.getSymbol()).asErasure(),
+                                arity), declaringType);
+                    } else {
+                        return TargetType.resolve(genericArray.asErasure(), declaringType);
+                    }
                 }
 
                 /**

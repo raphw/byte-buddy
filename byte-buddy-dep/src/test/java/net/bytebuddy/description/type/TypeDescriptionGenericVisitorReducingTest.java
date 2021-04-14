@@ -58,11 +58,12 @@ public class TypeDescriptionGenericVisitorReducingTest {
     }
 
     @Test
-    public void testGenericArrayOfVariable() throws Exception {
+    public void testGenericArrayOfVariableContextDeclared() throws Exception {
         when(typeDescription.getComponentType()).thenReturn(typeDescription);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
         when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
         when(typeDescription.getSymbol()).thenReturn(FOO);
+        when(typeVariableToken.getSymbol()).thenReturn(BAR);
         when(declaringType.findVariable(FOO)).thenReturn(typeDescription);
         when(rawTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
         when(rawTypeDescription.getDescriptor()).thenReturn(BAR);
@@ -71,8 +72,30 @@ public class TypeDescriptionGenericVisitorReducingTest {
         verify(typeDescription).getComponentType();
         verify(typeDescription).isArray();
         verify(typeDescription).getSort();
-        verify(typeDescription).getSymbol();
+        verify(typeDescription, times(2)).getSymbol();
         verifyNoMoreInteractions(typeDescription);
+    }
+
+    @Test
+    public void testGenericArrayOfVariableSelfDeclared() throws Exception {
+        when(typeDescription.getComponentType()).thenReturn(typeDescription);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
+        when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
+        when(typeDescription.getComponentType()).thenReturn(genericTypeDescription);
+        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
+        when(genericTypeDescription.getSymbol()).thenReturn(FOO);
+        when(typeVariableToken.getSymbol()).thenReturn(FOO);
+        when(typeVariableToken.getBounds()).thenReturn(new TypeList.Generic.Explicit(bound));
+        when(bound.accept(visitor)).thenReturn(rawTypeDescription);
+        when(rawTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
+        when(rawTypeDescription.getDescriptor()).thenReturn(BAR);
+        assertThat(visitor.onGenericArray(typeDescription), not(rawTypeDescription));
+        verify(typeDescription).getComponentType();
+        verifyNoMoreInteractions(typeDescription);
+        verify(genericTypeDescription).getSymbol();
+        verify(genericTypeDescription).getSort();
+        verify(genericTypeDescription).isArray();
+        verifyNoMoreInteractions(genericTypeDescription);
     }
 
     @Test
