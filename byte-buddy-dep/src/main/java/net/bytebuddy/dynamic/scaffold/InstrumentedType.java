@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -2116,6 +2117,11 @@ public interface InstrumentedType extends TypeDescription {
          */
         public TypeInitializer getTypeInitializer() {
             return TypeInitializer.None.INSTANCE;
+        }
+
+        @Override
+        public ClassFileVersion getClassFileVersion() {
+            return typeDescription.getClassFileVersion();
         }
 
         /**

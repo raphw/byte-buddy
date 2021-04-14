@@ -16,6 +16,7 @@
 package net.bytebuddy.pool;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.TypeVariableSource;
@@ -2530,6 +2531,11 @@ public interface TypePool {
             private final List<String> permittedSubclasses;
 
             /**
+             * The type's class file version.
+             */
+            private final ClassFileVersion classFileVersion;
+
+            /**
              * Creates a new lazy type description.
              *
              * @param typePool                           The type pool to be used for looking up linked types.
@@ -2554,6 +2560,7 @@ public interface TypePool {
              * @param methodTokens                       A list of method tokens describing the method's of this type.
              * @param recordComponentTokens              A list of record component tokens describing the record components of this type.
              * @param permittedSubclasses                A list of internal names of permitted subclasses.
+             * @param classFileVersion                   The type's class file version.
              */
             protected LazyTypeDescription(TypePool typePool,
                                           int actualModifiers,
@@ -2575,7 +2582,8 @@ public interface TypePool {
                                           List<FieldToken> fieldTokens,
                                           List<MethodToken> methodTokens,
                                           List<RecordComponentToken> recordComponentTokens,
-                                          List<String> permittedSubclasses) {
+                                          List<String> permittedSubclasses,
+                                          ClassFileVersion classFileVersion) {
                 this.typePool = typePool;
                 this.actualModifiers = actualModifiers & ~Opcodes.ACC_SUPER;
                 this.modifiers = modifiers & ~(Opcodes.ACC_SUPER | Opcodes.ACC_DEPRECATED);
@@ -2619,6 +2627,7 @@ public interface TypePool {
                 for (String internalName : permittedSubclasses) {
                     this.permittedSubclasses.add(Type.getObjectType(internalName).getDescriptor());
                 }
+                this.classFileVersion = classFileVersion;
             }
 
             /**
@@ -2783,6 +2792,11 @@ public interface TypePool {
              */
             public TypeList getPermittedSubclasses() {
                 return new LazyTypeList(typePool, permittedSubclasses);
+            }
+
+            @Override
+            public ClassFileVersion getClassFileVersion() {
+                return classFileVersion;
             }
 
             /**
@@ -7766,6 +7780,11 @@ public interface TypePool {
             private final List<String> permittedSubclasses;
 
             /**
+             * The discovered class file version.
+             */
+            private ClassFileVersion classFileVersion;
+
+            /**
              * Creates a new type extractor.
              */
             protected TypeExtractor() {
@@ -7798,6 +7817,7 @@ public interface TypePool {
                 this.genericSignature = genericSignature;
                 this.superClassName = superClassName;
                 this.interfaceName = interfaceName;
+                this.classFileVersion = ClassFileVersion.ofMinorMajor(classFileVersion);
             }
 
             @Override
@@ -7921,7 +7941,8 @@ public interface TypePool {
                         fieldTokens,
                         methodTokens,
                         recordComponentTokens,
-                        permittedSubclasses);
+                        permittedSubclasses,
+                        classFileVersion);
             }
 
             /**

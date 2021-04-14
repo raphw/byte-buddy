@@ -426,6 +426,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     boolean isSealed();
 
     /**
+     * Attempts to resolve the class file version of this type. If this description is not based on a class file
+     * or if the class file version cannot be resolved, {@code null} is returned.
+     *
+     * @return This type's class file version or {@code null} if it cannot be resolved.
+     */
+    ClassFileVersion getClassFileVersion();
+
+    /**
      * <p>
      * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
      * a specialization of a generic type.
@@ -8171,6 +8179,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        public ClassFileVersion getClassFileVersion() {
+            return null;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public Iterator<TypeDefinition> iterator() {
             return new SuperClassIterator(this);
         }
@@ -8430,6 +8445,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 public TypeList getPermittedSubclasses() {
                     return delegate().getPermittedSubclasses();
+                }
+
+                @Override
+                public ClassFileVersion getClassFileVersion() {
+                    return delegate().getClassFileVersion();
                 }
             }
         }
@@ -8867,6 +8887,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         public TypeList getPermittedSubclasses() {
             return new ClassDescriptionTypeList(type.getClassLoader(), DISPATCHER.getPermittedSubclasses(type));
+        }
+
+        @Override
+        @CachedReturnPlugin.Enhance
+        public ClassFileVersion getClassFileVersion() {
+            try {
+                return ClassFileVersion.of(type);
+            } catch (Throwable ignored) {
+                return null;
+            }
         }
 
         /**
@@ -10172,6 +10202,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         public TypeList getPermittedSubclasses() {
             return delegate.getPermittedSubclasses();
+        }
+
+        @Override
+        public ClassFileVersion getClassFileVersion() {
+            return delegate.getClassFileVersion();
         }
 
         /**
