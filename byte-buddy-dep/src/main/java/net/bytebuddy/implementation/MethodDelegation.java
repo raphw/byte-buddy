@@ -1466,6 +1466,7 @@ public class MethodDelegation implements Implementation.Composable {
          * @param matcher The matcher any delegation target needs to match in order to be considered a for delegation.
          * @return A new delegation configuration which only considers methods for delegation if they match the supplied matcher.
          */
+        @SuppressWarnings("unchecked")
         public WithCustomProperties filter(ElementMatcher<? super MethodDescription> matcher) {
             return new WithCustomProperties(ambiguityResolver,
                     parameterBinders,
