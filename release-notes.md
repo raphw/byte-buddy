@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 19. April 2021: version 1.11.0
+
+- Rework resubmission strategy to allow for immediate resubmission or on error.
+- Fix type for constructor call when setting field in MethodCall.
+- Include thread in default agent logger.
+- Add compound property to InvocationHandlerAdapter.
+- Flatten conjunction and disjunction matchers.
+- Add method to get possibly known class file version of TypeDescription.
+- Correctly consider generic array type when computing erasure.
+
 ### 9. Mars 2021: version 1.10.22
 
 - Refactor `JavaConstant` API and fix handle resolution.
