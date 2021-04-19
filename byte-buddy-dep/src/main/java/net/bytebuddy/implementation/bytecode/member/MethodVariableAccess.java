@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.implementation.bytecode.member;
 
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -127,6 +128,7 @@ public enum MethodVariableAccess {
      *
      * @return A stack manipulation loading the {@code this} reference.
      */
+    @CachedReturnPlugin.Enhance("loadThis")
     public static StackManipulation loadThis() {
         return MethodVariableAccess.REFERENCE.loadFrom(0);
     }
