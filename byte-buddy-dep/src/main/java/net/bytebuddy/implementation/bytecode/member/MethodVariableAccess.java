@@ -128,7 +128,7 @@ public enum MethodVariableAccess {
      * @return A stack manipulation loading the {@code this} reference.
      */
     public static StackManipulation loadThis() {
-        return MethodVariableAccess.REFERENCE.loadFrom(0);
+        return LoadThisHolder.LOAD_THIS;
     }
 
     /**
@@ -446,5 +446,14 @@ public enum MethodVariableAccess {
             return new Size(0, 0);
         }
     }
-}
 
+    /**
+     * Lazy initialization holder for {@link MethodVariableAccess#loadThis()} singleton.
+     */
+    private static final class LoadThisHolder {
+        /**
+         * Lazily-instantiated object for {@link MethodVariableAccess#loadThis()}.
+         */
+        static final StackManipulation LOAD_THIS = MethodVariableAccess.REFERENCE.loadFrom(0);
+    }
+}
