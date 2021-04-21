@@ -245,7 +245,9 @@
                     <static-requires>
                         java.instrument,
                         jdk.unsupported,
-                        net.bytebuddy.agent
+                        net.bytebuddy.agent,
+                        com.sun.jna,
+                        com.sun.jna.platform
                     </static-requires>
                 </configuration>
             </plugin>

@@ -2,6 +2,7 @@ package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.ClassJnaInjectionAvailableRule;
 import net.bytebuddy.test.utility.ClassReflectionInjectionAvailableRule;
 import net.bytebuddy.test.utility.ClassUnsafeInjectionAvailableRule;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -33,6 +34,9 @@ public class AgentBuilderInjectionStrategyTest {
     @Rule
     public MethodRule classUnsafeInjectionAvailableRule = new ClassUnsafeInjectionAvailableRule();
 
+    @Rule
+    public MethodRule classJnaInjectionAvailableRule = new ClassJnaInjectionAvailableRule();
+
     @Mock
     private ClassLoader classLoader;
 
@@ -62,6 +66,13 @@ public class AgentBuilderInjectionStrategyTest {
     public void testUsingUnsafe() throws Exception {
         assertThat(AgentBuilder.InjectionStrategy.UsingUnsafe.INSTANCE.resolve(classLoader, protectionDomain),
                 hasPrototype((ClassInjector) new ClassInjector.UsingUnsafe(classLoader, protectionDomain)));
+    }
+
+    @Test
+    @ClassJnaInjectionAvailableRule.Enforce
+    public void testUsingJna() throws Exception {
+        assertThat(AgentBuilder.InjectionStrategy.UsingJna.INSTANCE.resolve(classLoader, protectionDomain),
+                hasPrototype((ClassInjector) new ClassInjector.UsingJna(classLoader, protectionDomain)));
     }
 
     @Test

@@ -567,4 +567,41 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             return new ClassInjector.UsingUnsafe(classLoader, protectionDomain).inject(types);
         }
     }
+
+    /**
+     * A class loading strategy that injects a class using JNA via the JNI <i>DefineClass</i> method. This strategy can
+     * only be used if JNA is explicitly added as a dependency.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    class ForJnaInjection implements ClassLoadingStrategy<ClassLoader> {
+
+        /**
+         * The protection domain to use or {@code null} if no protection domain is set.
+         */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
+        private final ProtectionDomain protectionDomain;
+
+        /**
+         * Creates a new class loading strategy for JNA-based injection with a default protection domain.
+         */
+        public ForJnaInjection() {
+            this(NO_PROTECTION_DOMAIN);
+        }
+
+        /**
+         * Creates a new class loading strategy for JNA-based injection.
+         *
+         * @param protectionDomain The protection domain to use or {@code null} if no protection domain is set.
+         */
+        public ForJnaInjection(ProtectionDomain protectionDomain) {
+            this.protectionDomain = protectionDomain;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+            return new ClassInjector.UsingUnsafe(classLoader, protectionDomain).inject(types);
+        }
+    }
 }

@@ -3927,6 +3927,28 @@ public interface AgentBuilder {
         }
 
         /**
+         * An injection strategy that uses JNA to inject classes. This strategy is only available if JNA was added as a dependency.
+         */
+        enum UsingJna implements InjectionStrategy {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public ClassInjector resolve(ClassLoader classLoader, ProtectionDomain protectionDomain) {
+                if (ClassInjector.UsingJna.isAvailable()) {
+                    return new ClassInjector.UsingJna(classLoader, protectionDomain);
+                } else {
+                    throw new IllegalStateException("JNA-based injection is not available on the current VM");
+                }
+            }
+        }
+
+        /**
          * An injection strategy that uses bootstrap injection using an {@link Instrumentation} instance.
          */
         @HashCodeAndEqualsPlugin.Enhance

@@ -15,6 +15,10 @@
  */
 package net.bytebuddy.dynamic.loading;
 
+import com.sun.jna.JNIEnv;
+import com.sun.jna.LastErrorException;
+import com.sun.jna.Library;
+import com.sun.jna.Native;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.MemberRemoval;
@@ -909,11 +913,11 @@ public interface ClassInjector {
                                     .withArgument(1, 2, 3, 4, 5, 6, 7, 8));
                     if (getDefinedPackage != null) {
                         builder = builder
-                            .defineMethod("getDefinedPackage", Package.class, Visibility.PUBLIC)
-                            .withParameters(ClassLoader.class, String.class)
-                            .intercept(MethodCall.invoke(getDefinedPackage)
-                                .onArgument(0)
-                                .withArgument(1));
+                                .defineMethod("getDefinedPackage", Package.class, Visibility.PUBLIC)
+                                .withParameters(ClassLoader.class, String.class)
+                                .intercept(MethodCall.invoke(getDefinedPackage)
+                                        .onArgument(0)
+                                        .withArgument(1));
                     }
                     try {
                         builder = builder.defineMethod("getClassLoadingLock", Object.class, Visibility.PUBLIC)
@@ -1798,7 +1802,7 @@ public interface ClassInjector {
         private static final Dispatcher.Initializable DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
         /**
-         * A lock for the bootstrap loader when injecting code.
+         * A lock for the bootstrap loader when injecting.
          */
         private static final Object BOOTSTRAP_LOADER_LOCK = new Object();
 
@@ -2666,6 +2670,267 @@ public interface ClassInjector {
              * @param jarFile         The jar file to append.
              */
             protected abstract void inject(Instrumentation instrumentation, JarFile jarFile);
+        }
+    }
+
+    /**
+     * A class injector using JNA to invoke JNI's define class utility for defining a class. This injector is only
+     * available if JNA is available on the class loader.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    class UsingJna extends AbstractBase {
+
+        /**
+         * The dispatcher to use.
+         */
+        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+
+        /**
+         * A lock for the bootstrap loader when injecting.
+         */
+        private static final Object BOOTSTRAP_LOADER_LOCK = new Object();
+
+        /**
+         * The class loader to inject classes into or {@code null} for the bootstrap loader.
+         */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
+        private final ClassLoader classLoader;
+
+        /**
+         * The protection domain to use or {@code null} for no protection domain.
+         */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
+        private final ProtectionDomain protectionDomain;
+
+        /**
+         * Creates a new unsafe injector for the given class loader with a default protection domain.
+         *
+         * @param classLoader The class loader to inject classes into or {@code null} for the bootstrap loader.
+         */
+        public UsingJna(ClassLoader classLoader) {
+            this(classLoader, ClassLoadingStrategy.NO_PROTECTION_DOMAIN);
+        }
+
+        /**
+         * Creates a new JNA injector for the given class loader with a default protection domain.
+         *
+         * @param classLoader      The class loader to inject classes into or {@code null} for the bootstrap loader.
+         * @param protectionDomain The protection domain to use or {@code null} for no protection domain.
+         */
+        public UsingJna(ClassLoader classLoader, ProtectionDomain protectionDomain) {
+            this.classLoader = classLoader;
+            this.protectionDomain = protectionDomain;
+        }
+
+        /**
+         * Checks if JNA class injection is available on the current VM.
+         *
+         * @return {@code true} if JNA class injection is available on the current VM.
+         */
+        public static boolean isAvailable() {
+            return DISPATCHER.isAvailable();
+        }
+
+        /**
+         * Returns an JNA class injector for the system class loader.
+         *
+         * @return A class injector for the system class loader.
+         */
+        public static ClassInjector ofSystemLoader() {
+            return new UsingJna(ClassLoader.getSystemClassLoader());
+        }
+
+        /**
+         * Returns an JNA class injector for the platform class loader. For VMs of version 8 or older,
+         * the extension class loader is represented instead.
+         *
+         * @return A class injector for the platform class loader.
+         */
+        public static ClassInjector ofPlatformLoader() {
+            return new UsingJna(ClassLoader.getSystemClassLoader().getParent());
+        }
+
+        /**
+         * Returns an JNA class injector for the boot class loader.
+         *
+         * @return A class injector for the boot loader.
+         */
+        public static ClassInjector ofBootLoader() {
+            return new UsingJna(ClassLoadingStrategy.BOOTSTRAP_LOADER);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isAlive() {
+            return DISPATCHER.isAvailable();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
+            Map<String, Class<?>> result = new HashMap<String, Class<?>>();
+            synchronized (classLoader == null
+                    ? BOOTSTRAP_LOADER_LOCK
+                    : classLoader) {
+                for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
+                    try {
+                        result.put(entry.getKey(), Class.forName(entry.getKey(), false, classLoader));
+                    } catch (ClassNotFoundException ignored) {
+                        result.put(entry.getKey(), DISPATCHER.defineClass(classLoader, entry.getKey(), entry.getValue(), protectionDomain));
+                    }
+                }
+            }
+            return result;
+        }
+
+        /**
+         * A dispatcher for JNA class injection.
+         */
+        protected interface Dispatcher {
+
+            /**
+             * Checks if this dispatcher is available for use.
+             *
+             * @return {@code true} if this dispatcher is available for use.
+             */
+            boolean isAvailable();
+
+            /**
+             * Defines a class.
+             *
+             * @param classLoader          The class loader or {@code null} if a class should be injected into the bootstrap loader.
+             * @param name                 The class's name.
+             * @param binaryRepresentation The class's class file.
+             * @param protectionDomain     The protection domain to use or {@code null} if no protection domain should be used.
+             * @return The class that was defined.
+             */
+            Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain);
+
+            /**
+             * An action for creating a JNA dispatcher.
+             */
+            enum CreationAction implements PrivilegedAction<Dispatcher> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @SuppressWarnings("deprecation")
+                public Dispatcher run() {
+                    try {
+                        return new Enabled(Native.loadLibrary("jvm", Jvm.class, Collections.singletonMap(Library.OPTION_ALLOW_OBJECTS, Boolean.TRUE)));
+                    } catch (Throwable throwable) {
+                        return new Unavailable(throwable.getMessage());
+                    }
+                }
+            }
+
+            /**
+             * An enabled dispatcher for JNA-based class injection.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class Enabled implements Dispatcher {
+
+                /**
+                 * The JNA-dispatcher to use for invoking JNI's class definition utilities.
+                 */
+                private final Jvm jvm;
+
+                /**
+                 * Creates a new dispatcher for a JNI's class definition utilities.
+                 *
+                 * @param jvm The JNA-dispatcher to use for invoking JNI's class definition utilities.
+                 */
+                protected Enabled(Jvm jvm) {
+                    this.jvm = jvm;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isAvailable() {
+                    return true;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                    return jvm.JVM_DefineClass(JNIEnv.CURRENT,
+                            name.replace('.', '/'),
+                            classLoader,
+                            binaryRepresentation,
+                            binaryRepresentation.length,
+                            protectionDomain);
+                }
+            }
+
+            /**
+             * An unavailable dispatcher for JNA-based class injection.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class Unavailable implements Dispatcher {
+
+                /**
+                 * The exception's error message when attempting to resolve the JNA dispatcher.
+                 */
+                private final String error;
+
+                /**
+                 * Creates a new unavailable JNA-based class injector.
+                 *
+                 * @param error The exception's error message when attempting to resolve the JNA dispatcher.
+                 */
+                protected Unavailable(String error) {
+                    this.error = error;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isAvailable() {
+                    return false;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                    throw new UnsupportedOperationException("JNA is not available and JNA-based injection cannot be used: " + error);
+                }
+            }
+
+            /**
+             * A JNA dispatcher for the JVM's <i>JVM_DefineClass</i> method.
+             */
+            interface Jvm extends Library {
+
+                /**
+                 * Defines a new class into a given class loader.
+                 *
+                 * @param env                  The JNI environment.
+                 * @param name                 The internal name of the class.
+                 * @param classLoader          The class loader to inject into or {@code null} if injecting into the bootstrap loader.
+                 * @param binaryRepresentation The class's binary representation.
+                 * @param length               The length of the class's binary representation.
+                 * @param protectionDomain     The protection domain or {@code null} if no explicit protection domain should be used.
+                 * @return The class that was defined.
+                 * @throws LastErrorException If an error occurs during injection.
+                 */
+                @SuppressWarnings("checkstyle:methodname")
+                Class<?> JVM_DefineClass(JNIEnv env,
+                                         String name,
+                                         ClassLoader classLoader,
+                                         byte[] binaryRepresentation,
+                                         int length,
+                                         ProtectionDomain protectionDomain) throws LastErrorException;
+            }
         }
     }
 }
