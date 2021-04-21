@@ -2824,11 +2824,8 @@ public interface ClassInjector {
                  */
                 @SuppressWarnings("deprecation")
                 public Dispatcher run() {
-                    if (System.getProperty("java.vm.name", "").toUpperCase(Locale.US).contains("J9")) {
-                        return new Unavailable("J9 does not support JNI-based class definition");
-                    }
                     try {
-                        return new Enabled(Native.loadLibrary("jvm", Jvm.class, Collections.singletonMap(Library.OPTION_ALLOW_OBJECTS, Boolean.TRUE)));
+                        return new Enabled(Native.loadLibrary("java", Jvm.class, Collections.singletonMap(Library.OPTION_ALLOW_OBJECTS, Boolean.TRUE)));
                     } catch (Throwable throwable) {
                         return new Unavailable(throwable.getMessage());
                     }
