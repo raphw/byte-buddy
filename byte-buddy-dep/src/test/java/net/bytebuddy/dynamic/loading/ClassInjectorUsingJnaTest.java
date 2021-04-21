@@ -32,7 +32,7 @@ public class ClassInjectorUsingJnaTest {
     @Test
     @ClassJnaInjectionAvailableRule.Enforce
     public void testJnaInjection() throws Exception {
-        assertThat(new ClassInjector.UsingJna(classLoader, ClassInjectorUsingJnaTest.class.getProtectionDomain())
+        assertThat(new ClassInjector.UsingJna(classLoader)
                 .inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Foo.class), ClassFileLocator.ForClassLoader.read(Foo.class)))
                 .get(TypeDescription.ForLoadedType.of(Foo.class)), notNullValue(Class.class));
         assertThat(Class.forName(Foo.class.getName(), false, classLoader).getName(), is(Foo.class.getName()));
