@@ -15,10 +15,7 @@
  */
 package net.bytebuddy.dynamic.loading;
 
-import com.sun.jna.JNIEnv;
-import com.sun.jna.LastErrorException;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
+import com.sun.jna.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.MemberRemoval;
@@ -2824,11 +2821,40 @@ public interface ClassInjector {
                  */
                 @SuppressWarnings("deprecation")
                 public Dispatcher run() {
+                    if (System.getProperty("java.vm.name", "").toUpperCase(Locale.US).contains("J9")) {
+                        return new Unavailable("J9 does not support JNA-based class definition");
+                    }
                     try {
-                        return new Enabled(Native.loadLibrary("java", Jvm.class, Collections.singletonMap(Library.OPTION_ALLOW_OBJECTS, Boolean.TRUE)));
+                        Map<String, Object> options = new HashMap<String, Object>();
+                        options.put(Library.OPTION_ALLOW_OBJECTS, Boolean.TRUE);
+                        if (Platform.isWindows() && !Platform.is64Bit()) {
+                            options.put(Library.OPTION_ALLOW_OBJECTS, Windows32BitFunctionMapper.INSTANCE);
+                        }
+                        return new Enabled(Native.loadLibrary("jvm", Jvm.class, options));
                     } catch (Throwable throwable) {
                         return new Unavailable(throwable.getMessage());
                     }
+                }
+            }
+
+            /**
+             * A mapper for 32-bit Windows functions where names are defined with different convention.
+             */
+            enum Windows32BitFunctionMapper implements FunctionMapper {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public String getFunctionName(NativeLibrary library, Method method) {
+                    if (method.getName().equals("JVM_DefineClass")) {
+                        return "_JVM_DefineClass@24";
+                    }
+                    return method.getName();
                 }
             }
 
