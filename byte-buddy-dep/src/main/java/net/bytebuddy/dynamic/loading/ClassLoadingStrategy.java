@@ -570,7 +570,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
 
     /**
      * A class loading strategy that injects a class using JNA via the JNI <i>DefineClass</i> method. This strategy can
-     * only be used if JNA is explicitly added as a dependency.
+     * only be used if JNA is explicitly added as a dependency. Some JVM implementations might not support this strategy.
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ForJnaInjection implements ClassLoadingStrategy<ClassLoader> {
