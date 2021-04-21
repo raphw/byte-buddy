@@ -2828,7 +2828,7 @@ public interface ClassInjector {
                         Map<String, Object> options = new HashMap<String, Object>();
                         options.put(Library.OPTION_ALLOW_OBJECTS, Boolean.TRUE);
                         if (Platform.isWindows() && !Platform.is64Bit()) {
-                            options.put(Library.OPTION_ALLOW_OBJECTS, Windows32BitFunctionMapper.INSTANCE);
+                            options.put(Library.OPTION_FUNCTION_MAPPER, Windows32BitFunctionMapper.INSTANCE);
                         }
                         return new Enabled(Native.loadLibrary("jvm", Jvm.class, options));
                     } catch (Throwable throwable) {
