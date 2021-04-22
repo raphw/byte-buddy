@@ -66,6 +66,40 @@ public class HashCodeMethodOtherTest {
     }
 
     @Test
+    public void testStaticTypeHash() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(HashCodeBase.class)
+                .defineField(FOO, Object.class, Visibility.PUBLIC)
+                .method(isHashCode())
+                .intercept(HashCodeMethod.usingTypeHashOffset(false))
+                .make()
+                .load(HashCodeBase.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        instance.getClass().getDeclaredField(FOO).set(instance, FOO);
+        assertThat(instance.hashCode(), is(loaded.getLoaded().hashCode() * 31 + FOO.hashCode()));
+    }
+
+    @Test
+    public void testDynamicTypeHash() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(HashCodeBase.class)
+                .defineField(FOO, Object.class, Visibility.PUBLIC)
+                .method(isHashCode())
+                .intercept(HashCodeMethod.usingTypeHashOffset(true))
+                .make()
+                .load(HashCodeBase.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        instance.getClass().getDeclaredField(FOO).set(instance, FOO);
+        assertThat(instance.hashCode(), is(loaded.getLoaded().hashCode() * 31 + FOO.hashCode()));
+    }
+
+    @Test
     public void testMultiplier() throws Exception {
         DynamicType.Loaded<?> loaded = new ByteBuddy()
                 .subclass(Object.class)

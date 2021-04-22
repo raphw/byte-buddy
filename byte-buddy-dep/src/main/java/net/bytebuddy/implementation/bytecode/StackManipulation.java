@@ -102,6 +102,11 @@ public interface StackManipulation {
     class Size {
 
         /**
+         * A size of zero.
+         */
+        public static final Size ZERO = new Size(0, 0);
+
+        /**
          * The impact of any size operation onto the operand stack. This value can be negative if more values
          * were consumed from the stack than added to it.
          */
@@ -220,7 +225,7 @@ public interface StackManipulation {
          * {@inheritDoc}
          */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            Size size = new Size(0, 0);
+            Size size = Size.ZERO;
             for (StackManipulation stackManipulation : stackManipulations) {
                 size = size.aggregate(stackManipulation.apply(methodVisitor, implementationContext));
             }

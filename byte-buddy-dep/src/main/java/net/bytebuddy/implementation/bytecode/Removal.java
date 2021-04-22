@@ -31,7 +31,7 @@ public enum Removal implements StackManipulation {
     ZERO(StackSize.ZERO, Opcodes.NOP) {
         /** {@inheritDoc} */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            return new Size(0, 0);
+            return Size.ZERO;
         }
     },
 

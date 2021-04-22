@@ -490,7 +490,7 @@ public class EqualsMethod implements Implementation {
                     methodVisitor.visitJumpInsn(Opcodes.IFNULL, firstValueNull);
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize() + 1);
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize());
-                    return new Size(0, 0);
+                    return Size.ZERO;
                 }
             }
 
@@ -527,7 +527,7 @@ public class EqualsMethod implements Implementation {
                     if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
                         methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                     }
-                    return new Size(0, 0);
+                    return Size.ZERO;
                 }
             }
         }

@@ -67,6 +67,6 @@ public class InstanceCheck implements StackManipulation {
      */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, typeDescription.getInternalName());
-        return new Size(0, 0);
+        return Size.ZERO;
     }
 }

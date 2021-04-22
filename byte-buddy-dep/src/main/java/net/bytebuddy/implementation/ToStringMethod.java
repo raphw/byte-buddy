@@ -415,7 +415,7 @@ public class ToStringMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Z)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -426,7 +426,7 @@ public class ToStringMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(C)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -437,7 +437,7 @@ public class ToStringMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -459,7 +459,7 @@ public class ToStringMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(F)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -481,7 +481,7 @@ public class ToStringMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -493,7 +493,7 @@ public class ToStringMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/CharSequence;)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -504,7 +504,7 @@ public class ToStringMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/Object;)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -516,7 +516,7 @@ public class ToStringMethod implements Implementation {
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "toString", "([Z)Ljava/lang/String;", false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -528,7 +528,7 @@ public class ToStringMethod implements Implementation {
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "toString", "([B)Ljava/lang/String;", false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -540,7 +540,7 @@ public class ToStringMethod implements Implementation {
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "toString", "([S)Ljava/lang/String;", false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -552,7 +552,7 @@ public class ToStringMethod implements Implementation {
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "toString", "([C)Ljava/lang/String;", false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -564,7 +564,7 @@ public class ToStringMethod implements Implementation {
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "toString", "([I)Ljava/lang/String;", false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -576,7 +576,7 @@ public class ToStringMethod implements Implementation {
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "toString", "([J)Ljava/lang/String;", false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -588,7 +588,7 @@ public class ToStringMethod implements Implementation {
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "toString", "([F)Ljava/lang/String;", false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -600,7 +600,7 @@ public class ToStringMethod implements Implementation {
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "toString", "([D)Ljava/lang/String;", false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -612,7 +612,7 @@ public class ToStringMethod implements Implementation {
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "toString", "([Ljava/lang/Object;)Ljava/lang/String;", false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -624,7 +624,7 @@ public class ToStringMethod implements Implementation {
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "deepToString", "([Ljava/lang/Object;)Ljava/lang/String;", false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         };
 

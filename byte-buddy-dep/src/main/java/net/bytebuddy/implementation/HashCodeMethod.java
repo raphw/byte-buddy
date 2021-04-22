@@ -23,6 +23,7 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.*;
+import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -62,6 +63,14 @@ public class HashCodeMethod implements Implementation {
     private static final MethodDescription.InDefinedShape HASH_CODE = TypeDescription.ForLoadedType.of(Object.class)
             .getDeclaredMethods()
             .filter(isHashCode())
+            .getOnly();
+
+    /**
+     * The {@link Object#getClass()} method.
+     */
+    private static final MethodDescription.InDefinedShape GET_CLASS = TypeDescription.ForLoadedType.of(Object.class)
+            .getDeclaredMethods()
+            .filter(named("getClass").and(takesArguments(0)))
             .getOnly();
 
     /**
@@ -118,6 +127,16 @@ public class HashCodeMethod implements Implementation {
      */
     public static HashCodeMethod usingSuperClassOffset() {
         return new HashCodeMethod(OffsetProvider.ForSuperMethodCall.INSTANCE);
+    }
+
+    /**
+     * Creates a hash code method implementation that bases the hash code on the instrumented type's class constant's hash code..
+     *
+     * @param dynamic {@code true} if the type should be resolved from the instance and not be set as the declaring class.
+     * @return A hash code method implementation that bases the hash code on the instrumented type's class constant's hash code.
+     */
+    public static HashCodeMethod usingTypeHashOffset(boolean dynamic) {
+        return new HashCodeMethod(dynamic ? OffsetProvider.ForDynamicTypeHash.INSTANCE : OffsetProvider.ForStaticTypeHash.INSTANCE);
     }
 
     /**
@@ -259,6 +278,44 @@ public class HashCodeMethod implements Implementation {
                 return new StackManipulation.Compound(MethodVariableAccess.loadThis(), MethodInvocation.invoke(HASH_CODE).special(superClass.asErasure()));
             }
         }
+
+        /**
+         * An offset provider that uses the instrumented type's class constant's hash code.
+         */
+        enum ForStaticTypeHash implements OffsetProvider {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public StackManipulation resolve(TypeDescription instrumentedType) {
+                return new StackManipulation.Compound(ClassConstant.of(instrumentedType), MethodInvocation.invoke(HASH_CODE).virtual(TypeDescription.CLASS));
+            }
+        }
+
+        /**
+         * An offset provider that uses the instance's class's hash code.
+         */
+        enum ForDynamicTypeHash implements OffsetProvider {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public StackManipulation resolve(TypeDescription instrumentedType) {
+                return new StackManipulation.Compound(MethodVariableAccess.loadThis(),
+                        MethodInvocation.invoke(GET_CLASS).virtual(instrumentedType),
+                        MethodInvocation.invoke(HASH_CODE).virtual(TypeDescription.CLASS));
+            }
+        }
     }
 
     /**
@@ -397,7 +454,7 @@ public class HashCodeMethod implements Implementation {
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize());
                     methodVisitor.visitJumpInsn(Opcodes.IFNULL, label);
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize());
-                    return new Size(0, 0);
+                    return Size.ZERO;
                 }
             }
 
@@ -422,7 +479,7 @@ public class HashCodeMethod implements Implementation {
                     if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
                         methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, INTEGER.length, INTEGER);
                     }
-                    return new Size(0, 0);
+                    return Size.ZERO;
                 }
             }
         }
@@ -455,7 +512,7 @@ public class HashCodeMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Float", "floatToIntBits", "(F)I", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -482,7 +539,7 @@ public class HashCodeMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([Z)I", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -493,7 +550,7 @@ public class HashCodeMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([B)I", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -504,7 +561,7 @@ public class HashCodeMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([S)I", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -515,7 +572,7 @@ public class HashCodeMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([C)I", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -526,7 +583,7 @@ public class HashCodeMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([I)I", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -537,7 +594,7 @@ public class HashCodeMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([J)I", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -548,7 +605,7 @@ public class HashCodeMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([F)I", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -559,7 +616,7 @@ public class HashCodeMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([D)I", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -570,7 +627,7 @@ public class HashCodeMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([Ljava/lang/Object;)I", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         },
 
@@ -581,7 +638,7 @@ public class HashCodeMethod implements Implementation {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "deepHashCode", "([Ljava/lang/Object;)I", false);
-                return new Size(0, 0);
+                return Size.ZERO;
             }
         };
 

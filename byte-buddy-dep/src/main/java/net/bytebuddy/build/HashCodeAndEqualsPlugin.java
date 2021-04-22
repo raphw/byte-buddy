@@ -60,7 +60,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
         Enhance enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class).load();
         if (typeDescription.getDeclaredMethods().filter(isHashCode()).isEmpty()) {
             builder = builder.method(isHashCode()).intercept(enhance.invokeSuper()
-                    .hashCodeMethod(typeDescription)
+                    .hashCodeMethod(typeDescription, enhance.useTypeHashConstant(), enhance.permitSubclassEquality())
                     .withIgnoredFields(enhance.includeSyntheticFields()
                             ? ElementMatchers.<FieldDescription>none()
                             : ElementMatchers.<FieldDescription>isSynthetic())
@@ -159,6 +159,14 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
         boolean permitSubclassEquality() default false;
 
         /**
+         * Determines if the hash code constant should be derived of the instrumented type. If {@link Enhance#permitSubclassEquality()}
+         * is set to {@code true}, this constant is derived of the declared class, otherwise the type hash is computed of the active instance.
+         *
+         * @return {@code true} if the hash code constant should be derived of the instrumented type.
+         */
+        boolean useTypeHashConstant() default true;
+
+        /**
          * A strategy for determining the base value of a hash code or equality contract.
          */
         enum InvokeSuper {
@@ -168,7 +176,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
              */
             IF_DECLARED {
                 @Override
-                protected HashCodeMethod hashCodeMethod(TypeDescription instrumentedType) {
+                protected HashCodeMethod hashCodeMethod(TypeDescription instrumentedType, boolean typeHash, boolean subclassEquality) {
                     TypeDefinition typeDefinition = instrumentedType.getSuperClass();
                     while (typeDefinition != null && !typeDefinition.represents(Object.class)) {
                         if (typeDefinition.asErasure().getDeclaredAnnotations().isAnnotationPresent(Enhance.class)) {
@@ -177,12 +185,12 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
                         MethodList<?> hashCode = typeDefinition.getDeclaredMethods().filter(isHashCode());
                         if (!hashCode.isEmpty()) {
                             return hashCode.getOnly().isAbstract()
-                                    ? HashCodeMethod.usingDefaultOffset()
+                                    ? (typeHash ? HashCodeMethod.usingTypeHashOffset(!subclassEquality) : HashCodeMethod.usingDefaultOffset())
                                     : HashCodeMethod.usingSuperClassOffset();
                         }
                         typeDefinition = typeDefinition.getSuperClass();
                     }
-                    return HashCodeMethod.usingDefaultOffset();
+                    return typeHash ? HashCodeMethod.usingTypeHashOffset(!subclassEquality) : HashCodeMethod.usingDefaultOffset();
                 }
 
                 @Override
@@ -209,11 +217,11 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
              */
             IF_ANNOTATED {
                 @Override
-                protected HashCodeMethod hashCodeMethod(TypeDescription instrumentedType) {
+                protected HashCodeMethod hashCodeMethod(TypeDescription instrumentedType, boolean typeHash, boolean subclassEquality) {
                     TypeDefinition superClass = instrumentedType.getSuperClass();
                     return superClass != null && superClass.asErasure().getDeclaredAnnotations().isAnnotationPresent(Enhance.class)
                             ? HashCodeMethod.usingSuperClassOffset()
-                            : HashCodeMethod.usingDefaultOffset();
+                            : (typeHash ? HashCodeMethod.usingTypeHashOffset(!subclassEquality) : HashCodeMethod.usingDefaultOffset());
                 }
 
                 @Override
@@ -230,7 +238,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
              */
             ALWAYS {
                 @Override
-                protected HashCodeMethod hashCodeMethod(TypeDescription instrumentedType) {
+                protected HashCodeMethod hashCodeMethod(TypeDescription instrumentedType, boolean typeHash, boolean subclassEquality) {
                     return HashCodeMethod.usingSuperClassOffset();
                 }
 
@@ -245,8 +253,8 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
              */
             NEVER {
                 @Override
-                protected HashCodeMethod hashCodeMethod(TypeDescription instrumentedType) {
-                    return HashCodeMethod.usingDefaultOffset();
+                protected HashCodeMethod hashCodeMethod(TypeDescription instrumentedType, boolean typeHash, boolean subclassEquality) {
+                    return typeHash ? HashCodeMethod.usingTypeHashOffset(!subclassEquality) : HashCodeMethod.usingDefaultOffset();
                 }
 
                 @Override
@@ -259,9 +267,11 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
              * Resolves the hash code method to use.
              *
              * @param instrumentedType The instrumented type.
+             * @param typeHash         {@code true} if the base hash should be based on the instrumented class's type.
+             * @param subclassEquality {@code true} if subclasses can be equal to their base classes.
              * @return The hash code method to use.
              */
-            protected abstract HashCodeMethod hashCodeMethod(TypeDescription instrumentedType);
+            protected abstract HashCodeMethod hashCodeMethod(TypeDescription instrumentedType, boolean typeHash, boolean subclassEquality);
 
             /**
              * Resolves the equals method to use.

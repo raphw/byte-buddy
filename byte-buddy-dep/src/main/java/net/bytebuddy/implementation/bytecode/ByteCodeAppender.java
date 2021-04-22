@@ -57,6 +57,11 @@ public interface ByteCodeAppender {
     class Size {
 
         /**
+         * A size of zero.
+         */
+        public static final Size ZERO = new Size(0, 0);
+
+        /**
          * The size of the operand stack.
          */
         private final int operandStackSize;

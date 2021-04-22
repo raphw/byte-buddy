@@ -149,7 +149,7 @@ public interface TypeInitializer extends ByteCodeAppender {
          * {@inheritDoc}
          */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-            return new Size(0, 0);
+            return Size.ZERO;
         }
     }
 
