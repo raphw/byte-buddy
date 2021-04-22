@@ -137,7 +137,7 @@ public abstract class InvocationHandlerAdapter implements Implementation.Composa
      * @return An implementation that delegates all method interceptions to the given invocation handler.
      */
     public static InvocationHandlerAdapter of(InvocationHandler invocationHandler) {
-        return of(invocationHandler, ForInstance.PREFIX + "$" + RandomString.hashOf(invocationHandler.hashCode()));
+        return of(invocationHandler, ForInstance.PREFIX + "$" + RandomString.hashOf(invocationHandler.getClass().hashCode() ^ invocationHandler.hashCode()));
     }
 
     /**
@@ -354,6 +354,11 @@ public abstract class InvocationHandlerAdapter implements Implementation.Composa
          * {@inheritDoc}
          */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            if (!instrumentedType.getDeclaredFields().filter(named(fieldName).and(fieldType(INVOCATION_HANDLER_TYPE.asErasure()))).isEmpty()) {
+                throw new IllegalStateException("Field with name " + fieldName
+                        + " and type " + INVOCATION_HANDLER_TYPE.asErasure()
+                        + " already declared by " + instrumentedType);
+            }
             return instrumentedType
                     .withField(new FieldDescription.Token(fieldName,
                             Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_VOLATILE | Opcodes.ACC_SYNTHETIC,

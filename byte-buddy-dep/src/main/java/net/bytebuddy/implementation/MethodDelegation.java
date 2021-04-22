@@ -1079,6 +1079,11 @@ public class MethodDelegation implements Implementation.Composable {
                  * {@inheritDoc}
                  */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    if (!instrumentedType.getDeclaredFields().filter(named(fieldName).and(fieldType(fieldType.asErasure()))).isEmpty()) {
+                        throw new IllegalStateException("Field with name " + fieldName
+                                + " and type " + fieldType.asErasure()
+                                + " already declared by " + instrumentedType);
+                    }
                     return instrumentedType
                             .withField(new FieldDescription.Token(fieldName,
                                     Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_VOLATILE | Opcodes.ACC_SYNTHETIC,
@@ -1598,7 +1603,7 @@ public class MethodDelegation implements Implementation.Composable {
         public MethodDelegation to(Object target, Type type, MethodGraph.Compiler methodGraphCompiler) {
             return to(target,
                     type,
-                    ImplementationDelegate.FIELD_NAME_PREFIX + "$" + RandomString.hashOf(target.hashCode()),
+                    ImplementationDelegate.FIELD_NAME_PREFIX + "$" + RandomString.hashOf(target.getClass().hashCode() ^ target.hashCode()),
                     methodGraphCompiler);
         }
 
@@ -1665,7 +1670,7 @@ public class MethodDelegation implements Implementation.Composable {
         public MethodDelegation to(Object target, TypeDefinition typeDefinition, MethodGraph.Compiler methodGraphCompiler) {
             return to(target,
                     typeDefinition,
-                    ImplementationDelegate.FIELD_NAME_PREFIX + "$" + RandomString.hashOf(target.hashCode()),
+                    ImplementationDelegate.FIELD_NAME_PREFIX + "$" + RandomString.hashOf(target.getClass().hashCode() ^ target.hashCode()),
                     methodGraphCompiler);
         }
 

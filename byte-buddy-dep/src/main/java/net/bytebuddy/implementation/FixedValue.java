@@ -34,6 +34,7 @@ import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import static net.bytebuddy.matcher.ElementMatchers.fieldType;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -645,7 +646,7 @@ public abstract class FixedValue implements Implementation {
          * @param value The fixed value to be returned.
          */
         protected ForValue(Object value) {
-            this(PREFIX + "$" + RandomString.hashOf(value.hashCode()), value);
+            this(PREFIX + "$" + RandomString.hashOf(value.getClass().hashCode() ^ value.hashCode()), value);
         }
 
         /**
@@ -685,6 +686,9 @@ public abstract class FixedValue implements Implementation {
          * {@inheritDoc}
          */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            if (!instrumentedType.getDeclaredFields().filter(named(fieldName).and(fieldType(fieldType.asErasure()))).isEmpty()) {
+                throw new IllegalStateException("Field with name " + fieldName + " and type " + fieldType.asErasure() + " already declared by " + instrumentedType);
+            }
             return instrumentedType
                     .withField(new FieldDescription.Token(fieldName,
                             Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_VOLATILE | Opcodes.ACC_SYNTHETIC,
