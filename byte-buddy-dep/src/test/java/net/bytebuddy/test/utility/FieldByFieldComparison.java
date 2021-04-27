@@ -2,9 +2,11 @@ package net.bytebuddy.test.utility;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import org.hamcrest.BaseMatcher;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
@@ -22,11 +24,15 @@ public class FieldByFieldComparison<T> extends BaseMatcher<T> {
         this.base = base;
     }
 
+    @SuppressWarnings("unchecked")
     public static <S> Matcher<S> hasPrototype(S instance) {
         if (instance == null) {
-            throw new AssertionError("No instance can be similar to null");
+            return (Matcher<S>) CoreMatchers.nullValue();
+        } else if (instance.getClass().isArray()) {
+            return CoreMatchers.is(instance);
+        } else {
+            return new FieldByFieldComparison<S>(instance);
         }
-        return new FieldByFieldComparison<S>(instance);
     }
 
     public static <S> S matchesPrototype(S instance) {
@@ -111,6 +117,19 @@ public class FieldByFieldComparison<T> extends BaseMatcher<T> {
                         Iterator<?> rightIterable = ((Iterable<?>) rightObject).iterator();
                         for (Object instance : (Iterable<?>) leftObject) {
                             if (!rightIterable.hasNext() || !matches(instance.getClass(), instance, rightIterable.next(), visited)) {
+                                return false;
+                            }
+                        }
+                    } else if (field.getType().isArray()) {
+                        if (rightObject == null) {
+                            return false;
+                        }
+                        int length = Array.getLength(leftObject);
+                        if (Array.getLength(rightObject) != length) {
+                            return false;
+                        }
+                        for (int index = 0; index < length; index++) {
+                            if (!matches(Array.get(leftObject, index).getClass(), Array.get(leftObject, index), Array.get(rightObject, index), visited)) {
                                 return false;
                             }
                         }

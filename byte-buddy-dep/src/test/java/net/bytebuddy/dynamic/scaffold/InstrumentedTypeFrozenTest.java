@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -17,8 +18,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
 public class InstrumentedTypeFrozenTest {
@@ -27,8 +29,10 @@ public class InstrumentedTypeFrozenTest {
     public void testDelegation() throws Exception {
         for (Method method : TypeDescription.class.getDeclaredMethods()) {
             if (method.getParameterTypes().length == 0 && Modifier.isPublic(method.getModifiers()) && !method.isSynthetic()) {
-                assertThat(method.invoke(new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE)),
-                        is(method.invoke(TypeDescription.STRING)));
+                Object value = method.invoke(new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE));
+                assertThat(value, value instanceof ClassFileVersion
+                        ? hasPrototype(method.invoke(TypeDescription.STRING))
+                        : is(method.invoke(TypeDescription.STRING)));
             }
         }
     }
