@@ -2713,7 +2713,7 @@ public interface AnnotationValue<T, S> {
             /**
              * {@inheritDoc}
              */
-            public W resolve() {
+            public W resolve() { // TODO: Where is this actually used?
                 throw new IncompatibleClassChangeError(type.toString());
             }
 

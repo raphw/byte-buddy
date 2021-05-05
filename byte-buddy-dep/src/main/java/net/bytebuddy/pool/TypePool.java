@@ -6187,7 +6187,9 @@ public interface TypePool {
                         if (!resolution.isResolved()) {
                             return new AnnotationValue.ForMissingType<AnnotationDescription, Annotation>(annotationToken.getBinaryName());
                         } else if (!resolution.resolve().getAnnotationType().isAnnotation()) {
-                            return new ForIncompatibleType<AnnotationDescription, Annotation>(resolution.resolve().getAnnotationType());
+                            return new ForMismatchedType<>(TypeDescription.OBJECT.getDeclaredMethods()
+                                    .filter(named("toString"))
+                                    .getOnly(), "FOO"); // TODO: values
                         } else {
                             return new AnnotationValue.ForAnnotationDescription<Annotation>(resolution.resolve());
                         }
@@ -6235,7 +6237,9 @@ public interface TypePool {
                         if (!resolution.isResolved()) {
                             return new AnnotationValue.ForMissingType<EnumerationDescription, Enum<?>>(typeName);
                         } else if (!resolution.resolve().isEnum()) {
-                            return new ForIncompatibleType<EnumerationDescription, Enum<?>>(resolution.resolve());
+                            return new ForMismatchedType<EnumerationDescription, Enum<?>>(TypeDescription.OBJECT.getDeclaredMethods()
+                                    .filter(named("toString"))
+                                    .getOnly(), "FOO"); // TODO: values!
                         } else if (resolution.resolve().getDeclaredFields().filter(named(value)).isEmpty()) {
                             return new AnnotationValue.ForEnumerationDescription.WithUnknownConstant(resolution.resolve(), value);
                         } else {
@@ -6308,7 +6312,9 @@ public interface TypePool {
                         } else if (resolution.resolve().represents(double.class)) {
                             return new AnnotationValue.ForDescriptionArray<Object, Object>(double.class, resolution.resolve(), values);
                         } else {
-                            return new ForIncompatibleType<Object, Object>(resolution.resolve());
+                            return new ForMismatchedType<>(TypeDescription.OBJECT.getDeclaredMethods()
+                                    .filter(named("toString"))
+                                    .getOnly(), "FOO"); // TODO: values
                         }
                     }
                 }
