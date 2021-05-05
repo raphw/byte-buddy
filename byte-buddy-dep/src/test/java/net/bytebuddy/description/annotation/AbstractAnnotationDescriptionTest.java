@@ -322,6 +322,17 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertThat(describe(broken), notNullValue(AnnotationDescription.class));
     }
 
+    @Test
+    public void testBrokenAnnotationDuplicateValue() throws Exception {
+        assertThat(describe(broken).prepare(BrokenAnnotation.class).load().duplicateValue(), is(BAR));
+    }
+
+    @Test
+    public void testBrokenAnnotationDuplicateValueState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("duplicateValue"))).getState(),
+                is(AnnotationValue.State.RESOLVED));
+    }
+
     @Test(expected = AnnotationTypeMismatchException.class)
     public void testBrokenAnnotationIncompatibleValue() throws Exception {
         describe(broken).prepare(BrokenAnnotation.class).load().incompatibleValue();
@@ -892,6 +903,8 @@ public abstract class AbstractAnnotationDescriptionTest {
     @Retention(RetentionPolicy.RUNTIME)
     public @interface BrokenAnnotation {
 
+        String duplicateValue();
+
         String incompatibleValue();
 
         String[] incompatibleValueArray();
@@ -955,6 +968,8 @@ public abstract class AbstractAnnotationDescriptionTest {
             public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
                 super.visit(version, access, name, signature, superName, interfaces);
                 AnnotationVisitor annotationVisitor = visitAnnotation(Type.getDescriptor(BrokenAnnotation.class), true);
+                annotationVisitor.visit("duplicateValue", FOO);
+                annotationVisitor.visit("duplicateValue", BAR);
                 annotationVisitor.visit("incompatibleValue", INTEGER);
                 AnnotationVisitor incompatibleValueArray = annotationVisitor.visitArray("incompatibleValueArray");
                 incompatibleValueArray.visit(null, INTEGER);
