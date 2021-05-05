@@ -2417,7 +2417,7 @@ public interface AnnotationValue<T, S> {
         private final String value;
 
         /**
-         * Creates an annotation description for a mismatched typeName.
+         * Creates an annotation description for a mismatched type.
          *
          * @param property The property that does not defines a non-matching value.
          * @param value    A value description of the property.

@@ -1,6 +1,6 @@
 package net.bytebuddy.description.method;
 
-import org.junit.Ignore;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
@@ -31,7 +31,7 @@ public class MethodDescriptionForLoadedTest extends AbstractMethodDescriptionTes
 
     @Test
     @Override
-    @Ignore("The JVM does not currently consider synthetic parameter indices for annotations")
+    @JavaVersionRule.Enforce(17)
     public void testEnumConstructorAnnotation() throws Exception {
         super.testEnumConstructorAnnotation();
     }

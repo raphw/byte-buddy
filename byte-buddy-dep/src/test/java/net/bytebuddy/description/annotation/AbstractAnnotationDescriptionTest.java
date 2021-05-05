@@ -182,7 +182,8 @@ public abstract class AbstractAnnotationDescriptionTest {
         explicitTarget = ExplicitTarget.Carrier.class.getAnnotation(ExplicitTarget.class);
         brokenCarrier = new ByteBuddy()
                 .subclass(Object.class)
-                .visit(new AnnotationValueBreaker(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V12), false))
+                .visit(new AnnotationValueBreaker(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V12),
+                        ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V17)))
                 .make()
                 .include(new ByteBuddy().subclass(Object.class).name(BrokenAnnotationProperty.class.getName()).make())
                 .include(new ByteBuddy().subclass(Object.class).name(BrokenEnumerationProperty.class.getName()).make())
@@ -367,52 +368,59 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("The OpenJDK annotation parser does not currently recognize incompatible annotation types")
+    @JavaVersionRule.Enforce(17)
+    @Ignore("Bug in TypePool")
     public void testBrokenAnnotationIncompatibleAnnotationDeclaration() throws Exception {
         describe(broken).prepare(BrokenAnnotation.class).load().incompatibleAnnotationDeclaration();
     }
 
     @Test
-    @Ignore("The OpenJDK annotation parser does not currently recognize incompatible annotation types")
+    @JavaVersionRule.Enforce(17)
     public void testBrokenAnnotationIncompatibleAnnotationDeclarationState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("incompatibleAnnotationDeclaration"))).getState(),
+        AnnotationDescription d = describe(broken);
+        AnnotationValue<?, ?> v = d.getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("incompatibleAnnotationDeclaration")));
+        assertThat(v.getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("The OpenJDK annotation parser does not currently recognize incompatible annotation types")
+    @JavaVersionRule.Enforce(17)
+    @Ignore("Bug in TypePool")
     public void testBrokenAnnotationIncompatibleAnnotationDeclarationArray() throws Exception {
         describe(broken).prepare(BrokenAnnotation.class).load().incompatibleAnnotationDeclarationArray();
     }
 
     @Test
-    @Ignore("The OpenJDK annotation parser does not currently recognize incompatible annotation types")
+    @JavaVersionRule.Enforce(17)
     public void testBrokenAnnotationIncompatibleAnnotationDeclarationArrayState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("incompatibleAnnotationDeclarationArray"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("The OpenJDK annotation parser does not currently recognize incompatible annotation types")
+    @JavaVersionRule.Enforce(17)
+    @Ignore("Bug in TypePool")
     public void testBrokenAnnotationIncompatibleEnumerationDeclaration() throws Exception {
         describe(broken).prepare(BrokenAnnotation.class).load().incompatibleEnumerationDeclaration();
     }
 
     @Test
-    @Ignore("The OpenJDK annotation parser does not currently recognize incompatible annotation types")
+    @JavaVersionRule.Enforce(17)
     public void testBrokenAnnotationIncompatibleEnumerationDeclarationState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("incompatibleEnumerationDeclaration"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("The OpenJDK annotation parser does not currently recognize incompatible annotation types")
+    @JavaVersionRule.Enforce(17)
+    @Ignore("Bug in OpenJDK")
     public void testBrokenAnnotationIncompatibleEnumerationDeclarationArray() throws Exception {
         describe(broken).prepare(BrokenAnnotation.class).load().incompatibleEnumerationDeclarationArray();
     }
 
     @Test
-    @Ignore("The OpenJDK annotation parser does not currently recognize incompatible annotation types")
+    @JavaVersionRule.Enforce(17)
+    @Ignore("Bug in OpenJDK")
     public void testBrokenAnnotationIncompatibleEnumerationDeclarationArrayState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("incompatibleEnumerationDeclarationArray"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
@@ -472,6 +480,7 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     @Test
     @JavaVersionRule.Enforce(12)
+    @Ignore("Bug in TypePool")
     public void testBrokenAnnotationToString() throws Exception {
         assertToString(describe(broken).toString(), broken);
         assertToString(describe(broken).prepare(BrokenAnnotation.class).toString(), broken);
