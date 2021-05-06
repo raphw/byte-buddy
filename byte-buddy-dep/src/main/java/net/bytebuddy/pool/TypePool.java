@@ -7740,15 +7740,6 @@ public interface TypePool {
             private static final int REAL_MODIFIER_MASK = 0xFFFF;
 
             /**
-             * A mask that defines properties that the inner class modifier cannot overrule.
-             */
-            private static final int PERSISTENT_MODIFIER_MASK = Opcodes.ACC_INTERFACE
-                    | Opcodes.ACC_ANNOTATION
-                    | Opcodes.ACC_ABSTRACT
-                    | Opcodes.ACC_FINAL
-                    | Opcodes.ACC_ENUM;
-
-            /**
              * A mapping of the super types' type annotation tokens by their indices.
              */
             private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> superTypeAnnotationTokens;
@@ -7911,7 +7902,7 @@ public interface TypePool {
                     if (innerName == null && !typeContainment.isSelfContained()) { // Some compilers define this property inconsistently.
                         anonymousType = true;
                     }
-                    this.modifiers = (modifiers & REAL_MODIFIER_MASK) | (this.modifiers & PERSISTENT_MODIFIER_MASK);
+                    this.modifiers = modifiers & REAL_MODIFIER_MASK;
                 } else if (outerName != null && innerName != null && outerName.equals(this.internalName)) {
                     declaredTypes.add("L" + internalName + ";");
                 }
