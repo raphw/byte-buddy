@@ -182,6 +182,7 @@ public abstract class AbstractAnnotationDescriptionTest {
         brokenCarrier = new ByteBuddy()
                 .subclass(Object.class)
                 .visit(new AnnotationValueBreaker(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V12),
+                        ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V17),
                         ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V17)))
                 .make()
                 .include(new ByteBuddy().subclass(Object.class).name(BrokenAnnotationProperty.class.getName()).make())
@@ -379,6 +380,58 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     @Test(expected = AnnotationTypeMismatchException.class)
     @JavaVersionRule.Enforce(17)
+    public void testBrokenAnnotationBrokenAnnotationDeclaration() throws Exception {
+        describe(broken).prepare(BrokenAnnotation.class).load().brokenAnnotationDeclaration();
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(17)
+    public void testBrokenAnnotationBrokenAnnotationDeclarationState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("brokenAnnotationDeclaration"))).getState(),
+                is(AnnotationValue.State.UNRESOLVED));
+    }
+
+    @Test(expected = AnnotationTypeMismatchException.class)
+    @JavaVersionRule.Enforce(17)
+    public void testBrokenAnnotationBrokenAnnotationDeclarationArray() throws Exception {
+        describe(broken).prepare(BrokenAnnotation.class).load().brokenAnnotationDeclarationArray();
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(17)
+    public void testBrokenAnnotationBrokenAnnotationDeclarationArrayState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("brokenAnnotationDeclarationArray"))).getState(),
+                is(AnnotationValue.State.UNRESOLVED));
+    }
+
+    @Test(expected = AnnotationTypeMismatchException.class)
+    @JavaVersionRule.Enforce(17)
+    public void testBrokenAnnotationBrokenEnumerationDeclaration() throws Exception {
+        describe(broken).prepare(BrokenAnnotation.class).load().brokenEnumerationDeclaration();
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(17)
+    public void testBrokenAnnotationBrokenEnumerationDeclarationState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("brokenEnumerationDeclaration"))).getState(),
+                is(AnnotationValue.State.UNRESOLVED));
+    }
+
+    @Test(expected = AnnotationTypeMismatchException.class)
+    @JavaVersionRule.Enforce(17)
+    public void testBrokenAnnotationBrokenEnumerationDeclarationArray() throws Exception {
+        describe(broken).prepare(BrokenAnnotation.class).load().brokenEnumerationDeclarationArray();
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(17)
+    public void testBrokenAnnotationBrokenEnumerationDeclarationArrayState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("brokenEnumerationDeclarationArray"))).getState(),
+                is(AnnotationValue.State.UNRESOLVED));
+    }
+
+    @Test(expected = AnnotationTypeMismatchException.class)
+    @JavaVersionRule.Enforce(17)
     public void testBrokenAnnotationIncompatibleAnnotationDeclaration() throws Exception {
         describe(broken).prepare(BrokenAnnotation.class).load().incompatibleAnnotationDeclaration();
     }
@@ -386,9 +439,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     @Test
     @JavaVersionRule.Enforce(17)
     public void testBrokenAnnotationIncompatibleAnnotationDeclarationState() throws Exception {
-        AnnotationDescription d = describe(broken);
-        AnnotationValue<?, ?> v = d.getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("incompatibleAnnotationDeclaration")));
-        assertThat(v.getState(),
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("incompatibleAnnotationDeclaration"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
@@ -913,13 +964,21 @@ public abstract class AbstractAnnotationDescriptionTest {
 
         String[] missingValueArray();
 
-        BrokenAnnotationProperty incompatibleAnnotationDeclaration();
+        IncompatibleAnnotationProperty incompatibleAnnotationDeclaration();
 
-        BrokenAnnotationProperty[] incompatibleAnnotationDeclarationArray();
+        IncompatibleAnnotationProperty[] incompatibleAnnotationDeclarationArray();
 
-        BrokenEnumerationProperty incompatibleEnumerationDeclaration();
+        IncompatibleEnumerationProperty incompatibleEnumerationDeclaration();
 
-        BrokenEnumerationProperty[] incompatibleEnumerationDeclarationArray();
+        IncompatibleEnumerationProperty[] incompatibleEnumerationDeclarationArray();
+
+        BrokenAnnotationProperty brokenAnnotationDeclaration();
+
+        BrokenAnnotationProperty[] brokenAnnotationDeclarationArray();
+
+        BrokenEnumerationProperty brokenEnumerationDeclaration();
+
+        BrokenEnumerationProperty[] brokenEnumerationDeclarationArray();
 
         SampleEnumeration unknownEnumerationConstant();
 
@@ -928,6 +987,14 @@ public abstract class AbstractAnnotationDescriptionTest {
         Class<?> missingType();
 
         Class<?>[] missingTypeArray();
+    }
+
+    public @interface IncompatibleAnnotationProperty {
+        /* empty */
+    }
+
+    public enum IncompatibleEnumerationProperty {
+        FOO
     }
 
     public @interface BrokenAnnotationProperty {
@@ -940,11 +1007,12 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     private static class AnnotationValueBreaker extends AsmVisitorWrapper.AbstractBase {
 
-        private final boolean allowMissingValues, incompatibleDeclaration;
+        private final boolean allowMissingValues, allowIncompatibleDeclaration, allowBrokenDeclaration;
 
-        private AnnotationValueBreaker(boolean allowMissingValues, boolean allowIncompleteDeclaration) {
+        private AnnotationValueBreaker(boolean allowMissingValues, boolean allowIncompatibleDeclaration, boolean allowBrokenDeclaration) {
             this.allowMissingValues = allowMissingValues;
-            this.incompatibleDeclaration = allowIncompleteDeclaration;
+            this.allowIncompatibleDeclaration = allowIncompatibleDeclaration;
+            this.allowBrokenDeclaration = allowBrokenDeclaration;
         }
 
         public ClassVisitor wrap(TypeDescription instrumentedType,
@@ -974,16 +1042,6 @@ public abstract class AbstractAnnotationDescriptionTest {
                 AnnotationVisitor incompatibleValueArray = annotationVisitor.visitArray("incompatibleValueArray");
                 incompatibleValueArray.visit(null, INTEGER);
                 incompatibleValueArray.visitEnd();
-                if (incompatibleDeclaration) {
-                    annotationVisitor.visitAnnotation("incompatibleEnumerationDeclaration", Type.getDescriptor(BrokenAnnotationProperty.class)).visitEnd();
-                    AnnotationVisitor incompatibleAnnotationDeclarationArray = annotationVisitor.visitArray("incompatibleEnumerationDeclarationArray");
-                    incompatibleAnnotationDeclarationArray.visitAnnotation(null, Type.getDescriptor(BrokenAnnotationProperty.class));
-                    incompatibleAnnotationDeclarationArray.visitEnd();
-                    annotationVisitor.visitEnum("incompatibleAnnotationDeclaration", Type.getDescriptor(BrokenEnumerationProperty.class), FOO.toUpperCase());
-                    AnnotationVisitor incompatibleEnumerationDeclarationArray = annotationVisitor.visitArray("incompatibleAnnotationDeclarationArray");
-                    incompatibleEnumerationDeclarationArray.visitEnum(null, Type.getDescriptor(BrokenEnumerationProperty.class), FOO.toUpperCase());
-                    incompatibleEnumerationDeclarationArray.visitEnd();
-                }
                 if (allowMissingValues) {
                     annotationVisitor.visitEnum("unknownEnumerationConstant", Type.getDescriptor(SampleEnumeration.class), FOO);
                     AnnotationVisitor unknownEnumConstantArray = annotationVisitor.visitArray("unknownEnumerationConstantArray");
@@ -993,6 +1051,26 @@ public abstract class AbstractAnnotationDescriptionTest {
                     AnnotationVisitor missingTypeArray = annotationVisitor.visitArray("missingTypeArray");
                     missingTypeArray.visit(null, Type.getType("Lnet/bytebuddy/inexistant/Foo;"));
                     missingTypeArray.visitEnd();
+                }
+                if (allowIncompatibleDeclaration) {
+                    annotationVisitor.visitAnnotation("incompatibleEnumerationDeclaration", Type.getDescriptor(IncompatibleAnnotationProperty.class)).visitEnd();
+                    AnnotationVisitor incompatibleAnnotationDeclarationArray = annotationVisitor.visitArray("incompatibleEnumerationDeclarationArray");
+                    incompatibleAnnotationDeclarationArray.visitAnnotation(null, Type.getDescriptor(IncompatibleAnnotationProperty.class));
+                    incompatibleAnnotationDeclarationArray.visitEnd();
+                    annotationVisitor.visitEnum("incompatibleAnnotationDeclaration", Type.getDescriptor(IncompatibleEnumerationProperty.class), FOO.toUpperCase());
+                    AnnotationVisitor incompatibleEnumerationDeclarationArray = annotationVisitor.visitArray("incompatibleAnnotationDeclarationArray");
+                    incompatibleEnumerationDeclarationArray.visitEnum(null, Type.getDescriptor(IncompatibleEnumerationProperty.class), FOO.toUpperCase());
+                    incompatibleEnumerationDeclarationArray.visitEnd();
+                }
+                if (allowBrokenDeclaration) {
+                    annotationVisitor.visitAnnotation("brokenEnumerationDeclaration", Type.getDescriptor(BrokenEnumerationProperty.class)).visitEnd();
+                    AnnotationVisitor incompatibleAnnotationDeclarationArray = annotationVisitor.visitArray("brokenEnumerationDeclarationArray");
+                    incompatibleAnnotationDeclarationArray.visitAnnotation(null, Type.getDescriptor(BrokenEnumerationProperty.class));
+                    incompatibleAnnotationDeclarationArray.visitEnd();
+                    annotationVisitor.visitEnum("brokenAnnotationDeclaration", Type.getDescriptor(BrokenAnnotationProperty.class), FOO.toUpperCase());
+                    AnnotationVisitor incompatibleEnumerationDeclarationArray = annotationVisitor.visitArray("brokenAnnotationDeclarationArray");
+                    incompatibleEnumerationDeclarationArray.visitEnum(null, Type.getDescriptor(BrokenAnnotationProperty.class), FOO.toUpperCase());
+                    incompatibleEnumerationDeclarationArray.visitEnd();
                 }
                 annotationVisitor.visitEnd();
             }
