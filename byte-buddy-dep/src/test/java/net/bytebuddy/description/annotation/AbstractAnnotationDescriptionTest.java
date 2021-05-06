@@ -319,226 +319,226 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test
-    public void testBrokenAnnotationCanBeResolved() throws Exception {
+    public void testDefectiveAnnotationCanBeResolved() throws Exception {
         assertThat(describe(broken), notNullValue(AnnotationDescription.class));
     }
 
     @Test
-    public void testBrokenAnnotationDuplicateValue() throws Exception {
-        assertThat(describe(broken).prepare(BrokenAnnotation.class).load().duplicateValue(), is(BAR));
+    public void testDefectiveAnnotationDuplicateValue() throws Exception {
+        assertThat(describe(broken).prepare(DefectiveAnnotation.class).load().duplicateValue(), is(BAR));
     }
 
     @Test
-    public void testBrokenAnnotationDuplicateValueState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("duplicateValue"))).getState(),
+    public void testDefectiveAnnotationDuplicateValueState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("duplicateValue"))).getState(),
                 is(AnnotationValue.State.RESOLVED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    public void testBrokenAnnotationIncompatibleValue() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().incompatibleValue();
+    public void testDefectiveAnnotationIncompatibleValue() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().incompatibleValue();
     }
 
     @Test
-    public void testBrokenAnnotationIncompatibleValueState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("incompatibleValue"))).getState(),
+    public void testDefectiveAnnotationIncompatibleValueState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("incompatibleValue"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    public void testBrokenAnnotationIncompatibleValueArray() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().incompatibleValueArray();
+    public void testDefectiveAnnotationIncompatibleValueArray() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().incompatibleValueArray();
     }
 
     @Test
-    public void testBrokenAnnotationIncompatibleValueArrayState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("incompatibleValueArray"))).getState(),
+    public void testDefectiveAnnotationIncompatibleValueArrayState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("incompatibleValueArray"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = IncompleteAnnotationException.class)
-    public void testBrokenAnnotationMissingValue() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().missingValue();
+    public void testDefectiveAnnotationMissingValue() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().missingValue();
     }
 
     @Test
-    public void testBrokenAnnotationMissingValueState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("missingValue"))).getState(),
+    public void testDefectiveAnnotationMissingValueState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("missingValue"))).getState(),
                 is(AnnotationValue.State.UNDEFINED));
     }
 
     @Test(expected = IncompleteAnnotationException.class)
-    public void testBrokenAnnotationMissingValueArray() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().missingValueArray();
+    public void testDefectiveAnnotationMissingValueArray() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().missingValueArray();
     }
 
     @Test
-    public void testBrokenAnnotationMissingValueArrayState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("missingValueArray"))).getState(),
+    public void testDefectiveAnnotationMissingValueArrayState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("missingValueArray"))).getState(),
                 is(AnnotationValue.State.UNDEFINED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationBrokenAnnotationDeclaration() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().brokenAnnotationDeclaration();
+    public void testDefectiveAnnotationBrokenAnnotationDeclaration() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().brokenAnnotationDeclaration();
     }
 
     @Test
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationBrokenAnnotationDeclarationState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("brokenAnnotationDeclaration"))).getState(),
+    public void testDefectiveAnnotationBrokenAnnotationDeclarationState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("brokenAnnotationDeclaration"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationBrokenAnnotationDeclarationArray() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().brokenAnnotationDeclarationArray();
+    public void testDefectiveAnnotationBrokenAnnotationDeclarationArray() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().brokenAnnotationDeclarationArray();
     }
 
     @Test
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationBrokenAnnotationDeclarationArrayState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("brokenAnnotationDeclarationArray"))).getState(),
+    public void testDefectiveAnnotationBrokenAnnotationDeclarationArrayState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("brokenAnnotationDeclarationArray"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationBrokenEnumerationDeclaration() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().brokenEnumerationDeclaration();
+    public void testDefectiveAnnotationBrokenEnumerationDeclaration() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().brokenEnumerationDeclaration();
     }
 
     @Test
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationBrokenEnumerationDeclarationState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("brokenEnumerationDeclaration"))).getState(),
+    public void testDefectiveAnnotationBrokenEnumerationDeclarationState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("brokenEnumerationDeclaration"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationBrokenEnumerationDeclarationArray() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().brokenEnumerationDeclarationArray();
+    public void testDefectiveAnnotationBrokenEnumerationDeclarationArray() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().brokenEnumerationDeclarationArray();
     }
 
     @Test
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationBrokenEnumerationDeclarationArrayState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("brokenEnumerationDeclarationArray"))).getState(),
+    public void testDefectiveAnnotationBrokenEnumerationDeclarationArrayState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("brokenEnumerationDeclarationArray"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationIncompatibleAnnotationDeclaration() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().incompatibleAnnotationDeclaration();
+    public void testDefectiveAnnotationIncompatibleAnnotationDeclaration() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().incompatibleAnnotationDeclaration();
     }
 
     @Test
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationIncompatibleAnnotationDeclarationState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("incompatibleAnnotationDeclaration"))).getState(),
+    public void testDefectiveAnnotationIncompatibleAnnotationDeclarationState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("incompatibleAnnotationDeclaration"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationIncompatibleAnnotationDeclarationArray() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().incompatibleAnnotationDeclarationArray();
+    public void testDefectiveAnnotationIncompatibleAnnotationDeclarationArray() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().incompatibleAnnotationDeclarationArray();
     }
 
     @Test
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationIncompatibleAnnotationDeclarationArrayState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("incompatibleAnnotationDeclarationArray"))).getState(),
+    public void testDefectiveAnnotationIncompatibleAnnotationDeclarationArrayState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("incompatibleAnnotationDeclarationArray"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationIncompatibleEnumerationDeclaration() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().incompatibleEnumerationDeclaration();
+    public void testDefectiveAnnotationIncompatibleEnumerationDeclaration() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().incompatibleEnumerationDeclaration();
     }
 
     @Test
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationIncompatibleEnumerationDeclarationState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("incompatibleEnumerationDeclaration"))).getState(),
+    public void testDefectiveAnnotationIncompatibleEnumerationDeclarationState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("incompatibleEnumerationDeclaration"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationIncompatibleEnumerationDeclarationArray() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().incompatibleEnumerationDeclarationArray();
+    public void testDefectiveAnnotationIncompatibleEnumerationDeclarationArray() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().incompatibleEnumerationDeclarationArray();
     }
 
     @Test
     @JavaVersionRule.Enforce(17)
-    public void testBrokenAnnotationIncompatibleEnumerationDeclarationArrayState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("incompatibleEnumerationDeclarationArray"))).getState(),
+    public void testDefectiveAnnotationIncompatibleEnumerationDeclarationArrayState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("incompatibleEnumerationDeclarationArray"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = EnumConstantNotPresentException.class)
     @JavaVersionRule.Enforce(12)
-    public void testBrokenAnnotationUnknownEnumerationConstant() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().unknownEnumerationConstant();
+    public void testDefectiveAnnotationUnknownEnumerationConstant() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().unknownEnumerationConstant();
     }
 
     @Test
     @JavaVersionRule.Enforce(12)
-    public void testBrokenAnnotationUnknownEnumerationConstantState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("unknownEnumerationConstant"))).getState(),
+    public void testDefectiveAnnotationUnknownEnumerationConstantState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("unknownEnumerationConstant"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = EnumConstantNotPresentException.class)
     @JavaVersionRule.Enforce(12)
-    public void testBrokenAnnotationUnknownEnumerationConstantArray() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().unknownEnumerationConstantArray();
+    public void testDefectiveAnnotationUnknownEnumerationConstantArray() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().unknownEnumerationConstantArray();
     }
 
     @Test
     @JavaVersionRule.Enforce(12)
-    public void testBrokenAnnotationUnknownEnumerationConstantArrayState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("unknownEnumerationConstantArray"))).getState(),
+    public void testDefectiveAnnotationUnknownEnumerationConstantArrayState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("unknownEnumerationConstantArray"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = TypeNotPresentException.class)
     @JavaVersionRule.Enforce(12)
-    public void testBrokenAnnotationMissingType() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().missingType();
+    public void testDefectiveAnnotationMissingType() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().missingType();
     }
 
     @Test
     @JavaVersionRule.Enforce(12)
-    public void testBrokenAnnotationMissingTypeState() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("missingType"))).getState(),
+    public void testDefectiveAnnotationMissingTypeState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("missingType"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = TypeNotPresentException.class)
     @JavaVersionRule.Enforce(12)
-    public void testBrokenAnnotationMissingTypeArray() throws Exception {
-        describe(broken).prepare(BrokenAnnotation.class).load().missingTypeArray();
+    public void testDefectiveAnnotationMissingTypeArray() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().missingTypeArray();
     }
 
     @Test
     @JavaVersionRule.Enforce(12)
-    public void testBrokenAnnotationMissingTypeStateArray() throws Exception {
-        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("missingTypeArray"))).getState(),
+    public void testDefectiveAnnotationMissingTypeStateArray() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("missingTypeArray"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test
     @JavaVersionRule.Enforce(12)
-    public void testBrokenAnnotationToString() throws Exception {
+    public void testDefectiveAnnotationToString() throws Exception {
         assertToString(describe(broken).toString(), broken);
-        assertToString(describe(broken).prepare(BrokenAnnotation.class).toString(), broken);
+        assertToString(describe(broken).prepare(DefectiveAnnotation.class).toString(), broken);
     }
 
     @Test
@@ -952,7 +952,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    public @interface BrokenAnnotation {
+    public @interface DefectiveAnnotation {
 
         String duplicateValue();
 
@@ -1035,7 +1035,7 @@ public abstract class AbstractAnnotationDescriptionTest {
             @Override
             public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
                 super.visit(version, access, name, signature, superName, interfaces);
-                AnnotationVisitor annotationVisitor = visitAnnotation(Type.getDescriptor(BrokenAnnotation.class), true);
+                AnnotationVisitor annotationVisitor = visitAnnotation(Type.getDescriptor(DefectiveAnnotation.class), true);
                 annotationVisitor.visit("duplicateValue", FOO);
                 annotationVisitor.visit("duplicateValue", BAR);
                 annotationVisitor.visit("incompatibleValue", INTEGER);
