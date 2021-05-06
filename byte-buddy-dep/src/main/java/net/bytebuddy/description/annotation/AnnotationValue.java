@@ -418,7 +418,8 @@ public interface AnnotationValue<T, S> {
             } else if (typeDescription.isArray()) {
                 return '[';
             } else {
-                throw new IllegalArgumentException("Not an annotation component: " + typeDescription);
+                return 'L';
+                // TODO throw new IllegalArgumentException("Not an annotation component: " + typeDescription);
             }
         }
     }

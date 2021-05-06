@@ -1047,9 +1047,9 @@ public abstract class AbstractAnnotationDescriptionTest {
                     AnnotationVisitor unknownEnumConstantArray = annotationVisitor.visitArray("unknownEnumerationConstantArray");
                     unknownEnumConstantArray.visitEnum(null, Type.getDescriptor(SampleEnumeration.class), FOO);
                     unknownEnumConstantArray.visitEnd();
-                    annotationVisitor.visit("missingType", Type.getType("Lnet/bytebuddy/inexistant/Foo;"));
+                    annotationVisitor.visit("missingType", Type.getType("Lnet/bytebuddy/inexistent/Foo;"));
                     AnnotationVisitor missingTypeArray = annotationVisitor.visitArray("missingTypeArray");
-                    missingTypeArray.visit(null, Type.getType("Lnet/bytebuddy/inexistant/Foo;"));
+                    missingTypeArray.visit(null, Type.getType("Lnet/bytebuddy/inexistent/Foo;"));
                     missingTypeArray.visitEnd();
                 }
                 if (allowIncompatibleDeclaration) {
