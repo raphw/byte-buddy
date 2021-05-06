@@ -5422,7 +5422,7 @@ public interface TypePool {
                  */
                 private Resolution toAnnotationDescription(TypePool typePool) {
                     TypePool.Resolution resolution = typePool.describe(getBinaryName());
-                    return resolution.isResolved() && resolution.resolve().isAnnotation()
+                    return resolution.isResolved()
                             ? new Resolution.Simple(new LazyAnnotationDescription(typePool, resolution.resolve(), values))
                             : new Resolution.Illegal(getBinaryName());
                 }
@@ -5983,7 +5983,7 @@ public interface TypePool {
                     List<AnnotationDescription> annotationDescriptions = new ArrayList<AnnotationDescription>(tokens.size());
                     for (AnnotationToken token : tokens) {
                         AnnotationToken.Resolution resolution = token.toAnnotationDescription(typePool);
-                        if (resolution.isResolved()) {
+                        if (resolution.isResolved() && resolution.resolve().getAnnotationType().isAnnotation()) {
                             annotationDescriptions.add(resolution.resolve());
                         }
                     }

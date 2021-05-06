@@ -21,6 +21,7 @@ import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatchers;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.AnnotationTypeMismatchException;
@@ -836,7 +837,10 @@ public interface AnnotationValue<T, S> {
             } else if (value instanceof String[]) {
                 return of((String[]) value);
             } else {
-                throw new IllegalArgumentException("Not a constant annotation value: " + value);
+                return new AnnotationValue.ForMismatchedType<Object, Object>(TypeDescription.OBJECT.getDeclaredMethods()
+                        .filter(ElementMatchers.named("toString"))
+                        .getOnly(), null); // TODO: Value
+                // TODO throw new IllegalArgumentException("Not a constant annotation value: " + value);
             }
         }
 
