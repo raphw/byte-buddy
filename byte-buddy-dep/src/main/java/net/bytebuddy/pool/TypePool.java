@@ -5422,7 +5422,7 @@ public interface TypePool {
                  */
                 private Resolution toAnnotationDescription(TypePool typePool) {
                     TypePool.Resolution resolution = typePool.describe(getBinaryName());
-                    return resolution.isResolved()
+                    return resolution.isResolved() && resolution.resolve().isAnnotation()
                             ? new Resolution.Simple(new LazyAnnotationDescription(typePool, resolution.resolve(), values))
                             : new Resolution.Illegal(getBinaryName());
                 }
