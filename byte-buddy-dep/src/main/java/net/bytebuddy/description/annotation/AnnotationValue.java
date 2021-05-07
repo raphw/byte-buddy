@@ -837,10 +837,7 @@ public interface AnnotationValue<T, S> {
             } else if (value instanceof String[]) {
                 return of((String[]) value);
             } else {
-                return new AnnotationValue.ForMismatchedType<Object, Object>(TypeDescription.OBJECT.getDeclaredMethods()
-                        .filter(ElementMatchers.named("toString"))
-                        .getOnly(), null); // TODO: Value
-                // TODO throw new IllegalArgumentException("Not a constant annotation value: " + value);
+                throw new IllegalArgumentException("Not a constant annotation value: " + value);
             }
         }
 

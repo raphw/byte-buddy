@@ -181,6 +181,7 @@ public abstract class AbstractAnnotationDescriptionTest {
         explicitTarget = ExplicitTarget.Carrier.class.getAnnotation(ExplicitTarget.class);
         brokenCarrier = new ByteBuddy()
                 .subclass(Object.class)
+                .name(AbstractAnnotationDescriptionTest.class.getPackage().getName() + "." + "BrokenAnnotationCarrier")
                 .visit(new AnnotationValueBreaker(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V12),
                         ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V17),
                         ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V17)))
