@@ -1041,6 +1041,7 @@ public abstract class AbstractAnnotationDescriptionTest {
                 annotationVisitor.visit("duplicateValue", FOO);
                 annotationVisitor.visit("duplicateValue", BAR);
                 annotationVisitor.visit("incompatibleValue", INTEGER);
+                annotationVisitor.visit("excessValue", FOO);
                 AnnotationVisitor incompatibleValueArray = annotationVisitor.visitArray("incompatibleValueArray");
                 incompatibleValueArray.visit(null, INTEGER);
                 incompatibleValueArray.visitEnd();
