@@ -9911,6 +9911,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     protected abstract static class AdviceVisitor extends ExceptionTableSensitiveMethodVisitor implements Dispatcher.RelocationHandler.Relocation {
 
         /**
+         * The expected index for the {@code this} variable.
+         */
+        private static final int THIS_VARIABLE_INDEX = 0;
+
+        /**
+         * The expected name for the {@code this} variable.
+         */
+        private static final String THIS_VARIABLE_NAME = "this";
+
+        /**
          * A description of the instrumented method.
          */
         protected final MethodDescription instrumentedMethod;
@@ -10070,7 +10080,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-            mv.visitLocalVariable(name, descriptor, signature, start, end, argumentHandler.variable(index));
+            // The 'this' variable is exempt from remapping as it is assumed immutable and remapping it confuses debuggers to not display the variable.
+            mv.visitLocalVariable(name, descriptor, signature, start, end, index == THIS_VARIABLE_INDEX && THIS_VARIABLE_NAME.equals(name)
+                    ? index
+                    : argumentHandler.variable(index));
         }
 
         @Override
