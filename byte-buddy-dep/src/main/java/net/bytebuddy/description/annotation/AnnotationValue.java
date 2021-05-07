@@ -852,9 +852,16 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         public AnnotationValue<U, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
-            return typeDefinition.asErasure().asBoxed().represents(value.getClass()) ? this : new ForMismatchedType<U, U>(property, value.getClass().isArray()
-                    ? "Array with component tag: " + RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(value.getClass().getComponentType()))
-                    : value.getClass().toString() + '[' + value + ']');
+            if (typeDefinition.asErasure().asBoxed().represents(value.getClass())) {
+                return this;
+            } else if (value.getClass().isArray()) {
+                return new ForMismatchedType<U, U>(property, "Array with component tag: "
+                        + RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(value.getClass().getComponentType())));
+            } else if (value instanceof Enum<?>) {
+                return new ForMismatchedType<U, U>(property, value.getClass().getName() + '.' + ((Enum<?>) value).name());
+            } else {
+                return new ForMismatchedType<U, U>(property, value.getClass().getName() + '[' + value + ']');
+            }
         }
 
         /**
@@ -1431,7 +1438,7 @@ public interface AnnotationValue<T, S> {
         public AnnotationValue<AnnotationDescription, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
             return typeDefinition.asErasure().equals(annotationDescription.getAnnotationType())
                     ? this
-                    : new ForMismatchedType<AnnotationDescription, U>(property, annotationDescription.getAnnotationType().toString() + '[' + annotationDescription + ']');
+                    : new ForMismatchedType<AnnotationDescription, U>(property, annotationDescription.getAnnotationType().getName() + '[' + annotationDescription + ']');
         }
 
         /**
@@ -1587,7 +1594,7 @@ public interface AnnotationValue<T, S> {
         public AnnotationValue<EnumerationDescription, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
             return typeDefinition.asErasure().equals(enumerationDescription.getEnumerationType())
                     ? this
-                    : new ForMismatchedType<EnumerationDescription, U>(property, enumerationDescription.getEnumerationType().toString() + '[' + enumerationDescription.getValue() + ']');
+                    : new ForMismatchedType<EnumerationDescription, U>(property, enumerationDescription.getEnumerationType().getName() + '.' + enumerationDescription.getValue());
         }
 
         /**

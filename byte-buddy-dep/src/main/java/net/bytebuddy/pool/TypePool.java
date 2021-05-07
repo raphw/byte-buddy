@@ -6208,7 +6208,7 @@ public interface TypePool {
                                         .resolve()
                                         .getDeclaredMethods()
                                         .filter(named(property).and(takesArguments(0)))
-                                        .getOnly(), null); // missing: value
+                                        .getOnly(), resolution.resolve().getAnnotationType().getName());
                             }
                         } else {
                             return new AnnotationValue.ForAnnotationDescription<Annotation>(resolution.resolve());
@@ -6275,7 +6275,7 @@ public interface TypePool {
                                     .resolve()
                                     .getDeclaredMethods()
                                     .filter(named(property).and(takesArguments(0)))
-                                    .getOnly(), "L" + typeName.replace('.', '/') + ";." + value);
+                                    .getOnly(), typeName + "." + value);
                         } else if (resolution.resolve().getDeclaredFields().filter(named(value)).isEmpty()) {
                             return new AnnotationValue.ForEnumerationDescription.WithUnknownConstant(resolution.resolve(), value);
                         } else {
