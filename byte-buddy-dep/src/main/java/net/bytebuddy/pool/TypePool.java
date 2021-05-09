@@ -6117,12 +6117,31 @@ public interface TypePool {
                     return doResolve().toString();
                 }
 
+                /**
+                 * A proxy for a mismatched type for which the property is not yet know.
+                 *
+                 * @param <W> The represented unloaded type.
+                 * @param <X> The represented loaded type.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
                 private static class ForMismatchedType<W, X> extends AbstractBase<W, X> {
 
+                    /**
+                     * The mismatched value.
+                     */
                     private final String value;
 
+                    /**
+                     * The mismatched array type.
+                     */
                     private final Sort sort;
 
+                    /**
+                     * Creates a new mismatched type proxy.
+                     *
+                     * @param value The mismatched value.
+                     * @param sort  The mismatched array type.
+                     */
                     private ForMismatchedType(String value, Sort sort) {
                         this.value = value;
                         this.sort = sort;
@@ -6146,8 +6165,8 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public AnnotationValue<W, X> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
-                        return new ForMismatchedType<>(property, property.getReturnType().isArray()
-                                ? RenderingDispatcher.CURRENT.toComponentTag(sort)
+                        return new ForMismatchedType<W, X>(property, property.getReturnType().isArray()
+                                ? RenderingDispatcher.CURRENT.toArrayErrorString(sort)
                                 : value);
                     }
 
@@ -6155,14 +6174,14 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public W resolve() {
-                        throw new IllegalStateException(); // TODO
+                        throw new IllegalStateException("Expected filtering of this unresolved property");
                     }
 
                     /**
                      * {@inheritDoc}
                      */
                     public Loaded<X> load(ClassLoader classLoader) {
-                        throw new IllegalStateException(); // TODO
+                        throw new IllegalStateException("Expected filtering of this unresolved property");
                     }
                 }
 
@@ -6221,16 +6240,6 @@ public interface TypePool {
                     private final TypePool typePool;
 
                     /**
-                     * The descriptor of the type that defines the current annotation property.
-                     */
-                    private final String descriptor;
-
-                    /**
-                     * The name of the property.
-                     */
-                    private final String property;
-
-                    /**
                      * The annotation token.
                      */
                     private final AnnotationToken annotationToken;
@@ -6239,14 +6248,10 @@ public interface TypePool {
                      * Creates a new lazy annotation value.
                      *
                      * @param typePool        The type pool to use for resolving the annotation type.
-                     * @param descriptor      The descriptor of the type that defines the current annotation property.
-                     * @param property        The name of the property.
                      * @param annotationToken The annotation token.
                      */
-                    private ForAnnotationValue(TypePool typePool, String descriptor, String property, AnnotationToken annotationToken) {
+                    private ForAnnotationValue(TypePool typePool, AnnotationToken annotationToken) {
                         this.typePool = typePool;
-                        this.descriptor = descriptor;
-                        this.property = property;
                         this.annotationToken = annotationToken;
                     }
 
@@ -6264,11 +6269,7 @@ public interface TypePool {
                         if (!resolution.isResolved()) {
                             return new AnnotationValue.ForMissingType<AnnotationDescription, Annotation>(annotationToken.getBinaryName());
                         } else if (!resolution.resolve().getAnnotationType().isAnnotation()) {
-                            if (property == null) {
-                                return new ForIncompatibleType<AnnotationDescription, Annotation>(resolution.resolve().getAnnotationType());
-                            } else {
-                                return new ForMismatchedType<AnnotationDescription, Annotation>(resolution.resolve().getAnnotationType().getName(), Sort.ANNOTATION);
-                            }
+                            return new ForMismatchedType<AnnotationDescription, Annotation>(resolution.resolve().getAnnotationType().getName(), Sort.ANNOTATION);
                         } else {
                             return new AnnotationValue.ForAnnotationDescription<Annotation>(resolution.resolve());
                         }
@@ -6286,16 +6287,6 @@ public interface TypePool {
                     private final TypePool typePool;
 
                     /**
-                     * The descriptor of the type that defines the current annotation property.
-                     */
-                    private final String descriptor;
-
-                    /**
-                     * The name of the property.
-                     */
-                    private final String property;
-
-                    /**
                      * The binary name of the enumeration type.
                      */
                     private final String typeName;
@@ -6308,16 +6299,12 @@ public interface TypePool {
                     /**
                      * Creates a lazy annotation value description for an enumeration.
                      *
-                     * @param typePool   The type pool to use for looking up types.
-                     * @param descriptor The descriptor of the type that defines the current annotation property.
-                     * @param property   The name of the property.
-                     * @param typeName   The binary name of the enumeration type.
-                     * @param value      The name of the enumeration.
+                     * @param typePool The type pool to use for looking up types.
+                     * @param typeName The binary name of the enumeration type.
+                     * @param value    The name of the enumeration.
                      */
-                    private ForEnumerationValue(TypePool typePool, String descriptor, String property, String typeName, String value) {
+                    private ForEnumerationValue(TypePool typePool, String typeName, String value) {
                         this.typePool = typePool;
-                        this.descriptor = descriptor;
-                        this.property = property;
                         this.typeName = typeName;
                         this.value = value;
                     }
@@ -6357,16 +6344,6 @@ public interface TypePool {
                     private final TypePool typePool;
 
                     /**
-                     * The descriptor of the type that defines the current annotation property.
-                     */
-                    private final String descriptor;
-
-                    /**
-                     * The name of the property.
-                     */
-                    private final String property;
-
-                    /**
                      * A reference to the component type.
                      */
                     private final ComponentTypeReference componentTypeReference;
@@ -6380,15 +6357,11 @@ public interface TypePool {
                      * Creates a lazy projection for a non-primitive array.
                      *
                      * @param typePool               The type pool to use for looking up types.
-                     * @param descriptor             The descriptor of the type that defines the current annotation property.
-                     * @param property               The name of the property.
                      * @param componentTypeReference A reference to the component type.
                      * @param values                 A list of all values of this array value in their order.
                      */
-                    private ForArray(TypePool typePool, String descriptor, String property, ComponentTypeReference componentTypeReference, List<AnnotationValue<?, ?>> values) {
+                    private ForArray(TypePool typePool, ComponentTypeReference componentTypeReference, List<AnnotationValue<?, ?>> values) {
                         this.typePool = typePool;
-                        this.descriptor = descriptor;
-                        this.property = property;
                         this.componentTypeReference = componentTypeReference;
                         this.values = values;
                     }
@@ -6401,6 +6374,7 @@ public interface TypePool {
                     }
 
                     @Override
+                    @CachedReturnPlugin.Enhance("resolved")
                     protected AnnotationValue<Object, Object> doResolve() {
                         String typeName = componentTypeReference.lookup();
                         Resolution resolution = typePool.describe(typeName);
@@ -6431,17 +6405,12 @@ public interface TypePool {
                         } else if (resolution.resolve().represents(double.class)) {
                             return new AnnotationValue.ForDescriptionArray<Object, Object>(double.class, resolution.resolve(), values);
                         } else {
-                            MethodDescription.InDefinedShape property = typePool.describe(Type.getType(descriptor).getClassName())
-                                    .resolve()
-                                    .getDeclaredMethods()
-                                    .filter(named(this.property).and(takesArguments(0)))
-                                    .getOnly();
                             Sort sort = Sort.NONE;
                             ListIterator<AnnotationValue<?, ?>> iterator = values.listIterator(values.size());
-                            while (iterator.hasPrevious() && sort == Sort.NONE) {
+                            while (iterator.hasPrevious() && !sort.isDefined()) {
                                 sort = iterator.previous().getSort();
                             }
-                            return new ForMismatchedType<Object, Object>(RenderingDispatcher.CURRENT.toComponentTag(sort), sort);
+                            return new ForMismatchedType<Object, Object>(RenderingDispatcher.CURRENT.toArrayErrorString(sort), sort);
                         }
                     }
                 }
@@ -8007,7 +7976,7 @@ public interface TypePool {
                     default:
                         throw new IllegalArgumentException("Unexpected type reference: " + typeReference.getSort());
                 }
-                return new AnnotationExtractor(descriptor, annotationRegistrant, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
+                return new AnnotationExtractor(annotationRegistrant, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
             }
 
             @Override
@@ -8085,11 +8054,6 @@ public interface TypePool {
             protected class AnnotationExtractor extends AnnotationVisitor {
 
                 /**
-                 * The descriptor of the type that defines the current annotation property.
-                 */
-                private final String descriptor;
-
-                /**
                  * The annotation registrant to register found annotation values on.
                  */
                 private final AnnotationRegistrant annotationRegistrant;
@@ -8107,7 +8071,7 @@ public interface TypePool {
                  * @param componentTypeLocator The component type locator to use.
                  */
                 protected AnnotationExtractor(String descriptor, List<LazyTypeDescription.AnnotationToken> annotationTokens, ComponentTypeLocator componentTypeLocator) {
-                    this(descriptor, new AnnotationRegistrant.ForByteCodeElement(descriptor, annotationTokens), componentTypeLocator);
+                    this(new AnnotationRegistrant.ForByteCodeElement(descriptor, annotationTokens), componentTypeLocator);
                 }
 
                 /**
@@ -8122,19 +8086,17 @@ public interface TypePool {
                                               int index,
                                               Map<Integer, List<LazyTypeDescription.AnnotationToken>> annotationTokens,
                                               ComponentTypeLocator componentTypeLocator) {
-                    this(descriptor, new AnnotationRegistrant.ForByteCodeElement.WithIndex(descriptor, index, annotationTokens), componentTypeLocator);
+                    this(new AnnotationRegistrant.ForByteCodeElement.WithIndex(descriptor, index, annotationTokens), componentTypeLocator);
                 }
 
                 /**
                  * Creates a new annotation extractor.
                  *
-                 * @param descriptor           The annotation descriptor.
                  * @param annotationRegistrant The annotation registrant to register found annotation values on.
                  * @param componentTypeLocator A locator for the component type of any found annotation value.
                  */
-                protected AnnotationExtractor(String descriptor, AnnotationRegistrant annotationRegistrant, ComponentTypeLocator componentTypeLocator) {
+                protected AnnotationExtractor(AnnotationRegistrant annotationRegistrant, ComponentTypeLocator componentTypeLocator) {
                     super(OpenedClassReader.ASM_API);
-                    this.descriptor = descriptor;
                     this.annotationRegistrant = annotationRegistrant;
                     this.componentTypeLocator = componentTypeLocator;
                 }
@@ -8154,20 +8116,18 @@ public interface TypePool {
                 @Override
                 public void visitEnum(String name, String descriptor, String value) {
                     annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForEnumerationValue(Default.this,
-                            this.descriptor,
-                            name,
                             descriptor.substring(1, descriptor.length() - 1).replace('/', '.'),
                             value));
                 }
 
                 @Override
                 public AnnotationVisitor visitAnnotation(String name, String descriptor) {
-                    return new AnnotationExtractor(descriptor, new AnnotationLookup(this.descriptor, descriptor, name), new ComponentTypeLocator.ForAnnotationProperty(TypePool.Default.this, descriptor));
+                    return new AnnotationExtractor(new AnnotationLookup(descriptor, name), new ComponentTypeLocator.ForAnnotationProperty(TypePool.Default.this, descriptor));
                 }
 
                 @Override
                 public AnnotationVisitor visitArray(String name) {
-                    return new AnnotationExtractor(descriptor, new ArrayLookup(descriptor, name, componentTypeLocator.bind(name)), ComponentTypeLocator.Illegal.INSTANCE);
+                    return new AnnotationExtractor(new ArrayLookup(name, componentTypeLocator.bind(name)), ComponentTypeLocator.Illegal.INSTANCE);
                 }
 
                 @Override
@@ -8179,11 +8139,6 @@ public interface TypePool {
                  * An annotation registrant for registering values of an array.
                  */
                 protected class ArrayLookup implements AnnotationRegistrant {
-
-                    /**
-                     * The descriptor of the type that defines the current annotation property.
-                     */
-                    private final String descriptor;
 
                     /**
                      * The name of the annotation property the collected array is representing.
@@ -8203,12 +8158,10 @@ public interface TypePool {
                     /**
                      * Creates a new annotation registrant for an array lookup.
                      *
-                     * @param descriptor             The descriptor of the type that defines the current annotation property.
                      * @param name                   The name of the annotation property the collected array is representing.
                      * @param componentTypeReference A lazy reference to resolve the component type of the collected array.
                      */
-                    private ArrayLookup(String descriptor, String name, ComponentTypeReference componentTypeReference) {
-                        this.descriptor = descriptor;
+                    private ArrayLookup(String name, ComponentTypeReference componentTypeReference) {
                         this.name = name;
                         this.componentTypeReference = componentTypeReference;
                         values = new ArrayList<AnnotationValue<?, ?>>();
@@ -8226,8 +8179,6 @@ public interface TypePool {
                      */
                     public void onComplete() {
                         annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForArray(Default.this,
-                                descriptor,
-                                name,
                                 componentTypeReference,
                                 values));
                     }
@@ -8239,14 +8190,9 @@ public interface TypePool {
                 protected class AnnotationLookup implements AnnotationRegistrant {
 
                     /**
-                     * The descriptor of the type that defines the current annotation property.
-                     */
-                    private final String descriptor;
-
-                    /**
                      * The descriptor of the original annotation for which the annotation values are looked up.
                      */
-                    private final String target;
+                    private final String descriptor;
 
                     /**
                      * The name of the original annotation for which the annotation values are looked up.
@@ -8261,13 +8207,11 @@ public interface TypePool {
                     /**
                      * Creates a new annotation registrant for a recursive annotation lookup.
                      *
-                     * @param descriptor The descriptor of the type that defines the current annotation property.
-                     * @param target     The descriptor of the original annotation for which the annotation values are looked up.
+                     * @param descriptor The descriptor of the original annotation for which the annotation values are looked up.
                      * @param name       The name of the original annotation for which the annotation values are looked up.
                      */
-                    protected AnnotationLookup(String descriptor, String target, String name) {
+                    protected AnnotationLookup(String descriptor, String name) {
                         this.descriptor = descriptor;
-                        this.target = target;
                         this.name = name;
                         values = new HashMap<String, AnnotationValue<?, ?>>();
                     }
@@ -8284,9 +8228,7 @@ public interface TypePool {
                      */
                     public void onComplete() {
                         annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForAnnotationValue(Default.this,
-                                descriptor,
-                                name,
-                                new LazyTypeDescription.AnnotationToken(target, values)));
+                                new LazyTypeDescription.AnnotationToken(descriptor, values)));
                     }
                 }
             }
@@ -8359,7 +8301,7 @@ public interface TypePool {
                         default:
                             throw new IllegalStateException("Unexpected type reference on field: " + typeReference.getSort());
                     }
-                    return new AnnotationExtractor(descriptor, annotationRegistrant, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
+                    return new AnnotationExtractor(annotationRegistrant, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
                 }
 
                 @Override
@@ -8561,7 +8503,7 @@ public interface TypePool {
                         default:
                             throw new IllegalStateException("Unexpected type reference on method: " + typeReference.getSort());
                     }
-                    return new AnnotationExtractor(descriptor, annotationRegistrant, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
+                    return new AnnotationExtractor(annotationRegistrant, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
                 }
 
                 @Override
@@ -8607,7 +8549,7 @@ public interface TypePool {
 
                 @Override
                 public AnnotationVisitor visitAnnotationDefault() {
-                    return new AnnotationExtractor(descriptor, this, new ComponentTypeLocator.ForArrayType(descriptor));
+                    return new AnnotationExtractor(this, new ComponentTypeLocator.ForArrayType(descriptor));
                 }
 
                 /**
@@ -8703,7 +8645,7 @@ public interface TypePool {
                         default:
                             throw new IllegalStateException("Unexpected type reference on record component: " + typeReference.getSort());
                     }
-                    return new AnnotationExtractor(descriptor, annotationRegistrant, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
+                    return new AnnotationExtractor(annotationRegistrant, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
                 }
 
                 @Override

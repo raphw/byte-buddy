@@ -88,24 +88,7 @@ public class AnnotationValueRenderingDispatcherTest {
         assertThat(AnnotationValue.RenderingDispatcher.LEGACY_VM.toSourceString(Arrays.asList("foo", "bar")), is("[foo, bar]"));
         assertThat(AnnotationValue.RenderingDispatcher.JAVA_9_CAPABLE_VM.toSourceString(Arrays.asList("foo", "bar")), is("{foo, bar}"));
     }
-/*
-    @Test
-    public void testComponentTag() throws Exception {
-        assertThat(AnnotationValue.RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(boolean.class)), is((int) 'Z'));
-        assertThat(AnnotationValue.RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(byte.class)), is((int) 'B'));
-        assertThat(AnnotationValue.RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(short.class)), is((int) 'S'));
-        assertThat(AnnotationValue.RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(char.class)), is((int) 'C'));
-        assertThat(AnnotationValue.RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(int.class)), is((int) 'I'));
-        assertThat(AnnotationValue.RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(long.class)), is((int) 'J'));
-        assertThat(AnnotationValue.RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(float.class)), is((int) 'F'));
-        assertThat(AnnotationValue.RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(double.class)), is((int) 'D'));
-        assertThat(AnnotationValue.RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(String.class)), is((int) 's'));
-        assertThat(AnnotationValue.RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(SampleEnumeration.class)), is((int) 'e'));
-        assertThat(AnnotationValue.RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(SampleAnnotation.class)), is((int) '@'));
-        assertThat(AnnotationValue.RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(Object[].class)), is((int) '['));
-        assertThat(AnnotationValue.RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(void.class)), is((int) 'L')); // TODO
-    }
-*/
+
     private enum SampleEnumeration {
         SAMPLE
     }
