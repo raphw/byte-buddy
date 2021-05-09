@@ -393,7 +393,7 @@ public abstract class AbstractAnnotationDescriptionTest {
         describe(broken).prepare(DefectiveAnnotation.class).load().brokenAnnotationDeclaration();
     }
 
-    @Test(expected = IncompleteAnnotationException.class)
+    @Test(expected = AnnotationTypeMismatchException.class)
     public void testDefectiveAnnotationWrongArity() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().wrongArity();
     }
@@ -401,7 +401,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     @Test
     public void testDefectiveAnnotationWrongArityState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("wrongArity"))).getState(),
-                is(AnnotationValue.State.UNDEFINED));
+                is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
@@ -1104,9 +1104,9 @@ public abstract class AbstractAnnotationDescriptionTest {
                     missingTypeArray.visitEnd();
                 }
                 if (allowWrongArity) {
-                    /*AnnotationVisitor wrongArityValue = annotationVisitor.visitArray("wrongArity");
+                    AnnotationVisitor wrongArityValue = annotationVisitor.visitArray("wrongArity");
                     wrongArityValue.visit(null, FOO);
-                    wrongArityValue.visitEnd();*/
+                    wrongArityValue.visitEnd();
                     annotationVisitor.visit("wrongArityArray", FOO);
                 }
                 if (allowIncompatibleDeclaration) {

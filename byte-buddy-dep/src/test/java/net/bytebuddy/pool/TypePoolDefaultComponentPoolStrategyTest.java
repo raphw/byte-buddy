@@ -34,11 +34,11 @@ public class TypePoolDefaultComponentPoolStrategyTest {
         TypeDescription rawComponentType = mock(TypeDescription.class);
         when(rawReturnType.getComponentType()).thenReturn(rawComponentType);
         when(rawComponentType.getName()).thenReturn(QUX);
-        assertThat(new TypePool.Default.ComponentTypeLocator.ForAnnotationProperty(typePool, BAR_DESCRIPTOR).bind(FOO).lookup(), is(QUX));
+        assertThat(new TypePool.Default.ComponentTypeLocator.ForAnnotationProperty(typePool, BAR_DESCRIPTOR).bind(FOO).resolve(), is(QUX));
     }
 
     @Test
     public void testForArrayType() throws Exception {
-        assertThat(new TypePool.Default.ComponentTypeLocator.ForArrayType("()[" + BAR_DESCRIPTOR).bind(FOO).lookup(), is(BAR));
+        assertThat(new TypePool.Default.ComponentTypeLocator.ForArrayType("()[" + BAR_DESCRIPTOR).bind(FOO).resolve(), is(BAR));
     }
 }
