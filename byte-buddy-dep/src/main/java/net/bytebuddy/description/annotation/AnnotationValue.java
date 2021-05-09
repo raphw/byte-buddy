@@ -2604,6 +2604,11 @@ public interface AnnotationValue<T, S> {
             public W resolve() {
                 throw new AnnotationTypeMismatchException(property, value);
             }
+
+            @Override
+            public String toString() {
+                return "/* Warning type mismatch! \"" + value + "\" */";
+            }
         }
     }
 
