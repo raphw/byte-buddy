@@ -184,6 +184,7 @@ public abstract class AbstractAnnotationDescriptionTest {
                 .name(AbstractAnnotationDescriptionTest.class.getPackage().getName() + "." + "BrokenAnnotationCarrier")
                 .visit(new AnnotationValueBreaker(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V12),
                         ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V17),
+                        ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V17),
                         ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V17)))
                 .make()
                 .include(new ByteBuddy().decorate(DefectiveAnnotation.class).make())
@@ -390,6 +391,28 @@ public abstract class AbstractAnnotationDescriptionTest {
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationBrokenAnnotationDeclaration() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().brokenAnnotationDeclaration();
+    }
+
+    @Test(expected = IncompleteAnnotationException.class)
+    public void testDefectiveAnnotationWrongArity() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().wrongArity();
+    }
+
+    @Test
+    public void testDefectiveAnnotationWrongArityState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("wrongArity"))).getState(),
+                is(AnnotationValue.State.UNDEFINED));
+    }
+
+    @Test(expected = AnnotationTypeMismatchException.class)
+    public void testDefectiveAnnotationWrongArityArray() throws Exception {
+        describe(broken).prepare(DefectiveAnnotation.class).load().wrongArityArray();
+    }
+
+    @Test
+    public void testDefectiveAnnotationWrongArityArrayState() throws Exception {
+        assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("wrongArityArray"))).getState(),
+                is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test
@@ -983,6 +1006,10 @@ public abstract class AbstractAnnotationDescriptionTest {
 
         String[] missingValueArray();
 
+        String wrongArity();
+
+        String[] wrongArityArray();
+
         IncompatibleAnnotationProperty incompatibleAnnotationDeclaration();
 
         IncompatibleAnnotationProperty[] incompatibleAnnotationDeclarationArray();
@@ -1026,10 +1053,14 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     private static class AnnotationValueBreaker extends AsmVisitorWrapper.AbstractBase {
 
-        private final boolean allowMissingValues, allowIncompatibleDeclaration, allowBrokenDeclaration;
+        private final boolean allowMissingValues, allowWrongArity, allowIncompatibleDeclaration, allowBrokenDeclaration;
 
-        private AnnotationValueBreaker(boolean allowMissingValues, boolean allowIncompatibleDeclaration, boolean allowBrokenDeclaration) {
+        private AnnotationValueBreaker(boolean allowMissingValues,
+                                       boolean allowWrongArity,
+                                       boolean allowIncompatibleDeclaration,
+                                       boolean allowBrokenDeclaration) {
             this.allowMissingValues = allowMissingValues;
+            this.allowWrongArity = allowWrongArity;
             this.allowIncompatibleDeclaration = allowIncompatibleDeclaration;
             this.allowBrokenDeclaration = allowBrokenDeclaration;
         }
@@ -1071,6 +1102,12 @@ public abstract class AbstractAnnotationDescriptionTest {
                     AnnotationVisitor missingTypeArray = annotationVisitor.visitArray("missingTypeArray");
                     missingTypeArray.visit(null, Type.getType("Lnet/bytebuddy/inexistent/Foo;"));
                     missingTypeArray.visitEnd();
+                }
+                if (allowWrongArity) {
+                    /*AnnotationVisitor wrongArityValue = annotationVisitor.visitArray("wrongArity");
+                    wrongArityValue.visit(null, FOO);
+                    wrongArityValue.visitEnd();*/
+                    annotationVisitor.visit("wrongArityArray", FOO);
                 }
                 if (allowIncompatibleDeclaration) {
                     annotationVisitor.visitAnnotation("incompatibleEnumerationDeclaration", Type.getDescriptor(IncompatibleAnnotationProperty.class)).visitEnd();

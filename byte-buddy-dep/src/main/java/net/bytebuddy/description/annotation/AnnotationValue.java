@@ -113,7 +113,7 @@ public interface AnnotationValue<T, S> {
         /**
          * A rendering dispatcher for any VM previous to Java 9.
          */
-        LEGACY_VM('[', ']', false) {
+        LEGACY_VM('[', ']', true) {
             @Override
             public String toSourceString(char value) {
                 return Character.toString(value);
@@ -148,7 +148,7 @@ public interface AnnotationValue<T, S> {
         /**
          * A rendering dispatcher for Java 9 onward.
          */
-        JAVA_9_CAPABLE_VM('{', '}', false) {
+        JAVA_9_CAPABLE_VM('{', '}', true) {
             @Override
             public String toSourceString(char value) {
                 StringBuilder stringBuilder = new StringBuilder().append('\'');
@@ -197,7 +197,7 @@ public interface AnnotationValue<T, S> {
         /**
          * A rendering dispatcher for Java 14 onward.
          */
-        JAVA_14_CAPABLE_VM('{', '}', ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V17)) {
+        JAVA_14_CAPABLE_VM('{', '}', ClassFileVersion.ofThisVm().isLessThan(ClassFileVersion.JAVA_V17)) {
             @Override
             public String toSourceString(byte value) {
                 return "(byte)0x" + Integer.toHexString(value);
@@ -278,21 +278,21 @@ public interface AnnotationValue<T, S> {
         private final char closingBrace;
 
         /**
-         * If {@code true}, annotation types are represented as characters rather then integer values.
+         * If {@code true}, annotation types are represented as integer rather then character value.
          */
-        private final boolean componentAsCharacter;
+        private final boolean componentAsInteger;
 
         /**
          * Creates a new rendering dispatcher.
          *
          * @param openingBrace         The opening brace of an array {@link String} representation.
          * @param closingBrace         The closing brace of an array {@link String} representation.
-         * @param componentAsCharacter If {@code true}, annotation types are represented as characters rather then integer values.
+         * @param componentAsInteger If {@code true}, annotation types are represented as characters rather then integer values.
          */
-        RenderingDispatcher(char openingBrace, char closingBrace, boolean componentAsCharacter) {
+        RenderingDispatcher(char openingBrace, char closingBrace, boolean componentAsInteger) {
             this.openingBrace = openingBrace;
             this.closingBrace = closingBrace;
-            this.componentAsCharacter = componentAsCharacter;
+            this.componentAsInteger = componentAsInteger;
         }
 
         /**
@@ -410,7 +410,7 @@ public interface AnnotationValue<T, S> {
          * @return A message to describe the component property.
          */
         public String toArrayErrorString(Sort sort) {
-            return ARRAY_PREFIX + (componentAsCharacter || sort.getTag() == Sort.NONE.getTag()
+            return ARRAY_PREFIX + (componentAsInteger || !sort.isDefined()
                     ? Integer.toString(sort.getTag())
                     : Character.toString((char) sort.getTag()));
         }
