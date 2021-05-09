@@ -315,6 +315,12 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test
+    public void testPreparedToString() throws Exception {
+        assertToString(describe(first).prepare(Sample.class).toString(), first);
+        assertToString(describe(second).prepare(Sample.class).toString(), second);
+    }
+
+    @Test
     public void testToString() throws Exception {
         assertToString(describe(first).prepare(Sample.class).toString(), first);
         assertToString(describe(second).prepare(Sample.class).toString(), second);
@@ -538,9 +544,20 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     @Test
     @JavaVersionRule.Enforce(12)
+    public void testDefectiveAnnotationLoadedToString() throws Exception {
+        assertToString(describe(broken).prepare(DefectiveAnnotation.class).load().toString(), broken);
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(12)
+    public void testDefectiveAnnotationPreparedToString() throws Exception {
+        assertToString(describe(broken).prepare(DefectiveAnnotation.class).toString(), broken);
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(12)
     public void testDefectiveAnnotationToString() throws Exception {
         assertToString(describe(broken).toString(), broken);
-        assertToString(describe(broken).prepare(DefectiveAnnotation.class).toString(), broken);
     }
 
     @Test

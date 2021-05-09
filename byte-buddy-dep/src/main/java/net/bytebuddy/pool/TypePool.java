@@ -6143,6 +6143,13 @@ public interface TypePool {
                         this.typeName = typeName;
                     }
 
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Sort getSort() {
+                        return Sort.TYPE;
+                    }
+
                     @Override
                     @CachedReturnPlugin.Enhance("resolved")
                     @SuppressWarnings("unchecked")
@@ -6192,6 +6199,13 @@ public interface TypePool {
                         this.descriptor = descriptor;
                         this.property = property;
                         this.annotationToken = annotationToken;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Sort getSort() {
+                        return Sort.ANNOTATION;
                     }
 
                     @Override
@@ -6263,6 +6277,13 @@ public interface TypePool {
                         this.value = value;
                     }
 
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Sort getSort() {
+                        return Sort.ENUMERATION;
+                    }
+
                     @Override
                     @CachedReturnPlugin.Enhance("resolved")
                     @SuppressWarnings("unchecked")
@@ -6331,6 +6352,13 @@ public interface TypePool {
                         this.values = values;
                     }
 
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Sort getSort() {
+                        return Sort.ARRAY;
+                    }
+
                     @Override
                     protected AnnotationValue<Object, Object> doResolve() {
                         String typeName = componentTypeReference.lookup();
@@ -6362,14 +6390,18 @@ public interface TypePool {
                         } else if (resolution.resolve().represents(double.class)) {
                             return new AnnotationValue.ForDescriptionArray<Object, Object>(double.class, resolution.resolve(), values);
                         } else {
+
                             MethodDescription.InDefinedShape property = typePool.describe(Type.getType(descriptor).getClassName())
                                     .resolve()
                                     .getDeclaredMethods()
                                     .filter(named(this.property).and(takesArguments(0)))
                                     .getOnly();
-                            return new ForMismatchedType<Object, Object>(property, "Array with component tag: " + RenderingDispatcher.CURRENT.toComponentTag(property.getReturnType().isArray()
-                                    ? property.getReturnType().asErasure().getComponentType()
-                                    : property.getReturnType().asErasure()));
+                            Sort sort = Sort.NONE;
+                            ListIterator<AnnotationValue<?, ?>> iterator = values.listIterator(values.size());
+                            while (iterator.hasPrevious() && sort == Sort.NONE) {
+                                sort = iterator.previous().getSort();
+                            }
+                            return new ForMismatchedType<Object, Object>(property, RenderingDispatcher.CURRENT.toComponentTag(sort));
                         }
                     }
                 }
