@@ -897,7 +897,7 @@ public interface AnnotationValue<T, S> {
             if (typeDefinition.asErasure().asBoxed().represents(value.getClass())) {
                 return this;
             } else if (value.getClass().isArray()) {
-                return new ForMismatchedType<U, U>(property, RenderingDispatcher.CURRENT.toComponentTag(Sort.of(TypeDescription.ForLoadedType.of(value.getClass().getComponentType()))));
+                return new ForMismatchedType<U, U>(property, RenderingDispatcher.CURRENT.toComponentTag(Sort.of(TypeDescription.ForLoadedType.of(value.getClass().getComponentType()).asUnboxed())));
             } else if (value instanceof Enum<?>) {
                 return new ForMismatchedType<U, U>(property, value.getClass().getName() + '.' + ((Enum<?>) value).name());
             } else {
@@ -1484,9 +1484,9 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         public AnnotationValue<AnnotationDescription, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
-            return typeDefinition.asErasure().equals(annotationDescription.getAnnotationType())
-                    ? this
-                    : new ForMismatchedType<AnnotationDescription, U>(property, annotationDescription.toString());
+            return typeDefinition.asErasure().equals(annotationDescription.getAnnotationType()) ? this : new ForMismatchedType<AnnotationDescription, U>(property, property.getReturnType().isArray()
+                    ? RenderingDispatcher.CURRENT.toComponentTag(Sort.ANNOTATION)
+                    : annotationDescription.toString());
         }
 
         /**
@@ -1647,9 +1647,9 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         public AnnotationValue<EnumerationDescription, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
-            return typeDefinition.asErasure().equals(enumerationDescription.getEnumerationType())
-                    ? this
-                    : new ForMismatchedType<EnumerationDescription, U>(property, enumerationDescription.getEnumerationType().getName() + '.' + enumerationDescription.getValue());
+            return typeDefinition.asErasure().equals(enumerationDescription.getEnumerationType()) ? this : new ForMismatchedType<EnumerationDescription, U>(property, property.getReturnType().isArray()
+                    ? RenderingDispatcher.CURRENT.toComponentTag(Sort.ENUMERATION)
+                    : enumerationDescription.getEnumerationType().getName() + '.' + enumerationDescription.getValue());
         }
 
         /**
@@ -1967,9 +1967,9 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         public AnnotationValue<TypeDescription, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
-            return typeDefinition.asErasure().represents(Class.class)
-                    ? this
-                    : new ForMismatchedType<TypeDescription, U>(property, Class.class.getName() + '[' + typeDescription.getName() + ']');
+            return typeDefinition.asErasure().represents(Class.class) ? this : new ForMismatchedType<TypeDescription, U>(property, property.getReturnType().isArray()
+                    ? RenderingDispatcher.CURRENT.toComponentTag(Sort.TYPE)
+                    : Class.class.getName() + '[' + typeDescription.getName() + ']');
         }
 
         /**
@@ -2184,7 +2184,7 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) { // TODO: ?
+        public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
             if (typeDefinition.isArray() && typeDefinition.getComponentType().asErasure().equals(componentType)) {
                 for (AnnotationValue<?, ?> value : values) {
                     value = value.filter(property, typeDefinition.getComponentType());
@@ -2194,7 +2194,7 @@ public interface AnnotationValue<T, S> {
                 }
                 return this;
             } else {
-                return new ForMismatchedType<U, V>(property, RenderingDispatcher.CURRENT.toComponentTag(Sort.of(componentType))); // TODO: Correct?
+                return new ForMismatchedType<U, V>(property, RenderingDispatcher.CURRENT.toComponentTag(Sort.of(componentType)));
             }
         }
 

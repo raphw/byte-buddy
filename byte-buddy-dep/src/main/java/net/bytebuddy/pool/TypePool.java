@@ -6390,7 +6390,6 @@ public interface TypePool {
                         } else if (resolution.resolve().represents(double.class)) {
                             return new AnnotationValue.ForDescriptionArray<Object, Object>(double.class, resolution.resolve(), values);
                         } else {
-
                             MethodDescription.InDefinedShape property = typePool.describe(Type.getType(descriptor).getClassName())
                                     .resolve()
                                     .getDeclaredMethods()
