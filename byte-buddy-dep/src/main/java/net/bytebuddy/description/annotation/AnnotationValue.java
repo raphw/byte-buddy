@@ -2537,14 +2537,14 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
-            return this;
+            return new ForMismatchedType<>(property, value);
         }
 
         /**
          * {@inheritDoc}
          */
         public U resolve() {
-            throw new IllegalStateException(property + " cannot define " + value);
+            throw new IllegalStateException(value + " cannot be used as value for " + property);
         }
 
         /**

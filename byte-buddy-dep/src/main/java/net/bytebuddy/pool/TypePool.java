@@ -6117,6 +6117,55 @@ public interface TypePool {
                     return doResolve().toString();
                 }
 
+                private static class ForMismatchedType<W, X> extends AbstractBase<W, X> {
+
+                    private final String value;
+
+                    private final Sort sort;
+
+                    private ForMismatchedType(String value, Sort sort) {
+                        this.value = value;
+                        this.sort = sort;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public State getState() {
+                        return State.UNRESOLVED;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Sort getSort() {
+                        return Sort.NONE;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public AnnotationValue<W, X> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
+                        return new ForMismatchedType<>(property, property.getReturnType().isArray()
+                                ? RenderingDispatcher.CURRENT.toComponentTag(sort)
+                                : value);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public W resolve() {
+                        throw new IllegalStateException(); // TODO
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Loaded<X> load(ClassLoader classLoader) {
+                        throw new IllegalStateException(); // TODO
+                    }
+                }
+
                 /**
                  * A lazy annotation value description for a type value.
                  */
@@ -6218,11 +6267,7 @@ public interface TypePool {
                             if (property == null) {
                                 return new ForIncompatibleType<AnnotationDescription, Annotation>(resolution.resolve().getAnnotationType());
                             } else {
-                                return new ForMismatchedType<AnnotationDescription, Annotation>(typePool.describe(Type.getType(descriptor).getClassName())
-                                        .resolve()
-                                        .getDeclaredMethods()
-                                        .filter(named(property).and(takesArguments(0)))
-                                        .getOnly(), resolution.resolve().getAnnotationType().getName());
+                                return new ForMismatchedType<AnnotationDescription, Annotation>(resolution.resolve().getAnnotationType().getName(), Sort.ANNOTATION);
                             }
                         } else {
                             return new AnnotationValue.ForAnnotationDescription<Annotation>(resolution.resolve());
@@ -6292,11 +6337,7 @@ public interface TypePool {
                         if (!resolution.isResolved()) {
                             return new AnnotationValue.ForMissingType<EnumerationDescription, Enum<?>>(typeName);
                         } else if (!resolution.resolve().isEnum()) {
-                            return new ForMismatchedType<EnumerationDescription, Enum<?>>(typePool.describe(Type.getType(descriptor).getClassName())
-                                    .resolve()
-                                    .getDeclaredMethods()
-                                    .filter(named(property).and(takesArguments(0)))
-                                    .getOnly(), typeName + "." + value);
+                            return new ForMismatchedType<EnumerationDescription, Enum<?>>(typeName + "." + value, Sort.ENUMERATION);
                         } else if (resolution.resolve().getDeclaredFields().filter(named(value)).isEmpty()) {
                             return new AnnotationValue.ForEnumerationDescription.WithUnknownConstant(resolution.resolve(), value);
                         } else {
@@ -6400,7 +6441,7 @@ public interface TypePool {
                             while (iterator.hasPrevious() && sort == Sort.NONE) {
                                 sort = iterator.previous().getSort();
                             }
-                            return new ForMismatchedType<Object, Object>(property, RenderingDispatcher.CURRENT.toComponentTag(sort));
+                            return new ForMismatchedType<Object, Object>(RenderingDispatcher.CURRENT.toComponentTag(sort), sort);
                         }
                     }
                 }
