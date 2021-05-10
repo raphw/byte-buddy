@@ -2721,7 +2721,6 @@ public interface AnnotationValue<T, S> {
      * @param <U> The type of the annotation's value when it is not loaded.
      * @param <V> The type of the annotation's value when it is loaded.
      */
-    @HashCodeAndEqualsPlugin.Enhance
     class ForMissingValue<U, V> extends AnnotationValue.AbstractBase<U, V> {
 
         /**
@@ -2788,12 +2787,13 @@ public interface AnnotationValue<T, S> {
             throw new IllegalStateException(typeDescription + " does not define " + property);
         }
 
+        /* does not implement hashCode and equals method to mimic OpenJDK behavior. Does never appear in toString methods. */
+
         /**
          * Describes an annotation value for a property that is not assignable to it.
          *
          * @param <W> The type of the annotation's expected value.
          */
-        @HashCodeAndEqualsPlugin.Enhance
         public static class Loaded<W> extends AnnotationValue.Loaded.AbstractBase<W> {
 
             /**
@@ -2837,6 +2837,8 @@ public interface AnnotationValue<T, S> {
             public boolean represents(Object value) {
                 return false;
             }
+
+            /* does not implement hashCode and equals method to mimic OpenJDK behavior. Does never appear in toString methods. */
         }
     }
 
