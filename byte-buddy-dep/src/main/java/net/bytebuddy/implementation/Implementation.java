@@ -1874,6 +1874,11 @@ public interface Implementation extends InstrumentedType.Prepareable {
     class Simple implements Implementation {
 
         /**
+         * Indicates that no additional local variable slots are required.
+         */
+        private static final int NO_ADDITIONAL_VARIABLES = 0;
+
+        /**
          * The byte code appender to emmit.
          */
         private final ByteCodeAppender byteCodeAppender;
@@ -1898,6 +1903,30 @@ public interface Implementation extends InstrumentedType.Prepareable {
         }
 
         /**
+         * Resolves a simple implementation that applies the given dispatcher without defining additional local variables.
+         *
+         * @param dispatcher The dispatcher to use.
+         * @return An implementation for the supplied dispatcher.
+         */
+        public static Implementation of(Dispatcher dispatcher) {
+            return of(dispatcher, NO_ADDITIONAL_VARIABLES);
+        }
+
+        /**
+         * Resolves a simple implementation that applies the given dispatcher.
+         *
+         * @param dispatcher               The dispatcher to use.
+         * @param additionalVariableLength The amount of additional slots required in the local variable array.
+         * @return An implementation for the supplied dispatcher.
+         */
+        public static Implementation of(Dispatcher dispatcher, int additionalVariableLength) {
+            if (additionalVariableLength < NO_ADDITIONAL_VARIABLES) {
+                throw new IllegalArgumentException("Additional variable length cannot be negative: " + additionalVariableLength);
+            }
+            return new Simple(new ForDispatcher(dispatcher, additionalVariableLength));
+        }
+
+        /**
          * {@inheritDoc}
          */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
@@ -1909,6 +1938,58 @@ public interface Implementation extends InstrumentedType.Prepareable {
          */
         public ByteCodeAppender appender(Target implementationTarget) {
             return byteCodeAppender;
+        }
+
+        /**
+         * A dispatcher for a simple {@link Implementation}, typically implemented as a lambda expression.
+         */
+        public interface Dispatcher {
+
+            /**
+             * Creates a stack manipulation from a simple method dispatch.
+             *
+             * @param implementationContext The implementation context to use.
+             * @param instrumentedMethod    The instrumented method.
+             * @return The stack manipulation to apply.
+             */
+            StackManipulation apply(Context implementationContext, MethodDescription instrumentedMethod);
+        }
+
+        /**
+         * A {@link ByteCodeAppender} for a dispatcher.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        protected static class ForDispatcher implements ByteCodeAppender {
+
+            /**
+             * The dispatcher to use.
+             */
+            private final Dispatcher dispatcher;
+
+            /**
+             * The additional length of the local variable array.
+             */
+            private final int additionalVariableLength;
+
+            /**
+             * Creates a new byte code appender for a dispatcher.
+             *
+             * @param dispatcher               The dispatcher to use.
+             * @param additionalVariableLength The additional length of the local variable array.
+             */
+            protected ForDispatcher(Dispatcher dispatcher, int additionalVariableLength) {
+                this.dispatcher = dispatcher;
+                this.additionalVariableLength = additionalVariableLength;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                return new Size(dispatcher.apply(implementationContext, instrumentedMethod)
+                        .apply(methodVisitor, implementationContext)
+                        .getMaximalSize(), instrumentedMethod.getStackSize() + additionalVariableLength);
+            }
         }
     }
 }

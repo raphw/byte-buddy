@@ -24,21 +24,24 @@ import org.objectweb.asm.Opcodes;
  * Allows accessing the length of the array.
  */
 public enum ArrayLength implements StackManipulation {
-	
-	INSTANCE;
-	
-	public static ArrayLength of() {
-		return ArrayLength.INSTANCE;
-	}
-	
-	@Override
-	public boolean isValid() {
-		return true;
-	}
-	
-	@Override
-	public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
-		methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
-		return new Size(0, 0);
-	}
+
+    /**
+     * The singleton instance.
+     */
+    INSTANCE;
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean isValid() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+        methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
+        return Size.ZERO;
+    }
 }

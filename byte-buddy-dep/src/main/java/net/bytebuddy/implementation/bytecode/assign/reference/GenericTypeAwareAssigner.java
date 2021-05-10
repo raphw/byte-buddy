@@ -38,10 +38,6 @@ public enum GenericTypeAwareAssigner implements Assigner {
      * The singleton instance.
      */
     INSTANCE;
-    
-    public static GenericTypeAwareAssigner of() {
-        return GenericTypeAwareAssigner.INSTANCE;
-    }
 
     @Override
     public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {

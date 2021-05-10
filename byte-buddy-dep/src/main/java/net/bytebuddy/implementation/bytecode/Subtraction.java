@@ -20,19 +20,29 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * A stack manipulation that shifts right unsigned two numbers on the operand stack.
+ * A stack manipulation that subtracts two numbers on the operand stack.
  */
-public enum ShiftRightUnsigned implements StackManipulation {
+public enum Subtraction implements StackManipulation {
 
     /**
-     * Shifts right unsigned two integers or integer-compatible values.
+     * Subtracts two integers or integer-compatible values.
      */
-    INTEGER(Opcodes.IUSHR, StackSize.SINGLE),
+    INTEGER(Opcodes.ISUB, StackSize.SINGLE),
 
     /**
-     * Shifts right unsigned two longs.
+     * Subtracts two longs.
      */
-    LONG(Opcodes.LUSHR, StackSize.DOUBLE);
+    LONG(Opcodes.LSUB, StackSize.DOUBLE),
+
+    /**
+     * Subtracts two floats.
+     */
+    FLOAT(Opcodes.FSUB, StackSize.SINGLE),
+
+    /**
+     * Subtracts two doubles.
+     */
+    DOUBLE(Opcodes.DSUB, StackSize.DOUBLE);
 
     /**
      * The opcode to apply.
@@ -40,17 +50,17 @@ public enum ShiftRightUnsigned implements StackManipulation {
     private final int opcode;
 
     /**
-     * The stack size of the shift right unsigned primitive.
+     * The stack size of the subtracted primitive.
      */
     private final StackSize stackSize;
 
     /**
-     * Creates a new shift right unsigned.
+     * Creates a new subtraction.
      *
      * @param opcode    The opcode to apply.
-     * @param stackSize The stack size of the shift right unsigned primitive.
+     * @param stackSize The stack size of the subtracted primitive.
      */
-    ShiftRightUnsigned(int opcode, StackSize stackSize) {
+    Subtraction(int opcode, StackSize stackSize) {
         this.opcode = opcode;
         this.stackSize = stackSize;
     }

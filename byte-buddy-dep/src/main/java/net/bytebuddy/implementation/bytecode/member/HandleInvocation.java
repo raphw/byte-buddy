@@ -51,10 +51,6 @@ public class HandleInvocation implements StackManipulation {
     public HandleInvocation(JavaConstant.MethodType methodType) {
         this.methodType = methodType;
     }
-    
-    public static HandleInvocation of(JavaConstant.MethodType fieldDescription) {
-        return new HandleInvocation(fieldDescription);
-    }
 
     /**
      * {@inheritDoc}

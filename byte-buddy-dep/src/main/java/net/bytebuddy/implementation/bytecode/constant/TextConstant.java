@@ -40,10 +40,6 @@ public class TextConstant implements StackManipulation {
     public TextConstant(String text) {
         this.text = text;
     }
-    
-    public static TextConstant of(String text) {
-        return new TextConstant(text);
-    }
 
     /**
      * {@inheritDoc}

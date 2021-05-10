@@ -53,10 +53,6 @@ public interface StackManipulation {
          * The singleton instance.
          */
         INSTANCE;
-    
-        public static Illegal of() {
-            return Illegal.INSTANCE;
-        }
 
         /**
          * {@inheritDoc}
@@ -82,10 +78,6 @@ public interface StackManipulation {
          * The singleton instance.
          */
         INSTANCE;
-    
-        public static StackManipulation of() {
-            return Trivial.INSTANCE;
-        }
 
         /**
          * {@inheritDoc}
@@ -238,6 +230,56 @@ public interface StackManipulation {
                 size = size.aggregate(stackManipulation.apply(methodVisitor, implementationContext));
             }
             return size;
+        }
+    }
+
+    /**
+     * An implementation of {@link StackManipulation} that simplifies functional invocations via lambda expressions.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    class Simple implements StackManipulation {
+
+        /**
+         * The dispatcher to use.
+         */
+        private final Dispatcher dispatcher;
+
+        /**
+         * Creates a new stack manipulation for a dispatcher.
+         *
+         * @param dispatcher The dispatcher to use.
+         */
+        public Simple(Dispatcher dispatcher) {
+            this.dispatcher = dispatcher;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isValid() {
+            return true;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            return dispatcher.apply(methodVisitor, implementationContext);
+        }
+
+        /**
+         * A dispatcher for an instance of {@link Simple}.
+         */
+        public interface Dispatcher {
+
+            /**
+             * A valid implementation of {@link StackManipulation#apply(MethodVisitor, Implementation.Context)}.
+             *
+             * @param methodVisitor         The method visitor used to write the method implementation to.
+             * @param implementationContext The context of the current implementation.
+             * @return The changes to the size of the operand stack that are implied by this stack manipulation.
+             */
+            Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext);
         }
     }
 }

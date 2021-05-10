@@ -40,10 +40,6 @@ public class JavaConstantValue implements StackManipulation {
     public JavaConstantValue(JavaConstant javaConstant) {
         this.javaConstant = javaConstant;
     }
-    
-    public static JavaConstantValue of(JavaConstant javaConstant) {
-        return new JavaConstantValue(javaConstant);
-    }
 
     /**
      * {@inheritDoc}
