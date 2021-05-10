@@ -44,6 +44,10 @@ public class FieldConstant implements StackManipulation {
     public FieldConstant(FieldDescription.InDefinedShape fieldDescription) {
         this.fieldDescription = fieldDescription;
     }
+    
+    public static FieldConstant of(FieldDescription.InDefinedShape fieldDescription) {
+        return new FieldConstant(fieldDescription);
+    }
 
     /**
      * Returns a cached version of this field constant.
