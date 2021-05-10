@@ -258,6 +258,38 @@ public enum PrimitiveWideningDelegate {
             throw new IllegalArgumentException("Not a primitive non-void type: " + typeDefinition);
         }
     }
+    
+    public StackManipulation widenToBoolean() {
+        return toBooleanStackManipulation;
+    }
+    
+    public StackManipulation widenToByte() {
+        return toByteStackManipulation;
+    }
+    
+    public StackManipulation widenToShort() {
+        return toShortStackManipulation;
+    }
+    
+    public StackManipulation widenToCharacter() {
+        return toCharacterStackManipulation;
+    }
+    
+    public StackManipulation widenToInteger() {
+        return toIntegerStackManipulation;
+    }
+    
+    public StackManipulation widenToLong() {
+        return toLongStackManipulation;
+    }
+    
+    public StackManipulation widenToFloat() {
+        return toFloatStackManipulation;
+    }
+    
+    public StackManipulation widenToDouble() {
+        return toDoubleStackManipulation;
+    }
 
     /**
      * A stack manipulation that widens a primitive type into a more general primitive type.
