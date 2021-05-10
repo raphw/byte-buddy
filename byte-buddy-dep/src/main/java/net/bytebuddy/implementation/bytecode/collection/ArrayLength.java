@@ -27,6 +27,10 @@ public enum ArrayLength implements StackManipulation {
 	
 	INSTANCE;
 	
+	public static ArrayLength of() {
+		return ArrayLength.INSTANCE;
+	}
+	
 	@Override
 	public boolean isValid() {
 		return true;

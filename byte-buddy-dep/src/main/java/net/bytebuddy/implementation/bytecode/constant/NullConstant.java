@@ -44,6 +44,10 @@ public enum NullConstant implements StackManipulation {
     NullConstant(StackSize size) {
         this.size = size.toIncreasingSize();
     }
+    
+    public static NullConstant of() {
+        return NullConstant.INSTANCE;
+    }
 
     /**
      * {@inheritDoc}

@@ -53,6 +53,10 @@ public interface StackManipulation {
          * The singleton instance.
          */
         INSTANCE;
+    
+        public static Illegal of() {
+            return Illegal.INSTANCE;
+        }
 
         /**
          * {@inheritDoc}
@@ -78,6 +82,10 @@ public interface StackManipulation {
          * The singleton instance.
          */
         INSTANCE;
+    
+        public static StackManipulation of() {
+            return Trivial.INSTANCE;
+        }
 
         /**
          * {@inheritDoc}
