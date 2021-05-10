@@ -20,29 +20,29 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * A stack manipulation that adds two numbers on the operand stack.
+ * A stack manipulation that divides two numbers on the operand stack.
  */
-public enum Addition implements StackManipulation {
+public enum Division implements StackManipulation {
 
     /**
-     * Adds two integers or integer-compatible values.
+     * Divides two integers or integer-compatible values.
      */
-    INTEGER(Opcodes.IADD, StackSize.SINGLE),
+    INTEGER(Opcodes.IDIV, StackSize.SINGLE),
 
     /**
-     * Adds two longs.
+     * Divides two longs.
      */
-    LONG(Opcodes.LADD, StackSize.DOUBLE),
+    LONG(Opcodes.LDIV, StackSize.DOUBLE),
 
     /**
-     * Adds two floats.
+     * Divides two floats.
      */
-    FLOAT(Opcodes.FADD, StackSize.SINGLE),
+    FLOAT(Opcodes.FDIV, StackSize.SINGLE),
 
     /**
-     * Adds two doubles.
+     * Divides two doubles.
      */
-    DOUBLE(Opcodes.DADD, StackSize.DOUBLE);
+    DOUBLE(Opcodes.DDIV, StackSize.DOUBLE);
 
     /**
      * The opcode to apply.
@@ -50,17 +50,17 @@ public enum Addition implements StackManipulation {
     private final int opcode;
 
     /**
-     * The stack size of the added primitive.
+     * The stack size of the divided primitive.
      */
     private final StackSize stackSize;
 
     /**
-     * Creates a new addition.
+     * Creates a new division type.
      *
      * @param opcode    The opcode to apply.
-     * @param stackSize The stack size of the added primitive.
+     * @param stackSize The stack size of the divided primitive.
      */
-    Addition(int opcode, StackSize stackSize) {
+    Division(int opcode, StackSize stackSize) {
         this.opcode = opcode;
         this.stackSize = stackSize;
     }

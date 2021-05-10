@@ -20,29 +20,19 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * A stack manipulation that adds two numbers on the operand stack.
+ * A stack manipulation that shifts left two numbers on the operand stack.
  */
-public enum Addition implements StackManipulation {
+public enum ShiftLeft implements StackManipulation {
 
     /**
-     * Adds two integers or integer-compatible values.
+     * Shifts left two integers or integer-compatible values.
      */
-    INTEGER(Opcodes.IADD, StackSize.SINGLE),
+    INTEGER(Opcodes.ISHL, StackSize.SINGLE),
 
     /**
-     * Adds two longs.
+     * Shifts left two longs.
      */
-    LONG(Opcodes.LADD, StackSize.DOUBLE),
-
-    /**
-     * Adds two floats.
-     */
-    FLOAT(Opcodes.FADD, StackSize.SINGLE),
-
-    /**
-     * Adds two doubles.
-     */
-    DOUBLE(Opcodes.DADD, StackSize.DOUBLE);
+    LONG(Opcodes.LSHL, StackSize.DOUBLE);
 
     /**
      * The opcode to apply.
@@ -50,17 +40,17 @@ public enum Addition implements StackManipulation {
     private final int opcode;
 
     /**
-     * The stack size of the added primitive.
+     * The stack size of the shift left primitive.
      */
     private final StackSize stackSize;
 
     /**
-     * Creates a new addition.
+     * Creates a new shift left.
      *
      * @param opcode    The opcode to apply.
-     * @param stackSize The stack size of the added primitive.
+     * @param stackSize The stack size of the shift left primitive.
      */
-    Addition(int opcode, StackSize stackSize) {
+    ShiftLeft(int opcode, StackSize stackSize) {
         this.opcode = opcode;
         this.stackSize = stackSize;
     }

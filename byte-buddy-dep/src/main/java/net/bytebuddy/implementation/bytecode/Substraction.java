@@ -20,29 +20,29 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * A stack manipulation that adds two numbers on the operand stack.
+ * A stack manipulation that subtracts two numbers on the operand stack.
  */
-public enum Addition implements StackManipulation {
+public enum Substraction implements StackManipulation {
 
     /**
-     * Adds two integers or integer-compatible values.
+     * Subtracts two integers or integer-compatible values.
      */
-    INTEGER(Opcodes.IADD, StackSize.SINGLE),
+    INTEGER(Opcodes.ISUB, StackSize.SINGLE),
 
     /**
-     * Adds two longs.
+     * Subtracts two longs.
      */
-    LONG(Opcodes.LADD, StackSize.DOUBLE),
+    LONG(Opcodes.LSUB, StackSize.DOUBLE),
 
     /**
-     * Adds two floats.
+     * Subtracts two floats.
      */
-    FLOAT(Opcodes.FADD, StackSize.SINGLE),
+    FLOAT(Opcodes.FSUB, StackSize.SINGLE),
 
     /**
-     * Adds two doubles.
+     * Subtracts two doubles.
      */
-    DOUBLE(Opcodes.DADD, StackSize.DOUBLE);
+    DOUBLE(Opcodes.DSUB, StackSize.DOUBLE);
 
     /**
      * The opcode to apply.
@@ -50,17 +50,17 @@ public enum Addition implements StackManipulation {
     private final int opcode;
 
     /**
-     * The stack size of the added primitive.
+     * The stack size of the subtracted primitive.
      */
     private final StackSize stackSize;
 
     /**
-     * Creates a new addition.
+     * Creates a new subtraction.
      *
      * @param opcode    The opcode to apply.
-     * @param stackSize The stack size of the added primitive.
+     * @param stackSize The stack size of the subtracted primitive.
      */
-    Addition(int opcode, StackSize stackSize) {
+    Substraction(int opcode, StackSize stackSize) {
         this.opcode = opcode;
         this.stackSize = stackSize;
     }

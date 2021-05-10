@@ -20,29 +20,29 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * A stack manipulation that adds two numbers on the operand stack.
+ * A stack manipulation that computes the remainder two numbers on the operand stack.
  */
-public enum Addition implements StackManipulation {
+public enum Remainder implements StackManipulation {
 
     /**
-     * Adds two integers or integer-compatible values.
+     * Computes the remainder of two integers or integer-compatible values.
      */
-    INTEGER(Opcodes.IADD, StackSize.SINGLE),
+    INTEGER(Opcodes.IREM, StackSize.SINGLE),
 
     /**
-     * Adds two longs.
+     * Computes the remainder of two longs.
      */
-    LONG(Opcodes.LADD, StackSize.DOUBLE),
+    LONG(Opcodes.LREM, StackSize.DOUBLE),
 
     /**
-     * Adds two floats.
+     * Computes the remainder of two floats.
      */
-    FLOAT(Opcodes.FADD, StackSize.SINGLE),
+    FLOAT(Opcodes.FREM, StackSize.SINGLE),
 
     /**
-     * Adds two doubles.
+     * Computes the remainder of two doubles.
      */
-    DOUBLE(Opcodes.DADD, StackSize.DOUBLE);
+    DOUBLE(Opcodes.DREM, StackSize.DOUBLE);
 
     /**
      * The opcode to apply.
@@ -50,17 +50,17 @@ public enum Addition implements StackManipulation {
     private final int opcode;
 
     /**
-     * The stack size of the added primitive.
+     * The stack size of the remainder primitive.
      */
     private final StackSize stackSize;
 
     /**
-     * Creates a new addition.
+     * Creates a new remainder type.
      *
      * @param opcode    The opcode to apply.
-     * @param stackSize The stack size of the added primitive.
+     * @param stackSize The stack size of the remainder primitive.
      */
-    Addition(int opcode, StackSize stackSize) {
+    Remainder(int opcode, StackSize stackSize) {
         this.opcode = opcode;
         this.stackSize = stackSize;
     }
