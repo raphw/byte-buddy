@@ -18,7 +18,7 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
-public class ClassFileLocatorAgentBasedTest {
+public class ClassFileLocatorForInstrumentationTest {
 
     private static final String FOO = "foo";
 
@@ -39,7 +39,7 @@ public class ClassFileLocatorAgentBasedTest {
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testExtraction() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
-        ClassFileLocator classFileLocator = ClassFileLocator.AgentBased.fromInstalledAgent(getClass().getClassLoader());
+        ClassFileLocator classFileLocator = ClassFileLocator.ForInstrumentation.fromInstalledAgent(getClass().getClassLoader());
         ClassFileLocator.Resolution resolution = classFileLocator.locate(Foo.class.getName());
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.resolve(), notNullValue(byte[].class));
@@ -60,7 +60,7 @@ public class ClassFileLocatorAgentBasedTest {
         Field delegate = methodAccessor.getClass().getDeclaredField("delegate");
         delegate.setAccessible(true);
         Class<?> delegateClass = delegate.get(methodAccessor).getClass();
-        ClassFileLocator classFileLocator = ClassFileLocator.AgentBased.fromInstalledAgent(delegateClass.getClassLoader());
+        ClassFileLocator classFileLocator = ClassFileLocator.ForInstrumentation.fromInstalledAgent(delegateClass.getClassLoader());
         ClassFileLocator.Resolution resolution = classFileLocator.locate(delegateClass.getName());
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.resolve(), notNullValue(byte[].class));
@@ -68,7 +68,7 @@ public class ClassFileLocatorAgentBasedTest {
 
     @Test
     public void testExplicitLookupBootstrapClassLoader() throws Exception {
-        ClassFileLocator.AgentBased.ClassLoadingDelegate classLoadingDelegate = ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit.of(Object.class);
+        ClassFileLocator.ForInstrumentation.ClassLoadingDelegate classLoadingDelegate = ClassFileLocator.ForInstrumentation.ClassLoadingDelegate.Explicit.of(Object.class);
         assertThat(classLoadingDelegate.getClassLoader(), is(ClassLoader.getSystemClassLoader()));
         assertThat(classLoadingDelegate.locate(Object.class.getName()), CoreMatchers.<Class<?>>is(Object.class));
         assertThat(classLoadingDelegate.locate(String.class.getName()), CoreMatchers.<Class<?>>is(String.class));
@@ -76,7 +76,7 @@ public class ClassFileLocatorAgentBasedTest {
 
     @Test
     public void testExplicitLookup() throws Exception {
-        ClassFileLocator.AgentBased.ClassLoadingDelegate classLoadingDelegate = ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit.of(Foo.class);
+        ClassFileLocator.ForInstrumentation.ClassLoadingDelegate classLoadingDelegate = ClassFileLocator.ForInstrumentation.ClassLoadingDelegate.Explicit.of(Foo.class);
         assertThat(classLoadingDelegate.getClassLoader(), is(Foo.class.getClassLoader()));
         assertThat(classLoadingDelegate.locate(Foo.class.getName()), CoreMatchers.<Class<?>>is(Foo.class));
         assertThat(classLoadingDelegate.locate(Object.class.getName()), CoreMatchers.<Class<?>>is(Object.class));
@@ -84,7 +84,7 @@ public class ClassFileLocatorAgentBasedTest {
 
     @Test
     public void testExtractingTransformerHandlesNullValue() throws Exception {
-        assertThat(new ClassFileLocator.AgentBased.ExtractionClassFileTransformer(mock(ClassLoader.class), FOO).transform(mock(ClassLoader.class),
+        assertThat(new ClassFileLocator.ForInstrumentation.ExtractionClassFileTransformer(mock(ClassLoader.class), FOO).transform(mock(ClassLoader.class),
                 FOO,
                 Object.class,
                 mock(ProtectionDomain.class),
@@ -93,7 +93,7 @@ public class ClassFileLocatorAgentBasedTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNonCompatible() throws Exception {
-        new ClassFileLocator.AgentBased(mock(Instrumentation.class), getClass().getClassLoader());
+        new ClassFileLocator.ForInstrumentation(mock(Instrumentation.class), getClass().getClassLoader());
     }
 
     private static class Foo {

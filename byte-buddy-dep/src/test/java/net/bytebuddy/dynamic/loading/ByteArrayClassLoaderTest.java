@@ -17,7 +17,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.InputStream;
-import java.lang.instrument.ClassFileTransformer;
 import java.net.URL;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
@@ -56,7 +55,7 @@ public class ByteArrayClassLoaderTest {
     private PackageDefinitionStrategy packageDefinitionStrategy;
 
     @Mock
-    private ClassFileTransformer classFileTransformer;
+    private ClassFilePostProcessor classFilePostProcessor;
 
     public ByteArrayClassLoaderTest(ByteArrayClassLoader.PersistenceHandler persistenceHandler, boolean expectedResourceLookup) {
         this.persistenceHandler = persistenceHandler;
@@ -79,19 +78,18 @@ public class ByteArrayClassLoaderTest {
                 DEFAULT_PROTECTION_DOMAIN,
                 persistenceHandler,
                 packageDefinitionStrategy,
-                classFileTransformer);
+                classFilePostProcessor);
         sealBase = new URL("file://foo");
         when(packageDefinitionStrategy.define(classLoader, Foo.class.getPackage().getName(), Foo.class.getName()))
                 .thenReturn(new PackageDefinitionStrategy.Definition.Simple(FOO, BAR, QUX, QUX, FOO, BAR, sealBase));
         when(packageDefinitionStrategy.define(classLoader, Bar.class.getPackage().getName(), Bar.class.getName()))
                 .thenReturn(PackageDefinitionStrategy.Definition.Trivial.INSTANCE);
-        when(classFileTransformer.transform(eq(classLoader),
+        when(classFilePostProcessor.transform(eq(classLoader),
                 anyString(),
-                Mockito.any(Class.class),
-                Mockito.any(ProtectionDomain.class),
+                Mockito.<ProtectionDomain>any(),
                 Mockito.any(byte[].class))).thenAnswer(new Answer<byte[]>() {
             public byte[] answer(InvocationOnMock invocation) {
-                return (byte[]) invocation.getArguments()[4];
+                return (byte[]) invocation.getArguments()[3];
             }
         });
     }

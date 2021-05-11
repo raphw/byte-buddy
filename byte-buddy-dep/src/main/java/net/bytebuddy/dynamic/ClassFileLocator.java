@@ -1164,7 +1164,7 @@ public interface ClassFileLocator extends Closeable {
      * support the look-up of classes that represent lambda expressions.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    class AgentBased implements ClassFileLocator {
+    class ForInstrumentation implements ClassFileLocator {
 
         /**
          * The name of the Byte Buddy {@code net.bytebuddy.agent.Installer} class.
@@ -1202,7 +1202,7 @@ public interface ClassFileLocator extends Closeable {
          * @param instrumentation The instrumentation to be used.
          * @param classLoader     The class loader to read a class from.
          */
-        public AgentBased(Instrumentation instrumentation, ClassLoader classLoader) {
+        public ForInstrumentation(Instrumentation instrumentation, ClassLoader classLoader) {
             this(instrumentation, ClassLoadingDelegate.Default.of(classLoader));
         }
 
@@ -1212,7 +1212,7 @@ public interface ClassFileLocator extends Closeable {
          * @param instrumentation      The instrumentation to be used.
          * @param classLoadingDelegate The delegate responsible for class loading.
          */
-        public AgentBased(Instrumentation instrumentation, ClassLoadingDelegate classLoadingDelegate) {
+        public ForInstrumentation(Instrumentation instrumentation, ClassLoadingDelegate classLoadingDelegate) {
             if (!DISPATCHER.isRetransformClassesSupported(instrumentation)) {
                 throw new IllegalArgumentException(instrumentation + " does not support retransformation");
             }
@@ -1229,7 +1229,7 @@ public interface ClassFileLocator extends Closeable {
          */
         public static ClassFileLocator fromInstalledAgent(ClassLoader classLoader) {
             try {
-                return new AgentBased((Instrumentation) ClassLoader.getSystemClassLoader()
+                return new ForInstrumentation((Instrumentation) ClassLoader.getSystemClassLoader()
                         .loadClass(INSTALLER_TYPE)
                         .getMethod(INSTRUMENTATION_GETTER)
                         .invoke(STATIC_MEMBER), classLoader);
@@ -1248,7 +1248,7 @@ public interface ClassFileLocator extends Closeable {
          * @return A class file locator for locating the class file of the given type.
          */
         public static ClassFileLocator of(Instrumentation instrumentation, Class<?> type) {
-            return new AgentBased(instrumentation, ClassLoadingDelegate.Explicit.of(type));
+            return new ForInstrumentation(instrumentation, ClassLoadingDelegate.Explicit.of(type));
         }
 
         /**

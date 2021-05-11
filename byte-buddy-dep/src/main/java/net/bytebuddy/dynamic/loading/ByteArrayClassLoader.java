@@ -25,8 +25,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.IllegalClassFormatException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.*;
@@ -64,11 +62,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * Indicates that an array should be included from its first index. Improves the source code readability.
      */
     private static final int FROM_BEGINNING = 0;
-
-    /**
-     * Indicates a type that is not loaded.
-     */
-    private static final Class<?> UNLOADED_TYPE = null;
 
     /**
      * Indicates that a URL does not exist to improve code readability.
@@ -129,7 +122,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     /**
      * The class file transformer to apply on loaded classes.
      */
-    protected final ClassFileTransformer classFileTransformer;
+    protected final ClassFilePostProcessor classFilePostProcessor;
 
     /**
      * The access control context to use for loading classes.
@@ -213,7 +206,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                                 ProtectionDomain protectionDomain,
                                 PersistenceHandler persistenceHandler,
                                 PackageDefinitionStrategy packageDefinitionStrategy) {
-        this(parent, sealed, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, NoOpClassFileTransformer.INSTANCE);
+        this(parent, sealed, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, ClassFilePostProcessor.NoOp.INSTANCE);
     }
 
     /**
@@ -224,15 +217,15 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
      * @param packageDefinitionStrategy The package definer to be queried for package definitions.
      * @param persistenceHandler        The persistence handler of this class loader.
-     * @param classFileTransformer      The class file transformer to apply on loaded classes.
+     * @param classFilePostProcessor    A post processor for class files to apply p
      */
     public ByteArrayClassLoader(ClassLoader parent,
                                 Map<String, byte[]> typeDefinitions,
                                 ProtectionDomain protectionDomain,
                                 PersistenceHandler persistenceHandler,
                                 PackageDefinitionStrategy packageDefinitionStrategy,
-                                ClassFileTransformer classFileTransformer) {
-        this(parent, true, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, classFileTransformer);
+                                ClassFilePostProcessor classFilePostProcessor) {
+        this(parent, true, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, classFilePostProcessor);
     }
 
     /**
@@ -244,7 +237,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
      * @param packageDefinitionStrategy The package definer to be queried for package definitions.
      * @param persistenceHandler        The persistence handler of this class loader.
-     * @param classFileTransformer      The class file transformer to apply on loaded classes.
+     * @param classFilePostProcessor    A post processor for class files to apply p
      */
     public ByteArrayClassLoader(ClassLoader parent,
                                 boolean sealed,
@@ -252,13 +245,13 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                                 ProtectionDomain protectionDomain,
                                 PersistenceHandler persistenceHandler,
                                 PackageDefinitionStrategy packageDefinitionStrategy,
-                                ClassFileTransformer classFileTransformer) {
+                                ClassFilePostProcessor classFilePostProcessor) {
         super(parent, sealed);
         this.typeDefinitions = new ConcurrentHashMap<String, byte[]>(typeDefinitions);
         this.protectionDomain = protectionDomain;
         this.persistenceHandler = persistenceHandler;
         this.packageDefinitionStrategy = packageDefinitionStrategy;
-        this.classFileTransformer = classFileTransformer;
+        this.classFilePostProcessor = classFilePostProcessor;
         accessControlContext = AccessController.getContext();
     }
 
@@ -319,7 +312,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 protectionDomain,
                 persistenceHandler,
                 packageDefinitionStrategy,
-                NoOpClassFileTransformer.INSTANCE);
+                ClassFilePostProcessor.NoOp.INSTANCE);
         Map<TypeDescription, Class<?>> result = new LinkedHashMap<TypeDescription, Class<?>>();
         for (TypeDescription typeDescription : types.keySet()) {
             try {
@@ -368,15 +361,10 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         if (binaryRepresentation == null) {
             throw new ClassNotFoundException(name);
         } else {
-            try {
-                byte[] transformed = classFileTransformer.transform(this, name, UNLOADED_TYPE, protectionDomain, binaryRepresentation);
-                if (transformed != null) {
-                    binaryRepresentation = transformed;
-                }
-                return AccessController.doPrivileged(new ClassDefinitionAction(name, binaryRepresentation), accessControlContext);
-            } catch (IllegalClassFormatException exception) {
-                throw new IllegalStateException("The class file for " + name + " is not legal", exception);
-            }
+            return AccessController.doPrivileged(new ClassDefinitionAction(name, classFilePostProcessor.transform(this,
+                    name,
+                    protectionDomain,
+                    binaryRepresentation)), accessControlContext);
         }
     }
 
@@ -1112,15 +1100,15 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
          * @param persistenceHandler        The persistence handler of this class loader.
          * @param packageDefinitionStrategy The package definer to be queried for package definitions.
-         * @param classFileTransformer      The class file transformer to apply on loaded classes.
+         * @param classFilePostProcessor    A post processor for class files to apply p
          */
         public ChildFirst(ClassLoader parent,
                           Map<String, byte[]> typeDefinitions,
                           ProtectionDomain protectionDomain,
                           PersistenceHandler persistenceHandler,
                           PackageDefinitionStrategy packageDefinitionStrategy,
-                          ClassFileTransformer classFileTransformer) {
-            super(parent, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, classFileTransformer);
+                          ClassFilePostProcessor classFilePostProcessor) {
+            super(parent, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, classFilePostProcessor);
         }
 
         /**
@@ -1132,7 +1120,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
          * @param persistenceHandler        The persistence handler of this class loader.
          * @param packageDefinitionStrategy The package definer to be queried for package definitions.
-         * @param classFileTransformer      The class file transformer to apply on loaded classes.
+         * @param classFilePostProcessor    A post processor for class files to apply p
          */
         public ChildFirst(ClassLoader parent,
                           boolean sealed,
@@ -1140,8 +1128,8 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                           ProtectionDomain protectionDomain,
                           PersistenceHandler persistenceHandler,
                           PackageDefinitionStrategy packageDefinitionStrategy,
-                          ClassFileTransformer classFileTransformer) {
-            super(parent, sealed, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, classFileTransformer);
+                          ClassFilePostProcessor classFilePostProcessor) {
+            super(parent, sealed, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, classFilePostProcessor);
         }
 
         /**
@@ -1191,7 +1179,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                     protectionDomain,
                     persistenceHandler,
                     packageDefinitionStrategy,
-                    NoOpClassFileTransformer.INSTANCE);
+                    ClassFilePostProcessor.NoOp.INSTANCE);
             Map<TypeDescription, Class<?>> result = new LinkedHashMap<TypeDescription, Class<?>>();
             for (TypeDescription typeDescription : types.keySet()) {
                 try {

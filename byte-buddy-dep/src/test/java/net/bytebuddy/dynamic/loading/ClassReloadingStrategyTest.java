@@ -213,7 +213,7 @@ public class ClassReloadingStrategyTest {
         // Anonymous types can only be reset to their original format, if a retransformation is applied.
         ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(instrumentation,
                 ClassReloadingStrategy.Strategy.RETRANSFORMATION).preregistered(instance.getClass());
-        ClassFileLocator classFileLocator = ClassFileLocator.AgentBased.of(instrumentation, instance.getClass());
+        ClassFileLocator classFileLocator = ClassFileLocator.ForInstrumentation.of(instrumentation, instance.getClass());
         try {
             assertThat(instance.call(), is(FOO));
             new ByteBuddy()
