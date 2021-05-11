@@ -201,7 +201,7 @@ public interface AnnotationValue<T, S> {
         JAVA_14_CAPABLE_VM('{', '}', ClassFileVersion.ofThisVm().isLessThan(ClassFileVersion.JAVA_V17)) {
             @Override
             public String toSourceString(byte value) {
-                return "(byte)0x" + Integer.toHexString(value);
+                return "(byte)0x" + Integer.toHexString(value & 0xFF);
             }
 
             @Override
