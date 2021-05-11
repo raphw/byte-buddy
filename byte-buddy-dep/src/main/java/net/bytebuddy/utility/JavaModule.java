@@ -23,7 +23,6 @@ import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.type.PackageDescription;
 
 import java.io.InputStream;
-import java.lang.instrument.Instrumentation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -177,14 +176,14 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
     /**
      * Modifies this module's properties.
      *
-     * @param instrumentation The instrumentation instace to use for applying the modification.
+     * @param instrumentation The {@link java.lang.instrument.Instrumentation} instance to use for applying the modification.
      * @param reads           A set of additional modules this module should read.
      * @param exports         A map of packages to export to a set of modules.
      * @param opens           A map of packages to open to a set of modules.
      * @param uses            A set of provider interfaces to use by this module.
      * @param provides        A map of provider interfaces to provide by this module mapped to the provider implementations.
      */
-    public void modify(Instrumentation instrumentation,
+    public void modify(Object instrumentation,
                        Set<JavaModule> reads,
                        Map<String, Set<JavaModule>> exports,
                        Map<String, Set<JavaModule>> opens,
@@ -319,7 +318,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
         /**
          * Modifies this module's properties.
          *
-         * @param instrumentation The instrumentation instace to use for applying the modification.
+         * @param instrumentation The {@link java.lang.instrument.Instrumentation} instance to use for applying the modification.
          * @param module          The module to modify.
          * @param reads           A set of additional modules this module should read.
          * @param exports         A map of packages to export to a set of modules.
@@ -327,7 +326,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @param uses            A set of provider interfaces to use by this module.
          * @param provides        A map of provider interfaces to provide by this module mapped to the provider implementations.
          */
-        void modify(Instrumentation instrumentation,
+        void modify(Object instrumentation,
                     Object module,
                     Set<Object> reads,
                     Map<String, Set<Object>> exports,
@@ -362,6 +361,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
                                 module.getMethod("isExported", String.class, module),
                                 module.getMethod("isOpen", String.class, module),
                                 module.getMethod("canRead", module),
+                                instrumentation,
                                 instrumentation.getMethod("isModifiableModule", module),
                                 instrumentation.getMethod("redefineModule", module, Set.class, Map.class, Map.class, Set.class, Map.class));
                     } catch (ClassNotFoundException ignored) {
@@ -575,12 +575,12 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
             }
 
             /**
-             * A dispatcher for a VM that does support the {@code java.lang.Module} API and that does not support {@link Instrumentation}.
+             * A dispatcher for a VM that does support the {@code java.lang.Module} API and that does not support {@link java.lang.instrument.Instrumentation}.
              */
             protected static class WithoutInstrumentationSupport extends Enabled {
 
                 /**
-                 * Creates an enabled dispatcher without support for {@link Instrumentation}.
+                 * Creates an enabled dispatcher without support for {@link java.lang.instrument.Instrumentation}.
                  *
                  * @param getModule           The {@code java.lang.Class#getModule()} method.
                  * @param getClassLoader      The {@code java.lang.Module#getClassLoader()} method.
@@ -612,7 +612,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
                 /**
                  * {@inheritDoc}
                  */
-                public void modify(Instrumentation instrumentation,
+                public void modify(Object instrumentation,
                                    Object source,
                                    Set<Object> reads,
                                    Map<String, Set<Object>> exports,
@@ -624,9 +624,14 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
             }
 
             /**
-             * A dispatcher for a VM that does support the {@code java.lang.Module} API and that supports {@link Instrumentation}.
+             * A dispatcher for a VM that does support the {@code java.lang.Module} API and that supports {@link java.lang.instrument.Instrumentation}.
              */
             protected static class WithInstrumentationSupport extends Enabled {
+
+                /**
+                 * The {@link java.lang.instrument.Instrumentation} type.
+                 */
+                private final Class<?> instrumentation;
 
                 /**
                  * The {@code java.lang.instrument.Instrumentation#isModifiableModule} method.
@@ -649,6 +654,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
                  * @param isExported          The {@code java.lang.Module#isExported(String,Module)} method.
                  * @param isOpened            The {@code java.lang.Module#isOpened(String,Module)} method.
                  * @param canRead             The {@code java.lang.Module#canRead(Module)} method.
+                 * @param instrumentation     The {@link java.lang.instrument.Instrumentation} type.
                  * @param isModifiableModule  The {@code java.lang.instrument.Instrumentation#isModifiableModule} method.
                  * @param redefineModule      The {@code java.lang.instrument.Instrumentation#redefineModule} method.
                  */
@@ -660,6 +666,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
                                                      Method isExported,
                                                      Method isOpened,
                                                      Method canRead,
+                                                     Class<?> instrumentation,
                                                      Method isModifiableModule,
                                                      Method redefineModule) {
                     super(getModule,
@@ -670,6 +677,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
                             isExported,
                             isOpened,
                             canRead);
+                    this.instrumentation = instrumentation;
                     this.isModifiableModule = isModifiableModule;
                     this.redefineModule = redefineModule;
                 }
@@ -677,13 +685,16 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
                 /**
                  * {@inheritDoc}
                  */
-                public void modify(Instrumentation instrumentation,
+                public void modify(Object instrumentation,
                                    Object source,
                                    Set<Object> reads,
                                    Map<String, Set<Object>> exports,
                                    Map<String, Set<Object>> opens,
                                    Set<Class<?>> uses,
                                    Map<Class<?>, List<Class<?>>> provides) {
+                    if (!this.instrumentation.isInstance(instrumentation)) {
+                        throw new IllegalArgumentException("Expected an instance of instrumentation: " + instrumentation);
+                    }
                     try {
                         if (!(Boolean) isModifiableModule.invoke(instrumentation, source)) {
                             throw new IllegalStateException(source + " is not modifiable");
@@ -780,7 +791,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
             /**
              * {@inheritDoc}
              */
-            public void modify(Instrumentation instrumentation,
+            public void modify(Object instrumentation,
                                Object module,
                                Set<Object> reads,
                                Map<String, Set<Object>> exports,
