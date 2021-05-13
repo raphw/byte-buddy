@@ -6,7 +6,6 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.objectweb.asm.Type;
 
-import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 
