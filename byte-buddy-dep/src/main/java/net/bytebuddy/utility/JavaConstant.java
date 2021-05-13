@@ -51,6 +51,8 @@ public interface JavaConstant {
      */
     Object asConstantPoolValue();
 
+    Object asConstantDescription();
+
     /**
      * Returns a description of the type of the represented instance or at least a stub.
      *
@@ -215,6 +217,19 @@ public interface JavaConstant {
          */
         public Object asConstantPoolValue() {
             return value;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Object asConstantDescription() {
+            if (value instanceof Integer || value instanceof Long || value instanceof Float || value instanceof Double) {
+                return value;
+            } else if (value instanceof Type) {
+                return ClassDesc.ofDescriptor(((Type) value).getDescriptor());
+            } else {
+                throw new IllegalStateException("Cannot resolve to a description: " + value);
+            }
         }
 
         /**
@@ -458,6 +473,17 @@ public interface JavaConstant {
                 stringBuilder.append(parameterType.getDescriptor());
             }
             return Type.getMethodType(stringBuilder.append(')').append(getReturnType().getDescriptor()).toString());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Object asConstantDescription() {
+            ClassDesc[] parameterTypes = new ClassDesc[getParameterTypes().size()];
+            for (int index = 0; index < getParameterTypes().size(); index++) {
+                parameterTypes = ClassDesc.ofDescriptor(getParameterTypes().get(index).getDescriptor());
+            }
+            return MethodTypeDesc.of(ClassDesc.ofDescriptor(getReturnType().getDescriptor()), parameterTypes);
         }
 
         /**
@@ -726,6 +752,16 @@ public interface JavaConstant {
                     getName(),
                     getDescriptor(),
                     getOwnerType().isInterface());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Object asConstantDescription() {
+            return MethodHandleDesc.of(DirectMethodHandleDesc.Kind.valueOf(getHandleType().getIdentifier()),
+                    ClassDesc.ofDescriptor(getOwnerType().getDescriptor()),
+                    getName(),
+                    getDescriptor());
         }
 
         /**
@@ -1953,6 +1989,43 @@ public interface JavaConstant {
          */
         public Object asConstantPoolValue() {
             return value;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Object asConstantDescription() {
+            return asConstantDescription(value);
+        }
+
+        private static ConstantDesc asConstantDescription(ConstantDynamic value) {
+            ConstantDesc[] arguments = new ConstantDesc[value.getBootstrapMethodArgumentCount()];
+            for (int index = 0; index < value.getBootstrapMethodArgumentCount(); index++) {
+                if (value.getBootstrapMethodArgument(index) instanceof ConstantDynamic) {
+                    arguments[index] = asConstantDescription((ConstantDynamic) value.getBootstrapMethodArgument(index));
+                } else if (value.getBootstrapMethodArgument(index) instanceof Handle) {
+                    arguments[index] = MethodHandleDesc.of(DirectMethodHandleDesc.Kind.valueOf(((Handle) value.getBootstrapMethodArgument(index)).getTag()),
+                            ClassDesc.ofDescriptor(((Handle) value.getBootstrapMethodArgument(index)).getOwner()),
+                            ((Handle) value.getBootstrapMethodArgument(index)).getName(),
+                            ((Handle) value.getBootstrapMethodArgument(index)).getDesc());
+                } else if (value.getBootstrapMethodArgument(index) instanceof Type) {
+                    arguments[index] = ((Type) value.getBootstrapMethodArgument(index)).getSort() == Type.METHOD
+                            ? MethodTypeDesc.ofDescriptor(((Type) value.getBootstrapMethodArgument(index)).getDescriptor())
+                            : ClassDesc.ofDescriptor(((Type) value.getBootstrapMethodArgument(index)).getDescriptor());
+                } else if (value.getBootstrapMethodArgument(index) instanceof Integer
+                        || value.getBootstrapMethodArgument(index) instanceof Long
+                        || value.getBootstrapMethodArgument(index) instanceof Float
+                        || value.getBootstrapMethodArgument(index) instanceof Double
+                        || value.getBootstrapMethodArgument(index) instanceof String) {
+                    arguments[index] = (ConstantDesc) value.getBootstrapMethodArgument(index);
+                } else {
+                    throw new IllegalStateException("Could not resolve bootstrap argument to a constant description: " + value.getBootstrapMethodArgument(index));
+                }
+            }
+            return DynamicConstantDesc.ofCanonical(MethodHandleDesc.of(DirectMethodHandleDesc.Kind.valueOf(value.getBootstrapMethod().getTag()),
+                    ClassDesc.ofDescriptor(value.getBootstrapMethod().getOwner()),
+                    value.getBootstrapMethod().getName(),
+                    value.getBootstrapMethod().getDesc()), value.getBootstrapMethod(), value.getName(), ClassDesc.ofDescriptor(value.getDescriptor()), arguments);
         }
 
         /**
