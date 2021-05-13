@@ -9,8 +9,8 @@ import org.objectweb.asm.Type;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 @RunWith(Parameterized.class)
 public class JavaConstantSimpleTest {
@@ -18,14 +18,14 @@ public class JavaConstantSimpleTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-            {0, TypeDescription.ForLoadedType.of(int.class), 0},
-            {0L, TypeDescription.ForLoadedType.of(long.class), 0L},
-            {0f, TypeDescription.ForLoadedType.of(float.class), 0f},
-            {0d, TypeDescription.ForLoadedType.of(double.class), 0d},
-            {"foo", TypeDescription.STRING, "foo"},
-            {Object.class, TypeDescription.CLASS, Type.getType(Object.class)},
-            {TypeDescription.OBJECT, TypeDescription.CLASS, Type.getType(Object.class)},
-            {JavaConstant.Simple.ofLoaded(0), TypeDescription.ForLoadedType.of(int.class), 0}
+                {0, TypeDescription.ForLoadedType.of(int.class), 0},
+                {0L, TypeDescription.ForLoadedType.of(long.class), 0L},
+                {0f, TypeDescription.ForLoadedType.of(float.class), 0f},
+                {0d, TypeDescription.ForLoadedType.of(double.class), 0d},
+                {"foo", TypeDescription.STRING, "foo"},
+                {Object.class, TypeDescription.CLASS, Type.getType(Object.class)},
+                {TypeDescription.OBJECT, TypeDescription.CLASS, Type.getType(Object.class)},
+                {JavaConstant.Simple.ofLoaded(0), TypeDescription.ForLoadedType.of(int.class), 0}
         });
     }
 

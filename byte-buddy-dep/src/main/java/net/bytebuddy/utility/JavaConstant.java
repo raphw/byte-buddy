@@ -22,11 +22,14 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.pool.TypePool;
 import org.objectweb.asm.ConstantDynamic;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.lang.constant.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -72,6 +75,7 @@ public interface JavaConstant {
 
         /**
          * Creates a simple Java constant.
+         *
          * @param value           The represented constant pool value.
          * @param typeDescription A description of the type of the constant.
          */
@@ -105,6 +109,64 @@ public interface JavaConstant {
                 return MethodType.ofLoaded(value);
             } else {
                 throw new IllegalArgumentException("Not a loaded Java constant value: " + value);
+            }
+        }
+
+        public static JavaConstant ofDescription(ConstantDesc value, ClassLoader classLoader) {
+            return ofDescription(value, ClassFileLocator.ForClassLoader.of(classLoader));
+        }
+
+        public static JavaConstant ofDescription(ConstantDesc value, ClassFileLocator classFileLocator) {
+            return ofDescription(value, TypePool.Default.WithLazyResolution.of(classFileLocator));
+        }
+
+        public static JavaConstant ofDescription(ConstantDesc value, TypePool typePool) {
+            if (value instanceof Integer) {
+                return new Simple(value, TypeDescription.ForLoadedType.of(int.class));
+            } else if (value instanceof Long) {
+                return new Simple(value, TypeDescription.ForLoadedType.of(long.class));
+            } else if (value instanceof Float) {
+                return new Simple(value, TypeDescription.ForLoadedType.of(float.class));
+            } else if (value instanceof Double) {
+                return new Simple(value, TypeDescription.ForLoadedType.of(double.class));
+            } else if (value instanceof String) {
+                return new Simple(value, TypeDescription.STRING);
+            } else if (value instanceof ClassDesc) {
+                return new Simple(Type.getType(((ClassDesc) value).descriptorString()), TypeDescription.CLASS);
+            } else if (value instanceof MethodTypeDesc) {
+                List<ClassDesc> parameterTypes = ((MethodTypeDesc) value).parameterList();
+                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameterTypes.size());
+                for (ClassDesc parameterType : parameterTypes) {
+                    typeDescriptions.add(typePool.describe(Type.getType(parameterType.descriptorString()).getClassName()).resolve());
+                }
+                return MethodType.of(typePool.describe(Type.getType(((MethodTypeDesc) value).returnType().descriptorString()).getClassName()).resolve(), typeDescriptions);
+            } else if (value instanceof DirectMethodHandleDesc) {
+                List<ClassDesc> parameterTypes = ((DirectMethodHandleDesc) value).invocationType().parameterList();
+                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameterTypes.size());
+                for (ClassDesc parameterType : parameterTypes) {
+                    typeDescriptions.add(typePool.describe(Type.getType(parameterType.descriptorString()).getClassName()).resolve());
+                }
+                return new MethodHandle(MethodHandle.HandleType.of(((DirectMethodHandleDesc) value).refKind()),
+                        typePool.describe(Type.getType(((DirectMethodHandleDesc) value).owner().descriptorString()).getClassName()).resolve(),
+                        ((DirectMethodHandleDesc) value).methodName(),
+                        typePool.describe(Type.getType(((DirectMethodHandleDesc) value).invocationType().returnType().descriptorString()).getClassName()).resolve(),
+                        typeDescriptions);
+            } else if (value instanceof DynamicConstantDesc<?>) {
+                List<ConstantDesc> constants = ((DynamicConstantDesc<?>) value).bootstrapArgsList();
+                Object[] argument = new Object[constants.size()];
+                for (int index = 0; index < constants.size(); index++) {
+                    argument[index] = ofDescription(constants.get(index), typePool).asConstantPoolValue();
+                }
+                return new Dynamic(new ConstantDynamic(((DynamicConstantDesc<?>) value).constantName(),
+                        ((DynamicConstantDesc<?>) value).bootstrapMethod().lookupDescriptor(),
+                        new Handle(((DynamicConstantDesc<?>) value).bootstrapMethod().refKind(),
+                                ((DynamicConstantDesc<?>) value).bootstrapMethod().owner().descriptorString(),
+                                ((DynamicConstantDesc<?>) value).bootstrapMethod().methodName(),
+                                ((DynamicConstantDesc<?>) value).bootstrapMethod().lookupDescriptor(),
+                                ((DynamicConstantDesc<?>) value).bootstrapMethod().isOwnerInterface()),
+                        argument), typePool.describe(Type.getType(((DynamicConstantDesc<?>) value).constantType().descriptorString()).getClassName()).resolve());
+            } else {
+                throw new IllegalArgumentException("Not a resolvable constant description or not expressible as a constant pool value: " + value);
             }
         }
 
@@ -232,6 +294,17 @@ public interface JavaConstant {
          */
         public static MethodType of(Class<?> returnType, Class<?>... parameterType) {
             return of(TypeDescription.ForLoadedType.of(returnType), new TypeList.ForLoadedTypes(parameterType));
+        }
+
+        /**
+         * Returns a method type description of the given return type and parameter types.
+         *
+         * @param returnType    The return type to represent.
+         * @param parameterType The parameter types to represent.
+         * @return A method type of the given return type and parameter types.
+         */
+        public static MethodType of(TypeDescription returnType, TypeDescription... parameterType) {
+            return new MethodType(returnType, Arrays.asList(parameterType));
         }
 
         /**
@@ -714,18 +787,18 @@ public interface JavaConstant {
          */
         public String getDescriptor() {
             switch (handleType) {
-            case GET_FIELD:
-            case GET_STATIC_FIELD:
-                return returnType.getDescriptor();
-            case PUT_FIELD:
-            case PUT_STATIC_FIELD:
-                return parameterTypes.get(0).getDescriptor();
-            default:
-                StringBuilder stringBuilder = new StringBuilder().append('(');
-                for (TypeDescription parameterType : parameterTypes) {
-                    stringBuilder.append(parameterType.getDescriptor());
-                }
-                return stringBuilder.append(')').append(returnType.getDescriptor()).toString();
+                case GET_FIELD:
+                case GET_STATIC_FIELD:
+                    return returnType.getDescriptor();
+                case PUT_FIELD:
+                case PUT_STATIC_FIELD:
+                    return parameterTypes.get(0).getDescriptor();
+                default:
+                    StringBuilder stringBuilder = new StringBuilder().append('(');
+                    for (TypeDescription parameterType : parameterTypes) {
+                        stringBuilder.append(parameterType.getDescriptor());
+                    }
+                    return stringBuilder.append(')').append(returnType.getDescriptor()).toString();
             }
         }
 
@@ -1629,8 +1702,8 @@ public interface JavaConstant {
             if (!methodDescription.isConstructor() && methodDescription.getReturnType().represents(void.class)) {
                 throw new IllegalArgumentException("Bootstrap method is no constructor or non-void static factory: " + methodDescription);
             } else if (methodDescription.isVarArgs()
-                ? methodDescription.getParameters().size() + (methodDescription.isStatic() || methodDescription.isConstructor() ? 0 : 1) > constants.size() + 1
-                : methodDescription.getParameters().size() + (methodDescription.isStatic() || methodDescription.isConstructor() ? 0 : 1) != constants.size()) {
+                    ? methodDescription.getParameters().size() + (methodDescription.isStatic() || methodDescription.isConstructor() ? 0 : 1) > constants.size() + 1
+                    : methodDescription.getParameters().size() + (methodDescription.isStatic() || methodDescription.isConstructor() ? 0 : 1) != constants.size()) {
                 throw new IllegalArgumentException("Cannot assign " + constants + " to " + methodDescription);
             }
             Object[] argument = new Object[constants.size() + 1];

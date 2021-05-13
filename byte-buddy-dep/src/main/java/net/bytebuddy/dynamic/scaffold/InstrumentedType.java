@@ -371,6 +371,24 @@ public interface InstrumentedType extends TypeDescription {
          * @return The prepared instrumented type.
          */
         InstrumentedType prepare(InstrumentedType instrumentedType);
+
+        /**
+         * A prepareable that does not alter the instrumented type.
+         */
+        enum NoOp implements Prepareable {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+        }
     }
 
     /**

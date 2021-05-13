@@ -10,8 +10,8 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 public class ImplementationSimpleTest {
 
@@ -42,7 +42,7 @@ public class ImplementationSimpleTest {
     @Test
     public void testDispatcher() {
         ByteCodeAppender.Size size = Implementation.Simple.of(new Implementation.Simple.Dispatcher() {
-            public StackManipulation apply(Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+            public StackManipulation apply(Implementation.Target implementationTarget, MethodDescription instrumentedMethod) {
                 return StackManipulation.Trivial.INSTANCE;
             }
         }).appender(implementationTarget).apply(methodVisitor, implementationContext, methodDescription);
@@ -53,7 +53,7 @@ public class ImplementationSimpleTest {
     @Test
     public void testDispatcherWithExtendedLocalVariableArray() {
         ByteCodeAppender.Size size = Implementation.Simple.of(new Implementation.Simple.Dispatcher() {
-            public StackManipulation apply(Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+            public StackManipulation apply(Implementation.Target implementationTarget, MethodDescription instrumentedMethod) {
                 return StackManipulation.Trivial.INSTANCE;
             }
         }, 42).appender(implementationTarget).apply(methodVisitor, implementationContext, methodDescription);

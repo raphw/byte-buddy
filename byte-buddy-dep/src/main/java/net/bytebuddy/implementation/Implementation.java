@@ -255,7 +255,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             public static SpecialMethodInvocation of(MethodDescription methodDescription, TypeDescription typeDescription) {
                 StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).special(typeDescription);
                 return stackManipulation.isValid()
-                        ? new Simple(methodDescription, typeDescription, stackManipulation)
+                        ? new SpecialMethodInvocation.Simple(methodDescription, typeDescription, stackManipulation)
                         : SpecialMethodInvocation.Illegal.INSTANCE;
             }
 
@@ -1920,10 +1920,33 @@ public interface Implementation extends InstrumentedType.Prepareable {
          * @return An implementation for the supplied dispatcher.
          */
         public static Implementation of(Dispatcher dispatcher, int additionalVariableLength) {
+            return of(dispatcher, NoOp.INSTANCE, additionalVariableLength);
+        }
+
+        /**
+         * Resolves a simple implementation that applies the given dispatcher without defining additional local variables.
+         *
+         * @param dispatcher  The dispatcher to use.
+         * @param prepareable A preparation of the instrumented type.
+         * @return An implementation for the supplied dispatcher.
+         */
+        public static Implementation of(Dispatcher dispatcher, InstrumentedType.Prepareable prepareable) {
+            return of(dispatcher, prepareable, NO_ADDITIONAL_VARIABLES);
+        }
+
+        /**
+         * Resolves a simple implementation that applies the given dispatcher.
+         *
+         * @param dispatcher               The dispatcher to use.
+         * @param prepareable              A preparation of the instrumented type.
+         * @param additionalVariableLength The amount of additional slots required in the local variable array.
+         * @return An implementation for the supplied dispatcher.
+         */
+        public static Implementation of(Dispatcher dispatcher, InstrumentedType.Prepareable prepareable, int additionalVariableLength) {
             if (additionalVariableLength < NO_ADDITIONAL_VARIABLES) {
                 throw new IllegalArgumentException("Additional variable length cannot be negative: " + additionalVariableLength);
             }
-            return new Simple(new ForDispatcher(dispatcher, additionalVariableLength));
+            return new ForDispatcher(dispatcher, prepareable, additionalVariableLength);
         }
 
         /**
@@ -1948,23 +1971,28 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * Creates a stack manipulation from a simple method dispatch.
              *
-             * @param implementationContext The implementation context to use.
-             * @param instrumentedMethod    The instrumented method.
+             * @param implementationTarget The implementation target to use.
+             * @param instrumentedMethod   The instrumented method.
              * @return The stack manipulation to apply.
              */
-            StackManipulation apply(Context implementationContext, MethodDescription instrumentedMethod);
+            StackManipulation apply(Target implementationTarget, MethodDescription instrumentedMethod);
         }
 
         /**
          * A {@link ByteCodeAppender} for a dispatcher.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        protected static class ForDispatcher implements ByteCodeAppender {
+        protected static class ForDispatcher implements Implementation {
 
             /**
              * The dispatcher to use.
              */
             private final Dispatcher dispatcher;
+
+            /**
+             * A preparation of the instrumented type.
+             */
+            private final InstrumentedType.Prepareable prepareable;
 
             /**
              * The additional length of the local variable array.
@@ -1975,20 +2003,57 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * Creates a new byte code appender for a dispatcher.
              *
              * @param dispatcher               The dispatcher to use.
+             * @param prepareable              A preparation of the instrumented type.
              * @param additionalVariableLength The additional length of the local variable array.
              */
-            protected ForDispatcher(Dispatcher dispatcher, int additionalVariableLength) {
+            protected ForDispatcher(Dispatcher dispatcher, InstrumentedType.Prepareable prepareable, int additionalVariableLength) {
                 this.dispatcher = dispatcher;
+                this.prepareable = prepareable;
                 this.additionalVariableLength = additionalVariableLength;
             }
 
             /**
              * {@inheritDoc}
              */
-            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                return new Size(dispatcher.apply(implementationContext, instrumentedMethod)
-                        .apply(methodVisitor, implementationContext)
-                        .getMaximalSize(), instrumentedMethod.getStackSize() + additionalVariableLength);
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return prepareable.prepare(instrumentedType);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ByteCodeAppender appender(Target implementationTarget) {
+                return new Appender(implementationTarget);
+            }
+
+            /**
+             * An appender for a dispatcher-based simple implementation.
+             */
+            @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+            protected class Appender implements ByteCodeAppender {
+
+                /**
+                 * The implementation target.
+                 */
+                private final Target implementationTarget;
+
+                /**
+                 * Creates a new appender.
+                 *
+                 * @param implementationTarget The implementation target.
+                 */
+                protected Appender(Target implementationTarget) {
+                    this.implementationTarget = implementationTarget;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                    return new Size(dispatcher.apply(implementationTarget, instrumentedMethod)
+                            .apply(methodVisitor, implementationContext)
+                            .getMaximalSize(), instrumentedMethod.getStackSize() + additionalVariableLength);
+                }
             }
         }
     }
