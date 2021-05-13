@@ -51,6 +51,12 @@ public interface JavaConstant {
      */
     Object asConstantPoolValue();
 
+    /**
+     * Returns this constant as a Java {@code java.lang.constant.ConstantDesc} if the current VM is of at least version 12.
+     * If the current VM is of an older version and does not support the type, an exception is thrown.
+     *
+     * @return This constant as a Java {@code java.lang.constant.ConstantDesc}.
+     */
     Object asConstantDescription();
 
     /**
@@ -114,14 +120,35 @@ public interface JavaConstant {
             }
         }
 
+        /**
+         * Creates a Java constant value from a {@code java.lang.constant.ConstantDesc}.
+         *
+         * @param value       The  {@code java.lang.constant.ConstantDesc} to represent.
+         * @param classLoader The class loader to use for resolving type information from the supplied value.
+         * @return An appropriate Java constant representation.
+         */
         public static JavaConstant ofDescription(ConstantDesc value, ClassLoader classLoader) {
             return ofDescription(value, ClassFileLocator.ForClassLoader.of(classLoader));
         }
 
+        /**
+         * Creates a Java constant value from a {@code java.lang.constant.ConstantDesc}.
+         *
+         * @param value            The  {@code java.lang.constant.ConstantDesc} to represent.
+         * @param classFileLocator The class file locator to use for resolving type information from the supplied value.
+         * @return An appropriate Java constant representation.
+         */
         public static JavaConstant ofDescription(ConstantDesc value, ClassFileLocator classFileLocator) {
             return ofDescription(value, TypePool.Default.WithLazyResolution.of(classFileLocator));
         }
 
+        /**
+         * Creates a Java constant value from a {@code java.lang.constant.ConstantDesc}.
+         *
+         * @param value    The  {@code java.lang.constant.ConstantDesc} to represent.
+         * @param typePool The type pool to use for resolving type information from the supplied value.
+         * @return An appropriate Java constant representation.
+         */
         public static JavaConstant ofDescription(ConstantDesc value, TypePool typePool) {
             if (value instanceof Integer) {
                 return new Simple(value, TypeDescription.ForLoadedType.of(int.class));
@@ -481,7 +508,7 @@ public interface JavaConstant {
         public Object asConstantDescription() {
             ClassDesc[] parameterTypes = new ClassDesc[getParameterTypes().size()];
             for (int index = 0; index < getParameterTypes().size(); index++) {
-                parameterTypes = ClassDesc.ofDescriptor(getParameterTypes().get(index).getDescriptor());
+                parameterTypes[index] = ClassDesc.ofDescriptor(getParameterTypes().get(index).getDescriptor());
             }
             return MethodTypeDesc.of(ClassDesc.ofDescriptor(getReturnType().getDescriptor()), parameterTypes);
         }
@@ -1998,6 +2025,12 @@ public interface JavaConstant {
             return asConstantDescription(value);
         }
 
+        /**
+         * Resolves a {@link ConstantDynamic} value to a {@code java.lang.constant.ConstantDesc}.
+         *
+         * @param value The {@link ConstantDynamic} value to resolve.
+         * @return A {@code java.lang.constant.ConstantDesc} representing the supplied {@link ConstantDynamic}.
+         */
         private static ConstantDesc asConstantDescription(ConstantDynamic value) {
             ConstantDesc[] arguments = new ConstantDesc[value.getBootstrapMethodArgumentCount()];
             for (int index = 0; index < value.getBootstrapMethodArgumentCount(); index++) {
@@ -2025,7 +2058,7 @@ public interface JavaConstant {
             return DynamicConstantDesc.ofCanonical(MethodHandleDesc.of(DirectMethodHandleDesc.Kind.valueOf(value.getBootstrapMethod().getTag()),
                     ClassDesc.ofDescriptor(value.getBootstrapMethod().getOwner()),
                     value.getBootstrapMethod().getName(),
-                    value.getBootstrapMethod().getDesc()), value.getBootstrapMethod(), value.getName(), ClassDesc.ofDescriptor(value.getDescriptor()), arguments);
+                    value.getBootstrapMethod().getDesc()), value.getName(), ClassDesc.ofDescriptor(value.getDescriptor()), arguments);
         }
 
         /**
