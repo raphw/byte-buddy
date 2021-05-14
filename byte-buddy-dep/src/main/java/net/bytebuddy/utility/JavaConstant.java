@@ -187,7 +187,7 @@ public interface JavaConstant {
         /**
          * A dispatcher for extracting information from a {@code java.lang.invoke.MethodType} instance.
          */
-        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
         /**
          * The return type of this method type.
@@ -417,6 +417,7 @@ public interface JavaConstant {
         /**
          * A dispatcher for extracting information from a {@code java.lang.invoke.MethodType} instance.
          */
+        @JavaDispatcher.Proxied("java.lang.invoke.MethodType")
         protected interface Dispatcher {
 
             /**
@@ -434,114 +435,6 @@ public interface JavaConstant {
              * @return The parameter types that are described by the supplied instance.
              */
             Class<?>[] parameterArray(Object methodType);
-
-            /**
-             * A creation action for a dispatcher.
-             */
-            enum CreationAction implements PrivilegedAction<Dispatcher> {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-                public Dispatcher run() {
-                    try {
-                        Class<?> methodType = JavaType.METHOD_TYPE.load();
-                        return new Dispatcher.ForJava7CapableVm(methodType.getMethod("returnType"), methodType.getMethod("parameterArray"));
-                    } catch (Exception ignored) {
-                        return Dispatcher.ForLegacyVm.INSTANCE;
-                    }
-                }
-            }
-
-            /**
-             * A dispatcher for virtual machines that are aware of the {@code java.lang.invoke.MethodType} type that was added in Java version 7.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForJava7CapableVm implements Dispatcher {
-
-                /**
-                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
-                 */
-                private static final Object[] NO_ARGUMENTS = new Object[0];
-
-                /**
-                 * A reference to {@code java.lang.invoke.MethodType#returnType}.
-                 */
-                private final Method returnType;
-
-                /**
-                 * A reference to {@code java.lang.invoke.MethodType#returnType}.
-                 */
-                private final Method parameterArray;
-
-                /**
-                 * Creates a new dispatcher for a modern JVM.
-                 *
-                 * @param returnType     A reference to {@code java.lang.invoke.MethodType#returnType}.
-                 * @param parameterArray A reference to {@code java.lang.invoke.MethodType#returnType}.
-                 */
-                protected ForJava7CapableVm(Method returnType, Method parameterArray) {
-                    this.returnType = returnType;
-                    this.parameterArray = parameterArray;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?> returnType(Object methodType) {
-                    try {
-                        return (Class<?>) returnType.invoke(methodType, NO_ARGUMENTS);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodType#returnType", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodType#returnType", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?>[] parameterArray(Object methodType) {
-                    try {
-                        return (Class<?>[]) parameterArray.invoke(methodType, NO_ARGUMENTS);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodType#parameterArray", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodType#parameterArray", exception.getCause());
-                    }
-                }
-            }
-
-            /**
-             * A dispatcher for virtual machines that are <b>not</b> aware of the {@code java.lang.invoke.MethodType} type that was added in Java version 7.
-             */
-            enum ForLegacyVm implements Dispatcher {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?> returnType(Object methodType) {
-                    throw new UnsupportedOperationException("Unsupported type for the current JVM: java.lang.invoke.MethodType");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?>[] parameterArray(Object methodType) {
-                    throw new UnsupportedOperationException("Unsupported type for the current JVM: java.lang.invoke.MethodType");
-                }
-            }
         }
     }
 

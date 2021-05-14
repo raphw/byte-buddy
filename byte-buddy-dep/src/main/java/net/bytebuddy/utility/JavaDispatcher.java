@@ -108,9 +108,9 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                     } else {
                         offset = 1;
                         if (parameterType.length == 0) {
-                            throw new IllegalStateException();
-                        } else if (parameterType[0].isAssignableFrom(proxy)) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Expected self type: " + method);
+                        } else if (!parameterType[0].isAssignableFrom(target)) {
+                            throw new IllegalStateException("Cannot assign self type: " + target + " on " + method);
                         }
                         Class<?>[] adjusted = new Class<?>[parameterType.length - 1];
                         System.arraycopy(parameterType, 1, adjusted, 0, adjusted.length);
