@@ -8850,19 +8850,24 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         public TypeDescription getNestHost() {
-            return TypeDescription.ForLoadedType.of(DISPATCHER.getNestHost(type));
+            Class<?> host = DISPATCHER.getNestHost(type);
+            return TypeDescription.ForLoadedType.of(host == null ? type : host);
         }
 
         /**
          * {@inheritDoc}
          */
         public TypeList getNestMembers() {
-            return new TypeList.ForLoadedTypes(DISPATCHER.getNestMembers(type));
+            Class<?>[] member = DISPATCHER.getNestMembers(type);
+            return new TypeList.ForLoadedTypes(member.length == 0
+                    ? new Class<?>[] {type}
+                    : member);
         }
 
         @Override
         public boolean isNestHost() {
-            return DISPATCHER.getNestHost(type) == type;
+            Class<?> host = DISPATCHER.getNestHost(type);
+            return host == null || host == type;
         }
 
         @Override
@@ -8912,6 +8917,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * A dispatcher for using methods of {@link Class} that are not declared for Java 6.
          */
+        @JavaDispatcher.Defaults
         @JavaDispatcher.Proxied("java.lang.Class")
         protected interface Dispatcher {
 

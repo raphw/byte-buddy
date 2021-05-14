@@ -66,15 +66,29 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
      */
     @SuppressWarnings("unchecked")
     public T run() {
+        Map<Method, ProxiedInvocationHandler.Dispatcher> dispatchers = new HashMap<Method, ProxiedInvocationHandler.Dispatcher>();
+        boolean defaults = proxy.isAnnotationPresent(Defaults.class);
+        String name = proxy.getAnnotation(Proxied.class).value();
         Class<?> target;
         try {
-            target = Class.forName(proxy.getAnnotation(Proxied.class).value(), false, null);
+            target = Class.forName(name, false, null);
         } catch (ClassNotFoundException exception) {
+            for (Method method : proxy.getMethods()) {
+                if (method.getDeclaringClass() == Object.class) {
+                    continue;
+                }
+                if (method.isAnnotationPresent(Instance.class)) {
+                    dispatchers.put(method, new ProxiedInvocationHandler.Dispatcher.ForFixedValue(false));
+                } else {
+                    dispatchers.put(method, defaults || method.isAnnotationPresent(Defaults.class)
+                            ? ProxiedInvocationHandler.Dispatcher.ForFixedValue.of(method.getReturnType(), method.isAnnotationPresent(Reversed.class))
+                            : new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Type not available on current VM: " + exception.getMessage()));
+                }
+            }
             return (T) Proxy.newProxyInstance(proxy.getClassLoader(),
                     new Class<?>[]{proxy},
-                    new ExceptionInvocationHandler("Class not available on current VM: " + exception.getMessage()));
+                    new ProxiedInvocationHandler(name, dispatchers));
         }
-        Map<Method, ProxiedInvocationHandler.Dispatcher> dispatchers = new HashMap<Method, ProxiedInvocationHandler.Dispatcher>();
         for (Method method : proxy.getMethods()) {
             if (method.getDeclaringClass() == Object.class) {
                 continue;
@@ -142,9 +156,13 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                             ? new ProxiedInvocationHandler.Dispatcher.ForStaticMethod(resolved)
                             : new ProxiedInvocationHandler.Dispatcher.ForNonStaticMethod(resolved));
                 } catch (ClassNotFoundException exception) {
-                    dispatchers.put(method, new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Class not available on current VM: " + exception.getMessage()));
+                    dispatchers.put(method, defaults || method.isAnnotationPresent(Defaults.class)
+                            ? ProxiedInvocationHandler.Dispatcher.ForFixedValue.of(method.getReturnType(), method.isAnnotationPresent(Reversed.class))
+                            : new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Class not available on current VM: " + exception.getMessage()));
                 } catch (NoSuchMethodException exception) {
-                    dispatchers.put(method, new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Method not available on current VM: " + exception.getMessage()));
+                    dispatchers.put(method, defaults || method.isAnnotationPresent(Defaults.class)
+                            ? ProxiedInvocationHandler.Dispatcher.ForFixedValue.of(method.getReturnType(), method.isAnnotationPresent(Reversed.class))
+                            : new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Method not available on current VM: " + exception.getMessage()));
                 } catch (Throwable throwable) {
                     dispatchers.put(method, new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Unexpected error: " + throwable.getMessage()));
                 }
@@ -152,7 +170,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         }
         return (T) Proxy.newProxyInstance(proxy.getClassLoader(),
                 new Class<?>[]{proxy},
-                new ProxiedInvocationHandler(proxy, dispatchers));
+                new ProxiedInvocationHandler(target.getName(), dispatchers));
     }
 
     /**
@@ -193,14 +211,34 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     }
 
     /**
+     * Indicates that a method is supposed to return a default value if a method or type could not be resolved.
+     */
+    @Documented
+    @Target({ElementType.TYPE, ElementType.METHOD})
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Defaults {
+        /* empty */
+    }
+
+    /**
+     * Indicates that a {@code boolean} method is supposed to return {@code true} if not proxied.
+     */
+    @Documented
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Reversed {
+        /* empty */
+    }
+
+    /**
      * An invocation handler that invokes given dispatchers.
      */
     protected static class ProxiedInvocationHandler implements InvocationHandler {
 
         /**
-         * The proxied type.
+         * The proxied type's name.
          */
-        private final Class<?> type;
+        private final String name;
 
         /**
          * A mapping of proxy type methods to their proxied dispatchers.
@@ -210,18 +248,18 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         /**
          * Creates a new invocation handler for proxying a type.
          *
-         * @param type    The proxied type.
+         * @param name    The proxied type's name.
          * @param targets A mapping of proxy type methods to their proxied dispatchers.
          */
-        protected ProxiedInvocationHandler(Class<?> type, Map<Method, Dispatcher> targets) {
-            this.type = type;
+        protected ProxiedInvocationHandler(String name, Map<Method, Dispatcher> targets) {
+            this.name = name;
             this.targets = targets;
         }
 
         /**
          * {@inheritDoc}
          */
-        public Object invoke(Object proxy, Method method, Object[] argument) {
+        public Object invoke(Object proxy, Method method, Object[] argument) throws Throwable {
             if (method.getDeclaringClass() == Object.class) {
                 if (method.getName().equals("hashCode")) {
                     return hashCode();
@@ -230,7 +268,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                             && Proxy.isProxyClass(argument[0].getClass())
                             && Proxy.getInvocationHandler(argument[0]).equals(this);
                 } else if (method.getName().equals("toString")) {
-                    return "Call proxy for " + type.getName();
+                    return "Call proxy for " + name;
                 } else {
                     throw new IllegalStateException("Unexpected object method: " + method);
                 }
@@ -249,6 +287,11 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Throwable throwable) {
+                for (Class<?> type : method.getExceptionTypes()) {
+                    if (type.isInstance(throwable)) {
+                        throw throwable;
+                    }
+                }
                 throw new IllegalStateException("Failed to invoke proxy for " + method, throwable);
             }
         }
@@ -292,6 +335,66 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                  */
                 public Object invoke(Object[] argument) throws Throwable {
                     return target.isInstance(argument[0]);
+                }
+            }
+
+            /**
+             * A dispatcher that returns a fixed value.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForFixedValue implements Dispatcher {
+
+                /**
+                 * The returned value.
+                 */
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
+                private final Object value;
+
+                /**
+                 * Creates a dispatcher that returns a fixed value.
+                 *
+                 * @param value The returned value.
+                 */
+                protected ForFixedValue(Object value) {
+                    this.value = value;
+                }
+
+                /**
+                 * Resolves a fixed value for a given type.
+                 *
+                 * @param type      The type to resolve.
+                 * @param onBoolean The value to return for a boolean property.
+                 * @return An appropriate dispatcher.
+                 */
+                protected static Dispatcher of(Class<?> type, boolean onBoolean) {
+                    if (type == boolean.class) {
+                        return new ForFixedValue(onBoolean);
+                    } else if (type == byte.class) {
+                        return new ForFixedValue((byte) 0);
+                    } else if (type == short.class) {
+                        return new ForFixedValue((short) 0);
+                    } else if (type == char.class) {
+                        return new ForFixedValue((char) 0);
+                    } else if (type == int.class) {
+                        return new ForFixedValue(0);
+                    } else if (type == long.class) {
+                        return new ForFixedValue(0L);
+                    } else if (type == float.class) {
+                        return new ForFixedValue(0f);
+                    } else if (type == double.class) {
+                        return new ForFixedValue(0d);
+                    } else if (type.isArray()) {
+                        return new ForFixedValue(Array.newInstance(type.getComponentType(), 0));
+                    } else {
+                        return new ForFixedValue(null);
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object invoke(Object[] argument) throws Throwable {
+                    return value;
                 }
             }
 
@@ -379,48 +482,6 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 public Object invoke(Object[] argument) throws Throwable {
                     throw new IllegalStateException("Could not invoke proxy: " + message);
                 }
-            }
-        }
-    }
-
-    /**
-     * An invocation handler for invoking a type that could not be resolved.
-     */
-    @HashCodeAndEqualsPlugin.Enhance
-    protected static class ExceptionInvocationHandler implements InvocationHandler {
-
-        /**
-         * A message that explains why the type could not be resolved.
-         */
-        private final String message;
-
-        /**
-         * Creates an invocation handler for an unresolved type.
-         *
-         * @param message A message that explains why the type could not be resolved.
-         */
-        protected ExceptionInvocationHandler(String message) {
-            this.message = message;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public Object invoke(Object proxy, Method method, Object[] argument) {
-            if (method.getDeclaringClass() == Object.class) {
-                if (method.getName().equals("hashCode")) {
-                    return hashCode();
-                } else if (method.getName().equals("equals")) {
-                    return argument[0] != null
-                            && Proxy.isProxyClass(argument[0].getClass())
-                            && Proxy.getInvocationHandler(argument[0]).equals(this);
-                } else if (method.getName().equals("toString")) {
-                    return "Call proxy for exception: " + message;
-                } else {
-                    throw new IllegalStateException("Unexpected object method: " + method);
-                }
-            } else {
-                throw new IllegalStateException("Proxied class not available on the current VM: " + message);
             }
         }
     }
