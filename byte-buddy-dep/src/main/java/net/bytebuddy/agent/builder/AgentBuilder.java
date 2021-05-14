@@ -11519,7 +11519,6 @@ public interface AgentBuilder {
                  */
                 private final byte[] binaryRepresentation;
 
-
                 /**
                  * Creates a new legacy dispatcher.
                  *
