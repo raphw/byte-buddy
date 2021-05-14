@@ -35,6 +35,7 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.JavaDispatcher;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.Opcodes;
@@ -8478,7 +8479,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * A dispatcher for invking methods on {@link Class} reflectively.
          */
-        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
         /**
          * A cache of type descriptions for commonly used types to avoid unnecessary allocations.
@@ -8895,7 +8896,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         public TypeList getPermittedSubclasses() {
-            return new ClassDescriptionTypeList(type.getClassLoader(), DISPATCHER.getPermittedSubclasses(type));
+            return new TypeList.ForLoadedTypes(DISPATCHER.getPermittedSubclasses(type));
         }
 
         @Override
@@ -8911,6 +8912,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * A dispatcher for using methods of {@link Class} that are not declared for Java 6.
          */
+        @JavaDispatcher.Proxied("java.lang.Class")
         protected interface Dispatcher {
 
             /**
@@ -8942,381 +8944,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * Returns the permitted subclasses of the supplied type.
              *
              * @param type The type for which to check the permitted subclasses.
-             * @return An array of descriptors of permitted subclasses.
+             * @return The permitted subclasses.
              */
-            Object[] getPermittedSubclasses(Class<?> type);
-
-            /**
-             * Returns the internal name of a permitted subclass.
-             *
-             * @param permittedSubclass The permitted subclass descriptor.
-             * @return The permitted subclasses internal name.
-             */
-            String getInternalName(Object permittedSubclass);
-
-            /**
-             * An action to resolve the dispatcher for invoking methods of {@link Class} reflectively.
-             */
-            enum CreationAction implements PrivilegedAction<Dispatcher> {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-                public Dispatcher run() {
-                    try {
-                        try {
-                            return new ForJava16CapableVm(Class.class.getMethod("getNestHost"),
-                                    Class.class.getMethod("getNestMembers"),
-                                    Class.class.getMethod("isNestmateOf", Class.class),
-                                    Class.class.getMethod("permittedSubclasses"),
-                                    Class.forName("java.lang.constant.ClassDesc").getMethod("descriptorString"));
-                        } catch (Exception ignored) {
-                            return new ForJava11CapableVm(Class.class.getMethod("getNestHost"),
-                                    Class.class.getMethod("getNestMembers"),
-                                    Class.class.getMethod("isNestmateOf", Class.class));
-                        }
-                    } catch (NoSuchMethodException ignored) {
-                        return ForLegacyVm.INSTANCE;
-                    }
-                }
-            }
-
-            /**
-             * A dispatcher for a legacy VM.
-             */
-            enum ForLegacyVm implements Dispatcher {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?> getNestHost(Class<?> type) {
-                    return type;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?>[] getNestMembers(Class<?> type) {
-                    return new Class<?>[]{type};
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isNestmateOf(Class<?> type, Class<?> candidate) {
-                    return type == candidate;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object[] getPermittedSubclasses(Class<?> type) {
-                    return new Object[0];
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String getInternalName(Object permittedSubclass) {
-                    throw new IllegalStateException("Not supported on the current VM");
-                }
-            }
-
-            /**
-             * A dispatcher for a Java 11-capable VM.
-             */
-            class ForJava11CapableVm implements Dispatcher {
-
-                /**
-                 * The {@code java.lang.Class#getNestHost} method.
-                 */
-                private final Method getNestHost;
-
-                /**
-                 * The {@code java.lang.Class#getNestMembers} method.
-                 */
-                private final Method getNestMembers;
-
-                /**
-                 * The {@code java.lang.Class#isNestmateOf} method.
-                 */
-                private final Method isNestmateOf;
-
-                /**
-                 * Creates a dispatcher for a Java 11-capable VM.
-                 *
-                 * @param getNestHost    The {@code java.lang.Class#getNestHost} method.
-                 * @param getNestMembers The {@code java.lang.Class#getNestMembers} method.
-                 * @param isNestmateOf   The {@code java.lang.Class#isNestmateOf} method.
-                 */
-                protected ForJava11CapableVm(Method getNestHost, Method getNestMembers, Method isNestmateOf) {
-                    this.getNestHost = getNestHost;
-                    this.getNestMembers = getNestMembers;
-                    this.isNestmateOf = isNestmateOf;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?> getNestHost(Class<?> type) {
-                    try {
-                        return (Class<?>) getNestHost.invoke(type);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access Class::getNestHost", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Could not invoke Class::getNestHost", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?>[] getNestMembers(Class<?> type) {
-                    try {
-                        return (Class<?>[]) getNestMembers.invoke(type);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access Class::getNestMembers", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Could not invoke Class::getNestMembers", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isNestmateOf(Class<?> type, Class<?> candidate) {
-                    try {
-                        return (Boolean) isNestmateOf.invoke(type, candidate);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access Class::isNestmateOf", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Could not invoke Class::isNestmateOf", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object[] getPermittedSubclasses(Class<?> type) {
-                    return new Object[0];
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String getInternalName(Object permittedSubclass) {
-                    throw new IllegalStateException("Not supported on the current VM");
-                }
-            }
-
-            /**
-             * A dispatcher for a Java 16-capable VM.
-             */
-            class ForJava16CapableVm implements Dispatcher {
-
-                /**
-                 * The {@code java.lang.Class#getNestHost} method.
-                 */
-                private final Method getNestHost;
-
-                /**
-                 * The {@code java.lang.Class#getNestMembers} method.
-                 */
-                private final Method getNestMembers;
-
-                /**
-                 * The {@code java.lang.Class#isNestmateOf} method.
-                 */
-                private final Method isNestmateOf;
-
-                /**
-                 * The {@code java.lang.Class#permittedSubclasses} method.
-                 */
-                private final Method permittedSubclasses;
-
-                /**
-                 * The {@code java.lang.constant.ClassDesc#descriptorString} method.
-                 */
-                private final Method descriptorString;
-
-                /**
-                 * Creates a dispatcher for a Java 11-capable VM.
-                 *
-                 * @param getNestHost         The {@code java.lang.Class#getNestHost} method.
-                 * @param getNestMembers      The {@code java.lang.Class#getNestMembers} method.
-                 * @param isNestmateOf        The {@code java.lang.Class#isNestmateOf} method.
-                 * @param permittedSubclasses The {@code java.lang.Class#permittedSubclasses} method.
-                 * @param descriptorString    The {@code java.lang.constant.ClassDesc#descriptorString} method.
-                 */
-                protected ForJava16CapableVm(Method getNestHost, Method getNestMembers, Method isNestmateOf, Method permittedSubclasses, Method descriptorString) {
-                    this.getNestHost = getNestHost;
-                    this.getNestMembers = getNestMembers;
-                    this.isNestmateOf = isNestmateOf;
-                    this.permittedSubclasses = permittedSubclasses;
-                    this.descriptorString = descriptorString;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?> getNestHost(Class<?> type) {
-                    try {
-                        return (Class<?>) getNestHost.invoke(type);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access Class::getNestHost", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Could not invoke Class::getNestHost", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?>[] getNestMembers(Class<?> type) {
-                    try {
-                        return (Class<?>[]) getNestMembers.invoke(type);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access Class::getNestMembers", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Could not invoke Class::getNestMembers", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isNestmateOf(Class<?> type, Class<?> candidate) {
-                    try {
-                        return (Boolean) isNestmateOf.invoke(type, candidate);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access Class::isNestmateOf", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Could not invoke Class::isNestmateOf", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object[] getPermittedSubclasses(Class<?> type) {
-                    try {
-                        return (Object[]) permittedSubclasses.invoke(type);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access Class::permittedSubclasses", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Could not invoke Class::permittedSubclasses", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String getInternalName(Object permittedSubclass) {
-                    try {
-                        return (String) descriptorString.invoke(permittedSubclass);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access ClassDesc::descriptorString", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Could not invoke ClassDesc::descriptorString", exception.getCause());
-                    }
-                }
-            }
-        }
-
-        /**
-         * A list of type descriptions represented by class descriptions.
-         */
-        protected static class ClassDescriptionTypeList extends TypeList.AbstractBase {
-
-            /**
-             * The represented class loader.
-             */
-            private final ClassLoader classLoader;
-
-            /**
-             * An array of represented permitted subclasses.
-             */
-            private final Object[] permittedSubclass;
-
-            /**
-             * Creates a new list of type descriptions.
-             *
-             * @param classLoader       The represented class loader.
-             * @param permittedSubclass An array of represented permitted subclasses.
-             */
-            protected ClassDescriptionTypeList(ClassLoader classLoader, Object[] permittedSubclass) {
-                this.classLoader = classLoader;
-                this.permittedSubclass = permittedSubclass;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public TypeDescription get(int index) {
-                return new InternalNameLazyType(classLoader, DISPATCHER.getInternalName(permittedSubclass[index]));
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public int size() {
-                return permittedSubclass.length;
-            }
-
-            /**
-             * A lazy representation of an internal name for a given class loader.
-             */
-            protected static class InternalNameLazyType extends OfSimpleType.WithDelegation {
-
-                /**
-                 * The represented class loader.
-                 */
-                private final ClassLoader classLoader;
-
-                /**
-                 * The represented internal name.
-                 */
-                private final String internalName;
-
-                /**
-                 * Creates a new lazy representation of an internal name.
-                 *
-                 * @param classLoader  The represented class loader.
-                 * @param internalName The represented internal name.
-                 */
-                protected InternalNameLazyType(ClassLoader classLoader, String internalName) {
-                    this.classLoader = classLoader;
-                    this.internalName = internalName;
-                }
-
-                @Override
-                @CachedReturnPlugin.Enhance("delegate")
-                protected TypeDescription delegate() {
-                    try {
-                        return ForLoadedType.of(Class.forName(getName(), false, classLoader));
-                    } catch (ClassNotFoundException exception) {
-                        throw new IllegalStateException(exception);
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String getName() {
-                    return internalName.replace('/', '.');
-                }
-            }
+            Class<?>[] getPermittedSubclasses(Class<?> type);
         }
     }
 

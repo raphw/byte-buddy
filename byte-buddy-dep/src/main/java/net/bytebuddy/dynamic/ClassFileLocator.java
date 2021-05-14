@@ -20,6 +20,7 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.utility.JavaDispatcher;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.StreamDrainer;
@@ -30,7 +31,6 @@ import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -1184,7 +1184,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * A dispatcher for interacting with the instrumentation API.
          */
-        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
         /**
          * The instrumentation instance to use for looking up the binary format of a type.
@@ -1284,6 +1284,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * A dispatcher to interact with the {@link Instrumentation} API.
          */
+        @JavaDispatcher.Proxied("java.lang.instrument.Instrumentation")
         protected interface Dispatcher {
 
             /**
@@ -1311,144 +1312,6 @@ public interface ClassFileLocator extends Closeable {
              * @throws UnmodifiableClassException If any of the supplied types are unmodifiable.
              */
             void retransformClasses(Instrumentation instrumentation, Class<?>[] type) throws UnmodifiableClassException;
-
-            /**
-             * An action to create a {@link Dispatcher}.
-             */
-            enum CreationAction implements PrivilegedAction<Dispatcher> {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Dispatcher run() {
-                    try {
-                        Class<?> instrumentation = Class.forName("java.lang.instrument.Instrumentation");
-                        return new ForJava6CapableVm(instrumentation.getMethod("isRetransformClassesSupported"),
-                                instrumentation.getMethod("addTransformer", ClassFileTransformer.class, boolean.class),
-                                instrumentation.getMethod("retransformClasses", Class[].class));
-                    } catch (ClassNotFoundException ignored) {
-                        return ForLegacyVm.INSTANCE;
-                    } catch (NoSuchMethodException ignored) {
-                        return ForLegacyVm.INSTANCE;
-                    }
-                }
-            }
-
-            /**
-             * A dispatcher for a VM that does not support retransformation.
-             */
-            enum ForLegacyVm implements Dispatcher {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isRetransformClassesSupported(Instrumentation instrumentation) {
-                    return false;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public void addTransformer(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, boolean canRetransform) {
-                    throw new IllegalStateException("The current VM does not support class retransformation");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public void retransformClasses(Instrumentation instrumentation, Class<?>[] type) {
-                    throw new IllegalStateException("The current VM does not support class retransformation");
-                }
-            }
-
-            /**
-             * A dispatcher for a Java 6 capable VM.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForJava6CapableVm implements Dispatcher {
-
-                /**
-                 * The {@code Instrumentation#isRetransformClassesSupported} method.
-                 */
-                private final Method isRetransformClassesSupported;
-
-                /**
-                 * The {@code Instrumentation#addTransformer} method.
-                 */
-                private final Method addTransformer;
-
-                /**
-                 * The {@code Instrumentation#retransformClasses} method.
-                 */
-                private final Method retransformClasses;
-
-                /**
-                 * Creates a dispatcher for a Java 6 capable VM.
-                 *
-                 * @param isRetransformClassesSupported The {@code Instrumentation#isRetransformClassesSupported} method.
-                 * @param addTransformer                The {@code Instrumentation#addTransformer} method.
-                 * @param retransformClasses            The {@code Instrumentation#retransformClasses} method.
-                 */
-                protected ForJava6CapableVm(Method isRetransformClassesSupported, Method addTransformer, Method retransformClasses) {
-                    this.isRetransformClassesSupported = isRetransformClassesSupported;
-                    this.addTransformer = addTransformer;
-                    this.retransformClasses = retransformClasses;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isRetransformClassesSupported(Instrumentation instrumentation) {
-                    try {
-                        return (Boolean) isRetransformClassesSupported.invoke(instrumentation);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#isRetransformClassesSupported", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#isRetransformClassesSupported", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public void addTransformer(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, boolean canRetransform) {
-                    try {
-                        addTransformer.invoke(instrumentation, classFileTransformer, canRetransform);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#addTransformer", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#addTransformer", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public void retransformClasses(Instrumentation instrumentation, Class<?>[] type) throws UnmodifiableClassException {
-                    try {
-                        retransformClasses.invoke(instrumentation, (Object) type);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#retransformClasses", exception);
-                    } catch (InvocationTargetException exception) {
-                        Throwable cause = exception.getCause();
-                        if (cause instanceof UnmodifiableClassException) {
-                            throw (UnmodifiableClassException) cause;
-                        } else {
-                            throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#retransformClasses", cause);
-                        }
-                    }
-                }
-            }
         }
 
         /**
@@ -1562,7 +1425,6 @@ public interface ClassFileLocator extends Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                @SuppressWarnings("unchecked")
                 public Class<?> locate(String name) throws ClassNotFoundException {
                     Vector<Class<?>> classes;
                     try {
