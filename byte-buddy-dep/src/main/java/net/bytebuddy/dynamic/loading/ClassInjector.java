@@ -18,6 +18,7 @@ package net.bytebuddy.dynamic.loading;
 import com.sun.jna.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.MemberRemoval;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.modifier.Visibility;
@@ -28,6 +29,7 @@ import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.utility.JavaDispatcher;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
@@ -2354,7 +2356,7 @@ public interface ClassInjector {
         /**
          * A dispatcher for interacting with the instrumentation API.
          */
-        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
         /**
          * The instrumentation to use for appending to the class path or the boot path.
@@ -2461,20 +2463,14 @@ public interface ClassInjector {
          * @return {@code true} if this class injector is available on this VM.
          */
         public static boolean isAvailable() {
-            return DISPATCHER.isAlive();
+            return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V6);
         }
 
         /**
          * A dispatcher to interact with the instrumentation API.
          */
+        @JavaDispatcher.Proxied("java.lang.instrument.Instrumentation")
         protected interface Dispatcher {
-
-            /**
-             * Returns {@code true} if this dispatcher is alive.
-             *
-             * @return {@code true} if this dispatcher is alive.
-             */
-            boolean isAlive();
 
             /**
              * Appends a jar file to the bootstrap class loader.
@@ -2491,125 +2487,6 @@ public interface ClassInjector {
              * @param jarFile         The jar file to append.
              */
             void appendToSystemClassLoaderSearch(Instrumentation instrumentation, JarFile jarFile);
-
-            /**
-             * An action to create a dispatcher for interacting with the instrumentation API.
-             */
-            enum CreationAction implements PrivilegedAction<Dispatcher> {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Dispatcher run() {
-                    try {
-                        Class<?> instrumentation = Class.forName("java.lang.instrument.Instrumentation");
-                        return new ForJava6CapableVm(instrumentation.getMethod("appendToBootstrapClassLoaderSearch", JarFile.class),
-                                instrumentation.getMethod("appendToSystemClassLoaderSearch", JarFile.class));
-                    } catch (ClassNotFoundException ignored) {
-                        return ForLegacyVm.INSTANCE;
-                    } catch (NoSuchMethodException ignored) {
-                        return ForLegacyVm.INSTANCE;
-                    }
-                }
-            }
-
-            /**
-             * A dispatcher for a legacy VM that is not capable of appending jar files using instrumentation.
-             */
-            enum ForLegacyVm implements Dispatcher {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isAlive() {
-                    return false;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public void appendToBootstrapClassLoaderSearch(Instrumentation instrumentation, JarFile jarFile) {
-                    throw new UnsupportedOperationException("The current JVM does not support appending to the bootstrap loader");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public void appendToSystemClassLoaderSearch(Instrumentation instrumentation, JarFile jarFile) {
-                    throw new UnsupportedOperationException("The current JVM does not support appending to the system class loader");
-                }
-            }
-
-            /**
-             * A dispatcher for a VM that is capable of appending to the boot and system class loader.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForJava6CapableVm implements Dispatcher {
-
-                /**
-                 * The {@code Instrumentation#appendToBootstrapClassLoaderSearch} method.
-                 */
-                private final Method appendToBootstrapClassLoaderSearch;
-
-                /**
-                 * The {@code Instrumentation#appendToSystemClassLoaderSearch} method.
-                 */
-                private final Method appendToSystemClassLoaderSearch;
-
-                /**
-                 * Creates a new dispatcher for a Java 6 compatible VM.
-                 *
-                 * @param appendToBootstrapClassLoaderSearch The {@code Instrumentation#appendToBootstrapClassLoaderSearch} method.
-                 * @param appendToSystemClassLoaderSearch    The {@code Instrumentation#appendToSystemClassLoaderSearch} method.
-                 */
-                protected ForJava6CapableVm(Method appendToBootstrapClassLoaderSearch, Method appendToSystemClassLoaderSearch) {
-                    this.appendToBootstrapClassLoaderSearch = appendToBootstrapClassLoaderSearch;
-                    this.appendToSystemClassLoaderSearch = appendToSystemClassLoaderSearch;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isAlive() {
-                    return true;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public void appendToBootstrapClassLoaderSearch(Instrumentation instrumentation, JarFile jarFile) {
-                    try {
-                        appendToBootstrapClassLoaderSearch.invoke(instrumentation, jarFile);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#appendToBootstrapClassLoaderSearch", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#appendToBootstrapClassLoaderSearch", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public void appendToSystemClassLoaderSearch(Instrumentation instrumentation, JarFile jarFile) {
-                    try {
-                        appendToSystemClassLoaderSearch.invoke(instrumentation, jarFile);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#appendToSystemClassLoaderSearch", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#appendToSystemClassLoaderSearch", exception.getCause());
-                    }
-                }
-            }
         }
 
         /**
