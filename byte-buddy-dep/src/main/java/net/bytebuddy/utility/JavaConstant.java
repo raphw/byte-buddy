@@ -181,8 +181,8 @@ public interface JavaConstant {
                         typePool.describe(Type.getType(((DirectMethodHandleDesc) value).owner().descriptorString()).getClassName()).resolve(),
                         ((DirectMethodHandleDesc) value).methodName(),
                         ((DirectMethodHandleDesc) value).refKind() == Opcodes.H_NEWINVOKESPECIAL
-                            ? TypeDescription.VOID
-                            : typePool.describe(Type.getType(((DirectMethodHandleDesc) value).invocationType().returnType().descriptorString()).getClassName()).resolve(),
+                                ? TypeDescription.VOID
+                                : typePool.describe(Type.getType(((DirectMethodHandleDesc) value).invocationType().returnType().descriptorString()).getClassName()).resolve(),
                         typeDescriptions);
             } else if (DISPATCHER.isDynamicConstantDesc(value)) {
                 List<ConstantDesc> constants = ((DynamicConstantDesc<?>) value).bootstrapArgsList();
@@ -321,6 +321,14 @@ public interface JavaConstant {
             boolean isDynamicConstantDesc(Object value);
 
             /**
+             * Returns an array of component type {@code java.lang.constant.ConstantDesc}.
+             *
+             * @param length The length of the array.
+             * @return An array of type {@code java.lang.constant.ConstantDesc} with the given length.
+             */
+            Object[] toConstantDescArray(int length);
+
+            /**
              * Returns the descriptor of the supplied class description.
              *
              * @param value The {@code java.lang.constant.ClassDesc} to resolve.
@@ -370,6 +378,25 @@ public interface JavaConstant {
             Object toMethodTypeDesc(Object returnType, Object[] parameterType);
 
             /**
+             * Returns a {@code java.lang.constant.MethodTypeDesc} for a given descriptor.
+             *
+             * @param descriptor The method type's descriptor.
+             * @return A {@code java.lang.constant.MethodTypeDesc} of the supplied descriptor
+             */
+            Object toMethodTypeDescOfDescriptor(String descriptor);
+
+            /**
+             * Resolves a {@code java.lang.constant.MethodHandleDesc}.
+             *
+             * @param kind       The {@code java.lang.constant.DirectMethodHandleDesc$Kind} of the resolved method handle description.
+             * @param owner      The {@code java.lang.constant.ClassDesc} of the resolved method handle description's owner type.
+             * @param name       The name of the method handle to resolve.
+             * @param descriptor A descriptor of the lookup type.
+             * @return An {@code java.lang.constant.MethodTypeDesc} representing the invocation type.
+             */
+            Object toMethodHandleDesc(Object kind, Object owner, String name, String descriptor);
+
+            /**
              * Resolves a {@code java.lang.constant.MethodTypeDesc} representing the invocation type of
              * the supplied {@code java.lang.constant.DirectMethodHandleDesc}.
              *
@@ -377,6 +404,16 @@ public interface JavaConstant {
              * @return An {@code java.lang.constant.MethodTypeDesc} representing the invocation type.
              */
             Object toDirectMethodHandleDescInvocationType(Object value);
+
+            /**
+             * Resolves a {@code java.lang.constant.DirectMethodHandleDesc$Kind} from an identifier.
+             *
+             * @param identifier The identifier to resolve.
+             * @return The identifier's {@code java.lang.constant.DirectMethodHandleDesc$Kind}.
+             */
+            Object toDirectMethodHandleDescKind(int identifier);
+
+            Object toDynamicMethodDesc(Object bootstrap, String constantName, Object constantType, Object[] bootstrapArgs);
 
             /**
              * An action to create an appropriate {@link Dispatcher}.
@@ -393,11 +430,15 @@ public interface JavaConstant {
                  */
                 public Dispatcher run() {
                     try {
+                        Class<?> constantDesc = Class.forName("java.lang.constant.ConstantDesc");
                         Class<?> classDesc = Class.forName("java.lang.constant.ClassDesc");
                         Class<?> methodTypeDesc = Class.forName("java.lang.constant.MethodTypeDesc");
+                        Class<?> methodHandleDesc = Class.forName("java.lang.constant.MethodHandleDesc");
                         Class<?> directMethodHandleDesc = Class.forName("java.lang.constant.DirectMethodHandleDesc");
+                        Class<?> directMethodHandleDescKind = Class.forName("java.lang.constant.DirectMethodHandleDesc$Kind");
                         Class<?> dynamicConstantDesc = Class.forName("java.lang.constant.DynamicConstantDesc");
-                        return new ForJava12CapableVm(classDesc,
+                        return new ForJava12CapableVm(constantDesc,
+                                classDesc,
                                 methodTypeDesc,
                                 directMethodHandleDesc,
                                 dynamicConstantDesc,
@@ -405,8 +446,12 @@ public interface JavaConstant {
                                 classDesc.getMethod("ofDescriptor", String.class),
                                 methodTypeDesc.getMethod("returnType"),
                                 methodTypeDesc.getMethod("parameterList"),
+                                methodTypeDesc.getMethod("ofDescriptor", String.class),
                                 methodTypeDesc.getMethod("of", classDesc, Class.forName("[L" + classDesc.getName() + ";")),
-                                directMethodHandleDesc.getMethod("invocationType"));
+                                methodHandleDesc.getMethod("of", directMethodHandleDescKind, classDesc, String.class, String.class),
+                                directMethodHandleDesc.getMethod("invocationType"),
+                                directMethodHandleDescKind.getMethod("valueOf", int.class),
+                                dynamicConstantDesc.getMethod("ofCanonical", directMethodHandleDesc, String.class, classDesc, Class.forName("[L" + constantDesc.getName() + ";")));
                     } catch (Exception ignored) {
                         return ForLegacyVm.INSTANCE;
                     }
@@ -454,6 +499,13 @@ public interface JavaConstant {
                 /**
                  * {@inheritDoc}
                  */
+                public Object[] toConstantDescArray(int length) {
+                    throw new IllegalStateException("The current VM does not support constant descriptions");
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public String toClassDescDescriptor(Object value) {
                     throw new IllegalStateException("The current VM does not support constant descriptions");
                 }
@@ -496,12 +548,42 @@ public interface JavaConstant {
                 /**
                  * {@inheritDoc}
                  */
+                public Object toMethodTypeDescOfDescriptor(String descriptor) {
+                    throw new IllegalStateException("The current VM does not support constant descriptions");
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object toMethodHandleDesc(Object kind, Object owner, String name, String descriptor) {
+                    throw new IllegalStateException("The current VM does not support constant descriptions");
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public Object toDirectMethodHandleDescInvocationType(Object value) {
+                    throw new IllegalStateException("The current VM does not support constant descriptions");
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object toDirectMethodHandleDescKind(int identifier) {
+                    throw new IllegalStateException("The current VM does not support constant descriptions");
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object toDynamicMethodDesc(Object bootstrap, String constantName, Object constantType, Object[] bootstrapArgs) {
                     throw new IllegalStateException("The current VM does not support constant descriptions");
                 }
             }
 
             class ForJava12CapableVm implements Dispatcher {
+
+                private final Class<?> constantDesc;
 
                 private final Class<?> classDesc;
 
@@ -519,11 +601,20 @@ public interface JavaConstant {
 
                 private final Method parameterList;
 
-                private final Method toMethodType;
+                private final Method toMethodTypeDesc;
+
+                private final Method toMethodTypeDescOfDescriptor;
+
+                private final Method toMethodHandleDesc;
 
                 private final Method invocationType;
 
-                protected ForJava12CapableVm(Class<?> classDesc,
+                private final Method kind;
+
+                private final Method toDynamicMethodDesc;
+
+                protected ForJava12CapableVm(Class<?> constantDesc,
+                                             Class<?> classDesc,
                                              Class<?> methodTypeDesc,
                                              Class<?> directMethodHandleDesc,
                                              Class<?> dynamicConstantDesc,
@@ -531,8 +622,13 @@ public interface JavaConstant {
                                              Method toDescriptor,
                                              Method returnType,
                                              Method parameterList,
-                                             Method toMethodType,
-                                             Method invocationType) {
+                                             Method toMethodTypeDesc,
+                                             Method toMethodTypeDescOfDescriptor,
+                                             Method toMethodHandleDesc,
+                                             Method invocationType,
+                                             Method kind,
+                                             Method toDynamicMethodDesc) {
+                    this.constantDesc = constantDesc;
                     this.classDesc = classDesc;
                     this.methodTypeDesc = methodTypeDesc;
                     this.directMethodHandleDesc = directMethodHandleDesc;
@@ -541,8 +637,12 @@ public interface JavaConstant {
                     this.toDescriptor = toDescriptor;
                     this.returnType = returnType;
                     this.parameterList = parameterList;
-                    this.toMethodType = toMethodType;
+                    this.toMethodTypeDesc = toMethodTypeDesc;
+                    this.toMethodTypeDescOfDescriptor = toMethodTypeDescOfDescriptor;
+                    this.toMethodHandleDesc = toMethodHandleDesc;
                     this.invocationType = invocationType;
+                    this.kind = kind;
+                    this.toDynamicMethodDesc = toDynamicMethodDesc;
                 }
 
                 /**
@@ -571,6 +671,13 @@ public interface JavaConstant {
                  */
                 public boolean isDynamicConstantDesc(Object value) {
                     return dynamicConstantDesc.isInstance(value);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object[] toConstantDescArray(int length) {
+                    return (Object[]) Array.newInstance(constantDesc, length);
                 }
 
                 /**
@@ -637,11 +744,37 @@ public interface JavaConstant {
                  */
                 public Object toMethodTypeDesc(Object returnType, Object[] parameterType) {
                     try {
-                        return toMethodType.invoke(null, returnType, parameterType);
+                        return toMethodTypeDesc.invoke(null, returnType, parameterType);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.constant.MethodTypeDesc#of", exception);
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking java.lang.constant.MethodTypeDesc#of", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object toMethodTypeDescOfDescriptor(String descriptor) {
+                    try {
+                        return toMethodTypeDescOfDescriptor.invoke(null, descriptor);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.constant.MethodTypeDesc#ofDescriptor", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.constant.MethodTypeDesc#ofDescriptor", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object toMethodHandleDesc(Object kind, Object owner, String name, String descriptor) {
+                    try {
+                        return toMethodHandleDesc.invoke(null, kind, owner, name, descriptor);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.constant.MethodHandleDesc#of", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.constant.MethodHandleDesc#of", exception.getCause());
                     }
                 }
 
@@ -655,6 +788,32 @@ public interface JavaConstant {
                         throw new IllegalStateException("Cannot access java.lang.constant.DirectMethodHandleDesc#invocationType", exception);
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking java.lang.constant.DirectMethodHandleDesc#invocationType", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object toDirectMethodHandleDescKind(int identifier) {
+                    try {
+                        return kind.invoke(null, identifier);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.constant.DirectMethodHandleDesc$Kind#valueOf", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.constant.DirectMethodHandleDesc$Kind#valueOf", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object toDynamicMethodDesc(Object bootstrap, String constantName, Object constantType, Object[] bootstrapArgs) {
+                    try {
+                        return toDynamicMethodDesc.invoke(null, bootstrap, constantName, constantType, bootstrapArgs);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.constant.DynamicConstantDesc#ofCanonical", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.constant.DynamicConstantDesc#ofCanonical", exception.getCause());
                     }
                 }
             }
@@ -1163,8 +1322,8 @@ public interface JavaConstant {
          * {@inheritDoc}
          */
         public Object asConstantDescription() {
-            return MethodHandleDesc.of(DirectMethodHandleDesc.Kind.valueOf(getHandleType().getIdentifier()),
-                    ClassDesc.ofDescriptor(getOwnerType().getDescriptor()),
+            return Simple.DISPATCHER.toMethodHandleDesc(Simple.DISPATCHER.toDirectMethodHandleDescKind(getHandleType().getIdentifier()),
+                    Simple.DISPATCHER.toClassDescOfDescriptor(getOwnerType().getDescriptor()),
                     getName(),
                     getDescriptor());
         }
@@ -2409,34 +2568,34 @@ public interface JavaConstant {
          * @param value The {@link ConstantDynamic} value to resolve.
          * @return A {@code java.lang.constant.ConstantDesc} representing the supplied {@link ConstantDynamic}.
          */
-        private static ConstantDesc asConstantDescription(ConstantDynamic value) {
-            ConstantDesc[] arguments = new ConstantDesc[value.getBootstrapMethodArgumentCount()];
+        private static Object asConstantDescription(ConstantDynamic value) {
+            Object[] arguments = Simple.DISPATCHER.toConstantDescArray(value.getBootstrapMethodArgumentCount());
             for (int index = 0; index < value.getBootstrapMethodArgumentCount(); index++) {
                 if (value.getBootstrapMethodArgument(index) instanceof ConstantDynamic) {
                     arguments[index] = asConstantDescription((ConstantDynamic) value.getBootstrapMethodArgument(index));
                 } else if (value.getBootstrapMethodArgument(index) instanceof Handle) {
-                    arguments[index] = MethodHandleDesc.of(DirectMethodHandleDesc.Kind.valueOf(((Handle) value.getBootstrapMethodArgument(index)).getTag()),
-                            ClassDesc.ofDescriptor(((Handle) value.getBootstrapMethodArgument(index)).getOwner()),
+                    arguments[index] = Simple.DISPATCHER.toMethodHandleDesc(Simple.DISPATCHER.toDirectMethodHandleDescKind(((Handle) value.getBootstrapMethodArgument(index)).getTag()),
+                            Simple.DISPATCHER.toClassDescOfDescriptor(((Handle) value.getBootstrapMethodArgument(index)).getOwner()),
                             ((Handle) value.getBootstrapMethodArgument(index)).getName(),
                             ((Handle) value.getBootstrapMethodArgument(index)).getDesc());
                 } else if (value.getBootstrapMethodArgument(index) instanceof Type) {
                     arguments[index] = ((Type) value.getBootstrapMethodArgument(index)).getSort() == Type.METHOD
-                            ? MethodTypeDesc.ofDescriptor(((Type) value.getBootstrapMethodArgument(index)).getDescriptor())
-                            : ClassDesc.ofDescriptor(((Type) value.getBootstrapMethodArgument(index)).getDescriptor());
+                            ? Simple.DISPATCHER.toMethodTypeDescOfDescriptor(((Type) value.getBootstrapMethodArgument(index)).getDescriptor())
+                            : Simple.DISPATCHER.toClassDescOfDescriptor(((Type) value.getBootstrapMethodArgument(index)).getDescriptor());
                 } else if (value.getBootstrapMethodArgument(index) instanceof Integer
                         || value.getBootstrapMethodArgument(index) instanceof Long
                         || value.getBootstrapMethodArgument(index) instanceof Float
                         || value.getBootstrapMethodArgument(index) instanceof Double
                         || value.getBootstrapMethodArgument(index) instanceof String) {
-                    arguments[index] = (ConstantDesc) value.getBootstrapMethodArgument(index);
+                    arguments[index] = value.getBootstrapMethodArgument(index);
                 } else {
                     throw new IllegalStateException("Could not resolve bootstrap argument to a constant description: " + value.getBootstrapMethodArgument(index));
                 }
             }
-            return DynamicConstantDesc.ofCanonical(MethodHandleDesc.of(DirectMethodHandleDesc.Kind.valueOf(value.getBootstrapMethod().getTag()),
-                    ClassDesc.ofDescriptor(value.getBootstrapMethod().getOwner()),
+            return Simple.DISPATCHER.toDynamicMethodDesc(Simple.DISPATCHER.toMethodHandleDesc(Simple.DISPATCHER.toDirectMethodHandleDescKind(value.getBootstrapMethod().getTag()),
+                    Simple.DISPATCHER.toClassDescOfDescriptor(value.getBootstrapMethod().getOwner()),
                     value.getBootstrapMethod().getName(),
-                    value.getBootstrapMethod().getDesc()), value.getName(), ClassDesc.ofDescriptor(value.getDescriptor()), arguments);
+                    value.getBootstrapMethod().getDesc()), value.getName(), Simple.DISPATCHER.toClassDescOfDescriptor(value.getDescriptor()), arguments);
         }
 
         /**
