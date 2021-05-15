@@ -3355,7 +3355,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * {@inheritDoc}
                      */
                     public AnnotatedElement resolve() {
-                        return RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getAnnotatedType(recordComponent);
+                        return RecordComponentDescription.ForLoadedRecordComponent.RECORD_COMPONENT.getAnnotatedType(recordComponent);
                     }
                 }
             }
@@ -6885,12 +6885,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 @CachedReturnPlugin.Enhance("resolved")
                 protected Generic resolve() {
-                    return Sort.describe(RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getGenericType(recordComponent), getAnnotationReader());
+                    return Sort.describe(RecordComponentDescription.ForLoadedRecordComponent.RECORD_COMPONENT.getGenericType(recordComponent), getAnnotationReader());
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    return ForLoadedType.of(RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getType(recordComponent));
+                    return ForLoadedType.of(RecordComponentDescription.ForLoadedRecordComponent.RECORD_COMPONENT.getType(recordComponent));
                 }
 
                 @Override
@@ -8892,7 +8892,10 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         public RecordComponentList<RecordComponentDescription.InDefinedShape> getRecordComponents() {
-            return new RecordComponentList.ForLoadedRecordComponents(DISPATCHER.getRecordComponents(type));
+            Object[] recordComponent = DISPATCHER.getRecordComponents(type);
+            return recordComponent == null
+                    ? new RecordComponentList.Empty<RecordComponentDescription.InDefinedShape>()
+                    : new RecordComponentList.ForLoadedRecordComponents(recordComponent);
         }
 
         /**
@@ -8911,7 +8914,10 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         public TypeList getPermittedSubtypes() {
-            return new TypeList.ForLoadedTypes(DISPATCHER.getPermittedSubclasses(type));
+            Class<?>[] permittedSubclass = DISPATCHER.getPermittedSubclasses(type);
+            return permittedSubclass == null
+                    ? new TypeList.Empty()
+                    : new TypeList.ForLoadedTypes(permittedSubclass);
         }
 
         @Override

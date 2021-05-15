@@ -179,7 +179,7 @@ public interface RecordComponentDescription extends DeclaredByType,
         /**
          * A dispatcher for accessing {@code java.lang.RecordComponent} types.
          */
-        protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+        protected static final RecordComponent RECORD_COMPONENT = AccessController.doPrivileged(JavaDispatcher.of(RecordComponent.class));
 
         /**
          * The represented record component.
@@ -202,7 +202,7 @@ public interface RecordComponentDescription extends DeclaredByType,
          * @return A suitable description of the record component.
          */
         public static RecordComponentDescription of(Object recordComponent) {
-            if (!DISPATCHER.isInstance(recordComponent)) {
+            if (!RECORD_COMPONENT.isInstance(recordComponent)) {
                 throw new IllegalArgumentException("Not a record component: " + recordComponent);
             }
             return new ForLoadedRecordComponent((AnnotatedElement) recordComponent);
@@ -217,26 +217,26 @@ public interface RecordComponentDescription extends DeclaredByType,
 
         @Override
         public MethodDescription.InDefinedShape getAccessor() {
-            return new MethodDescription.ForLoadedMethod(DISPATCHER.getAccessor(recordComponent));
+            return new MethodDescription.ForLoadedMethod(RECORD_COMPONENT.getAccessor(recordComponent));
         }
 
         /**
          * {@inheritDoc}
          */
         public TypeDescription getDeclaringType() {
-            return TypeDescription.ForLoadedType.of(DISPATCHER.getDeclaringType(recordComponent));
+            return TypeDescription.ForLoadedType.of(RECORD_COMPONENT.getDeclaringRecord(recordComponent));
         }
 
         /**
          * {@inheritDoc}
          */
         public String getActualName() {
-            return DISPATCHER.getName(recordComponent);
+            return RECORD_COMPONENT.getName(recordComponent);
         }
 
         @Override
         public String getGenericSignature() {
-            return DISPATCHER.getGenericSignature(recordComponent);
+            return RECORD_COMPONENT.getGenericSignature(recordComponent);
         }
 
         /**
@@ -250,7 +250,7 @@ public interface RecordComponentDescription extends DeclaredByType,
          * A dispatcher for accessing methods of {@code java.lang.reflect.RecordComponent}.
          */
         @JavaDispatcher.Proxied("java.lang.reflect.RecordComponent")
-        protected interface Dispatcher {
+        protected interface RecordComponent {
 
             /**
              * Checks if the supplied instance is a record component.
@@ -275,7 +275,7 @@ public interface RecordComponentDescription extends DeclaredByType,
              * @param value The record component to resolve the declared type for.
              * @return The record component's declaring type.
              */
-            Class<?> getDeclaringType(Object value);
+            Class<?> getDeclaringRecord(Object value);
 
             /**
              * Resolves a record component's accessor method.
