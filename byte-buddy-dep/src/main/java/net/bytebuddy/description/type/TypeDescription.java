@@ -8851,7 +8851,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         public TypeDescription getNestHost() {
             Class<?> host = DISPATCHER.getNestHost(type);
-            return TypeDescription.ForLoadedType.of(host == null ? type : host);
+            return host == null ? this : TypeDescription.ForLoadedType.of(host);
         }
 
         /**
@@ -8904,7 +8904,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             Class<?>[] subclass = DISPATCHER.getPermittedSubclasses(type);
             return subclass == null
                     ? new TypeList.Empty()
-                    : new TypeList.ForLoadedTypes(type);
+                    : new TypeList.ForLoadedTypes(subclass);
         }
 
         @Override
