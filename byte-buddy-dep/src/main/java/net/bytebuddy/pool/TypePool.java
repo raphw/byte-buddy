@@ -2787,13 +2787,16 @@ public interface TypePool {
                 return (actualModifiers & Opcodes.ACC_RECORD) != 0 && JavaType.RECORD.getTypeStub().getDescriptor().equals(superClassDescriptor);
             }
 
+            @Override
+            public boolean isSealed() {
+                return !permittedSubclasses.isEmpty();
+            }
+
             /**
              * {@inheritDoc}
              */
-            public TypeList getPermittedSubclasses() {
-                return permittedSubclasses.isEmpty()
-                        ? TypeList.UNDEFINED
-                        : new LazyTypeList(typePool, permittedSubclasses);
+            public TypeList getPermittedSubtypes() {
+                return new LazyTypeList(typePool, permittedSubclasses);
             }
 
             @Override

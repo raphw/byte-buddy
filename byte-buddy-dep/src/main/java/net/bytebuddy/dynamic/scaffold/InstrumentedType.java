@@ -427,7 +427,9 @@ public interface InstrumentedType extends TypeDescription {
                             typeDescription.getEnclosingMethod(),
                             typeDescription.getEnclosingType(),
                             typeDescription.getDeclaredTypes(),
-                            typeDescription.getPermittedSubclasses(),
+                            typeDescription.isSealed()
+                                    ? typeDescription.getPermittedSubtypes()
+                                    : TypeList.UNDEFINED,
                             typeDescription.isAnonymousType(),
                             typeDescription.isLocalType(),
                             typeDescription.isRecord(),
@@ -1429,12 +1431,17 @@ public interface InstrumentedType extends TypeDescription {
             return record && getSuperClass().asErasure().equals(JavaType.RECORD.getTypeStub());
         }
 
+        @Override
+        public boolean isSealed() {
+            return permittedSubclasses != null;
+        }
+
         /**
          * {@inheritDoc}
          */
-        public TypeList getPermittedSubclasses() {
+        public TypeList getPermittedSubtypes() {
             return permittedSubclasses == null
-                ? TypeList.UNDEFINED
+                ? new TypeList.Empty()
                 : new TypeList.Explicit(permittedSubclasses);
         }
 
@@ -1544,12 +1551,9 @@ public interface InstrumentedType extends TypeDescription {
             } else if (!nestHost.isSamePackage(this)) {
                 throw new IllegalStateException("Cannot define nest host " + nestHost + " + within different package then " + this);
             }
-            TypeList permittedSubclasses = getPermittedSubclasses();
-            if (permittedSubclasses != null) {
-                for (TypeDescription permittedSubclass : permittedSubclasses) {
-                    if (!permittedSubclass.isAssignableTo(this) || permittedSubclass.equals(this)) {
-                        throw new IllegalStateException("Cannot assign permitted subclass " + permittedSubclass + " to " + this);
-                    }
+            for (TypeDescription permittedSubclass : getPermittedSubtypes()) {
+                if (!permittedSubclass.isAssignableTo(this) || permittedSubclass.equals(this)) {
+                    throw new IllegalStateException("Cannot assign permitted subclass " + permittedSubclass + " to " + this);
                 }
             }
             Set<TypeDescription> typeAnnotationTypes = new HashSet<TypeDescription>();
@@ -1927,11 +1931,16 @@ public interface InstrumentedType extends TypeDescription {
             return typeDescription.isRecord();
         }
 
+        @Override
+        public boolean isSealed() {
+            return typeDescription.isSealed();
+        }
+
         /**
          * {@inheritDoc}
          */
-        public TypeList getPermittedSubclasses() {
-            return typeDescription.getPermittedSubclasses();
+        public TypeList getPermittedSubtypes() {
+            return typeDescription.getPermittedSubtypes();
         }
 
         /**

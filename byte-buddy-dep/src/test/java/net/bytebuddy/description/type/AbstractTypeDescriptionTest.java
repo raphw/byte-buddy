@@ -19,7 +19,6 @@ import net.bytebuddy.test.visibility.Sample;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -750,7 +749,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     public void testNotSealed() throws Exception {
         assertThat(describe(SampleClass.class).isSealed(), is(false));
-        assertThat(describe(SampleClass.class).getPermittedSubclasses(), nullValue(TypeList.class));
+        assertThat(describe(SampleClass.class).getPermittedSubtypes().isEmpty(), is(true));
     }
 
     @Test

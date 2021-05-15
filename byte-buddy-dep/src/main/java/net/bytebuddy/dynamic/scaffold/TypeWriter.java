@@ -1649,8 +1649,8 @@ public interface TypeWriter<T> {
                 /**
                  * Creates a record for a rich record component.
                  *
-                 * @param attributeAppender           The attribute appender for the record component.
-                 * @param recordComponentDescription  The implemented record component.
+                 * @param attributeAppender          The attribute appender for the record component.
+                 * @param recordComponentDescription The implemented record component.
                  */
                 public ForExplicitRecordComponent(RecordComponentAttributeAppender attributeAppender, RecordComponentDescription recordComponentDescription) {
                     this.attributeAppender = attributeAppender;
@@ -4804,14 +4804,13 @@ public interface TypeWriter<T> {
                         for (TypeDescription typeDescription : instrumentedType.getDeclaredTypes()) {
                             declaredTypes.put(typeDescription.getInternalName(), typeDescription);
                         }
-                        TypeList permittedSubclasses = instrumentedType.getPermittedSubclasses();
-                        this.permittedSubclasses = permittedSubclasses == null
-                                ? null
-                                : new LinkedHashSet<String>();
-                        if (permittedSubclasses != null) {
-                            for (TypeDescription typeDescription : permittedSubclasses) {
-                                this.permittedSubclasses.add(typeDescription.getInternalName());
+                        if (instrumentedType.isSealed()) {
+                            permittedSubclasses = new LinkedHashSet<String>();
+                            for (TypeDescription typeDescription : instrumentedType.getPermittedSubtypes()) {
+                                permittedSubclasses.add(typeDescription.getInternalName());
                             }
+                        } else {
+                            permittedSubclasses = null;
                         }
                     }
 
@@ -5736,11 +5735,8 @@ public interface TypeWriter<T> {
                 if (!instrumentedType.isNestHost()) {
                     classVisitor.visitNestHost(instrumentedType.getNestHost().getInternalName());
                 }
-                TypeList permittedSubclasses = instrumentedType.getPermittedSubclasses();
-                if (permittedSubclasses != null) {
-                    for (TypeDescription typeDescription : permittedSubclasses) {
-                        classVisitor.visitPermittedSubclass(typeDescription.getInternalName());
-                    }
+                for (TypeDescription typeDescription : instrumentedType.getPermittedSubtypes()) {
+                    classVisitor.visitPermittedSubclass(typeDescription.getInternalName());
                 }
                 MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
                 if (enclosingMethod != null) {

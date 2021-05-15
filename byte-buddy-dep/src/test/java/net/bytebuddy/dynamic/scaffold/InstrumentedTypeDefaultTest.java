@@ -619,12 +619,12 @@ public class InstrumentedTypeDefaultTest {
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(typeDescription.asErasure()).thenReturn(typeDescription);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
-        assertThat(instrumentedType.getPermittedSubclasses(), nullValue(TypeList.class));
+        assertThat(instrumentedType.getPermittedSubtypes().isEmpty(), is(true));
         InstrumentedType transformed = instrumentedType.withPermittedSubclasses(new TypeList.Explicit(typeDescription));
-        assertThat(transformed.getPermittedSubclasses(), notNullValue(TypeList.class));
-        assertThat(transformed.getPermittedSubclasses().size(), is(1));
-        assertThat(transformed.getPermittedSubclasses(), hasItems(typeDescription));
-        assertThat(transformed.withPermittedSubclasses(TypeList.UNDEFINED).getPermittedSubclasses(), nullValue(TypeList.class));
+        assertThat(transformed.getPermittedSubtypes(), notNullValue(TypeList.class));
+        assertThat(transformed.getPermittedSubtypes().size(), is(1));
+        assertThat(transformed.getPermittedSubtypes(), hasItems(typeDescription));
+        assertThat(transformed.withPermittedSubclasses(TypeList.UNDEFINED).getPermittedSubtypes().isEmpty(), is(true));
     }
 
     @Test

@@ -415,11 +415,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     /**
      * Returns the list of permitted direct subclasses if this class is a sealed class. Permitted subclasses might or might not be
      * resolvable, where unresolvable subclasses might also be missing from the list. For returned types, methods that return the
-     * class's name will always be invokable without errors. If this type is not sealed, {@code null} is returned.
+     * class's name will always be invokable without errors. If this type is not sealed, an empty list is returned. Note that an empty
+     * list might also be returned for a sealed type, if no type permitted subtype is resolvable.
      *
-     * @return The list of permitted subclasses if this class is a sealed class or {@code null} if this type is not sealed.
+     * @return The list of permitted subtypes or an empty list if this type is not sealed.
      */
-    TypeList getPermittedSubclasses();
+    TypeList getPermittedSubtypes();
 
     /**
      * Returns {@code true} if this class is a sealed class that only permitts a specified range of subclasses.
@@ -8185,7 +8186,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         public boolean isSealed() {
-            return !isPrimitive() && !isArray() && getPermittedSubclasses() != null;
+            return !isPrimitive() && !isArray() && !getPermittedSubtypes().isEmpty();
         }
 
         /**
@@ -8452,11 +8453,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return delegate().isRecord();
                 }
 
+                @Override
+                public boolean isSealed() {
+                    return delegate().isSealed();
+                }
+
                 /**
                  * {@inheritDoc}
                  */
-                public TypeList getPermittedSubclasses() {
-                    return delegate().getPermittedSubclasses();
+                public TypeList getPermittedSubtypes() {
+                    return delegate().getPermittedSubtypes();
                 }
 
                 @Override
@@ -8904,12 +8910,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        public TypeList getPermittedSubclasses() {
-            if (DISPATCHER.isSealed(type)) {
-                return new TypeList.ForLoadedTypes(DISPATCHER.getPermittedSubclasses(type));
-            } else {
-                return TypeList.UNDEFINED;
-            }
+        public TypeList getPermittedSubtypes() {
+            return new TypeList.ForLoadedTypes(DISPATCHER.getPermittedSubclasses(type));
         }
 
         @Override
@@ -9279,8 +9281,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        public TypeList getPermittedSubclasses() {
-            return TypeList.UNDEFINED;
+        public TypeList getPermittedSubtypes() {
+            return new TypeList.Empty();
         }
     }
 
@@ -9482,7 +9484,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        public TypeList getPermittedSubclasses() {
+        public TypeList getPermittedSubtypes() {
             throw new IllegalStateException("Cannot resolve permitted subclasses of a latent type description: " + this);
         }
     }
@@ -9642,7 +9644,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        public TypeList getPermittedSubclasses() {
+        public TypeList getPermittedSubtypes() {
             return new TypeList.Empty();
         }
     }
@@ -9875,11 +9877,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return delegate.isRecord();
         }
 
+        @Override
+        public boolean isSealed() {
+            return delegate.isSealed();
+        }
+
         /**
          * {@inheritDoc}
          */
-        public TypeList getPermittedSubclasses() {
-            return delegate.getPermittedSubclasses();
+        public TypeList getPermittedSubtypes() {
+            return delegate.getPermittedSubtypes();
         }
 
         @Override
