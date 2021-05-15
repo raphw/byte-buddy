@@ -29,11 +29,11 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.JavaDispatcher;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
@@ -226,7 +226,12 @@ public interface ParameterDescription extends AnnotationSource,
         /**
          * A dispatcher for reading properties from {@code java.lang.reflect.Executable} instances.
          */
-        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+        private static final Executable EXECUTABLE = AccessController.doPrivileged(JavaDispatcher.of(Executable.class));
+
+        /**
+         * A dispatcher for reading properties from {@code java.lang.reflect.Parameter} instances.
+         */
+        private static final Parameter PARAMETER = AccessController.doPrivileged(JavaDispatcher.of(Parameter.class));
 
         /**
          * The {@code java.lang.reflect.Executable} for which the parameter types are described.
@@ -260,7 +265,7 @@ public interface ParameterDescription extends AnnotationSource,
          * {@inheritDoc}
          */
         public String getName() {
-            return DISPATCHER.getName(executable, index);
+            return PARAMETER.getName(EXECUTABLE.getParameters(executable)[index]);
         }
 
         /**
@@ -274,14 +279,14 @@ public interface ParameterDescription extends AnnotationSource,
          * {@inheritDoc}
          */
         public boolean isNamed() {
-            return DISPATCHER.isNamePresent(executable, index);
+            return PARAMETER.isNamePresent(EXECUTABLE.getParameters(executable)[index]);
         }
 
         /**
          * {@inheritDoc}
          */
         public int getModifiers() {
-            return DISPATCHER.getModifiers(executable, index);
+            return PARAMETER.getModifiers(EXECUTABLE.getParameters(executable)[index]);
         }
 
         /**
@@ -363,200 +368,49 @@ public interface ParameterDescription extends AnnotationSource,
         }
 
         /**
-         * A dispatcher creating parameter descriptions based on the API that is available for the current JVM.
+         * A proxy for a {@code java.lang.reflect.Executable}.
          */
-        protected interface Dispatcher {
+        @JavaDispatcher.Proxied("java.lang.reflect.Executable")
+        protected interface Executable {
+
+            /**
+             * Returns the parameters of an executable.
+             *
+             * @param value The executable to introspect.
+             * @return An array of the parameters of the supplied executable.
+             */
+            Object[] getParameters(Object value);
+        }
+
+        /**
+         * A proxy for a {@code java.lang.reflect.Parameter}.
+         */
+        @JavaDispatcher.Proxied("java.lang.reflect.Parameter")
+        protected interface Parameter {
 
             /**
              * Returns the given parameter's modifiers.
              *
-             * @param executable The executable to introspect.
-             * @param index      The parameter's index.
+             * @param value The parameter to introspect.
              * @return The parameter's modifiers.
              */
-            int getModifiers(AccessibleObject executable, int index);
+            int getModifiers(Object value);
 
             /**
              * Returns {@code true} if the given parameter has an explicit name.
              *
-             * @param executable The parameter to introspect.
-             * @param index      The parameter's index.
+             * @param value The parameter to introspect.
              * @return {@code true} if the given parameter has an explicit name.
              */
-            boolean isNamePresent(AccessibleObject executable, int index);
+            boolean isNamePresent(Object value);
 
             /**
              * Returns the given parameter's implicit or explicit name.
              *
-             * @param executable The parameter to introspect.
-             * @param index      The parameter's index.
+             * @param value The parameter to introspect.
              * @return The parameter's name.
              */
-            String getName(AccessibleObject executable, int index);
-
-            /**
-             * A creation action for a dispatcher.
-             */
-            enum CreationAction implements PrivilegedAction<Dispatcher> {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-                public Dispatcher run() {
-                    try {
-                        Class<?> executableType = Class.forName("java.lang.reflect.Executable");
-                        Class<?> parameterType = Class.forName("java.lang.reflect.Parameter");
-                        return new Dispatcher.ForJava8CapableVm(executableType.getMethod("getParameters"),
-                                parameterType.getMethod("getName"),
-                                parameterType.getMethod("isNamePresent"),
-                                parameterType.getMethod("getModifiers"));
-                    } catch (Exception ignored) {
-                        return Dispatcher.ForLegacyVm.INSTANCE;
-                    }
-                }
-            }
-
-            /**
-             * A dispatcher for VMs that support the {@code java.lang.reflect.Parameter} API for Java 8+.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForJava8CapableVm implements Dispatcher {
-
-                /**
-                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
-                 */
-                private static final Object[] NO_ARGUMENTS = new Object[0];
-
-                /**
-                 * A reference to {@code java.lang.reflect.Executable#getParameters}.
-                 */
-                private final Method getParameters;
-
-                /**
-                 * A reference to {@code java.lang.reflect.Parameter#getName}.
-                 */
-                private final Method getName;
-
-                /**
-                 * A reference to {@code java.lang.reflect.Parameter#isNamePresent}.
-                 */
-                private final Method isNamePresent;
-
-                /**
-                 * A reference to {@code java.lang.reflect.Parameter#getModifiers}.
-                 */
-                private final Method getModifiers;
-
-                /**
-                 * Creates a new dispatcher for a modern VM.
-                 *
-                 * @param getParameters A reference to {@code java.lang.reflect.Executable#getTypeArguments}.
-                 * @param getName       A reference to {@code java.lang.reflect.Parameter#getName}.
-                 * @param isNamePresent A reference to {@code java.lang.reflect.Parameter#isNamePresent}.
-                 * @param getModifiers  A reference to {@code java.lang.reflect.Parameter#getModifiers}.
-                 */
-                protected ForJava8CapableVm(Method getParameters, Method getName, Method isNamePresent, Method getModifiers) {
-                    this.getParameters = getParameters;
-                    this.getName = getName;
-                    this.isNamePresent = isNamePresent;
-                    this.getModifiers = getModifiers;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public int getModifiers(AccessibleObject executable, int index) {
-                    try {
-                        return (Integer) getModifiers.invoke(getParameter(executable, index), NO_ARGUMENTS);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getModifiers", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflect.Parameter#getModifiers", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isNamePresent(AccessibleObject executable, int index) {
-                    try {
-                        return (Boolean) isNamePresent.invoke(getParameter(executable, index), NO_ARGUMENTS);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#isNamePresent", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflect.Parameter#isNamePresent", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String getName(AccessibleObject executable, int index) {
-                    try {
-                        return (String) getName.invoke(getParameter(executable, index), NO_ARGUMENTS);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getName", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflect.Parameter#getName", exception.getCause());
-                    }
-                }
-
-                /**
-                 * Returns the {@code java.lang.reflect.Parameter} of an executable at a given index.
-                 *
-                 * @param executable The executable for which a parameter should be read.
-                 * @param index      The index of the parameter.
-                 * @return The parameter for the given index.
-                 */
-                private Object getParameter(AccessibleObject executable, int index) {
-                    try {
-                        return Array.get(getParameters.invoke(executable, NO_ARGUMENTS), index);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflect.Executable#getParameters", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflect.Executable#getParameters", exception.getCause());
-                    }
-                }
-            }
-
-            /**
-             * A dispatcher for a legacy VM that does not know the {@code java.lang.reflect.Parameter} type that only throws
-             * exceptions on any property extraction.
-             */
-            enum ForLegacyVm implements Dispatcher {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public int getModifiers(AccessibleObject executable, int index) {
-                    throw new UnsupportedOperationException("Cannot dispatch method for java.lang.reflect.Parameter");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isNamePresent(AccessibleObject executable, int index) {
-                    throw new UnsupportedOperationException("Cannot dispatch method for java.lang.reflect.Parameter");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String getName(AccessibleObject executable, int index) {
-                    throw new UnsupportedOperationException("Cannot dispatch method for java.lang.reflect.Parameter");
-                }
-            }
+            String getName(Object value);
         }
 
         /**
