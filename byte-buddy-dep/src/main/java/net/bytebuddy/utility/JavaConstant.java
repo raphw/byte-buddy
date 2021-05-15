@@ -197,15 +197,15 @@ public interface JavaConstant {
             } else if (CLASS_DESC.isInstance(value)) {
                 return new Simple(Type.getType(CLASS_DESC.descriptorString(value)), TypeDescription.CLASS);
             } else if (METHOD_TYPE_DESC.isInstance(value)) {
-                List<?> parameterTypes = METHOD_TYPE_DESC.parameterList(value);
-                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameterTypes.size());
+                Object[] parameterTypes = METHOD_TYPE_DESC.parameterArray(value);
+                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameterTypes.length);
                 for (Object parameterType : parameterTypes) {
                     typeDescriptions.add(typePool.describe(Type.getType(CLASS_DESC.descriptorString(parameterType)).getClassName()).resolve());
                 }
                 return MethodType.of(typePool.describe(Type.getType(CLASS_DESC.descriptorString(METHOD_TYPE_DESC.returnType(value))).getClassName()).resolve(), typeDescriptions);
             } else if (DIRECT_METHOD_HANDLE_DESC.isInstance(value)) {
-                List<?> parameterTypes = METHOD_TYPE_DESC.parameterList(METHOD_HANDLE_DESC.invocationType(value));
-                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameterTypes.size());
+                Object[] parameterTypes = METHOD_TYPE_DESC.parameterArray(METHOD_HANDLE_DESC.invocationType(value));
+                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameterTypes.length);
                 for (Object parameterType : parameterTypes) {
                     typeDescriptions.add(typePool.describe(Type.getType(CLASS_DESC.descriptorString(parameterType)).getClassName()).resolve());
                 }
@@ -217,10 +217,10 @@ public interface JavaConstant {
                                 : typePool.describe(Type.getType(CLASS_DESC.descriptorString(METHOD_TYPE_DESC.returnType(METHOD_HANDLE_DESC.invocationType(value)))).getClassName()).resolve(),
                         typeDescriptions);
             } else if (DYNAMIC_CONSTANT_DESC.isInstance(value)) {
-                List<?> constants = DYNAMIC_CONSTANT_DESC.bootstrapArgsList(value);
-                Object[] argument = new Object[constants.size()];
-                for (int index = 0; index < constants.size(); index++) {
-                    argument[index] = ofDescription(constants.get(index), typePool).asConstantPoolValue();
+                Object[] constants = DYNAMIC_CONSTANT_DESC.bootstrapArgs(value);
+                Object[] argument = new Object[constants.length];
+                for (int index = 0; index < constants.length; index++) {
+                    argument[index] = ofDescription(constants[index], typePool).asConstantPoolValue();
                 }
                 return new Dynamic(new ConstantDynamic(DYNAMIC_CONSTANT_DESC.constantName(value),
                         CLASS_DESC.descriptorString(DYNAMIC_CONSTANT_DESC.constantType(value)),
@@ -404,9 +404,9 @@ public interface JavaConstant {
                  * Returns the parameter types of a {@code java.lang.constant.MethodTypeDesc}.
                  *
                  * @param value The {@code java.lang.constant.MethodTypeDesc} to resolve.
-                 * @return A list of {@code java.lang.constant.ClassDesc} of the supplied {@code java.lang.constant.MethodTypeDesc}'s parameter types.
+                 * @return An array of {@code java.lang.constant.ClassDesc} of the supplied {@code java.lang.constant.MethodTypeDesc}'s parameter types.
                  */
-                List<?> parameterList(Object value);
+                Object[] parameterArray(Object value);
             }
 
             /**
@@ -529,9 +529,9 @@ public interface JavaConstant {
                  * Resolves a {@code java.lang.constant.DynamicConstantDesc}'s arguments.
                  *
                  * @param value The {@code java.lang.constant.DynamicConstantDesc} to resolve.
-                 * @return A list of {@code java.lang.constant.ConstantDesc} describing the arguments of the supplied dynamic constant description.
+                 * @return An array of {@code java.lang.constant.ConstantDesc} describing the arguments of the supplied dynamic constant description.
                  */
-                List<?> bootstrapArgsList(Object value);
+                Object[] bootstrapArgs(Object value);
 
                 /**
                  * Resolves the dynamic constant description's name.

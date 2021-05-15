@@ -3469,7 +3469,7 @@ public interface TypeWriter<T> {
                      * {@inheritDoc}
                      */
                     public void assertPermittedSubclass() {
-                        if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V15)) {
+                        if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V17)) {
                             throw new IllegalStateException("Cannot define permitted subclasses for class file version " + classFileVersion);
                         }
                     }
@@ -4739,7 +4739,7 @@ public interface TypeWriter<T> {
                     /**
                      * A list of internal names of permitted subclasses to include.
                      */
-                    private final List<String> permittedSubclasses;
+                    private final Set<String> permittedSubclasses;
 
                     /**
                      * The method pool to use or {@code null} if the pool was not yet initialized.
@@ -4804,9 +4804,14 @@ public interface TypeWriter<T> {
                         for (TypeDescription typeDescription : instrumentedType.getDeclaredTypes()) {
                             declaredTypes.put(typeDescription.getInternalName(), typeDescription);
                         }
-                        permittedSubclasses = new ArrayList<String>(instrumentedType.getPermittedSubclasses().size());
-                        for (TypeDescription typeDescription : instrumentedType.getPermittedSubclasses()) {
-                            permittedSubclasses.add(typeDescription.getInternalName());
+                        TypeList permittedSubclasses = instrumentedType.getPermittedSubclasses();
+                        this.permittedSubclasses = permittedSubclasses == null
+                                ? null
+                                : new LinkedHashSet<String>();
+                        if (permittedSubclasses != null) {
+                            for (TypeDescription typeDescription : permittedSubclasses) {
+                                this.permittedSubclasses.add(typeDescription.getInternalName());
+                            }
                         }
                     }
 
@@ -4864,15 +4869,17 @@ public interface TypeWriter<T> {
 
                     @Override
                     protected void onVisitPermittedSubclass(String permittedSubclass) {
-                        if (permittedSubclasses.remove(permittedSubclass)) {
+                        if (permittedSubclasses != null && permittedSubclasses.remove(permittedSubclass)) {
                             cv.visitPermittedSubclass(permittedSubclass);
                         }
                     }
 
                     @Override
                     protected void onAfterPermittedSubclasses() {
-                        for (String permittedSubclass : permittedSubclasses) {
-                            cv.visitPermittedSubclass(permittedSubclass);
+                        if (permittedSubclasses != null) {
+                            for (String permittedSubclass : permittedSubclasses) {
+                                cv.visitPermittedSubclass(permittedSubclass);
+                            }
                         }
                     }
 
@@ -5729,8 +5736,11 @@ public interface TypeWriter<T> {
                 if (!instrumentedType.isNestHost()) {
                     classVisitor.visitNestHost(instrumentedType.getNestHost().getInternalName());
                 }
-                for (TypeDescription typeDescription : instrumentedType.getPermittedSubclasses()) {
-                    classVisitor.visitPermittedSubclass(typeDescription.getInternalName());
+                TypeList permittedSubclasses = instrumentedType.getPermittedSubclasses();
+                if (permittedSubclasses != null) {
+                    for (TypeDescription typeDescription : permittedSubclasses) {
+                        classVisitor.visitPermittedSubclass(typeDescription.getInternalName());
+                    }
                 }
                 MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
                 if (enclosingMethod != null) {

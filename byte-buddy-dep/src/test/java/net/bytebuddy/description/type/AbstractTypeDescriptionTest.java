@@ -748,6 +748,12 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
+    public void testNotSealed() throws Exception {
+        assertThat(describe(SampleClass.class).isSealed(), is(false));
+        assertThat(describe(SampleClass.class).getPermittedSubclasses(), nullValue(TypeList.class));
+    }
+
+    @Test
     public void testNonRecordComponents() throws Exception {
         assertThat(describe(String.class).isRecord(), is(false));
         assertThat(describe(String.class).getRecordComponents().size(), is(0));

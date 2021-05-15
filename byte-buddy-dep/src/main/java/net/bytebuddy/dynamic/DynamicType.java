@@ -4423,7 +4423,7 @@ public interface DynamicType {
                  * {@inheritDoc}
                  */
                 public Builder<U> unsealed() {
-                    return materialize(instrumentedType.withoutPermittedSubclasses(),
+                    return materialize(instrumentedType.withPermittedSubclasses(TypeList.UNDEFINED),
                             fieldRegistry,
                             methodRegistry,
                             recordComponentRegistry,

@@ -43,6 +43,11 @@ import java.util.List;
 public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
     /**
+     * An {@code null} type list.
+     */
+    TypeList UNDEFINED = null;
+
+    /**
      * Represents that a type list does not contain any values for ASM interoperability which is represented by {@code null}.
      */
     @SuppressFBWarnings(value = {"MS_MUTABLE_ARRAY", "MS_OOI_PKGPROTECT"}, justification = "Value is null")

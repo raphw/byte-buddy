@@ -33,6 +33,7 @@ import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -1481,7 +1482,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     @JavaVersionRule.Enforce(17)
-    public void testPermittedSubclasses() throws Exception { // TODO: Permitted subclass
+    @Ignore("Sealed classes are still a preview feature")
+    public void testPermittedSubclasses() throws Exception {
         TypeDescription sample = new TypeDescription.Latent("foo.Qux",
                 Opcodes.ACC_PUBLIC,
                 new TypeDescription.Latent("foo.Bar", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT).asGenericType());

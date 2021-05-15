@@ -119,11 +119,6 @@ public class InstrumentedTypeFrozenTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testWithSealed() {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withoutPermittedSubclasses();
-    }
-
-    @Test(expected = IllegalStateException.class)
     public void testWithLocalClass() {
         new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withLocalClass(true);
     }

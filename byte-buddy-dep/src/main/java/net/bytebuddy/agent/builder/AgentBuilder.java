@@ -5319,6 +5319,11 @@ public interface AgentBuilder {
         };
 
         /**
+         * Indicates that the current VM does not support checks for the legality of type modification.
+         */
+        protected static final boolean ALL_MODIFIABLE = ClassFileVersion.ofThisVm().isAtMost(ClassFileVersion.JAVA_V5);
+
+        /**
          * A dispatcher to use for interacting with the instrumentation API.
          */
         protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
@@ -5433,7 +5438,7 @@ public interface AgentBuilder {
                     if (type == null || type.isArray() || !lambdaInstrumentationStrategy.isInstrumented(type)) {
                         continue;
                     }
-                    collector.consider(type, !type.isPrimitive() && DISPATCHER.isModifiableClass(instrumentation, type));
+                    collector.consider(type, !type.isPrimitive() && (ALL_MODIFIABLE || DISPATCHER.isModifiableClass(instrumentation, type)));
                 }
                 batch = collector.apply(instrumentation, redefinitionBatchAllocator, redefinitionListener, batch);
             }
@@ -7183,7 +7188,7 @@ public interface AgentBuilder {
                                             Class<?> type = Class.forName(iterator.next(), false, classLoader);
                                             collector.consider(type, !type.isArray()
                                                     && !type.isPrimitive()
-                                                    && DISPATCHER.isModifiableClass(instrumentation, type));
+                                                    && (ALL_MODIFIABLE || DISPATCHER.isModifiableClass(instrumentation, type)));
                                         } catch (Throwable ignored) {
                                             /* do nothing */
                                         } finally {
@@ -7415,8 +7420,6 @@ public interface AgentBuilder {
              * @param type            The type to check for modifiability.
              * @return {@code true} if the supplied type is modifiable.
              */
-            @JavaDispatcher.Defaults
-            @JavaDispatcher.Reversed
             boolean isModifiableClass(Instrumentation instrumentation, Class<?> type);
 
             /**

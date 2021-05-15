@@ -153,10 +153,10 @@ public interface InstrumentedType extends TypeDescription {
     InstrumentedType withDeclaredTypes(TypeList declaredTypes);
 
     /**
-     * Creates a new instrumented type that includes the supplied permitted subclasses.
+     * Creates a new instrumented type that includes the supplied permitted subclasses or unseals the type.
      *
-     * @param permittedSubclasses A list of permitted subclasses to include.
-     * @return A new instrumented type that includes the supplied permitted subclasses.
+     * @param permittedSubclasses A list of permitted subclasses to include or {@code null} to unseal the type.
+     * @return A new instrumented type that includes the supplied permitted subclasses or unseals the type.
      */
     InstrumentedType withPermittedSubclasses(TypeList permittedSubclasses);
 
@@ -186,13 +186,6 @@ public interface InstrumentedType extends TypeDescription {
      * @return A new instrumented type that is defined as a record.
      */
     InstrumentedType withRecord(boolean record);
-
-    /**
-     * Creates a new instrumented type that removes any permitted subclasses.
-     *
-     * @return A new instrumented type that does not restrict its permitted subclasses.
-     */
-    InstrumentedType withoutPermittedSubclasses();
 
     /**
      * Creates a new instrumented type that includes the given {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
@@ -298,11 +291,6 @@ public interface InstrumentedType extends TypeDescription {
          * {@inheritDoc}
          */
         WithFlexibleName withPermittedSubclasses(TypeList permittedSubclasses);
-
-        /**
-         * {@inheritDoc}
-         */
-        WithFlexibleName withoutPermittedSubclasses();
 
         /**
          * {@inheritDoc}
@@ -481,7 +469,7 @@ public interface InstrumentedType extends TypeDescription {
                         MethodDescription.UNDEFINED,
                         TypeDescription.UNDEFINED,
                         Collections.<TypeDescription>emptyList(),
-                        Collections.<TypeDescription>emptyList(),
+                        TypeList.UNDEFINED,
                         false,
                         false,
                         false,
@@ -1050,34 +1038,9 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
-                    CompoundList.of(this.permittedSubclasses, permittedSubclasses),
-                    anonymousClass,
-                    localClass,
-                    record,
-                    nestHost,
-                    nestMembers);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public WithFlexibleName withoutPermittedSubclasses() {
-            return new Default(name,
-                    modifiers,
-                    superClass,
-                    typeVariables,
-                    interfaceTypes,
-                    fieldTokens,
-                    methodTokens,
-                    recordComponentTokens,
-                    annotationDescriptions,
-                    typeInitializer,
-                    loadedTypeInitializer,
-                    declaringType,
-                    enclosingMethod,
-                    enclosingType,
-                    declaredTypes,
-                    Collections.<TypeDescription>emptyList(),
+                    permittedSubclasses == null || this.permittedSubclasses == null
+                            ? permittedSubclasses
+                            : CompoundList.of(this.permittedSubclasses, permittedSubclasses),
                     anonymousClass,
                     localClass,
                     record,
@@ -1470,7 +1433,9 @@ public interface InstrumentedType extends TypeDescription {
          * {@inheritDoc}
          */
         public TypeList getPermittedSubclasses() {
-            return new TypeList.Explicit(permittedSubclasses);
+            return permittedSubclasses == null
+                ? TypeList.UNDEFINED
+                : new TypeList.Explicit(permittedSubclasses);
         }
 
         /**
@@ -1580,9 +1545,11 @@ public interface InstrumentedType extends TypeDescription {
                 throw new IllegalStateException("Cannot define nest host " + nestHost + " + within different package then " + this);
             }
             TypeList permittedSubclasses = getPermittedSubclasses();
-            for (TypeDescription permittedSubclass : permittedSubclasses) {
-                if (!permittedSubclass.isAssignableTo(this) || permittedSubclass.equals(this)) {
-                    throw new IllegalStateException("Cannot assign permitted subclass " + permittedSubclass + " to " + this);
+            if (permittedSubclasses != null) {
+                for (TypeDescription permittedSubclass : permittedSubclasses) {
+                    if (!permittedSubclass.isAssignableTo(this) || permittedSubclass.equals(this)) {
+                        throw new IllegalStateException("Cannot assign permitted subclass " + permittedSubclass + " to " + this);
+                    }
                 }
             }
             Set<TypeDescription> typeAnnotationTypes = new HashSet<TypeDescription>();
@@ -2063,13 +2030,6 @@ public interface InstrumentedType extends TypeDescription {
          */
         public WithFlexibleName withPermittedSubclasses(TypeList permittedSubclasses) {
             throw new IllegalStateException("Cannot add permitted subclasses to frozen type: " + typeDescription);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public WithFlexibleName withoutPermittedSubclasses() {
-            throw new IllegalStateException("Cannot define seal state for frozen type: " + typeDescription);
         }
 
         /**

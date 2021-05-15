@@ -101,7 +101,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                     dispatchers.put(method, new ProxiedInvocationHandler.Dispatcher.ForFixedValue(false));
                 } else {
                     dispatchers.put(method, defaults || method.isAnnotationPresent(Defaults.class)
-                            ? ProxiedInvocationHandler.Dispatcher.ForFixedValue.of(method.getReturnType(), method.isAnnotationPresent(Reversed.class))
+                            ? ProxiedInvocationHandler.Dispatcher.ForFixedValue.of(method.getReturnType())
                             : new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Type not available on current VM: " + exception.getMessage()));
                 }
             }
@@ -178,16 +178,19 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                     }
                     Proxied proxied = method.getAnnotation(Proxied.class);
                     Method resolved = target.getMethod(proxied == null ? method.getName() : proxied.value(), parameterType);
+                    if (!method.getReturnType().isAssignableFrom(resolved.getReturnType())) {
+                        throw new IllegalStateException("Cannot assign " + resolved.getReturnType().getName() + " to " + method);
+                    }
                     dispatchers.put(method, Modifier.isStatic(resolved.getModifiers())
                             ? new ProxiedInvocationHandler.Dispatcher.ForStaticMethod(resolved)
                             : new ProxiedInvocationHandler.Dispatcher.ForNonStaticMethod(resolved));
                 } catch (ClassNotFoundException exception) {
                     dispatchers.put(method, defaults || method.isAnnotationPresent(Defaults.class)
-                            ? ProxiedInvocationHandler.Dispatcher.ForFixedValue.of(method.getReturnType(), method.isAnnotationPresent(Reversed.class))
+                            ? ProxiedInvocationHandler.Dispatcher.ForFixedValue.of(method.getReturnType())
                             : new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Class not available on current VM: " + exception.getMessage()));
                 } catch (NoSuchMethodException exception) {
                     dispatchers.put(method, defaults || method.isAnnotationPresent(Defaults.class)
-                            ? ProxiedInvocationHandler.Dispatcher.ForFixedValue.of(method.getReturnType(), method.isAnnotationPresent(Reversed.class))
+                            ? ProxiedInvocationHandler.Dispatcher.ForFixedValue.of(method.getReturnType())
                             : new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Method not available on current VM: " + exception.getMessage()));
                 } catch (Throwable throwable) {
                     dispatchers.put(method, new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Unexpected error: " + throwable.getMessage()));
@@ -255,16 +258,6 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     @Target({ElementType.TYPE, ElementType.METHOD})
     @Retention(RetentionPolicy.RUNTIME)
     public @interface Defaults {
-        /* empty */
-    }
-
-    /**
-     * Indicates that a {@code boolean} method is supposed to return {@code true} if not proxied.
-     */
-    @Documented
-    @Target(ElementType.METHOD)
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface Reversed {
         /* empty */
     }
 
@@ -428,13 +421,12 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 /**
                  * Resolves a fixed value for a given type.
                  *
-                 * @param type      The type to resolve.
-                 * @param onBoolean The value to return for a boolean property.
+                 * @param type The type to resolve.
                  * @return An appropriate dispatcher.
                  */
-                protected static Dispatcher of(Class<?> type, boolean onBoolean) {
+                protected static Dispatcher of(Class<?> type) {
                     if (type == boolean.class) {
-                        return new ForFixedValue(onBoolean);
+                        return new ForFixedValue(false);
                     } else if (type == byte.class) {
                         return new ForFixedValue((byte) 0);
                     } else if (type == short.class) {

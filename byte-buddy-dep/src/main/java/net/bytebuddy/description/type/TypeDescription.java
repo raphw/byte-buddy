@@ -413,9 +413,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     boolean isCompileTimeConstant();
 
     /**
-     * Returns the list of permitted subclasses if this class is a sealed class or an empty list if this class is not sealed.
+     * Returns the list of permitted direct subclasses if this class is a sealed class. Permitted subclasses might or might not be
+     * resolvable, where unresolvable subclasses might also be missing from the list. For returned types, methods that return the
+     * class's name will always be invokable without errors. If this type is not sealed, {@code null} is returned.
      *
-     * @return The list of permitted subclasses if this class is a sealed class or an empty list if this class is not sealed.
+     * @return The list of permitted subclasses if this class is a sealed class or {@code null} if this type is not sealed.
      */
     TypeList getPermittedSubclasses();
 
@@ -8183,7 +8185,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         public boolean isSealed() {
-            return !isPrimitive() && !isArray() && !getPermittedSubclasses().isEmpty();
+            return !isPrimitive() && !isArray() && getPermittedSubclasses() != null;
         }
 
         /**
@@ -8860,7 +8862,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public TypeList getNestMembers() {
             Class<?>[] member = DISPATCHER.getNestMembers(type);
             return new TypeList.ForLoadedTypes(member.length == 0
-                    ? new Class<?>[] {type}
+                    ? new Class<?>[]{type}
                     : member);
         }
 
@@ -8897,14 +8899,20 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.isRecord(type);
         }
 
+        @Override
+        public boolean isSealed() {
+            return DISPATCHER.isSealed(type);
+        }
+
         /**
          * {@inheritDoc}
          */
         public TypeList getPermittedSubclasses() {
-            Class<?>[] subclass = DISPATCHER.getPermittedSubclasses(type);
-            return subclass == null
-                    ? new TypeList.Empty()
-                    : new TypeList.ForLoadedTypes(subclass);
+            if (DISPATCHER.isSealed(type)) {
+                return new TypeList.ForLoadedTypes(DISPATCHER.getPermittedSubclasses(type));
+            } else {
+                return TypeList.UNDEFINED;
+            }
         }
 
         @Override
@@ -8948,6 +8956,15 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @return {@code true} if the specified type is a nest mate of the other class.
              */
             boolean isNestmateOf(Class<?> type, Class<?> candidate);
+
+            /**
+             * Checks if this type is sealed. This will always be {@code false} if the current VM does
+             * not support sealed classes.
+             *
+             * @param type The type to check
+             * @return {@code true} if the supplied type is sealed.
+             */
+            boolean isSealed(Class<?> type);
 
             /**
              * Returns the permitted subclasses of the supplied type.
@@ -9250,7 +9267,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         public TypeList getPermittedSubclasses() {
-            return new TypeList.Empty();
+            return TypeList.UNDEFINED;
         }
     }
 

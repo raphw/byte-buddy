@@ -2791,7 +2791,9 @@ public interface TypePool {
              * {@inheritDoc}
              */
             public TypeList getPermittedSubclasses() {
-                return new LazyTypeList(typePool, permittedSubclasses);
+                return permittedSubclasses.isEmpty()
+                        ? TypeList.UNDEFINED
+                        : new LazyTypeList(typePool, permittedSubclasses);
             }
 
             @Override

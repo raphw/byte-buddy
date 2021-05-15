@@ -73,7 +73,7 @@ public class InstrumentedTypeDefaultTest {
                 MethodDescription.UNDEFINED,
                 TypeDescription.UNDEFINED,
                 Collections.<TypeDescription>emptyList(),
-                Collections.<TypeDescription>emptyList(),
+                TypeList.UNDEFINED,
                 false,
                 false,
                 false,
@@ -614,16 +614,17 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test
-    public void testPermittedSubclass() throws Exception {
+    public void testPermittedSubclasses() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(typeDescription.asErasure()).thenReturn(typeDescription);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
-        assertThat(instrumentedType.getPermittedSubclasses().size(), is(0));
+        assertThat(instrumentedType.getPermittedSubclasses(), nullValue(TypeList.class));
         InstrumentedType transformed = instrumentedType.withPermittedSubclasses(new TypeList.Explicit(typeDescription));
+        assertThat(transformed.getPermittedSubclasses(), notNullValue(TypeList.class));
         assertThat(transformed.getPermittedSubclasses().size(), is(1));
         assertThat(transformed.getPermittedSubclasses(), hasItems(typeDescription));
-        assertThat(transformed.withoutPermittedSubclasses().getPermittedSubclasses().size(), is(0));
+        assertThat(transformed.withPermittedSubclasses(TypeList.UNDEFINED).getPermittedSubclasses(), nullValue(TypeList.class));
     }
 
     @Test
