@@ -3137,7 +3137,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return NoOp.INSTANCE;
                     }
                     try {
-                        return ANNOTATED_WILDCARD_TYPE.getAnnotatedUpperBounds(annotatedElement)[index];
+                        return ANNOTATED_WILDCARD_TYPE.getAnnotatedLowerBounds(annotatedElement)[index];
                     } catch (ClassCastException ignored) { // To avoid a bug on early releases of Java 8.
                         return NoOp.INSTANCE;
                     }
@@ -3159,12 +3159,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     boolean isInstance(AnnotatedElement value);
 
                     /**
-                     * Returns the supplied annotated element's annotated upper bounds.
+                     * Returns the supplied annotated element's annotated lower bounds.
                      *
                      * @param value The annotated element to resolve.
-                     * @return An array of annotated upper bounds for the supplied annotated elements.
+                     * @return An array of annotated lower bounds for the supplied annotated elements.
                      */
-                    AnnotatedElement[] getAnnotatedUpperBounds(AnnotatedElement value);
+                    AnnotatedElement[] getAnnotatedLowerBounds(AnnotatedElement value);
                 }
             }
 
