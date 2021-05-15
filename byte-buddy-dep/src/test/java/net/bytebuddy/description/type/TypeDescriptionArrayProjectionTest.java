@@ -20,29 +20,33 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
     }
 
     protected TypeDescription.Generic describeType(Field field) {
-        return TypeDefinition.Sort.describe(field.getGenericType(), TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field));
+        return TypeDefinition.Sort.describe(field.getGenericType(),
+                new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedField(field));
     }
 
     protected TypeDescription.Generic describeReturnType(Method method) {
-        return TypeDefinition.Sort.describe(method.getGenericReturnType(), TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReturnType(method));
+        return TypeDefinition.Sort.describe(method.getGenericReturnType(),
+                new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedMethodReturnType(method));
     }
 
     protected TypeDescription.Generic describeParameterType(Method method, int index) {
         return TypeDefinition.Sort.describe(method.getGenericParameterTypes()[index],
-                TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveParameterType(method, index));
+                new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedExecutableParameterType(method, index));
     }
 
     protected TypeDescription.Generic describeExceptionType(Method method, int index) {
         return TypeDefinition.Sort.describe(method.getGenericExceptionTypes()[index],
-                TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveExceptionType(method, index));
+                new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedExecutableExceptionType(method, index));
     }
 
     protected TypeDescription.Generic describeSuperClass(Class<?> type) {
-        return TypeDefinition.Sort.describe(type.getGenericSuperclass(), TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClassType(type));
+        return TypeDefinition.Sort.describe(type.getGenericSuperclass(),
+                new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedSuperClass(type));
     }
 
     protected TypeDescription.Generic describeInterfaceType(Class<?> type, int index) {
-        return TypeDefinition.Sort.describe(type.getGenericInterfaces()[index], TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterfaceType(type, index));
+        return TypeDefinition.Sort.describe(type.getGenericInterfaces()[index],
+                new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedInterface(type, index));
     }
 
     @Test(expected = IllegalArgumentException.class)

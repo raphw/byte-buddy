@@ -5,6 +5,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.PackageDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -28,10 +29,7 @@ import org.objectweb.asm.Opcodes;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -503,8 +501,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertThat(type.getSuperclass(), is((Object) Object.class));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClassType(type).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClassType(type).asList().ofType(typeAnnotationType)
+        assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedSuperClass(type).asList().size(), is(1));
+        assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedSuperClass(type).asList().ofType(typeAnnotationType)
                 .getValue(value).resolve(Integer.class), is(BAZ));
     }
 
@@ -524,9 +522,9 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
                 .getDeclaredMethod(FOO);
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method).getDeclaredAnnotations().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method).getDeclaredAnnotations()
-                .ofType(typeAnnotationType).getValue(value).resolve(Integer.class), is(BAZ));
+        TypeDescription.Generic receiver = TypeDefinition.Sort.describeAnnotated((AnnotatedElement) Method.class.getMethod("getAnnotatedReceiverType").invoke(method));
+        assertThat(receiver.getDeclaredAnnotations().size(), is(1));
+        assertThat(receiver.getDeclaredAnnotations().ofType(typeAnnotationType).getValue(value).resolve(Integer.class), is(BAZ));
     }
 
     @Test
@@ -545,9 +543,9 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
                 .getDeclaredMethod("toString");
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method).getDeclaredAnnotations().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method).getDeclaredAnnotations()
-                .ofType(typeAnnotationType).getValue(value).resolve(Integer.class), is(BAZ));
+        TypeDescription.Generic receiver = TypeDefinition.Sort.describeAnnotated((AnnotatedElement) Method.class.getMethod("getAnnotatedReceiverType").invoke(method));
+        assertThat(receiver.getDeclaredAnnotations().size(), is(1));
+        assertThat(receiver.getDeclaredAnnotations().ofType(typeAnnotationType).getValue(value).resolve(Integer.class), is(BAZ));
     }
 
     @Test(expected = IllegalStateException.class)

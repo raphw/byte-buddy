@@ -23,12 +23,15 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.JavaDispatcher;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.signature.SignatureWriter;
 
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Modifier;
+import java.security.AccessController;
 import java.util.Collections;
 import java.util.List;
 

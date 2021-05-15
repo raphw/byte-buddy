@@ -101,7 +101,7 @@ public class AnnotationAppenderDefaultTest {
     @JavaVersionRule.Enforce(8)
     public void testNoArgumentTypeAnnotation() throws Exception {
         Class<?> bar = makeTypeWithSuperClassAnnotation(new Foo.Instance());
-        TypeDescription.Generic.AnnotationReader annotationReader = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClassType(bar);
+        TypeDescription.Generic.AnnotationReader annotationReader = new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedSuperClass(bar);
         assertThat(annotationReader.asList().size(), is(1));
         assertThat(annotationReader.asList().isAnnotationPresent(Foo.class), is(true));
     }
@@ -110,7 +110,7 @@ public class AnnotationAppenderDefaultTest {
     @JavaVersionRule.Enforce(8)
     public void testNoArgumentTypeAnnotationSourceCodeRetention() throws Exception {
         Class<?> bar = makeTypeWithSuperClassAnnotation(new FooSourceCodeRetention.Instance());
-        TypeDescription.Generic.AnnotationReader annotationReader = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClassType(bar);
+        TypeDescription.Generic.AnnotationReader annotationReader = new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedSuperClass(bar);
         assertThat(annotationReader.asList().size(), is(0));
     }
 
@@ -118,7 +118,7 @@ public class AnnotationAppenderDefaultTest {
     @JavaVersionRule.Enforce(8)
     public void testNoArgumentTypeAnnotationByteCodeRetention() throws Exception {
         Class<?> bar = makeTypeWithSuperClassAnnotation(new FooByteCodeRetention.Instance());
-        TypeDescription.Generic.AnnotationReader annotationReader = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClassType(bar);
+        TypeDescription.Generic.AnnotationReader annotationReader = new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedSuperClass(bar);
         assertThat(annotationReader.asList().size(), is(0));
     }
 
@@ -126,7 +126,7 @@ public class AnnotationAppenderDefaultTest {
     @JavaVersionRule.Enforce(8)
     public void testNoArgumentTypeAnnotationNoRetention() throws Exception {
         Class<?> bar = makeTypeWithSuperClassAnnotation(new FooNoRetention.Instance());
-        TypeDescription.Generic.AnnotationReader annotationReader = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClassType(bar);
+        TypeDescription.Generic.AnnotationReader annotationReader = new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedSuperClass(bar);
         assertThat(annotationReader.asList().size(), is(0));
     }
 
@@ -134,7 +134,7 @@ public class AnnotationAppenderDefaultTest {
     @JavaVersionRule.Enforce(8)
     public void testSingleTypeArgumentAnnotation() throws Exception {
         Class<?> bar = makeTypeWithSuperClassAnnotation(new Qux.Instance(FOOBAR));
-        TypeDescription.Generic.AnnotationReader annotationReader = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClassType(bar);
+        TypeDescription.Generic.AnnotationReader annotationReader = new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedSuperClass(bar);
         assertThat(annotationReader.asList().size(), is(1));
         assertThat(annotationReader.asList().isAnnotationPresent(Qux.class), is(true));
         assertThat(annotationReader.asList().ofType(Qux.class).load().value(), is(FOOBAR));
@@ -145,7 +145,7 @@ public class AnnotationAppenderDefaultTest {
     public void testMultipleTypeArgumentAnnotation() throws Exception {
         int[] array = {2, 3, 4};
         Class<?> bar = makeTypeWithSuperClassAnnotation(new Baz.Instance(FOOBAR, array, new Foo.Instance(), Baz.Enum.VALUE, Void.class));
-        TypeDescription.Generic.AnnotationReader annotationReader = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClassType(bar);
+        TypeDescription.Generic.AnnotationReader annotationReader = new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedSuperClass(bar);
         assertThat(annotationReader.asList().size(), is(1));
         assertThat(annotationReader.asList().isAnnotationPresent(Baz.class), is(true));
         assertThat(annotationReader.asList().ofType(Baz.class).load().value(), is(FOOBAR));

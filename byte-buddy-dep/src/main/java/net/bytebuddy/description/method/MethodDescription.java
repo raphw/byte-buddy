@@ -32,16 +32,15 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.utility.JavaDispatcher;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.GenericSignatureFormatError;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
+import java.security.AccessController;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -363,6 +362,33 @@ public interface MethodDescription extends TypeVariableSource,
                 } else {
                     return TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(getDeclaringType());
                 }
+            }
+
+            protected abstract static class ForLoadedExecutable<T extends AnnotatedElement> extends InDefinedShape.AbstractBase {
+
+                protected static final Executable EXECUTABLE = AccessController.doPrivileged(JavaDispatcher.of(Executable.class));
+
+                protected final T executable;
+
+                protected ForLoadedExecutable(T executable) {
+                    this.executable = executable;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public TypeDescription.Generic getReceiverType() {
+                    AnnotatedElement element = EXECUTABLE.getAnnotatedReceiverType(executable);
+                    return element == null
+                            ? super.getReceiverType()
+                            : TypeDefinition.Sort.describeAnnotated(element);
+                }
+            }
+
+            @JavaDispatcher.Proxied("java.lang.reflect.Executable")
+            protected interface Executable {
+
+                AnnotatedElement getAnnotatedReceiverType(Object value);
             }
         }
     }
@@ -954,12 +980,7 @@ public interface MethodDescription extends TypeVariableSource,
     /**
      * An implementation of a method description for a loaded constructor.
      */
-    class ForLoadedConstructor extends InDefinedShape.AbstractBase implements ParameterDescription.ForLoadedParameter.ParameterAnnotationSource {
-
-        /**
-         * The loaded constructor that is represented by this instance.
-         */
-        private final Constructor<?> constructor;
+    class ForLoadedConstructor extends InDefinedShape.AbstractBase.ForLoadedExecutable<Constructor<?>> implements ParameterDescription.ForLoadedParameter.ParameterAnnotationSource {
 
         /**
          * Creates a new immutable method description for a loaded constructor.
@@ -967,14 +988,14 @@ public interface MethodDescription extends TypeVariableSource,
          * @param constructor The loaded constructor to be represented by this method description.
          */
         public ForLoadedConstructor(Constructor<?> constructor) {
-            this.constructor = constructor;
+            super(constructor);
         }
 
         /**
          * {@inheritDoc}
          */
         public TypeDescription getDeclaringType() {
-            return TypeDescription.ForLoadedType.of(constructor.getDeclaringClass());
+            return TypeDescription.ForLoadedType.of(executable.getDeclaringClass());
         }
 
         /**
@@ -989,14 +1010,14 @@ public interface MethodDescription extends TypeVariableSource,
          */
         @CachedReturnPlugin.Enhance("parameters")
         public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-            return ParameterList.ForLoadedExecutable.of(constructor, this);
+            return ParameterList.ForLoadedExecutable.of(executable, this);
         }
 
         /**
          * {@inheritDoc}
          */
         public TypeList.Generic getExceptionTypes() {
-            return new TypeList.Generic.OfConstructorExceptionTypes(constructor);
+            return new TypeList.Generic.OfConstructorExceptionTypes(executable);
         }
 
         /**
@@ -1024,28 +1045,28 @@ public interface MethodDescription extends TypeVariableSource,
          * {@inheritDoc}
          */
         public boolean represents(Constructor<?> constructor) {
-            return this.constructor.equals(constructor) || equals(new MethodDescription.ForLoadedConstructor(constructor));
+            return executable.equals(constructor) || equals(new MethodDescription.ForLoadedConstructor(constructor));
         }
 
         /**
          * {@inheritDoc}
          */
         public String getName() {
-            return constructor.getName();
+            return executable.getName();
         }
 
         /**
          * {@inheritDoc}
          */
         public int getModifiers() {
-            return constructor.getModifiers();
+            return executable.getModifiers();
         }
 
         /**
          * {@inheritDoc}
          */
         public boolean isSynthetic() {
-            return constructor.isSynthetic();
+            return executable.isSynthetic();
         }
 
         /**
@@ -1059,7 +1080,7 @@ public interface MethodDescription extends TypeVariableSource,
          * {@inheritDoc}
          */
         public String getDescriptor() {
-            return Type.getConstructorDescriptor(constructor);
+            return Type.getConstructorDescriptor(executable);
         }
 
         /**
@@ -1074,24 +1095,14 @@ public interface MethodDescription extends TypeVariableSource,
          */
         @CachedReturnPlugin.Enhance("declaredAnnotations")
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.ForLoadedAnnotations(constructor.getDeclaredAnnotations());
+            return new AnnotationList.ForLoadedAnnotations(executable.getDeclaredAnnotations());
         }
 
         /**
          * {@inheritDoc}
          */
         public TypeList.Generic getTypeVariables() {
-            return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(constructor);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public TypeDescription.Generic getReceiverType() {
-            TypeDescription.Generic receiverType = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(constructor);
-            return receiverType == null
-                    ? super.getReceiverType()
-                    : receiverType;
+            return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(executable);
         }
 
         /**
@@ -1099,19 +1110,14 @@ public interface MethodDescription extends TypeVariableSource,
          */
         @CachedReturnPlugin.Enhance("parameterAnnotations")
         public Annotation[][] getParameterAnnotations() {
-            return constructor.getParameterAnnotations();
+            return executable.getParameterAnnotations();
         }
     }
 
     /**
      * An implementation of a method description for a loaded method.
      */
-    class ForLoadedMethod extends InDefinedShape.AbstractBase implements ParameterDescription.ForLoadedParameter.ParameterAnnotationSource {
-
-        /**
-         * The loaded method that is represented by this instance.
-         */
-        private final Method method;
+    class ForLoadedMethod extends InDefinedShape.AbstractBase.ForLoadedExecutable<Method> implements ParameterDescription.ForLoadedParameter.ParameterAnnotationSource {
 
         /**
          * Creates a new immutable method description for a loaded method.
@@ -1119,14 +1125,14 @@ public interface MethodDescription extends TypeVariableSource,
          * @param method The loaded method to be represented by this method description.
          */
         public ForLoadedMethod(Method method) {
-            this.method = method;
+            super(method);
         }
 
         /**
          * {@inheritDoc}
          */
         public TypeDescription getDeclaringType() {
-            return TypeDescription.ForLoadedType.of(method.getDeclaringClass());
+            return TypeDescription.ForLoadedType.of(executable.getDeclaringClass());
         }
 
         /**
@@ -1134,9 +1140,9 @@ public interface MethodDescription extends TypeVariableSource,
          */
         public TypeDescription.Generic getReturnType() {
             if (TypeDescription.AbstractBase.RAW_TYPES) {
-                return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(method.getReturnType());
+                return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(executable.getReturnType());
             }
-            return new TypeDescription.Generic.LazyProjection.ForLoadedReturnType(method);
+            return new TypeDescription.Generic.LazyProjection.ForLoadedReturnType(executable);
         }
 
         /**
@@ -1144,7 +1150,7 @@ public interface MethodDescription extends TypeVariableSource,
          */
         @CachedReturnPlugin.Enhance("parameters")
         public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-            return ParameterList.ForLoadedExecutable.of(method, this);
+            return ParameterList.ForLoadedExecutable.of(executable, this);
         }
 
         /**
@@ -1152,9 +1158,9 @@ public interface MethodDescription extends TypeVariableSource,
          */
         public TypeList.Generic getExceptionTypes() {
             if (TypeDescription.AbstractBase.RAW_TYPES) {
-                return new TypeList.Generic.ForLoadedTypes(method.getExceptionTypes());
+                return new TypeList.Generic.ForLoadedTypes(executable.getExceptionTypes());
             }
-            return new TypeList.Generic.OfMethodExceptionTypes(method);
+            return new TypeList.Generic.OfMethodExceptionTypes(executable);
         }
 
         /**
@@ -1175,14 +1181,14 @@ public interface MethodDescription extends TypeVariableSource,
          * {@inheritDoc}
          */
         public boolean isBridge() {
-            return method.isBridge();
+            return executable.isBridge();
         }
 
         /**
          * {@inheritDoc}
          */
         public boolean represents(Method method) {
-            return this.method.equals(method) || equals(new MethodDescription.ForLoadedMethod(method));
+            return executable.equals(method) || equals(new MethodDescription.ForLoadedMethod(method));
         }
 
         /**
@@ -1196,35 +1202,35 @@ public interface MethodDescription extends TypeVariableSource,
          * {@inheritDoc}
          */
         public String getName() {
-            return method.getName();
+            return executable.getName();
         }
 
         /**
          * {@inheritDoc}
          */
         public int getModifiers() {
-            return method.getModifiers();
+            return executable.getModifiers();
         }
 
         /**
          * {@inheritDoc}
          */
         public boolean isSynthetic() {
-            return method.isSynthetic();
+            return executable.isSynthetic();
         }
 
         /**
          * {@inheritDoc}
          */
         public String getInternalName() {
-            return method.getName();
+            return executable.getName();
         }
 
         /**
          * {@inheritDoc}
          */
         public String getDescriptor() {
-            return Type.getMethodDescriptor(method);
+            return Type.getMethodDescriptor(executable);
         }
 
         /**
@@ -1233,7 +1239,7 @@ public interface MethodDescription extends TypeVariableSource,
          * @return The loaded method that is represented by this method description.
          */
         public Method getLoadedMethod() {
-            return method;
+            return executable;
         }
 
         /**
@@ -1241,17 +1247,17 @@ public interface MethodDescription extends TypeVariableSource,
          */
         @CachedReturnPlugin.Enhance("declaredAnnotations")
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.ForLoadedAnnotations(method.getDeclaredAnnotations());
+            return new AnnotationList.ForLoadedAnnotations(executable.getDeclaredAnnotations());
         }
 
         /**
          * {@inheritDoc}
          */
         public AnnotationValue<?, ?> getDefaultValue() {
-            Object value = method.getDefaultValue();
+            Object value = executable.getDefaultValue();
             return value == null
                     ? AnnotationValue.UNDEFINED
-                    : AnnotationDescription.ForLoadedAnnotation.asValue(value, method.getReturnType());
+                    : AnnotationDescription.ForLoadedAnnotation.asValue(value, executable.getReturnType());
         }
 
         /**
@@ -1261,20 +1267,7 @@ public interface MethodDescription extends TypeVariableSource,
             if (TypeDescription.AbstractBase.RAW_TYPES) {
                 return new TypeList.Generic.Empty();
             }
-            return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(method);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public TypeDescription.Generic getReceiverType() {
-            if (TypeDescription.AbstractBase.RAW_TYPES) {
-                return super.getReceiverType();
-            }
-            TypeDescription.Generic receiverType = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method);
-            return receiverType == null
-                    ? super.getReceiverType()
-                    : receiverType;
+            return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(executable);
         }
 
         /**
@@ -1282,7 +1275,7 @@ public interface MethodDescription extends TypeVariableSource,
          */
         @CachedReturnPlugin.Enhance("parameterAnnotations")
         public Annotation[][] getParameterAnnotations() {
-            return method.getParameterAnnotations();
+            return executable.getParameterAnnotations();
         }
     }
 

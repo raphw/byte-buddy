@@ -471,7 +471,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                  */
                 public TypeDescription.Generic get(int index) {
                     TypeVariable<?> typeVariable = typeVariables.get(index);
-                    return TypeDefinition.Sort.describe(typeVariable, TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(typeVariable));
+                    return TypeDefinition.Sort.describe(typeVariable, new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedTypeVariable(typeVariable));
                 }
 
                 /**
@@ -828,7 +828,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    return AnnotationReader.DISPATCHER.resolveInterfaceType(type, index);
+                    return new AnnotationReader.Delegator.ForLoadedInterface(type, index);
                 }
             }
         }
@@ -924,7 +924,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    return AnnotationReader.DISPATCHER.resolveExceptionType(constructor, index);
+                    return new AnnotationReader.Delegator.ForLoadedExecutableExceptionType(constructor, index);
                 }
             }
         }
@@ -1020,7 +1020,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    return AnnotationReader.DISPATCHER.resolveExceptionType(method, index);
+                    return new AnnotationReader.Delegator.ForLoadedExecutableExceptionType(method, index);
                 }
             }
         }

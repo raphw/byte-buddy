@@ -2052,7 +2052,7 @@ public interface DynamicType {
                      * {@inheritDoc}
                      */
                     public MethodDefinition<V> receiverType(AnnotatedElement receiverType) {
-                        return receiverType(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(receiverType));
+                        return receiverType(TypeDefinition.Sort.describeAnnotated(receiverType));
                     }
                 }
             }

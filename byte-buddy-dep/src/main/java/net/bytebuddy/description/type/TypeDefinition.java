@@ -18,10 +18,13 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.utility.JavaDispatcher;
 
 import java.lang.reflect.*;
+import java.security.AccessController;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -210,6 +213,8 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
          */
         VARIABLE_SYMBOLIC;
 
+        private static final AnnotatedType ANNOTATED_TYPE = AccessController.doPrivileged(JavaDispatcher.of(AnnotatedType.class));
+
         /**
          * Describes a loaded generic type as a {@link TypeDescription.Generic}.
          *
@@ -218,6 +223,13 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
          */
         public static TypeDescription.Generic describe(Type type) {
             return describe(type, TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE);
+        }
+
+        public static TypeDescription.Generic describeAnnotated(AnnotatedElement annotatedType) {
+            if (!ANNOTATED_TYPE.isInstance(annotatedType)) {
+                throw new IllegalArgumentException("Not an instance of AnnotatedType: " + annotatedType);
+            }
+            return describe(ANNOTATED_TYPE.getType(annotatedType), new TypeDescription.Generic.AnnotationReader.Delegator.Simple(annotatedType));
         }
 
         /**
@@ -287,6 +299,15 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
          */
         public boolean isTypeVariable() {
             return this == VARIABLE || this == VARIABLE_SYMBOLIC;
+        }
+
+        @JavaDispatcher.Proxied("java.lang.reflect.AnnotatedType")
+        protected interface AnnotatedType {
+
+            @JavaDispatcher.Instance
+            boolean isInstance(AnnotatedElement value);
+
+            Type getType(AnnotatedElement value);
         }
     }
 

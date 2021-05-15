@@ -465,11 +465,11 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertThat(type.getInterfaces().length, is(2));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterfaceType(type, 0).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterfaceType(type, 0).asList().ofType(typeAnnotationType)
+        assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedInterface(type, 0).asList().size(), is(1));
+        assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedInterface(type, 0).asList().ofType(typeAnnotationType)
                 .getValue(value).resolve(Integer.class), is(QUX * 2));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterfaceType(type, 1).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterfaceType(type, 1).asList().ofType(typeAnnotationType)
+        assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedInterface(type, 1).asList().size(), is(1));
+        assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedInterface(type, 1).asList().ofType(typeAnnotationType)
                 .getValue(value).resolve(Integer.class), is(QUX * 3));
     }
 
@@ -488,15 +488,15 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertThat(type.getTypeParameters().length, is(2));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).asList().ofType(typeAnnotationType)
+        assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedTypeVariable(type.getTypeParameters()[0]).asList().size(), is(1));
+        assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedTypeVariable(type.getTypeParameters()[0]).asList().ofType(typeAnnotationType)
                 .getValue(value).resolve(Integer.class), is(QUX));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[1]).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[1]).asList().ofType(typeAnnotationType)
+        assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedTypeVariable(type.getTypeParameters()[1]).asList().size(), is(1));
+        assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedTypeVariable(type.getTypeParameters()[1]).asList().ofType(typeAnnotationType)
                 .getValue(value).resolve(Integer.class), is(QUX * 3));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[1]).ofTypeVariableBoundType(0)
+        assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedTypeVariable(type.getTypeParameters()[1]).ofTypeVariableBoundType(0)
                 .asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[1]).ofTypeVariableBoundType(0)
+        assertThat(new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedTypeVariable(type.getTypeParameters()[1]).ofTypeVariableBoundType(0)
                 .asList().ofType(typeAnnotationType).getValue(value).resolve(Integer.class), is(QUX * 4));
     }
 

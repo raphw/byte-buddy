@@ -48,7 +48,6 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.*;
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
@@ -2392,11 +2391,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         interface AnnotationReader {
 
             /**
-             * The dispatcher to use.
-             */
-            Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
-
-            /**
              * Resolves the underlying {@link AnnotatedElement}.
              *
              * @return The underlying annotated element.
@@ -2472,640 +2466,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @return An annotation reader for the underlying component type.
              */
             AnnotationReader ofComponentType();
-
-            /**
-             * A dispatcher that represents the type annotation API via reflective calls if the language feature is available on the current JVM.
-             */
-            interface Dispatcher {
-
-                /**
-                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
-                 */
-                Object[] NO_ARGUMENTS = new Object[0];
-
-                /**
-                 * Resolves a formal type variable's type annotations.
-                 *
-                 * @param typeVariable The type variable to represent.
-                 * @return A suitable annotation reader.
-                 */
-                AnnotationReader resolveTypeVariable(TypeVariable<?> typeVariable);
-
-                /**
-                 * Resolves a loaded type's super class's type annotations.
-                 *
-                 * @param type The type to represent.
-                 * @return A suitable annotation reader.
-                 */
-                AnnotationReader resolveSuperClassType(Class<?> type);
-
-                /**
-                 * Resolves a loaded type's interface type's type annotations.
-                 *
-                 * @param type  The type to represent.
-                 * @param index The index of the interface.
-                 * @return A suitable annotation reader.
-                 */
-                AnnotationReader resolveInterfaceType(Class<?> type, int index);
-
-                /**
-                 * Resolves a loaded field's type's type annotations.
-                 *
-                 * @param field The field to represent.
-                 * @return A suitable annotation reader.
-                 */
-                AnnotationReader resolveFieldType(Field field);
-
-                /**
-                 * Resolves a loaded method's return type's type annotations.
-                 *
-                 * @param method The method to represent.
-                 * @return A suitable annotation reader.
-                 */
-                AnnotationReader resolveReturnType(Method method);
-
-                /**
-                 * Resolves a loaded executable's type argument type's type annotations.
-                 *
-                 * @param executable The executable to represent.
-                 * @param index      The type argument's index.
-                 * @return A suitable annotation reader.
-                 */
-                AnnotationReader resolveParameterType(AccessibleObject executable, int index);
-
-                /**
-                 * Resolves a loaded executable's exception type's type annotations.
-                 *
-                 * @param executable The executable to represent.
-                 * @param index      The type argument's index.
-                 * @return A suitable annotation reader.
-                 */
-                AnnotationReader resolveExceptionType(AccessibleObject executable, int index);
-
-                /**
-                 * Resolves a method's or constructor's receiver type. If receiver types are not available on the executing VM,
-                 * {@code null} is returned.
-                 *
-                 * @param executable The executable for which the receiver type should be resolved.
-                 * @return The executable's receiver type or {@code null}.
-                 */
-                Generic resolveReceiverType(AccessibleObject executable);
-
-                /**
-                 * Resolves the annotated type as generic type description.
-                 *
-                 * @param annotatedType The loaded annotated type.
-                 * @return A description of the supplied annotated type.
-                 */
-                Generic resolve(AnnotatedElement annotatedType);
-
-                /**
-                 * A creation action for a dispatcher.
-                 */
-                enum CreationAction implements PrivilegedAction<Dispatcher> {
-
-                    /**
-                     * The singleton instance.
-                     */
-                    INSTANCE;
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Dispatcher run() {
-                        try {
-                            return new ForJava8CapableVm(Class.class.getMethod("getAnnotatedSuperclass"),
-                                    Class.class.getMethod("getAnnotatedInterfaces"),
-                                    Field.class.getMethod("getAnnotatedType"),
-                                    Method.class.getMethod("getAnnotatedReturnType"),
-                                    Class.forName("java.lang.reflect.Executable").getMethod("getAnnotatedParameterTypes"),
-                                    Class.forName("java.lang.reflect.Executable").getMethod("getAnnotatedExceptionTypes"),
-                                    Class.forName("java.lang.reflect.Executable").getMethod("getAnnotatedReceiverType"),
-                                    Class.forName("java.lang.reflect.AnnotatedType").getMethod("getType"));
-                        } catch (RuntimeException exception) {
-                            throw exception;
-                        } catch (Exception ignored) {
-                            return Dispatcher.ForLegacyVm.INSTANCE;
-                        }
-                    }
-                }
-
-                /**
-                 * A dispatcher for {@link AnnotationReader}s on a legacy VM that does not support type annotations.
-                 */
-                enum ForLegacyVm implements Dispatcher {
-
-                    /**
-                     * The singleton instance.
-                     */
-                    INSTANCE;
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public AnnotationReader resolveTypeVariable(TypeVariable<?> typeVariable) {
-                        return NoOp.INSTANCE;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public AnnotationReader resolveSuperClassType(Class<?> type) {
-                        return NoOp.INSTANCE;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public AnnotationReader resolveInterfaceType(Class<?> type, int index) {
-                        return NoOp.INSTANCE;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public AnnotationReader resolveFieldType(Field field) {
-                        return NoOp.INSTANCE;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public AnnotationReader resolveReturnType(Method method) {
-                        return NoOp.INSTANCE;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public AnnotationReader resolveParameterType(AccessibleObject executable, int index) {
-                        return NoOp.INSTANCE;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public AnnotationReader resolveExceptionType(AccessibleObject executable, int index) {
-                        return NoOp.INSTANCE;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Generic resolveReceiverType(AccessibleObject executable) {
-                        return UNDEFINED;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Generic resolve(AnnotatedElement annotatedType) {
-                        throw new UnsupportedOperationException("Loaded annotated type cannot be represented on this VM");
-                    }
-                }
-
-                /**
-                 * A dispatcher for a modern JVM that supports type annotations.
-                 */
-                @HashCodeAndEqualsPlugin.Enhance
-                class ForJava8CapableVm implements Dispatcher {
-
-                    /**
-                     * The {@code java.lang.Class#getAnnotatedSuperclass} method.
-                     */
-                    private final Method getAnnotatedSuperclass;
-
-                    /**
-                     * The {@code java.lang.Class#getAnnotatedInterfaces} method.
-                     */
-                    private final Method getAnnotatedInterfaces;
-
-                    /**
-                     * The {@code java.lang.reflect.Field#getAnnotatedType} method.
-                     */
-                    private final Method getAnnotatedType;
-
-                    /**
-                     * The {@code java.lang.reflect.Method#getAnnotatedReturnType} method.
-                     */
-                    private final Method getAnnotatedReturnType;
-
-                    /**
-                     * The {@code java.lang.reflect.Executable#getAnnotatedParameterTypes} method.
-                     */
-                    private final Method getAnnotatedParameterTypes;
-
-                    /**
-                     * The {@code java.lang.reflect.Executable#getAnnotatedExceptionTypes} method.
-                     */
-                    private final Method getAnnotatedExceptionTypes;
-
-                    /**
-                     * The {@code java.lang.reflect.Executable#getAnnotatedReceiverType} method.
-                     */
-                    private final Method getAnnotatedReceiverType;
-
-                    /**
-                     * The {@code java.lang.reflect.AnnotatedType#getType} method.
-                     */
-                    private final Method getType;
-
-                    /**
-                     * Creates a new dispatcher for a VM that supports type annotations.
-                     *
-                     * @param getAnnotatedSuperclass     The {@code java.lang.Class#getAnnotatedSuperclass} method.
-                     * @param getAnnotatedInterfaces     The {@code java.lang.Class#getAnnotatedInterfaces} method.
-                     * @param getAnnotatedType           The {@code java.lang.reflect.Field#getAnnotatedType} method.
-                     * @param getAnnotatedReturnType     The {@code java.lang.reflect.Method#getAnnotatedReturnType} method.
-                     * @param getAnnotatedParameterTypes The {@code java.lang.reflect.Executable#getAnnotatedParameterTypes} method.
-                     * @param getAnnotatedExceptionTypes The {@code java.lang.reflect.Executable#getAnnotatedExceptionTypes} method.
-                     * @param getAnnotatedReceiverType   The {@code java.lang.reflect.Executable#getAnnotatedReceiverType} method.
-                     * @param getType                    The {@code java.lang.reflect.AnnotatedType#getType} method.
-                     */
-                    protected ForJava8CapableVm(Method getAnnotatedSuperclass,
-                                                Method getAnnotatedInterfaces,
-                                                Method getAnnotatedType,
-                                                Method getAnnotatedReturnType,
-                                                Method getAnnotatedParameterTypes,
-                                                Method getAnnotatedExceptionTypes,
-                                                Method getAnnotatedReceiverType,
-                                                Method getType) {
-                        this.getAnnotatedSuperclass = getAnnotatedSuperclass;
-                        this.getAnnotatedInterfaces = getAnnotatedInterfaces;
-                        this.getAnnotatedType = getAnnotatedType;
-                        this.getAnnotatedReturnType = getAnnotatedReturnType;
-                        this.getAnnotatedParameterTypes = getAnnotatedParameterTypes;
-                        this.getAnnotatedExceptionTypes = getAnnotatedExceptionTypes;
-                        this.getAnnotatedReceiverType = getAnnotatedReceiverType;
-                        this.getType = getType;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public AnnotationReader resolveTypeVariable(TypeVariable<?> typeVariable) {
-                        return new AnnotatedTypeVariableType(typeVariable);
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public AnnotationReader resolveSuperClassType(Class<?> type) {
-                        return new AnnotatedSuperClass(type);
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public AnnotationReader resolveInterfaceType(Class<?> type, int index) {
-                        return new AnnotatedInterfaceType(type, index);
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public AnnotationReader resolveFieldType(Field field) {
-                        return new AnnotatedFieldType(field);
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public AnnotationReader resolveReturnType(Method method) {
-                        return new AnnotatedReturnType(method);
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public AnnotationReader resolveParameterType(AccessibleObject executable, int index) {
-                        return new AnnotatedParameterizedType(executable, index);
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public AnnotationReader resolveExceptionType(AccessibleObject executable, int index) {
-                        return new AnnotatedExceptionType(executable, index);
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Generic resolveReceiverType(AccessibleObject executable) {
-                        try {
-                            return resolve((AnnotatedElement) getAnnotatedReceiverType.invoke(executable, NO_ARGUMENTS));
-                        } catch (IllegalAccessException exception) {
-                            throw new IllegalStateException("Cannot access java.lang.reflect.Executable#getAnnotatedReceiverType", exception);
-                        } catch (InvocationTargetException exception) {
-                            throw new IllegalStateException("Error invoking java.lang.reflect.Executable#getAnnotatedReceiverType", exception.getCause());
-                        }
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Generic resolve(AnnotatedElement annotatedType) {
-                        try {
-                            return annotatedType == null
-                                    ? UNDEFINED
-                                    : Sort.describe((java.lang.reflect.Type) getType.invoke(annotatedType, NO_ARGUMENTS), new Resolved(annotatedType));
-                        } catch (IllegalAccessException exception) {
-                            throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedType#getType", exception);
-                        } catch (InvocationTargetException exception) {
-                            throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedType#getType", exception.getCause());
-                        }
-                    }
-
-                    /**
-                     * A delegator for an existing {@code java.lang.reflect.AnnotatedElement}.
-                     */
-                    @HashCodeAndEqualsPlugin.Enhance
-                    protected static class Resolved extends Delegator {
-
-                        /**
-                         * The represented annotated element.
-                         */
-                        private final AnnotatedElement annotatedElement;
-
-                        /**
-                         * Creates a new resolved delegator.
-                         *
-                         * @param annotatedElement The represented annotated element.
-                         */
-                        protected Resolved(AnnotatedElement annotatedElement) {
-                            this.annotatedElement = annotatedElement;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public AnnotatedElement resolve() {
-                            return annotatedElement;
-                        }
-                    }
-
-                    /**
-                     * A delegating annotation reader for an annotated type variable.
-                     */
-                    @HashCodeAndEqualsPlugin.Enhance
-                    protected static class AnnotatedTypeVariableType extends Delegator {
-
-                        /**
-                         * The represented type variable.
-                         */
-                        private final TypeVariable<?> typeVariable;
-
-                        /**
-                         * Creates a new annotation reader for the given type variable.
-                         *
-                         * @param typeVariable The represented type variable.
-                         */
-                        protected AnnotatedTypeVariableType(TypeVariable<?> typeVariable) {
-                            this.typeVariable = typeVariable;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public AnnotatedElement resolve() {
-                            return (AnnotatedElement) typeVariable;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public AnnotationReader ofTypeVariableBoundType(int index) {
-                            return new ForTypeVariableBoundType.OfFormalTypeVariable(typeVariable, index);
-                        }
-                    }
-
-                    /**
-                     * A delegating annotation reader for an annotated super type.
-                     */
-                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-                    protected class AnnotatedSuperClass extends Delegator {
-
-                        /**
-                         * The represented type.
-                         */
-                        private final Class<?> type;
-
-                        /**
-                         * Creates a new annotation reader for an annotated super type.
-                         *
-                         * @param type The represented type.
-                         */
-                        protected AnnotatedSuperClass(Class<?> type) {
-                            this.type = type;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public AnnotatedElement resolve() {
-                            try {
-                                return (AnnotatedElement) getAnnotatedSuperclass.invoke(type, NO_ARGUMENTS);
-                            } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access java.lang.Class#getAnnotatedSuperclass", exception);
-                            } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Error invoking java.lang.Class#getAnnotatedSuperclass", exception.getCause());
-                            }
-                        }
-                    }
-
-                    /**
-                     * A delegating annotation reader for an annotated interface type.
-                     */
-                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-                    protected class AnnotatedInterfaceType extends Delegator {
-
-                        /**
-                         * The represented interface type.
-                         */
-                        private final Class<?> type;
-
-                        /**
-                         * The interface type's index.
-                         */
-                        private final int index;
-
-                        /**
-                         * Creates a new annotation reader for an annotated interface type.
-                         *
-                         * @param type  The represented interface type.
-                         * @param index The interface type's index.
-                         */
-                        protected AnnotatedInterfaceType(Class<?> type, int index) {
-                            this.type = type;
-                            this.index = index;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public AnnotatedElement resolve() {
-                            try {
-                                return (AnnotatedElement) Array.get(getAnnotatedInterfaces.invoke(type), index);
-                            } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access java.lang.Class#getAnnotatedInterfaces", exception);
-                            } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Error invoking java.lang.Class#getAnnotatedInterfaces", exception.getCause());
-                            }
-                        }
-                    }
-
-                    /**
-                     * A delegating annotation reader for an annotated field variable.
-                     */
-                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-                    protected class AnnotatedFieldType extends Delegator {
-
-                        /**
-                         * The represented field.
-                         */
-                        private final Field field;
-
-                        /**
-                         * Creates a new annotation reader for an annotated field type.
-                         *
-                         * @param field The represented field.
-                         */
-                        protected AnnotatedFieldType(Field field) {
-                            this.field = field;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public AnnotatedElement resolve() {
-                            try {
-                                return (AnnotatedElement) getAnnotatedType.invoke(field, NO_ARGUMENTS);
-                            } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access java.lang.reflect.Field#getAnnotatedType", exception);
-                            } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Error invoking java.lang.reflect.Field#getAnnotatedType", exception.getCause());
-                            }
-                        }
-                    }
-
-                    /**
-                     * A delegating annotation reader for an annotated return variable.
-                     */
-                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-                    protected class AnnotatedReturnType extends Delegator {
-
-                        /**
-                         * The represented method.
-                         */
-                        private final Method method;
-
-                        /**
-                         * Creates a new annotation reader for an annotated return type.
-                         *
-                         * @param method The represented method.
-                         */
-                        protected AnnotatedReturnType(Method method) {
-                            this.method = method;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public AnnotatedElement resolve() {
-                            try {
-                                return (AnnotatedElement) getAnnotatedReturnType.invoke(method, NO_ARGUMENTS);
-                            } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access java.lang.reflect.Method#getAnnotatedReturnType", exception);
-                            } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Error invoking java.lang.reflect.Method#getAnnotatedReturnType", exception.getCause());
-                            }
-                        }
-                    }
-
-                    /**
-                     * A delegating annotation reader for an annotated parameter variable.
-                     */
-                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-                    protected class AnnotatedParameterizedType extends Delegator {
-
-                        /**
-                         * The represented executable.
-                         */
-                        private final AccessibleObject executable;
-
-                        /**
-                         * The type argument's index.
-                         */
-                        private final int index;
-
-                        /**
-                         * Creates a new annotation reader for an annotated type argument type.
-                         *
-                         * @param executable The represented executable.
-                         * @param index      The type argument's index.
-                         */
-                        protected AnnotatedParameterizedType(AccessibleObject executable, int index) {
-                            this.executable = executable;
-                            this.index = index;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public AnnotatedElement resolve() {
-                            try {
-                                return (AnnotatedElement) Array.get(getAnnotatedParameterTypes.invoke(executable, NO_ARGUMENTS), index);
-                            } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access java.lang.reflect.Executable#getAnnotatedParameterTypes", exception);
-                            } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Error invoking java.lang.reflect.Executable#getAnnotatedParameterTypes", exception.getCause());
-                            }
-                        }
-                    }
-
-                    /**
-                     * A delegating annotation reader for an annotated exception variable.
-                     */
-                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-                    protected class AnnotatedExceptionType extends Delegator {
-
-                        /**
-                         * The represented executable.
-                         */
-                        private final AccessibleObject executable;
-
-                        /**
-                         * The exception type's index.
-                         */
-                        private final int index;
-
-                        /**
-                         * Creates a new annotation reader for an annotated exception type.
-                         *
-                         * @param executable The represented executable.
-                         * @param index      The exception type's index.
-                         */
-                        protected AnnotatedExceptionType(AccessibleObject executable, int index) {
-                            this.executable = executable;
-                            this.index = index;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public AnnotatedElement resolve() {
-                            try {
-                                return (AnnotatedElement) Array.get(getAnnotatedExceptionTypes.invoke(executable, NO_ARGUMENTS), index);
-                            } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access java.lang.reflect.Executable#getAnnotatedExceptionTypes", exception);
-                            } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Error invoking java.lang.reflect.Executable#getAnnotatedExceptionTypes", exception.getCause());
-                            }
-                        }
-                    }
-                }
-            }
 
             /**
              * A non-operational annotation reader.
@@ -3215,11 +2575,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             abstract class Delegator implements AnnotationReader {
 
                 /**
-                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
-                 */
-                protected static final Object[] NO_ARGUMENTS = new Object[0];
-
-                /**
                  * {@inheritDoc}
                  */
                 public AnnotationReader ofWildcardUpperBoundType(int index) {
@@ -3273,6 +2628,22 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 public AnnotationList asList() {
                     return new AnnotationList.ForLoadedAnnotations(resolve().getDeclaredAnnotations());
+                }
+
+                public static class Simple extends Delegator {
+
+                    private final AnnotatedElement annotatedElement;
+
+                    public Simple(AnnotatedElement annotatedElement) {
+                        this.annotatedElement = annotatedElement;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public AnnotatedElement resolve() {
+                        return annotatedElement;
+                    }
                 }
 
                 /**
@@ -3333,9 +2704,272 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 /**
+                 * A delegating annotation reader for an annotated type variable.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                public static class ForLoadedTypeVariable extends Delegator {
+
+                    /**
+                     * The represented type variable.
+                     */
+                    private final TypeVariable<?> typeVariable;
+
+                    /**
+                     * Creates a new annotation reader for the given type variable.
+                     *
+                     * @param typeVariable The represented type variable.
+                     */
+                    public ForLoadedTypeVariable(TypeVariable<?> typeVariable) {
+                        this.typeVariable = typeVariable;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public AnnotatedElement resolve() {
+                        // Older JVMs require this cast as the hierarchy was introduced in a later version.
+                        return (AnnotatedElement) typeVariable;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public AnnotationReader ofTypeVariableBoundType(int index) {
+                        return new ForTypeVariableBoundType.OfFormalTypeVariable(typeVariable, index);
+                    }
+                }
+
+                /**
+                 * A delegating annotation reader for an annotated super type.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+                public static class ForLoadedSuperClass extends Delegator {
+
+                    /**
+                     * The represented type.
+                     */
+                    private final Class<?> type;
+
+                    /**
+                     * Creates a new annotation reader for an annotated super type.
+                     *
+                     * @param type The represented type.
+                     */
+                    public ForLoadedSuperClass(Class<?> type) {
+                        this.type = type;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public AnnotatedElement resolve() {
+                        AnnotatedElement element = ForLoadedType.DISPATCHER.getAnnotatedSuperclass(type);
+                        return element == null ? NoOp.INSTANCE : element;
+                    }
+                }
+
+                /**
+                 * A delegating annotation reader for an annotated interface type.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+                public static class ForLoadedInterface extends Delegator {
+
+                    /**
+                     * The represented interface type.
+                     */
+                    private final Class<?> type;
+
+                    /**
+                     * The interface type's index.
+                     */
+                    private final int index;
+
+                    /**
+                     * Creates a new annotation reader for an annotated interface type.
+                     *
+                     * @param type  The represented interface type.
+                     * @param index The interface type's index.
+                     */
+                    public ForLoadedInterface(Class<?> type, int index) {
+                        this.type = type;
+                        this.index = index;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public AnnotatedElement resolve() {
+                        AnnotatedElement[] element = ForLoadedType.DISPATCHER.getAnnotatedInterfaces(type);
+                        return element.length == 0 ? NoOp.INSTANCE : element[index];
+                    }
+                }
+
+                /**
+                 * A delegating annotation reader for an annotated field variable.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+                public static class ForLoadedField extends Delegator {
+
+                    protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+
+                    /**
+                     * The represented field.
+                     */
+                    private final Field field;
+
+                    /**
+                     * Creates a new annotation reader for an annotated field type.
+                     *
+                     * @param field The represented field.
+                     */
+                    public ForLoadedField(Field field) {
+                        this.field = field;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public AnnotatedElement resolve() {
+                        AnnotatedElement element = DISPATCHER.getAnnotatedType(field);
+                        return element == null ? NoOp.INSTANCE : element;
+                    }
+
+                    @JavaDispatcher.Proxied("java.lang.reflect.Field")
+                    protected interface Dispatcher {
+
+                        AnnotatedElement getAnnotatedType(Field field);
+                    }
+                }
+
+                /**
+                 * A delegating annotation reader for an annotated return variable.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+                public static class ForLoadedMethodReturnType extends Delegator {
+
+                    protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+
+                    /**
+                     * The represented method.
+                     */
+                    private final Method method;
+
+                    /**
+                     * Creates a new annotation reader for an annotated return type.
+                     *
+                     * @param method The represented method.
+                     */
+                    public ForLoadedMethodReturnType(Method method) {
+                        this.method = method;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public AnnotatedElement resolve() {
+                        AnnotatedElement element = DISPATCHER.getAnnotatedReturnType(method);
+                        return element == null ? NoOp.INSTANCE : element;
+                    }
+
+                    @JavaDispatcher.Proxied("java.lang.reflect.Method")
+                    protected interface Dispatcher {
+
+                        AnnotatedElement getAnnotatedReturnType(Method method);
+                    }
+                }
+
+                /**
+                 * A delegating annotation reader for an annotated parameter variable.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+                public static class ForLoadedExecutableParameterType extends Delegator {
+
+                    protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+
+                    /**
+                     * The represented executable.
+                     */
+                    private final AccessibleObject executable;
+
+                    /**
+                     * The type argument's index.
+                     */
+                    private final int index;
+
+                    /**
+                     * Creates a new annotation reader for an annotated type argument type.
+                     *
+                     * @param executable The represented executable.
+                     * @param index      The type argument's index.
+                     */
+                    public ForLoadedExecutableParameterType(AccessibleObject executable, int index) {
+                        this.executable = executable;
+                        this.index = index;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public AnnotatedElement resolve() {
+                        AnnotatedElement[] element = DISPATCHER.getAnnotatedParameterTypes(executable);
+                        return element.length == 0 ? NoOp.INSTANCE : element[index];
+                    }
+
+                    @JavaDispatcher.Proxied("java.lang.reflect.Executable")
+                    protected interface Dispatcher {
+
+                        AnnotatedElement[] getAnnotatedParameterTypes(Object executable);
+                    }
+                }
+
+                /**
+                 * A delegating annotation reader for an annotated exception variable.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+                public static class ForLoadedExecutableExceptionType extends Delegator {
+
+                    protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+
+                    /**
+                     * The represented executable.
+                     */
+                    private final AccessibleObject executable;
+
+                    /**
+                     * The exception type's index.
+                     */
+                    private final int index;
+
+                    /**
+                     * Creates a new annotation reader for an annotated exception type.
+                     *
+                     * @param executable The represented executable.
+                     * @param index      The exception type's index.
+                     */
+                    public ForLoadedExecutableExceptionType(AccessibleObject executable, int index) {
+                        this.executable = executable;
+                        this.index = index;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public AnnotatedElement resolve() {
+                        AnnotatedElement[] element = DISPATCHER.getAnnotatedExceptionTypes(executable);
+                        return element.length == 0 ? NoOp.INSTANCE : element[index];
+                    }
+
+                    @JavaDispatcher.Proxied("java.lang.reflect.Executable")
+                    protected interface Dispatcher {
+
+                        AnnotatedElement[] getAnnotatedExceptionTypes(Object executable);
+                    }
+                }
+
+                /**
                  * An annotation reader for a {@code java.lang.reflect.RecordComponent}.
                  */
-                protected static class ForRecordComponent extends Delegator {
+                public static class ForLoadedRecordComponent extends Delegator {
 
                     /**
                      * The represented {@code java.lang.reflect.RecordComponent}.
@@ -3347,7 +2981,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      *
                      * @param recordComponent The represented {@code java.lang.reflect.RecordComponent}.
                      */
-                    protected ForRecordComponent(Object recordComponent) {
+                    public ForLoadedRecordComponent(Object recordComponent) {
                         this.recordComponent = recordComponent;
                     }
 
@@ -3393,7 +3027,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return NoOp.INSTANCE;
                     }
                     try {
-                        Object annotatedUpperBounds = GET_ANNOTATED_UPPER_BOUNDS.invoke(annotatedElement, NO_ARGUMENTS);
+                        Object annotatedUpperBounds = GET_ANNOTATED_UPPER_BOUNDS.invoke(annotatedElement);
                         return Array.getLength(annotatedUpperBounds) == 0 // Wildcards with a lower bound do not define annotations for their implicit upper bound.
                                 ? NoOp.INSTANCE
                                 : (AnnotatedElement) Array.get(annotatedUpperBounds, index);
@@ -3440,7 +3074,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return NoOp.INSTANCE;
                     }
                     try {
-                        return (AnnotatedElement) Array.get(GET_ANNOTATED_LOWER_BOUNDS.invoke(annotatedElement, NO_ARGUMENTS), index);
+                        return (AnnotatedElement) Array.get(GET_ANNOTATED_LOWER_BOUNDS.invoke(annotatedElement), index);
                     } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
                         return NoOp.INSTANCE;
                     } catch (IllegalAccessException exception) {
@@ -3484,7 +3118,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return NoOp.INSTANCE;
                     }
                     try {
-                        return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(annotatedElement, NO_ARGUMENTS), index);
+                        return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(annotatedElement), index);
                     } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
                         return NoOp.INSTANCE;
                     } catch (IllegalAccessException exception) {
@@ -3531,7 +3165,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      */
                     public AnnotatedElement resolve() {
                         try {
-                            return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(typeVariable, NO_ARGUMENTS), index);
+                            return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(typeVariable), index);
                         } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
                             return NoOp.INSTANCE;
                         } catch (IllegalAccessException exception) {
@@ -3576,7 +3210,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return NoOp.INSTANCE;
                     }
                     try {
-                        return (AnnotatedElement) Array.get(GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS.invoke(annotatedElement, NO_ARGUMENTS), index);
+                        return (AnnotatedElement) Array.get(GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS.invoke(annotatedElement), index);
                     } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
                         return NoOp.INSTANCE;
                     } catch (IllegalAccessException exception) {
@@ -3612,7 +3246,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return NoOp.INSTANCE;
                     }
                     try {
-                        return (AnnotatedElement) GET_ANNOTATED_GENERIC_COMPONENT_TYPE.invoke(annotatedElement, NO_ARGUMENTS);
+                        return (AnnotatedElement) GET_ANNOTATED_GENERIC_COMPONENT_TYPE.invoke(annotatedElement);
                     } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
                         return NoOp.INSTANCE;
                     } catch (IllegalAccessException exception) {
@@ -3662,7 +3296,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return NoOp.INSTANCE;
                     }
                     try {
-                        AnnotatedElement annotatedOwnerType = (AnnotatedElement) GET_ANNOTATED_OWNER_TYPE.invoke(annotatedElement, NO_ARGUMENTS);
+                        AnnotatedElement annotatedOwnerType = (AnnotatedElement) GET_ANNOTATED_OWNER_TYPE.invoke(annotatedElement);
                         return annotatedOwnerType == null
                                 ? NoOp.INSTANCE
                                 : annotatedOwnerType;
@@ -6671,7 +6305,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    return AnnotationReader.DISPATCHER.resolveSuperClassType(type);
+                    return new AnnotationReader.Delegator.ForLoadedSuperClass(type);
                 }
             }
 
@@ -6709,7 +6343,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    return AnnotationReader.DISPATCHER.resolveFieldType(field);
+                    return new AnnotationReader.Delegator.ForLoadedField(field);
                 }
             }
 
@@ -6747,7 +6381,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    return AnnotationReader.DISPATCHER.resolveReturnType(method);
+                    return new AnnotationReader.Delegator.ForLoadedMethodReturnType(method);
                 }
             }
 
@@ -6803,7 +6437,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    return AnnotationReader.DISPATCHER.resolveParameterType(constructor, index);
+                    return new AnnotationReader.Delegator.ForLoadedExecutableParameterType(constructor, index);
                 }
             }
 
@@ -6859,7 +6493,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    return AnnotationReader.DISPATCHER.resolveParameterType(method, index);
+                    return new AnnotationReader.Delegator.ForLoadedExecutableParameterType(method, index);
                 }
             }
 
@@ -6895,7 +6529,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    return new AnnotationReader.Delegator.ForRecordComponent(recordComponent);
+                    return new AnnotationReader.Delegator.ForLoadedRecordComponent(recordComponent);
                 }
             }
 
@@ -8936,6 +8570,10 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @JavaDispatcher.Defaults
         @JavaDispatcher.Proxied("java.lang.Class")
         protected interface Dispatcher {
+
+            AnnotatedElement getAnnotatedSuperclass(Class<?> type);
+
+            AnnotatedElement[] getAnnotatedInterfaces(Class<?> type);
 
             /**
              * Returns the specified class's nest host.

@@ -25,32 +25,32 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     protected TypeDescription.Generic describeType(Field field) {
-        return describe(field.getGenericType(), TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field))
+        return describe(field.getGenericType(), new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedField(field))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new FieldDescription.ForLoadedField(field)));
     }
 
     protected TypeDescription.Generic describeReturnType(Method method) {
-        return describe(method.getGenericReturnType(), TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReturnType(method))
+        return describe(method.getGenericReturnType(), new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedMethodReturnType(method))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new MethodDescription.ForLoadedMethod(method)));
     }
 
     protected TypeDescription.Generic describeParameterType(Method method, int index) {
-        return describe(method.getGenericParameterTypes()[index], TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveParameterType(method, index))
+        return describe(method.getGenericParameterTypes()[index], new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedExecutableParameterType(method, index))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new MethodDescription.ForLoadedMethod(method)));
     }
 
     protected TypeDescription.Generic describeExceptionType(Method method, int index) {
-        return describe(method.getGenericExceptionTypes()[index], TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveExceptionType(method, index))
+        return describe(method.getGenericExceptionTypes()[index], new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedExecutableExceptionType(method, index))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new MethodDescription.ForLoadedMethod(method)));
     }
 
     protected TypeDescription.Generic describeSuperClass(Class<?> type) {
-        return describe(type.getGenericSuperclass(), TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClassType(type))
+        return describe(type.getGenericSuperclass(), new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedSuperClass(type))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(TypeDescription.ForLoadedType.of(type)));
     }
 
     protected TypeDescription.Generic describeInterfaceType(Class<?> type, int index) {
-        return describe(type.getGenericInterfaces()[index], TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterfaceType(type, index))
+        return describe(type.getGenericInterfaces()[index], new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedInterface(type, index))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(TypeDescription.ForLoadedType.of(type)));
     }
 
