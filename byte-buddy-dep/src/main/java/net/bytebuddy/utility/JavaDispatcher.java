@@ -37,28 +37,48 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     private final Class<T> proxy;
 
     /**
+     * The class loader to resolve the proxied type from or {@code null} if the bootstrap loader should be used.
+     */
+    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
+    private final ClassLoader classLoader;
+
+    /**
      * Creates a new dispatcher.
      *
-     * @param proxy The proxy type.
+     * @param proxy       The proxy type.
+     * @param classLoader The class loader to resolve the proxied type from or {@code null} if the bootstrap loader should be used.
      */
-    protected JavaDispatcher(Class<T> proxy) {
+    protected JavaDispatcher(Class<T> proxy, ClassLoader classLoader) {
         this.proxy = proxy;
+        this.classLoader = classLoader;
     }
 
     /**
-     * Resolves an action for creating a dispatcher for the provided type.
+     * Resolves an action for creating a dispatcher for the provided type where the proxied type is resolved from the bootstrap loader.
      *
      * @param type The type for which a dispatcher should be resolved.
      * @param <T>  The resolved type.
      * @return An action for creating an appropriate dispatcher.
      */
     public static <T> PrivilegedAction<T> of(Class<T> type) {
+        return of(type, null);
+    }
+
+    /**
+     * Resolves an action for creating a dispatcher for the provided type.
+     *
+     * @param type        The type for which a dispatcher should be resolved.
+     * @param classLoader The class loader to resolve the proxied type from.
+     * @param <T>         The resolved type.
+     * @return An action for creating an appropriate dispatcher.
+     */
+    public static <T> PrivilegedAction<T> of(Class<T> type, ClassLoader classLoader) {
         if (!type.isInterface()) {
             throw new IllegalArgumentException();
         } else if (!type.isAnnotationPresent(Proxied.class)) {
             throw new IllegalArgumentException();
         }
-        return new JavaDispatcher<T>(type);
+        return new JavaDispatcher<T>(type, classLoader);
     }
 
     /**
@@ -71,7 +91,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         String name = proxy.getAnnotation(Proxied.class).value();
         Class<?> target;
         try {
-            target = Class.forName(name, false, null);
+            target = Class.forName(name, false, classLoader);
         } catch (ClassNotFoundException exception) {
             for (Method method : proxy.getMethods()) {
                 if (method.getDeclaringClass() == Object.class) {
@@ -98,6 +118,12 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                     throw new IllegalStateException("Instance check requires a single regular-typed argument: " + method);
                 } else {
                     dispatchers.put(method, new ProxiedInvocationHandler.Dispatcher.ForInstanceCheck(target));
+                }
+            } else if (method.isAnnotationPresent(Container.class)) {
+                if (method.getParameterTypes().length != 1 || method.getParameterTypes()[0] != int.class) {
+                    throw new IllegalStateException("Container creation requires a single int-typed argument: " + method);
+                } else {
+                    dispatchers.put(method, new ProxiedInvocationHandler.Dispatcher.ForContainerCreation(target));
                 }
             } else {
                 try {
@@ -128,7 +154,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                                 if (arity > 0) {
                                     if (parameterType[index].isPrimitive()) {
                                         throw new IllegalStateException("Primitive values are not supposed to be proxied: " + index + " of " + method);
-                                    } else if (!parameterType[index].isAssignableFrom(Class.forName(((Proxied) annotation).value(), false, null))) {
+                                    } else if (!parameterType[index].isAssignableFrom(Class.forName(((Proxied) annotation).value(), false, classLoader))) {
                                         throw new IllegalStateException("Cannot resolve to component type: " + ((Proxied) annotation).value() + " at " + index + " of " + method);
                                     }
                                     StringBuilder stringBuilder = new StringBuilder();
@@ -138,9 +164,9 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                                     parameterType[index] = Class.forName(stringBuilder.append('L')
                                             .append(((Proxied) annotation).value())
                                             .append(';')
-                                            .toString(), false, null);
+                                            .toString(), false, classLoader);
                                 } else {
-                                    Class<?> resolved = Class.forName(((Proxied) annotation).value(), false, null);
+                                    Class<?> resolved = Class.forName(((Proxied) annotation).value(), false, classLoader);
                                     if (!parameterType[index].isAssignableFrom(resolved)) {
                                         throw new IllegalStateException("Cannot resolve to type: " + resolved.getName() + " at " + index + " of " + method);
                                     }
@@ -207,6 +233,13 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.RUNTIME)
     public @interface Instance {
+        /* empty */
+    }
+
+    @Documented
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Container {
         /* empty */
     }
 
@@ -339,6 +372,34 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             }
 
             /**
+             * A dispatcher that creates an array.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForContainerCreation implements Dispatcher {
+
+                /**
+                 * The component type.
+                 */
+                private final Class<?> target;
+
+                /**
+                 * Creates a dispatcher for an array creation.
+                 *
+                 * @param target The component type.
+                 */
+                protected ForContainerCreation(Class<?> target) {
+                    this.target = target;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object invoke(Object[] argument) throws Throwable {
+                    return Array.newInstance(target, (Integer) argument[0]);
+                }
+            }
+
+            /**
              * A dispatcher that returns a fixed value.
              */
             @HashCodeAndEqualsPlugin.Enhance
@@ -433,6 +494,11 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             class ForNonStaticMethod implements Dispatcher {
 
                 /**
+                 * Indicates a call without arguments.
+                 */
+                private static final Object[] NO_ARGUMENTS = new Object[0];
+
+                /**
                  * The proxied method.
                  */
                 private final Method method;
@@ -450,8 +516,13 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                  * {@inheritDoc}
                  */
                 public Object invoke(Object[] argument) throws Throwable {
-                    Object[] reduced = new Object[argument.length - 1];
-                    System.arraycopy(argument, 1, reduced, 0, reduced.length);
+                    Object[] reduced;
+                    if (argument.length == 1) {
+                        reduced = NO_ARGUMENTS;
+                    } else {
+                        reduced = new Object[argument.length - 1];
+                        System.arraycopy(argument, 1, reduced, 0, reduced.length);
+                    }
                     return method.invoke(argument[0], reduced);
                 }
             }
