@@ -2,10 +2,14 @@ package net.bytebuddy.utility;
 
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 public class JavaDispatcherTest {
@@ -54,7 +58,18 @@ public class JavaDispatcherTest {
 
     @Test(expected = IllegalStateException.class)
     public void testIsInstanceIllegal() throws Exception {
-        assertThat(JavaDispatcher.of(IsInstanceIllegalSample.class).run().isInstance(null), is(false));
+        JavaDispatcher.of(IsInstanceIllegalSample.class).run().isInstance(null);
+    }
+
+    @Test
+    public void testContainer() throws Exception {
+        assertThat(JavaDispatcher.of(ContainerSample.class).run().toArray(1).length, is(1));
+        assertThat(JavaDispatcher.of(ContainerSample.class).run().toArray(1).getClass().getComponentType(), is((Object) Class.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testContainerIllegal() throws Exception {
+        JavaDispatcher.of(IllegalContainerSample.class).run().toArray(null);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -75,6 +90,20 @@ public class JavaDispatcherTest {
     @Test(expected = IllegalArgumentException.class)
     public void testNonAnnotated() throws Exception {
         JavaDispatcher.of(Runnable.class);
+    }
+
+    @Test(expected = IOException.class)
+    public void testDeclaredException() throws Exception {
+        File file = mock(File.class);
+        when(file.getCanonicalPath()).thenThrow(new IOException());
+        JavaDispatcher.of(DeclaredExceptionSample.class).run().getCanonicalPath(file);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testUndeclaredException() throws Exception {
+        File file = mock(File.class);
+        when(file.getCanonicalPath()).thenThrow(new IOException());
+        JavaDispatcher.of(UndeclaredExceptionSample.class).run().getCanonicalPath(file);
     }
 
     @JavaDispatcher.Proxied("java.lang.Class")
@@ -141,6 +170,20 @@ public class JavaDispatcherTest {
         boolean isInstance(Void target);
     }
 
+    @JavaDispatcher.Proxied("java.lang.Class")
+    public interface ContainerSample {
+
+        @JavaDispatcher.Container
+        Class<?>[] toArray(int arity);
+    }
+
+    @JavaDispatcher.Proxied("java.lang.Class")
+    public interface IllegalContainerSample {
+
+        @JavaDispatcher.Container
+        Class<?>[] toArray(Void arity);
+    }
+
     @JavaDispatcher.Proxied("does.not.Exist")
     public interface NonExistentTypeSample {
 
@@ -153,5 +196,15 @@ public class JavaDispatcherTest {
         void foo();
     }
 
-    // TODO: Instance, Container, checked exceptions, ...
+    @JavaDispatcher.Proxied("java.io.File")
+    public interface DeclaredExceptionSample {
+
+        String getCanonicalPath(Object target) throws IOException;
+    }
+
+    @JavaDispatcher.Proxied("java.io.File")
+    public interface UndeclaredExceptionSample {
+
+        String getCanonicalPath(Object target);
+    }
 }
