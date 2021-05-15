@@ -14,6 +14,7 @@ import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.test.packaging.EmptyType;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.visibility.PackageAnnotation;
 import net.bytebuddy.test.visibility.Sample;
@@ -39,6 +40,10 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
 
     protected DynamicType.Builder<?> createPlain() {
         return create(Foo.class);
+    }
+
+    protected DynamicType.Builder<?> createPlainEmpty() {
+        return create(EmptyType.class);
     }
 
     protected DynamicType.Builder<?> createDisabledContext() {

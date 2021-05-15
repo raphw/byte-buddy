@@ -12,6 +12,7 @@ import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.test.packaging.EmptyType;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Test;
 
@@ -45,6 +46,10 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
 
     protected DynamicType.Builder<?> createPlain() {
         return new ByteBuddy().redefine(Foo.class);
+    }
+
+    protected DynamicType.Builder<?> createPlainEmpty() {
+        return new ByteBuddy().redefine(EmptyType.class);
     }
 
     protected DynamicType.Builder<?> create(TypeDescription typeDescription, ClassFileLocator classFileLocator) {

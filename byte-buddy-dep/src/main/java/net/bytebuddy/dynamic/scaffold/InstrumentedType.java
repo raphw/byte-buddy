@@ -188,12 +188,11 @@ public interface InstrumentedType extends TypeDescription {
     InstrumentedType withRecord(boolean record);
 
     /**
-     * Creates a new instrumented type that indicates that it defined as a sealed type.
+     * Creates a new instrumented type that removes any permitted subclasses.
      *
-     * @param sealed {@code true} if the instrumented type is supposed to be sealed.
-     * @return A new instrumented type that is defined as a sealed type if any permitted subclasses are set.
+     * @return A new instrumented type that does not restrict its permitted subclasses.
      */
-    InstrumentedType withSealed(boolean sealed);
+    InstrumentedType withoutPermittedSubclasses();
 
     /**
      * Creates a new instrumented type that includes the given {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
@@ -303,6 +302,11 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        WithFlexibleName withoutPermittedSubclasses();
+
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withLocalClass(boolean localClass);
 
         /**
@@ -314,11 +318,6 @@ public interface InstrumentedType extends TypeDescription {
          * {@inheritDoc}
          */
         WithFlexibleName withRecord(boolean record);
-
-        /**
-         * {@inheritDoc}
-         */
-        WithFlexibleName withSealed(boolean sealed);
 
         /**
          * {@inheritDoc}
@@ -1062,6 +1061,33 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        public WithFlexibleName withoutPermittedSubclasses() {
+            return new Default(name,
+                    modifiers,
+                    superClass,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    recordComponentTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    Collections.<TypeDescription>emptyList(),
+                    anonymousClass,
+                    localClass,
+                    record,
+                    nestHost,
+                    nestMembers);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withTypeVariable(TypeVariableToken typeVariable) {
             return new Default(name,
                     modifiers,
@@ -1223,35 +1249,6 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingType,
                     declaredTypes,
                     permittedSubclasses,
-                    anonymousClass,
-                    localClass,
-                    record,
-                    nestHost,
-                    nestMembers);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public WithFlexibleName withSealed(boolean sealed) {
-            return new Default(name,
-                    modifiers,
-                    superClass,
-                    typeVariables,
-                    interfaceTypes,
-                    fieldTokens,
-                    methodTokens,
-                    recordComponentTokens,
-                    annotationDescriptions,
-                    typeInitializer,
-                    loadedTypeInitializer,
-                    declaringType,
-                    enclosingMethod,
-                    enclosingType,
-                    declaredTypes,
-                    sealed
-                        ? permittedSubclasses
-                        : Collections.<TypeDescription>emptyList(),
                     anonymousClass,
                     localClass,
                     record,
@@ -1582,7 +1579,8 @@ public interface InstrumentedType extends TypeDescription {
             } else if (!nestHost.isSamePackage(this)) {
                 throw new IllegalStateException("Cannot define nest host " + nestHost + " + within different package then " + this);
             }
-            for (TypeDescription permittedSubclass : getPermittedSubclasses()) {
+            TypeList permittedSubclasses = getPermittedSubclasses();
+            for (TypeDescription permittedSubclass : permittedSubclasses) {
                 if (!permittedSubclass.isAssignableTo(this) || permittedSubclass.equals(this)) {
                     throw new IllegalStateException("Cannot assign permitted subclass " + permittedSubclass + " to " + this);
                 }
@@ -2070,6 +2068,13 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        public WithFlexibleName withoutPermittedSubclasses() {
+            throw new IllegalStateException("Cannot define seal state for frozen type: " + typeDescription);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withLocalClass(boolean localClass) {
             throw new IllegalStateException("Cannot define local class state for frozen type: " + typeDescription);
         }
@@ -2086,13 +2091,6 @@ public interface InstrumentedType extends TypeDescription {
          */
         public WithFlexibleName withRecord(boolean record) {
             throw new IllegalStateException("Cannot define record state for frozen type: " + typeDescription);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public WithFlexibleName withSealed(boolean sealed) {
-            throw new IllegalStateException("Cannot define seal state for frozen type: " + typeDescription);
         }
 
         /**

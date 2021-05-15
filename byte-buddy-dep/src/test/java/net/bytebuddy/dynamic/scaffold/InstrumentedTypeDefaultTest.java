@@ -623,7 +623,7 @@ public class InstrumentedTypeDefaultTest {
         InstrumentedType transformed = instrumentedType.withPermittedSubclasses(new TypeList.Explicit(typeDescription));
         assertThat(transformed.getPermittedSubclasses().size(), is(1));
         assertThat(transformed.getPermittedSubclasses(), hasItems(typeDescription));
-        assertThat(transformed.withSealed(false).getPermittedSubclasses().size(), is(0));
+        assertThat(transformed.withoutPermittedSubclasses().getPermittedSubclasses().size(), is(0));
     }
 
     @Test

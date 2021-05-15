@@ -107,6 +107,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     protected abstract DynamicType.Builder<?> createPlainWithoutValidation();
 
+    protected abstract DynamicType.Builder<?> createPlainEmpty();
+
     @Before
     public void setUp() throws Exception {
         list = Holder.class.getDeclaredField("list").getGenericType();
@@ -1465,24 +1467,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
                 .getLoaded();
         Class<?> type = createPlainWithoutValidation()
-                .visit(new AsmVisitorWrapper.AbstractBase() {
-
-                    public ClassVisitor wrap(TypeDescription instrumentedType,
-                                             ClassVisitor classVisitor,
-                                             Implementation.Context implementationContext,
-                                             TypePool typePool,
-                                             FieldList<FieldDescription.InDefinedShape> fields,
-                                             MethodList<?> methods,
-                                             int writerFlags,
-                                             int readerFlags) {
-                        return new ClassVisitor(OpenedClassReader.ASM_API, classVisitor) {
-                            @Override
-                            public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-                                super.visit(ClassFileVersion.JAVA_V11.getMinorMajorVersion(), access, name, signature, superName, interfaces);
-                            }
-                        };
-                    }
-                })
+                .visit(new JavaVersionAdjustment())
                 .name(sample.getName())
                 .nestHost(outer)
                 .make()
@@ -1492,6 +1477,32 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(Class.class.getMethod("getNestMembers").invoke(outer), is((Object) new Class<?>[]{outer, type}));
         assertThat(Class.class.getMethod("getNestHost").invoke(type), is((Object) outer));
         assertThat(Class.class.getMethod("getNestMembers").invoke(type), is((Object) new Class<?>[]{outer, type}));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(17)
+    public void testPermittedSubclasses() throws Exception { // TODO: Permitted subclass
+        TypeDescription sample = new TypeDescription.Latent("foo.Qux",
+                Opcodes.ACC_PUBLIC,
+                new TypeDescription.Latent("foo.Bar", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT).asGenericType());
+        Class<?> type = createPlainEmpty()
+                .visit(new JavaVersionAdjustment())
+                .permittedSubclass(sample)
+                .name("foo.Bar")
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
+                .getLoaded();
+        Class<?> subclass = new ByteBuddy()
+                .subclass(type)
+                .merge(TypeManifestation.FINAL)
+                .name("foo.Qux")
+                .make()
+                .load((InjectionClassLoader) type.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
+                .getLoaded();
+        Class<?>[] permittedSubclass = (Class<?>[]) Class.class.getMethod("getPermittedSubclasses").invoke(type);
+        assertThat(permittedSubclass, notNullValue(Class[].class));
+        assertThat(permittedSubclass.length, is(1));
+        assertThat(permittedSubclass[0], is((Object) subclass));
     }
 
     @Test
@@ -1623,6 +1634,25 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
         interface SubInterface extends SampleInterface {
 
+        }
+    }
+
+    private static class JavaVersionAdjustment extends AsmVisitorWrapper.AbstractBase {
+
+        public ClassVisitor wrap(TypeDescription instrumentedType,
+                                 ClassVisitor classVisitor,
+                                 Implementation.Context implementationContext,
+                                 TypePool typePool,
+                                 FieldList<FieldDescription.InDefinedShape> fields,
+                                 MethodList<?> methods,
+                                 int writerFlags,
+                                 int readerFlags) {
+            return new ClassVisitor(OpenedClassReader.ASM_API, classVisitor) {
+
+                public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                    super.visit(Math.max(version, ClassFileVersion.ofThisVm().getMinorMajorVersion()), access, name, signature, superName, interfaces);
+                }
+            };
         }
     }
 }

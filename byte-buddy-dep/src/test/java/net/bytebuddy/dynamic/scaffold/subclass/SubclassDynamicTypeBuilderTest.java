@@ -65,6 +65,10 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         return new ByteBuddy().subclass(Object.class);
     }
 
+    protected DynamicType.Builder<?> createPlainEmpty() {
+        return createPlain();
+    }
+
     protected DynamicType.Builder<?> createPlainWithoutValidation() {
         return new ByteBuddy().with(TypeValidation.DISABLED).subclass(Object.class);
     }
