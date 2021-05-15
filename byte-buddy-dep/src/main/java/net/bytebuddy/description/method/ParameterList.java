@@ -15,20 +15,18 @@
  */
 package net.bytebuddy.description.method;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
+import net.bytebuddy.utility.JavaDispatcher;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -138,7 +136,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         /**
          * The dispatcher used creating parameter list instances and for accessing {@code java.lang.reflect.Executable} instances.
          */
-        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+        protected static final Executable EXECUTABLE = AccessController.doPrivileged(JavaDispatcher.of(Executable.class));
 
         /**
          * The executable for which a parameter list is represented.
@@ -180,7 +178,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          */
         public static ParameterList<ParameterDescription.InDefinedShape> of(Constructor<?> constructor,
                                                                             ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
-            return DISPATCHER.describe(constructor, parameterAnnotationSource);
+            return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V8)
+                    ? new OfConstructor(constructor, parameterAnnotationSource)
+                    : new OfLegacyVmConstructor(constructor, parameterAnnotationSource);
         }
 
         /**
@@ -202,20 +202,23 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          */
         public static ParameterList<ParameterDescription.InDefinedShape> of(Method method,
                                                                             ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
-            return DISPATCHER.describe(method, parameterAnnotationSource);
+            return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V8)
+                    ? new OfMethod(method, parameterAnnotationSource)
+                    : new OfLegacyVmMethod(method, parameterAnnotationSource);
         }
 
         /**
          * {@inheritDoc}
          */
         public int size() {
-            return DISPATCHER.getParameterCount(executable);
+            return EXECUTABLE.getParameterCount(executable);
         }
 
         /**
          * A dispatcher for creating descriptions of parameter lists and for evaluating the size of an {@code java.lang.reflect.Executable}'s parameters.
          */
-        protected interface Dispatcher {
+        @JavaDispatcher.Proxied("java.lang.reflect.Executable")
+        protected interface Executable {
 
             /**
              * Returns the amount of parameters of a given executable..
@@ -226,136 +229,12 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             int getParameterCount(Object executable);
 
             /**
-             * Describes a {@link Constructor}'s parameters of the given VM.
+             * Returns the parameters of an executable.
              *
-             * @param constructor               The constructor for which the parameters should be described.
-             * @param parameterAnnotationSource The parameter annotation source to query.
-             * @return A list describing the constructor's parameters.
+             * @param value The executable to introspect.
+             * @return An array of the parameters of the supplied executable.
              */
-            ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor,
-                                                                        ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource);
-
-            /**
-             * Describes a {@link Method}'s parameters of the given VM.
-             *
-             * @param method                    The method for which the parameters should be described.
-             * @param parameterAnnotationSource The parameter annotation source to query.
-             * @return A list describing the method's parameters.
-             */
-            ParameterList<ParameterDescription.InDefinedShape> describe(Method method,
-                                                                        ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource);
-
-            /**
-             * A creation action for a dispatcher.
-             */
-            enum CreationAction implements PrivilegedAction<Dispatcher> {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-                public Dispatcher run() {
-                    try {
-                        return new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.reflect.Executable").getMethod("getParameterCount"));
-                    } catch (Exception ignored) {
-                        return Dispatcher.ForLegacyVm.INSTANCE;
-                    }
-                }
-            }
-
-            /**
-             * A dispatcher for a legacy VM that does not support the {@code java.lang.reflect.Parameter} type.
-             */
-            enum ForLegacyVm implements Dispatcher {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public int getParameterCount(Object executable) {
-                    throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Executable");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor,
-                                                                                   ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
-                    return new OfLegacyVmConstructor(constructor, parameterAnnotationSource);
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public ParameterList<ParameterDescription.InDefinedShape> describe(Method method,
-                                                                                   ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
-                    return new OfLegacyVmMethod(method, parameterAnnotationSource);
-                }
-            }
-
-            /**
-             * A dispatcher for a legacy VM that does support the {@code java.lang.reflect.Parameter} type.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForJava8CapableVm implements Dispatcher {
-
-                /**
-                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
-                 */
-                private static final Object[] NO_ARGUMENTS = new Object[0];
-
-                /**
-                 * The {@code java.lang.reflect.Executable#getParameterCount()} method.
-                 */
-                private final Method getParameterCount;
-
-                /**
-                 * Creates a new dispatcher for a modern VM.
-                 *
-                 * @param getParameterCount The {@code java.lang.reflect.Executable#getParameterCount()} method.
-                 */
-                protected ForJava8CapableVm(Method getParameterCount) {
-                    this.getParameterCount = getParameterCount;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public int getParameterCount(Object executable) {
-                    try {
-                        return (Integer) getParameterCount.invoke(executable, NO_ARGUMENTS);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getModifiers", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflect.Parameter#getModifiers", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor,
-                                                                                   ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
-                    return new OfConstructor(constructor, parameterAnnotationSource);
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public ParameterList<ParameterDescription.InDefinedShape> describe(Method method,
-                                                                                   ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
-                    return new OfMethod(method, parameterAnnotationSource);
-                }
-            }
+            Object[] getParameters(Object value);
         }
 
         /**

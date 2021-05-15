@@ -32,7 +32,10 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.JavaDispatcher;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.util.AbstractList;
 import java.util.Collections;
@@ -210,7 +213,7 @@ public interface ParameterDescription extends AnnotationSource,
                 stringBuilder.append(' ');
             }
             stringBuilder.append(isVarArgs()
-                    ? getType().asErasure().getName().replaceFirst("\\[\\]$", "...")
+                    ? getType().asErasure().getName().replaceFirst("\\[]$", "...")
                     : getType().asErasure().getName());
             return stringBuilder.append(' ').append(getName()).toString();
         }
@@ -222,11 +225,6 @@ public interface ParameterDescription extends AnnotationSource,
      * @param <T> The type of the {@code java.lang.reflect.Executable} that this list represents.
      */
     abstract class ForLoadedParameter<T extends AccessibleObject> extends InDefinedShape.AbstractBase {
-
-        /**
-         * A dispatcher for reading properties from {@code java.lang.reflect.Executable} instances.
-         */
-        private static final Executable EXECUTABLE = AccessController.doPrivileged(JavaDispatcher.of(Executable.class));
 
         /**
          * A dispatcher for reading properties from {@code java.lang.reflect.Parameter} instances.
@@ -265,7 +263,7 @@ public interface ParameterDescription extends AnnotationSource,
          * {@inheritDoc}
          */
         public String getName() {
-            return PARAMETER.getName(EXECUTABLE.getParameters(executable)[index]);
+            return PARAMETER.getName(ParameterList.ForLoadedExecutable.EXECUTABLE.getParameters(executable)[index]);
         }
 
         /**
@@ -279,14 +277,14 @@ public interface ParameterDescription extends AnnotationSource,
          * {@inheritDoc}
          */
         public boolean isNamed() {
-            return PARAMETER.isNamePresent(EXECUTABLE.getParameters(executable)[index]);
+            return PARAMETER.isNamePresent(ParameterList.ForLoadedExecutable.EXECUTABLE.getParameters(executable)[index]);
         }
 
         /**
          * {@inheritDoc}
          */
         public int getModifiers() {
-            return PARAMETER.getModifiers(EXECUTABLE.getParameters(executable)[index]);
+            return PARAMETER.getModifiers(ParameterList.ForLoadedExecutable.EXECUTABLE.getParameters(executable)[index]);
         }
 
         /**
@@ -365,21 +363,6 @@ public interface ParameterDescription extends AnnotationSource,
                     return method.getParameterAnnotations();
                 }
             }
-        }
-
-        /**
-         * A proxy for a {@code java.lang.reflect.Executable}.
-         */
-        @JavaDispatcher.Proxied("java.lang.reflect.Executable")
-        protected interface Executable {
-
-            /**
-             * Returns the parameters of an executable.
-             *
-             * @param value The executable to introspect.
-             * @return An array of the parameters of the supplied executable.
-             */
-            Object[] getParameters(Object value);
         }
 
         /**
