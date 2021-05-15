@@ -15,9 +15,7 @@
  */
 package net.bytebuddy.description.type;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.CachedReturnPlugin;
-import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.DeclaredByType;
 import net.bytebuddy.description.NamedElement;
@@ -26,11 +24,14 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.JavaDispatcher;
 import org.objectweb.asm.signature.SignatureWriter;
 
-import java.lang.reflect.*;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.GenericSignatureFormatError;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.List;
 
@@ -176,9 +177,9 @@ public interface RecordComponentDescription extends DeclaredByType,
     class ForLoadedRecordComponent extends InDefinedShape.AbstractBase {
 
         /**
-         * The dispatcher to use.
+         * A dispatcher for accessing {@code java.lang.RecordComponent} types.
          */
-        protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+        protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
         /**
          * The represented record component.
@@ -246,8 +247,9 @@ public interface RecordComponentDescription extends DeclaredByType,
         }
 
         /**
-         * A dispatcher for resolving a {@code java.lang.reflect.RecordComponent}.
+         * A dispatcher for accessing methods of {@code java.lang.reflect.RecordComponent}.
          */
+        @JavaDispatcher.Proxied("java.lang.reflect.RecordComponent")
         protected interface Dispatcher {
 
             /**
@@ -256,412 +258,64 @@ public interface RecordComponentDescription extends DeclaredByType,
              * @param instance The instance to evaluate.
              * @return {@code true} if the supplied instance is a record component.
              */
+            @JavaDispatcher.Instance
             boolean isInstance(Object instance);
-
-            /**
-             * Resolves a type's record components.
-             *
-             * @param type The type for which to read the record components.
-             * @return An array of all declared record components.
-             */
-            Object[] getRecordComponents(Class<?> type);
-
-            /**
-             * Checks if the supplied type is a record.
-             *
-             * @param type The type to resolve.
-             * @return {@code true} if the supplied type is a record.
-             */
-            boolean isRecord(Class<?> type);
 
             /**
              * Resolves a record component's name.
              *
-             * @param recordComponent The record component to resolve the name for.
+             * @param value The record component to resolve the name for.
              * @return The record component's name.
              */
-            String getName(Object recordComponent);
+            String getName(Object value);
 
             /**
              * Resolves a record component's declaring type.
              *
-             * @param recordComponent The record component to resolve the declared type for.
+             * @param value The record component to resolve the declared type for.
              * @return The record component's declaring type.
              */
-            Class<?> getDeclaringType(Object recordComponent);
+            Class<?> getDeclaringType(Object value);
 
             /**
              * Resolves a record component's accessor method.
              *
-             * @param recordComponent The record component to resolve the accessor method for.
+             * @param value The record component to resolve the accessor method for.
              * @return The record component's accessor method.
              */
-            Method getAccessor(Object recordComponent);
+            Method getAccessor(Object value);
 
             /**
              * Resolves a record component's type.
              *
-             * @param recordComponent The record component to resolve the type for.
+             * @param value The record component to resolve the type for.
              * @return The record component's type.
              */
-            Class<?> getType(Object recordComponent);
+            Class<?> getType(Object value);
 
             /**
              * Resolves a record component's generic type.
              *
-             * @param recordComponent The record component to resolve the generic type for.
+             * @param value The record component to resolve the generic type for.
              * @return The record component's generic type.
              */
-            Type getGenericType(Object recordComponent);
+            Type getGenericType(Object value);
 
             /**
              * Returns the record component type's generic signature.
              *
-             * @param recordComponent The record component to resolve the generic signature for.
+             * @param value The record component to resolve the generic signature for.
              * @return The record component type's generic signature or {@code null} if no signature is defined.
              */
-            String getGenericSignature(Object recordComponent);
+            String getGenericSignature(Object value);
 
             /**
              * Resolves a record component's annotated type.
              *
-             * @param recordComponent The record component to resolve the annotated type for.
+             * @param value The record component to resolve the annotated type for.
              * @return The record component's annotated type.
              */
-            AnnotatedElement getAnnotatedType(Object recordComponent);
-
-            /**
-             * A creation action for creating a dispatcher.
-             */
-            enum CreationAction implements PrivilegedAction<Dispatcher> {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Dispatcher run() {
-                    try {
-                        Class<?> recordComponent = Class.forName("java.lang.reflect.RecordComponent");
-                        return new ForJava14CapableVm(recordComponent,
-                                Class.class.getMethod("getRecordComponents"),
-                                Class.class.getMethod("isRecord"),
-                                recordComponent.getMethod("getName"),
-                                recordComponent.getMethod("getDeclaringRecord"),
-                                recordComponent.getMethod("getAccessor"),
-                                recordComponent.getMethod("getType"),
-                                recordComponent.getMethod("getGenericType"),
-                                recordComponent.getMethod("getGenericSignature"),
-                                recordComponent.getMethod("getAnnotatedType"));
-                    } catch (ClassNotFoundException ignored) {
-                        return ForLegacyVm.INSTANCE;
-                    } catch (NoSuchMethodException ignored) {
-                        return ForLegacyVm.INSTANCE;
-                    }
-                }
-            }
-
-            /**
-             * A dispatcher for a legacy VM that does not support records.
-             */
-            enum ForLegacyVm implements Dispatcher {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isInstance(Object instance) {
-                    return false;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "Null value return is aligned with OpenJDK return value.")
-                public Object[] getRecordComponents(Class<?> type) {
-                    return null;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isRecord(Class<?> type) {
-                    return false;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String getName(Object recordComponent) {
-                    throw new IllegalStateException("The current VM does not support record components");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?> getDeclaringType(Object recordComponent) {
-                    throw new IllegalStateException("The current VM does not support record components");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Method getAccessor(Object recordComponent) {
-                    throw new IllegalStateException("The current VM does not support record components");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?> getType(Object recordComponent) {
-                    throw new IllegalStateException("The current VM does not support record components");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Type getGenericType(Object recordComponent) {
-                    throw new IllegalStateException("The current VM does not support record components");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String getGenericSignature(Object recordComponent) {
-                    throw new IllegalStateException("The current VM does not support record components");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public AnnotatedElement getAnnotatedType(Object recordComponent) {
-                    throw new IllegalStateException("The current VM does not support record components");
-                }
-            }
-
-            /**
-             * A dispatcher for a Java 14-capable JVM.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForJava14CapableVm implements Dispatcher {
-
-                /**
-                 * The {@code java.lang.reflect.RecordComponent} type.
-                 */
-                private final Class<?> recordComponent;
-
-                /**
-                 * The {@code java.lang.Class#getRecordComponents()} method.
-                 */
-                private final Method getRecordComponents;
-
-                /**
-                 * The {@code java.lang.Class#isRecord()} method.
-                 */
-                private final Method isRecord;
-
-                /**
-                 * The {@code java.lang.reflect.RecordComponent#getName()} method.
-                 */
-                private final Method getName;
-
-                /**
-                 * The {@code java.lang.reflect.RecordComponent#getDeclaringType()} method.
-                 */
-                private final Method getDeclaringType;
-
-                /**
-                 * The {@code java.lang.reflect.RecordComponent#getAccessor()} method.
-                 */
-                private final Method getAccessor;
-
-                /**
-                 * The {@code java.lang.reflect.RecordComponent#getType()} method.
-                 */
-                private final Method getType;
-
-                /**
-                 * The {@code java.lang.reflect.RecordComponent#getGenericType()} method.
-                 */
-                private final Method getGenericType;
-
-                /**
-                 * The {@code java.lang.reflect.RecordComponent#getGenericSignature()} method.
-                 */
-                private final Method getGenericSignature;
-
-                /**
-                 * The {@code java.lang.reflect.RecordComponent#getAnnotatedType()} method.
-                 */
-                private final Method getAnnotatedType;
-
-                /**
-                 * Creates a dispatcher for a Java 14 capable VM.
-                 *
-                 * @param recordComponent     The {@code java.lang.reflect.RecordComponent} type.
-                 * @param getRecordComponents The {@code java.lang.Class#getRecordComponents()} method.
-                 * @param isRecord            The {@code java.lang.Class#isRecord()} method.
-                 * @param getName             The {@code java.lang.reflect.RecordComponent#getName()} method.
-                 * @param getDeclaringType    The {@code java.lang.reflect.RecordComponent#getDeclaringType()} method.
-                 * @param getAccessor         The {@code java.lang.reflect.RecordComponent#getAccessor()} method.
-                 * @param getType             The {@code java.lang.reflect.RecordComponent#getType()} method.
-                 * @param getGenericType      The {@code java.lang.reflect.RecordComponent#getGenericType()} method.
-                 * @param getGenericSignature The {@code java.lang.reflect.RecordComponent#getGenericSignature()} method.
-                 * @param getAnnotatedType    The {@code java.lang.reflect.RecordComponent#getAnnotatedType()} method.
-                 */
-                protected ForJava14CapableVm(Class<?> recordComponent,
-                                             Method getRecordComponents,
-                                             Method isRecord,
-                                             Method getName,
-                                             Method getDeclaringType,
-                                             Method getAccessor,
-                                             Method getType,
-                                             Method getGenericType,
-                                             Method getGenericSignature,
-                                             Method getAnnotatedType) {
-                    this.recordComponent = recordComponent;
-                    this.getRecordComponents = getRecordComponents;
-                    this.isRecord = isRecord;
-                    this.getName = getName;
-                    this.getDeclaringType = getDeclaringType;
-                    this.getAccessor = getAccessor;
-                    this.getType = getType;
-                    this.getGenericType = getGenericType;
-                    this.getGenericSignature = getGenericSignature;
-                    this.getAnnotatedType = getAnnotatedType;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isInstance(Object instance) {
-                    return recordComponent.isInstance(instance);
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object[] getRecordComponents(Class<?> type) {
-                    try {
-                        return (Object[]) getRecordComponents.invoke(type);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.Class#getRecordComponents", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.Class#getRecordComponents", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isRecord(Class<?> type) {
-                    try {
-                        return (Boolean) isRecord.invoke(type);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.Class#isRecord", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.Class#isRecord", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String getName(Object recordComponent) {
-                    try {
-                        return (String) getName.invoke(recordComponent);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflection.RecordComponent#getName", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflection.RecordComponent#getName", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?> getDeclaringType(Object recordComponent) {
-                    try {
-                        return (Class<?>) getDeclaringType.invoke(recordComponent);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflection.RecordComponent#getDeclaringType", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflection.RecordComponent#getDeclaringType", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Method getAccessor(Object recordComponent) {
-                    try {
-                        return (Method) getAccessor.invoke(recordComponent);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflection.RecordComponent#getAccessor", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflection.RecordComponent#getAccessor", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?> getType(Object recordComponent) {
-                    try {
-                        return (Class<?>) getType.invoke(recordComponent);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflection.RecordComponent#getType", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflection.RecordComponent#getType", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Type getGenericType(Object recordComponent) {
-                    try {
-                        return (Type) getGenericType.invoke(recordComponent);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflection.RecordComponent#getGenericType", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflection.RecordComponent#getGenericType", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String getGenericSignature(Object recordComponent) {
-                    try {
-                        return (String) getGenericSignature.invoke(recordComponent);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflection.RecordComponent#getGenericSignature", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflection.RecordComponent#getGenericSignature", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public AnnotatedElement getAnnotatedType(Object recordComponent) {
-                    try {
-                        return (AnnotatedElement) getAnnotatedType.invoke(recordComponent);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflection.RecordComponent#getAnnotatedType", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflection.RecordComponent#getAnnotatedType", exception.getCause());
-                    }
-                }
-            }
+            AnnotatedElement getAnnotatedType(Object value);
         }
     }
 

@@ -8886,17 +8886,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         public RecordComponentList<RecordComponentDescription.InDefinedShape> getRecordComponents() {
-            Object[] recordComponent = RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getRecordComponents(type);
-            return recordComponent == null
-                    ? new RecordComponentList.Empty<RecordComponentDescription.InDefinedShape>()
-                    : new RecordComponentList.ForLoadedRecordComponents(recordComponent);
+            return new RecordComponentList.ForLoadedRecordComponents(DISPATCHER.getRecordComponents(type));
         }
 
         /**
          * {@inheritDoc}
          */
         public boolean isRecord() {
-            return RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.isRecord(type);
+            return DISPATCHER.isRecord(type);
         }
 
         @Override
@@ -8973,6 +8970,22 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @return The permitted subclasses.
              */
             Class<?>[] getPermittedSubclasses(Class<?> type);
+
+            /**
+             * Checks if the supplied type is a record.
+             *
+             * @param type The type to resolve.
+             * @return {@code true} if the supplied type is a record.
+             */
+            boolean isRecord(Class<?> type);
+
+            /**
+             * Resolves a type's record components.
+             *
+             * @param type The type for which to read the record components.
+             * @return An array of all declared record components.
+             */
+            Object[] getRecordComponents(Class<?> type);
         }
     }
 
