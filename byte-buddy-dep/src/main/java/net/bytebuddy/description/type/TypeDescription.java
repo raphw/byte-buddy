@@ -8920,6 +8920,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * A dispatcher for using methods of {@link Class} that are not declared for Java 6.
          */
+        @JavaDispatcher.Defaults
         @JavaDispatcher.Proxied("java.lang.Class")
         protected interface Dispatcher {
 
@@ -8937,7 +8938,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param type The type to get the nest members for.
              * @return An array containing all nest members of the specified type's nest group.
              */
-            @JavaDispatcher.Defaults
             Class<?>[] getNestMembers(Class<?> type);
 
             /**
@@ -8947,7 +8947,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param candidate The candidate type.
              * @return {@code true} if the specified type is a nest mate of the other class.
              */
-            @JavaDispatcher.Defaults
             boolean isNestmateOf(Class<?> type, Class<?> candidate);
 
             /**

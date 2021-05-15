@@ -227,7 +227,8 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     }
 
     /**
-     * Indicates that a method is supposed to perform an instance check. The annotated method must declare a single argument of type {@link Object}.
+     * Indicates that a method is supposed to perform an instance check. The annotated method must declare a single argument
+     * with a type that is assignable from the proxied type.
      */
     @Documented
     @Target(ElementType.METHOD)
@@ -236,6 +237,10 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         /* empty */
     }
 
+    /**
+     * Indicates that the method is supposed to return an array of the proxied type. The annotated method must declare a single,
+     * {@code int}-typed argument that represents the array's dimension.
+     */
     @Documented
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.RUNTIME)

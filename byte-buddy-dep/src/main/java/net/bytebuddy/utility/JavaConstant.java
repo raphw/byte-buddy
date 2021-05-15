@@ -318,6 +318,9 @@ public interface JavaConstant {
             return typeDescription.equals(simple.typeDescription);
         }
 
+        /**
+         * A dispatcher to represent {@code java.lang.constant.ConstantDesc}.
+         */
         @JavaDispatcher.Proxied("java.lang.constant.ConstantDesc")
         protected interface Dispatcher {
 
@@ -331,7 +334,7 @@ public interface JavaConstant {
             boolean isInstance(Object instance);
 
             /**
-             * Returns an array of this type.
+             * Returns an array of the dispatcher type.
              *
              * @param length The length of the array.
              * @return An array of the type that is represented by this dispatcher with the given length.
@@ -339,6 +342,9 @@ public interface JavaConstant {
             @JavaDispatcher.Container
             Object[] toArray(int length);
 
+            /**
+             * A dispatcher to represent {@code java.lang.constant.ClassDesc}.
+             */
             @JavaDispatcher.Proxied("java.lang.constant.ClassDesc")
             interface OfClassDesc extends Dispatcher {
 
@@ -360,6 +366,9 @@ public interface JavaConstant {
                 String descriptorString(Object value);
             }
 
+            /**
+             * A dispatcher to represent {@code java.lang.constant.MethodTypeDesc}.
+             */
             @JavaDispatcher.Proxied("java.lang.constant.MethodTypeDesc")
             interface OfMethodTypeDesc extends Dispatcher {
 
@@ -400,6 +409,9 @@ public interface JavaConstant {
                 List<?> parameterList(Object value);
             }
 
+            /**
+             * A dispatcher to represent {@code java.lang.constant.MethodHandleDesc}.
+             */
             @JavaDispatcher.Proxied("java.lang.constant.MethodHandleDesc")
             interface OfMethodHandleDesc extends Dispatcher {
 
@@ -428,19 +440,55 @@ public interface JavaConstant {
                 Object invocationType(Object value);
             }
 
+            /**
+             * A dispatcher to represent {@code java.lang.constant.DirectMethodHandleDesc}.
+             */
             @JavaDispatcher.Proxied("java.lang.constant.DirectMethodHandleDesc")
             interface OfDirectMethodHandleDesc extends Dispatcher {
 
+                /**
+                 * Resolves the type of method handle for the supplied method handle description.
+                 *
+                 * @param value The {@code java.lang.constant.DirectMethodHandleDesc} to resolve.
+                 * @return The type of the handle.
+                 */
                 int refKind(Object value);
 
+                /**
+                 * Resolves the method name of the supplied direct method handle.
+                 *
+                 * @param value The {@code java.lang.constant.DirectMethodHandleDesc} to resolve.
+                 * @return The handle's method name.
+                 */
                 String methodName(Object value);
 
+                /**
+                 * Resolves a {@code java.lang.constant.ClassDesc} representing the owner of a direct method handle description.
+                 *
+                 * @param value The {@code java.lang.constant.DirectMethodHandleDesc} to resolve.
+                 * @return A {@code java.lang.constant.ClassDesc} describing the handle's owner.
+                 */
                 Object owner(Object value);
 
+                /**
+                 * Checks if the represented method handle's owner is an interface type.
+                 *
+                 * @param value The {@code java.lang.constant.DirectMethodHandleDesc} to resolve.
+                 * @return {@code true} if the supplied method handle description is owned by an interface.
+                 */
                 boolean isOwnerInterface(Object value);
 
+                /**
+                 * Resolves the lookup descriptor of the supplied direct method handle description.
+                 *
+                 * @param value The {@code java.lang.constant.DirectMethodHandleDesc} to resolve.
+                 * @return A descriptor of the supplied direct method handle's lookup.
+                 */
                 String lookupDescriptor(Object value);
 
+                /**
+                 * A dispatcher to represent {@code java.lang.constant.DirectMethodHandleDesc$Kind}.
+                 */
                 @JavaDispatcher.Proxied("java.lang.constant.DirectMethodHandleDesc$Kind")
                 interface ForKind {
 
@@ -456,22 +504,59 @@ public interface JavaConstant {
                 }
             }
 
+            /**
+             * A dispatcher to represent {@code java.lang.constant.DynamicConstantDesc}.
+             */
             @JavaDispatcher.Proxied("java.lang.constant.DynamicConstantDesc")
             interface OfDynamicConstantDesc extends Dispatcher {
 
+                /**
+                 * Resolves a {@code java.lang.constant.DynamicConstantDesc} for a canonical description of the constant.
+                 *
+                 * @param bootstrap    A {@code java.lang.constant.DirectMethodHandleDesc} describing the boostrap method of the dynamic constant.
+                 * @param constantName The constant's name.
+                 * @param type         A {@code java.lang.constant.ClassDesc} describing the constant's type.
+                 * @param argument     Descriptions of the dynamic constant's arguments.
+                 * @return A {@code java.lang.constant.DynamicConstantDesc} for the supplied arguments.
+                 */
                 @JavaDispatcher.Static
                 Object ofCanonical(@JavaDispatcher.Proxied("java.lang.constant.DirectMethodHandleDesc") Object bootstrap,
                                    String constantName,
-                                   @JavaDispatcher.Proxied("java.lang.constant.ClassDesc") Object constantType,
-                                   @JavaDispatcher.Proxied("java.lang.constant.ConstantDesc") Object[] bootstrapArgs);
+                                   @JavaDispatcher.Proxied("java.lang.constant.ClassDesc") Object type,
+                                   @JavaDispatcher.Proxied("java.lang.constant.ConstantDesc") Object[] argument);
 
+                /**
+                 * Resolves a {@code java.lang.constant.DynamicConstantDesc}'s arguments.
+                 *
+                 * @param value The {@code java.lang.constant.DynamicConstantDesc} to resolve.
+                 * @return A list of {@code java.lang.constant.ConstantDesc} describing the arguments of the supplied dynamic constant description.
+                 */
                 List<?> bootstrapArgsList(Object value);
 
+                /**
+                 * Resolves the dynamic constant description's name.
+                 *
+                 * @param value The {@code java.lang.constant.DynamicConstantDesc} to resolve.
+                 * @return The dynamic constant description's name.
+                 */
                 String constantName(Object value);
 
+                /**
+                 * Resolves a {@code java.lang.constant.ClassDesc} for the dynamic constant's type.
+                 *
+                 * @param value The {@code java.lang.constant.DynamicConstantDesc} to resolve.
+                 * @return A {@code java.lang.constant.ClassDesc} describing the constant's type.
+                 */
                 Object constantType(Object value);
 
+                /**
+                 * Resolves a {@code java.lang.constant.DirectMethodHandleDesc} representing the dynamic constant's bootstrap method.
+                 *
+                 * @param value The {@code java.lang.constant.DynamicConstantDesc} to resolve.
+                 * @return A {@code java.lang.constant.DirectMethodHandleDesc} representing the dynamic constant's bootstrap method.
+                 */
                 Object bootstrapMethod(Object value);
+
             }
         }
     }
