@@ -23,15 +23,12 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.utility.JavaDispatcher;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.signature.SignatureWriter;
 
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Modifier;
-import java.security.AccessController;
 import java.util.Collections;
 import java.util.List;
 
@@ -351,7 +348,7 @@ public interface FieldDescription extends ByteCodeElement,
          * Creates a new latent field description. All provided types are attached to this instance before they are returned.
          *
          * @param declaringType       The declaring type of the field.
-         * @param name           The name of the field.
+         * @param name                The name of the field.
          * @param fieldType           The field's modifiers.
          * @param modifiers           The type of the field.
          * @param declaredAnnotations The annotations of this field.

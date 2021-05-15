@@ -18,7 +18,6 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.field.FieldList;
-import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.JavaDispatcher;
@@ -213,6 +212,9 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
          */
         VARIABLE_SYMBOLIC;
 
+        /**
+         * A dispatcher for interacting with {@code java.lang.reflect.AnnotatedType}.
+         */
         private static final AnnotatedType ANNOTATED_TYPE = AccessController.doPrivileged(JavaDispatcher.of(AnnotatedType.class));
 
         /**
@@ -225,6 +227,12 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
             return describe(type, TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE);
         }
 
+        /**
+         * Describes a loaded {@code java.lang.reflect.AnnotatedType} as a {@link TypeDescription.Generic}.
+         *
+         * @param annotatedType The {@code java.lang.reflect.AnnotatedType} to describe.
+         * @return A description of the provided generic type.
+         */
         public static TypeDescription.Generic describeAnnotated(AnnotatedElement annotatedType) {
             if (!ANNOTATED_TYPE.isInstance(annotatedType)) {
                 throw new IllegalArgumentException("Not an instance of AnnotatedType: " + annotatedType);
@@ -301,12 +309,27 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
             return this == VARIABLE || this == VARIABLE_SYMBOLIC;
         }
 
+        /**
+         * A proxy for interacting with {@code java.lang.reflect.AnnotatedType}.
+         */
         @JavaDispatcher.Proxied("java.lang.reflect.AnnotatedType")
         protected interface AnnotatedType {
 
+            /**
+             * Returns {@code true} if the supplied value is an instance of {@code java.lang.reflect.AnnotatedType}.
+             *
+             * @param value The instance to consider.
+             * @return {@code true} if the supplied instance is of type {@code java.lang.reflect.AnnotatedType}.
+             */
             @JavaDispatcher.Instance
             boolean isInstance(AnnotatedElement value);
 
+            /**
+             * Resolves the supplied {@code java.lang.reflect.AnnotatedType}'s type.
+             *
+             * @param value The {@code java.lang.reflect.AnnotatedType} to resolve.
+             * @return The annotated type's type.
+             */
             Type getType(AnnotatedElement value);
         }
     }

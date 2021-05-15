@@ -364,12 +364,28 @@ public interface MethodDescription extends TypeVariableSource,
                 }
             }
 
+            /**
+             * A base implementation for a loaded instance representation for a {@code java.lang.reflect.Executable}.
+             *
+             * @param <T> The type of the executable.
+             */
             protected abstract static class ForLoadedExecutable<T extends AnnotatedElement> extends InDefinedShape.AbstractBase {
 
+                /**
+                 * A dispatcher for interacting with {@code java.lang.reflect.Executable}.
+                 */
                 protected static final Executable EXECUTABLE = AccessController.doPrivileged(JavaDispatcher.of(Executable.class));
 
+                /**
+                 * The represented {@code java.lang.reflect.Executable}.
+                 */
                 protected final T executable;
 
+                /**
+                 * Creates a new method description for a loaded executable.
+                 *
+                 * @param executable The represented {@code java.lang.reflect.Executable}.
+                 */
                 protected ForLoadedExecutable(T executable) {
                     this.executable = executable;
                 }
@@ -385,9 +401,18 @@ public interface MethodDescription extends TypeVariableSource,
                 }
             }
 
+            /**
+             * A proxy type for invoking methods of {@code java.lang.reflect.Executable}.
+             */
             @JavaDispatcher.Proxied("java.lang.reflect.Executable")
             protected interface Executable {
 
+                /**
+                 * Returns the annotated receiver type.
+                 *
+                 * @param value The {@code java.lang.reflect.Executable} to resolve.
+                 * @return An instance of {@code java.lang.reflect.AnnotatedType} that represents the receiver of the supplied executable.
+                 */
                 AnnotatedElement getAnnotatedReceiverType(Object value);
             }
         }

@@ -2630,10 +2630,21 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return new AnnotationList.ForLoadedAnnotations(resolve().getDeclaredAnnotations());
                 }
 
+                /**
+                 * A simple delegator for a given {@link AnnotatedElement}.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
                 public static class Simple extends Delegator {
 
+                    /**
+                     * The represented {@link AnnotatedElement}.
+                     */
                     private final AnnotatedElement annotatedElement;
 
+                    /**
+                     * Creates a new simple delegator.
+                     * @param annotatedElement The represented {@link AnnotatedElement}.
+                     */
                     public Simple(AnnotatedElement annotatedElement) {
                         this.annotatedElement = annotatedElement;
                     }
@@ -2810,6 +2821,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 public static class ForLoadedField extends Delegator {
 
+                    /**
+                     * A dispatcher for interacting with {@link Field}.
+                     */
                     protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
                     /**
@@ -2834,9 +2848,19 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return element == null ? NoOp.INSTANCE : element;
                     }
 
+                    /**
+                     * A dispatcher for interacting with {@link Field}.
+                     */
                     @JavaDispatcher.Proxied("java.lang.reflect.Field")
                     protected interface Dispatcher {
 
+                        /**
+                         * Resolves the supplied method's annotated field type.
+                         *
+                         * @param field The field for which to resolve the annotated type.
+                         * @return The field type annotations or {@code null} if this feature is not supported.
+                         */
+                        @JavaDispatcher.Defaults
                         AnnotatedElement getAnnotatedType(Field field);
                     }
                 }
@@ -2847,6 +2871,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 public static class ForLoadedMethodReturnType extends Delegator {
 
+                    /**
+                     * A dispatcher for interacting with {@link Method}.
+                     */
                     protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
                     /**
@@ -2871,9 +2898,19 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return element == null ? NoOp.INSTANCE : element;
                     }
 
+                    /**
+                     * A dispatcher for interacting with {@link Method}.
+                     */
                     @JavaDispatcher.Proxied("java.lang.reflect.Method")
                     protected interface Dispatcher {
 
+                        /**
+                         * Resolves the supplied method's annotated return type.
+                         *
+                         * @param method The executable for which to resolve the annotated return type.
+                         * @return The return type annotations or {@code null} if this feature is not supported.
+                         */
+                        @JavaDispatcher.Defaults
                         AnnotatedElement getAnnotatedReturnType(Method method);
                     }
                 }
@@ -2884,6 +2921,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 public static class ForLoadedExecutableParameterType extends Delegator {
 
+                    /**
+                     * A dispatcher for interacting with {@code java.lang.reflect.Executable}.
+                     */
                     protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
                     /**
@@ -2915,9 +2955,19 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return element.length == 0 ? NoOp.INSTANCE : element[index];
                     }
 
+                    /**
+                     * A type for interacting with {@code java.lang.reflect.Executable}.
+                     */
                     @JavaDispatcher.Proxied("java.lang.reflect.Executable")
                     protected interface Dispatcher {
 
+                        /**
+                         * Resolves the supplied {@code java.lang.reflect.Executable}'s annotated parameter types.
+                         *
+                         * @param executable The executable for which to resolve its annotated parameter types.
+                         * @return An array of parameter type annotations or an empty array if this feature is not supported.
+                         */
+                        @JavaDispatcher.Defaults
                         AnnotatedElement[] getAnnotatedParameterTypes(Object executable);
                     }
                 }
@@ -2928,6 +2978,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 public static class ForLoadedExecutableExceptionType extends Delegator {
 
+                    /**
+                     * A dispatcher for interacting with {@code java.lang.reflect.Executable}.
+                     */
                     protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
                     /**
@@ -2959,9 +3012,19 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return element.length == 0 ? NoOp.INSTANCE : element[index];
                     }
 
+                    /**
+                     * A proxy type for interacting with {@code java.lang.reflect.Executable}.
+                     */
                     @JavaDispatcher.Proxied("java.lang.reflect.Executable")
                     protected interface Dispatcher {
 
+                        /**
+                         * Resolves the supplied {@code java.lang.reflect.Executable}'s annotated exception types.
+                         *
+                         * @param executable The executable for which to resolve its annotated exception types.
+                         * @return An array of exception type annotations or an empty array if this feature is not supported.
+                         */
+                        @JavaDispatcher.Defaults
                         AnnotatedElement[] getAnnotatedExceptionTypes(Object executable);
                     }
                 }
@@ -8571,8 +8634,20 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @JavaDispatcher.Proxied("java.lang.Class")
         protected interface Dispatcher {
 
+            /**
+             * Resolves the annotated super class of the supplied type.
+             *
+             * @param type The type to resolve.
+             * @return The annotated super class of the supplied type or {@code null} if this feature is not supported.
+             */
             AnnotatedElement getAnnotatedSuperclass(Class<?> type);
 
+            /**
+             * Resolves the annotated interfaces of the supplied type.
+             *
+             * @param type The type to resolve.
+             * @return An array of the type's annotated interfaces or an empty array if this feature is not supported.
+             */
             AnnotatedElement[] getAnnotatedInterfaces(Class<?> type);
 
             /**
