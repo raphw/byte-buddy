@@ -2034,6 +2034,8 @@ public interface ClassInjector {
                 this.dispatcher = dispatcher;
             }
 
+            // TODO: Move JavaModule.modify here.
+
             /**
              * Resolves an injection strategy that uses unsafe injection if available and also attempts to open and use
              * {@code jdk.internal.misc.Unsafe} as a fallback. This method generates a new class and module for opening the

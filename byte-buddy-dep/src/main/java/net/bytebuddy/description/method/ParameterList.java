@@ -134,6 +134,11 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
     abstract class ForLoadedExecutable<T> extends AbstractBase<ParameterDescription.InDefinedShape> {
 
         /**
+         * Indicates if the current VM supports the parameter API.
+         */
+        private static final boolean SUPPORTS_PARAMETERS = ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V8);
+
+        /**
          * The dispatcher used creating parameter list instances and for accessing {@code java.lang.reflect.Executable} instances.
          */
         protected static final Executable EXECUTABLE = AccessController.doPrivileged(JavaDispatcher.of(Executable.class));
@@ -178,7 +183,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          */
         public static ParameterList<ParameterDescription.InDefinedShape> of(Constructor<?> constructor,
                                                                             ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
-            return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V8)
+            return SUPPORTS_PARAMETERS
                     ? new OfConstructor(constructor, parameterAnnotationSource)
                     : new OfLegacyVmConstructor(constructor, parameterAnnotationSource);
         }
@@ -202,7 +207,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          */
         public static ParameterList<ParameterDescription.InDefinedShape> of(Method method,
                                                                             ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
-            return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V8)
+            return SUPPORTS_PARAMETERS
                     ? new OfMethod(method, parameterAnnotationSource)
                     : new OfLegacyVmMethod(method, parameterAnnotationSource);
         }
