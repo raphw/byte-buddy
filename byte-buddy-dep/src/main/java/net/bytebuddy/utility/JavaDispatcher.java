@@ -991,6 +991,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                         Type.getMethodDescriptor(entry.getKey()),
                         null,
                         exceptionTypeName);
+                methodVisitor.visitCode();
                 int length = (entry.getKey().getModifiers() & Opcodes.ACC_STATIC) == 0 ? 1 : 0;
                 for (Class<?> type : entry.getKey().getParameterTypes()) {
                     length += Type.getType(type).getSize();
@@ -1003,6 +1004,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                     Type.getMethodDescriptor(Type.VOID_TYPE),
                     null,
                     null);
+            methodVisitor.visitCode();
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
                     Type.getInternalName(Object.class),
