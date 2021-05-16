@@ -1,37 +1,57 @@
 package net.bytebuddy.utility;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
+@RunWith(Parameterized.class)
 public class JavaDispatcherTest {
+
+    private final boolean generate;
+
+    public JavaDispatcherTest(boolean generate) {
+        this.generate = generate;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {true},
+                {false}
+        });
+    }
 
     @Test
     public void testStaticDispatcher() throws Exception {
-        assertThat(JavaDispatcher.of(StaticSample.class).run().forName(Object.class.getName()), is((Object) Object.class));
+        assertThat(JavaDispatcher.of(StaticSample.class, null, generate).run().forName(Object.class.getName()), is((Object) Object.class));
     }
 
     @Test
     public void testStaticAdjustedDispatcher() throws Exception {
-        assertThat(JavaDispatcher.of(StaticAdjustedSample.class).run().forName(Object.class.getName()), is((Object) Object.class));
+        assertThat(JavaDispatcher.of(StaticAdjustedSample.class, null, generate).run().forName(Object.class.getName()), is((Object) Object.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testStaticAdjustedIllegalDispatcher() throws Exception {
-        assertThat(JavaDispatcher.of(StaticAdjustedIllegalSample.class).run().forName(null), is((Object) Object.class));
+        assertThat(JavaDispatcher.of(StaticAdjustedIllegalSample.class, null, generate).run().forName(null), is((Object) Object.class));
     }
 
     @Test
     public void testNonStaticDispatcher() throws Exception {
-        assertThat(JavaDispatcher.of(NonStaticSample.class).run().getName(Object.class), is(Object.class.getName()));
+        assertThat(JavaDispatcher.of(NonStaticSample.class, null, generate).run().getName(Object.class), is(Object.class.getName()));
     }
 
     @Test
@@ -42,68 +62,63 @@ public class JavaDispatcherTest {
 
     @Test(expected = IllegalStateException.class)
     public void testNonStaticAdjustedIllegalDispatcher() throws Exception {
-        JavaDispatcher.of(NonStaticAdjustedIllegalSample.class).run().getMethod(Object.class, "equals", null);
+        JavaDispatcher.of(NonStaticAdjustedIllegalSample.class, null, generate).run().getMethod(Object.class, "equals", null);
     }
 
     @Test
     public void testNonStaticRenamedDispatcher() throws Exception {
-        assertThat(JavaDispatcher.of(NonStaticRenamedSample.class).run().getNameRenamed(Object.class), is(Object.class.getName()));
+        assertThat(JavaDispatcher.of(NonStaticRenamedSample.class, null, generate).run().getNameRenamed(Object.class), is(Object.class.getName()));
     }
 
     @Test
     public void testIsInstance() throws Exception {
-        assertThat(JavaDispatcher.of(IsInstanceSample.class).run().isInstance(Object.class), is(true));
-        assertThat(JavaDispatcher.of(IsInstanceSample.class).run().isInstance(new Object()), is(false));
+        IsInstanceSample sample = JavaDispatcher.of(IsInstanceSample.class, null, generate).run();
+        assertThat(sample.isInstance(Object.class), is(true));
+        assertThat(sample.isInstance(new Object()), is(false));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testIsInstanceIllegal() throws Exception {
-        JavaDispatcher.of(IsInstanceIllegalSample.class).run().isInstance(null);
+        JavaDispatcher.of(IsInstanceIllegalSample.class, null, generate).run().isInstance(null);
     }
 
     @Test
     public void testContainer() throws Exception {
-        assertThat(JavaDispatcher.of(ContainerSample.class).run().toArray(1).length, is(1));
-        assertThat(JavaDispatcher.of(ContainerSample.class).run().toArray(1).getClass().getComponentType(), is((Object) Class.class));
+        Class<?>[] array = JavaDispatcher.of(ContainerSample.class, null, generate).run().toArray(1);
+        assertThat(array.length, is(1));
+        assertThat(array[0], nullValue(Class.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testContainerIllegal() throws Exception {
-        JavaDispatcher.of(IllegalContainerSample.class).run().toArray(null);
+        JavaDispatcher.of(IllegalContainerSample.class, null, generate).run().toArray(null);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testNonExistentType() throws Exception {
-        JavaDispatcher.of(NonExistentTypeSample.class).run().foo();
+        JavaDispatcher.of(NonExistentTypeSample.class, null, generate).run().foo();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testNonExistentMethod() throws Exception {
-        JavaDispatcher.of(NonExistentMethodSample.class).run().foo();
+        JavaDispatcher.of(NonExistentMethodSample.class, null, generate).run().foo();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNonInterface() throws Exception {
-        JavaDispatcher.of(Object.class);
+        JavaDispatcher.of(Object.class, null, generate);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNonAnnotated() throws Exception {
-        JavaDispatcher.of(Runnable.class);
+        JavaDispatcher.of(Runnable.class, null, generate);
     }
 
     @Test(expected = IOException.class)
     public void testDeclaredException() throws Exception {
         File file = mock(File.class);
         when(file.getCanonicalPath()).thenThrow(new IOException());
-        JavaDispatcher.of(DeclaredExceptionSample.class).run().getCanonicalPath(file);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testUndeclaredException() throws Exception {
-        File file = mock(File.class);
-        when(file.getCanonicalPath()).thenThrow(new IOException());
-        JavaDispatcher.of(UndeclaredExceptionSample.class).run().getCanonicalPath(file);
+        JavaDispatcher.of(DeclaredExceptionSample.class, null, generate).run().getCanonicalPath(file);
     }
 
     @JavaDispatcher.Proxied("java.lang.Class")

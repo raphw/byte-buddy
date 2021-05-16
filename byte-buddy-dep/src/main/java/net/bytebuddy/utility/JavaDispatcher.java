@@ -15,21 +15,40 @@
  */
 package net.bytebuddy.utility;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
+import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A dispatcher for creating a proxy that invokes methods of a type that is possibly unknown on the current VM.
+ * A dispatcher for creating a proxy that invokes methods of a type that is possibly unknown on the current VM. Dispatchers do not
+ * use any of Byte Buddy's regular infrastructure, to avoid bootstrapping issues as these dispatchers are used by Byte Buddy itself.
  *
  * @param <T> The resolved type.
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class JavaDispatcher<T> implements PrivilegedAction<T> {
+
+    /**
+     * A property to determine, that if {@code true}, dispatcher classes will be generated natively and not by using a {@link Proxy}.
+     */
+    public static final String GENERATE_PROPERTY = "net.bytebuddy.generate";
+
+    /**
+     * If {@code true}, dispatcher classes will be generated natively and not by using a {@link Proxy}.
+     */
+    private static final boolean GENERATE = Boolean.parseBoolean(AccessController.doPrivileged(new GetSystemPropertyAction(GENERATE_PROPERTY)));
 
     /**
      * The proxy type.
@@ -43,14 +62,21 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     private final ClassLoader classLoader;
 
     /**
+     * {@code true} if a proxy class should be manually generated.
+     */
+    private final boolean generate;
+
+    /**
      * Creates a new dispatcher.
      *
      * @param proxy       The proxy type.
      * @param classLoader The class loader to resolve the proxied type from or {@code null} if the bootstrap loader should be used.
+     * @param generate    {@code true} if a proxy class should be manually generated.
      */
-    protected JavaDispatcher(Class<T> proxy, ClassLoader classLoader) {
+    protected JavaDispatcher(Class<T> proxy, ClassLoader classLoader, boolean generate) {
         this.proxy = proxy;
         this.classLoader = classLoader;
+        this.generate = generate;
     }
 
     /**
@@ -72,13 +98,26 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
      * @param <T>         The resolved type.
      * @return An action for creating an appropriate dispatcher.
      */
-    public static <T> PrivilegedAction<T> of(Class<T> type, ClassLoader classLoader) {
+    protected static <T> PrivilegedAction<T> of(Class<T> type, ClassLoader classLoader) {
+        return of(type, classLoader, GENERATE);
+    }
+
+    /**
+     * Resolves an action for creating a dispatcher for the provided type.
+     *
+     * @param type        The type for which a dispatcher should be resolved.
+     * @param classLoader The class loader to resolve the proxied type from.
+     * @param generate    {@code true} if a proxy class should be manually generated.
+     * @param <T>         The resolved type.
+     * @return An action for creating an appropriate dispatcher.
+     */
+    protected static <T> PrivilegedAction<T> of(Class<T> type, ClassLoader classLoader, boolean generate) {
         if (!type.isInterface()) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Expected an interface instead of " + type);
         } else if (!type.isAnnotationPresent(Proxied.class)) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Expected " + type.getName() + " to be annotated with " + Proxied.class.getName());
         }
-        return new JavaDispatcher<T>(type, classLoader);
+        return new JavaDispatcher<T>(type, classLoader, generate);
     }
 
     /**
@@ -105,9 +144,13 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                             : new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Type not available on current VM: " + exception.getMessage()));
                 }
             }
-            return (T) Proxy.newProxyInstance(proxy.getClassLoader(),
-                    new Class<?>[]{proxy},
-                    new ProxiedInvocationHandler(name, dispatchers));
+            if (generate) {
+                return (T) ProxiedClassLoader.proxy(proxy, dispatchers);
+            } else {
+                return (T) Proxy.newProxyInstance(proxy.getClassLoader(),
+                        new Class<?>[]{proxy},
+                        new ProxiedInvocationHandler(name, dispatchers));
+            }
         }
         for (Method method : proxy.getMethods()) {
             if (method.getDeclaringClass() == Object.class) {
@@ -197,9 +240,13 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 }
             }
         }
-        return (T) Proxy.newProxyInstance(proxy.getClassLoader(),
-                new Class<?>[]{proxy},
-                new ProxiedInvocationHandler(target.getName(), dispatchers));
+        if (generate) {
+            return (T) ProxiedClassLoader.proxy(proxy, dispatchers);
+        } else {
+            return (T) Proxy.newProxyInstance(proxy.getClassLoader(),
+                    new Class<?>[]{proxy},
+                    new ProxiedInvocationHandler(target.getName(), dispatchers));
+        }
     }
 
     /**
@@ -342,6 +389,15 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             Object invoke(Object[] argument) throws Throwable;
 
             /**
+             * Implements this dispatcher in a generated proxy.
+             *
+             * @param methodVisitor The method visitor to implement the method with.
+             * @param method        The method being implemented.
+             * @return The maximal size of the operand stack.
+             */
+            int apply(MethodVisitor methodVisitor, Method method);
+
+            /**
              * A dispatcher that performs an instance check.
              */
             @HashCodeAndEqualsPlugin.Enhance
@@ -366,6 +422,16 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                  */
                 public Object invoke(Object[] argument) throws Throwable {
                     return target.isInstance(argument[0]);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int apply(MethodVisitor methodVisitor, Method method) {
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+                    methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(target));
+                    methodVisitor.visitInsn(Opcodes.IRETURN);
+                    return 1;
                 }
             }
 
@@ -394,6 +460,16 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                  */
                 public Object invoke(Object[] argument) throws Throwable {
                     return Array.newInstance(target, (Integer) argument[0]);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int apply(MethodVisitor methodVisitor, Method method) {
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 1);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, org.objectweb.asm.Type.getInternalName(target));
+                    methodVisitor.visitInsn(Opcodes.ARETURN);
+                    return 1;
                 }
             }
 
@@ -454,6 +530,22 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 public Object invoke(Object[] argument) throws Throwable {
                     return value;
                 }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int apply(MethodVisitor methodVisitor, Method method) { // TODO
+                    methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(IllegalStateException.class));
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitLdcInsn("Not yet implemented");
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                            Type.getInternalName(IllegalStateException.class),
+                            MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                            Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String.class)),
+                            false);
+                    methodVisitor.visitInsn(Opcodes.ATHROW);
+                    return 3;
+                }
             }
 
             /**
@@ -481,6 +573,29 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                  */
                 public Object invoke(Object[] argument) throws Throwable {
                     return method.invoke(null, argument);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int apply(MethodVisitor methodVisitor, Method method) {
+                    Class<?>[] source = method.getParameterTypes(), target = this.method.getParameterTypes();
+                    int offset = 1;
+                    for (int index = 0; index < source.length; index++) {
+                        Type type = Type.getType(source[index]);
+                        methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), offset);
+                        if (source[index] != target[index]) {
+                            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(target[index]));
+                        }
+                        offset += type.getSize();
+                    }
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                            Type.getInternalName(this.method.getDeclaringClass()),
+                            this.method.getName(),
+                            Type.getMethodDescriptor(this.method),
+                            false);
+                    methodVisitor.visitInsn(Type.getReturnType(this.method).getOpcode(Opcodes.IRETURN));
+                    return Math.max(offset - 1, Type.getReturnType(this.method).getSize());
                 }
             }
 
@@ -522,6 +637,31 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                     }
                     return method.invoke(argument[0], reduced);
                 }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int apply(MethodVisitor methodVisitor, Method method) {
+                    Class<?>[] source = method.getParameterTypes(), target = this.method.getParameterTypes();
+                    int offset = 1;
+                    for (int index = 0; index < source.length; index++) {
+                        Type type = Type.getType(source[index]);
+                        methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), offset);
+                        if (source[index] != (index == 0 ? this.method.getDeclaringClass() : target[index + 1])) {
+                            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(index == 0
+                                    ? this.method.getDeclaringClass()
+                                    : target[index + 1]));
+                        }
+                        offset += type.getSize();
+                    }
+                    methodVisitor.visitMethodInsn(this.method.getDeclaringClass().isInterface() ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL,
+                            Type.getInternalName(this.method.getDeclaringClass()),
+                            this.method.getName(),
+                            Type.getMethodDescriptor(this.method),
+                            this.method.getDeclaringClass().isInterface());
+                    methodVisitor.visitInsn(Type.getReturnType(this.method).getOpcode(Opcodes.IRETURN));
+                    return Math.max(offset - 1, Type.getReturnType(this.method).getSize());
+                }
             }
 
             /**
@@ -550,6 +690,106 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 public Object invoke(Object[] argument) throws Throwable {
                     throw new IllegalStateException("Could not invoke proxy: " + message);
                 }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int apply(MethodVisitor methodVisitor, Method method) {
+                    methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(IllegalStateException.class));
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitLdcInsn(message);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                            Type.getInternalName(IllegalStateException.class),
+                            MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                            Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String.class)),
+                            false);
+                    methodVisitor.visitInsn(Opcodes.ATHROW);
+                    return 3;
+                }
+            }
+        }
+    }
+
+    /**
+     * A class loader for loading proxied classes that do not require boxing of arguments into object arrays.
+     */
+    protected static class ProxiedClassLoader extends ClassLoader {
+
+        /**
+         * Indicates that a constructor does not declare any parameters.
+         */
+        private static final Class<?>[] NO_PARAMETER = new Class<?>[0];
+
+        /**
+         * Indicates that a constructor does not require any arguments.
+         */
+        private static final Object[] NO_ARGUMENT = new Object[0];
+
+        /**
+         * Creates a new proxied class loader.
+         *
+         * @param parent The super class loader.
+         */
+        protected ProxiedClassLoader(ClassLoader parent) {
+            super(parent);
+        }
+
+        /**
+         * Creates a new proxied type.
+         *
+         * @param proxy       The proxy type interface.
+         * @param dispatchers The dispatchers to implement.
+         * @return An instance of the proxied type.
+         */
+        protected static Object proxy(Class<?> proxy, Map<Method, ProxiedInvocationHandler.Dispatcher> dispatchers) {
+            ClassWriter classWriter = new ClassWriter(0);
+            classWriter.visit(ClassFileVersion.ofThisVm().getMinorMajorVersion(),
+                    Opcodes.ACC_PUBLIC,
+                    org.objectweb.asm.Type.getInternalName(proxy) + "$Proxy",
+                    null,
+                    org.objectweb.asm.Type.getInternalName(Object.class),
+                    new String[]{org.objectweb.asm.Type.getInternalName(proxy)});
+            for (Map.Entry<Method, ProxiedInvocationHandler.Dispatcher> entry : dispatchers.entrySet()) {
+                Class<?>[] exceptionType = entry.getKey().getExceptionTypes();
+                String[] exceptionTypeName = new String[exceptionType.length];
+                for (int index = 0; index < exceptionType.length; index++) {
+                    exceptionTypeName[index] = org.objectweb.asm.Type.getInternalName(exceptionType[index]);
+                }
+                MethodVisitor methodVisitor = classWriter.visitMethod(Opcodes.ACC_PUBLIC,
+                        entry.getKey().getName(),
+                        Type.getMethodDescriptor(entry.getKey()),
+                        null,
+                        exceptionTypeName);
+                int length = (entry.getKey().getModifiers() & Opcodes.ACC_STATIC) == 0 ? 1 : 0;
+                for (Class<?> type : entry.getKey().getParameterTypes()) {
+                    length += org.objectweb.asm.Type.getType(type).getSize();
+                }
+                methodVisitor.visitMaxs(entry.getValue().apply(methodVisitor, entry.getKey()), length);
+                methodVisitor.visitEnd();
+            }
+            MethodVisitor methodVisitor = classWriter.visitMethod(Opcodes.ACC_PUBLIC,
+                    MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                    Type.getMethodDescriptor(Type.VOID_TYPE),
+                    null,
+                    null);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                    Type.getInternalName(Object.class),
+                    MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                    Type.getMethodDescriptor(Type.VOID_TYPE),
+                    false);
+            methodVisitor.visitInsn(Opcodes.RETURN);
+            methodVisitor.visitMaxs(1, 1);
+            methodVisitor.visitEnd();
+            classWriter.visitEnd();
+            byte[] binaryRepresentation = classWriter.toByteArray();
+            try {
+                return new ProxiedClassLoader(proxy.getClassLoader())
+                        .defineClass(proxy.getName() + "$Proxy", binaryRepresentation, 0, binaryRepresentation.length)
+                        .getConstructor(NO_PARAMETER)
+                        .newInstance(NO_ARGUMENT);
+            } catch (Exception exception) {
+                throw new IllegalStateException("Failed to create proxy for " + proxy.getName(), exception);
             }
         }
     }
