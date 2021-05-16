@@ -206,7 +206,7 @@ public interface AnnotationDescription {
         /**
          * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
          */
-        private static final Object[] NO_ARGUMENTS = new Object[0];
+        private static final Object[] NO_ARGUMENT = new Object[0];
 
         /**
          * The loaded annotation type.
@@ -339,7 +339,7 @@ public interface AnnotationDescription {
             try {
                 for (Map.Entry<Method, AnnotationValue.Loaded<?>> entry : values.entrySet()) {
                     try {
-                        if (!entry.getValue().represents(entry.getKey().invoke(other, NO_ARGUMENTS))) {
+                        if (!entry.getValue().represents(entry.getKey().invoke(other, NO_ARGUMENT))) {
                             return false;
                         }
                     } catch (RuntimeException exception) {
@@ -491,6 +491,11 @@ public interface AnnotationDescription {
     class ForLoadedAnnotation<S extends Annotation> extends AbstractBase implements Loadable<S> {
 
         /**
+         * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
+         */
+        private static final Object[] NO_ARGUMENT = new Object[0];
+
+        /**
          * The represented annotation value.
          */
         private final S annotation;
@@ -554,7 +559,7 @@ public interface AnnotationDescription {
             Map<String, AnnotationValue<?, ?>> annotationValues = new HashMap<String, AnnotationValue<?, ?>>();
             for (Method property : annotation.annotationType().getDeclaredMethods()) {
                 try {
-                    annotationValues.put(property.getName(), asValue(property.invoke(annotation), property.getReturnType()));
+                    annotationValues.put(property.getName(), asValue(property.invoke(annotation, NO_ARGUMENT), property.getReturnType()));
                 } catch (InvocationTargetException exception) {
                     Throwable cause = exception.getCause();
                     if (cause instanceof TypeNotPresentException) {
@@ -642,7 +647,7 @@ public interface AnnotationDescription {
                         AccessController.doPrivileged(new SetAccessibleAction<Method>(method));
                     }
                 }
-                return asValue(method.invoke(annotation), method.getReturnType()).filter(property);
+                return asValue(method.invoke(annotation, NO_ARGUMENT), method.getReturnType()).filter(property);
             } catch (InvocationTargetException exception) {
                 Throwable cause = exception.getCause();
                 if (cause instanceof TypeNotPresentException) {
