@@ -24,7 +24,6 @@ import net.bytebuddy.description.type.PackageDescription;
 import java.io.InputStream;
 import java.lang.reflect.AnnotatedElement;
 import java.security.AccessController;
-import java.util.*;
 
 /**
  * Type-safe representation of a {@code java.lang.Module}. On platforms that do not support the module API, modules are represented by {@code null}.
@@ -175,45 +174,6 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      */
     public AnnotationList getDeclaredAnnotations() {
         return new AnnotationList.ForLoadedAnnotations(module.getDeclaredAnnotations());
-    }
-
-    /**
-     * Modifies this module's properties.
-     *
-     * @param instrumentation The {@link java.lang.instrument.Instrumentation} instance to use for applying the modification.
-     * @param reads           A set of additional modules this module should read.
-     * @param exports         A map of packages to export to a set of modules.
-     * @param opens           A map of packages to open to a set of modules.
-     * @param uses            A set of provider interfaces to use by this module.
-     * @param provides        A map of provider interfaces to provide by this module mapped to the provider implementations.
-     */
-    public void modify(Object instrumentation,
-                       Set<JavaModule> reads,
-                       Map<String, Set<JavaModule>> exports,
-                       Map<String, Set<JavaModule>> opens,
-                       Set<Class<?>> uses,
-                       Map<Class<?>, List<Class<?>>> provides) {
-        Set<Object> unwrappedReads = new HashSet<Object>();
-        for (JavaModule read : reads) {
-            unwrappedReads.add(read.unwrap());
-        }
-        Map<String, Set<Object>> unwrappedExports = new HashMap<String, Set<Object>>();
-        for (Map.Entry<String, Set<JavaModule>> entry : exports.entrySet()) {
-            Set<Object> modules = new HashSet<Object>();
-            for (JavaModule module : entry.getValue()) {
-                modules.add(module.unwrap());
-            }
-            unwrappedExports.put(entry.getKey(), modules);
-        }
-        Map<String, Set<Object>> unwrappedOpens = new HashMap<String, Set<Object>>();
-        for (Map.Entry<String, Set<JavaModule>> entry : opens.entrySet()) {
-            Set<Object> modules = new HashSet<Object>();
-            for (JavaModule module : entry.getValue()) {
-                modules.add(module.unwrap());
-            }
-            unwrappedOpens.put(entry.getKey(), modules);
-        }
-        DISPATCHER.modify(instrumentation, module, unwrappedReads, unwrappedExports, unwrappedOpens, uses, provides);
     }
 
     @Override

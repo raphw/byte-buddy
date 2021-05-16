@@ -2234,7 +2234,8 @@ public interface AgentBuilder {
                 if (module != JavaModule.UNSUPPORTED && module.isNamed()) {
                     for (JavaModule target : modules) {
                         if (!module.canRead(target) || addTargetEdge && !module.isOpened(typeDescription.getPackage(), target)) {
-                            module.modify(instrumentation,
+                            ClassInjector.UsingInstrumentation.redefineModule(instrumentation,
+                                    module,
                                     Collections.singleton(target),
                                     Collections.<String, Set<JavaModule>>emptyMap(),
                                     !addTargetEdge || typeDescription.getPackage() == null
@@ -2244,7 +2245,8 @@ public interface AgentBuilder {
                                     Collections.<Class<?>, List<Class<?>>>emptyMap());
                         }
                         if (addTargetEdge && !target.canRead(module)) {
-                            target.modify(instrumentation,
+                            ClassInjector.UsingInstrumentation.redefineModule(instrumentation,
+                                    target,
                                     Collections.singleton(module),
                                     Collections.<String, Set<JavaModule>>emptyMap(),
                                     Collections.<String, Set<JavaModule>>emptyMap(),

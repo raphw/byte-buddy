@@ -4,11 +4,14 @@ import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.JavaModule;
+import net.bytebuddy.utility.JavaType;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
@@ -16,6 +19,7 @@ import java.io.PrintStream;
 import java.lang.instrument.Instrumentation;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
@@ -31,6 +35,9 @@ public class AgentBuilderListenerTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Mock
     private AgentBuilder.Listener first, second;
@@ -283,23 +290,34 @@ public class AgentBuilderListenerTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(9)
     public void testReadEdgeAddingListenerNamedCannotRead() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
         JavaModule source = mock(JavaModule.class), target = mock(JavaModule.class);
         when(source.isNamed()).thenReturn(true);
         when(source.canRead(target)).thenReturn(false);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, false, Collections.singleton(target));
+        when(Instrumentation.class.getMethod("isModifiableModule", JavaType.MODULE.load()).invoke(instrumentation, (Object) null)).thenReturn(true);
         listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, LOADED, mock(DynamicType.class));
         verify(source).isNamed();
         verify(source).canRead(target);
-        verify(source).modify(instrumentation,
-                Collections.singleton(target),
+        Instrumentation.class.getMethod("redefineModule",
+                JavaType.MODULE.load(),
+                Set.class,
+                Map.class,
+                Map.class,
+                Set.class,
+                Map.class).invoke(verify(instrumentation),
+                null,
+                Collections.singleton(null),
                 Collections.<String, Set<JavaModule>>emptyMap(),
                 Collections.<String, Set<JavaModule>>emptyMap(),
                 Collections.<Class<?>>emptySet(),
                 Collections.<Class<?>, List<Class<?>>>emptyMap());
+        verify(source, times(2)).unwrap();
         verifyNoMoreInteractions(source);
-        verifyZeroInteractions(target);
+        verify(target).unwrap();
+        verifyNoMoreInteractions(target);
     }
 
     @Test
@@ -342,30 +360,35 @@ public class AgentBuilderListenerTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(9)
     public void testReadEdgeAddingListenerNamedDuplexCannotRead() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
         JavaModule source = mock(JavaModule.class), target = mock(JavaModule.class);
         when(source.isNamed()).thenReturn(true);
         when(source.canRead(target)).thenReturn(false);
         when(target.canRead(source)).thenReturn(false);
+        when(Instrumentation.class.getMethod("isModifiableModule", JavaType.MODULE.load()).invoke(instrumentation, (Object) null)).thenReturn(true);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, true, Collections.singleton(target));
         listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, LOADED, mock(DynamicType.class));
+        Instrumentation.class.getMethod("redefineModule",
+                JavaType.MODULE.load(),
+                Set.class,
+                Map.class,
+                Map.class,
+                Set.class,
+                Map.class).invoke(verify(instrumentation, times(2)),
+                null,
+                Collections.singleton(null),
+                Collections.<String, Set<JavaModule>>emptyMap(),
+                Collections.<String, Set<JavaModule>>emptyMap(),
+                Collections.<Class<?>>emptySet(),
+                Collections.<Class<?>, List<Class<?>>>emptyMap());
         verify(source).isNamed();
         verify(source).canRead(target);
-        verify(source).modify(instrumentation,
-                Collections.singleton(target),
-                Collections.<String, Set<JavaModule>>emptyMap(),
-                Collections.<String, Set<JavaModule>>emptyMap(),
-                Collections.<Class<?>>emptySet(),
-                Collections.<Class<?>, List<Class<?>>>emptyMap());
+        verify(source, times(3)).unwrap();
         verifyNoMoreInteractions(source);
         verify(target).canRead(source);
-        verify(target).modify(instrumentation,
-                Collections.singleton(source),
-                Collections.<String, Set<JavaModule>>emptyMap(),
-                Collections.<String, Set<JavaModule>>emptyMap(),
-                Collections.<Class<?>>emptySet(),
-                Collections.<Class<?>, List<Class<?>>>emptyMap());
+        verify(target, times(3)).unwrap();
         verifyNoMoreInteractions(target);
     }
 

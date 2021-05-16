@@ -2034,8 +2034,6 @@ public interface ClassInjector {
                 this.dispatcher = dispatcher;
             }
 
-            // TODO: Move JavaModule.modify here.
-
             /**
              * Resolves an injection strategy that uses unsafe injection if available and also attempts to open and use
              * {@code jdk.internal.misc.Unsafe} as a fallback. This method generates a new class and module for opening the
@@ -2071,7 +2069,8 @@ public interface ClassInjector {
                             return new Factory();
                         } else if (local) {
                             JavaModule module = JavaModule.ofType(AccessResolver.Default.class);
-                            source.modify(instrumentation,
+                            UsingInstrumentation.redefineModule(instrumentation,
+                                    source,
                                     Collections.singleton(module),
                                     Collections.<String, Set<JavaModule>>emptyMap(),
                                     Collections.singletonMap(packageDescription.getName(), Collections.singleton(module)),
@@ -2089,7 +2088,8 @@ public interface ClassInjector {
                                     .load(AccessResolver.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER.with(AccessResolver.class.getProtectionDomain()))
                                     .getLoaded();
                             JavaModule module = JavaModule.ofType(resolver);
-                            source.modify(instrumentation,
+                            ClassInjector.UsingInstrumentation.redefineModule(instrumentation,
+                                    source,
                                     Collections.singleton(module),
                                     Collections.<String, Set<JavaModule>>emptyMap(),
                                     Collections.singletonMap(packageDescription.getName(), Collections.singleton(module)),
@@ -2227,6 +2227,50 @@ public interface ClassInjector {
         }
 
         /**
+         * Modifies a module's properties using {@link Instrumentation}.
+         *
+         * @param instrumentation The {@link Instrumentation} instance to use for applying the modification.
+         * @param target The target module that should be modified.
+         * @param reads           A set of additional modules this module should read.
+         * @param exports         A map of packages to export to a set of modules.
+         * @param opens           A map of packages to open to a set of modules.
+         * @param uses            A set of provider interfaces to use by this module.
+         * @param provides        A map of provider interfaces to provide by this module mapped to the provider implementations.
+         */
+        public static void redefineModule(Instrumentation instrumentation,
+                                          JavaModule target,
+                                          Set<JavaModule> reads,
+                                          Map<String, Set<JavaModule>> exports,
+                                          Map<String, Set<JavaModule>> opens,
+                                          Set<Class<?>> uses,
+                                          Map<Class<?>, List<Class<?>>> provides) {
+            if (!DISPATCHER.isModifiableModule(instrumentation, target.unwrap())) {
+                throw new IllegalArgumentException("Cannot modify module: " + target);
+            }
+            Set<Object> unwrappedReads = new HashSet<Object>();
+            for (JavaModule read : reads) {
+                unwrappedReads.add(read.unwrap());
+            }
+            Map<String, Set<?>> unwrappedExports = new HashMap<String, Set<?>>();
+            for (Map.Entry<String, Set<JavaModule>> entry : exports.entrySet()) {
+                Set<Object> modules = new HashSet<Object>();
+                for (JavaModule module : entry.getValue()) {
+                    modules.add(module.unwrap());
+                }
+                unwrappedExports.put(entry.getKey(), modules);
+            }
+            Map<String, Set<?>> unwrappedOpens = new HashMap<String, Set<?>>();
+            for (Map.Entry<String, Set<JavaModule>> entry : opens.entrySet()) {
+                Set<Object> modules = new HashSet<Object>();
+                for (JavaModule module : entry.getValue()) {
+                    modules.add(module.unwrap());
+                }
+                unwrappedOpens.put(entry.getKey(), modules);
+            }
+            DISPATCHER.redefineModule(instrumentation, target.unwrap(), unwrappedReads, unwrappedExports, unwrappedOpens, uses, provides);
+        }
+
+        /**
          * Creates an instrumentation-based class injector.
          *
          * @param folder          The folder to be used for storing jar files.
@@ -2317,6 +2361,34 @@ public interface ClassInjector {
              * @param jarFile         The jar file to append.
              */
             void appendToSystemClassLoaderSearch(Instrumentation instrumentation, JarFile jarFile);
+
+            /**
+             * Checks if a module is modifiable.
+             *
+             * @param instrumentation The instrumentation instance to use for checking for modifiability.
+             * @param module          The {@code java.lang.Module} to examine.
+             * @return {@code true} if the supplied module is modifiable.
+             */
+            boolean isModifiableModule(Instrumentation instrumentation, @JavaDispatcher.Proxied("java.lang.Module") Object module);
+
+            /**
+             * Redefines an existing module.
+             *
+             * @param instrumentation The instrumentation instance to redefine.
+             * @param module          The {@code java.lang.Module} to redefine.
+             * @param reads           A set of {@code java.lang.Module}s that are to be read additionally.
+             * @param exports         A map of packages to a set of {@code java.lang.Module}s to read additionally.
+             * @param opens           A map of packages to a set of {@code java.lang.Module}s to open to additionally.
+             * @param uses            A list of types to use additionally.
+             * @param provides        A list of types to their implementations to offer additionally.
+             */
+            void redefineModule(Instrumentation instrumentation,
+                                @JavaDispatcher.Proxied("java.lang.Module") Object module,
+                                Set<?> reads,
+                                Map<String, Set<?>> exports,
+                                Map<String, Set<?>> opens,
+                                Set<Class<?>> uses,
+                                Map<Class<?>, List<Class<?>>> provides);
         }
 
         /**
