@@ -32,8 +32,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * <p>
  * A dispatcher for creating a proxy that invokes methods of a type that is possibly unknown on the current VM. Dispatchers do not
  * use any of Byte Buddy's regular infrastructure, to avoid bootstrapping issues as these dispatchers are used by Byte Buddy itself.
+ * </p>
+ * <p>
+ * By default, this dispatcher uses the Java {@link Proxy} for creating dispatchers. By setting {@code net.bytebuddy.generate} to
+ * {@code true}, Byte Buddy can generate proxies manually as byte code to mostly avoid reflection and boxing of arguments as arrays.
+ * </p>
  *
  * @param <T> The resolved type.
  */
