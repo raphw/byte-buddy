@@ -752,7 +752,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                         Type.getInternalName(this.method.getDeclaringClass()),
                         this.method.getName(),
                         Type.getMethodDescriptor(this.method),
-                        false);
+                        this.method.getDeclaringClass().isInterface());
                 methodVisitor.visitInsn(Type.getReturnType(this.method).getOpcode(Opcodes.IRETURN));
                 return Math.max(offset - 1, Type.getReturnType(this.method).getSize());
             }
@@ -806,10 +806,10 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 for (int index = 0; index < source.length; index++) {
                     Type type = Type.getType(source[index]);
                     methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), offset);
-                    if (source[index] != (index == 0 ? this.method.getDeclaringClass() : target[index + 1])) {
+                    if (source[index] != (index == 0 ? this.method.getDeclaringClass() : target[index - 1])) {
                         methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(index == 0
                                 ? this.method.getDeclaringClass()
-                                : target[index + 1]));
+                                : target[index - 1]));
                     }
                     offset += type.getSize();
                 }
