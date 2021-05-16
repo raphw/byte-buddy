@@ -416,7 +416,6 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         /**
          * A dispatcher that returns a fixed value.
          */
-        @HashCodeAndEqualsPlugin.Enhance
         enum ForDefaultValue implements Dispatcher {
 
             /**
@@ -877,6 +876,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     /**
      * An invocation handler that invokes given dispatchers.
      */
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class ProxiedInvocationHandler implements InvocationHandler {
 
         /**
