@@ -155,7 +155,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @return {@code true} if this module exports the supplied package to this module.
      */
     public boolean isExported(PackageDescription packageDescription, JavaModule module) {
-        return packageDescription == null || MODULE.isExported(this.module, module.unwrap(), packageDescription.getName());
+        return packageDescription == null || MODULE.isExported(this.module, packageDescription.getName(), module.unwrap());
     }
 
     /**
@@ -166,7 +166,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @return {@code true} if this module opens the supplied package to this module.
      */
     public boolean isOpened(PackageDescription packageDescription, JavaModule module) {
-        return packageDescription == null || MODULE.isOpened(this.module, module.unwrap(), packageDescription.getName());
+        return packageDescription == null || MODULE.isOpen(this.module, packageDescription.getName(), module.unwrap());
     }
 
     /**
@@ -209,7 +209,6 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @param type The type for which to resolve the module.
          * @return The type's module or {@code null} if the module system is not supported.
          */
-        @JavaDispatcher.Static
         @JavaDispatcher.Defaults
         Object getModule(Class<?> type);
     }
@@ -266,21 +265,21 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * Returns {@code true} if the source module exports the supplied package to the target module.
          *
          * @param value    The source module.
-         * @param target   The target module.
          * @param aPackage The name of the package to check.
+         * @param target   The target module.
          * @return {@code true} if the source module exports the supplied package to the target module.
          */
-        boolean isExported(Object value, @JavaDispatcher.Proxied("java.lang.Module") Object target, String aPackage);
+        boolean isExported(Object value, String aPackage, @JavaDispatcher.Proxied("java.lang.Module") Object target);
 
         /**
          * Returns {@code true} if the source module opens the supplied package to the target module.
          *
          * @param value    The source module.
-         * @param target   The target module.
          * @param aPackage The name of the package to check.
+         * @param target   The target module.
          * @return {@code true} if the source module opens the supplied package to the target module.
          */
-        boolean isOpened(Object value, @JavaDispatcher.Proxied("java.lang.Module") Object target, String aPackage);
+        boolean isOpen(Object value, String aPackage, @JavaDispatcher.Proxied("java.lang.Module") Object target);
 
         /**
          * Checks if the source module can read the target module.

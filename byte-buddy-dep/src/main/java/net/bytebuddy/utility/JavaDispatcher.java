@@ -125,7 +125,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
      */
     @SuppressWarnings("unchecked")
     public T run() {
-        Map<Method, ProxiedInvocationHandler.Dispatcher> dispatchers = new HashMap<Method, ProxiedInvocationHandler.Dispatcher>();
+        Map<Method, Dispatcher> dispatchers = new HashMap<Method, Dispatcher>();
         boolean defaults = proxy.isAnnotationPresent(Defaults.class);
         String name = proxy.getAnnotation(Proxied.class).value();
         Class<?> target;
@@ -137,11 +137,11 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                     continue;
                 }
                 if (method.isAnnotationPresent(Instance.class)) {
-                    dispatchers.put(method, new ProxiedInvocationHandler.Dispatcher.ForFixedValue(false));
+                    dispatchers.put(method, Dispatcher.ForDefaultValue.BOOLEAN);
                 } else {
                     dispatchers.put(method, defaults || method.isAnnotationPresent(Defaults.class)
-                            ? ProxiedInvocationHandler.Dispatcher.ForFixedValue.of(method.getReturnType())
-                            : new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Type not available on current VM: " + exception.getMessage()));
+                            ? Dispatcher.ForDefaultValue.of(method.getReturnType())
+                            : new Dispatcher.ForUnresolvedMethod("Type not available on current VM: " + exception.getMessage()));
                 }
             }
             if (generate) {
@@ -160,13 +160,13 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 if (method.getParameterTypes().length != 1 || !method.getParameterTypes()[0].isAssignableFrom(target)) {
                     throw new IllegalStateException("Instance check requires a single regular-typed argument: " + method);
                 } else {
-                    dispatchers.put(method, new ProxiedInvocationHandler.Dispatcher.ForInstanceCheck(target));
+                    dispatchers.put(method, new Dispatcher.ForInstanceCheck(target));
                 }
             } else if (method.isAnnotationPresent(Container.class)) {
                 if (method.getParameterTypes().length != 1 || method.getParameterTypes()[0] != int.class) {
                     throw new IllegalStateException("Container creation requires a single int-typed argument: " + method);
                 } else {
-                    dispatchers.put(method, new ProxiedInvocationHandler.Dispatcher.ForContainerCreation(target));
+                    dispatchers.put(method, new Dispatcher.ForContainerCreation(target));
                 }
             } else {
                 try {
@@ -225,18 +225,18 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                         throw new IllegalStateException("Cannot assign " + resolved.getReturnType().getName() + " to " + method);
                     }
                     dispatchers.put(method, Modifier.isStatic(resolved.getModifiers())
-                            ? new ProxiedInvocationHandler.Dispatcher.ForStaticMethod(resolved)
-                            : new ProxiedInvocationHandler.Dispatcher.ForNonStaticMethod(resolved));
+                            ? new Dispatcher.ForStaticMethod(resolved)
+                            : new Dispatcher.ForNonStaticMethod(resolved));
                 } catch (ClassNotFoundException exception) {
                     dispatchers.put(method, defaults || method.isAnnotationPresent(Defaults.class)
-                            ? ProxiedInvocationHandler.Dispatcher.ForFixedValue.of(method.getReturnType())
-                            : new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Class not available on current VM: " + exception.getMessage()));
+                            ? Dispatcher.ForDefaultValue.of(method.getReturnType())
+                            : new Dispatcher.ForUnresolvedMethod("Class not available on current VM: " + exception.getMessage()));
                 } catch (NoSuchMethodException exception) {
                     dispatchers.put(method, defaults || method.isAnnotationPresent(Defaults.class)
-                            ? ProxiedInvocationHandler.Dispatcher.ForFixedValue.of(method.getReturnType())
-                            : new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Method not available on current VM: " + exception.getMessage()));
+                            ? Dispatcher.ForDefaultValue.of(method.getReturnType())
+                            : new Dispatcher.ForUnresolvedMethod("Method not available on current VM: " + exception.getMessage()));
                 } catch (Throwable throwable) {
-                    dispatchers.put(method, new ProxiedInvocationHandler.Dispatcher.ForUnresolvedMethod("Unexpected error: " + throwable.getMessage()));
+                    dispatchers.put(method, new Dispatcher.ForUnresolvedMethod("Unexpected error: " + throwable.getMessage()));
                 }
             }
         }
@@ -309,6 +309,566 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     }
 
     /**
+     * A dispatcher for handling a proxied method.
+     */
+    protected interface Dispatcher {
+
+        /**
+         * Invokes the proxied action.
+         *
+         * @param argument The arguments provided.
+         * @return The return value.
+         * @throws Throwable If any error occurs.
+         */
+        Object invoke(Object[] argument) throws Throwable;
+
+        /**
+         * Implements this dispatcher in a generated proxy.
+         *
+         * @param methodVisitor The method visitor to implement the method with.
+         * @param method        The method being implemented.
+         * @return The maximal size of the operand stack.
+         */
+        int apply(MethodVisitor methodVisitor, Method method);
+
+        /**
+         * A dispatcher that performs an instance check.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class ForInstanceCheck implements Dispatcher {
+
+            /**
+             * The checked type.
+             */
+            private final Class<?> target;
+
+            /**
+             * Creates a dispatcher for an instance check.
+             *
+             * @param target The checked type.
+             */
+            protected ForInstanceCheck(Class<?> target) {
+                this.target = target;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Object invoke(Object[] argument) {
+                return target.isInstance(argument[0]);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public int apply(MethodVisitor methodVisitor, Method method) {
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+                methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(target));
+                methodVisitor.visitInsn(Opcodes.IRETURN);
+                return 1;
+            }
+        }
+
+        /**
+         * A dispatcher that creates an array.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class ForContainerCreation implements Dispatcher {
+
+            /**
+             * The component type.
+             */
+            private final Class<?> target;
+
+            /**
+             * Creates a dispatcher for an array creation.
+             *
+             * @param target The component type.
+             */
+            protected ForContainerCreation(Class<?> target) {
+                this.target = target;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Object invoke(Object[] argument) {
+                return Array.newInstance(target, (Integer) argument[0]);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public int apply(MethodVisitor methodVisitor, Method method) {
+                methodVisitor.visitVarInsn(Opcodes.ILOAD, 1);
+                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, Type.getInternalName(target));
+                methodVisitor.visitInsn(Opcodes.ARETURN);
+                return 1;
+            }
+        }
+
+        /**
+         * A dispatcher that returns a fixed value.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        enum ForDefaultValue implements Dispatcher {
+
+            /**
+             * A dispatcher for a {@code void} type.
+             */
+            VOID(null, Opcodes.NOP, Opcodes.RETURN, 0),
+
+            /**
+             * A dispatcher for a {@code boolean} type.
+             */
+            BOOLEAN(false, Opcodes.ICONST_0, Opcodes.IRETURN, 1),
+
+            /**
+             * A dispatcher for a {@code byte} type.
+             */
+            BYTE((byte) 0, Opcodes.ICONST_0, Opcodes.IRETURN, 1),
+
+            /**
+             * A dispatcher for a {@code short} type.
+             */
+            SHORT((short) 0, Opcodes.ICONST_0, Opcodes.IRETURN, 1),
+
+            /**
+             * A dispatcher for a {@code char} type.
+             */
+            CHARACTER((char) 0, Opcodes.ICONST_0, Opcodes.IRETURN, 1),
+
+            /**
+             * A dispatcher for an {@code int} type.
+             */
+            INTEGER(0, Opcodes.ICONST_0, Opcodes.IRETURN, 1),
+
+            /**
+             * A dispatcher for a {@code long} type.
+             */
+            LONG(0L, Opcodes.LCONST_0, Opcodes.LRETURN, 2),
+
+            /**
+             * A dispatcher for a {@code float} type.
+             */
+            FLOAT(0f, Opcodes.FCONST_0, Opcodes.FRETURN, 1),
+
+            /**
+             * A dispatcher for a {@code double} type.
+             */
+            DOUBLE(0d, Opcodes.DCONST_0, Opcodes.DRETURN, 2),
+
+            /**
+             * A dispatcher for a reference type.
+             */
+            REFERENCE(null, Opcodes.ACONST_NULL, Opcodes.ARETURN, 1);
+
+            /**
+             * The default value.
+             */
+            private final Object value;
+
+            /**
+             * The opcode to load the default value.
+             */
+            private final int load;
+
+            /**
+             * The opcode to return the default value.
+             */
+            private final int returned;
+
+            /**
+             * The operand stack size of default value.
+             */
+            private final int size;
+
+            /**
+             * Creates a new default value dispatcher.
+             *
+             * @param value    The default value.
+             * @param load     The opcode to load the default value.
+             * @param returned The opcode to return the default value.
+             * @param size     The operand stack size of default value.
+             */
+            ForDefaultValue(Object value, int load, int returned, int size) {
+                this.value = value;
+                this.load = load;
+                this.returned = returned;
+                this.size = size;
+            }
+
+            /**
+             * Resolves a fixed value for a given type.
+             *
+             * @param type The type to resolve.
+             * @return An appropriate dispatcher.
+             */
+            protected static Dispatcher of(Class<?> type) {
+                if (type == void.class) {
+                    return VOID;
+                } else if (type == boolean.class) {
+                    return BOOLEAN;
+                } else if (type == byte.class) {
+                    return BYTE;
+                } else if (type == short.class) {
+                    return SHORT;
+                } else if (type == char.class) {
+                    return CHARACTER;
+                } else if (type == int.class) {
+                    return INTEGER;
+                } else if (type == long.class) {
+                    return LONG;
+                } else if (type == float.class) {
+                    return FLOAT;
+                } else if (type == double.class) {
+                    return DOUBLE;
+                } else if (type.isArray()) {
+                    if (type.getComponentType() == boolean.class) {
+                        return OfPrimitiveArray.BOOLEAN;
+                    } else if (type.getComponentType() == byte.class) {
+                        return OfPrimitiveArray.BYTE;
+                    } else if (type.getComponentType() == short.class) {
+                        return OfPrimitiveArray.SHORT;
+                    } else if (type.getComponentType() == char.class) {
+                        return OfPrimitiveArray.CHARACTER;
+                    } else if (type.getComponentType() == int.class) {
+                        return OfPrimitiveArray.INTEGER;
+                    } else if (type.getComponentType() == long.class) {
+                        return OfPrimitiveArray.LONG;
+                    } else if (type.getComponentType() == float.class) {
+                        return OfPrimitiveArray.FLOAT;
+                    } else if (type.getComponentType() == double.class) {
+                        return OfPrimitiveArray.DOUBLE;
+                    } else {
+                        return OfNonPrimitiveArray.of(type.getComponentType());
+                    }
+                } else {
+                    return REFERENCE;
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Object invoke(Object[] argument) {
+                return value;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public int apply(MethodVisitor methodVisitor, Method method) {
+                if (load != Opcodes.NOP) {
+                    methodVisitor.visitInsn(load);
+                }
+                methodVisitor.visitInsn(returned);
+                return size;
+            }
+
+            /**
+             * A dispatcher for returning a default value for a primitive array.
+             */
+            protected enum OfPrimitiveArray implements Dispatcher {
+
+                /**
+                 * A dispatcher for a {@code boolean} array.
+                 */
+                BOOLEAN(new boolean[0], Opcodes.T_BOOLEAN),
+
+                /**
+                 * A dispatcher for a {@code byte} array.
+                 */
+                BYTE(new byte[0], Opcodes.T_BYTE),
+
+                /**
+                 * A dispatcher for a {@code short} array.
+                 */
+                SHORT(new short[0], Opcodes.T_SHORT),
+
+                /**
+                 * A dispatcher for a {@code char} array.
+                 */
+                CHARACTER(new char[0], Opcodes.T_CHAR),
+
+                /**
+                 * A dispatcher for a {@code int} array.
+                 */
+                INTEGER(new int[0], Opcodes.T_INT),
+
+                /**
+                 * A dispatcher for a {@code long} array.
+                 */
+                LONG(new long[0], Opcodes.T_LONG),
+
+                /**
+                 * A dispatcher for a {@code float} array.
+                 */
+                FLOAT(new float[0], Opcodes.T_FLOAT),
+
+                /**
+                 * A dispatcher for a {@code double} array.
+                 */
+                DOUBLE(new double[0], Opcodes.T_DOUBLE);
+
+                /**
+                 * The default value.
+                 */
+                private final Object value;
+
+                /**
+                 * The operand for creating an array of the represented type.
+                 */
+                private final int operand;
+
+                /**
+                 * Creates a new dispatcher for a primitive array.
+                 *
+                 * @param value   The default value.
+                 * @param operand The operand for creating an array of the represented type.
+                 */
+                OfPrimitiveArray(Object value, int operand) {
+                    this.value = value;
+                    this.operand = operand;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object invoke(Object[] argument) {
+                    return value;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int apply(MethodVisitor methodVisitor, Method method) {
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitIntInsn(Opcodes.NEWARRAY, operand);
+                    methodVisitor.visitInsn(Opcodes.ARETURN);
+                    return 1;
+                }
+            }
+
+            /**
+             * A dispatcher for a non-primitive array type.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            protected static class OfNonPrimitiveArray implements Dispatcher {
+
+                /**
+                 * The default value.
+                 */
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
+                private final Object value;
+
+                /**
+                 * The represented component type.
+                 */
+                private final Class<?> componentType;
+
+                /**
+                 * Creates a new dispatcher for the default value of a non-primitive array.
+                 *
+                 * @param value         The default value.
+                 * @param componentType The represented component type.
+                 */
+                protected OfNonPrimitiveArray(Object value, Class<?> componentType) {
+                    this.value = value;
+                    this.componentType = componentType;
+                }
+
+                /**
+                 * Creates a new dispatcher.
+                 *
+                 * @param componentType The represented component type.
+                 * @return A dispatcher for the supplied component type.
+                 */
+                protected static Dispatcher of(Class<?> componentType) {
+                    return new OfNonPrimitiveArray(Array.newInstance(componentType, 0), componentType);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object invoke(Object[] argument) {
+                    return value;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int apply(MethodVisitor methodVisitor, Method method) {
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, Type.getInternalName(componentType));
+                    methodVisitor.visitInsn(Opcodes.ARETURN);
+                    return 1;
+                }
+            }
+        }
+
+        /**
+         * A dispatcher for invoking a static proxied method.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class ForStaticMethod implements Dispatcher {
+
+            /**
+             * The proxied method.
+             */
+            private final Method method;
+
+            /**
+             * Creates a dispatcher for invoking a static method.
+             *
+             * @param method The proxied method.
+             */
+            protected ForStaticMethod(Method method) {
+                this.method = method;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Object invoke(Object[] argument) throws Throwable {
+                return method.invoke(null, argument);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public int apply(MethodVisitor methodVisitor, Method method) {
+                Class<?>[] source = method.getParameterTypes(), target = this.method.getParameterTypes();
+                int offset = 1;
+                for (int index = 0; index < source.length; index++) {
+                    Type type = Type.getType(source[index]);
+                    methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), offset);
+                    if (source[index] != target[index]) {
+                        methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(target[index]));
+                    }
+                    offset += type.getSize();
+                }
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                        Type.getInternalName(this.method.getDeclaringClass()),
+                        this.method.getName(),
+                        Type.getMethodDescriptor(this.method),
+                        false);
+                methodVisitor.visitInsn(Type.getReturnType(this.method).getOpcode(Opcodes.IRETURN));
+                return Math.max(offset - 1, Type.getReturnType(this.method).getSize());
+            }
+        }
+
+        /**
+         * A dispatcher for invoking a non-static proxied method.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class ForNonStaticMethod implements Dispatcher {
+
+            /**
+             * Indicates a call without arguments.
+             */
+            private static final Object[] NO_ARGUMENTS = new Object[0];
+
+            /**
+             * The proxied method.
+             */
+            private final Method method;
+
+            /**
+             * Creates a dispatcher for invoking a non-static method.
+             *
+             * @param method The proxied method.
+             */
+            protected ForNonStaticMethod(Method method) {
+                this.method = method;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Object invoke(Object[] argument) throws Throwable {
+                Object[] reduced;
+                if (argument.length == 1) {
+                    reduced = NO_ARGUMENTS;
+                } else {
+                    reduced = new Object[argument.length - 1];
+                    System.arraycopy(argument, 1, reduced, 0, reduced.length);
+                }
+                return method.invoke(argument[0], reduced);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public int apply(MethodVisitor methodVisitor, Method method) {
+                Class<?>[] source = method.getParameterTypes(), target = this.method.getParameterTypes();
+                int offset = 1;
+                for (int index = 0; index < source.length; index++) {
+                    Type type = Type.getType(source[index]);
+                    methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), offset);
+                    if (source[index] != (index == 0 ? this.method.getDeclaringClass() : target[index + 1])) {
+                        methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(index == 0
+                                ? this.method.getDeclaringClass()
+                                : target[index + 1]));
+                    }
+                    offset += type.getSize();
+                }
+                methodVisitor.visitMethodInsn(this.method.getDeclaringClass().isInterface() ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL,
+                        Type.getInternalName(this.method.getDeclaringClass()),
+                        this.method.getName(),
+                        Type.getMethodDescriptor(this.method),
+                        this.method.getDeclaringClass().isInterface());
+                methodVisitor.visitInsn(Type.getReturnType(this.method).getOpcode(Opcodes.IRETURN));
+                return Math.max(offset - 1, Type.getReturnType(this.method).getSize());
+            }
+        }
+
+        /**
+         * A dispatcher for an unresolved method.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class ForUnresolvedMethod implements Dispatcher {
+
+            /**
+             * The message for describing the reason why the method could not be resolved.
+             */
+            private final String message;
+
+            /**
+             * Creates a dispatcher for an unresolved method.
+             *
+             * @param message The message for describing the reason why the method could not be resolved.
+             */
+            protected ForUnresolvedMethod(String message) {
+                this.message = message;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Object invoke(Object[] argument) throws Throwable {
+                throw new IllegalStateException("Could not invoke proxy: " + message);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public int apply(MethodVisitor methodVisitor, Method method) {
+                methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(IllegalStateException.class));
+                methodVisitor.visitInsn(Opcodes.DUP);
+                methodVisitor.visitLdcInsn(message);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                        Type.getInternalName(IllegalStateException.class),
+                        MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                        Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String.class)),
+                        false);
+                methodVisitor.visitInsn(Opcodes.ATHROW);
+                return 3;
+            }
+        }
+    }
+
+    /**
      * An invocation handler that invokes given dispatchers.
      */
     protected static class ProxiedInvocationHandler implements InvocationHandler {
@@ -373,341 +933,6 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 throw new IllegalStateException("Failed to invoke proxy for " + method, throwable);
             }
         }
-
-        /**
-         * A dispatcher for handling a proxied method.
-         */
-        protected interface Dispatcher {
-
-            /**
-             * Invokes the proxied action.
-             *
-             * @param argument The arguments provided.
-             * @return The return value.
-             * @throws Throwable If any error occurs.
-             */
-            Object invoke(Object[] argument) throws Throwable;
-
-            /**
-             * Implements this dispatcher in a generated proxy.
-             *
-             * @param methodVisitor The method visitor to implement the method with.
-             * @param method        The method being implemented.
-             * @return The maximal size of the operand stack.
-             */
-            int apply(MethodVisitor methodVisitor, Method method);
-
-            /**
-             * A dispatcher that performs an instance check.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForInstanceCheck implements Dispatcher {
-
-                /**
-                 * The checked type.
-                 */
-                private final Class<?> target;
-
-                /**
-                 * Creates a dispatcher for an instance check.
-                 *
-                 * @param target The checked type.
-                 */
-                protected ForInstanceCheck(Class<?> target) {
-                    this.target = target;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object invoke(Object[] argument) throws Throwable {
-                    return target.isInstance(argument[0]);
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public int apply(MethodVisitor methodVisitor, Method method) {
-                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
-                    methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(target));
-                    methodVisitor.visitInsn(Opcodes.IRETURN);
-                    return 1;
-                }
-            }
-
-            /**
-             * A dispatcher that creates an array.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForContainerCreation implements Dispatcher {
-
-                /**
-                 * The component type.
-                 */
-                private final Class<?> target;
-
-                /**
-                 * Creates a dispatcher for an array creation.
-                 *
-                 * @param target The component type.
-                 */
-                protected ForContainerCreation(Class<?> target) {
-                    this.target = target;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object invoke(Object[] argument) throws Throwable {
-                    return Array.newInstance(target, (Integer) argument[0]);
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public int apply(MethodVisitor methodVisitor, Method method) {
-                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 1);
-                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, org.objectweb.asm.Type.getInternalName(target));
-                    methodVisitor.visitInsn(Opcodes.ARETURN);
-                    return 1;
-                }
-            }
-
-            /**
-             * A dispatcher that returns a fixed value.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForFixedValue implements Dispatcher {
-
-                /**
-                 * The returned value.
-                 */
-                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
-                private final Object value;
-
-                /**
-                 * Creates a dispatcher that returns a fixed value.
-                 *
-                 * @param value The returned value.
-                 */
-                protected ForFixedValue(Object value) {
-                    this.value = value;
-                }
-
-                /**
-                 * Resolves a fixed value for a given type.
-                 *
-                 * @param type The type to resolve.
-                 * @return An appropriate dispatcher.
-                 */
-                protected static Dispatcher of(Class<?> type) {
-                    if (type == boolean.class) {
-                        return new ForFixedValue(false);
-                    } else if (type == byte.class) {
-                        return new ForFixedValue((byte) 0);
-                    } else if (type == short.class) {
-                        return new ForFixedValue((short) 0);
-                    } else if (type == char.class) {
-                        return new ForFixedValue((char) 0);
-                    } else if (type == int.class) {
-                        return new ForFixedValue(0);
-                    } else if (type == long.class) {
-                        return new ForFixedValue(0L);
-                    } else if (type == float.class) {
-                        return new ForFixedValue(0f);
-                    } else if (type == double.class) {
-                        return new ForFixedValue(0d);
-                    } else if (type.isArray()) {
-                        return new ForFixedValue(Array.newInstance(type.getComponentType(), 0));
-                    } else {
-                        return new ForFixedValue(null);
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object invoke(Object[] argument) throws Throwable {
-                    return value;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public int apply(MethodVisitor methodVisitor, Method method) { // TODO
-                    methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(IllegalStateException.class));
-                    methodVisitor.visitInsn(Opcodes.DUP);
-                    methodVisitor.visitLdcInsn("Not yet implemented");
-                    methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
-                            Type.getInternalName(IllegalStateException.class),
-                            MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                            Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String.class)),
-                            false);
-                    methodVisitor.visitInsn(Opcodes.ATHROW);
-                    return 3;
-                }
-            }
-
-            /**
-             * A dispatcher for invoking a static proxied method.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForStaticMethod implements Dispatcher {
-
-                /**
-                 * The proxied method.
-                 */
-                private final Method method;
-
-                /**
-                 * Creates a dispatcher for invoking a static method.
-                 *
-                 * @param method The proxied method.
-                 */
-                protected ForStaticMethod(Method method) {
-                    this.method = method;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object invoke(Object[] argument) throws Throwable {
-                    return method.invoke(null, argument);
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public int apply(MethodVisitor methodVisitor, Method method) {
-                    Class<?>[] source = method.getParameterTypes(), target = this.method.getParameterTypes();
-                    int offset = 1;
-                    for (int index = 0; index < source.length; index++) {
-                        Type type = Type.getType(source[index]);
-                        methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), offset);
-                        if (source[index] != target[index]) {
-                            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(target[index]));
-                        }
-                        offset += type.getSize();
-                    }
-                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                            Type.getInternalName(this.method.getDeclaringClass()),
-                            this.method.getName(),
-                            Type.getMethodDescriptor(this.method),
-                            false);
-                    methodVisitor.visitInsn(Type.getReturnType(this.method).getOpcode(Opcodes.IRETURN));
-                    return Math.max(offset - 1, Type.getReturnType(this.method).getSize());
-                }
-            }
-
-            /**
-             * A dispatcher for invoking a non-static proxied method.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForNonStaticMethod implements Dispatcher {
-
-                /**
-                 * Indicates a call without arguments.
-                 */
-                private static final Object[] NO_ARGUMENTS = new Object[0];
-
-                /**
-                 * The proxied method.
-                 */
-                private final Method method;
-
-                /**
-                 * Creates a dispatcher for invoking a non-static method.
-                 *
-                 * @param method The proxied method.
-                 */
-                protected ForNonStaticMethod(Method method) {
-                    this.method = method;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object invoke(Object[] argument) throws Throwable {
-                    Object[] reduced;
-                    if (argument.length == 1) {
-                        reduced = NO_ARGUMENTS;
-                    } else {
-                        reduced = new Object[argument.length - 1];
-                        System.arraycopy(argument, 1, reduced, 0, reduced.length);
-                    }
-                    return method.invoke(argument[0], reduced);
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public int apply(MethodVisitor methodVisitor, Method method) {
-                    Class<?>[] source = method.getParameterTypes(), target = this.method.getParameterTypes();
-                    int offset = 1;
-                    for (int index = 0; index < source.length; index++) {
-                        Type type = Type.getType(source[index]);
-                        methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), offset);
-                        if (source[index] != (index == 0 ? this.method.getDeclaringClass() : target[index + 1])) {
-                            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(index == 0
-                                    ? this.method.getDeclaringClass()
-                                    : target[index + 1]));
-                        }
-                        offset += type.getSize();
-                    }
-                    methodVisitor.visitMethodInsn(this.method.getDeclaringClass().isInterface() ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL,
-                            Type.getInternalName(this.method.getDeclaringClass()),
-                            this.method.getName(),
-                            Type.getMethodDescriptor(this.method),
-                            this.method.getDeclaringClass().isInterface());
-                    methodVisitor.visitInsn(Type.getReturnType(this.method).getOpcode(Opcodes.IRETURN));
-                    return Math.max(offset - 1, Type.getReturnType(this.method).getSize());
-                }
-            }
-
-            /**
-             * A dispatcher for an unresolved method.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForUnresolvedMethod implements Dispatcher {
-
-                /**
-                 * The message for describing the reason why the method could not be resolved.
-                 */
-                private final String message;
-
-                /**
-                 * Creates a dispatcher for an unresolved method.
-                 *
-                 * @param message The message for describing the reason why the method could not be resolved.
-                 */
-                protected ForUnresolvedMethod(String message) {
-                    this.message = message;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object invoke(Object[] argument) throws Throwable {
-                    throw new IllegalStateException("Could not invoke proxy: " + message);
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public int apply(MethodVisitor methodVisitor, Method method) {
-                    methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(IllegalStateException.class));
-                    methodVisitor.visitInsn(Opcodes.DUP);
-                    methodVisitor.visitLdcInsn(message);
-                    methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
-                            Type.getInternalName(IllegalStateException.class),
-                            MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                            Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String.class)),
-                            false);
-                    methodVisitor.visitInsn(Opcodes.ATHROW);
-                    return 3;
-                }
-            }
-        }
     }
 
     /**
@@ -741,19 +966,19 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
          * @param dispatchers The dispatchers to implement.
          * @return An instance of the proxied type.
          */
-        protected static Object proxy(Class<?> proxy, Map<Method, ProxiedInvocationHandler.Dispatcher> dispatchers) {
+        protected static Object proxy(Class<?> proxy, Map<Method, Dispatcher> dispatchers) {
             ClassWriter classWriter = new ClassWriter(0);
             classWriter.visit(ClassFileVersion.ofThisVm().getMinorMajorVersion(),
                     Opcodes.ACC_PUBLIC,
-                    org.objectweb.asm.Type.getInternalName(proxy) + "$Proxy",
+                    Type.getInternalName(proxy) + "$Proxy",
                     null,
-                    org.objectweb.asm.Type.getInternalName(Object.class),
-                    new String[]{org.objectweb.asm.Type.getInternalName(proxy)});
-            for (Map.Entry<Method, ProxiedInvocationHandler.Dispatcher> entry : dispatchers.entrySet()) {
+                    Type.getInternalName(Object.class),
+                    new String[]{Type.getInternalName(proxy)});
+            for (Map.Entry<Method, Dispatcher> entry : dispatchers.entrySet()) {
                 Class<?>[] exceptionType = entry.getKey().getExceptionTypes();
                 String[] exceptionTypeName = new String[exceptionType.length];
                 for (int index = 0; index < exceptionType.length; index++) {
-                    exceptionTypeName[index] = org.objectweb.asm.Type.getInternalName(exceptionType[index]);
+                    exceptionTypeName[index] = Type.getInternalName(exceptionType[index]);
                 }
                 MethodVisitor methodVisitor = classWriter.visitMethod(Opcodes.ACC_PUBLIC,
                         entry.getKey().getName(),
@@ -762,7 +987,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                         exceptionTypeName);
                 int length = (entry.getKey().getModifiers() & Opcodes.ACC_STATIC) == 0 ? 1 : 0;
                 for (Class<?> type : entry.getKey().getParameterTypes()) {
-                    length += org.objectweb.asm.Type.getType(type).getSize();
+                    length += Type.getType(type).getSize();
                 }
                 methodVisitor.visitMaxs(entry.getValue().apply(methodVisitor, entry.getKey()), length);
                 methodVisitor.visitEnd();
