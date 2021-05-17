@@ -812,7 +812,8 @@ public class MethodCall implements Implementation.Composable {
                 if (candidates.size() == 1) {
                     return candidates.get(0);
                 } else {
-                    throw new IllegalStateException(instrumentedType + " does not define exactly one virtual method or constructor for " + matcher);
+                    throw new IllegalStateException(instrumentedType + " does not define exactly one virtual method or constructor for " + matcher +
+                            ", " + candidates.size() + " matched");
                 }
             }
 
@@ -897,7 +898,6 @@ public class MethodCall implements Implementation.Composable {
              */
             ArgumentProvider make(Implementation.Target implementationTarget);
         }
-
         /**
          * An argument loader that loads the {@code null} value onto the operand stack.
          */
@@ -939,6 +939,7 @@ public class MethodCall implements Implementation.Composable {
                 return NullConstant.INSTANCE;
             }
         }
+
 
         /**
          * An argument loader that assigns the {@code this} reference to a parameter.
@@ -1191,7 +1192,8 @@ public class MethodCall implements Implementation.Composable {
                  */
                 public List<ArgumentLoader> resolve(MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     if (index >= instrumentedMethod.getParameters().size()) {
-                        throw new IllegalStateException(instrumentedMethod + " does not have a parameter with index " + index);
+                        throw new IllegalStateException(instrumentedMethod + " does not have a parameter with index " + index +
+                                ", " + instrumentedMethod.getParameters().size() + " defined");
                     }
                     return Collections.<ArgumentLoader>singletonList(new ForMethodParameter(index, instrumentedMethod));
                 }
@@ -1367,9 +1369,11 @@ public class MethodCall implements Implementation.Composable {
                  */
                 public List<ArgumentLoader> resolve(MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     if (instrumentedMethod.getParameters().size() <= index) {
-                        throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index);
+                        throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index +
+                                ", " + instrumentedMethod.getParameters().size() + " defined");
                     } else if (!instrumentedMethod.getParameters().get(index).getType().isArray()) {
-                        throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index));
+                        throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index) +
+                                " at index " + index);
                     }
                     return Collections.<ArgumentLoader>singletonList(new ForMethodParameterArrayElement(instrumentedMethod.getParameters().get(index), arrayIndex));
                 }
@@ -1414,9 +1418,11 @@ public class MethodCall implements Implementation.Composable {
                  */
                 public List<ArgumentLoader> resolve(MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     if (instrumentedMethod.getParameters().size() <= index) {
-                        throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index);
+                        throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index +
+                                ", " + instrumentedMethod.getParameters().size() + " defined");
                     } else if (!instrumentedMethod.getParameters().get(index).getType().isArray()) {
-                        throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index));
+                        throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index) +
+                                " at index " + index);
                     }
                     List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(invokedMethod.getParameters().size());
                     for (int index = 0; index < invokedMethod.getParameters().size(); index++) {
@@ -2027,6 +2033,7 @@ public class MethodCall implements Implementation.Composable {
                 return new Resolved(instrumentedType, instrumentedMethod);
             }
 
+
             /**
              * A resolved target handler for a static or self-declared invocation.
              */
@@ -2083,7 +2090,6 @@ public class MethodCall implements Implementation.Composable {
                     );
                 }
             }
-
             /**
              * A factory for invoking a static method or a self-declared method.
              */
@@ -2626,8 +2632,8 @@ public class MethodCall implements Implementation.Composable {
                  */
                 public StackManipulation toStackManipulation(MethodDescription invokedMethod, Assigner assigner, Assigner.Typing typing) {
                     StackManipulation stackManipulation = assigner.assign(methodDescription.isConstructor()
-                                    ? methodDescription.getDeclaringType().asGenericType()
-                                    : methodDescription.getReturnType(), invokedMethod.getDeclaringType().asGenericType(), typing);
+                            ? methodDescription.getDeclaringType().asGenericType()
+                            : methodDescription.getReturnType(), invokedMethod.getDeclaringType().asGenericType(), typing);
                     if (!stackManipulation.isValid()) {
                         throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + (methodDescription.isConstructor()
                                 ? methodDescription.getDeclaringType()
@@ -2998,7 +3004,6 @@ public class MethodCall implements Implementation.Composable {
              */
             TerminationHandler make(TypeDescription instrumentedType);
         }
-
         /**
          * Simple termination handler implementations.
          */
@@ -3062,6 +3067,7 @@ public class MethodCall implements Implementation.Composable {
                 return StackManipulation.Trivial.INSTANCE;
             }
         }
+
 
         /**
          * A termination handler that sets a field.
