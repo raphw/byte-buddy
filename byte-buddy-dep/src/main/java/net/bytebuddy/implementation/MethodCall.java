@@ -812,8 +812,9 @@ public class MethodCall implements Implementation.Composable {
                 if (candidates.size() == 1) {
                     return candidates.get(0);
                 } else {
-                    throw new IllegalStateException(instrumentedType + " does not define exactly one virtual method or constructor for " + matcher +
-                            ", " + candidates.size() + " matched");
+                    throw new IllegalStateException(instrumentedType + " does not define exactly one virtual method or constructor for " + matcher
+                            + " but contained " + candidates.size()
+                            + " candidates: " + candidates);
                 }
             }
 
