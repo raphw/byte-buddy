@@ -2717,6 +2717,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * {@inheritDoc}
                      */
+                    @SuppressFBWarnings(value = "BC_VACUOUS_INSTANCEOF", justification = "Cast is required for JVMs before Java 8")
                     public AnnotatedElement resolve() {
                         // Older JVMs require this check and cast as the hierarchy was introduced in a later version.
                         return typeVariable instanceof AnnotatedElement
