@@ -10,8 +10,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -32,6 +31,11 @@ public class JavaDispatcherTest {
                 {true},
                 {false}
         });
+    }
+
+    @Test
+    public void testConstructor() throws Exception {
+        assertThat(JavaDispatcher.of(Constructor.class, null, generate).run().make(), instanceOf(Object.class));
     }
 
     @Test
@@ -119,6 +123,13 @@ public class JavaDispatcherTest {
         File file = mock(File.class);
         when(file.getCanonicalPath()).thenThrow(new IOException());
         JavaDispatcher.of(DeclaredExceptionSample.class, null, generate).run().getCanonicalPath(file);
+    }
+
+    @JavaDispatcher.Proxied("java.lang.Object")
+    public interface Constructor {
+
+        @JavaDispatcher.IsConstructor
+        Object make();
     }
 
     @JavaDispatcher.Proxied("java.lang.Class")
