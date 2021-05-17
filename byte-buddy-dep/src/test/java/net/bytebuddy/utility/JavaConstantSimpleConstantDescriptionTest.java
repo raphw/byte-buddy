@@ -18,7 +18,7 @@ public class JavaConstantSimpleConstantDescriptionTest {
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
-    public void testConstant() throws Exception {
+    public void testInteger() throws Exception {
         assertThat(JavaConstant.Simple.ofDescription(42, (ClassLoader) null).asConstantDescription(), is((Object) 42));
     }
 
