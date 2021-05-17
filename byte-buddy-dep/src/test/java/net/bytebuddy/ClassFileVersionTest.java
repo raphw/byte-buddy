@@ -1,10 +1,10 @@
 package net.bytebuddy;
 
-import java.lang.reflect.Field;
-import java.util.regex.Pattern;
-
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
+
+import java.lang.reflect.Field;
+import java.util.regex.Pattern;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -40,11 +40,6 @@ public class ClassFileVersionTest {
         assertThat(new ClassFileVersion(Opcodes.V1_2).compareTo(new ClassFileVersion(Opcodes.V1_2)), is(0));
         assertThat(new ClassFileVersion(Opcodes.V1_3).compareTo(new ClassFileVersion(Opcodes.V1_2)), is(1));
         assertThat(new ClassFileVersion(Opcodes.V1_2).compareTo(new ClassFileVersion(Opcodes.V1_3)), is(-1));
-    }
-
-    @Test
-    public void testVersionPropertyAction() throws Exception {
-        assertThat(ClassFileVersion.VersionLocator.ForLegacyVm.INSTANCE.run(), is(System.getProperty("java.version")));
     }
 
     @Test

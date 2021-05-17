@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.utility;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
@@ -972,9 +973,10 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
          * @param dispatchers The dispatchers to implement.
          * @return An instance of the proxied type.
          */
+        @SuppressFBWarnings(value = {"REC_CATCH_EXCEPTION", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"}, justification = "Expected internal invocation")
         protected static Object proxy(Class<?> proxy, Map<Method, Dispatcher> dispatchers) {
             ClassWriter classWriter = new ClassWriter(0);
-            classWriter.visit(ClassFileVersion.ofThisVm().getMinorMajorVersion(),
+            classWriter.visit(ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).getMinorMajorVersion(),
                     Opcodes.ACC_PUBLIC,
                     Type.getInternalName(proxy) + "$Proxy",
                     null,

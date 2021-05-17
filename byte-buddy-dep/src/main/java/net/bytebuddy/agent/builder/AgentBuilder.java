@@ -5321,11 +5321,6 @@ public interface AgentBuilder {
         };
 
         /**
-         * Indicates that the current VM does not support checks for the legality of type modification.
-         */
-        protected static final boolean ALL_MODIFIABLE = ClassFileVersion.ofThisVm().isAtMost(ClassFileVersion.JAVA_V5);
-
-        /**
          * A dispatcher to use for interacting with the instrumentation API.
          */
         protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
@@ -5400,6 +5395,7 @@ public interface AgentBuilder {
         /**
          * Applies this redefinition strategy by submitting all loaded types to redefinition. If this redefinition strategy is disabled,
          * this method is non-operational.
+         *
          * @param instrumentation               The instrumentation instance to use.
          * @param poolStrategy                  The type locator to use.
          * @param locationStrategy              The location strategy to use.
@@ -5407,7 +5403,7 @@ public interface AgentBuilder {
          * @param fallbackStrategy              The fallback strategy to apply.
          * @param redefinitionDiscoveryStrategy The discovery strategy for loaded types to be redefined.
          * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
-*                                      instrumentation of classes that represent lambda expressions.
+         *                                      instrumentation of classes that represent lambda expressions.
          * @param listener                      The listener to notify on transformations.
          * @param redefinitionListener          The redefinition listener for the redefinition strategy to apply.
          * @param matcher                       The matcher to identify what types to redefine.
@@ -5437,10 +5433,10 @@ public interface AgentBuilder {
                         matcher,
                         circularityLock);
                 for (Class<?> type : types) {
-                    if (type == null || type.isArray() || !lambdaInstrumentationStrategy.isInstrumented(type)) {
+                    if (type == null || type.isArray() || type.isPrimitive() || !lambdaInstrumentationStrategy.isInstrumented(type)) {
                         continue;
                     }
-                    collector.consider(type, !type.isPrimitive() && (ALL_MODIFIABLE || DISPATCHER.isModifiableClass(instrumentation, type)));
+                    collector.consider(type, DISPATCHER.isModifiableClass(instrumentation, type) || ClassFileVersion.ofThisVm().isAtMost(ClassFileVersion.JAVA_V5));
                 }
                 batch = collector.apply(instrumentation, redefinitionBatchAllocator, redefinitionListener, batch);
             }
@@ -7190,7 +7186,8 @@ public interface AgentBuilder {
                                             Class<?> type = Class.forName(iterator.next(), false, classLoader);
                                             collector.consider(type, !type.isArray()
                                                     && !type.isPrimitive()
-                                                    && (ALL_MODIFIABLE || DISPATCHER.isModifiableClass(instrumentation, type)));
+                                                    && (DISPATCHER.isModifiableClass(instrumentation, type)
+                                                    || ClassFileVersion.ofThisVm().isAtMost(ClassFileVersion.JAVA_V5)));
                                         } catch (Throwable ignored) {
                                             /* do nothing */
                                         } finally {
@@ -7633,8 +7630,8 @@ public interface AgentBuilder {
             /**
              * Applies this collector.
              *
-             * @param instrumentation  The instrumentation instance to apply the transformation for.
-             * @param types            The types of the current patch to transform.
+             * @param instrumentation The instrumentation instance to apply the transformation for.
+             * @param types           The types of the current patch to transform.
              * @throws UnmodifiableClassException If a class is not modifiable.
              * @throws ClassNotFoundException     If a class could not be found.
              */
@@ -12056,6 +12053,7 @@ public interface AgentBuilder {
                                                                      ElementMatcher<String> typeNameMatcher) {
                     return resubmitOnError(exceptionMatcher, typeNameMatcher, ElementMatchers.<ClassLoader>any());
                 }
+
                 /**
                  * {@inheritDoc}
                  */
