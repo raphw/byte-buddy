@@ -159,6 +159,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                         new ProxiedInvocationHandler(name, dispatchers));
             }
         }
+        boolean generate = this.generate;
         for (Method method : proxy.getMethods()) {
             if (method.getDeclaringClass() == Object.class) {
                 continue;
@@ -179,7 +180,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 try {
                     Class<?>[] parameterType = method.getParameterTypes();
                     int offset;
-                    if (method.isAnnotationPresent(Static.class)) {
+                    if (method.isAnnotationPresent(IsStatic.class) || method.isAnnotationPresent(IsConstructor.class)) {
                         offset = 0;
                     } else {
                         offset = 1;
@@ -226,14 +227,38 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                             }
                         }
                     }
-                    Proxied proxied = method.getAnnotation(Proxied.class);
-                    Method resolved = target.getMethod(proxied == null ? method.getName() : proxied.value(), parameterType);
-                    if (!method.getReturnType().isAssignableFrom(resolved.getReturnType())) {
-                        throw new IllegalStateException("Cannot assign " + resolved.getReturnType().getName() + " to " + method);
+                    if (method.isAnnotationPresent(IsConstructor.class)) {
+                        Constructor<?> resolved = target.getConstructor(parameterType);
+                        if (!method.getReturnType().isAssignableFrom(target)) {
+                            throw new IllegalStateException("Cannot assign " + resolved.getDeclaringClass().getName() + " to " + method);
+                        }
+                        if ((resolved.getModifiers() & Opcodes.ACC_PUBLIC) == 0 || (target.getModifiers() & Opcodes.ACC_PUBLIC) == 0) {
+                            resolved.setAccessible(true);
+                            generate = false;
+                        }
+                        dispatchers.put(method, new Dispatcher.ForConstructor(resolved));
+                    } else {
+                        Proxied proxied = method.getAnnotation(Proxied.class);
+                        Method resolved = target.getMethod(proxied == null ? method.getName() : proxied.value(), parameterType);
+                        if (!method.getReturnType().isAssignableFrom(resolved.getReturnType())) {
+                            throw new IllegalStateException("Cannot assign " + resolved.getReturnType().getName() + " to " + method);
+                        }
+                        if ((resolved.getModifiers() & Opcodes.ACC_PUBLIC) == 0 || (resolved.getDeclaringClass().getModifiers() & Opcodes.ACC_PUBLIC) == 0) {
+                            resolved.setAccessible(true);
+                            generate = false;
+                        }
+                        if (Modifier.isStatic(resolved.getModifiers())) {
+                            if (!method.isAnnotationPresent(IsStatic.class)) {
+                                throw new IllegalStateException("Resolved method for " + method + " was expected to be static: " + resolved);
+                            }
+                            dispatchers.put(method, new Dispatcher.ForStaticMethod(resolved));
+                        } else {
+                            if (method.isAnnotationPresent(IsStatic.class)) {
+                                throw new IllegalStateException("Resolved method for " + method + " was expected to be virtual: " + resolved);
+                            }
+                            dispatchers.put(method, new Dispatcher.ForNonStaticMethod(resolved));
+                        }
                     }
-                    dispatchers.put(method, Modifier.isStatic(resolved.getModifiers())
-                            ? new Dispatcher.ForStaticMethod(resolved)
-                            : new Dispatcher.ForNonStaticMethod(resolved));
                 } catch (ClassNotFoundException exception) {
                     dispatchers.put(method, defaults || method.isAnnotationPresent(Defaults.class)
                             ? Dispatcher.ForDefaultValue.of(method.getReturnType())
@@ -279,7 +304,17 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     @Documented
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.RUNTIME)
-    public @interface Static {
+    public @interface IsStatic {
+        /* empty */
+    }
+
+    /**
+     * Indicates that a proxied method is a constructor.
+     */
+    @Documented
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface IsConstructor {
         /* empty */
     }
 
@@ -710,6 +745,59 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                     methodVisitor.visitInsn(Opcodes.ARETURN);
                     return 1;
                 }
+            }
+        }
+
+        /**
+         * A dispatcher for invoking a constructor.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class ForConstructor implements Dispatcher {
+
+            /**
+             * The proxied constructor.
+             */
+            private final Constructor<?> constructor;
+
+            /**
+             * Creates a dispatcher for invoking a constructor.
+             *
+             * @param constructor The proxied constructor.
+             */
+            protected ForConstructor(Constructor<?> constructor) {
+                this.constructor = constructor;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Object invoke(Object[] argument) throws Throwable {
+                return constructor.newInstance(argument);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public int apply(MethodVisitor methodVisitor, Method method) {
+                Class<?>[] source = method.getParameterTypes(), target = constructor.getParameterTypes();
+                methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(constructor.getDeclaringClass()));
+                methodVisitor.visitInsn(Opcodes.DUP);
+                int offset = 1;
+                for (int index = 0; index < source.length; index++) {
+                    Type type = Type.getType(source[index]);
+                    methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), offset);
+                    if (source[index] != target[index]) {
+                        methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(target[index]));
+                    }
+                    offset += type.getSize();
+                }
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                        Type.getInternalName(constructor.getDeclaringClass()),
+                        MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                        Type.getConstructorDescriptor(constructor),
+                        false);
+                methodVisitor.visitInsn(Opcodes.ARETURN);
+                return offset + 1;
             }
         }
 

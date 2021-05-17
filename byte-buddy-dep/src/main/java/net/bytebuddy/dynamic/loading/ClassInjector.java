@@ -1575,7 +1575,7 @@ public interface ClassInjector {
              * @param lookup The lookup to resolve.
              * @return An appropriate lookup instance.
              */
-            @JavaDispatcher.Static
+            @JavaDispatcher.IsStatic
             Object privateLookupIn(Class<?> type, @JavaDispatcher.Proxied("java.lang.invoke.MethodHandles$Lookup") Object lookup);
 
             /**

@@ -2718,8 +2718,10 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * {@inheritDoc}
                      */
                     public AnnotatedElement resolve() {
-                        // Older JVMs require this cast as the hierarchy was introduced in a later version.
-                        return (AnnotatedElement) typeVariable;
+                        // Older JVMs require this check and cast as the hierarchy was introduced in a later version.
+                        return typeVariable instanceof AnnotatedElement
+                                ? (AnnotatedElement) typeVariable
+                                : NoOp.INSTANCE;
                     }
 
                     /**

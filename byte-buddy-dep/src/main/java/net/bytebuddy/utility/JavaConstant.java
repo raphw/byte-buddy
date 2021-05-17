@@ -15,8 +15,7 @@
  */
 package net.bytebuddy.utility;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -31,10 +30,8 @@ import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.*;
 
 /**
@@ -354,7 +351,7 @@ public interface JavaConstant {
                  * @param descriptor The descriptor to resolve.
                  * @return An appropriate {@code java.lang.constant.ClassDesc}.
                  */
-                @JavaDispatcher.Static
+                @JavaDispatcher.IsStatic
                 Object ofDescriptor(String descriptor);
 
                 /**
@@ -379,7 +376,7 @@ public interface JavaConstant {
                  * @param parameterType An array of {@code java.lang.constant.ClassDesc}s representing the parameter types.
                  * @return An appropriate {@code java.lang.constant.MethodTypeDesc}.
                  */
-                @JavaDispatcher.Static
+                @JavaDispatcher.IsStatic
                 Object of(@JavaDispatcher.Proxied("java.lang.constant.ClassDesc") Object returnType,
                           @JavaDispatcher.Proxied("java.lang.constant.ClassDesc") Object[] parameterType);
 
@@ -389,7 +386,7 @@ public interface JavaConstant {
                  * @param descriptor The method type's descriptor.
                  * @return A {@code java.lang.constant.MethodTypeDesc} of the supplied descriptor
                  */
-                @JavaDispatcher.Static
+                @JavaDispatcher.IsStatic
                 Object ofDescriptor(String descriptor);
 
                 /**
@@ -424,7 +421,7 @@ public interface JavaConstant {
                  * @param descriptor A descriptor of the lookup type.
                  * @return An {@code java.lang.constant.MethodTypeDesc} representing the invocation type.
                  */
-                @JavaDispatcher.Static
+                @JavaDispatcher.IsStatic
                 Object of(@JavaDispatcher.Proxied("java.lang.constant.DirectMethodHandleDesc$Kind") Object kind,
                           @JavaDispatcher.Proxied("java.lang.constant.ClassDesc") Object owner,
                           String name,
@@ -499,7 +496,7 @@ public interface JavaConstant {
                      * @param isInterface {@code true} if the handle invokes an interface type.
                      * @return The identifier's {@code java.lang.constant.DirectMethodHandleDesc$Kind}.
                      */
-                    @JavaDispatcher.Static
+                    @JavaDispatcher.IsStatic
                     Object valueOf(int identifier, boolean isInterface);
                 }
             }
@@ -519,7 +516,7 @@ public interface JavaConstant {
                  * @param argument     Descriptions of the dynamic constant's arguments.
                  * @return A {@code java.lang.constant.DynamicConstantDesc} for the supplied arguments.
                  */
-                @JavaDispatcher.Static
+                @JavaDispatcher.IsStatic
                 Object ofCanonical(@JavaDispatcher.Proxied("java.lang.constant.DirectMethodHandleDesc") Object bootstrap,
                                    String constantName,
                                    @JavaDispatcher.Proxied("java.lang.constant.ClassDesc") Object type,
@@ -850,9 +847,24 @@ public interface JavaConstant {
     class MethodHandle implements JavaConstant {
 
         /**
-         * A dispatcher for receiving the type information that is represented by a {@code java.lang.invoke.MethodHandle} instance.
+         * A dispatcher to interact with {@code java.lang.invoke.MethodHandleInfo}.
          */
-        private static final Dispatcher.Initializable DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+        protected static final MethodHandleInfo METHOD_HANDLE_INFO = AccessController.doPrivileged(JavaDispatcher.of(MethodHandleInfo.class));
+
+        /**
+         * A dispatcher to interact with {@code java.lang.invoke.MethodType}.
+         */
+        protected static final MethodType METHOD_TYPE = AccessController.doPrivileged(JavaDispatcher.of(MethodType.class));
+
+        /**
+         * A dispatcher to interact with {@code java.lang.invoke.MethodHandles}.
+         */
+        protected static final MethodHandles METHOD_HANDLES = AccessController.doPrivileged(JavaDispatcher.of(MethodHandles.class));
+
+        /**
+         * A dispatcher to interact with {@code java.lang.invoke.MethodHandles$Lookup}.
+         */
+        protected static final MethodHandles.Lookup METHOD_HANDLES_LOOKUP = AccessController.doPrivileged(JavaDispatcher.of(MethodHandles.Lookup.class));
 
         /**
          * The handle type that is represented by this instance.
@@ -909,7 +921,7 @@ public interface JavaConstant {
          * @return A representation of the loaded method handle
          */
         public static MethodHandle ofLoaded(Object methodHandle) {
-            return ofLoaded(methodHandle, DISPATCHER.publicLookup());
+            return ofLoaded(methodHandle, METHOD_HANDLES.publicLookup());
         }
 
         /**
@@ -927,14 +939,15 @@ public interface JavaConstant {
             } else if (!JavaType.METHOD_HANDLES_LOOKUP.isInstance(lookup)) {
                 throw new IllegalArgumentException("Expected method handle lookup object: " + lookup);
             }
-            Dispatcher dispatcher = DISPATCHER.initialize();
-            Object methodHandleInfo = dispatcher.reveal(lookup, methodHandle);
-            Object methodType = dispatcher.getMethodType(methodHandleInfo);
-            return new MethodHandle(HandleType.of(dispatcher.getReferenceKind(methodHandleInfo)),
-                    TypeDescription.ForLoadedType.of(dispatcher.getDeclaringClass(methodHandleInfo)),
-                    dispatcher.getName(methodHandleInfo),
-                    TypeDescription.ForLoadedType.of(dispatcher.returnType(methodType)),
-                    new TypeList.ForLoadedTypes(dispatcher.parameterArray(methodType)));
+            Object methodHandleInfo = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V8).isAtMost(ClassFileVersion.JAVA_V7)
+                    ? METHOD_HANDLE_INFO.revealDirect(methodHandle)
+                    : METHOD_HANDLES_LOOKUP.revealDirect(lookup, methodHandle);
+            Object methodType = METHOD_HANDLE_INFO.getMethodType(methodHandleInfo);
+            return new MethodHandle(HandleType.of(METHOD_HANDLE_INFO.getReferenceKind(methodHandleInfo)),
+                    TypeDescription.ForLoadedType.of(METHOD_HANDLE_INFO.getDeclaringClass(methodHandleInfo)),
+                    METHOD_HANDLE_INFO.getName(methodHandleInfo),
+                    TypeDescription.ForLoadedType.of(METHOD_TYPE.returnType(methodType)),
+                    new TypeList.ForLoadedTypes(METHOD_TYPE.parameterArray(methodType)));
         }
 
         /**
@@ -1046,6 +1059,16 @@ public interface JavaConstant {
                     fieldDescription.getInternalName(),
                     TypeDescription.VOID,
                     Collections.singletonList(fieldDescription.getType().asErasure()));
+        }
+
+        /**
+         * Returns the lookup type of the provided {@code java.lang.invoke.MethodHandles$Lookup} instance.
+         *
+         * @param callerClassLookup An instance of {@code java.lang.invoke.MethodHandles$Lookup}.
+         * @return The instance's lookup type.
+         */
+        public static Class<?> lookupType(Object callerClassLookup) {
+            return METHOD_HANDLES_LOOKUP.lookupClass(callerClassLookup);
         }
 
         /**
@@ -1166,501 +1189,6 @@ public interface JavaConstant {
                     && ownerType.equals(methodHandle.ownerType)
                     && parameterTypes.equals(methodHandle.parameterTypes)
                     && returnType.equals(methodHandle.returnType);
-        }
-
-        /**
-         * Returns the lookup type of the provided {@code java.lang.invoke.MethodHandles$Lookup} instance.
-         *
-         * @param callerClassLookup An instance of {@code java.lang.invoke.MethodHandles$Lookup}.
-         * @return The instance's lookup type.
-         */
-        public static Class<?> lookupType(Object callerClassLookup) {
-            return DISPATCHER.lookupType(callerClassLookup);
-        }
-
-        /**
-         * A dispatcher for analyzing a {@code java.lang.invoke.MethodHandle} instance.
-         */
-        protected interface Dispatcher {
-
-            /**
-             * Reveals a method handle's information object.
-             *
-             * @param lookup       The lookup to be used for introspecting the instance.
-             * @param methodHandle The method handle to be introspected.
-             * @return The {@code java.lang.invoke.MethodHandleInfo} object that describes the instance.
-             */
-            Object reveal(Object lookup, Object methodHandle);
-
-            /**
-             * Returns a method handle info's method type.
-             *
-             * @param methodHandleInfo The method handle info to introspect.
-             * @return The {@code java.lang.invoke.MethodType} instance representing the method handle's type.
-             */
-            Object getMethodType(Object methodHandleInfo);
-
-            /**
-             * Returns the reference kind of the supplied method handle info.
-             *
-             * @param methodHandleInfo The method handle to be introspected.
-             * @return The method handle info's reference type.
-             */
-            int getReferenceKind(Object methodHandleInfo);
-
-            /**
-             * Returns the declaring class of the supplied method handle info.
-             *
-             * @param methodHandleInfo The method handle to be introspected.
-             * @return The method handle info's declaring class.
-             */
-            Class<?> getDeclaringClass(Object methodHandleInfo);
-
-            /**
-             * Returns the method name of the supplied method handle info.
-             *
-             * @param methodHandleInfo The method handle to be introspected.
-             * @return The method handle info's method name.
-             */
-            String getName(Object methodHandleInfo);
-
-            /**
-             * Returns the return type of the supplied method type.
-             *
-             * @param methodType The method type to be introspected.
-             * @return The method type's return type.
-             */
-            Class<?> returnType(Object methodType);
-
-            /**
-             * Returns the parameter types of the supplied method type.
-             *
-             * @param methodType The method type to be introspected.
-             * @return The method type's parameter types.
-             */
-            List<? extends Class<?>> parameterArray(Object methodType);
-
-            /**
-             * An initializable version of a dispatcher that is not yet made accessible.
-             */
-            interface Initializable {
-
-                /**
-                 * Initializes the dispatcher, if required.
-                 *
-                 * @return The initialized dispatcher.
-                 */
-                Dispatcher initialize();
-
-                /**
-                 * Returns a public {@code java.lang.invoke.MethodHandles.Lookup} instance.
-                 *
-                 * @return A public {@code java.lang.invoke.MethodHandles.Lookup} instance.
-                 */
-                Object publicLookup();
-
-                /**
-                 * Returns the lookup type of a given {@code java.lang.invoke.MethodHandles$Lookup} instance.
-                 *
-                 * @param lookup A {@code java.lang.invoke.MethodHandles$Lookup} instance.
-                 * @return The provided instance's lookup type.
-                 */
-                Class<?> lookupType(Object lookup);
-            }
-
-            /**
-             * A creation action for a dispatcher.
-             */
-            enum CreationAction implements PrivilegedAction<Initializable> {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-                public Initializable run() {
-                    try {
-                        try {
-                            return new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.invoke.MethodHandles").getMethod("publicLookup"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getName"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getDeclaringClass"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getReferenceKind"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getMethodType"),
-                                    JavaType.METHOD_TYPE.load().getMethod("returnType"),
-                                    JavaType.METHOD_TYPE.load().getMethod("parameterArray"),
-                                    JavaType.METHOD_HANDLES_LOOKUP.load().getMethod("lookupClass"),
-                                    JavaType.METHOD_HANDLES_LOOKUP.load().getMethod("revealDirect", JavaType.METHOD_HANDLE.load()));
-                        } catch (Exception ignored) {
-                            return new Dispatcher.ForJava7CapableVm(Class.forName("java.lang.invoke.MethodHandles").getMethod("publicLookup"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getName"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getDeclaringClass"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getReferenceKind"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getMethodType"),
-                                    JavaType.METHOD_TYPE.load().getMethod("returnType"),
-                                    JavaType.METHOD_TYPE.load().getMethod("parameterArray"),
-                                    JavaType.METHOD_HANDLES_LOOKUP.load().getMethod("lookupClass"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getConstructor(JavaType.METHOD_HANDLE.load()));
-                        }
-                    } catch (Exception ignored) {
-                        return Dispatcher.ForLegacyVm.INSTANCE;
-                    }
-                }
-            }
-
-            /**
-             * An abstract base implementation of a dispatcher.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            abstract class AbstractBase implements Dispatcher, Initializable {
-
-                /**
-                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
-                 */
-                private static final Object[] NO_ARGUMENTS = new Object[0];
-
-                /**
-                 * A reference to {@code java.lang.invoke.MethodHandles#publicLookup}.
-                 */
-                protected final Method publicLookup;
-
-                /**
-                 * A reference to {@code java.lang.invoke.MethodHandleInfo#getName}.
-                 */
-                protected final Method getName;
-
-                /**
-                 * A reference to {@code java.lang.invoke.MethodHandleInfo#getDeclaringClass}.
-                 */
-                protected final Method getDeclaringClass;
-
-                /**
-                 * A reference to {@code java.lang.invoke.MethodHandleInfo#getReferenceKind}.
-                 */
-                protected final Method getReferenceKind;
-
-                /**
-                 * A reference to {@code java.lang.invoke.MethodHandleInfo#getMethodType}.
-                 */
-                protected final Method getMethodType;
-
-                /**
-                 * A reference to {@code java.lang.invoke.MethodType#returnType}.
-                 */
-                protected final Method returnType;
-
-                /**
-                 * A reference to {@code java.lang.invoke.MethodType#parameterArray}.
-                 */
-                protected final Method parameterArray;
-
-                /**
-                 * A reference to {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
-                 */
-                protected final Method lookupClass;
-
-                /**
-                 * Creates a legal dispatcher.
-                 *
-                 * @param publicLookup      A reference to {@code java.lang.invoke.MethodHandles#publicLookup}.
-                 * @param getName           A reference to {@code java.lang.invoke.MethodHandleInfo#getName}.
-                 * @param getDeclaringClass A reference to {@code java.lang.invoke.MethodHandleInfo#getDeclaringClass}.
-                 * @param getReferenceKind  A reference to {@code java.lang.invoke.MethodHandleInfo#getReferenceKind}.
-                 * @param getMethodType     A reference to {@code java.lang.invoke.MethodHandleInfo#getMethodType}.
-                 * @param returnType        A reference to {@code java.lang.invoke.MethodType#returnType}.
-                 * @param parameterArray    A reference to {@code java.lang.invoke.MethodType#parameterArray}.
-                 * @param lookupClass       A reference to {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
-                 */
-                protected AbstractBase(Method publicLookup,
-                                       Method getName,
-                                       Method getDeclaringClass,
-                                       Method getReferenceKind,
-                                       Method getMethodType,
-                                       Method returnType,
-                                       Method parameterArray,
-                                       Method lookupClass) {
-                    this.publicLookup = publicLookup;
-                    this.getName = getName;
-                    this.getDeclaringClass = getDeclaringClass;
-                    this.getReferenceKind = getReferenceKind;
-                    this.getMethodType = getMethodType;
-                    this.returnType = returnType;
-                    this.parameterArray = parameterArray;
-                    this.lookupClass = lookupClass;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object publicLookup() {
-                    try {
-                        return publicLookup.invoke(null, NO_ARGUMENTS);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles#publicLookup", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodHandles#publicLookup", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object getMethodType(Object methodHandleInfo) {
-                    try {
-                        return getMethodType.invoke(methodHandleInfo, NO_ARGUMENTS);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandleInfo#getMethodType", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodHandleInfo#getMethodType", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public int getReferenceKind(Object methodHandleInfo) {
-                    try {
-                        return (Integer) getReferenceKind.invoke(methodHandleInfo, NO_ARGUMENTS);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandleInfo#getReferenceKind", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodHandleInfo#getReferenceKind", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?> getDeclaringClass(Object methodHandleInfo) {
-                    try {
-                        return (Class<?>) getDeclaringClass.invoke(methodHandleInfo, NO_ARGUMENTS);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandleInfo#getDeclaringClass", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodHandleInfo#getDeclaringClass", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String getName(Object methodHandleInfo) {
-                    try {
-                        return (String) getName.invoke(methodHandleInfo, NO_ARGUMENTS);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandleInfo#getName", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodHandleInfo#getName", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?> returnType(Object methodType) {
-                    try {
-                        return (Class<?>) returnType.invoke(methodType, NO_ARGUMENTS);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodType#returnType", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflect.MethodType#returnType", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public List<? extends Class<?>> parameterArray(Object methodType) {
-                    try {
-                        return Arrays.asList((Class<?>[]) parameterArray.invoke(methodType, NO_ARGUMENTS));
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflect.MethodType#parameterArray", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflect.MethodType#parameterArray", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?> lookupType(Object lookup) {
-                    try {
-                        return (Class<?>) lookupClass.invoke(lookup, NO_ARGUMENTS);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflect.MethodHandles.Lookup#lookupClass", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflect.MethodHandles.Lookup#lookupClass", exception.getCause());
-                    }
-                }
-            }
-
-            /**
-             * A dispatcher for introspecting a {@code java.lang.invoke.MethodHandle} instance on a virtual machine that officially supports this
-             * introspection, i.e. Java versions 8+.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForJava8CapableVm extends AbstractBase {
-
-                /**
-                 * A reference to the {@code java.lang.invoke.MethodHandles.Lookup#revealDirect} method.
-                 */
-                private final Method revealDirect;
-
-                /**
-                 * Creates a dispatcher for a modern VM.
-                 *
-                 * @param publicLookup      A reference to {@code java.lang.invoke.MethodHandles#publicLookup}.
-                 * @param getName           A reference to {@code java.lang.invoke.MethodHandleInfo#getName}.
-                 * @param getDeclaringClass A reference to {@code java.lang.invoke.MethodHandleInfo#getDeclaringClass}.
-                 * @param getReferenceKind  A reference to {@code java.lang.invoke.MethodHandleInfo#getReferenceKind}.
-                 * @param getMethodType     A reference to {@code java.lang.invoke.MethodHandleInfo#getMethodType}.
-                 * @param returnType        A reference to {@code java.lang.invoke.MethodType#returnType}.
-                 * @param parameterArray    A reference to {@code java.lang.invoke.MethodType#parameterArray}.
-                 * @param lookupClass       A reference to {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
-                 * @param revealDirect      A reference to the {@code java.lang.invoke.MethodHandles.Lookup#revealDirect} method.
-                 */
-                protected ForJava8CapableVm(Method publicLookup,
-                                            Method getName,
-                                            Method getDeclaringClass,
-                                            Method getReferenceKind,
-                                            Method getMethodType,
-                                            Method returnType,
-                                            Method parameterArray,
-                                            Method lookupClass,
-                                            Method revealDirect) {
-                    super(publicLookup, getName, getDeclaringClass, getReferenceKind, getMethodType, returnType, parameterArray, lookupClass);
-                    this.revealDirect = revealDirect;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object reveal(Object lookup, Object methodHandle) {
-                    try {
-                        return revealDirect.invoke(lookup, methodHandle);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles.Lookup#revealDirect", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodHandles.Lookup#revealDirect", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Dispatcher initialize() {
-                    return this;
-                }
-            }
-
-            /**
-             * A dispatcher that extracts the information of a method handle by using private APIs that are available in Java 7+.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForJava7CapableVm extends AbstractBase implements PrivilegedAction<Dispatcher> {
-
-                /**
-                 * A reference to the {@code java.lang.invoke.MethodInfo} constructor.
-                 */
-                private final Constructor<?> methodInfo;
-
-                /**
-                 * Creates a dispatcher for an intermediate VM.
-                 *
-                 * @param publicLookup      A reference to {@code java.lang.invoke.MethodHandles#publicLookup}.
-                 * @param getName           A reference to {@code java.lang.invoke.MethodHandleInfo#getName}.
-                 * @param getDeclaringClass A reference to {@code java.lang.invoke.MethodHandleInfo#getDeclaringClass}.
-                 * @param getReferenceKind  A reference to {@code java.lang.invoke.MethodHandleInfo#getReferenceKind}.
-                 * @param getMethodType     A reference to {@code java.lang.invoke.MethodHandleInfo#getMethodType}.
-                 * @param returnType        A reference to {@code java.lang.invoke.MethodType#returnType}.
-                 * @param parameterArray    A reference to {@code java.lang.invoke.MethodType#parameterArray}.
-                 * @param lookupClass       A reference to {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
-                 * @param methodInfo        A reference to the {@code java.lang.invoke.MethodInfo} constructor.
-                 */
-                protected ForJava7CapableVm(Method publicLookup,
-                                            Method getName,
-                                            Method getDeclaringClass,
-                                            Method getReferenceKind,
-                                            Method getMethodType,
-                                            Method returnType,
-                                            Method parameterArray,
-                                            Method lookupClass,
-                                            Constructor<?> methodInfo) {
-                    super(publicLookup, getName, getDeclaringClass, getReferenceKind, getMethodType, returnType, parameterArray, lookupClass);
-                    this.methodInfo = methodInfo;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Dispatcher initialize() {
-                    return AccessController.doPrivileged(this);
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Dispatcher run() {
-                    // This is safe even in a multi-threaded environment as all threads set the instances accessible before invoking any methods.
-                    // By always setting accessibility, the security manager is always triggered if this operation was illegal.
-                    methodInfo.setAccessible(true);
-                    getName.setAccessible(true);
-                    getDeclaringClass.setAccessible(true);
-                    getReferenceKind.setAccessible(true);
-                    getMethodType.setAccessible(true);
-                    return this;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object reveal(Object lookup, Object methodHandle) {
-                    try {
-                        return methodInfo.newInstance(methodHandle);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodInfo()", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodInfo()", exception.getCause());
-                    } catch (InstantiationException exception) {
-                        throw new IllegalStateException("Error constructing java.lang.invoke.MethodInfo", exception);
-                    }
-                }
-            }
-
-            /**
-             * A dispatcher that does not support method handles at all.
-             */
-            enum ForLegacyVm implements Initializable {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Dispatcher initialize() {
-                    throw new UnsupportedOperationException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object publicLookup() {
-                    throw new UnsupportedOperationException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?> lookupType(Object lookup) {
-                    throw new UnsupportedOperationException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
-                }
-            }
         }
 
         /**
@@ -1826,6 +1354,117 @@ public interface JavaConstant {
              */
             public boolean isField() {
                 return field;
+            }
+        }
+
+        /**
+         * A dispatcher to interact with {@code java.lang.invoke.MethodHandleInfo}.
+         */
+        @JavaDispatcher.Proxied("java.lang.invoke.MethodHandleInfo")
+        protected interface MethodHandleInfo {
+
+            /**
+             * Returns the name of the method handle info.
+             *
+             * @param value The {@code java.lang.invoke.MethodHandleInfo} to resolve.
+             * @return The name of the method handle info.
+             */
+            String getName(Object value);
+
+            /**
+             * Returns the declaring type of the method handle info.
+             *
+             * @param value The {@code java.lang.invoke.MethodHandleInfo} to resolve.
+             * @return The declaring type of the method handle info.
+             */
+            Class<?> getDeclaringClass(Object value);
+
+            /**
+             * Returns the reference kind of the method handle info.
+             *
+             * @param value The {@code java.lang.invoke.MethodHandleInfo} to resolve.
+             * @return The reference kind of the method handle info.
+             */
+            int getReferenceKind(Object value);
+
+            /**
+             * Returns the {@code java.lang.invoke.MethodType} of the method handle info.
+             *
+             * @param value The {@code java.lang.invoke.MethodHandleInfo} to resolve.
+             * @return The {@code java.lang.invoke.MethodType} of the method handle info.
+             */
+            Object getMethodType(Object value);
+
+            /**
+             * Returns the {@code java.lang.invoke.MethodHandleInfo} of the provided method handle. This method
+             * was available on Java 7 but replaced by a lookup-based method in Java 8 and later.
+             *
+             * @param handle The {@code java.lang.invoke.MethodHandle} to resolve.
+             * @return A {@code java.lang.invoke.MethodHandleInfo} to describe the supplied method handle.
+             */
+            @JavaDispatcher.IsConstructor
+            Object revealDirect(@JavaDispatcher.Proxied("java.lang.invoke.MethodHandle") Object handle);
+        }
+
+        /**
+         * A dispatcher to interact with {@code java.lang.invoke.MethodType}.
+         */
+        @JavaDispatcher.Proxied("java.lang.invoke.MethodType")
+        protected interface MethodType {
+
+            /**
+             * Resolves a method type's return type.
+             *
+             * @param value The {@code java.lang.invoke.MethodType} to resolve.
+             * @return The method type's return type.
+             */
+            Class<?> returnType(Object value);
+
+            /**
+             * Resolves a method type's parameter type.
+             *
+             * @param value The {@code java.lang.invoke.MethodType} to resolve.
+             * @return The method type's parameter types.
+             */
+            Class<?>[] parameterArray(Object value);
+        }
+
+        /**
+         * A dispatcher to interact with {@code java.lang.invoke.MethodHandles}.
+         */
+        @JavaDispatcher.Proxied("java.lang.invoke.MethodHandles")
+        protected interface MethodHandles {
+
+            /**
+             * Resolves the public {@code java.lang.invoke.MethodHandles$Lookup}.
+             *
+             * @return The public {@code java.lang.invoke.MethodHandles$Lookup}.
+             */
+            @JavaDispatcher.IsStatic
+            Object publicLookup();
+
+            /**
+             * A dispatcher to interact with {@code java.lang.invoke.MethodHandles$Lookup}.
+             */
+            @JavaDispatcher.Proxied("java.lang.invoke.MethodHandles$Lookup")
+            interface Lookup {
+
+                /**
+                 * Resolves the lookup type for a given lookup instance.
+                 *
+                 * @param value The {@code java.lang.invoke.MethodHandles$Lookup} to resolve.
+                 * @return The lookup's lookup class.
+                 */
+                Class<?> lookupClass(Object value);
+
+                /**
+                 * Reveals the {@code java.lang.invoke.MethodHandleInfo} for the supplied method handle.
+                 *
+                 * @param value  The {@code java.lang.invoke.MethodHandles$Lookup} to use for resolving the supplied handle
+                 * @param handle The {@code java.lang.invoke.MethodHandle} to resolve.
+                 * @return A {@code java.lang.invoke.MethodHandleInfo} representing the supplied method handle.
+                 */
+                Object revealDirect(Object value, @JavaDispatcher.Proxied("java.lang.invoke.MethodHandle") Object handle);
             }
         }
     }

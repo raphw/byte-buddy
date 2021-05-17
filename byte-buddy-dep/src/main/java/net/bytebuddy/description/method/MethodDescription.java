@@ -413,6 +413,7 @@ public interface MethodDescription extends TypeVariableSource,
                  * @param value The {@code java.lang.reflect.Executable} to resolve.
                  * @return An instance of {@code java.lang.reflect.AnnotatedType} that represents the receiver of the supplied executable.
                  */
+                @JavaDispatcher.Defaults
                 AnnotatedElement getAnnotatedReceiverType(Object value);
             }
         }

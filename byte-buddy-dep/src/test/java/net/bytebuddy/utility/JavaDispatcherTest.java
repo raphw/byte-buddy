@@ -124,21 +124,21 @@ public class JavaDispatcherTest {
     @JavaDispatcher.Proxied("java.lang.Class")
     public interface StaticSample {
 
-        @JavaDispatcher.Static
+        @JavaDispatcher.IsStatic
         Class<?> forName(String name);
     }
 
     @JavaDispatcher.Proxied("java.lang.Class")
     public interface StaticAdjustedSample {
 
-        @JavaDispatcher.Static
+        @JavaDispatcher.IsStatic
         Class<?> forName(@JavaDispatcher.Proxied("java.lang.String") Object name);
     }
 
     @JavaDispatcher.Proxied("java.lang.Class")
     public interface StaticAdjustedIllegalSample {
 
-        @JavaDispatcher.Static
+        @JavaDispatcher.IsStatic
         Class<?> forName(@JavaDispatcher.Proxied("java.lang.String") Void name);
     }
 
