@@ -27,12 +27,14 @@ import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.FileSystem;
 
 import java.io.*;
 import java.lang.annotation.*;
-import java.lang.reflect.*;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.jar.JarEntry;
@@ -3209,11 +3211,6 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             class ForFolder implements Target, Sink {
 
                 /**
-                 * A dispatcher for using NIO2 if the current VM supports it.
-                 */
-                protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
-
-                /**
                  * The folder that is represented by this instance.
                  */
                 private final File folder;
@@ -3275,8 +3272,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                             throw new IllegalArgumentException(target + " is not a subdirectory of " + folder);
                         } else if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
                             throw new IOException("Could not create directory: " + target.getParent());
-                        } else if (DISPATCHER.isAlive() && resolved != null && !resolved.equals(target)) {
-                            DISPATCHER.copy(resolved, target);
+                        } else if (resolved != null && !resolved.equals(target)) {
+                            FileSystem.INSTANCE.copy(resolved, target);
                         } else if (!target.equals(resolved)) {
                             InputStream inputStream = element.getInputStream();
                             try {
@@ -3302,141 +3299,6 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public void close() {
                     /* do nothing */
-                }
-
-                /**
-                 * A dispatcher that allows for file copy operations based on NIO2 if available.
-                 */
-                protected interface Dispatcher {
-
-                    /**
-                     * Returns {@code true} if this dispatcher is alive.
-                     *
-                     * @return {@code true} if this dispatcher is alive.
-                     */
-                    boolean isAlive();
-
-                    /**
-                     * Copies the source file to the target location.
-                     *
-                     * @param source The source file.
-                     * @param target The target file.
-                     * @throws IOException If an I/O error occurs.
-                     */
-                    void copy(File source, File target) throws IOException;
-
-                    /**
-                     * An action for creating a dispatcher.
-                     */
-                    enum CreationAction implements PrivilegedAction<Dispatcher> {
-
-                        /**
-                         * The singleton instance.
-                         */
-                        INSTANCE;
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        @SuppressWarnings("unchecked")
-                        public Dispatcher run() {
-                            try {
-                                Class<?> path = Class.forName("java.nio.file.Path");
-                                Object[] arguments = (Object[]) Array.newInstance(Class.forName("java.nio.file.CopyOption"), 1);
-                                arguments[0] = Enum.valueOf((Class) Class.forName("java.nio.file.StandardCopyOption"), "REPLACE_EXISTING");
-                                return new ForJava7CapableVm(File.class.getMethod("toPath"),
-                                        Class.forName("java.nio.file.Files").getMethod("copy", path, path, arguments.getClass()),
-                                        arguments);
-                            } catch (Throwable ignored) {
-                                return ForLegacyVm.INSTANCE;
-                            }
-                        }
-                    }
-
-                    /**
-                     * A legacy dispatcher that is not capable of NIO.
-                     */
-                    enum ForLegacyVm implements Dispatcher {
-
-                        /**
-                         * The singleton instance.
-                         */
-                        INSTANCE;
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public boolean isAlive() {
-                            return false;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public void copy(File source, File target) {
-                            throw new UnsupportedOperationException("Cannot use NIO2 copy on current VM");
-                        }
-                    }
-
-                    /**
-                     * A dispatcher for VMs that are capable of NIO2.
-                     */
-                    @HashCodeAndEqualsPlugin.Enhance
-                    class ForJava7CapableVm implements Dispatcher {
-
-                        /**
-                         * The {@code java.io.File#toPath()} method.
-                         */
-                        private final Method toPath;
-
-                        /**
-                         * The {@code java.nio.Files#copy(Path,Path,CopyOption[])} method.
-                         */
-                        private final Method copy;
-
-                        /**
-                         * The copy options to apply.
-                         */
-                        private final Object[] copyOptions;
-
-                        /**
-                         * Creates a new NIO2 capable dispatcher.
-                         *
-                         * @param toPath      The {@code java.io.File#toPath()} method.
-                         * @param copy        The {@code java.nio.Files#copy(Path,Path,CopyOption[])} method.
-                         * @param copyOptions The copy options to apply.
-                         */
-                        protected ForJava7CapableVm(Method toPath, Method copy, Object[] copyOptions) {
-                            this.toPath = toPath;
-                            this.copy = copy;
-                            this.copyOptions = copyOptions;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public boolean isAlive() {
-                            return true;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public void copy(File source, File target) throws IOException {
-                            try {
-                                copy.invoke(null, toPath.invoke(source), toPath.invoke(target), copyOptions);
-                            } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access NIO file copy", exception);
-                            } catch (InvocationTargetException exception) {
-                                Throwable cause = exception.getCause();
-                                if (cause instanceof IOException) {
-                                    throw (IOException) cause;
-                                } else {
-                                    throw new IllegalStateException("Cannot execute NIO file copy", cause);
-                                }
-                            }
-                        }
-                    }
                 }
             }
 

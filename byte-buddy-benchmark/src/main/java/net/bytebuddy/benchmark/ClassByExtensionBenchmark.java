@@ -501,8 +501,8 @@ public class ClassByExtensionBenchmark {
             public Object invoke(Object self,
                                  Method thisMethod,
                                  Method proceed,
-                                 Object[] args) throws Throwable {
-                return proceed.invoke(self, args);
+                                 Object[] argument) throws Throwable {
+                return proceed.invoke(self, argument);
             }
         });
         return (ExampleClass) instance;

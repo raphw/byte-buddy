@@ -39,13 +39,12 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.FileSystem;
 import org.objectweb.asm.Opcodes;
 
 import java.io.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.*;
 import java.util.jar.*;
 
@@ -5868,11 +5867,6 @@ public interface DynamicType {
         private static final String TEMP_SUFFIX = "tmp";
 
         /**
-         * A dispacher for applying a file copy.
-         */
-        protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
-
-        /**
          * A type description of this dynamic type.
          */
         protected final TypeDescription typeDescription;
@@ -6009,15 +6003,7 @@ public interface DynamicType {
          * {@inheritDoc}
          */
         public File inject(File jar) throws IOException {
-            File temporary = doInject(jar, File.createTempFile(jar.getName(), TEMP_SUFFIX));
-            boolean delete = true;
-            try {
-                delete = DISPATCHER.copy(temporary, jar);
-            } finally {
-                if (delete && !temporary.delete()) {
-                    temporary.deleteOnExit();
-                }
-            }
+            FileSystem.INSTANCE.move(doInject(jar, File.createTempFile(jar.getName(), TEMP_SUFFIX)), jar);
             return jar;
         }
 
@@ -6107,137 +6093,6 @@ public interface DynamicType {
                 outputStream.close();
             }
             return file;
-        }
-
-        /**
-         * A dispatcher that allows for file copy operations based on NIO2 if available.
-         */
-        protected interface Dispatcher {
-
-            /**
-             * Copies the source file to the target location.
-             *
-             * @param source The source file.
-             * @param target The target file.
-             * @return {@code true} if the source file needs to be deleted.
-             * @throws IOException If an I/O error occurs.
-             */
-            boolean copy(File source, File target) throws IOException;
-
-            /**
-             * An action for creating a dispatcher.
-             */
-            enum CreationAction implements PrivilegedAction<Dispatcher> {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                @SuppressWarnings("unchecked")
-                public Dispatcher run() {
-                    try {
-                        Class<?> path = Class.forName("java.nio.file.Path");
-                        Object[] arguments = (Object[]) Array.newInstance(Class.forName("java.nio.file.CopyOption"), 1);
-                        arguments[0] = Enum.valueOf((Class) Class.forName("java.nio.file.StandardCopyOption"), "REPLACE_EXISTING");
-                        return new ForJava7CapableVm(File.class.getMethod("toPath"),
-                                Class.forName("java.nio.file.Files").getMethod("move", path, path, arguments.getClass()),
-                                arguments);
-                    } catch (Throwable ignored) {
-                        return ForLegacyVm.INSTANCE;
-                    }
-                }
-            }
-
-            /**
-             * A legacy dispatcher that is not capable of NIO.
-             */
-            enum ForLegacyVm implements Dispatcher {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean copy(File source, File target) throws IOException {
-                    InputStream inputStream = new FileInputStream(source);
-                    try {
-                        OutputStream outputStream = new FileOutputStream(target);
-                        try {
-                            byte[] buffer = new byte[BUFFER_SIZE];
-                            int index;
-                            while ((index = inputStream.read(buffer)) != END_OF_FILE) {
-                                outputStream.write(buffer, FROM_BEGINNING, index);
-                            }
-                        } finally {
-                            outputStream.close();
-                        }
-                    } finally {
-                        inputStream.close();
-                    }
-                    return true;
-                }
-            }
-
-            /**
-             * A dispatcher for VMs that are capable of NIO2.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForJava7CapableVm implements Dispatcher {
-
-                /**
-                 * The {@code java.io.File#toPath()} method.
-                 */
-                private final Method toPath;
-
-                /**
-                 * The {@code java.nio.Files#copy(Path,Path,CopyOption[])} method.
-                 */
-                private final Method move;
-
-                /**
-                 * The copy options to apply.
-                 */
-                private final Object[] copyOptions;
-
-                /**
-                 * Creates a new NIO2 capable dispatcher.
-                 *
-                 * @param toPath      The {@code java.io.File#toPath()} method.
-                 * @param move        The {@code java.nio.Files#move(Path,Path,CopyOption[])} method.
-                 * @param copyOptions The copy options to apply.
-                 */
-                protected ForJava7CapableVm(Method toPath, Method move, Object[] copyOptions) {
-                    this.toPath = toPath;
-                    this.move = move;
-                    this.copyOptions = copyOptions;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean copy(File source, File target) throws IOException {
-                    try {
-                        move.invoke(null, toPath.invoke(source), toPath.invoke(target), copyOptions);
-                        return false;
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access NIO file copy", exception);
-                    } catch (InvocationTargetException exception) {
-                        Throwable cause = exception.getCause();
-                        if (cause instanceof IOException) {
-                            throw (IOException) cause;
-                        } else {
-                            throw new IllegalStateException("Cannot execute NIO file copy", cause);
-                        }
-                    }
-                }
-            }
         }
 
         /**

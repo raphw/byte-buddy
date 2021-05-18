@@ -1,5 +1,6 @@
 package net.bytebuddy.build;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.StreamDrainer;
@@ -120,7 +121,7 @@ public class PluginEngineTargetForFolderTest {
         } finally {
             assertThat(original.delete(), is(true));
         }
-        verify(element, times(Plugin.Engine.Target.ForFolder.DISPATCHER.isAlive() ? 0 : 1)).getInputStream();
+        verify(element, times(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V7) ? 0 : 1)).getInputStream();
     }
 
     @Test
@@ -162,11 +163,5 @@ public class PluginEngineTargetForFolderTest {
         Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
         when(element.getName()).thenReturn("../illegal");
         target.write(Plugin.Engine.Source.Origin.NO_MANIFEST).retain(element);
-    }
-
-    @Test
-    @JavaVersionRule.Enforce(7)
-    public void testCanUseNio2() {
-        assertThat(Plugin.Engine.Target.ForFolder.DISPATCHER.isAlive(), is(true));
     }
 }

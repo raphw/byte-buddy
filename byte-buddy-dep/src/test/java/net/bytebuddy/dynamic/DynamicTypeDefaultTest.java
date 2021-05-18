@@ -5,8 +5,6 @@ import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.RandomString;
-
-import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -21,7 +19,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.jar.*;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -327,11 +324,5 @@ public class DynamicTypeDefaultTest {
         assertThat(types.hasNext(), is(true));
         assertThat(types.next(), is(auxiliaryTypeDescription));
         assertThat(types.hasNext(), is(false));
-    }
-
-    @Test
-    @JavaVersionRule.Enforce(7)
-    public void testDispatcher() {
-        assertThat(DynamicType.Default.DISPATCHER, instanceOf(DynamicType.Default.Dispatcher.ForJava7CapableVm.class));
     }
 }
