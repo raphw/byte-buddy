@@ -214,19 +214,24 @@ public interface JavaConstant {
                                 : typePool.describe(Type.getType(CLASS_DESC.descriptorString(METHOD_TYPE_DESC.returnType(METHOD_HANDLE_DESC.invocationType(value)))).getClassName()).resolve(),
                         typeDescriptions);
             } else if (DYNAMIC_CONSTANT_DESC.isInstance(value)) {
-                Object[] constants = DYNAMIC_CONSTANT_DESC.bootstrapArgs(value);
-                Object[] argument = new Object[constants.length];
-                for (int index = 0; index < constants.length; index++) {
-                    argument[index] = ofDescription(constants[index], typePool).asConstantPoolValue();
+                Type methodType = Type.getMethodType(DIRECT_METHOD_HANDLE_DESC.lookupDescriptor(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value)));
+                List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(methodType.getArgumentTypes().length);
+                for (Type type : methodType.getArgumentTypes()) {
+                    parameterTypes.add(typePool.describe(methodType.getReturnType().getClassName()).resolve());
                 }
-                return new Dynamic(new ConstantDynamic(DYNAMIC_CONSTANT_DESC.constantName(value),
-                        CLASS_DESC.descriptorString(DYNAMIC_CONSTANT_DESC.constantType(value)),
-                        new Handle(DIRECT_METHOD_HANDLE_DESC.refKind(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value)),
-                                CLASS_DESC.descriptorString(DIRECT_METHOD_HANDLE_DESC.owner(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value))),
+                Object[] constant = DYNAMIC_CONSTANT_DESC.bootstrapArgs(value);
+                List<JavaConstant> arguments = new ArrayList<JavaConstant>(constant.length);
+                for (Object aConstant : constant) {
+                    arguments.add(ofDescription(aConstant, typePool));
+                }
+                return new Dynamic(DYNAMIC_CONSTANT_DESC.constantName(value),
+                        typePool.describe(Type.getType(CLASS_DESC.descriptorString(DYNAMIC_CONSTANT_DESC.constantType(value))).getClassName()).resolve(),
+                        new MethodHandle(MethodHandle.HandleType.of(DIRECT_METHOD_HANDLE_DESC.refKind(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value))),
+                                typePool.describe(Type.getType(CLASS_DESC.descriptorString(DIRECT_METHOD_HANDLE_DESC.owner(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value)))).getClassName()).resolve(),
                                 DIRECT_METHOD_HANDLE_DESC.methodName(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value)),
-                                DIRECT_METHOD_HANDLE_DESC.lookupDescriptor(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value)),
-                                DIRECT_METHOD_HANDLE_DESC.isOwnerInterface(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value))),
-                        argument), typePool.describe(Type.getType(CLASS_DESC.descriptorString(DYNAMIC_CONSTANT_DESC.constantType(value))).getClassName()).resolve());
+                                typePool.describe(methodType.getReturnType().getClassName()).resolve(),
+                                parameterTypes),
+                        arguments);
             } else {
                 throw new IllegalArgumentException("Not a resolvable constant description or not expressible as a constant pool value: " + value);
             }
@@ -776,7 +781,7 @@ public interface JavaConstant {
         /**
          * {@inheritDoc}
          */
-        public Object asConstantPoolValue() {
+        public Type asConstantPoolValue() {
             StringBuilder stringBuilder = new StringBuilder().append('(');
             for (TypeDescription parameterType : getParameterTypes()) {
                 stringBuilder.append(parameterType.getDescriptor());
@@ -1096,7 +1101,7 @@ public interface JavaConstant {
         /**
          * {@inheritDoc}
          */
-        public Object asConstantPoolValue() {
+        public Handle asConstantPoolValue() {
             return new Handle(getHandleType().getIdentifier(),
                     getOwnerType().getInternalName(),
                     getName(),
@@ -1526,29 +1531,38 @@ public interface JavaConstant {
         public static final String DEFAULT_NAME = "_";
 
         /**
-         * The {@code java.lang.invoke.ConstantBootstraps} class's internal name..
+         * The name of the dynamic constant.
          */
-        private static final String CONSTANT_BOOTSTRAPS = "java/lang/invoke/ConstantBootstraps";
+        private final String name;
 
         /**
-         * The represented bootstrap value.
-         */
-        private final ConstantDynamic value;
-
-        /**
-         * The represented value constant.
+         * A description of the represented value's type.
          */
         private final TypeDescription typeDescription;
 
         /**
-         * Creates a new dynamic class pool entry.
-         *
-         * @param value           The represented bootstrap value.
-         * @param typeDescription The represented value constant.
+         * A handle representation of the bootstrap method.
          */
-        protected Dynamic(ConstantDynamic value, TypeDescription typeDescription) {
-            this.value = value;
+        private final MethodHandle bootstrap;
+
+        /**
+         * A list of the arguments to the dynamic constant.
+         */
+        private final List<JavaConstant> arguments;
+
+        /**
+         * Creates a dynamic resolved constant.
+         *
+         * @param name            The name of the dynamic constant.
+         * @param typeDescription A description of the represented value's type.
+         * @param bootstrap       A handle representation of the bootstrap method.
+         * @param arguments       A list of the arguments to the dynamic constant.
+         */
+        protected Dynamic(String name, TypeDescription typeDescription, MethodHandle bootstrap, List<JavaConstant> arguments) {
+            this.name = name;
             this.typeDescription = typeDescription;
+            this.bootstrap = bootstrap;
+            this.arguments = arguments;
         }
 
         /**
@@ -1557,13 +1571,14 @@ public interface JavaConstant {
          * @return A dynamically resolved null constant.
          */
         public static Dynamic ofNullConstant() {
-            return new Dynamic(new ConstantDynamic("nullConstant",
-                    TypeDescription.OBJECT.getDescriptor(),
-                    new Handle(Opcodes.H_INVOKESTATIC,
-                            CONSTANT_BOOTSTRAPS,
+            return new Dynamic(DEFAULT_NAME,
+                    TypeDescription.OBJECT,
+                    new MethodHandle(MethodHandle.HandleType.INVOKE_STATIC,
+                            JavaType.CONSTANT_BOOTSTRAPS.getTypeStub(),
                             "nullConstant",
-                            "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;",
-                            false)), TypeDescription.OBJECT);
+                            TypeDescription.OBJECT,
+                            Arrays.asList(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub(), TypeDescription.STRING, TypeDescription.CLASS)),
+                    Collections.<JavaConstant>emptyList());
         }
 
         /**
@@ -1586,13 +1601,14 @@ public interface JavaConstant {
             if (!typeDescription.isPrimitive()) {
                 throw new IllegalArgumentException("Not a primitive type: " + typeDescription);
             }
-            return new Dynamic(new ConstantDynamic(typeDescription.getDescriptor(),
-                    TypeDescription.CLASS.getDescriptor(),
-                    new Handle(Opcodes.H_INVOKESTATIC,
-                            CONSTANT_BOOTSTRAPS,
+            return new Dynamic(typeDescription.getDescriptor(),
+                    TypeDescription.CLASS,
+                    new MethodHandle(MethodHandle.HandleType.INVOKE_STATIC,
+                            JavaType.CONSTANT_BOOTSTRAPS.getTypeStub(),
                             "primitiveClass",
-                            "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Class;",
-                            false)), TypeDescription.CLASS);
+                            TypeDescription.CLASS,
+                            Arrays.asList(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub(), TypeDescription.STRING, TypeDescription.CLASS)),
+                    Collections.<JavaConstant>emptyList());
         }
 
         /**
@@ -1612,13 +1628,14 @@ public interface JavaConstant {
          * @return A dynamically resolved enumeration constant.
          */
         public static JavaConstant ofEnumeration(EnumerationDescription enumerationDescription) {
-            return new Dynamic(new ConstantDynamic(enumerationDescription.getValue(),
-                    enumerationDescription.getEnumerationType().getDescriptor(),
-                    new Handle(Opcodes.H_INVOKESTATIC,
-                            CONSTANT_BOOTSTRAPS,
+            return new Dynamic(enumerationDescription.getValue(),
+                    enumerationDescription.getEnumerationType(),
+                    new MethodHandle(MethodHandle.HandleType.INVOKE_STATIC,
+                            JavaType.CONSTANT_BOOTSTRAPS.getTypeStub(),
                             "enumConstant",
-                            "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Enum;",
-                            false)), enumerationDescription.getEnumerationType());
+                            TypeDescription.ForLoadedType.of(Enum.class),
+                            Arrays.asList(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub(), TypeDescription.STRING, TypeDescription.CLASS)),
+                    Collections.<JavaConstant>emptyList());
         }
 
         /**
@@ -1644,17 +1661,18 @@ public interface JavaConstant {
             boolean selfDeclared = fieldDescription.getType().isPrimitive()
                     ? fieldDescription.getType().asErasure().asBoxed().equals(fieldDescription.getType().asErasure())
                     : fieldDescription.getDeclaringType().equals(fieldDescription.getType().asErasure());
-            return new Dynamic(new ConstantDynamic(fieldDescription.getInternalName(),
-                    fieldDescription.getDescriptor(),
-                    new Handle(Opcodes.H_INVOKESTATIC,
-                            CONSTANT_BOOTSTRAPS,
+            return new Dynamic(fieldDescription.getInternalName(),
+                    fieldDescription.getType().asErasure(),
+                    new MethodHandle(MethodHandle.HandleType.INVOKE_STATIC,
+                            JavaType.CONSTANT_BOOTSTRAPS.getTypeStub(),
                             "getStaticFinal",
+                            TypeDescription.OBJECT,
                             selfDeclared
-                                    ? "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"
-                                    : "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;",
-                            false), selfDeclared
-                    ? new Object[0]
-                    : new Object[]{Type.getType(fieldDescription.getDeclaringType().getDescriptor())}), fieldDescription.getType().asErasure());
+                                    ? Arrays.asList(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub(), TypeDescription.STRING, TypeDescription.CLASS)
+                                    : Arrays.asList(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub(), TypeDescription.STRING, TypeDescription.CLASS, TypeDescription.CLASS)),
+                    selfDeclared
+                            ? Collections.<JavaConstant>emptyList()
+                            : Collections.singletonList(Simple.of(fieldDescription.getDeclaringType())));
         }
 
         /**
@@ -1737,12 +1755,6 @@ public interface JavaConstant {
                     : methodDescription.getParameters().size() + (methodDescription.isStatic() || methodDescription.isConstructor() ? 0 : 1) != constants.size()) {
                 throw new IllegalArgumentException("Cannot assign " + constants + " to " + methodDescription);
             }
-            Object[] argument = new Object[constants.size() + 1];
-            argument[0] = new Handle(methodDescription.isConstructor() ? Opcodes.H_NEWINVOKESPECIAL : Opcodes.H_INVOKESTATIC,
-                    methodDescription.getDeclaringType().getInternalName(),
-                    methodDescription.getInternalName(),
-                    methodDescription.getDescriptor(),
-                    methodDescription.getDeclaringType().isInterface());
             List<TypeDescription> parameters = (methodDescription.isStatic() || methodDescription.isConstructor()
                     ? methodDescription.getParameters().asTypeList().asErasures()
                     : CompoundList.of(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList().asErasures()));
@@ -1754,24 +1766,29 @@ public interface JavaConstant {
             } else {
                 iterator = parameters.iterator();
             }
-            int index = 0;
+            List<JavaConstant> arguments = new ArrayList<JavaConstant>(constants.size() + 1);
+            arguments.add(MethodHandle.of(methodDescription));
             for (Object constant : constants) {
-                JavaConstant wrapped = Simple.wrap(constant);
-                if (!wrapped.getTypeDescription().isAssignableTo(iterator.next())) {
+                JavaConstant argument = Simple.wrap(constant);
+                if (!argument.getTypeDescription().isAssignableTo(iterator.next())) {
                     throw new IllegalArgumentException("Cannot assign " + constants + " to " + methodDescription);
                 }
-                argument[++index] = wrapped.asConstantPoolValue();
+                arguments.add(argument);
             }
-            return new Dynamic(new ConstantDynamic("invoke",
-                    (methodDescription.isConstructor()
+            return new Dynamic(DEFAULT_NAME,
+                    methodDescription.isConstructor()
                             ? methodDescription.getDeclaringType()
-                            : methodDescription.getReturnType().asErasure()).getDescriptor(),
-                    new Handle(Opcodes.H_INVOKESTATIC,
-                            CONSTANT_BOOTSTRAPS,
+                            : methodDescription.getReturnType().asErasure(),
+                    new MethodHandle(MethodHandle.HandleType.INVOKE_STATIC,
+                            JavaType.CONSTANT_BOOTSTRAPS.getTypeStub(),
                             "invoke",
-                            "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;",
-                            false),
-                    argument), methodDescription.isConstructor() ? methodDescription.getDeclaringType() : methodDescription.getReturnType().asErasure());
+                            TypeDescription.OBJECT,
+                            Arrays.asList(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub(),
+                                    TypeDescription.STRING,
+                                    TypeDescription.CLASS,
+                                    JavaType.METHOD_HANDLE.getTypeStub(),
+                                    TypeDescription.ArrayProjection.of(TypeDescription.OBJECT))),
+                    arguments);
         }
 
         /**
@@ -1791,17 +1808,20 @@ public interface JavaConstant {
          * @return A dynamic constant that represents the created var handle constant.
          */
         public static JavaConstant ofVarHandle(FieldDescription.InDefinedShape fieldDescription) {
-            return new Dynamic(new ConstantDynamic(fieldDescription.getInternalName(),
-                    JavaType.VAR_HANDLE.getTypeStub().getDescriptor(),
-                    new Handle(Opcodes.H_INVOKESTATIC,
-                            CONSTANT_BOOTSTRAPS,
+            return new Dynamic(fieldDescription.getInternalName(),
+                    JavaType.VAR_HANDLE.getTypeStub(),
+                    new MethodHandle(MethodHandle.HandleType.INVOKE_STATIC,
+                            JavaType.CONSTANT_BOOTSTRAPS.getTypeStub(),
                             fieldDescription.isStatic()
                                     ? "staticFieldVarHandle"
                                     : "fieldVarHandle",
-                            "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/invoke/VarHandle;",
-                            false),
-                    Type.getType(fieldDescription.getDeclaringType().getDescriptor()),
-                    Type.getType(fieldDescription.getType().asErasure().getDescriptor())), JavaType.VAR_HANDLE.getTypeStub());
+                            JavaType.VAR_HANDLE.getTypeStub(),
+                            Arrays.asList(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub(),
+                                    TypeDescription.STRING,
+                                    TypeDescription.CLASS,
+                                    TypeDescription.CLASS,
+                                    TypeDescription.CLASS)),
+                    Arrays.asList(Simple.of(fieldDescription.getDeclaringType()), Simple.of(fieldDescription.getType().asErasure())));
         }
 
         /**
@@ -1824,14 +1844,17 @@ public interface JavaConstant {
             if (!typeDescription.isArray()) {
                 throw new IllegalArgumentException("Not an array type: " + typeDescription);
             }
-            return new Dynamic(new ConstantDynamic("arrayVarHandle",
-                    JavaType.VAR_HANDLE.getTypeStub().getDescriptor(),
-                    new Handle(Opcodes.H_INVOKESTATIC,
-                            CONSTANT_BOOTSTRAPS,
+            return new Dynamic(DEFAULT_NAME,
+                    JavaType.VAR_HANDLE.getTypeStub(),
+                    new MethodHandle(MethodHandle.HandleType.INVOKE_STATIC,
+                            JavaType.CONSTANT_BOOTSTRAPS.getTypeStub(),
                             "arrayVarHandle",
-                            "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/invoke/VarHandle;",
-                            false),
-                    Type.getType(typeDescription.getDescriptor())), JavaType.VAR_HANDLE.getTypeStub());
+                            JavaType.VAR_HANDLE.getTypeStub(),
+                            Arrays.asList(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub(),
+                                    TypeDescription.STRING,
+                                    TypeDescription.CLASS,
+                                    TypeDescription.CLASS)),
+                    Collections.singletonList(Simple.of(typeDescription)));
         }
 
         /**
@@ -1917,30 +1940,55 @@ public interface JavaConstant {
             if (name.length() == 0 || name.contains(".")) {
                 throw new IllegalArgumentException("Not a valid field name: " + name);
             }
-            Object[] argument = new Object[constants.size()];
+            List<JavaConstant> arguments = new ArrayList<JavaConstant>(constants.size());
             List<TypeDescription> types = new ArrayList<TypeDescription>(constants.size());
-            int index = 0;
             for (Object constant : constants) {
-                JavaConstant wrapped = JavaConstant.Simple.wrap(constant);
-                argument[index++] = wrapped.asConstantPoolValue();
-                types.add(wrapped.getTypeDescription());
+                JavaConstant argument = JavaConstant.Simple.wrap(constant);
+                arguments.add(argument);
+                types.add(argument.getTypeDescription());
             }
             if (!bootstrap.isConstantBootstrap(types)) {
-                throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrap + " for " + Arrays.asList(argument));
+                throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrap + " for " + arguments);
             }
-            return new Dynamic(new ConstantDynamic(name,
-                    (bootstrap.isConstructor()
-                            ? bootstrap.getDeclaringType()
-                            : bootstrap.getReturnType().asErasure()).getDescriptor(),
-                    new Handle(bootstrap.isConstructor() ? Opcodes.H_NEWINVOKESPECIAL : Opcodes.H_INVOKESTATIC,
-                            bootstrap.getDeclaringType().getInternalName(),
-                            bootstrap.getInternalName(),
-                            bootstrap.getDescriptor(),
-                            false),
-                    argument),
+            return new Dynamic(name,
                     bootstrap.isConstructor()
                             ? bootstrap.getDeclaringType()
-                            : bootstrap.getReturnType().asErasure());
+                            : bootstrap.getReturnType().asErasure(),
+                    new MethodHandle(bootstrap.isConstructor() ? MethodHandle.HandleType.INVOKE_SPECIAL_CONSTRUCTOR : MethodHandle.HandleType.INVOKE_STATIC,
+                            bootstrap.isConstructor()
+                                    ? bootstrap.getDeclaringType()
+                                    : bootstrap.getReturnType().asErasure(),
+                            bootstrap.getInternalName(),
+                            bootstrap.getReturnType().asErasure(),
+                            bootstrap.getParameters().asTypeList().asErasures()),
+                    arguments);
+        }
+
+        /**
+         * Returns the name of the dynamic constant.
+         *
+         * @return The name of the dynamic constant.
+         */
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * Returns a handle representation of the bootstrap method.
+         *
+         * @return A handle representation of the bootstrap method.
+         */
+        public MethodHandle getBootstrap() {
+            return bootstrap;
+        }
+
+        /**
+         * Returns a list of the arguments to the dynamic constant.
+         *
+         * @return A list of the arguments to the dynamic constant.
+         */
+        public List<JavaConstant> getArguments() {
+            return arguments;
         }
 
         /**
@@ -1964,71 +2012,41 @@ public interface JavaConstant {
         public JavaConstant withType(TypeDescription typeDescription) {
             if (typeDescription.represents(void.class)) {
                 throw new IllegalArgumentException("Constant value cannot represent void");
-            } else if (value.getBootstrapMethod().getName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
-                    ? !this.typeDescription.isAssignableTo(typeDescription)
-                    : (!typeDescription.asBoxed().isInHierarchyWith(this.typeDescription.asBoxed()))) {
-                throw new IllegalArgumentException(typeDescription + " is not compatible with bootstrapped type " + this.typeDescription);
+            } else if (getBootstrap().getName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
+                    ? !getTypeDescription().isAssignableTo(typeDescription)
+                    : (!typeDescription.asBoxed().isInHierarchyWith(getTypeDescription().asBoxed()))) {
+                throw new IllegalArgumentException(typeDescription + " is not compatible with bootstrapped type " + getTypeDescription());
             }
-            Object[] bootstrapMethodArgument = new Object[value.getBootstrapMethodArgumentCount()];
-            for (int index = 0; index < value.getBootstrapMethodArgumentCount(); index++) {
-                bootstrapMethodArgument[index] = value.getBootstrapMethodArgument(index);
-            }
-            return new Dynamic(new ConstantDynamic(value.getName(),
-                    typeDescription.getDescriptor(),
-                    value.getBootstrapMethod(),
-                    bootstrapMethodArgument), typeDescription);
+            return new Dynamic(getName(), typeDescription, getBootstrap(), getArguments());
         }
 
         /**
          * {@inheritDoc}
          */
-        public Object asConstantPoolValue() {
-            return value;
+        public ConstantDynamic asConstantPoolValue() {
+            Object[] arguments = new Object[getArguments().size()];
+            for (int index = 0; index < arguments.length; index++) {
+                arguments[index] = getArguments().get(index).asConstantPoolValue();
+            }
+            return new ConstantDynamic(getName(),
+                    getTypeDescription().getDescriptor(),
+                    getBootstrap().asConstantPoolValue(),
+                    arguments);
         }
 
         /**
          * {@inheritDoc}
          */
         public Object asConstantDescription() {
-            return asConstantDescription(value);
-        }
-
-        /**
-         * Resolves a {@link ConstantDynamic} value to a {@code java.lang.constant.ConstantDesc}.
-         *
-         * @param value The {@link ConstantDynamic} value to resolve.
-         * @return A {@code java.lang.constant.ConstantDesc} representing the supplied {@link ConstantDynamic}.
-         */
-        private static Object asConstantDescription(ConstantDynamic value) {
-            Object[] arguments = Simple.CONSTANT_DESC.toArray(value.getBootstrapMethodArgumentCount());
-            for (int index = 0; index < value.getBootstrapMethodArgumentCount(); index++) {
-                if (value.getBootstrapMethodArgument(index) instanceof ConstantDynamic) {
-                    arguments[index] = asConstantDescription((ConstantDynamic) value.getBootstrapMethodArgument(index));
-                } else if (value.getBootstrapMethodArgument(index) instanceof Handle) {
-                    arguments[index] = Simple.METHOD_HANDLE_DESC.of(Simple.DIRECT_METHOD_HANDLE_DESC_KIND.valueOf(
-                            ((Handle) value.getBootstrapMethodArgument(index)).getTag(), ((Handle) value.getBootstrapMethodArgument(index)).isInterface()),
-                            Simple.CLASS_DESC.ofDescriptor(((Handle) value.getBootstrapMethodArgument(index)).getOwner()),
-                            ((Handle) value.getBootstrapMethodArgument(index)).getName(),
-                            ((Handle) value.getBootstrapMethodArgument(index)).getDesc());
-                } else if (value.getBootstrapMethodArgument(index) instanceof Type) {
-                    arguments[index] = ((Type) value.getBootstrapMethodArgument(index)).getSort() == Type.METHOD
-                            ? Simple.METHOD_TYPE_DESC.ofDescriptor(((Type) value.getBootstrapMethodArgument(index)).getDescriptor())
-                            : Simple.CLASS_DESC.ofDescriptor(((Type) value.getBootstrapMethodArgument(index)).getDescriptor());
-                } else if (value.getBootstrapMethodArgument(index) instanceof Integer
-                        || value.getBootstrapMethodArgument(index) instanceof Long
-                        || value.getBootstrapMethodArgument(index) instanceof Float
-                        || value.getBootstrapMethodArgument(index) instanceof Double
-                        || value.getBootstrapMethodArgument(index) instanceof String) {
-                    arguments[index] = value.getBootstrapMethodArgument(index);
-                } else {
-                    throw new IllegalStateException("Could not resolve bootstrap argument to a constant description: " + value.getBootstrapMethodArgument(index));
-                }
+            Object[] argument = Simple.CONSTANT_DESC.toArray(getArguments().size());
+            for (int index = 0; index < argument.length; index++) {
+                argument[index] = getArguments().get(index).asConstantDescription();
             }
             return Simple.DYNAMIC_CONSTANT_DESC.ofCanonical(Simple.METHOD_HANDLE_DESC.of(
-                    Simple.DIRECT_METHOD_HANDLE_DESC_KIND.valueOf(value.getBootstrapMethod().getTag(), value.getBootstrapMethod().isInterface()),
-                    Simple.CLASS_DESC.ofDescriptor(value.getBootstrapMethod().getOwner()),
-                    value.getBootstrapMethod().getName(),
-                    value.getBootstrapMethod().getDesc()), value.getName(), Simple.CLASS_DESC.ofDescriptor(value.getDescriptor()), arguments);
+                    Simple.DIRECT_METHOD_HANDLE_DESC_KIND.valueOf(getBootstrap().getHandleType().getIdentifier(), getBootstrap().getOwnerType().isInterface()),
+                    Simple.CLASS_DESC.ofDescriptor(getBootstrap().getOwnerType().getDescriptor()),
+                    getBootstrap().getName(),
+                    getBootstrap().getDescriptor()), getName(), Simple.CLASS_DESC.ofDescriptor(getTypeDescription().getDescriptor()), argument);
         }
 
         /**
@@ -2040,41 +2058,43 @@ public interface JavaConstant {
 
         @Override
         public int hashCode() {
-            int result = value.hashCode();
+            int result = name.hashCode();
             result = 31 * result + typeDescription.hashCode();
+            result = 31 * result + bootstrap.hashCode();
+            result = 31 * result + arguments.hashCode();
             return result;
         }
 
         @Override
-        public boolean equals(Object other) {
-            if (this == other) {
-                return true;
-            } else if (other == null || getClass() != other.getClass()) {
-                return false;
-            }
-            Dynamic dynamic = (Dynamic) other;
-            return value.equals(dynamic.value) && typeDescription.equals(dynamic.typeDescription);
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            Dynamic dynamic = (Dynamic) object;
+            if (!name.equals(dynamic.name)) return false;
+            if (!typeDescription.equals(dynamic.typeDescription)) return false;
+            if (!bootstrap.equals(dynamic.bootstrap)) return false;
+            return arguments.equals(dynamic.arguments);
         }
 
         @Override
         public String toString() {
-            int offset = value.getBootstrapMethod().getOwner().lastIndexOf('/');
             StringBuilder stringBuilder = new StringBuilder()
-                    .append(offset == -1
-                            ? value.getBootstrapMethod().getOwner()
-                            : value.getBootstrapMethod().getOwner().substring(offset + 1))
+                    .append(getBootstrap().getOwnerType().getSimpleName())
                     .append("::")
-                    .append(value.getBootstrapMethod().getName())
+                    .append(getBootstrap().getName())
                     .append('(')
-                    .append(value.getName().equals(DEFAULT_NAME) ? "" : value.getName())
+                    .append(getName().equals(DEFAULT_NAME) ? "" : getName())
                     .append('/');
-            for (int index = 0; index < value.getBootstrapMethodArgumentCount(); index++) {
-                if (index > 0) {
+            boolean first = true;
+            for (JavaConstant constant : getArguments()) {
+                if (first) {
+                    first = false;
+                } else {
                     stringBuilder.append(',');
                 }
-                stringBuilder.append(value.getBootstrapMethodArgument(index));
+                stringBuilder.append(constant.toString());
             }
-            return stringBuilder.append(')').append(typeDescription.getSimpleName()).toString();
+            return stringBuilder.append(')').append(getTypeDescription().getSimpleName()).toString();
         }
     }
 }

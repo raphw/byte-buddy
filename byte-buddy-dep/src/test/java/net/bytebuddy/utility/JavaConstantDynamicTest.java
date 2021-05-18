@@ -4,6 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;

@@ -24,6 +24,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
 import java.lang.reflect.*;
+import java.util.List;
 
 /**
  * Representations of Java types that do not exist in Java 6 but that have a special meaning to the JVM.
@@ -154,6 +155,11 @@ public enum JavaType {
     MODULE("java.lang.Module", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, Object.class, AnnotatedElement.class),
 
     /**
+     * The Java 12 {@code java.lang.invoke.ConstantBootstraps} type.
+     */
+    CONSTANT_BOOTSTRAPS("java.lang.invoke.ConstantBootstraps", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, Object.class),
+
+    /**
      * The Java 14 {@code java.lang.Record} type.
      */
     RECORD("java.lang.Record", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, Object.class),
@@ -205,7 +211,7 @@ public enum JavaType {
      * @param interfaces The interfaces of this type when creating a stub.
      */
     JavaType(String typeName, int modifiers, TypeDescription.Generic superClass, TypeList.Generic interfaces) {
-        typeDescription = new TypeDescription.Latent(typeName, modifiers, superClass, interfaces);
+        typeDescription = new LatentTypeWithSimpleName(typeName, modifiers, superClass, interfaces);
     }
 
     /**
@@ -268,6 +274,32 @@ public enum JavaType {
             return load().isInstance(instance);
         } catch (ClassNotFoundException ignored) {
             return false;
+        }
+    }
+
+    /**
+     * A latent type that resolves the simple name without considering the declaring type which is not normally available. This
+     * is required since the {@link JavaConstant} replication of Java's string representation uses the simple name.
+     */
+    protected static class LatentTypeWithSimpleName extends TypeDescription.Latent {
+
+        /**
+         * Creates a new latent type with a simple name.
+         *
+         * @param name       The name of the type.
+         * @param modifiers  The modifiers of the type.
+         * @param superClass The super type or {@code null} if no such type exists.
+         * @param interfaces The interfaces that this type implements.
+         */
+        protected LatentTypeWithSimpleName(String name, int modifiers, Generic superClass, List<? extends Generic> interfaces) {
+            super(name, modifiers, superClass, interfaces);
+        }
+
+        @Override
+        public String getSimpleName() {
+            String name = getName();
+            int index = Math.max(name.lastIndexOf('$'), name.lastIndexOf('.'));
+            return index == -1 ? name : name.substring(index + 1);
         }
     }
 }

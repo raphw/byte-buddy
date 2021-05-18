@@ -185,5 +185,16 @@ public class JavaTypeTest {
         assertThat(JavaType.TYPE_DESCRIPTOR_OF_FIELD.loadAsDescription(), notNullValue(TypeDescription.class));
         assertThat(JavaType.TYPE_DESCRIPTOR_OF_METHOD.load(), notNullValue(Class.class));
         assertThat(JavaType.TYPE_DESCRIPTOR_OF_METHOD.loadAsDescription(), notNullValue(TypeDescription.class));
+        assertThat(JavaType.CONSTANT_BOOTSTRAPS.load(), notNullValue(Class.class));
+        assertThat(JavaType.CONSTANT_BOOTSTRAPS.loadAsDescription(), notNullValue(TypeDescription.class));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(14)
+    public void testJava14Types() throws Exception {
+        assertThat(JavaType.RECORD.load(), notNullValue(Class.class));
+        assertThat(JavaType.RECORD.loadAsDescription(), notNullValue(TypeDescription.class));
+        assertThat(JavaType.OBJECT_METHODS.load(), notNullValue(Class.class));
+        assertThat(JavaType.OBJECT_METHODS.loadAsDescription(), notNullValue(TypeDescription.class));
     }
 }
