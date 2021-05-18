@@ -52,7 +52,7 @@ public enum FileSystem {
      */
     public void copy(File source, File target) throws IOException {
         Object[] option = STANDARD_COPY_OPTION.toArray(1);
-        if (option == null) {
+        if (option.length == 0) {
             InputStream inputStream = new FileInputStream(source);
             try {
                 OutputStream outputStream = new FileOutputStream(target);
@@ -83,7 +83,7 @@ public enum FileSystem {
      */
     public void move(File source, File target) throws IOException {
         Object[] option = STANDARD_COPY_OPTION.toArray(1);
-        if (option == null) {
+        if (option.length == 0) {
             InputStream inputStream = new FileInputStream(source);
             try {
                 OutputStream outputStream = new FileOutputStream(target);
