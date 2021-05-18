@@ -64,8 +64,10 @@ public interface JavaConstant {
 
     /**
      * Represents a simple Java constant, either a primitive constant, a {@link String} or a {@link Class}.
+     *
+     * @param <T> The represented type.
      */
-    class Simple implements JavaConstant {
+    abstract class Simple<T> implements JavaConstant {
 
         /**
          * A dispatcher for interaction with {@code java.lang.constant.ClassDesc}.
@@ -105,7 +107,7 @@ public interface JavaConstant {
         /**
          * The represented constant pool value.
          */
-        private final Object value;
+        protected final T value;
 
         /**
          * A description of the type of the constant.
@@ -118,7 +120,7 @@ public interface JavaConstant {
          * @param value           The represented constant pool value.
          * @param typeDescription A description of the type of the constant.
          */
-        protected Simple(Object value, TypeDescription typeDescription) {
+        protected Simple(T value, TypeDescription typeDescription) {
             this.value = value;
             this.typeDescription = typeDescription;
         }
@@ -131,17 +133,17 @@ public interface JavaConstant {
          */
         public static JavaConstant ofLoaded(Object value) {
             if (value instanceof Integer) {
-                return new Simple(value, TypeDescription.ForLoadedType.of(int.class));
+                return new OfTrivialValue<Integer>((Integer) value, TypeDescription.ForLoadedType.of(int.class));
             } else if (value instanceof Long) {
-                return new Simple(value, TypeDescription.ForLoadedType.of(long.class));
+                return new OfTrivialValue<Long>((Long) value, TypeDescription.ForLoadedType.of(long.class));
             } else if (value instanceof Float) {
-                return new Simple(value, TypeDescription.ForLoadedType.of(float.class));
+                return new OfTrivialValue<Float>((Float) value, TypeDescription.ForLoadedType.of(float.class));
             } else if (value instanceof Double) {
-                return new Simple(value, TypeDescription.ForLoadedType.of(double.class));
+                return new OfTrivialValue<Double>((Double) value, TypeDescription.ForLoadedType.of(double.class));
             } else if (value instanceof String) {
-                return new Simple(value, TypeDescription.STRING);
+                return new OfTrivialValue<String>((String) value, TypeDescription.STRING);
             } else if (value instanceof Class<?>) {
-                return new Simple(TypeDescription.ForLoadedType.of((Class<?>) value), TypeDescription.CLASS);
+                return Simple.of(TypeDescription.ForLoadedType.of((Class<?>) value));
             } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
                 return MethodHandle.ofLoaded(value);
             } else if (JavaType.METHOD_TYPE.isInstance(value)) {
@@ -182,17 +184,17 @@ public interface JavaConstant {
          */
         public static JavaConstant ofDescription(Object value, TypePool typePool) {
             if (value instanceof Integer) {
-                return new Simple(value, TypeDescription.ForLoadedType.of(int.class));
+                return new Simple.OfTrivialValue<Integer>((Integer) value, TypeDescription.ForLoadedType.of(int.class));
             } else if (value instanceof Long) {
-                return new Simple(value, TypeDescription.ForLoadedType.of(long.class));
+                return new Simple.OfTrivialValue<Long>((Long) value, TypeDescription.ForLoadedType.of(long.class));
             } else if (value instanceof Float) {
-                return new Simple(value, TypeDescription.ForLoadedType.of(float.class));
+                return new Simple.OfTrivialValue<Float>((Float) value, TypeDescription.ForLoadedType.of(float.class));
             } else if (value instanceof Double) {
-                return new Simple(value, TypeDescription.ForLoadedType.of(double.class));
+                return new Simple.OfTrivialValue<Double>((Double) value, TypeDescription.ForLoadedType.of(double.class));
             } else if (value instanceof String) {
-                return new Simple(value, TypeDescription.STRING);
+                return new Simple.OfTrivialValue<String>((String) value, TypeDescription.STRING);
             } else if (CLASS_DESC.isInstance(value)) {
-                return new Simple(typePool.describe(Type.getType(CLASS_DESC.descriptorString(value)).getClassName()).resolve(), TypeDescription.CLASS);
+                return Simple.OfTypeDescription.of(typePool.describe(Type.getType(CLASS_DESC.descriptorString(value)).getClassName()).resolve());
             } else if (METHOD_TYPE_DESC.isInstance(value)) {
                 Object[] parameterTypes = METHOD_TYPE_DESC.parameterArray(value);
                 List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameterTypes.length);
@@ -244,7 +246,10 @@ public interface JavaConstant {
          * @return An appropriate Java constant representation.
          */
         public static JavaConstant of(TypeDescription typeDescription) {
-            return new Simple(typeDescription, TypeDescription.CLASS);
+            if (typeDescription.isPrimitive()) {
+                throw new IllegalArgumentException("A primitive type cannot be represented as a type constant: " + typeDescription);
+            }
+            return new Simple.OfTypeDescription(typeDescription);
         }
 
         /**
@@ -280,32 +285,6 @@ public interface JavaConstant {
         /**
          * {@inheritDoc}
          */
-        public Object asConstantPoolValue() {
-            if (value instanceof Integer || value instanceof Long || value instanceof Float || value instanceof Double || value instanceof String) {
-                return value;
-            } else if (value instanceof TypeDescription) {
-                return Type.getType(((TypeDescription) value).getDescriptor());
-            } else {
-                throw new IllegalStateException("Cannot resolve to a constant pool value: " + value);
-            }
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public Object asConstantDescription() {
-            if (value instanceof Integer || value instanceof Long || value instanceof Float || value instanceof Double || value instanceof String) {
-                return value;
-            } else if (value instanceof TypeDescription) {
-                return CLASS_DESC.ofDescriptor(((TypeDescription) value).getDescriptor());
-            } else {
-                throw new IllegalStateException("Cannot resolve to a constant description: " + value);
-            }
-        }
-
-        /**
-         * {@inheritDoc}
-         */
         public TypeDescription getTypeDescription() {
             return typeDescription;
         }
@@ -319,12 +298,73 @@ public interface JavaConstant {
         public boolean equals(Object object) {
             if (this == object) return true;
             if (object == null || getClass() != object.getClass()) return false;
-            return value.equals(((Simple) object).value);
+            return value.equals(((Simple<?>) object).value);
         }
 
         @Override
         public String toString() {
             return value.toString();
+        }
+
+        /**
+         * Represents a trivial constant value that represents itself.
+         *
+         * @param <S> The represented type.
+         */
+        protected static class OfTrivialValue<S> extends Simple<S> {
+
+            /**
+             * Creates a representation of a trivial constant that represents itself.
+             *
+             * @param value           The represented value.
+             * @param typeDescription The represented value's type.
+             */
+            protected OfTrivialValue(S value, TypeDescription typeDescription) {
+                super(value, typeDescription);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public S asConstantPoolValue() {
+                return value;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Object asConstantDescription() {
+                return value;
+            }
+        }
+
+        /**
+         * Represents a type constant.
+         */
+        protected static class OfTypeDescription extends Simple<TypeDescription> {
+
+            /**
+             * Creates a type constant.
+             *
+             * @param value The represented type.
+             */
+            protected OfTypeDescription(TypeDescription value) {
+                super(value, TypeDescription.CLASS);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Type asConstantPoolValue() {
+                return Type.getType(value.getDescriptor());
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Object asConstantDescription() {
+                return CLASS_DESC.ofDescriptor(value.getDescriptor());
+            }
         }
 
         /**
@@ -485,7 +525,7 @@ public interface JavaConstant {
                  * @param value The {@code java.lang.constant.DirectMethodHandleDesc} to resolve.
                  * @return {@code true} if the supplied method handle description is owned by an interface.
                  */
-                boolean isOwnerInterface(Object value);
+                boolean isOwnerInterface(Object value); // FIXME: Retain interface information?
 
                 /**
                  * Resolves the lookup descriptor of the supplied direct method handle description.
