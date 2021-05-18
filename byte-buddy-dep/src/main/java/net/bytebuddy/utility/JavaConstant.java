@@ -624,14 +624,6 @@ public interface JavaConstant {
                 Object owner(Object value);
 
                 /**
-                 * Checks if the represented method handle's owner is an interface type.
-                 *
-                 * @param value The {@code java.lang.constant.DirectMethodHandleDesc} to resolve.
-                 * @return {@code true} if the supplied method handle description is owned by an interface.
-                 */
-                boolean isOwnerInterface(Object value); // FIXME: Retain interface information?
-
-                /**
                  * Resolves the lookup descriptor of the supplied direct method handle description.
                  *
                  * @param value The {@code java.lang.constant.DirectMethodHandleDesc} to resolve.
