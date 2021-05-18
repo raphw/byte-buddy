@@ -192,7 +192,7 @@ public interface JavaConstant {
             } else if (value instanceof String) {
                 return new Simple(value, TypeDescription.STRING);
             } else if (CLASS_DESC.isInstance(value)) {
-                return new Simple(typePool.describe(Type.getType(CLASS_DESC.descriptorString(value)).getClassName()), TypeDescription.CLASS);
+                return new Simple(typePool.describe(Type.getType(CLASS_DESC.descriptorString(value)).getClassName()).resolve(), TypeDescription.CLASS);
             } else if (METHOD_TYPE_DESC.isInstance(value)) {
                 Object[] parameterTypes = METHOD_TYPE_DESC.parameterArray(value);
                 List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameterTypes.length);
