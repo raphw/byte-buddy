@@ -121,7 +121,6 @@ public class PluginEngineTargetForFolderTest {
         } finally {
             assertThat(original.delete(), is(true));
         }
-        verify(element, times(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V7) ? 0 : 1)).getInputStream();
     }
 
     @Test
