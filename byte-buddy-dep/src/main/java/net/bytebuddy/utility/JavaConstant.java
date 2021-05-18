@@ -217,7 +217,7 @@ public interface JavaConstant {
                 Type methodType = Type.getMethodType(DIRECT_METHOD_HANDLE_DESC.lookupDescriptor(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value)));
                 List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(methodType.getArgumentTypes().length);
                 for (Type type : methodType.getArgumentTypes()) {
-                    parameterTypes.add(typePool.describe(methodType.getReturnType().getClassName()).resolve());
+                    parameterTypes.add(typePool.describe(type.getClassName()).resolve());
                 }
                 Object[] constant = DYNAMIC_CONSTANT_DESC.bootstrapArgs(value);
                 List<JavaConstant> arguments = new ArrayList<JavaConstant>(constant.length);
