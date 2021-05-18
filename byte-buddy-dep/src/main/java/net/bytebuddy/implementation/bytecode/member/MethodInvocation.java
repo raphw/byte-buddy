@@ -24,6 +24,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
+import net.bytebuddy.implementation.bytecode.constant.JavaConstantValue;
 import net.bytebuddy.utility.JavaConstant;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
@@ -505,7 +506,7 @@ public enum MethodInvocation {
             Object[] constant = new Object[arguments.size()];
             int index = 0;
             for (JavaConstant argument : arguments) {
-                constant[index++] = argument.asConstantPoolValue();
+                constant[index++] = argument.accept(JavaConstantValue.Visitor.INSTANCE);
             }
             methodVisitor.visitInvokeDynamicInsn(methodName,
                     methodDescriptor,

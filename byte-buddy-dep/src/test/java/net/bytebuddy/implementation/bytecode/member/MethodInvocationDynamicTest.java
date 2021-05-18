@@ -6,6 +6,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.implementation.bytecode.constant.JavaConstantValue;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.JavaConstant;
 import org.junit.Before;
@@ -64,7 +65,7 @@ public class MethodInvocationDynamicTest {
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(declaringType.getInternalName()).thenReturn(BAR);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, firstType, secondType));
-        when(argument.asConstantPoolValue()).thenReturn(provided);
+        when(argument.accept(JavaConstantValue.Visitor.INSTANCE)).thenReturn(provided);
     }
 
     @Test

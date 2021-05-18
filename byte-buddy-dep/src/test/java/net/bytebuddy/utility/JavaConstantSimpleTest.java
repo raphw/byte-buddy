@@ -1,6 +1,7 @@
 package net.bytebuddy.utility;
 
 import net.bytebuddy.description.type.TypeDescription;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -9,6 +10,7 @@ import org.objectweb.asm.Type;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -23,8 +25,8 @@ public class JavaConstantSimpleTest {
                 {0f, TypeDescription.ForLoadedType.of(float.class), 0f},
                 {0d, TypeDescription.ForLoadedType.of(double.class), 0d},
                 {"foo", TypeDescription.STRING, "foo"},
-                {Object.class, TypeDescription.CLASS, Type.getType(Object.class)},
-                {TypeDescription.OBJECT, TypeDescription.CLASS, Type.getType(Object.class)},
+                {Object.class, TypeDescription.CLASS, TypeDescription.ForLoadedType.of(Object.class)},
+                {TypeDescription.OBJECT, TypeDescription.CLASS, TypeDescription.ForLoadedType.of(Object.class)},
                 {JavaConstant.Simple.ofLoaded(0), TypeDescription.ForLoadedType.of(int.class), 0}
         });
     }
@@ -43,7 +45,8 @@ public class JavaConstantSimpleTest {
 
     @Test
     public void testValueWrap() {
-        assertThat(JavaConstant.Simple.wrap(value).asConstantPoolValue(), is(constant));
+        assertThat(JavaConstant.Simple.wrap(value), instanceOf(JavaConstant.Simple.class));
+        assertThat(((JavaConstant.Simple<?>) JavaConstant.Simple.wrap(value)).getValue(), is(constant));
     }
 
     @Test

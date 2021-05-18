@@ -37,14 +37,14 @@ public class JavaConstantValueTest {
 
     @Test
     public void testMethodHandle() throws Exception {
-        when(javaConstant.asConstantPoolValue()).thenReturn(FOO);
+        when(javaConstant.accept(JavaConstantValue.Visitor.INSTANCE)).thenReturn(FOO);
         when(javaConstant.getTypeDescription()).thenReturn(typeDescription);
         when(typeDescription.getStackSize()).thenReturn(StackSize.SINGLE);
         StackManipulation stackManipulation = new JavaConstantValue(javaConstant);
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
-        verify(javaConstant).asConstantPoolValue();
+        verify(javaConstant).accept(JavaConstantValue.Visitor.INSTANCE);
         verify(javaConstant).getTypeDescription();
         verifyNoMoreInteractions(javaConstant);
         verify(methodVisitor).visitLdcInsn(FOO);

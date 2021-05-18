@@ -4869,7 +4869,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             exit ? 1 : 0,
                             Type.getType(instrumentedType.getDescriptor()),
                             instrumentedMethod.getInternalName(),
-                            JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()).asConstantPoolValue()};
+                            JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()).accept(JavaConstantValue.Visitor.INSTANCE)};
                 }
                 methodVisitor.visitInvokeDynamicInsn(adviceMethod.getInternalName(),
                         adviceMethod.getDescriptor(),

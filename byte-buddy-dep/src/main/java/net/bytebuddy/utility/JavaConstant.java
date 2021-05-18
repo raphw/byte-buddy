@@ -23,8 +23,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.pool.TypePool;
-import org.objectweb.asm.ConstantDynamic;
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -41,19 +39,12 @@ import java.util.*;
 public interface JavaConstant {
 
     /**
-     * Returns the represented instance as a constant pool value.
-     *
-     * @return The constant pool value in a format that can be written by ASM.
-     */
-    Object asConstantPoolValue();
-
-    /**
      * Returns this constant as a Java {@code java.lang.constant.ConstantDesc} if the current VM is of at least version 12.
      * If the current VM is of an older version and does not support the type, an exception is thrown.
      *
      * @return This constant as a Java {@code java.lang.constant.ConstantDesc}.
      */
-    Object asConstantDescription();
+    Object toDescription();
 
     /**
      * Returns a description of the type of the represented instance or at least a stub.
@@ -61,6 +52,110 @@ public interface JavaConstant {
      * @return A description of the type of the represented instance or at least a stub.
      */
     TypeDescription getTypeDescription();
+
+    /**
+     * Applies the supplied visitor to this constant type with its respective callback.
+     *
+     * @param visitor The visitor to dispatch.
+     * @param <T>     The type of the value that is returned by the visitor.
+     * @return The value that is returned by the supplied visitor.
+     */
+    <T> T accept(Visitor<T> visitor);
+
+    /**
+     * A visitor to resolve a {@link JavaConstant} based on its implementation.
+     *
+     * @param <T> The type of the value that is returned by this visitor.
+     */
+    interface Visitor<T> {
+
+        /**
+         * Invoked on a {@link Simple} constant that represents itself. Such values are of type
+         * {@link Integer}, {@link Long}, {@link Float}, {@link Double} or {@link String}.
+         *
+         * @param constant The simple constant.
+         * @return The returned value.
+         */
+        T onValue(Simple<?> constant);
+
+        /**
+         * Invoked on a {@link Simple} constant that represents a {@link TypeDescription}.
+         *
+         * @param constant The simple constant.
+         * @return The returned value.
+         */
+        T onType(Simple<TypeDescription> constant);
+
+        /**
+         * Invoked on a constant that represents a {@link MethodType}.
+         *
+         * @param constant The method type constant.
+         * @return The returned value.
+         */
+        T onMethodType(MethodType constant);
+
+        /**
+         * Invoked on a constant that represents a {@link MethodHandle}.
+         *
+         * @param constant The method handle constant.
+         * @return The returned value.
+         */
+        T onMethodHandle(MethodHandle constant);
+
+        /**
+         * Invoked on a {@link Dynamic} constant.
+         *
+         * @param constant The dynamic constant.
+         * @return The returned value.
+         */
+        T onDynamic(Dynamic constant);
+
+        /**
+         * A non-operational implementation of a {@link Visitor} for a {@link JavaConstant}.
+         */
+        enum NoOp implements Visitor<JavaConstant> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public JavaConstant onValue(Simple<?> constant) {
+                return constant;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public JavaConstant onType(Simple<TypeDescription> constant) {
+                return constant;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public JavaConstant onMethodType(MethodType constant) {
+                return constant;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public JavaConstant onMethodHandle(MethodHandle constant) {
+                return constant;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public JavaConstant onDynamic(Dynamic constant) {
+                return constant;
+            }
+        }
+    }
 
     /**
      * Represents a simple Java constant, either a primitive constant, a {@link String} or a {@link Class}.
@@ -283,6 +378,15 @@ public interface JavaConstant {
         }
 
         /**
+         * Returns the represented value.
+         *
+         * @return The represented value.
+         */
+        public T getValue() {
+            return value;
+        }
+
+        /**
          * {@inheritDoc}
          */
         public TypeDescription getTypeDescription() {
@@ -326,15 +430,15 @@ public interface JavaConstant {
             /**
              * {@inheritDoc}
              */
-            public S asConstantPoolValue() {
+            public Object toDescription() {
                 return value;
             }
 
             /**
              * {@inheritDoc}
              */
-            public Object asConstantDescription() {
-                return value;
+            public <T> T accept(Visitor<T> visitor) {
+                return visitor.onValue(this);
             }
         }
 
@@ -355,15 +459,15 @@ public interface JavaConstant {
             /**
              * {@inheritDoc}
              */
-            public Type asConstantPoolValue() {
-                return Type.getType(value.getDescriptor());
+            public Object toDescription() {
+                return CLASS_DESC.ofDescriptor(value.getDescriptor());
             }
 
             /**
              * {@inheritDoc}
              */
-            public Object asConstantDescription() {
-                return CLASS_DESC.ofDescriptor(value.getDescriptor());
+            public <T> T accept(Visitor<T> visitor) {
+                return visitor.onType(this);
             }
         }
 
@@ -821,23 +925,19 @@ public interface JavaConstant {
         /**
          * {@inheritDoc}
          */
-        public Type asConstantPoolValue() {
-            StringBuilder stringBuilder = new StringBuilder().append('(');
-            for (TypeDescription parameterType : getParameterTypes()) {
-                stringBuilder.append(parameterType.getDescriptor());
+        public Object toDescription() {
+            Object[] parameterType = Simple.CLASS_DESC.toArray(parameterTypes.size());
+            for (int index = 0; index < parameterTypes.size(); index++) {
+                parameterType[index] = Simple.CLASS_DESC.ofDescriptor(parameterTypes.get(index).getDescriptor());
             }
-            return Type.getMethodType(stringBuilder.append(')').append(getReturnType().getDescriptor()).toString());
+            return Simple.METHOD_TYPE_DESC.of(Simple.CLASS_DESC.ofDescriptor(returnType.getDescriptor()), parameterType);
         }
 
         /**
          * {@inheritDoc}
          */
-        public Object asConstantDescription() {
-            Object[] parameterTypes = Simple.CLASS_DESC.toArray(getParameterTypes().size());
-            for (int index = 0; index < getParameterTypes().size(); index++) {
-                parameterTypes[index] = Simple.CLASS_DESC.ofDescriptor(getParameterTypes().get(index).getDescriptor());
-            }
-            return Simple.METHOD_TYPE_DESC.of(Simple.CLASS_DESC.ofDescriptor(getReturnType().getDescriptor()), parameterTypes);
+        public <T> T accept(Visitor<T> visitor) {
+            return visitor.onMethodType(this);
         }
 
         /**
@@ -1141,22 +1241,18 @@ public interface JavaConstant {
         /**
          * {@inheritDoc}
          */
-        public Handle asConstantPoolValue() {
-            return new Handle(getHandleType().getIdentifier(),
-                    getOwnerType().getInternalName(),
-                    getName(),
-                    getDescriptor(),
-                    getOwnerType().isInterface());
+        public Object toDescription() {
+            return Simple.METHOD_HANDLE_DESC.of(Simple.DIRECT_METHOD_HANDLE_DESC_KIND.valueOf(handleType.getIdentifier(), ownerType.isInterface()),
+                    Simple.CLASS_DESC.ofDescriptor(ownerType.getDescriptor()),
+                    name,
+                    getDescriptor());
         }
 
         /**
          * {@inheritDoc}
          */
-        public Object asConstantDescription() {
-            return Simple.METHOD_HANDLE_DESC.of(Simple.DIRECT_METHOD_HANDLE_DESC_KIND.valueOf(getHandleType().getIdentifier(), getOwnerType().isInterface()),
-                    Simple.CLASS_DESC.ofDescriptor(getOwnerType().getDescriptor()),
-                    getName(),
-                    getDescriptor());
+        public <T> T accept(Visitor<T> visitor) {
+            return visitor.onMethodHandle(this);
         }
 
         /**
@@ -2063,30 +2159,23 @@ public interface JavaConstant {
         /**
          * {@inheritDoc}
          */
-        public ConstantDynamic asConstantPoolValue() {
-            Object[] arguments = new Object[getArguments().size()];
-            for (int index = 0; index < arguments.length; index++) {
-                arguments[index] = getArguments().get(index).asConstantPoolValue();
+        public Object toDescription() {
+            Object[] argument = Simple.CONSTANT_DESC.toArray(arguments.size());
+            for (int index = 0; index < argument.length; index++) {
+                argument[index] = arguments.get(index).toDescription();
             }
-            return new ConstantDynamic(getName(),
-                    getTypeDescription().getDescriptor(),
-                    getBootstrap().asConstantPoolValue(),
-                    arguments);
+            return Simple.DYNAMIC_CONSTANT_DESC.ofCanonical(Simple.METHOD_HANDLE_DESC.of(
+                    Simple.DIRECT_METHOD_HANDLE_DESC_KIND.valueOf(bootstrap.getHandleType().getIdentifier(), bootstrap.getOwnerType().isInterface()),
+                    Simple.CLASS_DESC.ofDescriptor(bootstrap.getOwnerType().getDescriptor()),
+                    bootstrap.getName(),
+                    bootstrap.getDescriptor()), getName(), Simple.CLASS_DESC.ofDescriptor(typeDescription.getDescriptor()), argument);
         }
 
         /**
          * {@inheritDoc}
          */
-        public Object asConstantDescription() {
-            Object[] argument = Simple.CONSTANT_DESC.toArray(getArguments().size());
-            for (int index = 0; index < argument.length; index++) {
-                argument[index] = getArguments().get(index).asConstantDescription();
-            }
-            return Simple.DYNAMIC_CONSTANT_DESC.ofCanonical(Simple.METHOD_HANDLE_DESC.of(
-                    Simple.DIRECT_METHOD_HANDLE_DESC_KIND.valueOf(getBootstrap().getHandleType().getIdentifier(), getBootstrap().getOwnerType().isInterface()),
-                    Simple.CLASS_DESC.ofDescriptor(getBootstrap().getOwnerType().getDescriptor()),
-                    getBootstrap().getName(),
-                    getBootstrap().getDescriptor()), getName(), Simple.CLASS_DESC.ofDescriptor(getTypeDescription().getDescriptor()), argument);
+        public <T> T accept(Visitor<T> visitor) {
+            return visitor.onDynamic(this);
         }
 
         /**
@@ -2119,14 +2208,14 @@ public interface JavaConstant {
         @Override
         public String toString() {
             StringBuilder stringBuilder = new StringBuilder()
-                    .append(getBootstrap().getOwnerType().getSimpleName())
+                    .append(bootstrap.getOwnerType().getSimpleName())
                     .append("::")
-                    .append(getBootstrap().getName())
+                    .append(bootstrap.getName())
                     .append('(')
-                    .append(getName().equals(DEFAULT_NAME) ? "" : getName())
+                    .append(name.equals(DEFAULT_NAME) ? "" : name)
                     .append('/');
             boolean first = true;
-            for (JavaConstant constant : getArguments()) {
+            for (JavaConstant constant : arguments) {
                 if (first) {
                     first = false;
                 } else {
@@ -2134,7 +2223,7 @@ public interface JavaConstant {
                 }
                 stringBuilder.append(constant.toString());
             }
-            return stringBuilder.append(')').append(getTypeDescription().getSimpleName()).toString();
+            return stringBuilder.append(')').append(typeDescription.getSimpleName()).toString();
         }
     }
 }
