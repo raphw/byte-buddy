@@ -7,6 +7,7 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -123,6 +124,11 @@ public class JavaDispatcherTest {
         File file = mock(File.class);
         when(file.getCanonicalPath()).thenThrow(new IOException());
         JavaDispatcher.of(DeclaredExceptionSample.class, null, generate).run().getCanonicalPath(file);
+    }
+
+    @Test
+    public void testProxy() {
+        assertThat(Proxy.isProxyClass(JavaDispatcher.of(StaticSample.class, null, generate).run().getClass()), is(!generate));
     }
 
     @JavaDispatcher.Proxied("java.lang.Object")
