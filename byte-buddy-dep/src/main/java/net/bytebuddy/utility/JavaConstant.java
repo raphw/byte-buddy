@@ -141,7 +141,7 @@ public interface JavaConstant {
             } else if (value instanceof String) {
                 return new Simple(value, TypeDescription.STRING);
             } else if (value instanceof Class<?>) {
-                return new Simple(Type.getType((Class<?>) value), TypeDescription.CLASS);
+                return new Simple(TypeDescription.ForLoadedType.of((Class<?>) value), TypeDescription.CLASS);
             } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
                 return MethodHandle.ofLoaded(value);
             } else if (JavaType.METHOD_TYPE.isInstance(value)) {
@@ -192,7 +192,7 @@ public interface JavaConstant {
             } else if (value instanceof String) {
                 return new Simple(value, TypeDescription.STRING);
             } else if (CLASS_DESC.isInstance(value)) {
-                return new Simple(Type.getType(CLASS_DESC.descriptorString(value)), TypeDescription.CLASS);
+                return new Simple(typePool.describe(Type.getType(CLASS_DESC.descriptorString(value)).getClassName()), TypeDescription.CLASS);
             } else if (METHOD_TYPE_DESC.isInstance(value)) {
                 Object[] parameterTypes = METHOD_TYPE_DESC.parameterArray(value);
                 List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameterTypes.length);
@@ -239,7 +239,7 @@ public interface JavaConstant {
          * @return An appropriate Java constant representation.
          */
         public static JavaConstant of(TypeDescription typeDescription) {
-            return new Simple(Type.getType(typeDescription.getDescriptor()), TypeDescription.CLASS);
+            return new Simple(typeDescription, TypeDescription.CLASS);
         }
 
         /**
@@ -276,7 +276,13 @@ public interface JavaConstant {
          * {@inheritDoc}
          */
         public Object asConstantPoolValue() {
-            return value;
+            if (value instanceof Integer || value instanceof Long || value instanceof Float || value instanceof Double || value instanceof String) {
+                return value;
+            } else if (value instanceof TypeDescription) {
+                return Type.getType(((TypeDescription) value).getDescriptor());
+            } else {
+                throw new IllegalStateException("Cannot resolve to a constant pool value: " + value);
+            }
         }
 
         /**
@@ -285,10 +291,10 @@ public interface JavaConstant {
         public Object asConstantDescription() {
             if (value instanceof Integer || value instanceof Long || value instanceof Float || value instanceof Double || value instanceof String) {
                 return value;
-            } else if (value instanceof Type) {
-                return CLASS_DESC.ofDescriptor(((Type) value).getDescriptor());
+            } else if (value instanceof TypeDescription) {
+                return CLASS_DESC.ofDescriptor(((TypeDescription) value).getDescriptor());
             } else {
-                throw new IllegalStateException("Cannot resolve to a description: " + value);
+                throw new IllegalStateException("Cannot resolve to a constant description: " + value);
             }
         }
 
@@ -301,18 +307,19 @@ public interface JavaConstant {
 
         @Override
         public int hashCode() {
-            int result = value.hashCode();
-            result = 31 * result + typeDescription.hashCode();
-            return result;
+            return value.hashCode();
         }
 
         @Override
         public boolean equals(Object object) {
             if (this == object) return true;
             if (object == null || getClass() != object.getClass()) return false;
-            Simple simple = (Simple) object;
-            if (!value.equals(simple.value)) return false;
-            return typeDescription.equals(simple.typeDescription);
+            return value.equals(((Simple) object).value);
+        }
+
+        @Override
+        public String toString() {
+            return value.toString();
         }
 
         /**
@@ -815,6 +822,21 @@ public interface JavaConstant {
 
         }
 
+        @Override
+        public String toString() {
+            StringBuilder stringBuilder = new StringBuilder().append('(');
+            boolean first = true;
+            for (TypeDescription typeDescription : parameterTypes) {
+                if (first) {
+                    first = false;
+                } else {
+                    stringBuilder.append(',');
+                }
+                stringBuilder.append(typeDescription.getSimpleName());
+            }
+            return stringBuilder.append(')').append(returnType.getSimpleName()).toString();
+        }
+
         /**
          * A dispatcher for extracting information from a {@code java.lang.invoke.MethodType} instance.
          */
@@ -1191,6 +1213,30 @@ public interface JavaConstant {
                     && returnType.equals(methodHandle.returnType);
         }
 
+        @Override
+        public String toString() {
+            StringBuilder stringBuilder = new StringBuilder()
+                    .append(handleType.name())
+                    .append(ownerType.isInterface() && !handleType.isField() && handleType != HandleType.INVOKE_INTERFACE
+                            ? "@interface"
+                            : "")
+                    .append('/')
+                    .append(ownerType.getSimpleName())
+                    .append("::")
+                    .append(name)
+                    .append('(');
+            boolean first = true;
+            for (TypeDescription typeDescription : parameterTypes) {
+                if (first) {
+                    first = false;
+                } else {
+                    stringBuilder.append(',');
+                }
+                stringBuilder.append(typeDescription.getSimpleName());
+            }
+            return stringBuilder.append(')').append(returnType.getSimpleName()).toString();
+        }
+
         /**
          * A representation of a method handle's type.
          */
@@ -1473,6 +1519,11 @@ public interface JavaConstant {
      * Represents a dynamically resolved constant pool entry of a class file. This feature is supported for class files in version 11 and newer.
      */
     class Dynamic implements JavaConstant {
+
+        /**
+         * The default name of a dynamic constant.
+         */
+        public static final String DEFAULT_NAME = "_";
 
         /**
          * The {@code java.lang.invoke.ConstantBootstraps} class's internal name..
@@ -2003,6 +2054,27 @@ public interface JavaConstant {
             }
             Dynamic dynamic = (Dynamic) other;
             return value.equals(dynamic.value) && typeDescription.equals(dynamic.typeDescription);
+        }
+
+        @Override
+        public String toString() {
+            int offset = value.getBootstrapMethod().getOwner().lastIndexOf('/');
+            StringBuilder stringBuilder = new StringBuilder()
+                    .append(offset == -1
+                            ? value.getBootstrapMethod().getOwner()
+                            : value.getBootstrapMethod().getOwner().substring(offset + 1))
+                    .append("::")
+                    .append(value.getBootstrapMethod().getName())
+                    .append('(')
+                    .append(value.getName().equals(DEFAULT_NAME) ? "" : value.getName())
+                    .append('/');
+            for (int index = 0; index < value.getBootstrapMethodArgumentCount(); index++) {
+                if (index > 0) {
+                    stringBuilder.append(',');
+                }
+                stringBuilder.append(value.getBootstrapMethodArgument(index));
+            }
+            return stringBuilder.append(')').append(typeDescription.getSimpleName()).toString();
         }
     }
 }

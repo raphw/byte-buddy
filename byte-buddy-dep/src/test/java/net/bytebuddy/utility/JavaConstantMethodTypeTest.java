@@ -103,6 +103,24 @@ public class JavaConstantMethodTypeTest {
         assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Object.class)));
     }
 
+    @Test
+    public void testHashCode() throws Exception {
+        assertThat(JavaConstant.MethodType.of(Foo.class.getDeclaredMethod(QUX, Void.class)).hashCode(),
+                is(JavaConstant.MethodType.of(Foo.class.getDeclaredMethod(QUX, Void.class)).hashCode()));
+    }
+
+    @Test
+    public void testEquals() throws Exception {
+        assertThat(JavaConstant.MethodType.of(Foo.class.getDeclaredMethod(QUX, Void.class)),
+                is(JavaConstant.MethodType.of(Foo.class.getDeclaredMethod(QUX, Void.class))));
+    }
+
+    @Test
+    public void testToString() throws Exception {
+        assertThat(JavaConstant.MethodType.of(Foo.class.getDeclaredMethod(QUX, Void.class)).toString(),
+                is("(Void)void"));
+    }
+
     @SuppressWarnings("unused")
     public static class Foo {
 

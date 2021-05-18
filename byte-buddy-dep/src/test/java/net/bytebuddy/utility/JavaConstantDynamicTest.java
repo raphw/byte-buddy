@@ -680,6 +680,40 @@ public class JavaConstantDynamicTest {
                 Object[].class));
     }
 
+    @Test
+    @JavaVersionRule.Enforce(11)
+    public void testHashCode() throws Exception{
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap");
+        assertThat(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getMethod("bootstrap",
+                Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                Object[].class)).hashCode(),
+                is(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getMethod("bootstrap",
+                        Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                        Object[].class)).hashCode()));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(11)
+    public void testEquals() throws Exception {
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap");
+        assertThat(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getMethod("bootstrap",
+                Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                Object[].class)),
+                is(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getMethod("bootstrap",
+                        Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                        Object[].class))));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(11)
+    public void testToString() throws Exception {
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap");
+        assertThat(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getMethod("bootstrap",
+                Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                Object[].class)).toString(),
+                is("DynamicConstantBootstrap::bootstrap(foo/)DynamicConstantBootstrap"));
+    }
+
     public static class Foo {
 
         public Object foo() {

@@ -50,4 +50,21 @@ public class JavaConstantSimpleTest {
     public void testTypeMatchesConstant() {
         assertThat(JavaConstant.Simple.wrap(value).getTypeDescription(), is(typeDescription));
     }
+
+    @Test
+    public void testHashCode() {
+        assertThat(JavaConstant.Simple.wrap(value).hashCode(), is((value instanceof Class<?>
+                ? TypeDescription.ForLoadedType.of((Class<?>) value)
+                : value).hashCode()));
+    }
+
+    @Test
+    public void testEquals() {
+        assertThat(JavaConstant.Simple.wrap(value), is(JavaConstant.Simple.wrap(value)));
+    }
+
+    @Test
+    public void testToString() {
+        assertThat(JavaConstant.Simple.wrap(value).toString(), is(value.toString()));
+    }
 }

@@ -181,6 +181,24 @@ public class JavaConstantMethodHandleTest {
         JavaConstant.MethodHandle.ofSpecial(methodDescription, typeDescription);
     }
 
+    @Test
+    public void testHashCode() throws Exception {
+        assertThat(JavaConstant.MethodHandle.of(Foo.class.getDeclaredMethod(BAR, Void.class)).hashCode(),
+                is(JavaConstant.MethodHandle.of(Foo.class.getDeclaredMethod(BAR, Void.class)).hashCode()));
+    }
+
+    @Test
+    public void testEquals() throws Exception {
+        assertThat(JavaConstant.MethodHandle.of(Foo.class.getDeclaredMethod(BAR, Void.class)),
+                is(JavaConstant.MethodHandle.of(Foo.class.getDeclaredMethod(BAR, Void.class))));
+    }
+
+    @Test
+    public void testToString() throws Exception {
+        assertThat(JavaConstant.MethodHandle.of(Foo.class.getDeclaredMethod(BAR, Void.class)).toString(),
+                is("INVOKE_VIRTUAL/Foo::bar(Void)void"));
+    }
+
     public static class Foo {
 
         public static Void qux;
