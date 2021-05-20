@@ -62,7 +62,7 @@
         <asm.url>https://asm.ow2.io</asm.url>
         <nexus.url>https://oss.sonatype.org</nexus.url>
         <version.asm>9.1</version.asm>
-        <jna.version>5.3.1</jna.version>
+        <jna.version>5.8.0</jna.version>
         <version.junit>4.13.2</version.junit>
         <version.mockito>2.23.0</version.mockito>
         <version.plugin.clean>3.0.0</version.plugin.clean>
