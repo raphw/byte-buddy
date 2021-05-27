@@ -21,9 +21,11 @@ public class AnnotationDescriptionForLoadedAnnotationDifferentClassLoaderTest ex
                         Other.class,
                         SampleEnumeration.class,
                         ExplicitTarget.class,
-                        BrokenAnnotation.class,
+                        DefectiveAnnotation.class,
                         BrokenAnnotationProperty.class,
-                        BrokenEnumerationProperty.class));
+                        BrokenEnumerationProperty.class,
+                        IncompatibleAnnotationProperty.class,
+                        IncompatibleEnumerationProperty.class));
         super.setUp();
     }
 

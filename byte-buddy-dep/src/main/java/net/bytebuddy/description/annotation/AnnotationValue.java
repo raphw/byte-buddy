@@ -17,6 +17,7 @@ package net.bytebuddy.description.annotation;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.CachedReturnPlugin;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -56,6 +57,13 @@ public interface AnnotationValue<T, S> {
      * @return The state represented by this instance.
      */
     State getState();
+
+    /**
+     * Returns the property type of the annotation value.
+     *
+     * @return The property type of the annotation value.
+     */
+    Sort getSort();
 
     /**
      * Filters this annotation value as a valid value of the provided property.
@@ -106,7 +114,7 @@ public interface AnnotationValue<T, S> {
         /**
          * A rendering dispatcher for any VM previous to Java 9.
          */
-        LEGACY_VM('[', ']') {
+        LEGACY_VM('[', ']', true) {
             @Override
             public String toSourceString(char value) {
                 return Character.toString(value);
@@ -141,12 +149,12 @@ public interface AnnotationValue<T, S> {
         /**
          * A rendering dispatcher for Java 9 onward.
          */
-        JAVA_9_CAPABLE_VM('{', '}') {
+        JAVA_9_CAPABLE_VM('{', '}', true) {
             @Override
             public String toSourceString(char value) {
                 StringBuilder stringBuilder = new StringBuilder().append('\'');
                 if (value == '\'') {
-                    stringBuilder.append("\\\'");
+                    stringBuilder.append("\\'");
                 } else {
                     stringBuilder.append(value);
                 }
@@ -190,17 +198,17 @@ public interface AnnotationValue<T, S> {
         /**
          * A rendering dispatcher for Java 14 onward.
          */
-        JAVA_14_CAPABLE_VM('{', '}') {
+        JAVA_14_CAPABLE_VM('{', '}', ClassFileVersion.ofThisVm().isLessThan(ClassFileVersion.JAVA_V17)) {
             @Override
             public String toSourceString(byte value) {
-                return "(byte)0x" + Integer.toHexString(value);
+                return "(byte)0x" + Integer.toHexString(value & 0xFF);
             }
 
             @Override
             public String toSourceString(char value) {
                 StringBuilder stringBuilder = new StringBuilder().append('\'');
                 if (value == '\'') {
-                    stringBuilder.append("\\\'");
+                    stringBuilder.append("\\'");
                 } else {
                     stringBuilder.append(value);
                 }
@@ -240,6 +248,11 @@ public interface AnnotationValue<T, S> {
         };
 
         /**
+         * The prefix text for describing a mistyped array property.
+         */
+        private static final String ARRAY_PREFIX = "Array with component tag: ";
+
+        /**
          * The rendering dispatcher for the current VM.
          */
         public static final RenderingDispatcher CURRENT;
@@ -266,14 +279,21 @@ public interface AnnotationValue<T, S> {
         private final char closingBrace;
 
         /**
+         * If {@code true}, annotation types are represented as integer rather then character value.
+         */
+        private final boolean componentAsInteger;
+
+        /**
          * Creates a new rendering dispatcher.
          *
-         * @param openingBrace The opening brace of an array {@link String} representation.
-         * @param closingBrace The closing brace of an array {@link String} representation.
+         * @param openingBrace         The opening brace of an array {@link String} representation.
+         * @param closingBrace         The closing brace of an array {@link String} representation.
+         * @param componentAsInteger If {@code true}, annotation types are represented as characters rather then integer values.
          */
-        RenderingDispatcher(char openingBrace, char closingBrace) {
+        RenderingDispatcher(char openingBrace, char closingBrace, boolean componentAsInteger) {
             this.openingBrace = openingBrace;
             this.closingBrace = closingBrace;
+            this.componentAsInteger = componentAsInteger;
         }
 
         /**
@@ -385,41 +405,15 @@ public interface AnnotationValue<T, S> {
         }
 
         /**
-         * Resolves the supplied type description's component tag.
+         * Resolves a string for representing an inconsistently typed array of an annotation property.
          *
-         * @param typeDescription The type to resolve.
-         * @return The character that describes the component tag as an {@code int} to ease concatenation.
+         * @param sort The sort of the inconsistent property.
+         * @return A message to describe the component property.
          */
-        public int toComponentTag(TypeDescription typeDescription) {
-            if (typeDescription.represents(boolean.class)) {
-                return 'Z';
-            } else if (typeDescription.represents(byte.class)) {
-                return 'B';
-            } else if (typeDescription.represents(short.class)) {
-                return 'S';
-            } else if (typeDescription.represents(char.class)) {
-                return 'C';
-            } else if (typeDescription.represents(int.class)) {
-                return 'I';
-            } else if (typeDescription.represents(long.class)) {
-                return 'J';
-            } else if (typeDescription.represents(float.class)) {
-                return 'F';
-            } else if (typeDescription.represents(double.class)) {
-                return 'D';
-            } else if (typeDescription.represents(String.class)) {
-                return 's';
-            } else if (typeDescription.represents(Class.class)) {
-                return 'c';
-            } else if (typeDescription.isEnum()) {
-                return 'e';
-            } else if (typeDescription.isAnnotation()) {
-                return '@';
-            } else if (typeDescription.isArray()) {
-                return '[';
-            } else {
-                throw new IllegalArgumentException("Not an annotation component: " + typeDescription);
-            }
+        public String toArrayErrorString(Sort sort) {
+            return ARRAY_PREFIX + (componentAsInteger || !sort.isDefined()
+                    ? Integer.toString(sort.getTag())
+                    : Character.toString((char) sort.getTag()));
         }
     }
 
@@ -518,7 +512,7 @@ public interface AnnotationValue<T, S> {
     }
 
     /**
-     * Represents the state of a {@link Loaded} annotation property.
+     * Represents the state of an {@link AnnotationValue}.
      */
     enum State {
 
@@ -557,6 +551,152 @@ public interface AnnotationValue<T, S> {
          */
         public boolean isResolved() {
             return this == RESOLVED;
+        }
+    }
+
+    /**
+     * Represents the sort of an {@link AnnotationValue}.
+     */
+    enum Sort {
+
+        /**
+         * A {@code boolean}-typed property.
+         */
+        BOOLEAN('Z'),
+
+        /**
+         * A {@code byte}-typed property.
+         */
+        BYTE('B'),
+
+        /**
+         * A {@code short}-typed property.
+         */
+        SHORT('S'),
+
+        /**
+         * A {@code char}-typed property.
+         */
+        CHARACTER('C'),
+
+        /**
+         * An {@code int}-typed property.
+         */
+        INTEGER('I'),
+
+        /**
+         * A {@code long}-typed property.
+         */
+        LONG('J'),
+
+        /**
+         * A {@code float}-typed property.
+         */
+        FLOAT('F'),
+
+        /**
+         * A {@code double}-typed property.
+         */
+        DOUBLE('D'),
+
+        /**
+         * A {@link String}-typed property.
+         */
+        STRING('s'),
+
+        /**
+         * A {@link Class}-typed property.
+         */
+        TYPE('c'),
+
+        /**
+         * A {@link Enum}-typed property.
+         */
+        ENUMERATION('e'),
+
+        /**
+         * A {@link Annotation}-typed property.
+         */
+        ANNOTATION('@'),
+
+        /**
+         * An array-typed property.
+         */
+        ARRAY('['),
+
+        /**
+         * A property without a well-defined value.
+         */
+        NONE(0);
+
+        /**
+         * The property's tag.
+         */
+        private final int tag;
+
+        /**
+         * Creates a new sort.
+         *
+         * @param tag The property's tag.
+         */
+        Sort(int tag) {
+            this.tag = tag;
+        }
+
+        /**
+         * Resolves a sort for the provided type definition.
+         *
+         * @param typeDefinition The type definition to resolve.
+         * @return The resolved sort for the provided type definition.
+         */
+        public static Sort of(TypeDefinition typeDefinition) {
+            if (typeDefinition.represents(boolean.class)) {
+                return BOOLEAN;
+            } else if (typeDefinition.represents(byte.class)) {
+                return BYTE;
+            } else if (typeDefinition.represents(short.class)) {
+                return SHORT;
+            } else if (typeDefinition.represents(char.class)) {
+                return CHARACTER;
+            } else if (typeDefinition.represents(int.class)) {
+                return INTEGER;
+            } else if (typeDefinition.represents(long.class)) {
+                return LONG;
+            } else if (typeDefinition.represents(float.class)) {
+                return FLOAT;
+            } else if (typeDefinition.represents(double.class)) {
+                return DOUBLE;
+            } else if (typeDefinition.represents(String.class)) {
+                return STRING;
+            } else if (typeDefinition.represents(Class.class)) {
+                return TYPE;
+            } else if (typeDefinition.isEnum()) {
+                return ENUMERATION;
+            } else if (typeDefinition.isAnnotation()) {
+                return ANNOTATION;
+            } else if (typeDefinition.isArray()) {
+                return ARRAY;
+            } else {
+                return NONE;
+            }
+        }
+
+        /**
+         * Returns the property's tag.
+         *
+         * @return The property's tag.
+         */
+        protected int getTag() {
+            return tag;
+        }
+
+        /**
+         * Returns {@code true} if the property is defined.
+         *
+         * @return {@code true} if the property is defined.
+         */
+        public boolean isDefined() {
+            return this != NONE;
         }
     }
 
@@ -849,10 +989,23 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
+        public Sort getSort() {
+            return Sort.of(TypeDescription.ForLoadedType.of(value.getClass()).asUnboxed());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue<U, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
-            return typeDefinition.asErasure().asBoxed().represents(value.getClass()) ? this : new ForMismatchedType<U, U>(property, value.getClass().isArray()
-                    ? "Array with component tag: " + RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(value.getClass().getComponentType()))
-                    : value.getClass().toString() + '[' + value + ']');
+            if (typeDefinition.asErasure().asBoxed().represents(value.getClass())) {
+                return this;
+            } else if (value.getClass().isArray()) {
+                return new ForMismatchedType<U, U>(property, RenderingDispatcher.CURRENT.toArrayErrorString(Sort.of(TypeDescription.ForLoadedType.of(value.getClass().getComponentType()))));
+            } else if (value instanceof Enum<?>) {
+                return new ForMismatchedType<U, U>(property, value.getClass().getName() + '.' + ((Enum<?>) value).name());
+            } else {
+                return new ForMismatchedType<U, U>(property, value.getClass().getName() + '[' + value + ']');
+            }
         }
 
         /**
@@ -1426,10 +1579,17 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
+        public Sort getSort() {
+            return Sort.ANNOTATION;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue<AnnotationDescription, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
-            return typeDefinition.asErasure().equals(annotationDescription.getAnnotationType())
-                    ? this
-                    : new ForMismatchedType<AnnotationDescription, U>(property, annotationDescription.getAnnotationType().toString() + '[' + annotationDescription + ']');
+            return typeDefinition.asErasure().equals(annotationDescription.getAnnotationType()) ? this : new ForMismatchedType<AnnotationDescription, U>(property, property.getReturnType().isArray()
+                    ? RenderingDispatcher.CURRENT.toArrayErrorString(Sort.ANNOTATION)
+                    : annotationDescription.toString());
         }
 
         /**
@@ -1582,10 +1742,17 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
+        public Sort getSort() {
+            return Sort.ENUMERATION;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue<EnumerationDescription, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
-            return typeDefinition.asErasure().equals(enumerationDescription.getEnumerationType())
-                    ? this
-                    : new ForMismatchedType<EnumerationDescription, U>(property, enumerationDescription.getEnumerationType().toString() + '[' + enumerationDescription.getValue() + ']');
+            return typeDefinition.asErasure().equals(enumerationDescription.getEnumerationType()) ? this : new ForMismatchedType<EnumerationDescription, U>(property, property.getReturnType().isArray()
+                    ? RenderingDispatcher.CURRENT.toArrayErrorString(Sort.ENUMERATION)
+                    : enumerationDescription.getEnumerationType().getName() + '.' + enumerationDescription.getValue());
         }
 
         /**
@@ -1767,6 +1934,13 @@ public interface AnnotationValue<T, S> {
             /**
              * {@inheritDoc}
              */
+            public Sort getSort() {
+                return Sort.NONE;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationValue<EnumerationDescription, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
                 return this;
             }
@@ -1888,10 +2062,17 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
+        public Sort getSort() {
+            return Sort.TYPE;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue<TypeDescription, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
-            return typeDefinition.asErasure().represents(Class.class)
-                    ? this
-                    : new ForMismatchedType<TypeDescription, U>(property, Class.class.getName() + '[' + typeDescription.getName() + ']');
+            return typeDefinition.asErasure().represents(Class.class) ? this : new ForMismatchedType<TypeDescription, U>(property, property.getReturnType().isArray()
+                    ? RenderingDispatcher.CURRENT.toArrayErrorString(Sort.TYPE)
+                    : Class.class.getName() + '[' + typeDescription.getName() + ']');
         }
 
         /**
@@ -2098,6 +2279,13 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
+        public Sort getSort() {
+            return Sort.ARRAY;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         @SuppressWarnings("unchecked")
         public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
             if (typeDefinition.isArray() && typeDefinition.getComponentType().asErasure().equals(componentType)) {
@@ -2109,7 +2297,7 @@ public interface AnnotationValue<T, S> {
                 }
                 return this;
             } else {
-                return new ForMismatchedType<U, V>(property, "Array with component tag: " + RenderingDispatcher.CURRENT.toComponentTag(componentType));
+                return new ForMismatchedType<U, V>(property, RenderingDispatcher.CURRENT.toArrayErrorString(Sort.of(componentType)));
             }
         }
 
@@ -2331,6 +2519,13 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
+        public Sort getSort() {
+            return Sort.NONE;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
             return this;
         }
@@ -2417,7 +2612,7 @@ public interface AnnotationValue<T, S> {
         private final String value;
 
         /**
-         * Creates an annotation description for a mismatched typeName.
+         * Creates an annotation description for a mismatched type.
          *
          * @param property The property that does not defines a non-matching value.
          * @param value    A value description of the property.
@@ -2437,15 +2632,22 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
+        public Sort getSort() {
+            return Sort.NONE;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
-            return this;
+            return new ForMismatchedType<U, V>(property, value);
         }
 
         /**
          * {@inheritDoc}
          */
         public U resolve() {
-            throw new IllegalStateException(property + " cannot define " + value);
+            throw new IllegalStateException(value + " cannot be used as value for " + property);
         }
 
         /**
@@ -2505,6 +2707,11 @@ public interface AnnotationValue<T, S> {
             public W resolve() {
                 throw new AnnotationTypeMismatchException(property, value);
             }
+
+            @Override
+            public String toString() {
+                return "/* Warning type mismatch! \"" + value + "\" */";
+            }
         }
     }
 
@@ -2547,6 +2754,13 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
+        public Sort getSort() {
+            return Sort.NONE;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
             return this;
         }
@@ -2573,7 +2787,7 @@ public interface AnnotationValue<T, S> {
             throw new IllegalStateException(typeDescription + " does not define " + property);
         }
 
-        /* does not implement hashCode and equals method to mimic OpenJDK behavior. */
+        /* does not implement hashCode and equals method to mimic OpenJDK behavior. Does never appear in toString methods. */
 
         /**
          * Describes an annotation value for a property that is not assignable to it.
@@ -2624,7 +2838,7 @@ public interface AnnotationValue<T, S> {
                 return false;
             }
 
-            /* does not implement hashCode and equals method to mimic OpenJDK behavior. */
+            /* does not implement hashCode and equals method to mimic OpenJDK behavior. Does never appear in toString methods. */
         }
     }
 
@@ -2655,6 +2869,13 @@ public interface AnnotationValue<T, S> {
          */
         public State getState() {
             return State.UNRESOLVED;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Sort getSort() {
+            return Sort.NONE;
         }
 
         /**

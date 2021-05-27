@@ -204,6 +204,11 @@ public interface AnnotationDescription {
         private static final String TO_STRING = "toString";
 
         /**
+         * The name of the {@link Annotation#annotationType()} method.
+         */
+        private static final String ANNOTATION_TYPE = "annotationType";
+
+        /**
          * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
          */
         private static final Object[] NO_ARGUMENT = new Object[0];
@@ -268,8 +273,10 @@ public interface AnnotationDescription {
                     return equalsRepresentation(proxy, argument[0]);
                 } else if (method.getName().equals(TO_STRING)) {
                     return toStringRepresentation();
-                } else /* if (method.getName().equals("annotationType")) */ {
+                } else if (method.getName().equals(ANNOTATION_TYPE)) {
                     return annotationType;
+                } else {
+                    throw new IllegalStateException("Unexpected method: " + method);
                 }
             }
             return values.get(method).resolve();
@@ -372,7 +379,7 @@ public interface AnnotationDescription {
             } else if (!(other instanceof AnnotationInvocationHandler)) {
                 return false;
             }
-            AnnotationInvocationHandler that = (AnnotationInvocationHandler) other;
+            AnnotationInvocationHandler<?> that = (AnnotationInvocationHandler<?>) other;
             if (!annotationType.equals(that.annotationType)) {
                 return false;
             }

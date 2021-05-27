@@ -562,11 +562,16 @@ public interface TypePool {
         protected interface ComponentTypeReference {
 
             /**
-             * Lazily returns the binary name of the array component type of an annotation value.
-             *
-             * @return The binary name of the component type.
+             * Indicates that no component type is defined for the property.
              */
-            String lookup();
+            String NO_ARRAY = null;
+
+            /**
+             * Lazily resolves the binary name of the array component type of an annotation value.
+             *
+             * @return The binary name of the component type of the array or {@code null} if the referenced type is not an array.
+             */
+            String resolve();
         }
 
         /**
@@ -1477,16 +1482,17 @@ public interface TypePool {
                     /**
                      * {@inheritDoc}
                      */
-                    public String lookup() {
-                        return typePool.describe(annotationName)
+                    public String resolve() {
+                        TypeDescription typeDescription = typePool.describe(annotationName)
                                 .resolve()
                                 .getDeclaredMethods()
                                 .filter(named(name))
                                 .getOnly()
                                 .getReturnType()
-                                .asErasure()
-                                .getComponentType()
-                                .getName();
+                                .asErasure();
+                        return typeDescription.isArray()
+                                ? typeDescription.getComponentType().getName()
+                                : NO_ARRAY;
                     }
                 }
             }
@@ -1522,7 +1528,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                public String lookup() {
+                public String resolve() {
                     return componentType;
                 }
             }
@@ -6048,7 +6054,7 @@ public interface TypePool {
                     List<AnnotationDescription> annotationDescriptions = new ArrayList<AnnotationDescription>(tokens.size());
                     for (AnnotationToken token : tokens) {
                         AnnotationToken.Resolution resolution = token.toAnnotationDescription(typePool);
-                        if (resolution.isResolved()) {
+                        if (resolution.isResolved() && resolution.resolve().getAnnotationType().isAnnotation()) {
                             annotationDescriptions.add(resolution.resolve());
                         }
                     }
@@ -6183,6 +6189,74 @@ public interface TypePool {
                 }
 
                 /**
+                 * A proxy for a mismatched type for which the property is not yet know.
+                 *
+                 * @param <W> The represented unloaded type.
+                 * @param <X> The represented loaded type.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                private static class ForMismatchedType<W, X> extends AbstractBase<W, X> {
+
+                    /**
+                     * The mismatched value.
+                     */
+                    private final String value;
+
+                    /**
+                     * The mismatched array type.
+                     */
+                    private final Sort sort;
+
+                    /**
+                     * Creates a new mismatched type proxy.
+                     *
+                     * @param value The mismatched value.
+                     * @param sort  The mismatched array type.
+                     */
+                    private ForMismatchedType(String value, Sort sort) {
+                        this.value = value;
+                        this.sort = sort;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public State getState() {
+                        return State.UNRESOLVED;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Sort getSort() {
+                        return Sort.NONE;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public AnnotationValue<W, X> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
+                        return new ForMismatchedType<W, X>(property, property.getReturnType().isArray()
+                                ? RenderingDispatcher.CURRENT.toArrayErrorString(sort)
+                                : value);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public W resolve() {
+                        throw new IllegalStateException("Expected filtering of this unresolved property");
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Loaded<X> load(ClassLoader classLoader) {
+                        throw new IllegalStateException("Expected filtering of this unresolved property");
+                    }
+                }
+
+                /**
                  * A lazy annotation value description for a type value.
                  */
                 private static class ForTypeValue extends LazyAnnotationValue<TypeDescription, Class<?>> {
@@ -6206,6 +6280,13 @@ public interface TypePool {
                     private ForTypeValue(TypePool typePool, String typeName) {
                         this.typePool = typePool;
                         this.typeName = typeName;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Sort getSort() {
+                        return Sort.TYPE;
                     }
 
                     @Override
@@ -6245,6 +6326,13 @@ public interface TypePool {
                         this.annotationToken = annotationToken;
                     }
 
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Sort getSort() {
+                        return Sort.ANNOTATION;
+                    }
+
                     @Override
                     @CachedReturnPlugin.Enhance("resolved")
                     protected AnnotationValue<AnnotationDescription, Annotation> doResolve() {
@@ -6252,7 +6340,7 @@ public interface TypePool {
                         if (!resolution.isResolved()) {
                             return new AnnotationValue.ForMissingType<AnnotationDescription, Annotation>(annotationToken.getBinaryName());
                         } else if (!resolution.resolve().getAnnotationType().isAnnotation()) {
-                            return new ForIncompatibleType<AnnotationDescription, Annotation>(resolution.resolve().getAnnotationType());
+                            return new ForMismatchedType<AnnotationDescription, Annotation>(resolution.resolve().getAnnotationType().getName(), Sort.ANNOTATION);
                         } else {
                             return new AnnotationValue.ForAnnotationDescription<Annotation>(resolution.resolve());
                         }
@@ -6292,6 +6380,13 @@ public interface TypePool {
                         this.value = value;
                     }
 
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Sort getSort() {
+                        return Sort.ENUMERATION;
+                    }
+
                     @Override
                     @CachedReturnPlugin.Enhance("resolved")
                     @SuppressWarnings("unchecked")
@@ -6300,7 +6395,7 @@ public interface TypePool {
                         if (!resolution.isResolved()) {
                             return new AnnotationValue.ForMissingType<EnumerationDescription, Enum<?>>(typeName);
                         } else if (!resolution.resolve().isEnum()) {
-                            return new ForIncompatibleType<EnumerationDescription, Enum<?>>(resolution.resolve());
+                            return new ForMismatchedType<EnumerationDescription, Enum<?>>(typeName + "." + value, Sort.ENUMERATION);
                         } else if (resolution.resolve().getDeclaredFields().filter(named(value)).isEmpty()) {
                             return new AnnotationValue.ForEnumerationDescription.WithUnknownConstant(resolution.resolve(), value);
                         } else {
@@ -6342,39 +6437,53 @@ public interface TypePool {
                         this.values = values;
                     }
 
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Sort getSort() {
+                        return Sort.ARRAY;
+                    }
+
                     @Override
+                    @CachedReturnPlugin.Enhance("resolved")
                     protected AnnotationValue<Object, Object> doResolve() {
-                        String typeName = componentTypeReference.lookup();
-                        Resolution resolution = typePool.describe(typeName);
-                        if (!resolution.isResolved()) {
-                            return new ForMissingType<Object, Object>(typeName);
-                        } else if (resolution.resolve().isEnum()) {
-                            return new AnnotationValue.ForDescriptionArray<Object, Object>(EnumerationDescription.class, resolution.resolve(), values);
-                        } else if (resolution.resolve().isAnnotation()) {
-                            return new AnnotationValue.ForDescriptionArray<Object, Object>(AnnotationDescription.class, resolution.resolve(), values);
-                        } else if (resolution.resolve().represents(Class.class)) {
-                            return new AnnotationValue.ForDescriptionArray<Object, Object>(TypeDescription.class, resolution.resolve(), values);
-                        } else if (resolution.resolve().represents(String.class)) {
-                            return new AnnotationValue.ForDescriptionArray<Object, Object>(String.class, resolution.resolve(), values);
-                        } else if (resolution.resolve().represents(boolean.class)) {
-                            return new AnnotationValue.ForDescriptionArray<Object, Object>(boolean.class, resolution.resolve(), values);
-                        } else if (resolution.resolve().represents(byte.class)) {
-                            return new AnnotationValue.ForDescriptionArray<Object, Object>(byte.class, resolution.resolve(), values);
-                        } else if (resolution.resolve().represents(short.class)) {
-                            return new AnnotationValue.ForDescriptionArray<Object, Object>(short.class, resolution.resolve(), values);
-                        } else if (resolution.resolve().represents(char.class)) {
-                            return new AnnotationValue.ForDescriptionArray<Object, Object>(char.class, resolution.resolve(), values);
-                        } else if (resolution.resolve().represents(int.class)) {
-                            return new AnnotationValue.ForDescriptionArray<Object, Object>(int.class, resolution.resolve(), values);
-                        } else if (resolution.resolve().represents(long.class)) {
-                            return new AnnotationValue.ForDescriptionArray<Object, Object>(long.class, resolution.resolve(), values);
-                        } else if (resolution.resolve().represents(float.class)) {
-                            return new AnnotationValue.ForDescriptionArray<Object, Object>(float.class, resolution.resolve(), values);
-                        } else if (resolution.resolve().represents(double.class)) {
-                            return new AnnotationValue.ForDescriptionArray<Object, Object>(double.class, resolution.resolve(), values);
-                        } else {
-                            return new ForIncompatibleType<Object, Object>(resolution.resolve());
+                        String typeName = componentTypeReference.resolve();
+                        if (typeName != null) {
+                            Resolution resolution = typePool.describe(typeName);
+                            if (!resolution.isResolved()) {
+                                return new ForMissingType<Object, Object>(typeName);
+                            } else if (resolution.resolve().isEnum()) {
+                                return new AnnotationValue.ForDescriptionArray<Object, Object>(EnumerationDescription.class, resolution.resolve(), values);
+                            } else if (resolution.resolve().isAnnotation()) {
+                                return new AnnotationValue.ForDescriptionArray<Object, Object>(AnnotationDescription.class, resolution.resolve(), values);
+                            } else if (resolution.resolve().represents(Class.class)) {
+                                return new AnnotationValue.ForDescriptionArray<Object, Object>(TypeDescription.class, resolution.resolve(), values);
+                            } else if (resolution.resolve().represents(String.class)) {
+                                return new AnnotationValue.ForDescriptionArray<Object, Object>(String.class, resolution.resolve(), values);
+                            } else if (resolution.resolve().represents(boolean.class)) {
+                                return new AnnotationValue.ForDescriptionArray<Object, Object>(boolean.class, resolution.resolve(), values);
+                            } else if (resolution.resolve().represents(byte.class)) {
+                                return new AnnotationValue.ForDescriptionArray<Object, Object>(byte.class, resolution.resolve(), values);
+                            } else if (resolution.resolve().represents(short.class)) {
+                                return new AnnotationValue.ForDescriptionArray<Object, Object>(short.class, resolution.resolve(), values);
+                            } else if (resolution.resolve().represents(char.class)) {
+                                return new AnnotationValue.ForDescriptionArray<Object, Object>(char.class, resolution.resolve(), values);
+                            } else if (resolution.resolve().represents(int.class)) {
+                                return new AnnotationValue.ForDescriptionArray<Object, Object>(int.class, resolution.resolve(), values);
+                            } else if (resolution.resolve().represents(long.class)) {
+                                return new AnnotationValue.ForDescriptionArray<Object, Object>(long.class, resolution.resolve(), values);
+                            } else if (resolution.resolve().represents(float.class)) {
+                                return new AnnotationValue.ForDescriptionArray<Object, Object>(float.class, resolution.resolve(), values);
+                            } else if (resolution.resolve().represents(double.class)) {
+                                return new AnnotationValue.ForDescriptionArray<Object, Object>(double.class, resolution.resolve(), values);
+                            }
                         }
+                        Sort sort = Sort.NONE;
+                        ListIterator<AnnotationValue<?, ?>> iterator = values.listIterator(values.size());
+                        while (iterator.hasPrevious() && !sort.isDefined()) {
+                            sort = iterator.previous().getSort();
+                        }
+                        return new ForMismatchedType<Object, Object>(RenderingDispatcher.CURRENT.toArrayErrorString(sort), sort);
                     }
                 }
             }
@@ -8124,7 +8233,7 @@ public interface TypePool {
                      * @param name                   The name of the annotation property the collected array is representing.
                      * @param componentTypeReference A lazy reference to resolve the component type of the collected array.
                      */
-                    protected ArrayLookup(String name, ComponentTypeReference componentTypeReference) {
+                    private ArrayLookup(String name, ComponentTypeReference componentTypeReference) {
                         this.name = name;
                         this.componentTypeReference = componentTypeReference;
                         values = new ArrayList<AnnotationValue<?, ?>>();
@@ -8141,7 +8250,9 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public void onComplete() {
-                        annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForArray(Default.this, componentTypeReference, values));
+                        annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForArray(Default.this,
+                                componentTypeReference,
+                                values));
                     }
                 }
 
@@ -8168,8 +8279,8 @@ public interface TypePool {
                     /**
                      * Creates a new annotation registrant for a recursive annotation lookup.
                      *
-                     * @param name       The name of the original annotation for which the annotation values are looked up.
                      * @param descriptor The descriptor of the original annotation for which the annotation values are looked up.
+                     * @param name       The name of the original annotation for which the annotation values are looked up.
                      */
                     protected AnnotationLookup(String descriptor, String name) {
                         this.descriptor = descriptor;

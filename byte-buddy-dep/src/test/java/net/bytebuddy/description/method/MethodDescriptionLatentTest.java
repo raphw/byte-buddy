@@ -4,7 +4,7 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.ElementMatchers;
-import org.junit.Ignore;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
@@ -44,7 +44,7 @@ public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
 
     @Test
     @Override
-    @Ignore("The JVM does not currently consider synthetic parameter indices for annotations")
+    @JavaVersionRule.Enforce(17)
     public void testEnumConstructorAnnotation() throws Exception {
         super.testEnumConstructorAnnotation();
     }
