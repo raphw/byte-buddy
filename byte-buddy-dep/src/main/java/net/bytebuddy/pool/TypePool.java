@@ -42,10 +42,12 @@ import org.objectweb.asm.signature.SignatureVisitor;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.ref.SoftReference;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -295,6 +297,64 @@ public interface TypePool {
              */
             public ConcurrentMap<String, Resolution> getStorage() {
                 return storage;
+            }
+
+            /**
+             * A {@link Simple} cache provider that clears its storage if the heap is filled, by using a soft reference.
+             */
+            public static class UsingSoftReference implements CacheProvider {
+
+                /**
+                 * A reference for the actual cache provider.
+                 */
+                private final AtomicReference<SoftReference<Simple>> delegate;
+
+                /**
+                 * Creates a softly referenced {@link Simple} cache provider.
+                 */
+                public UsingSoftReference() {
+                    delegate = new AtomicReference<SoftReference<Simple>>(new SoftReference<Simple>(new Simple()));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Resolution find(String name) {
+                    CacheProvider provider = delegate.get().get();
+                    return provider == null
+                            ? null
+                            : provider.find(name);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Resolution register(String name, Resolution resolution) {
+                    SoftReference<Simple> reference = delegate.get();
+                    Simple provider = reference.get();
+                    if (provider == null) {
+                        provider = new Simple();
+                        while (!delegate.compareAndSet(reference, new SoftReference<Simple>(provider))) {
+                            reference = delegate.get();
+                            Simple previous = reference.get();
+                            if (previous != null) {
+                                provider = previous;
+                                break;
+                            }
+                        }
+                    }
+                    return provider.register(name, resolution);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void clear() {
+                    CacheProvider provider = delegate.get().get();
+                    if (provider != null) {
+                        provider.clear();
+                    }
+                }
             }
         }
 

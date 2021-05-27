@@ -2,7 +2,6 @@ package net.bytebuddy.pool;
 
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
-import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -53,6 +52,21 @@ public class TypePoolCacheProviderTest {
         ConcurrentMap<String, TypePool.Resolution> storage = new ConcurrentHashMap<String, TypePool.Resolution>();
         TypePool.CacheProvider.Simple cacheProvider = new TypePool.CacheProvider.Simple(storage);
         assertThat(cacheProvider.getStorage(), sameInstance(storage));
+    }
+
+    @Test
+    public void testSimpleSoftlyReferenced() throws Exception {
+        TypePool.CacheProvider simple = new TypePool.CacheProvider.Simple.UsingSoftReference();
+        assertThat(simple.find(FOO), nullValue(TypePool.Resolution.class));
+        assertThat(simple.register(FOO, resolution), sameInstance(resolution));
+        assertThat(simple.find(FOO), sameInstance(resolution));
+        TypePool.Resolution resolution = mock(TypePool.Resolution.class);
+        assertThat(simple.register(FOO, resolution), sameInstance(this.resolution));
+        assertThat(simple.find(FOO), sameInstance(this.resolution));
+        simple.clear();
+        assertThat(simple.find(FOO), nullValue(TypePool.Resolution.class));
+        assertThat(simple.register(FOO, resolution), sameInstance(resolution));
+        assertThat(simple.find(FOO), sameInstance(resolution));
     }
 
     @Test
