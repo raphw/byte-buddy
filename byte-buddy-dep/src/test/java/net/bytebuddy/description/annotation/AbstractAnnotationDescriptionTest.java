@@ -394,22 +394,26 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
+    @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationWrongArity() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().wrongArity();
     }
 
     @Test
+    @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationWrongArityState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("wrongArity"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
+    @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationWrongArityArray() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().wrongArityArray();
     }
 
     @Test
+    @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationWrongArityArrayState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("wrongArityArray"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
