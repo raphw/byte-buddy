@@ -160,7 +160,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
                             <excludes>
-                                <exclude>net/bytebuddy/pool/TypePoolDefaultAnnotationDescriptionTest.java</exclude>
+                                <exclude>net.bytebuddy.pool.TypePoolDefaultAnnotationDescriptionTest</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
