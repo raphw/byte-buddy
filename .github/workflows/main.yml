@@ -95,12 +95,6 @@ jobs:
           java-version: ${{ matrix.java }}
           distribution: adopt-hotspot
           architecture: x64
-      - uses: actions/upload-artifact@v2
-        if: ${{ failure() }}
-        with:
-          name: dumpfile
-          path: |
-            /home/runner/work/byte-buddy/byte-buddy/byte-buddy-dep/target/surefire-reports/*.dumpstream
       - name: Build project
         run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
   hotspot-legacy:
@@ -117,6 +111,11 @@ jobs:
           java-version: ${{ matrix.java }}
           distribution: zulu
           architecture: x64
+      - uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+          name: dumpfile
+          path: /home/runner/work/byte-buddy/byte-buddy/byte-buddy-dep/target/surefire-reports/*.dumpstream
       - name: Build project
         run: ./mvnw -s .mvn/nossl.settings.xml verify -Pintegration -Pjava6
   coverage:
