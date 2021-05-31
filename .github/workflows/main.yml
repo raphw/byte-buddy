@@ -22,19 +22,24 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
+      - uses: actions/setup-java@v2
+        with:
+          java-version: 17-ea
+          distribution: adopt-hotspot
+          architecture: x64
       - name: Install JDK and build project
         run: |
-          . ./.github/scripts/install-jdk.sh --feature ea --os linux-x64
           export MAVEN_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED"
           ./mvnw verify -Pjava17 -Dnet.bytebuddy.experimental=true
         continue-on-error: true
-  hotspot-supported:
-    name: HotSpot (supported)
+  any-supported:
+    name: Any (supported)
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-18.04, macOS-10.15, windows-2019]
         java: [8, 11, 16]
+        distribution: [adopt-hotspot, adopt-openj9]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -47,6 +52,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.java }}
+          distribution: ${{ matrix.distribution }}
           architecture: x64
       - name: Build project
         run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
@@ -69,6 +75,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.java }}
+          distribution: 'adopt-hotspot'
           architecture: x86
       - name: Build project
         run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
@@ -90,6 +97,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.java }}
+          distribution: 'adopt-hotspot'
           architecture: x64
       - uses: actions/upload-artifact@v2
         if: ${{ failure() }}
@@ -107,32 +115,14 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: 1.6
+          distribution: 'adopt-hotspot'
           architecture: x64
       - name: Build project
         run: ./mvnw -s .mvn/nossl.settings.xml verify -Pintegration -Pjava6
-  openj9-supported:
-    name: OpenJ9 (supported)
-    strategy:
-      fail-fast: false
-      matrix:
-        java: [8, 11, 13]
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-      - name: Install JDK and build project
-        run: |
-          . ./.github/scripts/install-jdk.sh --url "https://api.adoptopenjdk.net/v2/binary/releases/openjdk${{ matrix.java }}?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
-          ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
   coverage:
     name: Coverage
     runs-on: ubuntu-18.04
-    needs: [hotspot-ea, hotspot-supported, hotspot-unsupported, hotspot-legacy, openj9-supported]
+    needs: [hotspot-ea, any-supported, hotspot-unsupported, hotspot-legacy]
     if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v2
@@ -145,6 +135,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: 8
+          distribution: 'adopt-hotspot'
           architecture: x64
       - name: Build project
         run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pintegration
@@ -157,6 +148,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: 8
+          distribution: 'adopt-hotspot'
           architecture: x64
       - name: Publish new version
         run: |
