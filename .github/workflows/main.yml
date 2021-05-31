@@ -92,7 +92,9 @@ jobs:
           java-version: ${{ matrix.java }}
           architecture: x64
       - name: Build project
-        run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
+        run: |
+          ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
+          cat /home/runner/work/byte-buddy/byte-buddy/byte-buddy-dep/target/surefire-reports/*
   hotspot-legacy:
     name: HotSpot (legacy)
     runs-on: ubuntu-18.04
