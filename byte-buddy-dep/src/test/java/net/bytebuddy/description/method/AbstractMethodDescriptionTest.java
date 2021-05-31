@@ -15,6 +15,7 @@ import net.bytebuddy.test.packaging.MethodDescriptionTestHelper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -811,6 +812,7 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @Test
+    @Ignore("Fixed on Java 17 but not yet merged to all builds")
     public void testEnumConstructorAnnotation() throws Exception {
         MethodDescription.InDefinedShape constructor = describe(EnumConstructorAnnotationSample.class.getDeclaredConstructor(String.class, int.class, Void.class));
         assertThat(constructor.getParameters().get(2).getDeclaredAnnotations().size(), is(1));
