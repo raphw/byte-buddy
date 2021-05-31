@@ -117,7 +117,9 @@ jobs:
         if: ${{ failure() }}
         with:
           name: dumpfile
-          path: /home/runner/work/byte-buddy/byte-buddy/byte-buddy-dep/target/surefire-reports/*.dumpstream
+          path: |
+            /home/runner/work/byte-buddy/byte-buddy/byte-buddy-dep/target/surefire-reports/*.dumpstream
+            /home/runner/work/byte-buddy/byte-buddy/byte-buddy-dep/*.log
   coverage:
     name: Coverage
     runs-on: ubuntu-18.04
