@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -23,7 +24,7 @@ import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 public class VirtualMachineForOpenJ9Test {
-    
+
     private static final String FOO = "foo", BAR = "bar";
 
     private static final int PROCESS_ID = 42, USER_ID = 84, VM_ID = 168;
@@ -356,13 +357,22 @@ public class VirtualMachineForOpenJ9Test {
                 return result.length + 1;
             }
         });
-        Properties properties = new Properties();
+        final Properties properties = new Properties();
         properties.setProperty(FOO, BAR);
         new VirtualMachine.ForOpenJ9(socket).startManagementAgent(properties);
         verify(outputStream).write("ATTACH_START_MANAGEMENT_AGENT".getBytes("UTF-8"));
-        ByteArrayOutputStream written = new ByteArrayOutputStream();
-        properties.store(written, null);
-        verify(outputStream).write(written.toByteArray());
+        verify(outputStream).write(argThat(new ArgumentMatcher<byte[]>() {
+
+            public boolean matches(byte[] buffer) {
+                Properties matched = new Properties();
+                try {
+                    matched.load(new ByteArrayInputStream(buffer));
+                } catch (IOException e) {
+                    throw new AssertionError(e);
+                }
+                return properties.equals(matched);
+            }
+        }));
     }
 
     @Test
