@@ -50,7 +50,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     private final List<Class<?>> standardTypes;
 
-    @SuppressWarnings({"unchecked", "deprecation"})
     protected AbstractTypeDescriptionTest() {
         standardTypes = Arrays.asList(
                 Object.class,
@@ -85,11 +84,11 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
                 new EnclosingType().anonymousConstructor,
                 Array.newInstance(new EnclosingType().anonymousConstructor, 1).getClass(),
                 EnclosingType.LOCAL_INITIALIZER,
-                Array.newInstance(EnclosingType.LOCAL_INITIALIZER.getClass(), 1).getClass(),
+                Array.newInstance(EnclosingType.LOCAL_INITIALIZER, 1).getClass(),
                 EnclosingType.ANONYMOUS_INITIALIZER,
                 Array.newInstance(EnclosingType.ANONYMOUS_INITIALIZER, 1).getClass(),
                 EnclosingType.LOCAL_METHOD,
-                Array.newInstance(EnclosingType.LOCAL_METHOD.getClass(), 1).getClass(),
+                Array.newInstance(EnclosingType.LOCAL_METHOD, 1).getClass(),
                 EnclosingType.ANONYMOUS_METHOD,
                 Array.newInstance(EnclosingType.ANONYMOUS_METHOD, 1).getClass(),
                 EnclosingType.INNER,
