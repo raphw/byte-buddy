@@ -5,6 +5,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
@@ -45,6 +46,7 @@ public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
     @Test
     @Override
     @JavaVersionRule.Enforce(17)
+    @Ignore("Fixed on Java 17 but not yet merged to all builds")
     public void testEnumConstructorAnnotation() throws Exception {
         super.testEnumConstructorAnnotation();
     }

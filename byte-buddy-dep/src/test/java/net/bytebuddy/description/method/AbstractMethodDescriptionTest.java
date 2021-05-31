@@ -2,7 +2,6 @@ package net.bytebuddy.description.method;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.TypeVariableSource;
-import net.bytebuddy.description.annotation.AbstractAnnotationDescriptionTest;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -13,9 +12,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.test.packaging.MethodDescriptionTestHelper;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import org.hamcrest.CoreMatchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -812,7 +809,6 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @Test
-    @Ignore("Fixed on Java 17 but not yet merged to all builds")
     public void testEnumConstructorAnnotation() throws Exception {
         MethodDescription.InDefinedShape constructor = describe(EnumConstructorAnnotationSample.class.getDeclaredConstructor(String.class, int.class, Void.class));
         assertThat(constructor.getParameters().get(2).getDeclaredAnnotations().size(), is(1));

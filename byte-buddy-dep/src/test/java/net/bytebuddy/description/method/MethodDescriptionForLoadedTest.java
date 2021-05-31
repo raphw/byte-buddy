@@ -1,6 +1,7 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.test.utility.JavaVersionRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
@@ -32,6 +33,7 @@ public class MethodDescriptionForLoadedTest extends AbstractMethodDescriptionTes
     @Test
     @Override
     @JavaVersionRule.Enforce(17)
+    @Ignore("Fixed on Java 17 but not yet merged to all builds")
     public void testEnumConstructorAnnotation() throws Exception {
         super.testEnumConstructorAnnotation();
     }
