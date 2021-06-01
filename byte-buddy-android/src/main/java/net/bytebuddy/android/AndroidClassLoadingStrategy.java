@@ -53,8 +53,8 @@ import java.util.logging.Logger;
  * <b>not</b> permitted by Android's security checks to store these files in a shared folder where they could be
  * manipulated by a third application what would break Android's sandbox model. An example for a forbidden storage
  * would therefore be the external storage. Instead, the class loading application must either supply a designated
- * directory, such as by creating a directory using {@link android.content.Context#getDir(String, int)} with specifying
- * {@link android.content.Context#MODE_PRIVATE} visibility for the created folder or by using the
+ * directory, such as by creating a directory using {@code android.content.Context#getDir(String, int)} with specifying
+ * {@code android.content.Context#MODE_PRIVATE} visibility for the created folder or by using the
  * {@code getCodeCacheDir} directory which is exposed for Android API versions 21 or higher.
  * </p>
  * <p>

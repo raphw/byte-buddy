@@ -5,7 +5,7 @@
     <parent>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
-        <version>1.11.2-SNAPSHOT</version>
+        <version>1.11.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy</artifactId>
@@ -78,6 +78,18 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>byte-buddy-dep</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>${jna.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform</artifactId>
+            <version>${jna.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
