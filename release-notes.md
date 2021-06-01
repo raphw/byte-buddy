@@ -1,6 +1,18 @@
 Byte Buddy release notes
 ------------------------
 
+### 1. June 2021: version 1.11.1
+
+- Add JNA based `ClassInjector` for use if JNA is already available.
+- Allow `HashCodeEqualsPlugin` to derive hash code from instrumented type rather then lowest type in hierarchy.
+- Retain *this* variable name for index 0 when using advice with remapped locals.
+- Rework `AnnotationDescription` for `TypePool` to mirror JVM behavior if annotation properties are changed inconsistently.
+- Add several `StackManipulation`s for common operations.
+- Remove unwanted dependency to `Instrumentation` API from `JavaModule` type.
+- Rework use of reflection to use `JavaDispatcher` API which also allows for custom generation of proxies without use of reflection.
+- Fully rework `JavaConstant` API to integrate with Java's `ConstantDesc` API and to allow for production of such descriptions.
+- Fix different bugs to properly support representation sealed classes.
+
 ### 19. April 2021: version 1.11.0
 
 - Rework resubmission strategy to allow for immediate resubmission or on error.
