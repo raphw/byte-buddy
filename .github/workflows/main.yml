@@ -128,7 +128,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: 8
-          distribution: adopt-hotspot
+          distribution: zulu
           architecture: x64
       - name: Build project
         run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pintegration
@@ -141,7 +141,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: 8
-          distribution: adopt-hotspot
+          distribution: zulu
           architecture: x64
       - name: Publish new version
         run: |
