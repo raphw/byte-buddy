@@ -4,7 +4,7 @@
 
     <groupId>net.bytebuddy</groupId>
     <artifactId>byte-buddy-parent</artifactId>
-    <version>1.11.2-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -760,6 +760,7 @@
                             <detectJavaApiLink>true</detectJavaApiLink>
                             <links>
                                 <link>${asm.url}/javadoc</link>
+                                <link>https://javadoc.io/doc/net.java.dev.jna/jna/latest</link>
                             </links>
                         </configuration>
                     </plugin>
