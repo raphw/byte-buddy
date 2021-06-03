@@ -289,44 +289,64 @@ public interface JavaConstant {
             } else if (value instanceof String) {
                 return new Simple.OfTrivialValue<String>((String) value, TypeDescription.STRING);
             } else if (CLASS_DESC.isInstance(value)) {
-                return Simple.OfTypeDescription.of(typePool.describe(Type.getType(CLASS_DESC.descriptorString(value)).getClassName()).resolve());
+                Type type = Type.getType(CLASS_DESC.descriptorString(value));
+                return Simple.OfTypeDescription.of(typePool.describe(type.getSort() == Type.ARRAY
+                        ? type.getInternalName().replace('/', '.')
+                        : type.getClassName()).resolve());
             } else if (METHOD_TYPE_DESC.isInstance(value)) {
                 Object[] parameterTypes = METHOD_TYPE_DESC.parameterArray(value);
                 List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameterTypes.length);
                 for (Object parameterType : parameterTypes) {
-                    typeDescriptions.add(typePool.describe(Type.getType(CLASS_DESC.descriptorString(parameterType)).getClassName()).resolve());
+                    Type type = Type.getType(CLASS_DESC.descriptorString(parameterType));
+                    typeDescriptions.add(typePool.describe(type.getSort() == Type.ARRAY
+                            ? type.getInternalName().replace('/', '.')
+                            : type.getClassName()).resolve());
                 }
-                return MethodType.of(typePool.describe(Type.getType(CLASS_DESC.descriptorString(METHOD_TYPE_DESC.returnType(value))).getClassName()).resolve(), typeDescriptions);
+                Type type = Type.getType(CLASS_DESC.descriptorString(METHOD_TYPE_DESC.returnType(value)));
+                return MethodType.of(typePool.describe(type.getSort() == Type.ARRAY
+                        ? type.getInternalName().replace('/', '.')
+                        : type.getClassName()).resolve(), typeDescriptions);
             } else if (DIRECT_METHOD_HANDLE_DESC.isInstance(value)) {
                 Object[] parameterTypes = METHOD_TYPE_DESC.parameterArray(METHOD_HANDLE_DESC.invocationType(value));
                 List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameterTypes.length);
                 for (Object parameterType : parameterTypes) {
-                    typeDescriptions.add(typePool.describe(Type.getType(CLASS_DESC.descriptorString(parameterType)).getClassName()).resolve());
+                    Type type = Type.getType(CLASS_DESC.descriptorString(parameterType));
+                    typeDescriptions.add(typePool.describe(type.getSort() == Type.ARRAY
+                            ? type.getInternalName().replace('/', '.')
+                            : type.getClassName()).resolve());
                 }
+                Type type = Type.getType(CLASS_DESC.descriptorString(METHOD_TYPE_DESC.returnType(METHOD_HANDLE_DESC.invocationType(value))));
                 return new MethodHandle(MethodHandle.HandleType.of(DIRECT_METHOD_HANDLE_DESC.refKind(value)),
                         typePool.describe(Type.getType(CLASS_DESC.descriptorString(DIRECT_METHOD_HANDLE_DESC.owner(value))).getClassName()).resolve(),
                         DIRECT_METHOD_HANDLE_DESC.methodName(value),
                         DIRECT_METHOD_HANDLE_DESC.refKind(value) == Opcodes.H_NEWINVOKESPECIAL
                                 ? TypeDescription.VOID
-                                : typePool.describe(Type.getType(CLASS_DESC.descriptorString(METHOD_TYPE_DESC.returnType(METHOD_HANDLE_DESC.invocationType(value)))).getClassName()).resolve(),
+                                : typePool.describe(type.getSort() == Type.ARRAY ? type.getInternalName().replace('/', '.') : type.getClassName()).resolve(),
                         typeDescriptions);
             } else if (DYNAMIC_CONSTANT_DESC.isInstance(value)) {
                 Type methodType = Type.getMethodType(DIRECT_METHOD_HANDLE_DESC.lookupDescriptor(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value)));
                 List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(methodType.getArgumentTypes().length);
                 for (Type type : methodType.getArgumentTypes()) {
-                    parameterTypes.add(typePool.describe(type.getClassName()).resolve());
+                    parameterTypes.add(typePool.describe(type.getSort() == Type.ARRAY
+                            ? type.getInternalName().replace('/', '.')
+                            : type.getClassName()).resolve());
                 }
                 Object[] constant = DYNAMIC_CONSTANT_DESC.bootstrapArgs(value);
                 List<JavaConstant> arguments = new ArrayList<JavaConstant>(constant.length);
                 for (Object aConstant : constant) {
                     arguments.add(ofDescription(aConstant, typePool));
                 }
+                Type type = Type.getType(CLASS_DESC.descriptorString(DYNAMIC_CONSTANT_DESC.constantType(value)));
                 return new Dynamic(DYNAMIC_CONSTANT_DESC.constantName(value),
-                        typePool.describe(Type.getType(CLASS_DESC.descriptorString(DYNAMIC_CONSTANT_DESC.constantType(value))).getClassName()).resolve(),
+                        typePool.describe(type.getSort() == Type.ARRAY
+                                ? type.getInternalName().replace('/', '.')
+                                : type.getClassName()).resolve(),
                         new MethodHandle(MethodHandle.HandleType.of(DIRECT_METHOD_HANDLE_DESC.refKind(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value))),
                                 typePool.describe(Type.getType(CLASS_DESC.descriptorString(DIRECT_METHOD_HANDLE_DESC.owner(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value)))).getClassName()).resolve(),
                                 DIRECT_METHOD_HANDLE_DESC.methodName(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value)),
-                                typePool.describe(methodType.getReturnType().getClassName()).resolve(),
+                                typePool.describe(methodType.getReturnType().getSort() == Type.ARRAY
+                                        ? type.getReturnType().getInternalName().replace('/', '.')
+                                        : type.getReturnType().getClassName()).resolve(),
                                 parameterTypes),
                         arguments);
             } else {
