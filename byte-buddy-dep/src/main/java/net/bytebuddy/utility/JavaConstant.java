@@ -345,8 +345,8 @@ public interface JavaConstant {
                                 typePool.describe(Type.getType(CLASS_DESC.descriptorString(DIRECT_METHOD_HANDLE_DESC.owner(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value)))).getClassName()).resolve(),
                                 DIRECT_METHOD_HANDLE_DESC.methodName(DYNAMIC_CONSTANT_DESC.bootstrapMethod(value)),
                                 typePool.describe(methodType.getReturnType().getSort() == Type.ARRAY
-                                        ? type.getReturnType().getInternalName().replace('/', '.')
-                                        : type.getReturnType().getClassName()).resolve(),
+                                        ? methodType.getReturnType().getInternalName().replace('/', '.')
+                                        : methodType.getReturnType().getClassName()).resolve(),
                                 parameterTypes),
                         arguments);
             } else {
