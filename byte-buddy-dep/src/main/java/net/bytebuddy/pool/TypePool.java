@@ -508,16 +508,28 @@ public interface TypePool {
             if (name.contains("/")) {
                 throw new IllegalArgumentException(name + " contains the illegal character '/'");
             }
-            int arity = 0;
-            while (name.startsWith(ARRAY_SYMBOL)) {
-                arity++;
+            int arity;
+            int arraySymbolIndex = name.indexOf(ARRAY_SYMBOL);
+            if (arraySymbolIndex < 0) {
+                arity = 0;
+            } else if (arraySymbolIndex == 0) {
+                arity = 1;
                 name = name.substring(1);
-            }
-            if (arity > 0) {
+                while (name.startsWith(ARRAY_SYMBOL)) {
+                    arity++;
+                    name = name.substring(1);
+                }
                 String primitiveName = PRIMITIVE_DESCRIPTORS.get(name);
                 name = primitiveName == null
                         ? name.substring(1, name.length() - 1)
                         : primitiveName;
+            } else {
+                arity = 1;
+                String arraySuffixes = name.substring(arraySymbolIndex + 2);
+                for (int i = 0; i < arraySuffixes.length(); i += 2) {
+                    arity++;
+                }
+                name = name.substring(0, arraySymbolIndex);
             }
             TypeDescription typeDescription = PRIMITIVE_TYPES.get(name);
             Resolution resolution = typeDescription == null
