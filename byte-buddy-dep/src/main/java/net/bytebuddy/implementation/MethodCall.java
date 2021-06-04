@@ -808,7 +808,7 @@ public class MethodCall implements Implementation.Composable {
                 List<MethodDescription> candidates = CompoundList.<MethodDescription>of(
                         instrumentedType.getSuperClass().getDeclaredMethods().filter(isConstructor().and(matcher)),
                         instrumentedType.getDeclaredMethods().filter(not(ElementMatchers.isVirtual()).and(not(is(instrumentedMethod))).and(matcher)),
-                        methodGraphCompiler.compile(targetType, instrumentedType).listNodes().asMethodList().filter(not(is(instrumentedMethod)).and(matcher)));
+                        methodGraphCompiler.compile(targetType, instrumentedType).listNodes().asMethodList().filter(matcher));
                 if (candidates.size() == 1) {
                     return candidates.get(0);
                 } else {
