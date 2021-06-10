@@ -451,7 +451,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                     } catch (Exception ignored) {
                         // On the bootstrap class loader, a lookup instance cannot be located reflectively. To avoid issuing a warning for accessing
                         // a protected method from outside of a class that is caused if the module system does not offer accessing the method.
-                        return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V9) && ByteArrayClassLoader.class.getClassLoader() == null
+                        return ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).isAtLeast(ClassFileVersion.JAVA_V9) && ByteArrayClassLoader.class.getClassLoader() == null
                                 ? SynchronizationStrategy.ForLegacyVm.INSTANCE
                                 : new ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class));
                     }

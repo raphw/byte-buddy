@@ -1559,7 +1559,7 @@ public interface ClassInjector {
          * @return {@code true} if the current VM is capable of defining classes using a lookup.
          */
         public static boolean isAvailable() {
-            return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V9);
+            return ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).isAtLeast(ClassFileVersion.JAVA_V9);
         }
 
         /**
@@ -2337,7 +2337,7 @@ public interface ClassInjector {
          * @return {@code true} if this class injector is available on this VM.
          */
         public static boolean isAvailable() {
-            return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V6);
+            return ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).isAtLeast(ClassFileVersion.JAVA_V6);
         }
 
         /**

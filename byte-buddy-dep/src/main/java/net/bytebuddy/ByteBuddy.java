@@ -184,7 +184,7 @@ public class ByteBuddy {
      * @see ClassFileVersion#ofThisVm(ClassFileVersion)
      */
     public ByteBuddy() {
-        this(ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6));
+        this(ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5));
     }
 
     /**

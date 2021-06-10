@@ -15,7 +15,6 @@
  */
 package net.bytebuddy.description.method;
 
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -178,7 +177,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          */
         public static ParameterList<ParameterDescription.InDefinedShape> of(Constructor<?> constructor,
                                                                             ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
-            return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V8)
+            return EXECUTABLE.isInstance(constructor)
                     ? new OfConstructor(constructor, parameterAnnotationSource)
                     : new OfLegacyVmConstructor(constructor, parameterAnnotationSource);
         }
@@ -202,7 +201,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          */
         public static ParameterList<ParameterDescription.InDefinedShape> of(Method method,
                                                                             ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
-            return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V8)
+            return EXECUTABLE.isInstance(method)
                     ? new OfMethod(method, parameterAnnotationSource)
                     : new OfLegacyVmMethod(method, parameterAnnotationSource);
         }
@@ -219,6 +218,15 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          */
         @JavaDispatcher.Proxied("java.lang.reflect.Executable")
         protected interface Executable {
+
+            /**
+             * Checks if the supplied instance is a {@code java.lang.reflect.Executable}.
+             *
+             * @param value The value to check for being a {@code java.lang.reflect.Executable}.
+             * @return {@code true} if the supplied instance is a {@code java.lang.reflect.Executable}.
+             */
+            @JavaDispatcher.Instance
+            boolean isInstance(Object value);
 
             /**
              * Returns the amount of parameters of a given executable..

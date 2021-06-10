@@ -161,7 +161,7 @@ public interface AnnotationDescription {
          * Initializes the rendering dispatcher.
          */
         static {
-            ClassFileVersion classFileVersion = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6);
+            ClassFileVersion classFileVersion = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5);
             if (classFileVersion.isAtLeast(ClassFileVersion.JAVA_V14)) {
                 CURRENT = RenderingDispatcher.JAVA_14_CAPABLE_VM;
             } else {

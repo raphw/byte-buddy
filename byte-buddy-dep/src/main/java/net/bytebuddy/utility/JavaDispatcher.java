@@ -144,7 +144,13 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                     continue;
                 }
                 if (method.isAnnotationPresent(Instance.class)) {
-                    dispatchers.put(method, Dispatcher.ForDefaultValue.BOOLEAN);
+                    if (method.getParameterTypes().length != 1 || method.getParameterTypes()[0].isPrimitive() || method.getParameterTypes()[0].isArray()) {
+                        throw new IllegalStateException("Instance check requires a single regular-typed argument: " + method);
+                    } else if (method.getReturnType() != boolean.class) {
+                        throw new IllegalStateException("Instance check requires a boolean return type: " + method);
+                    } else {
+                        dispatchers.put(method, Dispatcher.ForDefaultValue.BOOLEAN);
+                    }
                 } else {
                     dispatchers.put(method, defaults || method.isAnnotationPresent(Defaults.class)
                             ? Dispatcher.ForDefaultValue.of(method.getReturnType())
@@ -167,12 +173,16 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             if (method.isAnnotationPresent(Instance.class)) {
                 if (method.getParameterTypes().length != 1 || !method.getParameterTypes()[0].isAssignableFrom(target)) {
                     throw new IllegalStateException("Instance check requires a single regular-typed argument: " + method);
+                } else if (method.getReturnType() != boolean.class) {
+                    throw new IllegalStateException("Instance check requires a boolean return type: " + method);
                 } else {
                     dispatchers.put(method, new Dispatcher.ForInstanceCheck(target));
                 }
             } else if (method.isAnnotationPresent(Container.class)) {
                 if (method.getParameterTypes().length != 1 || method.getParameterTypes()[0] != int.class) {
                     throw new IllegalStateException("Container creation requires a single int-typed argument: " + method);
+                } else if (!method.getReturnType().isArray() || !method.getReturnType().getComponentType().isAssignableFrom(target)) {
+                    throw new IllegalStateException("Container creation requires an assignable array as return value: " + method);
                 } else {
                     dispatchers.put(method, new Dispatcher.ForContainerCreation(target));
                 }

@@ -386,7 +386,7 @@ public class MethodCallTest {
         assertThat(new ByteBuddy()
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .defineConstructor(Visibility.PUBLIC)
-                .intercept(MethodCall.invoke(isConstructor()).onSuper())
+                .intercept(MethodCall.invoke(isConstructor().and(isDeclaredBy(Object.class))).onSuper())
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
@@ -422,6 +422,29 @@ public class MethodCallTest {
                 .subclass(SuperMethodInvocation.class)
                 .method(takesArguments(0).and(named(FOO)))
                 .intercept(MethodCall.invokeSelf().on(delegate))
+                .make()
+                .load(SuperMethodInvocation.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredMethod(FOO), not(nullValue(Method.class)));
+        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        SuperMethodInvocation instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(SuperMethodInvocation.class)));
+        assertThat(instance, instanceOf(SuperMethodInvocation.class));
+        assertThat(instance.foo(), is(FOO));
+        verify(delegate).foo();
+        verifyNoMoreInteractions(delegate);
+    }
+
+    @Test
+    public void testSelfInvocationViaMatcher() throws Exception {
+        SuperMethodInvocation delegate = mock(SuperMethodInvocation.class);
+        when(delegate.foo()).thenReturn(FOO);
+        DynamicType.Loaded<SuperMethodInvocation> loaded = new ByteBuddy()
+                .subclass(SuperMethodInvocation.class)
+                .method(takesArguments(0).and(named(FOO)))
+                .intercept(MethodCall.invoke(takesArguments(0).and(named(FOO))).on(delegate, SuperMethodInvocation.class))
                 .make()
                 .load(SuperMethodInvocation.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));

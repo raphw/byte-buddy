@@ -92,7 +92,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @return {@code true} if the current VM supports modules.
      */
     public static boolean isSupported() {
-        return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V9);
+        return ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).isAtLeast(ClassFileVersion.JAVA_V9);
     }
 
     /**

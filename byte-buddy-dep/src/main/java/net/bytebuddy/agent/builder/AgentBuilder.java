@@ -5436,7 +5436,7 @@ public interface AgentBuilder {
                     if (type == null || type.isArray() || type.isPrimitive() || !lambdaInstrumentationStrategy.isInstrumented(type)) {
                         continue;
                     }
-                    collector.consider(type, DISPATCHER.isModifiableClass(instrumentation, type) || ClassFileVersion.ofThisVm().isAtMost(ClassFileVersion.JAVA_V5));
+                    collector.consider(type, DISPATCHER.isModifiableClass(instrumentation, type) || ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).isAtMost(ClassFileVersion.JAVA_V5));
                 }
                 batch = collector.apply(instrumentation, redefinitionBatchAllocator, redefinitionListener, batch);
             }
@@ -7187,7 +7187,7 @@ public interface AgentBuilder {
                                             collector.consider(type, !type.isArray()
                                                     && !type.isPrimitive()
                                                     && (DISPATCHER.isModifiableClass(instrumentation, type)
-                                                    || ClassFileVersion.ofThisVm().isAtMost(ClassFileVersion.JAVA_V5)));
+                                                    || ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).isAtMost(ClassFileVersion.JAVA_V5)));
                                         } catch (Throwable ignored) {
                                             /* do nothing */
                                         } finally {
@@ -7876,7 +7876,7 @@ public interface AgentBuilder {
         /**
          * The name of the current VM's {@code Unsafe} class that is visible to the bootstrap loader.
          */
-        private static final String UNSAFE_CLASS = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
+        private static final String UNSAFE_CLASS = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).isAtLeast(ClassFileVersion.JAVA_V9)
                 ? "jdk/internal/misc/Unsafe"
                 : "sun/misc/Unsafe";
 
@@ -9334,7 +9334,7 @@ public interface AgentBuilder {
          * @return An appropriate agent builder.
          */
         public static AgentBuilder of(EntryPoint entryPoint, List<? extends Plugin> plugins) {
-            return of(entryPoint, ClassFileVersion.ofThisVm(), plugins);
+            return of(entryPoint, ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5), plugins);
         }
 
         /**

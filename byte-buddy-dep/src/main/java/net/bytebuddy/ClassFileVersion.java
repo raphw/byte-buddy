@@ -488,6 +488,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                 } catch (Throwable ignored) {
                     try {
                         String versionString = System.getProperty(JAVA_VERSION);
+                        if (versionString == null) {
+                            throw new IllegalStateException("Java version property is not set");
+                        } else if (versionString.equals("0")) { // Used by Android, assume Java 6 defensively.
+                            return new Resolved(ClassFileVersion.JAVA_V6);
+                        }
                         int[] versionIndex = {-1, 0, 0};
                         for (int index = 1; index < 3; index++) {
                             versionIndex[index] = versionString.indexOf('.', versionIndex[index - 1] + 1);

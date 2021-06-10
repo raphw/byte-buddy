@@ -374,7 +374,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     String javaVersionString = findJavaVersionString(project);
                     ClassFileVersion classFileVersion;
                     if (javaVersionString == null) {
-                        classFileVersion = ClassFileVersion.ofThisVm();
+                        classFileVersion = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5);
                         getLog().warn("Could not locate Java target version, build is JDK dependant: " + classFileVersion.getMajorVersion());
                     } else {
                         classFileVersion = ClassFileVersion.ofJavaVersionString(javaVersionString);

@@ -5066,7 +5066,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A rendering delegate for the current VM.
                  */
-                protected static final RenderingDelegate CURRENT = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V8)
+                protected static final RenderingDelegate CURRENT = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).isAtLeast(ClassFileVersion.JAVA_V8)
                         ? RenderingDelegate.FOR_JAVA_8_CAPABLE_VM
                         : RenderingDelegate.FOR_LEGACY_VM;
 
