@@ -832,13 +832,13 @@ class Bar { }
 class MyApplication {
   public static void main(String[] args) {
     TypePool typePool = TypePool.Default.ofSystemLoader();
-    new ByteBuddy()
+    Class<?> bar = new ByteBuddy()
       .redefine(typePool.describe("foo.Bar").resolve(), // do not use 'Bar.class'
                 ClassFileLocator.ForClassLoader.ofSystemLoader())
       .defineField("qux", String.class) // we learn more about defining fields later
       .make()
       .load(ClassLoader.getSystemClassLoader());
-    assertThat(Bar.class.getDeclaredField("qux"), notNullValue());
+    assertThat(bar.getDeclaredField("qux"), notNullValue());
   }
 }
 </pre>
