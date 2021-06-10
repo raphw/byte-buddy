@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 11. June 2021: version 1.11.2
+
+- Fixes resolution of array types for Java descriptors of `JavaConstant`.
+- Properly process Android's version string and avoid relying on the version string where possible.
+- Allow for self-calls when creating a `MethodCall` and identifying a method via a matcher.
+
 ### 1. June 2021: version 1.11.1
 
 - Add JNA based `ClassInjector` for use if JNA is already available.
