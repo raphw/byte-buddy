@@ -1482,7 +1482,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     @JavaVersionRule.Enforce(17)
-    @Ignore("Sealed classes are still a preview feature")
     public void testPermittedSubclasses() throws Exception {
         TypeDescription sample = new TypeDescription.Latent("foo.Qux",
                 Opcodes.ACC_PUBLIC,
