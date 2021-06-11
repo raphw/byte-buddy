@@ -752,6 +752,17 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
+    @JavaVersionRule.Enforce(17)
+    public void testSealed() throws Exception {
+        Class<?> sealed = Class.forName("net.bytebuddy.test.precompiled.Sealed");
+        assertThat(describe(sealed).isSealed(), is(true));
+        assertThat(describe(sealed).getPermittedSubtypes().size(), is(3));
+        assertThat(describe(sealed).getPermittedSubtypes().get(0), is(describe(Class.forName(sealed.getName() + "$SubNonSealed"))));
+        assertThat(describe(sealed).getPermittedSubtypes().get(1), is(describe(Class.forName(sealed.getName() + "$SubSealed"))));
+        assertThat(describe(sealed).getPermittedSubtypes().get(2), is(describe(Class.forName(sealed.getName() + "$SubFinal"))));
+    }
+
+    @Test
     public void testNonRecordComponents() throws Exception {
         assertThat(describe(String.class).isRecord(), is(false));
         assertThat(describe(String.class).getRecordComponents().size(), is(0));
