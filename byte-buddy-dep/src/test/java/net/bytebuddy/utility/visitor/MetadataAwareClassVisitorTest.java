@@ -107,12 +107,20 @@ public class MetadataAwareClassVisitorTest {
     }
 
     @Test
+    public void testVisitPermittedSubclass() {
+        classVisitor.visitPermittedSubclass(null);
+        assertThat(classVisitor.nestHostVisited, is(true));
+        assertThat(classVisitor.outerClassVisited, is(true));
+        assertThat(classVisitor.afterAttributesVisited, is(true));
+        assertThat(classVisitor.afterPermittedSubclassesVisited, is(false));
+    }
+
+    @Test
     public void testVisitField() {
         classVisitor.visitField(0, null, null, null, null);
         assertThat(classVisitor.nestHostVisited, is(true));
         assertThat(classVisitor.outerClassVisited, is(true));
         assertThat(classVisitor.afterAttributesVisited, is(true));
-        assertThat(classVisitor.afterRecordComponentsVisited, is(true));
     }
 
     @Test
@@ -121,7 +129,6 @@ public class MetadataAwareClassVisitorTest {
         assertThat(classVisitor.nestHostVisited, is(true));
         assertThat(classVisitor.outerClassVisited, is(true));
         assertThat(classVisitor.afterAttributesVisited, is(true));
-        assertThat(classVisitor.afterRecordComponentsVisited, is(true));
     }
 
     @Test
@@ -131,11 +138,12 @@ public class MetadataAwareClassVisitorTest {
         assertThat(classVisitor.outerClassVisited, is(true));
         assertThat(classVisitor.afterAttributesVisited, is(true));
         assertThat(classVisitor.afterRecordComponentsVisited, is(true));
+        assertThat(classVisitor.afterPermittedSubclassesVisited, is(true));
     }
 
     private static class DelegatingMetadataAwareClassVisitor extends MetadataAwareClassVisitor {
 
-        private boolean nestHostVisited, outerClassVisited, afterAttributesVisited, afterRecordComponentsVisited;
+        private boolean nestHostVisited, outerClassVisited, afterAttributesVisited, afterRecordComponentsVisited, afterPermittedSubclassesVisited;
 
         private DelegatingMetadataAwareClassVisitor() {
             super(OpenedClassReader.ASM_API, null);
@@ -159,6 +167,11 @@ public class MetadataAwareClassVisitorTest {
         @Override
         protected void onAfterRecordComponents() {
             afterRecordComponentsVisited = true;
+        }
+
+        @Override
+        protected void onAfterPermittedSubclasses() {
+            afterPermittedSubclassesVisited = true;
         }
     }
 }
