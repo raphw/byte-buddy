@@ -28,11 +28,6 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     private boolean triggerNestHost;
 
     /**
-     * {@code true} if the permitted subclass visitation is not yet completed.
-     */
-    private boolean triggerPermittedSubclasses;
-
-    /**
      * {@code true} if the outer class was not yet visited.
      */
     private boolean triggerOuterClass;
@@ -43,11 +38,6 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     private boolean triggerAttributes;
 
     /**
-     * {@code true} if the record component visitation is not yet triggered.
-     */
-    private boolean triggerRecordComponents;
-
-    /**
      * Creates a metadata aware class visitor.
      *
      * @param api          The API version.
@@ -56,23 +46,14 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     protected MetadataAwareClassVisitor(int api, ClassVisitor classVisitor) {
         super(api, classVisitor);
         triggerNestHost = true;
-        triggerPermittedSubclasses = true;
         triggerOuterClass = true;
         triggerAttributes = true;
-        triggerRecordComponents = true;
     }
 
     /**
      * Invoked if the nest host was not visited.
      */
     protected void onNestHost() {
-        /* do nothing */
-    }
-
-    /**
-     * Invoked if the permitted subclass visitation is about to complete.
-     */
-    protected void onAfterPermittedSubclasses() {
         /* do nothing */
     }
 
@@ -87,13 +68,6 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * Invoked if the attribute visitation is about to complete.
      */
     protected void onAfterAttributes() {
-        /* do nothing */
-    }
-
-    /**
-     * Invoked after all record components are visited or none is found.
-     */
-    protected void onAfterRecordComponents() {
         /* do nothing */
     }
 
@@ -118,32 +92,12 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     }
 
     /**
-     * Considers triggering the after permitted subclass visitation.
-     */
-    private void considerTriggerAfterPermittedSubclasses() {
-        if (triggerPermittedSubclasses) {
-            triggerPermittedSubclasses = false;
-            onAfterPermittedSubclasses();
-        }
-    }
-
-    /**
      * Considers triggering the after attribute visitation.
      */
     private void considerTriggerAfterAttributes() {
         if (triggerAttributes) {
             triggerAttributes = false;
             onAfterAttributes();
-        }
-    }
-
-    /**
-     * Considers triggering the after record components visitation.
-     */
-    private void considerTriggerAfterRecordComponents() {
-        if (triggerRecordComponents) {
-            triggerRecordComponents = false;
-            onAfterRecordComponents();
         }
     }
 
@@ -355,10 +309,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     public final void visitEnd() {
         considerTriggerNestHost();
-        considerTriggerAfterPermittedSubclasses();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
-        considerTriggerAfterRecordComponents();
         onVisitEnd();
     }
 

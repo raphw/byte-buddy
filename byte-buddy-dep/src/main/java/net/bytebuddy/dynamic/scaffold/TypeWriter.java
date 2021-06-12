@@ -4874,15 +4874,6 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    protected void onAfterPermittedSubclasses() {
-                        if (permittedSubclasses != null) {
-                            for (String permittedSubclass : permittedSubclasses) {
-                                cv.visitPermittedSubclass(permittedSubclass);
-                            }
-                        }
-                    }
-
-                    @Override
                     protected void onVisitOuterClass(String owner, String name, String descriptor) {
                         try { // The Groovy compiler often gets this attribute wrong such that this safety just retains it.
                             onOuterType();
@@ -4951,13 +4942,6 @@ public interface TypeWriter<T> {
                         return recordComponentVisitor == null
                                 ? IGNORE_RECORD_COMPONENT
                                 : new AttributeObtainingRecordComponentVisitor(recordComponentVisitor, record);
-                    }
-
-                    @Override
-                    protected void onAfterRecordComponents() {
-                        for (RecordComponentDescription recordComponent : declarableRecordComponents.values()) {
-                            recordComponentPool.target(recordComponent).apply(cv, annotationValueFilterFactory);
-                        }
                     }
 
                     @Override
@@ -5109,13 +5093,14 @@ public interface TypeWriter<T> {
 
                     @Override
                     protected void onVisitEnd() {
-                        for (FieldDescription fieldDescription : declarableFields.values()) {
-                            fieldPool.target(fieldDescription).apply(cv, annotationValueFilterFactory);
+                        for (String nestMember : nestMembers) {
+                            cv.visitNestMember(nestMember);
                         }
-                        for (MethodDescription methodDescription : declarableMethods.values()) {
-                            methodPool.target(methodDescription).apply(cv, implementationContext, annotationValueFilterFactory);
+                        if (permittedSubclasses != null) {
+                            for (String permittedSubclass : permittedSubclasses) {
+                                cv.visitPermittedSubclass(permittedSubclass);
+                            }
                         }
-                        initializationHandler.complete(cv, implementationContext);
                         TypeDescription declaringType = instrumentedType.getDeclaringType();
                         if (declaringType != null) {
                             cv.visitInnerClass(instrumentedType.getInternalName(),
@@ -5143,6 +5128,16 @@ public interface TypeWriter<T> {
                                             : typeDescription.getSimpleName(),
                                     typeDescription.getModifiers());
                         }
+                        for (RecordComponentDescription recordComponent : declarableRecordComponents.values()) {
+                            recordComponentPool.target(recordComponent).apply(cv, annotationValueFilterFactory);
+                        }
+                        for (FieldDescription fieldDescription : declarableFields.values()) {
+                            fieldPool.target(fieldDescription).apply(cv, annotationValueFilterFactory);
+                        }
+                        for (MethodDescription methodDescription : declarableMethods.values()) {
+                            methodPool.target(methodDescription).apply(cv, implementationContext, annotationValueFilterFactory);
+                        }
+                        initializationHandler.complete(cv, implementationContext);
                         cv.visitEnd();
                     }
 
@@ -5735,9 +5730,6 @@ public interface TypeWriter<T> {
                 if (!instrumentedType.isNestHost()) {
                     classVisitor.visitNestHost(instrumentedType.getNestHost().getInternalName());
                 }
-                for (TypeDescription typeDescription : instrumentedType.getPermittedSubtypes()) {
-                    classVisitor.visitPermittedSubclass(typeDescription.getInternalName());
-                }
                 MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
                 if (enclosingMethod != null) {
                     classVisitor.visitOuterClass(enclosingMethod.getDeclaringType().getInternalName(),
@@ -5747,22 +5739,13 @@ public interface TypeWriter<T> {
                     classVisitor.visitOuterClass(instrumentedType.getEnclosingType().getInternalName(), NO_REFERENCE, NO_REFERENCE);
                 }
                 typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
-                for (RecordComponentDescription recordComponentDescription : recordComponents) {
-                    recordComponentPool.target(recordComponentDescription).apply(classVisitor, annotationValueFilterFactory);
-                }
-                for (FieldDescription fieldDescription : fields) {
-                    fieldPool.target(fieldDescription).apply(classVisitor, annotationValueFilterFactory);
-                }
-                for (MethodDescription methodDescription : instrumentedMethods) {
-                    methodPool.target(methodDescription).apply(classVisitor, implementationContext, annotationValueFilterFactory);
-                }
-                implementationContext.drain(new TypeInitializer.Drain.Default(instrumentedType,
-                        methodPool,
-                        annotationValueFilterFactory), classVisitor, annotationValueFilterFactory);
                 if (instrumentedType.isNestHost()) {
                     for (TypeDescription typeDescription : instrumentedType.getNestMembers().filter(not(is(instrumentedType)))) {
                         classVisitor.visitNestMember(typeDescription.getInternalName());
                     }
+                }
+                for (TypeDescription typeDescription : instrumentedType.getPermittedSubtypes()) {
+                    classVisitor.visitPermittedSubclass(typeDescription.getInternalName());
                 }
                 TypeDescription declaringType = instrumentedType.getDeclaringType();
                 if (declaringType != null) {
@@ -5791,6 +5774,18 @@ public interface TypeWriter<T> {
                                     : typeDescription.getSimpleName(),
                             typeDescription.getModifiers());
                 }
+                for (RecordComponentDescription recordComponentDescription : recordComponents) {
+                    recordComponentPool.target(recordComponentDescription).apply(classVisitor, annotationValueFilterFactory);
+                }
+                for (FieldDescription fieldDescription : fields) {
+                    fieldPool.target(fieldDescription).apply(classVisitor, annotationValueFilterFactory);
+                }
+                for (MethodDescription methodDescription : instrumentedMethods) {
+                    methodPool.target(methodDescription).apply(classVisitor, implementationContext, annotationValueFilterFactory);
+                }
+                implementationContext.drain(new TypeInitializer.Drain.Default(instrumentedType,
+                        methodPool,
+                        annotationValueFilterFactory), classVisitor, annotationValueFilterFactory);
                 classVisitor.visitEnd();
                 return new UnresolvedType(classWriter.toByteArray(), implementationContext.getAuxiliaryTypes());
             }
