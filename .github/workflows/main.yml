@@ -27,9 +27,7 @@ jobs:
           distribution: adopt-hotspot
           architecture: x64
       - name: Install JDK and build project
-        run: |
-          export MAVEN_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED"
-          ./mvnw verify -Pjava17 -Dnet.bytebuddy.experimental=true
+        run: ./mvnw verify -Pjava17
         continue-on-error: false
   any-supported:
     name: Any (supported)

@@ -187,6 +187,11 @@ concat_lines() {
 export MAVEN_PROJECTBASEDIR=${MAVEN_BASEDIR:-$(find_maven_basedir)}
 MAVEN_OPTS="$(concat_lines "$MAVEN_PROJECTBASEDIR/.mvn/jvm.config") $MAVEN_OPTS"
 
+# Open Java base module on Java 9 and later to avoid Maven build failure.
+if ! `$JAVA_HOME/bin/java -fullversion 2>&1 >/dev/null | awk '{print $4}' | grep -Eq "^\"1\.[678]\."`; then
+  MAVEN_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED $MAVEN_OPTS"
+fi
+
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
   [ -n "$M2_HOME" ] &&
