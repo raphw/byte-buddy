@@ -73,6 +73,13 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     private Discovery discovery;
 
     /**
+     * Determines what tasks are considered when adjusting the task dependency graph to include the Byte Buddy task.
+     * By default, only the altered task's project's task is considered but the resolution can include subprojects or
+     * the entire project graph. Note that it might not always be legal to resolve such recursive dependencies.
+     */
+    private Resolution resolution;
+
+    /**
      * The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
      */
     private int threads;
@@ -87,6 +94,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         failOnLiveInitializer = true;
         warnOnEmptyTypeSet = true;
         discovery = Discovery.EMPTY;
+        resolution = Resolution.SELF;
     }
 
     /**
@@ -225,12 +233,30 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     }
 
     /**
-     * Determines the discovery being used for finding plugins on the class path.
+     * Determines the discovery for finding plugins on the class path.
      *
      * @param discovery The discovery for finding plugins on the class path.
      */
     public void setDiscovery(Discovery discovery) {
         this.discovery = discovery;
+    }
+
+    /**
+     * Determines the resolution for tasks that might depend on post-processed compile tasks.
+     *
+     * @return The resolution for tasks that might depend on post-processed compile tasks.
+     */
+    public Resolution getResolution() {
+        return resolution;
+    }
+
+    /**
+     * Determines the resolution for tasks that might depend on post-processed compile tasks.
+     *
+     * @param resolution The resolution for tasks that might depend on post-processed compile tasks.
+     */
+    public void setResolution(Resolution resolution) {
+        this.resolution = resolution;
     }
 
     /**
