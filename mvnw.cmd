@@ -126,7 +126,7 @@ for /f tokens^=2-5^ delims^=.-_^" %%j in ('%JAVA_HOME%\bin\java -fullversion 2^>
 IF NOT "%JAVA_VERSION_STRING:~0,3%"=="160" (
   IF NOT "%JAVA_VERSION_STRING:~0,3%"=="170" (
     IF NOT "%JAVA_VERSION_STRING:~0,3%"=="180" (
-      set MAVEN_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED %MAVEN_OPTS%"
+      set MAVEN_OPTS="--add-opens=java.base/java.lang=ALL-UNNAMED %MAVEN_OPTS%"
     )
   )
 )
