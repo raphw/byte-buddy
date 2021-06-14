@@ -78,7 +78,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
             byteBuddyTask.dependsOn(compileTask);
             extension.configure(byteBuddyTask);
             configureDirectories(sourceSet.getJava(), compileTask, byteBuddyTask);
-            for (Map.Entry<Project, Set<Task>> entry : extension.getResolution().resolve(project).entrySet()) {
+            for (Map.Entry<Project, Set<Task>> entry : extension.getAdjustment().resolve(project).entrySet()) {
                 for (Task task : entry.getValue()) {
                     if (!(task.getName().equals(name)
                             && task.getProject().equals(project))

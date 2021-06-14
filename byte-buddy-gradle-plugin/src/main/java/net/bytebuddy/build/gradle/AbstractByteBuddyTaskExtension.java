@@ -74,10 +74,10 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
 
     /**
      * Determines what tasks are considered when adjusting the task dependency graph to include the Byte Buddy task.
-     * By default, only the altered task's project's task is considered but the resolution can include subprojects or
+     * By default, only the altered task's project's task is considered but the adjustment can include subprojects or
      * the entire project graph. Note that it might not always be legal to resolve such recursive dependencies.
      */
-    private Resolution resolution;
+    private Adjustment adjustment;
 
     /**
      * The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
@@ -94,7 +94,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         failOnLiveInitializer = true;
         warnOnEmptyTypeSet = true;
         discovery = Discovery.EMPTY;
-        resolution = Resolution.SELF;
+        adjustment = Adjustment.SELF;
     }
 
     /**
@@ -242,21 +242,21 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     }
 
     /**
-     * Determines the resolution for tasks that might depend on post-processed compile tasks.
+     * Determines the adjustment for tasks that might depend on post-processed compile tasks.
      *
-     * @return The resolution for tasks that might depend on post-processed compile tasks.
+     * @return The adjustment for tasks that might depend on post-processed compile tasks.
      */
-    public Resolution getResolution() {
-        return resolution;
+    public Adjustment getAdjustment() {
+        return adjustment;
     }
 
     /**
-     * Determines the resolution for tasks that might depend on post-processed compile tasks.
+     * Determines the adjustment for tasks that might depend on post-processed compile tasks.
      *
-     * @param resolution The resolution for tasks that might depend on post-processed compile tasks.
+     * @param adjustment The adjustment for tasks that might depend on post-processed compile tasks.
      */
-    public void setResolution(Resolution resolution) {
-        this.resolution = resolution;
+    public void setAdjustment(Adjustment adjustment) {
+        this.adjustment = adjustment;
     }
 
     /**
