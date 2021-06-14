@@ -26,4 +26,6 @@ A custom can declare a constructor that can take arguments of type `File`, `Buil
 
 A plugin can be applied automatically if the plugin's containing jar file declares the plugin's name in the *META-INF/net.bytebuddy/build.plugins* file.
 
+By default, the Byte Buddy plugin only adjusts the task dependency graph within a given project. If a different project depends on the compile task of another project, the Byte Buddy task might not be applied when the dependant task is executed. This behavior can be overridden by setting the `adjustment` property in the Byte Buddy extension. This way, Byte Buddy attempts to either resolve subprojects of a project (`Adjustement.SUB`), or all projects (`Adjustement.FULL`). This might not be allowed in newer Gradle versions if the build is executed in parallel.
+
 The plugin offers the implementation of custom tasks, the `ByteBuddyTask` transforms classes within a folder and writes it to another folder while using Gradle's incremental build feature what requires Gradle 6 or later. The `ByteBuddySimpleTask` does not support incremental build but works from Gradle 2 on up whereas the `ByteBuddyJarTask` allows the transformation of a bundled jar file. Insight into the Byte Buddy plugins autoconfiguration can be found in the debug log.
