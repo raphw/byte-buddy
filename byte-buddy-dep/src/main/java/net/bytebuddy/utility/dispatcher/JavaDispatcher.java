@@ -189,6 +189,8 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 } else {
                     dispatchers.put(method, new Dispatcher.ForContainerCreation(target));
                 }
+            } else if (target.getName().equals("java.lang.invoke.MethodHandles") && method.getName().equals("lookup")) {
+                throw new UnsupportedOperationException("Cannot resolve Byte Buddy lookup via dispatcher");
             } else {
                 try {
                     Class<?>[] parameterType = method.getParameterTypes();

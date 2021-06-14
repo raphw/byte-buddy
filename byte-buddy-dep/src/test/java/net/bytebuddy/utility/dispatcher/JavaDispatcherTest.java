@@ -1,7 +1,9 @@
 package net.bytebuddy.utility.dispatcher;
 
-import net.bytebuddy.utility.dispatcher.JavaDispatcher;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -18,9 +20,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-
 @RunWith(Parameterized.class)
 public class JavaDispatcherTest {
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private final boolean generate;
 
@@ -138,6 +142,12 @@ public class JavaDispatcherTest {
         JavaDispatcher.of(ProtectionDomain.class);
     }
 
+    @JavaVersionRule.Enforce(9)
+    @Test(expected = UnsupportedOperationException.class)
+    public void testMethodHandleLookup() {
+        JavaDispatcher.of(MethodHandles.class).run().lookup();
+    }
+
     @JavaDispatcher.Proxied("java.lang.Object")
     public interface Constructor {
 
@@ -245,5 +255,11 @@ public class JavaDispatcherTest {
     public interface UndeclaredExceptionSample {
 
         String getCanonicalPath(Object target);
+    }
+
+    @JavaDispatcher.Proxied("java.lang.invoke.MethodHandles")
+    public interface MethodHandles {
+
+        Object lookup();
     }
 }
