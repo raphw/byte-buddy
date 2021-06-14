@@ -24,7 +24,7 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.utility.JavaDispatcher;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.reflect.AnnotatedElement;

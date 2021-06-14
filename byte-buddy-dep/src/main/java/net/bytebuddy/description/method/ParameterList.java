@@ -21,7 +21,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
-import net.bytebuddy.utility.JavaDispatcher;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;

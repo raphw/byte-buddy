@@ -1,5 +1,6 @@
-package net.bytebuddy.utility;
+package net.bytebuddy.utility.dispatcher;
 
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

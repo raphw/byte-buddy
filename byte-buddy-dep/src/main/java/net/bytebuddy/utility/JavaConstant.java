@@ -23,6 +23,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 

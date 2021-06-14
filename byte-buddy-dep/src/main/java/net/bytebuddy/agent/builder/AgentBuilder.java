@@ -61,6 +61,7 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.*;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;

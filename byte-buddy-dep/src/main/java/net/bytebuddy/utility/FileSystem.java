@@ -15,6 +15,8 @@
  */
 package net.bytebuddy.utility;
 
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
+
 import java.io.*;
 import java.security.AccessController;
 

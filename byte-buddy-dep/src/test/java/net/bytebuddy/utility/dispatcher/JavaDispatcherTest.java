@@ -1,5 +1,6 @@
-package net.bytebuddy.utility;
+package net.bytebuddy.utility.dispatcher;
 
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -8,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -129,6 +131,11 @@ public class JavaDispatcherTest {
     @Test
     public void testProxy() {
         assertThat(Proxy.isProxyClass(JavaDispatcher.of(StaticSample.class, null, generate).run().getClass()), is(!generate));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testJavaSecurity() {
+        JavaDispatcher.of(ProtectionDomain.class);
     }
 
     @JavaDispatcher.Proxied("java.lang.Object")

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.utility;
+package net.bytebuddy.utility.dispatcher;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
@@ -123,8 +123,11 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             throw new IllegalArgumentException("Expected an interface instead of " + type);
         } else if (!type.isAnnotationPresent(Proxied.class)) {
             throw new IllegalArgumentException("Expected " + type.getName() + " to be annotated with " + Proxied.class.getName());
+        } else if (type.getAnnotation(Proxied.class).value().startsWith("java.security.")) {
+            throw new IllegalArgumentException("Classes related to Java security cannot be proxied: " + type.getName());
+        } else {
+            return new JavaDispatcher<T>(type, classLoader, generate);
         }
-        return new JavaDispatcher<T>(type, classLoader, generate);
     }
 
     /**

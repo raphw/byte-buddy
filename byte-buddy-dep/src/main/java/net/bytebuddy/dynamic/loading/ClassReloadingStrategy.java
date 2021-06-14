@@ -19,7 +19,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.utility.JavaDispatcher;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import java.io.File;
 import java.io.IOException;

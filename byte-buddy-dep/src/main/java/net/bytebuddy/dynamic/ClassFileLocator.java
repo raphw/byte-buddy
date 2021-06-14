@@ -20,7 +20,7 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.utility.JavaDispatcher;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.StreamDrainer;

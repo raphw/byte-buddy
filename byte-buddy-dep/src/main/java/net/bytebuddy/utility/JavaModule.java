@@ -20,6 +20,7 @@ import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.type.PackageDescription;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import java.io.InputStream;
 import java.lang.reflect.AnnotatedElement;

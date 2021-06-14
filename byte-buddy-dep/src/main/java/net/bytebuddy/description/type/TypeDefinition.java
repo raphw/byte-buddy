@@ -20,7 +20,7 @@ import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.implementation.bytecode.StackSize;
-import net.bytebuddy.utility.JavaDispatcher;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import java.lang.reflect.*;
 import java.security.AccessController;

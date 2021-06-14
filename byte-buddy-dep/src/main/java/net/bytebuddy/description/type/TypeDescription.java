@@ -35,7 +35,7 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.JavaDispatcher;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.Opcodes;
