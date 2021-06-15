@@ -1149,11 +1149,11 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                         null,
                         exceptionTypeName);
                 methodVisitor.visitCode();
-                int length = (entry.getKey().getModifiers() & Opcodes.ACC_STATIC) == 0 ? 1 : 0;
+                int offset = (entry.getKey().getModifiers() & Opcodes.ACC_STATIC) == 0 ? 1 : 0;
                 for (Class<?> type : entry.getKey().getParameterTypes()) {
-                    length += Type.getType(type).getSize();
+                    offset += Type.getType(type).getSize();
                 }
-                methodVisitor.visitMaxs(entry.getValue().apply(methodVisitor, entry.getKey()), length);
+                methodVisitor.visitMaxs(entry.getValue().apply(methodVisitor, entry.getKey()), offset);
                 methodVisitor.visitEnd();
             }
             MethodVisitor methodVisitor = classWriter.visitMethod(Opcodes.ACC_PUBLIC,
@@ -1209,23 +1209,23 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                         null,
                         exceptionTypeName);
                 methodVisitor.visitCode();
-                int length = 1;
+                int offset = 1;
                 Type[] parameter = new Type[method.getParameterTypes().length - 1];
                 for (int index = 0; index < method.getParameterTypes().length; index++) {
                     Type type = Type.getType(method.getParameterTypes()[index]);
                     if (index > 0) {
                         parameter[index - 1] = type;
                     }
-                    methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), length);
-                    length += type.getSize();
+                    methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), offset);
+                    offset += type.getSize();
                 }
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                         Type.getInternalName(method.getParameterTypes()[0]),
                         method.getName(),
                         Type.getMethodDescriptor(Type.getReturnType(method), parameter),
                         false);
-                methodVisitor.visitInsn(Type.getType(method.getReturnType()).getOpcode(Opcodes.IRETURN));
-                methodVisitor.visitMaxs(Math.max(length - 1, Type.getType(method.getReturnType()).getSize()), length);
+                methodVisitor.visitInsn(Type.getReturnType(method).getOpcode(Opcodes.IRETURN));
+                methodVisitor.visitMaxs(Math.max(offset - 1, Type.getReturnType(method).getSize()), offset);
                 methodVisitor.visitEnd();
             }
             MethodVisitor methodVisitor = classWriter.visitMethod(Opcodes.ACC_PUBLIC,
