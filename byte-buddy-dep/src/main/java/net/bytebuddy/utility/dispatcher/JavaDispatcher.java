@@ -58,6 +58,12 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     private static final boolean GENERATE = Boolean.parseBoolean(AccessController.doPrivileged(new GetSystemPropertyAction(GENERATE_PROPERTY)));
 
     /**
+     * Contains an invoker that makes sure that reflective dispatchers make invocations from an isolated {@link ClassLoader} and
+     * not from within Byte Buddy's context. This way, no privilege context can be leaked by accident.
+     */
+    private static final Invoker INVOKER = AccessController.doPrivileged(Invoker.CreationAction.INSTANCE);
+
+    /**
      * The proxy type.
      */
     private final Class<T> proxy;
@@ -161,7 +167,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 }
             }
             if (generate) {
-                return (T) ProxiedClassLoader.proxy(proxy, dispatchers);
+                return (T) DynamicClassLoader.proxy(proxy, dispatchers);
             } else {
                 return (T) Proxy.newProxyInstance(proxy.getClassLoader(),
                         new Class<?>[]{proxy},
@@ -288,7 +294,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             }
         }
         if (generate) {
-            return (T) ProxiedClassLoader.proxy(proxy, dispatchers);
+            return (T) DynamicClassLoader.proxy(proxy, dispatchers);
         } else {
             return (T) Proxy.newProxyInstance(proxy.getClassLoader(),
                     new Class<?>[]{proxy},
@@ -363,6 +369,52 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     @Retention(RetentionPolicy.RUNTIME)
     public @interface Defaults {
         /* empty */
+    }
+
+    /**
+     * An invoker is a deliberate indirection to wrap indirect calls. This way, reflective call are never dispatched from Byte Buddy's
+     * context but always from a synthetic layer that does not own any privileges.
+     */
+    protected interface Invoker {
+
+        /**
+         * Creates a new instance via {@link Constructor#newInstance(Object...)}
+         *
+         * @param constructor The constructor to invoke.
+         * @param argument    The constructor arguments.
+         * @return The constructed instance.
+         * @throws InstantiationException    If the instance cannot be constructed.
+         * @throws IllegalAccessException    If the constructor is accessed illegally.
+         * @throws InvocationTargetException If the invocation causes an error.
+         */
+        Object newInstance(Constructor<?> constructor, Object[] argument) throws InstantiationException, IllegalAccessException, InvocationTargetException;
+
+        /**
+         * Invokes a method via {@link Method#invoke(Object, Object...)}.
+         *
+         * @param method   The method to invoke.
+         * @param instance The instance upon which to invoke the method or {@code null} if the method is static.
+         * @param argument The method arguments.
+         * @return The return value of the method or {@code null} if the method is {@code void}.
+         * @throws IllegalAccessException    If the method is accessed illegally.
+         * @throws InvocationTargetException If the invocation causes an error.
+         */
+        Object invoke(Method method, Object instance, Object[] argument) throws IllegalAccessException, InvocationTargetException;
+
+        /**
+         * A creation action for creating an {@link Invoker}.
+         */
+        enum CreationAction implements PrivilegedAction<Invoker> {
+
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public Invoker run() {
+                return DynamicClassLoader.invoker();
+            }
+        }
     }
 
     /**
@@ -787,7 +839,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
              * {@inheritDoc}
              */
             public Object invoke(Object[] argument) throws Throwable {
-                return constructor.newInstance(argument);
+                return INVOKER.newInstance(constructor, argument);
             }
 
             /**
@@ -840,7 +892,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
              * {@inheritDoc}
              */
             public Object invoke(Object[] argument) throws Throwable {
-                return method.invoke(null, argument);
+                return INVOKER.invoke(method, null, argument);
             }
 
             /**
@@ -903,7 +955,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                     reduced = new Object[argument.length - 1];
                     System.arraycopy(argument, 1, reduced, 0, reduced.length);
                 }
-                return method.invoke(argument[0], reduced);
+                return INVOKER.invoke(method, argument[0], reduced);
             }
 
             /**
@@ -1046,9 +1098,9 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     }
 
     /**
-     * A class loader for loading proxied classes that do not require boxing of arguments into object arrays.
+     * A class loader for loading synthetic classes for implementing a {@link JavaDispatcher}.
      */
-    protected static class ProxiedClassLoader extends ClassLoader {
+    protected static class DynamicClassLoader extends ClassLoader {
 
         /**
          * Indicates that a constructor does not declare any parameters.
@@ -1061,11 +1113,11 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         private static final Object[] NO_ARGUMENT = new Object[0];
 
         /**
-         * Creates a new proxied class loader.
+         * Creates a new dynamic class loader.
          *
-         * @param parent The super class loader.
+         * @param parent The parent class loader.
          */
-        protected ProxiedClassLoader(ClassLoader parent) {
+        protected DynamicClassLoader(ClassLoader parent) {
             super(parent);
         }
 
@@ -1122,12 +1174,84 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             classWriter.visitEnd();
             byte[] binaryRepresentation = classWriter.toByteArray();
             try {
-                return new ProxiedClassLoader(proxy.getClassLoader())
+                return new DynamicClassLoader(proxy.getClassLoader())
                         .defineClass(proxy.getName() + "$Proxy", binaryRepresentation, 0, binaryRepresentation.length)
                         .getConstructor(NO_PARAMETER)
                         .newInstance(NO_ARGUMENT);
             } catch (Exception exception) {
                 throw new IllegalStateException("Failed to create proxy for " + proxy.getName(), exception);
+            }
+        }
+
+        /**
+         * Resolves a {@link Invoker} for a seperate class loader.
+         *
+         * @return The created {@link Invoker}.
+         */
+        @SuppressFBWarnings(value = {"REC_CATCH_EXCEPTION", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"}, justification = "Expected internal invocation")
+        protected static Invoker invoker() {
+            ClassWriter classWriter = new ClassWriter(0);
+            classWriter.visit(ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).getMinorMajorVersion(),
+                    Opcodes.ACC_PUBLIC,
+                    Type.getInternalName(Invoker.class) + "$Dispatcher",
+                    null,
+                    Type.getInternalName(Object.class),
+                    new String[]{Type.getInternalName(Invoker.class)});
+            for (Method method : Invoker.class.getMethods()) {
+                Class<?>[] exceptionType = method.getExceptionTypes();
+                String[] exceptionTypeName = new String[exceptionType.length];
+                for (int index = 0; index < exceptionType.length; index++) {
+                    exceptionTypeName[index] = Type.getInternalName(exceptionType[index]);
+                }
+                MethodVisitor methodVisitor = classWriter.visitMethod(Opcodes.ACC_PUBLIC,
+                        method.getName(),
+                        Type.getMethodDescriptor(method),
+                        null,
+                        exceptionTypeName);
+                methodVisitor.visitCode();
+                int length = 1;
+                Type[] parameter = new Type[method.getParameterTypes().length - 1];
+                for (int index = 0; index < method.getParameterTypes().length; index++) {
+                    Type type = Type.getType(method.getParameterTypes()[index]);
+                    if (index > 0) {
+                        parameter[index - 1] = type;
+                    }
+                    methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), length);
+                    length += type.getSize();
+                }
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                        Type.getInternalName(method.getParameterTypes()[0]),
+                        method.getName(),
+                        Type.getMethodDescriptor(Type.getReturnType(method), parameter),
+                        false);
+                methodVisitor.visitInsn(Type.getType(method.getReturnType()).getOpcode(Opcodes.IRETURN));
+                methodVisitor.visitMaxs(Math.max(length - 1, Type.getType(method.getReturnType()).getSize()), length);
+                methodVisitor.visitEnd();
+            }
+            MethodVisitor methodVisitor = classWriter.visitMethod(Opcodes.ACC_PUBLIC,
+                    MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                    Type.getMethodDescriptor(Type.VOID_TYPE),
+                    null,
+                    null);
+            methodVisitor.visitCode();
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                    Type.getInternalName(Object.class),
+                    MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                    Type.getMethodDescriptor(Type.VOID_TYPE),
+                    false);
+            methodVisitor.visitInsn(Opcodes.RETURN);
+            methodVisitor.visitMaxs(1, 1);
+            methodVisitor.visitEnd();
+            classWriter.visitEnd();
+            byte[] binaryRepresentation = classWriter.toByteArray();
+            try {
+                return (Invoker) new DynamicClassLoader(Invoker.class.getClassLoader())
+                        .defineClass(Invoker.class.getName() + "$Dispatcher", binaryRepresentation, 0, binaryRepresentation.length)
+                        .getConstructor(NO_PARAMETER)
+                        .newInstance(NO_ARGUMENT);
+            } catch (Exception exception) {
+                throw new IllegalStateException("Failed to create invoker for " + Invoker.class.getName(), exception);
             }
         }
     }
