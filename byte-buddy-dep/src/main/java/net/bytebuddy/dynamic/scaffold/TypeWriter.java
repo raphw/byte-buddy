@@ -51,6 +51,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
+import net.bytebuddy.utility.visitor.FramePaddingMethodVisitor;
 import net.bytebuddy.utility.visitor.MetadataAwareClassVisitor;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.ClassRemapper;
@@ -4572,7 +4573,7 @@ public interface TypeWriter<T> {
                                                 AnnotationValueFilter.Factory annotationValueFilterFactory,
                                                 boolean requireFrames,
                                                 boolean expandFrames) {
-                                super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
+                                super(new FramePaddingMethodVisitor(methodVisitor), instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
                                 appended = new Label();
                                 original = new Label();
                             }
