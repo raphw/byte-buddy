@@ -27,6 +27,7 @@ import org.objectweb.asm.Type;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
+import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.HashMap;
@@ -390,7 +391,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     protected interface Invoker {
 
         /**
-         * Creates a new instance via {@link Constructor#newInstance(Object...)}
+         * Creates a new instance via {@link Constructor#newInstance(Object...)}.
          *
          * @param constructor The constructor to invoke.
          * @param argument    The constructor arguments.
@@ -418,6 +419,9 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
          */
         enum CreationAction implements PrivilegedAction<Invoker> {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             /**

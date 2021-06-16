@@ -10,8 +10,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.security.PrivilegedAction;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 public class AccessControllerPluginTest {
 
@@ -28,10 +28,10 @@ public class AccessControllerPluginTest {
                 .getLoaded();
         Field field = type.getDeclaredField("ACCESS_CONTROLLER");
         field.setAccessible(true);
-        assertThat(field.getBoolean(null), equalTo(true));
+        assertThat(field.getBoolean(null), is(true));
         Method method = type.getDeclaredMethod("doPrivileged", PrivilegedAction.class);
         method.setAccessible(true);
-        assertThat(method.invoke(null, new TrivialPrivilegedAction(FOO)), equalTo((Object) FOO));
+        assertThat(method.invoke(null, new TrivialPrivilegedAction(FOO)), is((Object) FOO));
     }
 
     @Test
@@ -45,10 +45,10 @@ public class AccessControllerPluginTest {
                 .getLoaded();
         Field field = type.getDeclaredField("ACCESS_CONTROLLER");
         field.setAccessible(true);
-        assertThat(field.getBoolean(null), equalTo(true));
+        assertThat(field.getBoolean(null), is(true));
         Method method = type.getDeclaredMethod("doPrivileged", PrivilegedAction.class);
         method.setAccessible(true);
-        assertThat(method.invoke(null, new TrivialPrivilegedAction(FOO)), equalTo((Object) FOO));
+        assertThat(method.invoke(null, new TrivialPrivilegedAction(FOO)), is((Object) FOO));
     }
 
     @Test
@@ -63,15 +63,111 @@ public class AccessControllerPluginTest {
                 .getLoaded();
         Field field = type.getDeclaredField("ACCESS_CONTROLLER");
         field.setAccessible(true);
-        assertThat(field.getBoolean(null), equalTo(false));
+        assertThat(field.getBoolean(null), is(false));
         Method method = type.getDeclaredMethod("doPrivileged", PrivilegedAction.class);
         method.setAccessible(true);
-        assertThat(method.invoke(null, new TrivialPrivilegedAction(FOO)), equalTo((Object) BAR));
+        assertThat(method.invoke(null, new TrivialPrivilegedAction(FOO)), is((Object) BAR));
+    }
+
+    @Test
+    public void testPluginConflictingField() throws Exception {
+        Class<?> type = new AccessControllerPlugin()
+                .apply(new ByteBuddy().redefine(ConflictingFieldSample.class),
+                        TypeDescription.ForLoadedType.of(ConflictingFieldSample.class),
+                        ClassFileLocator.ForClassLoader.of(ConflictingFieldSample.class.getClassLoader()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Field field = type.getDeclaredField("ACCESS_CONTROLLER$");
+        field.setAccessible(true);
+        assertThat(field.getBoolean(null), is(true));
+        Method method = type.getDeclaredMethod("doPrivileged", PrivilegedAction.class);
+        method.setAccessible(true);
+        assertThat(method.invoke(null, new TrivialPrivilegedAction(FOO)), is((Object) FOO));
+    }
+
+    @Test
+    public void testPluginMappedType() throws Exception {
+        Class<?> type = new AccessControllerPlugin()
+                .apply(new ByteBuddy().redefine(MappingSample.class),
+                        TypeDescription.ForLoadedType.of(MappingSample.class),
+                        ClassFileLocator.ForClassLoader.of(MappingSample.class.getClassLoader()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Field field = type.getDeclaredField("ACCESS_CONTROLLER");
+        field.setAccessible(true);
+        assertThat(field.getBoolean(null), is(true));
+        Method context = type.getDeclaredMethod("getContext");
+        context.setAccessible(true);
+        Method method = type.getDeclaredMethod("doPrivileged", PrivilegedAction.class, Object.class);
+        method.setAccessible(true);
+        assertThat(method.invoke(null, new TrivialPrivilegedAction(FOO), context.invoke(null)), is((Object) FOO));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testTargetMethodIsPublic() {
+        new AccessControllerPlugin()
+                .apply(new ByteBuddy().redefine(PublicMethodSample.class),
+                        TypeDescription.ForLoadedType.of(PublicMethodSample.class),
+                        ClassFileLocator.ForClassLoader.of(PublicMethodSample.class.getClassLoader()))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testUnknownMethod() {
+        new AccessControllerPlugin()
+                .apply(new ByteBuddy().redefine(UnknownMethodSample.class),
+                        TypeDescription.ForLoadedType.of(UnknownMethodSample.class),
+                        ClassFileLocator.ForClassLoader.of(UnknownMethodSample.class.getClassLoader()))
+                .make();
     }
 
     public static class SimpleSample {
 
         @SuppressWarnings("unused")
+        @AccessControllerPlugin.Enhance
+        static Object doPrivileged(PrivilegedAction<?> action) {
+            return BAR;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class MappingSample {
+
+        static Object getContext() {
+            return null;
+        }
+
+        @AccessControllerPlugin.Enhance
+        static Object doPrivileged(PrivilegedAction<?> action, Object context) {
+            return BAR;
+        }
+    }
+
+    public static class PublicMethodSample {
+
+        @SuppressWarnings("unused")
+        @AccessControllerPlugin.Enhance
+        public static Object doPrivileged(PrivilegedAction<?> action) {
+            return BAR;
+        }
+    }
+
+    public static class UnknownMethodSample {
+
+        @SuppressWarnings("unused")
+        @AccessControllerPlugin.Enhance
+        public static Object doPrivileged() {
+            return BAR;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ConflictingFieldSample {
+
+        private static final boolean ACCESS_CONTROLLER = false;
+
         @AccessControllerPlugin.Enhance
         static Object doPrivileged(PrivilegedAction<?> action) {
             return BAR;

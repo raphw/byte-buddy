@@ -2075,6 +2075,19 @@ public interface MethodDescription extends TypeVariableSource,
             return new TypeToken(returnType, parameterTypes);
         }
 
+        /**
+         * Returns a method descriptor for this token.
+         *
+         * @return A method descriptor for this token.
+         */
+        public String getDescriptor() {
+            StringBuilder stringBuilder = new StringBuilder().append('(');
+            for (TypeDescription typeDescription : parameterTypes) {
+                stringBuilder.append(typeDescription.getDescriptor());
+            }
+            return stringBuilder.append(')').append(returnType.getDescriptor()).toString();
+        }
+
         @Override
         @CachedReturnPlugin.Enhance("hashCode")
         public int hashCode() {

@@ -167,7 +167,12 @@ public enum JavaType {
     /**
      * The Java 14 {@code java.lang.runtime.ObjectMethods} type.
      */
-    OBJECT_METHODS("java.lang.runtime.ObjectMethods", Opcodes.ACC_PUBLIC, Object.class);
+    OBJECT_METHODS("java.lang.runtime.ObjectMethods", Opcodes.ACC_PUBLIC, Object.class),
+
+    /**
+     * The {@code java.security.AccessControlContext} type which is deprecated for removal beginning in Java 17.
+     */
+    ACCESS_CONTROL_CONTEXT("java.security.AccessControlContext", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, TypeDescription.UNDEFINED);
 
     /**
      * The type description to represent this type which is either a loaded type or a stub.

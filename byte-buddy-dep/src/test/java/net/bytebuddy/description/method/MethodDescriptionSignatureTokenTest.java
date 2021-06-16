@@ -11,10 +11,11 @@ import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.when;
 
 public class MethodDescriptionSignatureTokenTest {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "foo", BAR = "bar";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -34,5 +35,12 @@ public class MethodDescriptionSignatureTokenTest {
     public void testTypeToken() throws Exception {
         assertThat(new MethodDescription.SignatureToken(FOO, returnType, Collections.singletonList(parameterType)).asTypeToken(),
                 is(new MethodDescription.TypeToken(returnType, Collections.singletonList(parameterType))));
+    }
+
+    @Test
+    public void testSignature() throws Exception {
+        when(returnType.getDescriptor()).thenReturn(FOO);
+        when(parameterType.getDescriptor()).thenReturn(BAR);
+        assertThat(new MethodDescription.SignatureToken(FOO, returnType, Collections.singletonList(parameterType)).getDescriptor(), is("(bar)foo"));
     }
 }

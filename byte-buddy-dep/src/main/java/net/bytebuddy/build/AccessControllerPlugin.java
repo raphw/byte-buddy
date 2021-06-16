@@ -1,9 +1,23 @@
+/*
+ * Copyright 2014 - Present Rafael Winterhalter
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package net.bytebuddy.build;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
@@ -12,39 +26,158 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
 
 import java.lang.annotation.*;
+import java.security.Permission;
 import java.security.PrivilegedAction;
-import java.util.HashSet;
-import java.util.Set;
+import java.security.PrivilegedActionException;
+import java.util.HashMap;
+import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
+/**
+ * A build tool plugin that instruments methods to dispatch to methods {@code java.security.AccessController} with equal signature.
+ * This can be useful to avoid using types from the {@code java.security} package which were deprecated for removal in Java 17.
+ * Annotated methods are dispatched to the JVM's access controller only if this type is available on the current VM, and if no system
+ * property is added and set to disable such dispatch. In the process, {@code java.security.AccessControlContext} is represented by
+ * {@link Object}.
+ */
 @HashCodeAndEqualsPlugin.Enhance
 public class AccessControllerPlugin extends Plugin.ForElementMatcher implements Plugin.Factory {
 
+    /**
+     * The binary name of {@code java.security.AccessController}.
+     */
     private static final String ACCESS_CONTROLLER = "java.security.AccessController";
 
+    /**
+     * The name of the generated field.
+     */
     private static final String NAME = "ACCESS_CONTROLLER";
 
+    /**
+     * An empty array to create frames without additional allocation.
+     */
     private static final Object[] EMPTY = new Object[0];
 
-    private static final Set<MethodDescription.SignatureToken> SIGNATURES;
+    /**
+     * A map to all signatures of {@code java.security.AccessController} from a signature that does not contain any
+     * types that are deprecated for removal.
+     */
+    private static final Map<MethodDescription.SignatureToken, MethodDescription.SignatureToken> SIGNATURES;
 
+    /*
+     * Adds all relevant access controller signatures to validating collection.
+     */
     static {
-        SIGNATURES = new HashSet<>();
-        SIGNATURES.add(new MethodDescription.SignatureToken("doPrivileged", TypeDescription.OBJECT, TypeDescription.ForLoadedType.of(PrivilegedAction.class)));
+        SIGNATURES = new HashMap<MethodDescription.SignatureToken, MethodDescription.SignatureToken>();
+        SIGNATURES.put(new MethodDescription.SignatureToken("doPrivileged",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedAction.class)), new MethodDescription.SignatureToken("doPrivileged",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedAction.class)));
+        SIGNATURES.put(new MethodDescription.SignatureToken("doPrivilegedWithCombiner",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedAction.class)), new MethodDescription.SignatureToken("doPrivilegedWithCombiner",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedAction.class)));
+        SIGNATURES.put(new MethodDescription.SignatureToken("doPrivileged",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedAction.class),
+                TypeDescription.OBJECT), new MethodDescription.SignatureToken("doPrivileged",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedAction.class),
+                JavaType.ACCESS_CONTROL_CONTEXT.getTypeStub()));
+        SIGNATURES.put(new MethodDescription.SignatureToken("doPrivileged",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedAction.class),
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(Permission[].class)), new MethodDescription.SignatureToken("doPrivileged",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedAction.class),
+                JavaType.ACCESS_CONTROL_CONTEXT.getTypeStub(),
+                TypeDescription.ForLoadedType.of(Permission[].class)));
+        SIGNATURES.put(new MethodDescription.SignatureToken("doPrivilegedWithCombiner",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedAction.class),
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(Permission[].class)), new MethodDescription.SignatureToken("doPrivilegedWithCombiner",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedAction.class),
+                JavaType.ACCESS_CONTROL_CONTEXT.getTypeStub(),
+                TypeDescription.ForLoadedType.of(Permission[].class)));
+        SIGNATURES.put(new MethodDescription.SignatureToken("doPrivileged",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedActionException.class)), new MethodDescription.SignatureToken("doPrivileged",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedActionException.class)));
+        SIGNATURES.put(new MethodDescription.SignatureToken("doPrivilegedWithCombiner",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedAction.class)), new MethodDescription.SignatureToken("doPrivilegedWithCombiner",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedAction.class)));
+        SIGNATURES.put(new MethodDescription.SignatureToken("doPrivileged",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedActionException.class),
+                TypeDescription.OBJECT), new MethodDescription.SignatureToken("doPrivileged",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedActionException.class),
+                JavaType.ACCESS_CONTROL_CONTEXT.getTypeStub()));
+        SIGNATURES.put(new MethodDescription.SignatureToken("doPrivileged",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedActionException.class),
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(Permission[].class)), new MethodDescription.SignatureToken("doPrivileged",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedActionException.class),
+                JavaType.ACCESS_CONTROL_CONTEXT.getTypeStub(),
+                TypeDescription.ForLoadedType.of(Permission[].class)));
+        SIGNATURES.put(new MethodDescription.SignatureToken("doPrivilegedWithCombiner",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedActionException.class),
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(Permission[].class)), new MethodDescription.SignatureToken("doPrivilegedWithCombiner",
+                TypeDescription.OBJECT,
+                TypeDescription.ForLoadedType.of(PrivilegedActionException.class),
+                JavaType.ACCESS_CONTROL_CONTEXT.getTypeStub(),
+                TypeDescription.ForLoadedType.of(Permission[].class)));
+        SIGNATURES.put(new MethodDescription.SignatureToken("getContext",
+                TypeDescription.OBJECT), new MethodDescription.SignatureToken("getContext",
+                JavaType.ACCESS_CONTROL_CONTEXT.getTypeStub()));
+        SIGNATURES.put(new MethodDescription.SignatureToken("checkPermission",
+                TypeDescription.VOID,
+                TypeDescription.ForLoadedType.of(Permission.class)), new MethodDescription.SignatureToken("checkPermission",
+                TypeDescription.VOID,
+                TypeDescription.ForLoadedType.of(Permission.class)));
     }
 
+    /**
+     * The property to control if the access controller should be used even
+     * if available or {@code null} if such a property should not be available.
+     */
+    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
     private final String property;
 
+    /**
+     * Creates a new plugin to weave access controller dispatches without
+     * a property to allow for disabling the access controller handling.
+     */
     public AccessControllerPlugin() {
         this(null);
     }
 
+    /**
+     * Creates a new plugin to weave access controller dispatches.
+     *
+     * @param property The property to control if the access controller should be used even
+     *                 if available or {@code null} if such a property should not be available.
+     */
     public AccessControllerPlugin(String property) {
         super(declaresMethod(isAnnotatedWith(Enhance.class)));
         this.property = property;
@@ -80,12 +213,29 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
         /* do nothing */
     }
 
+    /**
+     * A byte code appender to create an initializer segment that determines if
+     * the {@code java.security.AccessController} is available.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
     protected abstract static class Initializer implements ByteCodeAppender {
 
+        /**
+         * The instrumented type.
+         */
         private final TypeDescription instrumentedType;
 
+        /**
+         * The name of the field to determine the use of access controller dispatch.
+         */
         private final String name;
 
+        /**
+         * Creates a new initializer.
+         *
+         * @param instrumentedType The instrumented type.
+         * @param name             The name of the field to determine the use of access controller dispatch.
+         */
         protected Initializer(TypeDescription instrumentedType, String name) {
             this.instrumentedType = instrumentedType;
             this.name = name;
@@ -137,14 +287,34 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
             return new Size(Math.max(3, size), 0);
         }
 
+        /**
+         * Invoked to determine if the access controller should be used after the class was found.
+         *
+         * @param methodVisitor The method visitor to dispatch to.
+         * @return The size of the stack required to implement the implemented dispatch.
+         */
         protected abstract int onAccessController(MethodVisitor methodVisitor);
 
+        /**
+         * An initializer that uses a property to determine if the access controller should be actually used even if it is available.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class WithProperty extends Initializer {
 
+            /**
+             * The name of the property.
+             */
             private final String property;
 
-            protected WithProperty(TypeDescription instrumentedType, String field, String property) {
-                super(instrumentedType, field);
+            /**
+             * Creates an initializer that uses a property to determine if the access controller should be actually used even if it is available.
+             *
+             * @param instrumentedType The instrumented type.
+             * @param name             The name of the field to determine the use of access controller dispatch.
+             * @param property         The name of the property.
+             */
+            protected WithProperty(TypeDescription instrumentedType, String name, String property) {
+                super(instrumentedType, name);
                 this.property = property;
             }
 
@@ -166,8 +336,18 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
             }
         }
 
+        /**
+         * An initializer that always uses the access controller if it is available.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class WithoutProperty extends Initializer {
 
+            /**
+             * Creates an initializer that always uses the access controller if it is available.
+             *
+             * @param instrumentedType The instrumented type.
+             * @param name             The name of the field to determine the use of access controller dispatch.
+             */
             protected WithoutProperty(TypeDescription instrumentedType, String name) {
                 super(instrumentedType, name);
             }
@@ -180,10 +360,22 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
         }
     }
 
+    /**
+     * An wrapper for a method that represents a method of {@code AccessController} which is weaved.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class AccessControlWrapper implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
 
+        /**
+         * The name of the field.
+         */
         private final String name;
 
+        /**
+         * Creates a new access control wrapper.
+         *
+         * @param name The name of the field.
+         */
         protected AccessControlWrapper(String name) {
             this.name = name;
         }
@@ -198,37 +390,71 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
                                   TypePool typePool,
                                   int writerFlags,
                                   int readerFlags) {
-            if (!SIGNATURES.contains(instrumentedMethod.asDefined().asSignatureToken())) {
-                throw new IllegalStateException();
+            MethodDescription.SignatureToken token = SIGNATURES.get(instrumentedMethod.asDefined().asSignatureToken());
+            if (token == null) {
+                throw new IllegalStateException(instrumentedMethod + " does not have a method with a matching signature in " + ACCESS_CONTROLLER);
             } else if (instrumentedMethod.isPublic() || instrumentedMethod.isProtected()) {
-                throw new IllegalStateException();
+                throw new IllegalStateException(instrumentedMethod + " is either public or protected what is not permitted to avoid context leaks");
             }
             return new PrefixingMethodVisitor(methodVisitor,
                     instrumentedType,
-                    instrumentedMethod.asDefined(),
+                    token,
                     name,
+                    instrumentedMethod.isStatic() ? 0 : 1,
                     (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6));
         }
 
+        /**
+         * A method visitor to implement a weaved method to dispatch to an {@code java.security.AccessController}, if available.
+         */
         protected static class PrefixingMethodVisitor extends MethodVisitor {
 
+            /**
+             * The instrumented type.
+             */
             private final TypeDescription instrumentedType;
 
-            private final MethodDescription.InDefinedShape instrumentedMethod;
+            /**
+             * The target signature of the method declared by the JVM access controller.
+             */
+            private final MethodDescription.SignatureToken token;
 
+            /**
+             * The name of the field.
+             */
             private final String name;
 
+            /**
+             * The base offset of the weaved method.
+             */
+            private final int offset;
+
+            /**
+             * {@code true} if frames should be added to a method.
+             */
             private final boolean frames;
 
+            /**
+             * Creates a new prefixing method visitor.
+             *
+             * @param methodVisitor    The method visitor to write to.
+             * @param instrumentedType The instrumented type.
+             * @param token            The target signature of the method declared by the JVM access controller.
+             * @param name             The name of the field.
+             * @param offset           The base offset of the instrumented method.
+             * @param frames           {@code true} if frames should be added to a method.
+             */
             protected PrefixingMethodVisitor(MethodVisitor methodVisitor,
                                              TypeDescription instrumentedType,
-                                             MethodDescription.InDefinedShape instrumentedMethod,
+                                             MethodDescription.SignatureToken token,
                                              String name,
+                                             int offset,
                                              boolean frames) {
                 super(OpenedClassReader.ASM_API, methodVisitor);
                 this.instrumentedType = instrumentedType;
-                this.instrumentedMethod = instrumentedMethod;
+                this.token = token;
                 this.name = name;
+                this.offset = offset;
                 this.frames = frames;
             }
 
@@ -238,16 +464,20 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
                 mv.visitFieldInsn(Opcodes.GETSTATIC, instrumentedType.getInternalName(), name, Type.getDescriptor(boolean.class));
                 Label label = new Label();
                 mv.visitJumpInsn(Opcodes.IFEQ, label);
-                for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
-                    mv.visitVarInsn(Type.getType(parameterDescription.getType().asErasure().getDescriptor()).getOpcode(Opcodes.ILOAD),
-                            parameterDescription.getOffset());
+                int offset = this.offset;
+                for (TypeDescription typeDescription : token.getParameterTypes()) {
+                    mv.visitVarInsn(Type.getType(typeDescription.getDescriptor()).getOpcode(Opcodes.ILOAD), offset);
+                    if (typeDescription.equals(JavaType.ACCESS_CONTROL_CONTEXT.getTypeStub())) {
+                        mv.visitTypeInsn(Opcodes.CHECKCAST, typeDescription.getInternalName());
+                    }
+                    offset += typeDescription.getStackSize().getSize();
                 }
                 mv.visitMethodInsn(Opcodes.INVOKESTATIC,
                         ACCESS_CONTROLLER.replace('.', '/'),
-                        instrumentedMethod.getName(),
-                        instrumentedMethod.getDescriptor(),
+                        token.getName(),
+                        token.getDescriptor(),
                         false);
-                mv.visitInsn(Type.getType(instrumentedMethod.getReturnType().asErasure().getDescriptor()).getOpcode(Opcodes.IRETURN));
+                mv.visitInsn(Type.getType(token.getReturnType().getDescriptor()).getOpcode(Opcodes.IRETURN));
                 mv.visitLabel(label);
                 if (frames) {
                     mv.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
@@ -255,16 +485,22 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
             }
 
             @Override
-            public void visitMaxs(int size, int length) { // TODO
-                mv.visitMaxs(Math.max(Math.max(instrumentedMethod.getStackSize(), instrumentedMethod.getReturnType().getStackSize().getSize()), size), length);
+            public void visitMaxs(int stackSize, int localVariableLength) {
+                mv.visitMaxs(Math.max(Math.max(StackSize.of(token.getParameterTypes()),
+                        token.getReturnType().getStackSize().getSize()), stackSize), localVariableLength);
             }
         }
     }
 
+    /**
+     * Indicates that the annotated method represents a pseudo implementation of {@code java.security.AccessController}
+     * which can be weaved to dispatch to the access controller if this is possible on the current VM and not explicitly
+     * disabled on the current VM via a system property.
+     */
     @Documented
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.RUNTIME)
     public @interface Enhance {
-
+        /* empty */
     }
 }
