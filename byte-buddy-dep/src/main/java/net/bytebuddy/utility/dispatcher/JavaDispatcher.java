@@ -29,6 +29,7 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -1175,7 +1176,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             byte[] binaryRepresentation = classWriter.toByteArray();
             try {
                 return new DynamicClassLoader(proxy.getClassLoader())
-                        .defineClass(proxy.getName() + "$Proxy", binaryRepresentation, 0, binaryRepresentation.length)
+                        .defineClass(proxy.getName() + "$Proxy", binaryRepresentation, 0, binaryRepresentation.length, new ProtectionDomain(null, null))
                         .getConstructor(NO_PARAMETER)
                         .newInstance(NO_ARGUMENT);
             } catch (Exception exception) {
@@ -1247,7 +1248,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             byte[] binaryRepresentation = classWriter.toByteArray();
             try {
                 return (Invoker) new DynamicClassLoader(Invoker.class.getClassLoader())
-                        .defineClass(Invoker.class.getName() + "$Dispatcher", binaryRepresentation, 0, binaryRepresentation.length)
+                        .defineClass(Invoker.class.getName() + "$Dispatcher", binaryRepresentation, 0, binaryRepresentation.length, new ProtectionDomain(null, null))
                         .getConstructor(NO_PARAMETER)
                         .newInstance(NO_ARGUMENT);
             } catch (Exception exception) {
