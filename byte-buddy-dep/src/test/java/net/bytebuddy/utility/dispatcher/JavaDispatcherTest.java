@@ -132,6 +132,11 @@ public class JavaDispatcherTest {
         JavaDispatcher.of(DeclaredExceptionSample.class, null, generate).run().getCanonicalPath(file);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testUndeclaredException() throws Exception {
+        JavaDispatcher.of(UndeclaredExceptionSample.class, null, generate).run().getCanonicalPath(mock(File.class));
+    }
+
     @Test
     public void testProxy() {
         assertThat(Proxy.isProxyClass(JavaDispatcher.of(StaticSample.class, null, generate).run().getClass()), is(!generate));
@@ -159,14 +164,14 @@ public class JavaDispatcherTest {
     public interface StaticSample {
 
         @JavaDispatcher.IsStatic
-        Class<?> forName(String name);
+        Class<?> forName(String name) throws ClassNotFoundException;
     }
 
     @JavaDispatcher.Proxied("java.lang.Class")
     public interface StaticAdjustedSample {
 
         @JavaDispatcher.IsStatic
-        Class<?> forName(@JavaDispatcher.Proxied("java.lang.String") Object name);
+        Class<?> forName(@JavaDispatcher.Proxied("java.lang.String") Object name) throws ClassNotFoundException;
     }
 
     @JavaDispatcher.Proxied("java.lang.Class")
@@ -187,7 +192,7 @@ public class JavaDispatcherTest {
 
         Method getMethod(Class<?> target,
                          @JavaDispatcher.Proxied("java.lang.String") Object name,
-                         @JavaDispatcher.Proxied("java.lang.Class") Object[] argument);
+                         @JavaDispatcher.Proxied("java.lang.Class") Object[] argument) throws Exception;
     }
 
     @JavaDispatcher.Proxied("java.lang.Class")
@@ -260,6 +265,7 @@ public class JavaDispatcherTest {
     @JavaDispatcher.Proxied("java.lang.invoke.MethodHandles")
     public interface MethodHandles {
 
+        @JavaDispatcher.IsStatic
         Object lookup();
     }
 }

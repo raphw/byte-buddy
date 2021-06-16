@@ -29,10 +29,10 @@ import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.MethodCall;
-import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -1527,7 +1527,11 @@ public interface ClassInjector {
          * @return An new injector with the specified scope.
          */
         public UsingLookup in(Class<?> type) {
-            return new UsingLookup(METHOD_HANDLES.privateLookupIn(type, lookup));
+            try {
+                return new UsingLookup(METHOD_HANDLES.privateLookupIn(type, lookup));
+            } catch (IllegalAccessException exception) {
+                throw new IllegalStateException("Cannot access " + type.getName() + " from " + lookup, exception);
+            }
         }
 
         /**
@@ -1548,7 +1552,11 @@ public interface ClassInjector {
                 if (!expectedPackage.equals(index == -1 ? "" : entry.getKey().substring(0, index))) {
                     throw new IllegalArgumentException(entry.getKey() + " must be defined in the same package as " + lookup);
                 }
-                result.put(entry.getKey(), METHOD_HANDLES_LOOKUP.defineClass(lookup, entry.getValue()));
+                try {
+                    result.put(entry.getKey(), METHOD_HANDLES_LOOKUP.defineClass(lookup, entry.getValue()));
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Failed to define " + entry.getKey() + " using " + lookup, exception);
+                }
             }
             return result;
         }
@@ -1574,9 +1582,10 @@ public interface ClassInjector {
              * @param type   The type to resolve the scope for.
              * @param lookup The lookup to resolve.
              * @return An appropriate lookup instance.
+             * @throws IllegalAccessException If an illegal access occurs.
              */
             @JavaDispatcher.IsStatic
-            Object privateLookupIn(Class<?> type, @JavaDispatcher.Proxied("java.lang.invoke.MethodHandles$Lookup") Object lookup);
+            Object privateLookupIn(Class<?> type, @JavaDispatcher.Proxied("java.lang.invoke.MethodHandles$Lookup") Object lookup) throws IllegalAccessException;
 
             /**
              * A dispatcher for {@code java.lang.invoke.MethodHandles$Lookup}.
@@ -1606,8 +1615,9 @@ public interface ClassInjector {
                  * @param lookup               The {@code java.lang.invoke.MethodHandles$Lookup} instance to use.
                  * @param binaryRepresentation The defined class's binary representation.
                  * @return The defined class.
+                 * @throws IllegalAccessException If the class definition is accessing an illegal package.
                  */
-                Class<?> defineClass(Object lookup, byte[] binaryRepresentation);
+                Class<?> defineClass(Object lookup, byte[] binaryRepresentation) throws IllegalAccessException;
             }
         }
     }
@@ -2230,7 +2240,7 @@ public interface ClassInjector {
          * Modifies a module's properties using {@link Instrumentation}.
          *
          * @param instrumentation The {@link Instrumentation} instance to use for applying the modification.
-         * @param target The target module that should be modified.
+         * @param target          The target module that should be modified.
          * @param reads           A set of additional modules this module should read.
          * @param exports         A map of packages to export to a set of modules.
          * @param opens           A map of packages to open to a set of modules.

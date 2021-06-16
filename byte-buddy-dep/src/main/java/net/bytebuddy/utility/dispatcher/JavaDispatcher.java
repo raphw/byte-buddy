@@ -265,6 +265,18 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                         if (!method.getReturnType().isAssignableFrom(resolved.getReturnType())) {
                             throw new IllegalStateException("Cannot assign " + resolved.getReturnType().getName() + " to " + method);
                         }
+                        exceptions:
+                        for (Class<?> type : resolved.getExceptionTypes()) {
+                            if (RuntimeException.class.isAssignableFrom(type)) {
+                                continue;
+                            }
+                            for (Class<?> exception : method.getExceptionTypes()) {
+                                if (exception.isAssignableFrom(type)) {
+                                    continue exceptions;
+                                }
+                            }
+                            throw new IllegalStateException("Resolved method for " + method + " throws undeclared checked exception " + type.getName());
+                        }
                         if ((resolved.getModifiers() & Opcodes.ACC_PUBLIC) == 0 || (resolved.getDeclaringClass().getModifiers() & Opcodes.ACC_PUBLIC) == 0) {
                             resolved.setAccessible(true);
                             generate = false;

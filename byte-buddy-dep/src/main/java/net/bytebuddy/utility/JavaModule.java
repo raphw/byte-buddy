@@ -22,6 +22,7 @@ import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.AnnotatedElement;
 import java.security.AccessController;
@@ -115,8 +116,9 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      *
      * @param name The name of the resource.
      * @return An input stream for the resource or {@code null} if it does not exist.
+     * @throws IOException If an I/O exception occurs.
      */
-    public InputStream getResourceAsStream(String name) {
+    public InputStream getResourceAsStream(String name) throws IOException {
         return MODULE.getResourceAsStream(module, name);
     }
 
@@ -251,8 +253,9 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @param value The {@code java.lang.Module} instance to apply this method upon.
          * @param name  The name of the resource.
          * @return An input stream for the resource or {@code null} if it does not exist.
+         * @throws IOException If an I/O exception occurs.
          */
-        InputStream getResourceAsStream(Object value, String name);
+        InputStream getResourceAsStream(Object value, String name) throws IOException;
 
         /**
          * Returns the module's class loader.
