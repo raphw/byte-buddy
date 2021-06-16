@@ -32,8 +32,8 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.JavaType;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureWriter;
@@ -41,10 +41,7 @@ import org.objectweb.asm.signature.SignatureWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.security.AccessController;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.not;
 import static net.bytebuddy.matcher.ElementMatchers.ofSort;
@@ -2016,6 +2013,17 @@ public interface MethodDescription extends TypeVariableSource,
          * The represented method's raw parameter types.
          */
         private final List<? extends TypeDescription> parameterTypes;
+
+        /**
+         * Creates a new type token.
+         *
+         * @param name          The internal name of the represented method.
+         * @param returnType    The represented method's raw return type.
+         * @param parameterType The represented method's raw parameter types.
+         */
+        public SignatureToken(String name, TypeDescription returnType, TypeDescription... parameterType) {
+            this(name, returnType, Arrays.asList(parameterType));
+        }
 
         /**
          * Creates a new type token.

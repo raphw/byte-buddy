@@ -3271,8 +3271,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      */
                     public AnnotatedElement resolve() {
                         try {
-                            // Older JVMs require this cast as the hierarchy was introduced in a later version.
-                            AnnotatedElement[] annotatedBound = TYPE_VARIABLE.getAnnotatedBounds((AnnotatedElement) typeVariable);
+                            AnnotatedElement[] annotatedBound = TYPE_VARIABLE.getAnnotatedBounds(typeVariable);
                             return annotatedBound.length == 0
                                     ? NoOp.INSTANCE
                                     : annotatedBound[index];
@@ -3296,7 +3295,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                          * empty array if this feature is not supported.
                          */
                         @JavaDispatcher.Defaults
-                        AnnotatedElement[] getAnnotatedBounds(AnnotatedElement value);
+                        AnnotatedElement[] getAnnotatedBounds(Object value);
                     }
                 }
             }

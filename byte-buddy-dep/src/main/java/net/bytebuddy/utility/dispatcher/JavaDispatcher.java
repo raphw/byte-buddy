@@ -27,7 +27,6 @@ import org.objectweb.asm.Type;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.HashMap;
