@@ -17,9 +17,9 @@ package net.bytebuddy.build.gradle;
 
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.execution.TaskExecutionGraph;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Determines what tasks are considered for resolving compile task dependencies. If a compile task is a
@@ -33,8 +33,8 @@ public enum Adjustment {
      */
     FULL {
         @Override
-        protected Map<Project, Set<Task>> resolve(Project project) {
-            return project.getRootProject().getAllTasks(true);
+        protected Iterable<Task> resolve(Project project, TaskExecutionGraph graph) {
+            return new CompoundIterable(project.getRootProject().getAllTasks(true).values());
         }
     },
 
@@ -43,8 +43,8 @@ public enum Adjustment {
      */
     SUB {
         @Override
-        protected Map<Project, Set<Task>> resolve(Project project) {
-            return project.getAllTasks(true);
+        protected Iterable<Task> resolve(Project project, TaskExecutionGraph graph) {
+            return new CompoundIterable(project.getAllTasks(true).values());
         }
     },
 
@@ -53,8 +53,18 @@ public enum Adjustment {
      */
     SELF {
         @Override
-        protected Map<Project, Set<Task>> resolve(Project project) {
-            return project.getAllTasks(false);
+        protected Iterable<Task> resolve(Project project, TaskExecutionGraph graph) {
+            return new CompoundIterable(project.getAllTasks(false).values());
+        }
+    },
+
+    /**
+     * Resolves only active tasks of the current execution as determined by the {@link TaskExecutionGraph}.
+     */
+    ACTIVE {
+        @Override
+        protected Iterable<Task> resolve(Project project, TaskExecutionGraph graph) {
+            return graph.getAllTasks();
         }
     };
 
@@ -62,7 +72,99 @@ public enum Adjustment {
      * Resolves the task dependencies per project.
      *
      * @param project The project of the compile task.
-     * @return A map of projects to their defined tasks.
+     * @param graph The task execution graph.
+     * @return An iterable of all tasks to adjust.
      */
-    protected abstract Map<Project, Set<Task>> resolve(Project project);
+    protected abstract Iterable<Task> resolve(Project project, TaskExecutionGraph graph);
+
+    /**
+     * An {@link Iterable} that concatenates multiple iterables of {@link Task}s.
+     */
+    protected static class CompoundIterable implements Iterable<Task> {
+
+        /**
+         * The iterables to consider.
+         */
+        private final Collection<? extends Iterable<? extends Task>> iterables;
+
+        /**
+         * Creates a compound iterable.
+         *
+         * @param iterables The iterables to consider.
+         */
+        protected CompoundIterable(Collection<? extends Iterable<? extends Task>> iterables) {
+            this.iterables = iterables;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Iterator<Task> iterator() {
+            return new CompoundIterator(new ArrayList<Iterable<? extends Task>>(iterables));
+        }
+
+        /**
+         * An {@link Iterator} that concatenates multiple iterables of {@link Task}s.
+         */
+        protected static class CompoundIterator implements Iterator<Task> {
+
+            /**
+             * The current iterator or {@code null} if no such iterator is defined.
+             */
+            private Iterator<? extends Task> current;
+
+            /**
+             * A backlog of iterables to still consider.
+             */
+            private final List<Iterable<? extends Task>> backlog;
+
+            /**
+             * Creates a compound iterator.
+             *
+             * @param iterables The iterables to consider.
+             */
+            protected CompoundIterator(List<Iterable<? extends Task>> iterables) {
+                backlog = iterables;
+                forward();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean hasNext() {
+                return current != null && current.hasNext();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Task next() {
+                try {
+                    if (current != null) {
+                        return current.next();
+                    } else {
+                        throw new NoSuchElementException();
+                    }
+                } finally {
+                    forward();
+                }
+            }
+
+            /**
+             * Forwards the iterator to the next relevant iterable.
+             */
+            private void forward() {
+                while ((current == null || !current.hasNext()) && !backlog.isEmpty()) {
+                    current = backlog.remove(0).iterator();
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void remove() {
+                throw new UnsupportedOperationException("remove");
+            }
+        }
+    }
 }
