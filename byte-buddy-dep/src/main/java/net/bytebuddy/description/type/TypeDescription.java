@@ -17,6 +17,7 @@ package net.bytebuddy.description.type;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.ByteCodeElement;
@@ -47,7 +48,7 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.*;
-import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
@@ -2575,6 +2576,18 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             abstract class Delegator implements AnnotationReader {
 
                 /**
+                 * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+                 *
+                 * @param action The action to execute from a privileged context.
+                 * @param <T>    The type of the action's resolved value.
+                 * @return The action's resolved value.
+                 */
+                @AccessControllerPlugin.Enhance
+                static <T> T doPrivileged(PrivilegedAction<T> action) {
+                    return action.run();
+                }
+
+                /**
                  * {@inheritDoc}
                  */
                 public AnnotationReader ofWildcardUpperBoundType(int index) {
@@ -2807,7 +2820,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for interacting with {@link Field}.
                      */
-                    protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+                    protected static final Dispatcher DISPATCHER = doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
                     /**
                      * The represented field.
@@ -2857,7 +2870,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for interacting with {@link Method}.
                      */
-                    protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+                    protected static final Dispatcher DISPATCHER = doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
                     /**
                      * The represented method.
@@ -2907,7 +2920,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for interacting with {@code java.lang.reflect.Executable}.
                      */
-                    protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+                    protected static final Dispatcher DISPATCHER = doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
                     /**
                      * The represented executable.
@@ -2964,7 +2977,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for interacting with {@code java.lang.reflect.Executable}.
                      */
-                    protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+                    protected static final Dispatcher DISPATCHER = doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
                     /**
                      * The represented executable.
@@ -3049,7 +3062,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A proxy to interact with {@code java.lang.reflect.AnnotatedWildcardType}.
                  */
-                private static final AnnotatedWildcardType ANNOTATED_WILDCARD_TYPE = AccessController.doPrivileged(JavaDispatcher.of(AnnotatedWildcardType.class));
+                private static final AnnotatedWildcardType ANNOTATED_WILDCARD_TYPE = doPrivileged(JavaDispatcher.of(AnnotatedWildcardType.class));
 
                 /**
                  * The wildcard bound's index.
@@ -3116,7 +3129,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A dispatcher to interact with {@code java.lang.reflect.AnnotatedWildcardType}.
                  */
-                private static final AnnotatedWildcardType ANNOTATED_WILDCARD_TYPE = AccessController.doPrivileged(JavaDispatcher.of(AnnotatedWildcardType.class));
+                private static final AnnotatedWildcardType ANNOTATED_WILDCARD_TYPE = doPrivileged(JavaDispatcher.of(AnnotatedWildcardType.class));
 
                 /**
                  * The wildcard bound's index.
@@ -3180,7 +3193,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A dispatcher to interact with {@code java.lang.reflect.AnnotatedTypeVariable}.
                  */
-                private static final AnnotatedTypeVariable ANNOTATED_TYPE_VARIABLE = AccessController.doPrivileged(JavaDispatcher.of(AnnotatedTypeVariable.class));
+                private static final AnnotatedTypeVariable ANNOTATED_TYPE_VARIABLE = doPrivileged(JavaDispatcher.of(AnnotatedTypeVariable.class));
 
                 /**
                  * The type variable's index.
@@ -3243,7 +3256,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher to interact with {@code java.lang.reflect.TypeVariable}.
                      */
-                    private static final FormalTypeVariable TYPE_VARIABLE = AccessController.doPrivileged(JavaDispatcher.of(FormalTypeVariable.class));
+                    private static final FormalTypeVariable TYPE_VARIABLE = doPrivileged(JavaDispatcher.of(FormalTypeVariable.class));
 
                     /**
                      * The represented type variable.
@@ -3309,7 +3322,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A dispatcher to interact with {@code java.lang.reflect.AnnotatedParameterizedType}.
                  */
-                private static final AnnotatedParameterizedType ANNOTATED_PARAMETERIZED_TYPE = AccessController.doPrivileged(JavaDispatcher.of(AnnotatedParameterizedType.class));
+                private static final AnnotatedParameterizedType ANNOTATED_PARAMETERIZED_TYPE = doPrivileged(JavaDispatcher.of(AnnotatedParameterizedType.class));
 
                 /**
                  * The type argument's index.
@@ -3372,7 +3385,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A dispatcher for interacting with {@code java.lang.reflect.AnnotatedArrayType}.
                  */
-                private static final AnnotatedParameterizedType ANNOTATED_PARAMETERIZED_TYPE = AccessController.doPrivileged(JavaDispatcher.of(AnnotatedParameterizedType.class));
+                private static final AnnotatedParameterizedType ANNOTATED_PARAMETERIZED_TYPE = doPrivileged(JavaDispatcher.of(AnnotatedParameterizedType.class));
 
                 /**
                  * Creates a chained annotation reader for reading a component type.
@@ -3428,7 +3441,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A dispatcher for interacting with {@code java.lang.reflect.AnnotatedType}.
                  */
-                private static final AnnotatedType ANNOTATED_TYPE = AccessController.doPrivileged(JavaDispatcher.of(AnnotatedType.class));
+                private static final AnnotatedType ANNOTATED_TYPE = doPrivileged(JavaDispatcher.of(AnnotatedType.class));
 
                 /**
                  * Creates a chained annotation reader for reading an owner type if it is accessible.
@@ -7443,11 +7456,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         static {
             boolean rawTypes;
             try {
-                rawTypes = Boolean.parseBoolean(AccessController.doPrivileged(new GetSystemPropertyAction(RAW_TYPES_PROPERTY)));
+                rawTypes = Boolean.parseBoolean(doPrivileged(new GetSystemPropertyAction(RAW_TYPES_PROPERTY)));
             } catch (Exception ignored) {
                 rawTypes = false;
             }
             RAW_TYPES = rawTypes;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**
@@ -8279,7 +8304,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * A dispatcher for invking methods on {@link Class} reflectively.
          */
-        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+        private static final Dispatcher DISPATCHER = doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
         /**
          * A cache of type descriptions for commonly used types to avoid unnecessary allocations.
@@ -8327,6 +8352,18 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         public ForLoadedType(Class<?> type) {
             this.type = type;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**

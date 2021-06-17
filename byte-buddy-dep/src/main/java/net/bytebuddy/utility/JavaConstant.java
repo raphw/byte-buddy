@@ -16,6 +16,7 @@
 package net.bytebuddy.utility;
 
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -30,7 +31,7 @@ import org.objectweb.asm.Type;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.*;
 
 /**
@@ -168,37 +169,37 @@ public interface JavaConstant {
         /**
          * A dispatcher for interaction with {@code java.lang.constant.ClassDesc}.
          */
-        protected static final Dispatcher CONSTANT_DESC = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+        protected static final Dispatcher CONSTANT_DESC = doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
         /**
          * A dispatcher for interaction with {@code java.lang.constant.ClassDesc}.
          */
-        protected static final Dispatcher.OfClassDesc CLASS_DESC = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.OfClassDesc.class));
+        protected static final Dispatcher.OfClassDesc CLASS_DESC = doPrivileged(JavaDispatcher.of(Dispatcher.OfClassDesc.class));
 
         /**
          * A dispatcher for interaction with {@code java.lang.constant.MethodTypeDesc}.
          */
-        protected static final Dispatcher.OfMethodTypeDesc METHOD_TYPE_DESC = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.OfMethodTypeDesc.class));
+        protected static final Dispatcher.OfMethodTypeDesc METHOD_TYPE_DESC = doPrivileged(JavaDispatcher.of(Dispatcher.OfMethodTypeDesc.class));
 
         /**
          * A dispatcher for interaction with {@code java.lang.constant.MethodHandleDesc}.
          */
-        protected static final Dispatcher.OfMethodHandleDesc METHOD_HANDLE_DESC = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.OfMethodHandleDesc.class));
+        protected static final Dispatcher.OfMethodHandleDesc METHOD_HANDLE_DESC = doPrivileged(JavaDispatcher.of(Dispatcher.OfMethodHandleDesc.class));
 
         /**
          * A dispatcher for interaction with {@code java.lang.constant.DirectMethodHandleDesc}.
          */
-        protected static final Dispatcher.OfDirectMethodHandleDesc DIRECT_METHOD_HANDLE_DESC = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.OfDirectMethodHandleDesc.class));
+        protected static final Dispatcher.OfDirectMethodHandleDesc DIRECT_METHOD_HANDLE_DESC = doPrivileged(JavaDispatcher.of(Dispatcher.OfDirectMethodHandleDesc.class));
 
         /**
          * A dispatcher for interaction with {@code java.lang.constant.DirectMethodHandleDesc}.
          */
-        protected static final Dispatcher.OfDirectMethodHandleDesc.ForKind DIRECT_METHOD_HANDLE_DESC_KIND = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.OfDirectMethodHandleDesc.ForKind.class));
+        protected static final Dispatcher.OfDirectMethodHandleDesc.ForKind DIRECT_METHOD_HANDLE_DESC_KIND = doPrivileged(JavaDispatcher.of(Dispatcher.OfDirectMethodHandleDesc.ForKind.class));
 
         /**
          * A dispatcher for interaction with {@code java.lang.constant.DirectMethodHandleDesc}.
          */
-        protected static final Dispatcher.OfDynamicConstantDesc DYNAMIC_CONSTANT_DESC = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.OfDynamicConstantDesc.class));
+        protected static final Dispatcher.OfDynamicConstantDesc DYNAMIC_CONSTANT_DESC = doPrivileged(JavaDispatcher.of(Dispatcher.OfDynamicConstantDesc.class));
 
         /**
          * The represented constant pool value.
@@ -219,6 +220,18 @@ public interface JavaConstant {
         protected Simple(T value, TypeDescription typeDescription) {
             this.value = value;
             this.typeDescription = typeDescription;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**
@@ -735,7 +748,7 @@ public interface JavaConstant {
         /**
          * A dispatcher for extracting information from a {@code java.lang.invoke.MethodType} instance.
          */
-        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+        private static final Dispatcher DISPATCHER = doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
         /**
          * The return type of this method type.
@@ -756,6 +769,18 @@ public interface JavaConstant {
         protected MethodType(TypeDescription returnType, List<? extends TypeDescription> parameterTypes) {
             this.returnType = returnType;
             this.parameterTypes = parameterTypes;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**
@@ -1029,22 +1054,22 @@ public interface JavaConstant {
         /**
          * A dispatcher to interact with {@code java.lang.invoke.MethodHandleInfo}.
          */
-        protected static final MethodHandleInfo METHOD_HANDLE_INFO = AccessController.doPrivileged(JavaDispatcher.of(MethodHandleInfo.class));
+        protected static final MethodHandleInfo METHOD_HANDLE_INFO = doPrivileged(JavaDispatcher.of(MethodHandleInfo.class));
 
         /**
          * A dispatcher to interact with {@code java.lang.invoke.MethodType}.
          */
-        protected static final MethodType METHOD_TYPE = AccessController.doPrivileged(JavaDispatcher.of(MethodType.class));
+        protected static final MethodType METHOD_TYPE = doPrivileged(JavaDispatcher.of(MethodType.class));
 
         /**
          * A dispatcher to interact with {@code java.lang.invoke.MethodHandles}.
          */
-        protected static final MethodHandles METHOD_HANDLES = AccessController.doPrivileged(JavaDispatcher.of(MethodHandles.class));
+        protected static final MethodHandles METHOD_HANDLES = doPrivileged(JavaDispatcher.of(MethodHandles.class));
 
         /**
          * A dispatcher to interact with {@code java.lang.invoke.MethodHandles$Lookup}.
          */
-        protected static final MethodHandles.Lookup METHOD_HANDLES_LOOKUP = AccessController.doPrivileged(JavaDispatcher.of(MethodHandles.Lookup.class));
+        protected static final MethodHandles.Lookup METHOD_HANDLES_LOOKUP = doPrivileged(JavaDispatcher.of(MethodHandles.Lookup.class));
 
         /**
          * The handle type that is represented by this instance.
@@ -1090,6 +1115,18 @@ public interface JavaConstant {
             this.name = name;
             this.returnType = returnType;
             this.parameterTypes = parameterTypes;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**

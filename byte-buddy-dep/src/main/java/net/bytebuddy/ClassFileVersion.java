@@ -16,6 +16,7 @@
 package net.bytebuddy;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -23,7 +24,6 @@ import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 /**
@@ -126,7 +126,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     /**
      * A version locator for the executing JVM.
      */
-    private static final VersionLocator VERSION_LOCATOR = AccessController.doPrivileged(VersionLocator.Resolver.INSTANCE);
+    private static final VersionLocator VERSION_LOCATOR = doPrivileged(VersionLocator.Resolver.INSTANCE);
 
     /**
      * The version number that is represented by this class file version instance.
@@ -140,6 +140,18 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      */
     protected ClassFileVersion(int versionNumber) {
         this.versionNumber = versionNumber;
+    }
+
+    /**
+     * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+     *
+     * @param action The action to execute from a privileged context.
+     * @param <T>    The type of the action's resolved value.
+     * @return The action's resolved value.
+     */
+    @AccessControllerPlugin.Enhance
+    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+        return action.run();
     }
 
     /**

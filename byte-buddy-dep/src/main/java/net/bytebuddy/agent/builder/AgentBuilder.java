@@ -21,6 +21,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.build.Plugin;
@@ -60,7 +61,10 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.utility.*;
+import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.JavaConstant;
+import net.bytebuddy.utility.JavaModule;
+import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -75,8 +79,6 @@ import java.lang.instrument.UnmodifiableClassException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
@@ -101,7 +103,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * should be defined first.
  * </p>
  * <p>
- * <b>Note</b>: Any transformation is performed using the {@link AccessControlContext} of an agent's creator.
+ * <b>Note</b>: Any transformation is performed using the {@code java.security.AccessControlContext} of an agent's creator.
  * </p>
  * <p>
  * <b>Important</b>: Types that implement lambda expressions (functional interfaces) are not instrumented by default but
@@ -5324,7 +5326,7 @@ public interface AgentBuilder {
         /**
          * A dispatcher to use for interacting with the instrumentation API.
          */
-        protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+        protected static final Dispatcher DISPATCHER = Default.doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
         /**
          * Indicates that this redefinition strategy is enabled.
@@ -9059,7 +9061,7 @@ public interface AgentBuilder {
         /**
          * A dipatcher to use for interacting with the instrumentation API.
          */
-        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+        private static final Dispatcher DISPATCHER = doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
         /**
          * The default circularity lock that assures that no agent created by any agent builder within this
@@ -9294,6 +9296,18 @@ public interface AgentBuilder {
             this.installationListener = installationListener;
             this.ignoreMatcher = ignoreMatcher;
             this.transformations = transformations;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**
@@ -10572,7 +10586,7 @@ public interface AgentBuilder {
             /**
              * A factory for creating a {@link ClassFileTransformer} that supports the features of the current VM.
              */
-            protected static final Factory FACTORY = AccessController.doPrivileged(Factory.CreationAction.INSTANCE);
+            protected static final Factory FACTORY = Default.doPrivileged(Factory.CreationAction.INSTANCE);
 
             /**
              * The Byte Buddy instance to be used.
@@ -10660,9 +10674,10 @@ public interface AgentBuilder {
             private final CircularityLock circularityLock;
 
             /**
-             * The access control context to use for loading classes.
+             * The access control context to use for loading classes or {@code null} if the
+             * access controller is not available on the current VM.
              */
-            private final AccessControlContext accessControlContext;
+            private final Object accessControlContext;
 
             /**
              * Creates a new class file transformer.
@@ -10719,7 +10734,30 @@ public interface AgentBuilder {
                 this.resubmissionEnforcer = resubmissionEnforcer;
                 this.transformations = transformations;
                 this.circularityLock = circularityLock;
-                accessControlContext = AccessController.getContext();
+                accessControlContext = getContext();
+            }
+
+            /**
+             * A proxy for {@code java.security.AccessController#getContext} that is activated if available.
+             *
+             * @return The current access control context or {@code null} if the current VM does not support it.
+             */
+            @AccessControllerPlugin.Enhance
+            private static Object getContext() {
+                return null;
+            }
+
+            /**
+             * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+             *
+             * @param action  The action to execute from a privileged context.
+             * @param context The access control context or {@code null} if the current VM does not support it.
+             * @param <T>     The type of the action's resolved value.
+             * @return The action's resolved value.
+             */
+            @AccessControllerPlugin.Enhance
+            private static <T> T doPrivileged(PrivilegedAction<T> action, @SuppressWarnings("unused") Object context) {
+                return action.run();
             }
 
             /**
@@ -10732,7 +10770,7 @@ public interface AgentBuilder {
                                     byte[] binaryRepresentation) {
                 if (circularityLock.acquire()) {
                     try {
-                        return AccessController.doPrivileged(new LegacyVmDispatcher(classLoader,
+                        return doPrivileged(new LegacyVmDispatcher(classLoader,
                                 internalTypeName,
                                 classBeingRedefined,
                                 protectionDomain,
@@ -10767,7 +10805,7 @@ public interface AgentBuilder {
                                        byte[] binaryRepresentation) {
                 if (circularityLock.acquire()) {
                     try {
-                        return AccessController.doPrivileged(new Java9CapableVmDispatcher(rawModule,
+                        return doPrivileged(new Java9CapableVmDispatcher(rawModule,
                                 classLoader,
                                 internalTypeName,
                                 classBeingRedefined,

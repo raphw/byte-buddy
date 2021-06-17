@@ -16,11 +16,12 @@
 package net.bytebuddy.utility;
 
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 
-import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 /**
  * A {@link ClassReader} that does not apply a class file version check if the {@code net.bytebuddy.experimental} property is set.
@@ -48,7 +49,7 @@ public class OpenedClassReader {
     static {
         boolean experimental;
         try {
-            experimental = Boolean.parseBoolean(AccessController.doPrivileged(new GetSystemPropertyAction(EXPERIMENTAL_PROPERTY)));
+            experimental = Boolean.parseBoolean(doPrivileged(new GetSystemPropertyAction(EXPERIMENTAL_PROPERTY)));
         } catch (Exception ignored) {
             experimental = false;
         }
@@ -61,6 +62,18 @@ public class OpenedClassReader {
      */
     private OpenedClassReader() {
         throw new UnsupportedOperationException("This class is a utility class and not supposed to be instantiated");
+    }
+
+    /**
+     * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+     *
+     * @param action The action to execute from a privileged context.
+     * @param <T>    The type of the action's resolved value.
+     * @return The action's resolved value.
+     */
+    @AccessControllerPlugin.Enhance
+    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+        return action.run();
     }
 
     /**

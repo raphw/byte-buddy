@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.DeclaredByType;
@@ -31,7 +32,7 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.List;
 
@@ -179,7 +180,7 @@ public interface RecordComponentDescription extends DeclaredByType,
         /**
          * A dispatcher for accessing {@code java.lang.RecordComponent} types.
          */
-        protected static final RecordComponent RECORD_COMPONENT = AccessController.doPrivileged(JavaDispatcher.of(RecordComponent.class));
+        protected static final RecordComponent RECORD_COMPONENT = doPrivileged(JavaDispatcher.of(RecordComponent.class));
 
         /**
          * The represented record component.
@@ -193,6 +194,18 @@ public interface RecordComponentDescription extends DeclaredByType,
          */
         protected ForLoadedRecordComponent(AnnotatedElement recordComponent) {
             this.recordComponent = recordComponent;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**

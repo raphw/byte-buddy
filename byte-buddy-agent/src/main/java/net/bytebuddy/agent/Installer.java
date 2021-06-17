@@ -16,6 +16,8 @@
 package net.bytebuddy.agent;
 
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.InvocationTargetException;
+import java.security.Permission;
 
 /**
  * An installer class which defined the hook-in methods that are required by the Java agent specification.
@@ -51,9 +53,24 @@ public class Installer {
      * @return The instrumentation instance of the Byte Buddy agent.
      */
     public static Instrumentation getInstrumentation() {
-        SecurityManager securityManager = System.getSecurityManager();
-        if (securityManager != null) {
-            securityManager.checkPermission(new RuntimePermission("getInstrumentation"));
+        try {
+            Object securityManager = System.class.getMethod("getSecurityManager").invoke(null);
+            if (securityManager != null) {
+                securityManager.getClass()
+                        .getMethod("checkPermission", Permission.class)
+                        .invoke(securityManager, new RuntimePermission("getInstrumentation"));
+            }
+        } catch (NoSuchMethodException ignored) {
+            /* security manager not available on current VM */
+        } catch (InvocationTargetException exception) {
+            Throwable cause = exception.getCause();
+            if (cause instanceof RuntimeException) {
+                throw (RuntimeException) cause;
+            } else {
+                throw new IllegalStateException("Failed to assert access rights using security manager", cause);
+            }
+        } catch (IllegalAccessException exception) {
+            throw new IllegalStateException("Failed to access security manager", exception);
         }
         Instrumentation instrumentation = Installer.instrumentation;
         if (instrumentation == null) {

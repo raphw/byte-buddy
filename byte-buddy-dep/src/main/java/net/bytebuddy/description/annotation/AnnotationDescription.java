@@ -17,6 +17,7 @@ package net.bytebuddy.description.annotation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
@@ -31,7 +32,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -536,6 +537,18 @@ public interface AnnotationDescription {
         }
 
         /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
+        }
+
+        /**
          * Creates a description of the given annotation.
          *
          * @param annotation The annotation to be described.
@@ -651,7 +664,7 @@ public interface AnnotationDescription {
                 if (method == null || method.getDeclaringClass() != annotation.annotationType() || (!accessible && !method.isAccessible())) {
                     method = annotation.annotationType().getMethod(property.getName());
                     if (!accessible) {
-                        AccessController.doPrivileged(new SetAccessibleAction<Method>(method));
+                        doPrivileged(new SetAccessibleAction<Method>(method));
                     }
                 }
                 return asValue(method.invoke(annotation, NO_ARGUMENT), method.getReturnType()).filter(property);

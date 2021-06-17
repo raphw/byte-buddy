@@ -26,7 +26,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.AccessController;
 import java.security.CodeSource;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
@@ -172,13 +171,37 @@ public class ByteBuddyAgent {
     /**
      * The attachment type evaluator to be used for determining if an attachment requires an external process.
      */
-    private static final AttachmentTypeEvaluator ATTACHMENT_TYPE_EVALUATOR = AccessController.doPrivileged(AttachmentTypeEvaluator.InstallationAction.INSTANCE);
+    private static final AttachmentTypeEvaluator ATTACHMENT_TYPE_EVALUATOR = doPrivileged(AttachmentTypeEvaluator.InstallationAction.INSTANCE);
 
     /**
      * The agent provides only {@code static} utility methods and should not be instantiated.
      */
     private ByteBuddyAgent() {
         throw new UnsupportedOperationException("This class is a utility class and not supposed to be instantiated");
+    }
+
+    /**
+     * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+     *
+     * @param action The action to execute from a privileged context.
+     * @param <T>    The type of the action's resolved value.
+     * @return The action's resolved value.
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+        try {
+            return (T) Class.forName("java.security.AccessController")
+                    .getMethod("doPrivileged", PrivilegedAction.class)
+                    .invoke(null, action);
+        } catch (ClassNotFoundException ignored) {
+            return action.run();
+        } catch (InvocationTargetException exception) {
+            throw new IllegalStateException("Failed to invoke access controller", exception.getCause());
+        } catch (IllegalAccessException exception) {
+            throw new IllegalStateException("Failed to access access controller", exception);
+        } catch (NoSuchMethodException exception) {
+            throw new IllegalStateException("Failed to resolve well-known access controller method", exception);
+        }
     }
 
     /**
@@ -1185,7 +1208,7 @@ public class ByteBuddyAgent {
              */
             public Accessor attempt() {
                 try {
-                    return new Accessor.Simple.WithDirectAttachment(AccessController.doPrivileged(VirtualMachine.Resolver.INSTANCE));
+                    return new Accessor.Simple.WithDirectAttachment(doPrivileged(VirtualMachine.Resolver.INSTANCE));
                 } catch (Throwable ignored) {
                     return Accessor.Unavailable.INSTANCE;
                 }

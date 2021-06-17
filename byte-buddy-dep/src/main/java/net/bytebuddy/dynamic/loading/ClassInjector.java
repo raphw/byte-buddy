@@ -20,6 +20,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.MemberRemoval;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.PackageDescription;
@@ -40,7 +41,6 @@ import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.*;
 import java.net.URL;
-import java.security.AccessController;
 import java.security.Permission;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
@@ -58,7 +58,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * requiring the class loader to being able to explicitly look up these classes.
  * </p>
  * <p>
- * <b>Important</b>: Byte Buddy does not supply privileges when injecting code. When using a {@link SecurityManager},
+ * <b>Important</b>: Byte Buddy does not supply privileges when injecting code. When using a {@code java.lang.SecurityManager},
  * the user of this injector is responsible for providing access to non-public properties.
  * </p>
  */
@@ -128,7 +128,17 @@ public interface ClassInjector {
         /**
          * The dispatcher to use for accessing a class loader via reflection.
          */
-        private static final Dispatcher.Initializable DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+        private static final Dispatcher.Initializable DISPATCHER = doPrivileged(Dispatcher.CreationAction.INSTANCE);
+
+        /**
+         * A proxy for {@code java.lang.System} to access the security manager if available.
+         */
+        private static final System SYSTEM = doPrivileged(JavaDispatcher.of(System.class));
+
+        /**
+         * A proxy for {@code java.lang.SecurityManager} if available.
+         */
+        private static final SecurityManager SECURITY_MANAGER = doPrivileged(JavaDispatcher.of(SecurityManager.class));
 
         /**
          * The class loader into which the classes are to be injected.
@@ -194,6 +204,18 @@ public interface ClassInjector {
             this.protectionDomain = protectionDomain;
             this.packageDefinitionStrategy = packageDefinitionStrategy;
             this.forbidExisting = forbidExisting;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**
@@ -616,10 +638,10 @@ public interface ClassInjector {
                  * {@inheritDoc}
                  */
                 public Dispatcher initialize() {
-                    SecurityManager securityManager = System.getSecurityManager();
+                    Object securityManager = SYSTEM.getSecurityManager();
                     if (securityManager != null) {
                         try {
-                            securityManager.checkPermission(SUPPRESS_ACCESS_CHECKS);
+                            SECURITY_MANAGER.checkPermission(securityManager, SUPPRESS_ACCESS_CHECKS);
                         } catch (Exception exception) {
                             return new Dispatcher.Unavailable(exception.getMessage());
                         }
@@ -953,10 +975,10 @@ public interface ClassInjector {
                  * {@inheritDoc}
                  */
                 public Dispatcher initialize() {
-                    SecurityManager securityManager = System.getSecurityManager();
+                    Object securityManager = SYSTEM.getSecurityManager();
                     if (securityManager != null) {
                         try {
-                            securityManager.checkPermission(SUPPRESS_ACCESS_CHECKS);
+                            SECURITY_MANAGER.checkPermission(securityManager, SUPPRESS_ACCESS_CHECKS);
                         } catch (Exception exception) {
                             return new Dispatcher.Unavailable(exception.getMessage());
                         }
@@ -1208,10 +1230,10 @@ public interface ClassInjector {
                  * {@inheritDoc}
                  */
                 public Dispatcher initialize() {
-                    SecurityManager securityManager = System.getSecurityManager();
+                    Object securityManager = SYSTEM.getSecurityManager();
                     if (securityManager != null) {
                         try {
-                            securityManager.checkPermission(SUPPRESS_ACCESS_CHECKS);
+                            SECURITY_MANAGER.checkPermission(securityManager, SUPPRESS_ACCESS_CHECKS);
                         } catch (Exception exception) {
                             return new Dispatcher.Unavailable(exception.getMessage());
                         }
@@ -1452,6 +1474,37 @@ public interface ClassInjector {
                 }
             }
         }
+
+        /**
+         * A proxy of {@code java.lang.SecurityManager}.
+         */
+        @JavaDispatcher.Proxied("java.lang.SecurityManager")
+        protected interface SecurityManager {
+
+            /**
+             * Checks the given permissions on the supplied security manager.
+             *
+             * @param value      The security manager to use.
+             * @param permission The permissions to validate.
+             */
+            void checkPermission(Object value, Permission permission);
+        }
+
+        /**
+         * A proxy of {@code java.lang.System}.
+         */
+        @JavaDispatcher.Proxied("java.lang.System")
+        protected interface System {
+
+            /**
+             * Returns the current security manager or {@code null} if not available.
+             *
+             * @return The current security manager or {@code null} if not available.
+             */
+            @JavaDispatcher.IsStatic
+            @JavaDispatcher.Defaults
+            Object getSecurityManager();
+        }
     }
 
     /**
@@ -1468,12 +1521,12 @@ public interface ClassInjector {
         /**
          * The dispatcher to interacting with instances of {@code java.lang.invoke.MethodHandles}.
          */
-        private static final MethodHandles METHOD_HANDLES = AccessController.doPrivileged(JavaDispatcher.of(MethodHandles.class));
+        private static final MethodHandles METHOD_HANDLES = doPrivileged(JavaDispatcher.of(MethodHandles.class));
 
         /**
          * The dispatcher to interacting with {@code java.lang.invoke.MethodHandles$Lookup}.
          */
-        private static final MethodHandles.Lookup METHOD_HANDLES_LOOKUP = AccessController.doPrivileged(JavaDispatcher.of(MethodHandles.Lookup.class));
+        private static final MethodHandles.Lookup METHOD_HANDLES_LOOKUP = doPrivileged(JavaDispatcher.of(MethodHandles.Lookup.class));
 
         /**
          * Indicates a lookup instance's package lookup mode.
@@ -1492,6 +1545,18 @@ public interface ClassInjector {
          */
         protected UsingLookup(Object lookup) {
             this.lookup = lookup;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**
@@ -1636,7 +1701,17 @@ public interface ClassInjector {
         /**
          * The dispatcher to use.
          */
-        private static final Dispatcher.Initializable DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+        private static final Dispatcher.Initializable DISPATCHER = doPrivileged(Dispatcher.CreationAction.INSTANCE);
+
+        /**
+         * A proxy for {@code java.lang.System} to access the security manager if available.
+         */
+        private static final System SYSTEM = doPrivileged(JavaDispatcher.of(System.class));
+
+        /**
+         * A proxy for {@code java.lang.SecurityManager} if available.
+         */
+        private static final SecurityManager SECURITY_MANAGER = doPrivileged(JavaDispatcher.of(SecurityManager.class));
 
         /**
          * A lock for the bootstrap loader when injecting.
@@ -1690,6 +1765,18 @@ public interface ClassInjector {
             this.classLoader = classLoader;
             this.protectionDomain = protectionDomain;
             this.dispatcher = dispatcher;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**
@@ -1909,10 +1996,10 @@ public interface ClassInjector {
                  * {@inheritDoc}
                  */
                 public Dispatcher initialize() {
-                    SecurityManager securityManager = System.getSecurityManager();
+                    Object securityManager = SYSTEM.getSecurityManager();
                     if (securityManager != null) {
                         try {
-                            securityManager.checkPermission(SUPPRESS_ACCESS_CHECKS);
+                            SECURITY_MANAGER.checkPermission(securityManager, SUPPRESS_ACCESS_CHECKS);
                         } catch (Exception exception) {
                             return new Unavailable(exception.getMessage());
                         }
@@ -2174,6 +2261,37 @@ public interface ClassInjector {
                 }
             }
         }
+
+        /**
+         * A proxy of {@code java.lang.SecurityManager}.
+         */
+        @JavaDispatcher.Proxied("java.lang.SecurityManager")
+        protected interface SecurityManager {
+
+            /**
+             * Checks the given permissions on the supplied security manager.
+             *
+             * @param value      The security manager to use.
+             * @param permission The permissions to validate.
+             */
+            void checkPermission(Object value, Permission permission);
+        }
+
+        /**
+         * A proxy of {@code java.lang.System}.
+         */
+        @JavaDispatcher.Proxied("java.lang.System")
+        protected interface System {
+
+            /**
+             * Returns the current security manager or {@code null} if not available.
+             *
+             * @return The current security manager or {@code null} if not available.
+             */
+            @JavaDispatcher.IsStatic
+            @JavaDispatcher.Defaults
+            Object getSecurityManager();
+        }
     }
 
     /**
@@ -2196,7 +2314,7 @@ public interface ClassInjector {
         /**
          * A dispatcher for interacting with the instrumentation API.
          */
-        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+        private static final Dispatcher DISPATCHER = doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
         /**
          * The instrumentation to use for appending to the class path or the boot path.
@@ -2234,6 +2352,18 @@ public interface ClassInjector {
             this.target = target;
             this.instrumentation = instrumentation;
             this.randomString = randomString;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**
@@ -2470,7 +2600,7 @@ public interface ClassInjector {
         /**
          * The dispatcher to use.
          */
-        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+        private static final Dispatcher DISPATCHER = doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
         /**
          * A lock for the bootstrap loader when injecting.
@@ -2507,6 +2637,18 @@ public interface ClassInjector {
         public UsingJna(ClassLoader classLoader, ProtectionDomain protectionDomain) {
             this.classLoader = classLoader;
             this.protectionDomain = protectionDomain;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**

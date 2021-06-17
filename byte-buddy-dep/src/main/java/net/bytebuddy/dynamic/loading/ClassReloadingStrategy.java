@@ -16,6 +16,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -27,7 +28,7 @@ import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
-import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,7 +68,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
     /**
      * A dispatcher to use with some methods of the {@link Instrumentation} API.
      */
-    protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+    protected static final Dispatcher DISPATCHER = doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
     /**
      * This instance's instrumentation.
@@ -120,6 +121,18 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
         this.strategy = strategy.validate(instrumentation);
         this.bootstrapInjection = bootstrapInjection;
         this.preregisteredTypes = preregisteredTypes;
+    }
+
+    /**
+     * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+     *
+     * @param action The action to execute from a privileged context.
+     * @param <T>    The type of the action's resolved value.
+     * @return The action's resolved value.
+     */
+    @AccessControllerPlugin.Enhance
+    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+        return action.run();
     }
 
     /**
