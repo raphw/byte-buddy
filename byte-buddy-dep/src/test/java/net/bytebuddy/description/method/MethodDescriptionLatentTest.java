@@ -46,7 +46,7 @@ public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
     @Test
     @Override
     @JavaVersionRule.Enforce(17)
-    @Ignore("Fixed on Java 17 but not yet merged to all builds")
+    @Ignore("Awaiting CI server update for EA versions")
     public void testEnumConstructorAnnotation() throws Exception {
         super.testEnumConstructorAnnotation();
     }

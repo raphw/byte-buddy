@@ -184,9 +184,9 @@ public abstract class AbstractAnnotationDescriptionTest {
                 .subclass(Object.class)
                 .name(AbstractAnnotationDescriptionTest.class.getPackage().getName() + "." + "BrokenAnnotationCarrier")
                 .visit(new AnnotationValueBreaker(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V12),
-                        false,
-                        false,
-                        false))
+                        false, // Java 18 EA (Awaiting CI server update for EA versions)
+                        false, // Java 17 EA (Awaiting CI server update for EA versions)
+                        false)) // Java 17 EA (Awaiting CI server update for EA versions)
                 .make()
                 .include(new ByteBuddy().decorate(DefectiveAnnotation.class).make())
                 .include(new ByteBuddy().subclass(Object.class).name(BrokenAnnotationProperty.class.getName()).make())
@@ -389,21 +389,21 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationBrokenAnnotationDeclaration() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().brokenAnnotationDeclaration();
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationWrongArity() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().wrongArity();
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationWrongArityState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("wrongArity"))).getState(),
@@ -411,22 +411,22 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("Awaiting fix on Java 17 branch")
-    @JavaVersionRule.Enforce(17)
+    @Ignore("Awaiting CI server update for EA versions")
+    @JavaVersionRule.Enforce(18)
     public void testDefectiveAnnotationWrongArityArray() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().wrongArityArray();
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
-    @JavaVersionRule.Enforce(17)
+    @Ignore("Awaiting CI server update for EA versions")
+    @JavaVersionRule.Enforce(18)
     public void testDefectiveAnnotationWrongArityArrayState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("wrongArityArray"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationBrokenAnnotationDeclarationState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("brokenAnnotationDeclaration"))).getState(),
@@ -434,14 +434,14 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationBrokenAnnotationDeclarationArray() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().brokenAnnotationDeclarationArray();
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationBrokenAnnotationDeclarationArrayState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("brokenAnnotationDeclarationArray"))).getState(),
@@ -449,14 +449,14 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationBrokenAnnotationDeclarationEmptyArray() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().brokenAnnotationDeclarationEmptyArray();
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationBrokenAnnotationDeclarationArrayEmptyState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("brokenAnnotationDeclarationEmptyArray"))).getState(),
@@ -464,14 +464,14 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationBrokenEnumerationDeclaration() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().brokenEnumerationDeclaration();
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationBrokenEnumerationDeclarationState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("brokenEnumerationDeclaration"))).getState(),
@@ -479,14 +479,14 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationBrokenEnumerationDeclarationArray() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().brokenEnumerationDeclarationArray();
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationBrokenEnumerationDeclarationArrayState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("brokenEnumerationDeclarationArray"))).getState(),
@@ -494,14 +494,14 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationBrokenEnumerationDeclarationEmptyArray() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().brokenEnumerationDeclarationEmptyArray();
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationBrokenEnumerationDeclarationEmptyArrayState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("brokenEnumerationDeclarationEmptyArray"))).getState(),
@@ -509,14 +509,14 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationIncompatibleAnnotationDeclaration() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().incompatibleAnnotationDeclaration();
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationIncompatibleAnnotationDeclarationState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("incompatibleAnnotationDeclaration"))).getState(),
@@ -524,14 +524,14 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationIncompatibleAnnotationDeclarationArray() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().incompatibleAnnotationDeclarationArray();
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationIncompatibleAnnotationDeclarationArrayState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("incompatibleAnnotationDeclarationArray"))).getState(),
@@ -539,14 +539,14 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationIncompatibleAnnotationDeclarationEmptyArray() throws Exception {
         assertThat(describe(broken).prepare(DefectiveAnnotation.class).load().incompatibleAnnotationDeclarationEmptyArray().length, is(0));
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationIncompatibleAnnotationDeclarationEmptyArrayState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("incompatibleAnnotationDeclarationEmptyArray"))).getState(),
@@ -554,14 +554,14 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationIncompatibleEnumerationDeclaration() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().incompatibleEnumerationDeclaration();
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationIncompatibleEnumerationDeclarationState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("incompatibleEnumerationDeclaration"))).getState(),
@@ -569,14 +569,14 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationIncompatibleEnumerationDeclarationArray() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().incompatibleEnumerationDeclarationArray();
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationIncompatibleEnumerationDeclarationArrayState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("incompatibleEnumerationDeclarationArray"))).getState(),
@@ -584,14 +584,14 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationIncompatibleEnumerationDeclarationEmptyArray() throws Exception {
         assertThat(describe(broken).prepare(DefectiveAnnotation.class).load().incompatibleEnumerationDeclarationEmptyArray().length, is(0));
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testDefectiveAnnotationIncompatibleEnumerationDeclarationEmptyArrayState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("incompatibleEnumerationDeclarationEmptyArray"))).getState(),
@@ -651,21 +651,21 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(12)
     public void testDefectiveAnnotationLoadedToString() throws Exception {
         assertToString(describe(broken).prepare(DefectiveAnnotation.class).load().toString(), broken);
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(12)
     public void testDefectiveAnnotationPreparedToString() throws Exception {
         assertToString(describe(broken).prepare(DefectiveAnnotation.class).toString(), broken);
     }
 
     @Test
-    @Ignore("Awaiting fix on Java 17 branch")
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(12)
     public void testDefectiveAnnotationToString() throws Exception {
         assertToString(describe(broken).toString(), broken);

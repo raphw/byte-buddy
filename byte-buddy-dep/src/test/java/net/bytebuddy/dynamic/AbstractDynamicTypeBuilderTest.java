@@ -1481,6 +1481,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
+    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testPermittedSubclasses() throws Exception {
         TypeDescription sample = new TypeDescription.Latent("foo.Qux",

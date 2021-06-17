@@ -19,6 +19,7 @@ import net.bytebuddy.test.visibility.Sample;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -753,6 +754,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     @JavaVersionRule.Enforce(17)
+    @Ignore("Awaiting CI server update for EA versions")
     public void testSealed() throws Exception {
         Class<?> sealed = Class.forName("net.bytebuddy.test.precompiled.Sealed");
         assertThat(describe(sealed).isSealed(), is(true));

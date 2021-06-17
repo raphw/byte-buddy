@@ -1041,7 +1041,7 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
-    @Ignore("Open issue")
+    @Ignore("Documents known issue")
     public void testDominantInterfaceMethod() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(BaseInterface.ExtensionType.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
