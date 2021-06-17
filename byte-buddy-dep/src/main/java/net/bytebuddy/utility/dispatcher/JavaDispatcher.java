@@ -267,7 +267,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                         }
                         exceptions:
                         for (Class<?> type : resolved.getExceptionTypes()) {
-                            if (RuntimeException.class.isAssignableFrom(type)) {
+                            if (RuntimeException.class.isAssignableFrom(type) || Error.class.isAssignableFrom(type)) {
                                 continue;
                             }
                             for (Class<?> exception : method.getExceptionTypes()) {
