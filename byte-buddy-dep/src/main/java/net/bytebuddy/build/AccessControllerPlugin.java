@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.build;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
@@ -193,10 +194,11 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
     /**
      * {@inheritDoc}
      */
+    @SuppressFBWarnings(value = "SBSC_USE_STRINGBUFFER_CONCATENATION", justification = "Collision is unlikely and buffer overhead not justified")
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         String name = NAME;
         while (!typeDescription.getDeclaredFields().filter(named(name)).isEmpty()) {
-            name += "$";
+            name = "$";
         }
         return builder
                 .defineField(name, boolean.class, Visibility.PRIVATE, Ownership.STATIC, FieldManifestation.FINAL)
