@@ -2488,9 +2488,7 @@ public class InvokeDynamic implements Implementation.Composable {
         DROPPING {
             @Override
             protected StackManipulation resolve(MethodDescription interceptedMethod, TypeDescription returnType, Assigner assigner, Assigner.Typing typing) {
-                return Removal.of(interceptedMethod.isConstructor()
-                        ? interceptedMethod.getDeclaringType()
-                        : interceptedMethod.getReturnType());
+                return Removal.of(returnType);
             }
         };
 
