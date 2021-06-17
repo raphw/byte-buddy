@@ -3270,6 +3270,10 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * {@inheritDoc}
                      */
                     public AnnotatedElement resolve() {
+                        // Explicit check since hierarchy was introduced in a later JVM.
+                        if (!(typeVariable instanceof AnnotatedElement)) {
+                            return NoOp.INSTANCE;
+                        }
                         try {
                             AnnotatedElement[] annotatedBound = TYPE_VARIABLE.getAnnotatedBounds(typeVariable);
                             return annotatedBound.length == 0
