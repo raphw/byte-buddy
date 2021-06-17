@@ -109,7 +109,7 @@ public interface LoadedTypeInitializer {
          * access controller is not available on the current VM.
          */
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
-        private final transient Object accessControlContext; // fixme: Set on deserialization
+        private final transient Object accessControlContext;
 
         /**
          * Creates a new {@link LoadedTypeInitializer} for setting a static field.
@@ -144,6 +144,15 @@ public interface LoadedTypeInitializer {
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action, @SuppressWarnings("unused") Object context) {
             return action.run();
+        }
+
+        /**
+         * Resolves this instance after deserialization to assure the access control context is set.
+         *
+         * @return A resolved instance of this instance that includes an appropriate access control context.
+         */
+        private Object readResolve() {
+            return new ForStaticField(fieldName, value);
         }
 
         /**
