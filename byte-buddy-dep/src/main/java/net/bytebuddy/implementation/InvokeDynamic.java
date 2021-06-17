@@ -2846,7 +2846,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
         /**
          * Requests the bootstrap method to bind a method with the given return type. The return type
-         * is he assigned to the intercepted method's return type.
+         * is assigned to the intercepted method's return type.
          *
          * @param returnType The return type to request from the bootstrapping method.
          * @return This implementation where the bootstrap method is requested to bind a method with the given
@@ -2858,7 +2858,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
         /**
          * Requests the bootstrap method to bind a method with the given return type. The return type
-         * is he assigned to the intercepted method's return type.
+         * is assigned to the intercepted method's return type.
          *
          * @param returnType The return type to request from the bootstrapping method.
          * @return This implementation where the bootstrap method is requested to bind a method with the given
@@ -2890,8 +2890,8 @@ public class InvokeDynamic implements Implementation.Composable {
 
         /**
          * Requests the bootstrap method to bind a method with the given return type. The return type
-         * is he assigned to the intercepted method's return type. Also, the bootstrap method is passed the
-         * given method name,
+         * is assigned to the intercepted method's return type. Also, the bootstrap method is passed the
+         * given method name.
          *
          * @param methodName The method name to pass to the bootstrapping method.
          * @param returnType The return type to request from the bootstrapping method.
@@ -2904,8 +2904,8 @@ public class InvokeDynamic implements Implementation.Composable {
 
         /**
          * Requests the bootstrap method to bind a method with the given return type. The return type
-         * is he assigned to the intercepted method's return type. Also, the bootstrap method is passed the
-         * given method name,
+         * is assigned to the intercepted method's return type. Also, the bootstrap method is passed the
+         * given method name.
          *
          * @param methodName The method name to pass to the bootstrapping method.
          * @param returnType The return type to request from the bootstrapping method.
