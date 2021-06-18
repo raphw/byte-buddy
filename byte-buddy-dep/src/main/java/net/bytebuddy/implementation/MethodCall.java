@@ -3175,7 +3175,7 @@ public class MethodCall implements Implementation.Composable {
                         if (candidates.size() == 1) {
                             return new FieldSetting(candidates.getOnly());
                         } else if (candidates.size() == 2) {
-                            throw new IllegalStateException(matcher + " is ambigous and resolved: " + candidates);
+                            throw new IllegalStateException(matcher + " is ambiguous and resolved: " + candidates);
                         }
                         current = current.getSuperClass();
                     } while (current != null);
