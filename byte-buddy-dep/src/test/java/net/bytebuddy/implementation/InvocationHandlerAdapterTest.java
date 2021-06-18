@@ -5,8 +5,11 @@ import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.AccessControllerRule;
 import net.bytebuddy.test.utility.CallTraceable;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
@@ -24,6 +27,9 @@ public class InvocationHandlerAdapterTest {
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     private static final int BAZ = 42;
+
+    @Rule
+    public MethodRule accessControllerRule = new AccessControllerRule();
 
     @Test
     public void testStaticAdapterWithoutCache() throws Exception {
@@ -47,6 +53,7 @@ public class InvocationHandlerAdapterTest {
     }
 
     @Test
+    @AccessControllerRule.Enforce
     public void testStaticAdapterPrivileged() throws Exception {
         Foo foo = new Foo();
         DynamicType.Loaded<Bar> loaded = new ByteBuddy()
