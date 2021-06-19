@@ -111,6 +111,10 @@ jobs:
           architecture: x64
       - name: Build project
         run: ./mvnw -s .mvn/nossl.settings.xml verify -Pintegration -Pjava${{ matrix.java }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dist-without-markdown
+          path: byte-buddy/byte-buddy-dep/target/surefire-reports
   coverage:
     name: Coverage
     runs-on: ubuntu-18.04
