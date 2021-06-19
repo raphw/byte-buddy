@@ -26,7 +26,6 @@ import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.AnnotatedElement;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 /**
@@ -72,7 +71,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      */
     @AccessControllerPlugin.Enhance
     private static <T> T doPrivileged(PrivilegedAction<T> action) {
-        return AccessController.doPrivileged(action); // action.run();
+        return action.run();
     }
 
     /**

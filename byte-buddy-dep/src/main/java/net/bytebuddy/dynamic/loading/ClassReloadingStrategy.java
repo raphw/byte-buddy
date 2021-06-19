@@ -28,7 +28,6 @@ import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
@@ -133,7 +132,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
      */
     @AccessControllerPlugin.Enhance
     private static <T> T doPrivileged(PrivilegedAction<T> action) {
-        return AccessController.doPrivileged(action); // action.run();
+        return action.run();
     }
 
     /**

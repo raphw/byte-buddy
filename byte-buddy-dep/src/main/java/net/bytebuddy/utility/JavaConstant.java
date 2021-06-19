@@ -31,7 +31,6 @@ import org.objectweb.asm.Type;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
 
@@ -232,7 +231,7 @@ public interface JavaConstant {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return AccessController.doPrivileged(action); // action.run();
+            return action.run();
         }
 
         /**
@@ -781,7 +780,7 @@ public interface JavaConstant {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return AccessController.doPrivileged(action); // action.run();
+            return action.run();
         }
 
         /**
@@ -1127,7 +1126,7 @@ public interface JavaConstant {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return AccessController.doPrivileged(action); // action.run();
+            return action.run();
         }
 
         /**

@@ -79,8 +79,6 @@ import java.lang.instrument.UnmodifiableClassException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
@@ -9309,7 +9307,7 @@ public interface AgentBuilder {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return AccessController.doPrivileged(action); // action.run();
+            return action.run();
         }
 
         /**
@@ -10746,7 +10744,7 @@ public interface AgentBuilder {
              */
             @AccessControllerPlugin.Enhance
             private static Object getContext() {
-                return AccessController.getContext(); // null;
+                return null;
             }
 
             /**
@@ -10759,7 +10757,7 @@ public interface AgentBuilder {
              */
             @AccessControllerPlugin.Enhance
             private static <T> T doPrivileged(PrivilegedAction<T> action, @SuppressWarnings("unused") Object context) {
-                return AccessController.doPrivileged(action, (AccessControlContext) context); // action.run();
+                return action.run();
             }
 
             /**

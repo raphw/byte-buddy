@@ -41,7 +41,6 @@ import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
 
@@ -398,7 +397,7 @@ public interface MethodDescription extends TypeVariableSource,
                  */
                 @AccessControllerPlugin.Enhance
                 private static <T> T doPrivileged(PrivilegedAction<T> action) {
-                    return AccessController.doPrivileged(action); // action.run();
+                    return action.run();
                 }
 
                 /**

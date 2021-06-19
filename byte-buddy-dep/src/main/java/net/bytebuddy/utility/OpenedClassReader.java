@@ -21,7 +21,6 @@ import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 /**
@@ -74,7 +73,7 @@ public class OpenedClassReader {
      */
     @AccessControllerPlugin.Enhance
     private static <T> T doPrivileged(PrivilegedAction<T> action) {
-        return AccessController.doPrivileged(action); // action.run();
+        return action.run();
     }
 
     /**

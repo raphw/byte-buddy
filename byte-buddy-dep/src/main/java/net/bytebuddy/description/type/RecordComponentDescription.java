@@ -32,7 +32,6 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.List;
@@ -206,7 +205,7 @@ public interface RecordComponentDescription extends DeclaredByType,
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return AccessController.doPrivileged(action); // action.run();
+            return action.run();
         }
 
         /**

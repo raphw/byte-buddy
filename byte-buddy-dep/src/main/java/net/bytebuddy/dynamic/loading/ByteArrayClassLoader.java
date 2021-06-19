@@ -29,8 +29,6 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.*;
-import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
@@ -109,7 +107,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      */
     @AccessControllerPlugin.Enhance
     private static <T> T doPrivileged(PrivilegedAction<T> action) {
-        return AccessController.doPrivileged(action); // action.run();
+        return action.run();
     }
 
     /**
@@ -275,7 +273,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      */
     @AccessControllerPlugin.Enhance
     private static Object getContext() {
-        return AccessController.getContext(); // null;
+        return null;
     }
 
     /**
@@ -288,7 +286,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      */
     @AccessControllerPlugin.Enhance
     private static <T> T doPrivileged(PrivilegedAction<T> action, @SuppressWarnings("unused") Object context) {
-        return AccessController.doPrivileged(action, (AccessControlContext) context); // action.run();
+        return action.run();
     }
 
     /**

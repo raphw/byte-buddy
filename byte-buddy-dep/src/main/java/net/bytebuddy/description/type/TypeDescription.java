@@ -48,7 +48,6 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.*;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
 
@@ -2585,7 +2584,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 @AccessControllerPlugin.Enhance
                 static <T> T doPrivileged(PrivilegedAction<T> action) {
-                    return AccessController.doPrivileged(action); // action.run();
+                    return action.run();
                 }
 
                 /**
@@ -7544,7 +7543,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return AccessController.doPrivileged(action); // action.run();
+            return action.run();
         }
 
         /**
@@ -8435,7 +8434,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return AccessController.doPrivileged(action); // action.run();
+            return action.run();
         }
 
         /**

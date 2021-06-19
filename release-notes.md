@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 19. June 2021: version 1.11.4
+
+- Add constant for Java 18
+- Improve constructor resolution for `Plugin`s.
+- Add convenience method for translating `TypeDescription.Generic` to a builder.
+- Add convenience method for resolving an annotation property from a property name.
+
 ### 18. June 2021: version 1.11.3
 
 - Introduce `AccessControllerPlugin` to weave use of `AccessController` only if available.

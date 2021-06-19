@@ -63,7 +63,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.util.*;
@@ -1928,7 +1927,7 @@ public interface TypeWriter<T> {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return AccessController.doPrivileged(action); // action.run();
+            return action.run();
         }
 
         /**
@@ -1941,7 +1940,7 @@ public interface TypeWriter<T> {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedExceptionAction<T> action) throws Exception {
-            return AccessController.doPrivileged(action); // action.run();
+            return action.run();
         }
 
         /**

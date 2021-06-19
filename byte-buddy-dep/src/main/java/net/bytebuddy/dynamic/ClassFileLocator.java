@@ -21,10 +21,10 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.StreamDrainer;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import java.io.*;
 import java.lang.instrument.ClassFileTransformer;
@@ -35,7 +35,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
@@ -312,7 +311,7 @@ public interface ClassFileLocator extends Closeable {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return AccessController.doPrivileged(action); // action.run();
+            return action.run();
         }
 
         /**
@@ -1135,7 +1134,7 @@ public interface ClassFileLocator extends Closeable {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return AccessController.doPrivileged(action); // action.run();
+            return action.run();
         }
 
         /**
@@ -1458,7 +1457,7 @@ public interface ClassFileLocator extends Closeable {
                  */
                 @AccessControllerPlugin.Enhance
                 private static <T> T doPrivileged(PrivilegedAction<T> action) {
-                    return AccessController.doPrivileged(action); // action.run();
+                    return action.run();
                 }
 
                 /**
@@ -1567,7 +1566,7 @@ public interface ClassFileLocator extends Closeable {
                          */
                         @AccessControllerPlugin.Enhance
                         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-                            return AccessController.doPrivileged(action); // action.run();
+                            return action.run();
                         }
 
                         /**

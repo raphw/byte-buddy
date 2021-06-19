@@ -24,7 +24,6 @@ import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 /**
@@ -157,7 +156,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      */
     @AccessControllerPlugin.Enhance
     private static <T> T doPrivileged(PrivilegedAction<T> action) {
-        return AccessController.doPrivileged(action); // action.run();
+        return action.run();
     }
 
     /**

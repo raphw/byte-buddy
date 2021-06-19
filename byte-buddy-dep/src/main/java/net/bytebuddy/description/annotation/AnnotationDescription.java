@@ -32,12 +32,10 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * An annotation description describes {@link java.lang.annotation.Annotation} meta data of a class without this class
@@ -420,7 +418,10 @@ public interface AnnotationDescription {
          * {@inheritDoc}
          */
         public AnnotationValue<?, ?> getValue(String property) {
-            MethodList<MethodDescription.InDefinedShape> candidates = getAnnotationType().getDeclaredMethods().filter(named(property).and(takesArguments(0)));
+            MethodList<MethodDescription.InDefinedShape> candidates = getAnnotationType().getDeclaredMethods().filter(named(property)
+                    .and(takesArguments(0))
+                    .and(isPublic())
+                    .and(not(isStatic())));
             if (candidates.size() == 1) {
                 return getValue(candidates.getOnly());
             } else {
@@ -567,7 +568,7 @@ public interface AnnotationDescription {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return AccessController.doPrivileged(action); // action.run();
+            return action.run();
         }
 
         /**
