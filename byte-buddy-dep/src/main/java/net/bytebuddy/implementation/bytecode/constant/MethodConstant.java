@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.implementation.bytecode.constant;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -46,12 +47,16 @@ public abstract class MethodConstant implements StackManipulation {
      * The {@code java.security.AccessController#doPrivileged(PrivilegedExceptionAction)} method or {@code null} if
      * this method is not available on the current VM.
      */
-    protected static final MethodDescription.InDefinedShape DO_PRIVILEGED;
+    protected static final MethodDescription.InDefinedShape DO_PRIVILEGED = doPrivileged();
 
-    /*
-     * Locates the access controller's do privileged method.
+    /**
+     * Resolves the {@code java.security.AccessController#doPrivileged} method if the security manager is supported
+     * on the current VM and if security manager support is not explicitly disabled.
+     *
+     * @return The {@code doPrivileged} method or {@code null}.
      */
-    static {
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but be nulled out")
+    private static MethodDescription.InDefinedShape doPrivileged() {
         MethodDescription.InDefinedShape doPrivileged;
         try {
             doPrivileged = new MethodDescription.ForLoadedMethod(Class.forName("java.security.AccessController").getMethod("doPrivileged", PrivilegedExceptionAction.class));
@@ -65,7 +70,7 @@ public abstract class MethodConstant implements StackManipulation {
         } catch (Exception ignored) {
             doPrivileged = null;
         }
-        DO_PRIVILEGED = doPrivileged;
+        return doPrivileged;
     }
 
     /**

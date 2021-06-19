@@ -25,7 +25,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
 import java.lang.annotation.*;
