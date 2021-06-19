@@ -28,6 +28,7 @@ import org.objectweb.asm.Type;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
+import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.HashMap;
@@ -102,7 +103,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
      */
     @AccessControllerPlugin.Enhance
     private static <T> T doPrivileged(PrivilegedAction<T> action) {
-        return action.run();
+        return AccessController.doPrivileged(action); // action.run();
     }
 
     /**

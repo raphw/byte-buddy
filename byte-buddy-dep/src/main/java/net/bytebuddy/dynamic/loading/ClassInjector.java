@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.*;
 import java.net.URL;
+import java.security.AccessController;
 import java.security.Permission;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
@@ -215,7 +216,7 @@ public interface ClassInjector {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return action.run();
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**
@@ -1556,7 +1557,7 @@ public interface ClassInjector {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return action.run();
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**
@@ -1776,7 +1777,7 @@ public interface ClassInjector {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return action.run();
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**
@@ -2363,7 +2364,7 @@ public interface ClassInjector {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return action.run();
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**
@@ -2648,7 +2649,7 @@ public interface ClassInjector {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return action.run();
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**

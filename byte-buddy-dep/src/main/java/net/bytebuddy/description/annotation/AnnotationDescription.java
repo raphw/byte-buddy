@@ -33,6 +33,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
 
@@ -567,7 +568,7 @@ public interface AnnotationDescription {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return action.run();
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**

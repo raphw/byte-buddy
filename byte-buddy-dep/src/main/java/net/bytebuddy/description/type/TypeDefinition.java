@@ -24,6 +24,7 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import java.lang.reflect.*;
+import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -227,7 +228,7 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return action.run();
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**

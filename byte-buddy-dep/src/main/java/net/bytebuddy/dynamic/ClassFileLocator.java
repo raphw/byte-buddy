@@ -35,6 +35,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
@@ -311,7 +312,7 @@ public interface ClassFileLocator extends Closeable {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return action.run();
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**
@@ -1134,7 +1135,7 @@ public interface ClassFileLocator extends Closeable {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return action.run();
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**
@@ -1457,7 +1458,7 @@ public interface ClassFileLocator extends Closeable {
                  */
                 @AccessControllerPlugin.Enhance
                 private static <T> T doPrivileged(PrivilegedAction<T> action) {
-                    return action.run();
+                    return AccessController.doPrivileged(action); // action.run();
                 }
 
                 /**
@@ -1566,7 +1567,7 @@ public interface ClassFileLocator extends Closeable {
                          */
                         @AccessControllerPlugin.Enhance
                         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-                            return action.run();
+                            return AccessController.doPrivileged(action); // action.run();
                         }
 
                         /**

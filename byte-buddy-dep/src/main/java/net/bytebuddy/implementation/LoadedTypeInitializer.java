@@ -25,6 +25,8 @@ import net.bytebuddy.utility.privilege.SetAccessibleAction;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -130,7 +132,7 @@ public interface LoadedTypeInitializer {
          */
         @AccessControllerPlugin.Enhance
         private static Object getContext() {
-            return null;
+            return AccessController.getContext(); // null;
         }
 
         /**
@@ -143,7 +145,7 @@ public interface LoadedTypeInitializer {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action, @SuppressWarnings("unused") Object context) {
-            return action.run();
+            return AccessController.doPrivileged(action, (AccessControlContext) context); // action.run();
         }
 
         /**

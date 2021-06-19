@@ -37,6 +37,7 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.AbstractList;
 import java.util.Collections;
@@ -269,7 +270,7 @@ public interface ParameterDescription extends AnnotationSource,
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return action.run();
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**

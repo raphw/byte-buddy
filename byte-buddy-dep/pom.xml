@@ -114,7 +114,7 @@
             <plugin>
                 <groupId>net.bytebuddy</groupId>
                 <artifactId>byte-buddy-maven-plugin</artifactId>
-                <version>0-TEST</version>
+                <version>1.11.3</version>
                 <executions>
                     <execution>
                         <phase>compile</phase>
@@ -129,26 +129,14 @@
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>0-TEST</version>
+                                    <version>1.11.3</version>
                                     <plugin>net.bytebuddy.build.HashCodeAndEqualsPlugin$WithNonNullableFields</plugin>
                                 </transformation>
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>0-TEST</version>
+                                    <version>1.11.3</version>
                                     <plugin>net.bytebuddy.build.CachedReturnPlugin</plugin>
-                                </transformation>
-                                <transformation>
-                                    <groupId>net.bytebuddy</groupId>
-                                    <artifactId>byte-buddy</artifactId>
-                                    <version>0-TEST</version>
-                                    <plugin>net.bytebuddy.build.AccessControllerPlugin</plugin>
-                                    <arguments>
-                                        <argument>
-                                            <index>0</index>
-                                            <value>net.bytebuddy.securitymanager</value>
-                                        </argument>
-                                    </arguments>
                                 </transformation>
                             </transformations>
                         </configuration>

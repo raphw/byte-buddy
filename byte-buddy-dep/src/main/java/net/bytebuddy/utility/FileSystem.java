@@ -19,6 +19,7 @@ import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import java.io.*;
+import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 /**
@@ -55,7 +56,7 @@ public enum FileSystem {
      */
     @AccessControllerPlugin.Enhance
     private static <T> T doPrivileged(PrivilegedAction<T> action) {
-        return action.run();
+        return AccessController.doPrivileged(action); // action.run();
     }
 
     /**

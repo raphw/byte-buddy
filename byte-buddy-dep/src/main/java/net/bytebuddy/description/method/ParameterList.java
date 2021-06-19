@@ -26,6 +26,7 @@ import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -168,7 +169,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return action.run();
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**
