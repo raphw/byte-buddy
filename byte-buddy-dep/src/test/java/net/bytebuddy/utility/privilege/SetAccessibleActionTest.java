@@ -24,6 +24,7 @@ public class SetAccessibleActionTest {
         Object bar, qux;
     }
 
+    @SuppressWarnings("deprecation")
     private static class AccessibleObjectSpy extends AccessibleObject {
 
         private final AccessibleObject accessibleObject;

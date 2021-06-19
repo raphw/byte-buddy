@@ -11,10 +11,12 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.test.utility.AccessControllerRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
@@ -35,6 +37,9 @@ public class MethodConstantTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
+    @Rule
+    public MethodRule accessControllerRule = new AccessControllerRule();
 
     @Mock
     private MethodDescription.InDefinedShape methodDescription, auxiliaryConstructor;
@@ -135,6 +140,7 @@ public class MethodConstantTest {
     }
 
     @Test
+    @AccessControllerRule.Enforce
     public void testMethodPrivileged() throws Exception {
         when(methodDescription.isMethod()).thenReturn(true);
         when(implementationContext.register(any(AuxiliaryType.class))).thenReturn(auxiliaryType);
@@ -150,6 +156,7 @@ public class MethodConstantTest {
     }
 
     @Test
+    @AccessControllerRule.Enforce
     public void testMethodPrivilegedCached() throws Exception {
         when(implementationContext.cache(any(StackManipulation.class), any(TypeDescription.class))).thenReturn(fieldDescription);
         StackManipulation.Size size = MethodConstant.ofPrivileged(methodDescription).cached().apply(methodVisitor, implementationContext);
@@ -202,6 +209,7 @@ public class MethodConstantTest {
     }
 
     @Test
+    @AccessControllerRule.Enforce
     public void testConstructorPrivileged() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
         when(implementationContext.register(any(AuxiliaryType.class))).thenReturn(auxiliaryType);
@@ -217,6 +225,7 @@ public class MethodConstantTest {
     }
 
     @Test
+    @AccessControllerRule.Enforce
     public void testConstructorPrivilegedCached() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
         when(implementationContext.cache(any(StackManipulation.class), any(TypeDescription.class))).thenReturn(fieldDescription);

@@ -16,6 +16,7 @@
 package net.bytebuddy.description.method;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.ByteCodeElement;
@@ -37,6 +38,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
@@ -229,7 +231,7 @@ public interface ParameterDescription extends AnnotationSource,
         /**
          * A dispatcher for reading properties from {@code java.lang.reflect.Parameter} instances.
          */
-        private static final Parameter PARAMETER = AccessController.doPrivileged(JavaDispatcher.of(Parameter.class));
+        private static final Parameter PARAMETER = doPrivileged(JavaDispatcher.of(Parameter.class));
 
         /**
          * The {@code java.lang.reflect.Executable} for which the parameter types are described.
@@ -257,6 +259,18 @@ public interface ParameterDescription extends AnnotationSource,
             this.executable = executable;
             this.index = index;
             this.parameterAnnotationSource = parameterAnnotationSource;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**

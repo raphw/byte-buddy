@@ -15,10 +15,12 @@
  */
 package net.bytebuddy.utility;
 
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import java.io.*;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 /**
  * A dispatcher to interact with the file system. If NIO2 is available, the API is used. Otherwise, byte streams are used.
@@ -33,17 +35,29 @@ public enum FileSystem {
     /**
      * A dispatcher to resolve a {@link File} to a {@code java.nio.file.Path}.
      */
-    private static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+    private static final Dispatcher DISPATCHER = doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
     /**
      * A dispatcher to interact with {@code java.nio.file.Files}.
      */
-    private static final Files FILES = AccessController.doPrivileged(JavaDispatcher.of(Files.class));
+    private static final Files FILES = doPrivileged(JavaDispatcher.of(Files.class));
 
     /**
      * A dispatcher to interact with {@code java.nio.file.StandardCopyOption}.
      */
-    private static final StandardCopyOption STANDARD_COPY_OPTION = AccessController.doPrivileged(JavaDispatcher.of(StandardCopyOption.class));
+    private static final StandardCopyOption STANDARD_COPY_OPTION = doPrivileged(JavaDispatcher.of(StandardCopyOption.class));
+
+    /**
+     * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+     *
+     * @param action The action to execute from a privileged context.
+     * @param <T>    The type of the action's resolved value.
+     * @return The action's resolved value.
+     */
+    @AccessControllerPlugin.Enhance
+    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+        return AccessController.doPrivileged(action); // action.run();
+    }
 
     /**
      * Copies a file.

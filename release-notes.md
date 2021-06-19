@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 18. June 2021: version 1.11.3
+
+- Introduce `AccessControllerPlugin` to weave use of `AccessController` only if available.
+- Fix use of incorrect type when chaining `InvokeDynamic`.
+- Better emulate visitation order of ASM when creating types.
+- Avoid writing duplicate entries for submitted subtypes in sealed types.
+- Better encapsulate `JavaDispatcher` utility.
+- Add frame padding to initialization handler when redefining or rebasing a class.
+- Do not assume that `TypeVariable`s are `AnnotatedElement`s to support Java 7 and earlier.
+
 ### 11. June 2021: version 1.11.2
 
 - Fixes resolution of array types for Java descriptors of `JavaConstant`.

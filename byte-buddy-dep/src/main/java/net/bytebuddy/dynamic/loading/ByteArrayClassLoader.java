@@ -17,6 +17,7 @@ package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaModule;
@@ -48,7 +49,7 @@ import java.util.concurrent.ConcurrentMap;
  * arrays.
  * </p>
  * <p>
- * <b>Note</b>: Any class and package definition is performed using the creator's {@link AccessControlContext}.
+ * <b>Note</b>: Any class and package definition is performed using the creator's {@code java.security.AccessControlContext}.
  * </p>
  */
 public class ByteArrayClassLoader extends InjectionClassLoader {
@@ -71,12 +72,12 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     /**
      * A strategy for locating a package by name.
      */
-    private static final PackageLookupStrategy PACKAGE_LOOKUP_STRATEGY = AccessController.doPrivileged(PackageLookupStrategy.CreationAction.INSTANCE);
+    private static final PackageLookupStrategy PACKAGE_LOOKUP_STRATEGY = doPrivileged(PackageLookupStrategy.CreationAction.INSTANCE);
 
     /**
      * The synchronization engine for the executing JVM.
      */
-    protected static final SynchronizationStrategy.Initializable SYNCHRONIZATION_STRATEGY = AccessController.doPrivileged(SynchronizationStrategy.CreationAction.INSTANCE);
+    protected static final SynchronizationStrategy.Initializable SYNCHRONIZATION_STRATEGY = doPrivileged(SynchronizationStrategy.CreationAction.INSTANCE);
 
     /*
      * Register class loader as parallel capable if the current VM supports it.
@@ -97,6 +98,18 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         } catch (Throwable ignored) {
             /* do nothing */
         }
+    }
+
+    /**
+     * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+     *
+     * @param action The action to execute from a privileged context.
+     * @param <T>    The type of the action's resolved value.
+     * @return The action's resolved value.
+     */
+    @AccessControllerPlugin.Enhance
+    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+        return AccessController.doPrivileged(action); // action.run();
     }
 
     /**
@@ -125,9 +138,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     protected final ClassFilePostProcessor classFilePostProcessor;
 
     /**
-     * The access control context to use for loading classes.
+     * The access control context to use for loading classes or {@code null} if this is not supported on the current VM.
      */
-    protected final AccessControlContext accessControlContext;
+    protected final Object accessControlContext;
 
     /**
      * Creates a new class loader for a given definition of classes.
@@ -252,7 +265,30 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         this.persistenceHandler = persistenceHandler;
         this.packageDefinitionStrategy = packageDefinitionStrategy;
         this.classFilePostProcessor = classFilePostProcessor;
-        accessControlContext = AccessController.getContext();
+        accessControlContext = getContext();
+    }
+
+    /**
+     * A proxy for {@code java.security.AccessController#getContext} that is activated if available.
+     *
+     * @return The current access control context or {@code null} if the current VM does not support it.
+     */
+    @AccessControllerPlugin.Enhance
+    private static Object getContext() {
+        return AccessController.getContext(); // null;
+    }
+
+    /**
+     * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+     *
+     * @param action  The action to execute from a privileged context.
+     * @param context The access control context or {@code null} if the current VM does not support it.
+     * @param <T>     The type of the action's resolved value.
+     * @return The action's resolved value.
+     */
+    @AccessControllerPlugin.Enhance
+    private static <T> T doPrivileged(PrivilegedAction<T> action, @SuppressWarnings("unused") Object context) {
+        return AccessController.doPrivileged(action, (AccessControlContext) context); // action.run();
     }
 
     /**
@@ -361,7 +397,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         if (binaryRepresentation == null) {
             throw new ClassNotFoundException(name);
         } else {
-            return AccessController.doPrivileged(new ClassDefinitionAction(name, classFilePostProcessor.transform(this,
+            return doPrivileged(new ClassDefinitionAction(name, classFilePostProcessor.transform(this,
                     name,
                     protectionDomain,
                     binaryRepresentation)), accessControlContext);
@@ -764,7 +800,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 byte[] binaryRepresentation = typeDefinitions.get(typeName);
                 return binaryRepresentation == null
                         ? NO_URL
-                        : AccessController.doPrivileged(new UrlDefinitionAction(resourceName, binaryRepresentation));
+                        : doPrivileged(new UrlDefinitionAction(resourceName, binaryRepresentation));
             }
 
             @Override

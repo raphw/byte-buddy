@@ -18,6 +18,7 @@ package net.bytebuddy.dynamic.scaffold;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -63,6 +64,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.util.*;
 
@@ -1744,7 +1746,7 @@ public interface TypeWriter<T> {
         static {
             String dumpFolder;
             try {
-                dumpFolder = AccessController.doPrivileged(new GetSystemPropertyAction(DUMP_PROPERTY));
+                dumpFolder = doPrivileged(new GetSystemPropertyAction(DUMP_PROPERTY));
             } catch (RuntimeException exception) {
                 dumpFolder = null;
             }
@@ -1915,6 +1917,31 @@ public interface TypeWriter<T> {
             this.typeValidation = typeValidation;
             this.classWriterStrategy = classWriterStrategy;
             this.typePool = typePool;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return AccessController.doPrivileged(action); // action.run();
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         * @throws Exception If an exception occurs.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedExceptionAction<T> action) throws Exception {
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**
@@ -5925,7 +5952,7 @@ public interface TypeWriter<T> {
                      */
                     public void dump(TypeDescription instrumentedType, boolean original, byte[] binaryRepresentation) {
                         try {
-                            AccessController.doPrivileged(new ClassDumpAction(folder, instrumentedType, original, timestamp, binaryRepresentation));
+                            doPrivileged(new ClassDumpAction(folder, instrumentedType, original, timestamp, binaryRepresentation));
                         } catch (Exception exception) {
                             exception.printStackTrace();
                         }

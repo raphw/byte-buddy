@@ -16,6 +16,7 @@
 package net.bytebuddy.utility;
 
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.AnnotatedElement;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 /**
  * Type-safe representation of a {@code java.lang.Module}. On platforms that do not support the module API, modules are represented by {@code null}.
@@ -40,12 +42,12 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
     /**
      * A dispatcher to resolve a {@link Class}'s {@code java.lang.Module}.
      */
-    protected static final Resolver RESOLVER = AccessController.doPrivileged(JavaDispatcher.of(Resolver.class));
+    protected static final Resolver RESOLVER = doPrivileged(JavaDispatcher.of(Resolver.class));
 
     /**
      * A dispatcher to interact with {@code java.lang.Module}.
      */
-    protected static final Module MODULE = AccessController.doPrivileged(JavaDispatcher.of(Module.class));
+    protected static final Module MODULE = doPrivileged(JavaDispatcher.of(Module.class));
 
     /**
      * The {@code java.lang.Module} instance this wrapper represents.
@@ -59,6 +61,18 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      */
     protected JavaModule(AnnotatedElement module) {
         this.module = module;
+    }
+
+    /**
+     * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+     *
+     * @param action The action to execute from a privileged context.
+     * @param <T>    The type of the action's resolved value.
+     * @return The action's resolved value.
+     */
+    @AccessControllerPlugin.Enhance
+    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+        return AccessController.doPrivileged(action); // action.run();
     }
 
     /**

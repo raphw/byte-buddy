@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.description.method;
 
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -26,6 +27,7 @@ import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -135,7 +137,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         /**
          * The dispatcher used creating parameter list instances and for accessing {@code java.lang.reflect.Executable} instances.
          */
-        protected static final Executable EXECUTABLE = AccessController.doPrivileged(JavaDispatcher.of(Executable.class));
+        protected static final Executable EXECUTABLE = doPrivileged(JavaDispatcher.of(Executable.class));
 
         /**
          * The executable for which a parameter list is represented.
@@ -156,6 +158,18 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         protected ForLoadedExecutable(T executable, ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
             this.executable = executable;
             this.parameterAnnotationSource = parameterAnnotationSource;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**

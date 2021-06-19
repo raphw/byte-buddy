@@ -30,7 +30,6 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +41,32 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
  * set of constant pool values and can therefore be considered a constant in the broader meaning.
  */
 public abstract class MethodConstant implements StackManipulation {
+
+    /**
+     * The {@code java.security.AccessController#doPrivileged(PrivilegedExceptionAction)} method or {@code null} if
+     * this method is not available on the current VM.
+     */
+    protected static final MethodDescription.InDefinedShape DO_PRIVILEGED;
+
+    /*
+     * Locates the access controller's do privileged method.
+     */
+    static {
+        MethodDescription.InDefinedShape doPrivileged;
+        try {
+            doPrivileged = new MethodDescription.ForLoadedMethod(Class.forName("java.security.AccessController").getMethod("doPrivileged", PrivilegedExceptionAction.class));
+            try {
+                if (!Boolean.parseBoolean(System.getProperty("net.bytebuddy.securitymanager", "true"))) {
+                    doPrivileged = null;
+                }
+            } catch (SecurityException ignored) {
+                /* do nothing */
+            }
+        } catch (Exception ignored) {
+            doPrivileged = null;
+        }
+        DO_PRIVILEGED = doPrivileged;
+    }
 
     /**
      * A description of the method to be loaded onto the stack.
@@ -75,18 +100,23 @@ public abstract class MethodConstant implements StackManipulation {
     }
 
     /**
-     * Creates a stack manipulation that loads a method constant onto the operand stack using an {@link AccessController}.
+     * Creates a stack manipulation that loads a method constant onto the operand stack using an {@code java.security.AccessController}.
+     * If the current VM does not support the access controller API, or if {@code net.bytebuddy.securitymanager} is set to false, this
+     * method has the same effect as {@link MethodConstant#of(MethodDescription.InDefinedShape)}.
      *
      * @param methodDescription The method to be loaded onto the stack.
      * @return A stack manipulation that assigns a method constant for the given method description.
      */
     public static CanCache ofPrivileged(MethodDescription.InDefinedShape methodDescription) {
+        if (DO_PRIVILEGED == null) {
+            return of(methodDescription);
+        }
         if (methodDescription.isTypeInitializer()) {
             return CanCacheIllegal.INSTANCE;
         } else if (methodDescription.isConstructor()) {
-            return new ForConstructor(methodDescription).privileged();
+            return new ForConstructor(methodDescription).withPrivilegedLookup();
         } else {
-            return new ForMethod(methodDescription).privileged();
+            return new ForMethod(methodDescription).withPrivilegedLookup();
         }
     }
 
@@ -126,11 +156,11 @@ public abstract class MethodConstant implements StackManipulation {
     }
 
     /**
-     * Returns a method constant that uses an {@link AccessController} to look up this constant.
+     * Returns a method constant that uses an {@code java.security.AccessController} to look up this constant.
      *
-     * @return A method constant that uses an {@link AccessController} to look up this constant.
+     * @return A method constant that uses an {@code java.security.AccessController} to look up this constant.
      */
-    protected CanCache privileged() {
+    protected CanCache withPrivilegedLookup() {
         return new PrivilegedLookup(methodDescription, methodName());
     }
 
@@ -330,25 +360,9 @@ public abstract class MethodConstant implements StackManipulation {
     }
 
     /**
-     * Performs a privileged lookup of a method constant by using an {@link AccessController}.
+     * Performs a privileged lookup of a method constant by using an {@code java.security.AccessController}.
      */
     protected static class PrivilegedLookup implements StackManipulation, CanCache {
-
-        /**
-         * The {@link AccessController#doPrivileged(PrivilegedExceptionAction)} method.
-         */
-        private static final MethodDescription.InDefinedShape DO_PRIVILEGED;
-
-        /*
-         * Locates the access controller's do privileged method.
-         */
-        static {
-            try {
-                DO_PRIVILEGED = new MethodDescription.ForLoadedMethod(AccessController.class.getMethod("doPrivileged", PrivilegedExceptionAction.class));
-            } catch (NoSuchMethodException exception) {
-                throw new IllegalStateException("Cannot locate AccessController::doPrivileged", exception);
-            }
-        }
 
         /**
          * The method constant to load.

@@ -6,6 +6,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.DefaultMethod;
 import net.bytebuddy.implementation.bind.annotation.This;
+import net.bytebuddy.test.utility.AccessControllerRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,6 +32,9 @@ public class MethodDelegationDefaultMethodTest {
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
+
+    @Rule
+    public MethodRule accessControllerRule = new AccessControllerRule();
 
     @Test
     @JavaVersionRule.Enforce(8)
@@ -66,6 +70,7 @@ public class MethodDelegationDefaultMethodTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
+    @AccessControllerRule.Enforce
     public void testCallableDefaultCallPrivileged() throws Exception {
         DynamicType.Loaded<?> loaded = new ByteBuddy()
                 .subclass(Object.class)

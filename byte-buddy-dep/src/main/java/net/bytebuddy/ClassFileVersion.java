@@ -16,6 +16,7 @@
 package net.bytebuddy;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -124,9 +125,14 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     public static final ClassFileVersion JAVA_V17 = new ClassFileVersion(Opcodes.V17);
 
     /**
+     * The class file version of Java 18.
+     */
+    public static final ClassFileVersion JAVA_V18 = new ClassFileVersion(Opcodes.V17 + 1);
+
+    /**
      * A version locator for the executing JVM.
      */
-    private static final VersionLocator VERSION_LOCATOR = AccessController.doPrivileged(VersionLocator.Resolver.INSTANCE);
+    private static final VersionLocator VERSION_LOCATOR = doPrivileged(VersionLocator.Resolver.INSTANCE);
 
     /**
      * The version number that is represented by this class file version instance.
@@ -140,6 +146,18 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      */
     protected ClassFileVersion(int versionNumber) {
         this.versionNumber = versionNumber;
+    }
+
+    /**
+     * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+     *
+     * @param action The action to execute from a privileged context.
+     * @param <T>    The type of the action's resolved value.
+     * @return The action's resolved value.
+     */
+    @AccessControllerPlugin.Enhance
+    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+        return AccessController.doPrivileged(action); // action.run();
     }
 
     /**
@@ -197,6 +215,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             return JAVA_V16;
         } else if (javaVersionString.equals("1.17") || javaVersionString.equals("17")) {
             return JAVA_V17;
+        } else if (javaVersionString.equals("1.18") || javaVersionString.equals("18")) {
+            return JAVA_V18;
         } else {
             if (OpenedClassReader.EXPERIMENTAL) {
                 try {
@@ -256,6 +276,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                 return JAVA_V16;
             case 17:
                 return JAVA_V17;
+            case 18:
+                return JAVA_V18;
             default:
                 if (OpenedClassReader.EXPERIMENTAL && javaVersion > 0) {
                     return new ClassFileVersion(BASE_VERSION + javaVersion);

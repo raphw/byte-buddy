@@ -19,7 +19,7 @@ public class PluginFactoryUsingReflectionTest {
 
     @Test
     public void testDefaultConstructorIgnoreArgument() {
-        assertThat(new Plugin.Factory.UsingReflection(SimplePluginTwoConstructors.class).make(), instanceOf(SimplePluginTwoConstructors.class));
+        assertThat(new Plugin.Factory.UsingReflection(SimplePluginMultipleConstructors.class).make(), instanceOf(SimplePluginMultipleConstructors.class));
     }
 
     @Test
@@ -36,23 +36,38 @@ public class PluginFactoryUsingReflectionTest {
 
     @Test(expected = IllegalStateException.class)
     public void testConstructorAmbiguous() {
-        new Plugin.Factory.UsingReflection(SimplePluginTwoConstructors.class)
+        new Plugin.Factory.UsingReflection(SimplePluginMultipleConstructors.class)
                 .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Void.class, null))
+                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(String.class, null))
                 .make();
     }
 
     @Test
-    public void testArgumentConstructorPrirorityLeft() {
+    public void testArgumentConstructorPriorityLeft() {
         assertThat(new Plugin.Factory.UsingReflection(SimplePluginPreferredConstructorLeft.class)
                 .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Void.class, null))
                 .make(), instanceOf(SimplePluginPreferredConstructorLeft.class));
     }
 
     @Test
-    public void testArgumentConstructorPrirorityRight() {
+    public void testArgumentConstructorPriorityRight() {
         assertThat(new Plugin.Factory.UsingReflection(SimplePluginPreferredConstructorRight.class)
                 .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Void.class, null))
                 .make(), instanceOf(SimplePluginPreferredConstructorRight.class));
+    }
+
+    @Test
+    public void testArgumentConstructorComplexLeft() {
+        assertThat(new Plugin.Factory.UsingReflection(SimplePluginComplexConstructorLeft.class)
+                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Void.class, null))
+                .make(), instanceOf(SimplePluginComplexConstructorLeft.class));
+    }
+
+    @Test
+    public void testArgumentConstructorComplexRight() {
+        assertThat(new Plugin.Factory.UsingReflection(SimplePluginComplexConstructorRight.class)
+                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Void.class, null))
+                .make(), instanceOf(SimplePluginComplexConstructorRight.class));
     }
 
     @Test
@@ -132,13 +147,18 @@ public class PluginFactoryUsingReflectionTest {
         }
     }
 
-    public static class SimplePluginTwoConstructors implements Plugin {
+    @SuppressWarnings("unused")
+    public static class SimplePluginMultipleConstructors implements Plugin {
 
-        public SimplePluginTwoConstructors() {
+        public SimplePluginMultipleConstructors() {
             /* empty */
         }
 
-        public SimplePluginTwoConstructors(Void unused) {
+        public SimplePluginMultipleConstructors(String ignored) {
+            /* empty */
+        }
+
+        public SimplePluginMultipleConstructors(Void ignored) {
             /* empty */
         }
 
@@ -187,6 +207,52 @@ public class PluginFactoryUsingReflectionTest {
 
         @Factory.UsingReflection.Priority(1)
         public SimplePluginPreferredConstructorRight(Void unused) {
+            /* empty */
+        }
+
+        public boolean matches(TypeDescription target) {
+            throw new AssertionError();
+        }
+
+        public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+            throw new AssertionError();
+        }
+
+        public void close() {
+            throw new AssertionError();
+        }
+    }
+
+    public static class SimplePluginComplexConstructorLeft implements Plugin {
+
+        public SimplePluginComplexConstructorLeft() {
+            /* empty */
+        }
+
+        public SimplePluginComplexConstructorLeft(Void unused) {
+            /* empty */
+        }
+
+        public boolean matches(TypeDescription target) {
+            throw new AssertionError();
+        }
+
+        public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+            throw new AssertionError();
+        }
+
+        public void close() {
+            throw new AssertionError();
+        }
+    }
+
+    public static class SimplePluginComplexConstructorRight implements Plugin {
+
+        public SimplePluginComplexConstructorRight(Void unused) {
+            /* empty */
+        }
+
+        public SimplePluginComplexConstructorRight() {
             /* empty */
         }
 

@@ -5,6 +5,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.test.utility.AccessControllerRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,6 +33,9 @@ public class MethodDelegationOriginTest {
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
+
+    @Rule
+    public MethodRule accessControllerRule = new AccessControllerRule();
 
     @Test
     public void testOriginClass() throws Exception {
@@ -80,6 +84,7 @@ public class MethodDelegationOriginTest {
     }
 
     @Test
+    @AccessControllerRule.Enforce
     public void testOriginMethodWithPrivilege() throws Exception {
         DynamicType.Loaded<Foo> loaded = new ByteBuddy()
                 .subclass(Foo.class)
@@ -138,6 +143,7 @@ public class MethodDelegationOriginTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    @AccessControllerRule.Enforce
     public void testOriginConstructorWithPrivilege() throws Exception {
         OriginConstructorWithPrivilege originConstructor = new OriginConstructorWithPrivilege();
         DynamicType.Loaded<Foo> loaded = new ByteBuddy()

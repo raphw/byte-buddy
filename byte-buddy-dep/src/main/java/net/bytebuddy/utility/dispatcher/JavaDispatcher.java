@@ -17,6 +17,7 @@ package net.bytebuddy.utility.dispatcher;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
@@ -56,13 +57,13 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     /**
      * If {@code true}, dispatcher classes will be generated natively and not by using a {@link Proxy}.
      */
-    private static final boolean GENERATE = Boolean.parseBoolean(AccessController.doPrivileged(new GetSystemPropertyAction(GENERATE_PROPERTY)));
+    private static final boolean GENERATE = Boolean.parseBoolean(doPrivileged(new GetSystemPropertyAction(GENERATE_PROPERTY)));
 
     /**
      * Contains an invoker that makes sure that reflective dispatchers make invocations from an isolated {@link ClassLoader} and
      * not from within Byte Buddy's context. This way, no privilege context can be leaked by accident.
      */
-    private static final Invoker INVOKER = AccessController.doPrivileged(Invoker.CreationAction.INSTANCE);
+    private static final Invoker INVOKER = doPrivileged(Invoker.CreationAction.INSTANCE);
 
     /**
      * The proxy type.
@@ -91,6 +92,18 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         this.proxy = proxy;
         this.classLoader = classLoader;
         this.generate = generate;
+    }
+
+    /**
+     * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+     *
+     * @param action The action to execute from a privileged context.
+     * @param <T>    The type of the action's resolved value.
+     * @return The action's resolved value.
+     */
+    @AccessControllerPlugin.Enhance
+    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+        return AccessController.doPrivileged(action); // action.run();
     }
 
     /**

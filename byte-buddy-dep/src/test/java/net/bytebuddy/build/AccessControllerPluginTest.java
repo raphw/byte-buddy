@@ -1,14 +1,20 @@
 package net.bytebuddy.build;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.AccessControllerRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.security.PrivilegedAction;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -16,6 +22,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class AccessControllerPluginTest {
 
     private static final String FOO = "foo", BAR = "bar";
+
+    @Rule
+    public MethodRule accessControllerRule = new AccessControllerRule();
 
     @Test
     public void testPluginEnhanceNoProperty() throws Exception {
@@ -103,6 +112,20 @@ public class AccessControllerPluginTest {
         Method method = type.getDeclaredMethod("doPrivileged", PrivilegedAction.class, Object.class);
         method.setAccessible(true);
         assertThat(method.invoke(null, new TrivialPrivilegedAction(FOO), context.invoke(null)), is((Object) FOO));
+    }
+
+    @Test
+    @AccessControllerRule.Enforce(force = true)
+    public void testAccessControllerMethods() throws Exception {
+        Field field = AccessControllerPlugin.class.getDeclaredField("SIGNATURES");
+        field.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Map<MethodDescription.SignatureToken, MethodDescription.SignatureToken> signatures = (Map<MethodDescription.SignatureToken, MethodDescription.SignatureToken>) field.get(null);
+        for (Method method : Class.forName("java.security.AccessController").getMethods()) {
+            if (method.getDeclaringClass().getName().equals("java.security.AccessController") && Modifier.isStatic(method.getModifiers())) {
+                assertThat(signatures.containsValue(new MethodDescription.ForLoadedMethod(method).asSignatureToken()), is(true));
+            }
+        }
     }
 
     @Test(expected = IllegalStateException.class)

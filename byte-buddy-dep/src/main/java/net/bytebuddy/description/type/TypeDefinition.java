@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.field.FieldList;
@@ -24,6 +25,7 @@ import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import java.lang.reflect.*;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -215,7 +217,19 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
         /**
          * A dispatcher for interacting with {@code java.lang.reflect.AnnotatedType}.
          */
-        private static final AnnotatedType ANNOTATED_TYPE = AccessController.doPrivileged(JavaDispatcher.of(AnnotatedType.class));
+        private static final AnnotatedType ANNOTATED_TYPE = doPrivileged(JavaDispatcher.of(AnnotatedType.class));
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return AccessController.doPrivileged(action); // action.run();
+        }
 
         /**
          * Describes a loaded generic type as a {@link TypeDescription.Generic}.

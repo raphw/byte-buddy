@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.description.method;
 
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
@@ -41,6 +42,7 @@ import org.objectweb.asm.signature.SignatureWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.not;
@@ -371,7 +373,7 @@ public interface MethodDescription extends TypeVariableSource,
                 /**
                  * A dispatcher for interacting with {@code java.lang.reflect.Executable}.
                  */
-                protected static final Executable EXECUTABLE = AccessController.doPrivileged(JavaDispatcher.of(Executable.class));
+                protected static final Executable EXECUTABLE = doPrivileged(JavaDispatcher.of(Executable.class));
 
                 /**
                  * The represented {@code java.lang.reflect.Executable}.
@@ -385,6 +387,18 @@ public interface MethodDescription extends TypeVariableSource,
                  */
                 protected ForLoadedExecutable(T executable) {
                     this.executable = executable;
+                }
+
+                /**
+                 * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+                 *
+                 * @param action The action to execute from a privileged context.
+                 * @param <T>    The type of the action's resolved value.
+                 * @return The action's resolved value.
+                 */
+                @AccessControllerPlugin.Enhance
+                private static <T> T doPrivileged(PrivilegedAction<T> action) {
+                    return AccessController.doPrivileged(action); // action.run();
                 }
 
                 /**

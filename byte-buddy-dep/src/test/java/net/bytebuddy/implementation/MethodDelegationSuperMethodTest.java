@@ -6,6 +6,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.SuperMethod;
 import net.bytebuddy.implementation.bind.annotation.This;
+import net.bytebuddy.test.utility.AccessControllerRule;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Rule;
@@ -29,6 +30,9 @@ public class MethodDelegationSuperMethodTest {
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
+
+    @Rule
+    public MethodRule accessControllerRule = new AccessControllerRule();
 
     @Test
     public void testRunnableSuperCall() throws Exception {
@@ -63,6 +67,7 @@ public class MethodDelegationSuperMethodTest {
     }
 
     @Test
+    @AccessControllerRule.Enforce
     public void testRunnableSuperCallWithPrivilege() throws Exception {
         DynamicType.Loaded<Foo> loaded = new ByteBuddy()
                 .subclass(Foo.class)

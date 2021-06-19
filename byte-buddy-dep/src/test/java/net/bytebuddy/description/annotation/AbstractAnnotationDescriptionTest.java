@@ -294,6 +294,11 @@ public abstract class AbstractAnnotationDescriptionTest {
         describe(first).getValue(new MethodDescription.ForLoadedMethod(Object.class.getMethod("toString")));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testIllegalProperty() throws Exception {
+        describe(first).getValue("toString");
+    }
+
     @Test
     public void testLoadedEquals() throws Exception {
         assertThat(describe(first).prepare(Sample.class).load(), is(first));
@@ -816,7 +821,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     private void assertValue(Annotation annotation, String methodName, Object unloadedValue, Object loadedValue) throws Exception {
-        assertThat(describe(annotation).getValue(new MethodDescription.ForLoadedMethod(annotation.annotationType().getDeclaredMethod(methodName))).resolve(),
+        assertThat(describe(annotation).getValue(methodName).resolve(),
                 is(unloadedValue));
         assertThat(describe(annotation).getValue(new MethodDescription.Latent(TypeDescription.ForLoadedType.of(annotation.annotationType()),
                 methodName,

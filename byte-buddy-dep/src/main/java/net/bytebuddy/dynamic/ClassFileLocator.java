@@ -16,6 +16,7 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
@@ -286,7 +287,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * A class loader that does not define resources of its own but allows querying for resources supplied by the boot loader.
          */
-        private static final ClassLoader BOOT_LOADER_PROXY = AccessController.doPrivileged(BootLoaderProxyCreationAction.INSTANCE);
+        private static final ClassLoader BOOT_LOADER_PROXY = doPrivileged(BootLoaderProxyCreationAction.INSTANCE);
 
         /**
          * The class loader to query.
@@ -300,6 +301,18 @@ public interface ClassFileLocator extends Closeable {
          */
         protected ForClassLoader(ClassLoader classLoader) {
             this.classLoader = classLoader;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**
@@ -1101,7 +1114,7 @@ public interface ClassFileLocator extends Closeable {
          * @param url The URLs to search for class files.
          */
         public ForUrl(URL... url) {
-            classLoader = AccessController.doPrivileged(new ClassLoaderCreationAction(url));
+            classLoader = doPrivileged(new ClassLoaderCreationAction(url));
         }
 
         /**
@@ -1111,6 +1124,18 @@ public interface ClassFileLocator extends Closeable {
          */
         public ForUrl(Collection<? extends URL> urls) {
             this(urls.toArray(new URL[0]));
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return AccessController.doPrivileged(action); // action.run();
         }
 
         /**
@@ -1184,7 +1209,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * A dispatcher for interacting with the instrumentation API.
          */
-        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+        private static final Dispatcher DISPATCHER = doPrivileged(JavaDispatcher.of(Dispatcher.class));
 
         /**
          * The instrumentation instance to use for looking up the binary format of a type.
@@ -1204,6 +1229,18 @@ public interface ClassFileLocator extends Closeable {
          */
         public ForInstrumentation(Instrumentation instrumentation, ClassLoader classLoader) {
             this(instrumentation, ClassLoadingDelegate.Default.of(classLoader));
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
         }
 
         /**
@@ -1401,7 +1438,7 @@ public interface ClassFileLocator extends Closeable {
                 /**
                  * A dispatcher for extracting a class loader's loaded classes.
                  */
-                private static final Dispatcher.Initializable DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+                private static final Dispatcher.Initializable DISPATCHER = doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
                 /**
                  * Creates a class loading delegate for a delegating class loader.
@@ -1410,6 +1447,18 @@ public interface ClassFileLocator extends Closeable {
                  */
                 protected ForDelegatingClassLoader(ClassLoader classLoader) {
                     super(classLoader);
+                }
+
+                /**
+                 * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+                 *
+                 * @param action The action to execute from a privileged context.
+                 * @param <T>    The type of the action's resolved value.
+                 * @return The action's resolved value.
+                 */
+                @AccessControllerPlugin.Enhance
+                private static <T> T doPrivileged(PrivilegedAction<T> action) {
+                    return AccessController.doPrivileged(action); // action.run();
                 }
 
                 /**
@@ -1510,10 +1559,22 @@ public interface ClassFileLocator extends Closeable {
                         }
 
                         /**
+                         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+                         *
+                         * @param action The action to execute from a privileged context.
+                         * @param <T>    The type of the action's resolved value.
+                         * @return The action's resolved value.
+                         */
+                        @AccessControllerPlugin.Enhance
+                        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+                            return AccessController.doPrivileged(action); // action.run();
+                        }
+
+                        /**
                          * {@inheritDoc}
                          */
                         public Dispatcher initialize() {
-                            return AccessController.doPrivileged(this);
+                            return doPrivileged(this);
                         }
 
                         /**

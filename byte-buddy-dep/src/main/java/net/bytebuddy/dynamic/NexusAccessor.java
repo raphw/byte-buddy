@@ -16,6 +16,7 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -53,7 +54,7 @@ public class NexusAccessor {
     /**
      * The dispatcher to use.
      */
-    private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+    private static final Dispatcher DISPATCHER = doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
     /**
      * An type-safe constant for a non-operational reference queue.
@@ -83,6 +84,18 @@ public class NexusAccessor {
      */
     public NexusAccessor(ReferenceQueue<? super ClassLoader> referenceQueue) {
         this.referenceQueue = referenceQueue;
+    }
+
+    /**
+     * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+     *
+     * @param action The action to execute from a privileged context.
+     * @param <T>    The type of the action's resolved value.
+     * @return The action's resolved value.
+     */
+    @AccessControllerPlugin.Enhance
+    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+        return AccessController.doPrivileged(action); // action.run();
     }
 
     /**

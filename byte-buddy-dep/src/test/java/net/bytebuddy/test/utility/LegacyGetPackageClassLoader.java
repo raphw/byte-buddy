@@ -24,6 +24,7 @@ public class LegacyGetPackageClassLoader extends URLClassLoader {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     protected Package definePackage(String name, String specTitle, String specVersion, String specVendor, String implTitle, String implVersion, String implVendor, URL sealBase) throws IllegalArgumentException {
         if (getPackage(name) != null) {
             throw new IllegalArgumentException(name);

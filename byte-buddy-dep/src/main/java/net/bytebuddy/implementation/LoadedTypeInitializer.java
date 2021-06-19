@@ -16,6 +16,7 @@
 package net.bytebuddy.implementation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaModule;
@@ -24,7 +25,9 @@ import net.bytebuddy.utility.privilege.SetAccessibleAction;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.security.AccessControlContext;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -104,6 +107,13 @@ public interface LoadedTypeInitializer {
         private final Object value;
 
         /**
+         * The access control context to use for loading classes or {@code null} if the
+         * access controller is not available on the current VM.
+         */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
+        private final transient Object accessControlContext;
+
+        /**
          * Creates a new {@link LoadedTypeInitializer} for setting a static field.
          *
          * @param fieldName the name of the field.
@@ -112,6 +122,39 @@ public interface LoadedTypeInitializer {
         public ForStaticField(String fieldName, Object value) {
             this.fieldName = fieldName;
             this.value = value;
+            accessControlContext = getContext();
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#getContext} that is activated if available.
+         *
+         * @return The current access control context or {@code null} if the current VM does not support it.
+         */
+        @AccessControllerPlugin.Enhance
+        private static Object getContext() {
+            return AccessController.getContext(); // null;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action  The action to execute from a privileged context.
+         * @param context The access control context or {@code null} if the current VM does not support it.
+         * @param <T>     The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action, @SuppressWarnings("unused") Object context) {
+            return AccessController.doPrivileged(action, (AccessControlContext) context); // action.run();
+        }
+
+        /**
+         * Resolves this instance after deserialization to assure the access control context is set.
+         *
+         * @return A resolved instance of this instance that includes an appropriate access control context.
+         */
+        private Object readResolve() {
+            return new ForStaticField(fieldName, value);
         }
 
         /**
@@ -124,7 +167,7 @@ public interface LoadedTypeInitializer {
                         || !Modifier.isPublic(field.getDeclaringClass().getModifiers())
                         || JavaModule.isSupported()
                         && !JavaModule.ofType(type).isExported(new TypeDescription.ForLoadedType(type).getPackage(), JavaModule.ofType(ForStaticField.class))) {
-                    AccessController.doPrivileged(new SetAccessibleAction<Field>(field));
+                    doPrivileged(new SetAccessibleAction<Field>(field), accessControlContext);
                 }
                 field.set(STATIC_FIELD, value);
             } catch (IllegalAccessException exception) {
