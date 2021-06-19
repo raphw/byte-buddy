@@ -112,6 +112,7 @@ jobs:
       - name: Build project
         run: ./mvnw -s .mvn/nossl.settings.xml verify -Pintegration -Pjava${{ matrix.java }}
       - uses: actions/upload-artifact@v2
+        if: failure()
         with:
           name: dist-without-markdown
           path: byte-buddy/byte-buddy-dep/target/surefire-reports
