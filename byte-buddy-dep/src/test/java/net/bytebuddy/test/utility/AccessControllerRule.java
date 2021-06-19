@@ -1,11 +1,8 @@
 package net.bytebuddy.test.utility;
 
 import org.junit.rules.MethodRule;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
-import org.mockito.MockitoAnnotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -21,19 +18,24 @@ public class AccessControllerRule implements MethodRule  {
 
     private final boolean available;
 
+    private final boolean enabled;
+
     public AccessControllerRule() {
-        boolean available;
+        boolean available, enabled;
         try {
             Class.forName("java.security.AccessController", false, null);
-            available = Boolean.parseBoolean(System.getProperty("net.bytebuddy.securitymanager", "true"));
+            available = true;
+            enabled = Boolean.parseBoolean(System.getProperty("net.bytebuddy.securitymanager", "true"));
         } catch (ClassNotFoundException ignored) {
             available = false;
+            enabled = false;
         }
         this.available = available;
+        this.enabled = enabled;
     }
 
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
-        return available || method.getAnnotation(Enforce.class) == null
+        return enabled || method.getAnnotation(Enforce.class) == null || available && method.getAnnotation(Enforce.class).force()
                 ? base
                 : new NoOpStatement();
     }
@@ -41,7 +43,8 @@ public class AccessControllerRule implements MethodRule  {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface Enforce {
-        /* empty */
+
+        boolean force() default false;
     }
 
     private static class NoOpStatement extends Statement {

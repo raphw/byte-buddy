@@ -214,7 +214,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                             if (resolved) {
                                 index += 1;
                             } else {
-                                break candidates;
+                                continue candidates;
                             }
                         }
                         instantiator = instantiator.replaceBy(new Instantiator.Resolved((Constructor<? extends Plugin>) constructor, arguments));
@@ -274,7 +274,72 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      * {@inheritDoc}
                      */
                     public Plugin instantiate() {
-                        throw new IllegalStateException("No constructor available for " + type);
+                        throw new IllegalStateException("No constructor resolvable for " + type);
+                    }
+                }
+
+                /**
+                 * Represents an ambiguously resolved instantiator.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class Ambiguous implements Instantiator {
+
+                    /**
+                     * The left constructor.
+                     */
+                    private final Constructor<?> left;
+
+                    /**
+                     * The right constructor.
+                     */
+                    private final Constructor<?> right;
+
+                    /**
+                     * The resolved priority.
+                     */
+                    private final int priority;
+
+                    /**
+                     * The resolved number of parameters.
+                     */
+                    private final int parameters;
+
+                    /**
+                     * Creates a new ambiguous instantiator.
+                     *
+                     * @param left       The left constructor.
+                     * @param right      The right constructor.
+                     * @param priority   The resolved priority.
+                     * @param parameters The resolved number of parameters.
+                     */
+                    protected Ambiguous(Constructor<?> left, Constructor<?> right, int priority, int parameters) {
+                        this.left = left;
+                        this.right = right;
+                        this.priority = priority;
+                        this.parameters = parameters;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Instantiator replaceBy(Resolved instantiator) {
+                        Priority priority = instantiator.getConstructor().getAnnotation(Priority.class);
+                        if ((priority == null ? Priority.DEFAULT : priority.value()) > this.priority) {
+                            return instantiator;
+                        } else if ((priority == null ? Priority.DEFAULT : priority.value()) < this.priority) {
+                            return this;
+                        } else if (instantiator.getConstructor().getParameterTypes().length > parameters) {
+                            return instantiator;
+                        } else {
+                            return this;
+                        }
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Plugin instantiate() {
+                        throw new IllegalStateException("Ambiguous constructors " + left + " and " + right);
                     }
                 }
 
@@ -306,17 +371,30 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     }
 
                     /**
+                     * Returns the resolved constructor.
+                     *
+                     * @return The resolved constructor.
+                     */
+                    protected Constructor<? extends Plugin> getConstructor() {
+                        return constructor;
+                    }
+
+                    /**
                      * {@inheritDoc}
                      */
                     public Instantiator replaceBy(Resolved instantiator) {
-                        Priority left = constructor.getAnnotation(Priority.class), right = instantiator.constructor.getAnnotation(Priority.class);
+                        Priority left = constructor.getAnnotation(Priority.class), right = instantiator.getConstructor().getAnnotation(Priority.class);
                         int leftPriority = left == null ? Priority.DEFAULT : left.value(), rightPriority = right == null ? Priority.DEFAULT : right.value();
                         if (leftPriority > rightPriority) {
                             return this;
                         } else if (leftPriority < rightPriority) {
                             return instantiator;
+                        } else if (constructor.getParameterTypes().length > instantiator.getConstructor().getParameterTypes().length) {
+                            return this;
+                        } else if (constructor.getParameterTypes().length < instantiator.getConstructor().getParameterTypes().length) {
+                            return instantiator;
                         } else {
-                            throw new IllegalStateException("Ambiguous constructors " + constructor + " and " + instantiator.constructor);
+                            return new Ambiguous(constructor, instantiator.getConstructor(), leftPriority, constructor.getParameterTypes().length);
                         }
                     }
 
@@ -3373,7 +3451,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 void materialize(Target.Sink sink,
                                  List<TypeDescription> transformed,
                                  Map<TypeDescription,
-                                 List<Throwable>> failed,
+                                         List<Throwable>> failed,
                                  List<String> unresolved) throws IOException;
 
                 /**
@@ -3728,7 +3806,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                                     Target.Sink sink,
                                                     List<TypeDescription> transformed,
                                                     Map<TypeDescription,
-                                                    List<Throwable>> failed,
+                                                            List<Throwable>> failed,
                                                     List<String> unresolved) {
                     this.sink = sink;
                     this.transformed = transformed;

@@ -36,7 +36,7 @@ import org.objectweb.asm.*;
 import java.lang.annotation.*;
 import java.security.Permission;
 import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -115,37 +115,37 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
                 TypeDescription.ForLoadedType.of(Permission[].class)));
         SIGNATURES.put(new MethodDescription.SignatureToken("doPrivileged",
                 TypeDescription.OBJECT,
-                TypeDescription.ForLoadedType.of(PrivilegedActionException.class)), new MethodDescription.SignatureToken("doPrivileged",
+                TypeDescription.ForLoadedType.of(PrivilegedExceptionAction.class)), new MethodDescription.SignatureToken("doPrivileged",
                 TypeDescription.OBJECT,
-                TypeDescription.ForLoadedType.of(PrivilegedActionException.class)));
+                TypeDescription.ForLoadedType.of(PrivilegedExceptionAction.class)));
         SIGNATURES.put(new MethodDescription.SignatureToken("doPrivilegedWithCombiner",
                 TypeDescription.OBJECT,
-                TypeDescription.ForLoadedType.of(PrivilegedAction.class)), new MethodDescription.SignatureToken("doPrivilegedWithCombiner",
+                TypeDescription.ForLoadedType.of(PrivilegedExceptionAction.class)), new MethodDescription.SignatureToken("doPrivilegedWithCombiner",
                 TypeDescription.OBJECT,
-                TypeDescription.ForLoadedType.of(PrivilegedAction.class)));
+                TypeDescription.ForLoadedType.of(PrivilegedExceptionAction.class)));
         SIGNATURES.put(new MethodDescription.SignatureToken("doPrivileged",
                 TypeDescription.OBJECT,
-                TypeDescription.ForLoadedType.of(PrivilegedActionException.class),
+                TypeDescription.ForLoadedType.of(PrivilegedExceptionAction.class),
                 TypeDescription.OBJECT), new MethodDescription.SignatureToken("doPrivileged",
                 TypeDescription.OBJECT,
-                TypeDescription.ForLoadedType.of(PrivilegedActionException.class),
+                TypeDescription.ForLoadedType.of(PrivilegedExceptionAction.class),
                 JavaType.ACCESS_CONTROL_CONTEXT.getTypeStub()));
         SIGNATURES.put(new MethodDescription.SignatureToken("doPrivileged",
                 TypeDescription.OBJECT,
-                TypeDescription.ForLoadedType.of(PrivilegedActionException.class),
+                TypeDescription.ForLoadedType.of(PrivilegedExceptionAction.class),
                 TypeDescription.OBJECT,
                 TypeDescription.ForLoadedType.of(Permission[].class)), new MethodDescription.SignatureToken("doPrivileged",
                 TypeDescription.OBJECT,
-                TypeDescription.ForLoadedType.of(PrivilegedActionException.class),
+                TypeDescription.ForLoadedType.of(PrivilegedExceptionAction.class),
                 JavaType.ACCESS_CONTROL_CONTEXT.getTypeStub(),
                 TypeDescription.ForLoadedType.of(Permission[].class)));
         SIGNATURES.put(new MethodDescription.SignatureToken("doPrivilegedWithCombiner",
                 TypeDescription.OBJECT,
-                TypeDescription.ForLoadedType.of(PrivilegedActionException.class),
+                TypeDescription.ForLoadedType.of(PrivilegedExceptionAction.class),
                 TypeDescription.OBJECT,
                 TypeDescription.ForLoadedType.of(Permission[].class)), new MethodDescription.SignatureToken("doPrivilegedWithCombiner",
                 TypeDescription.OBJECT,
-                TypeDescription.ForLoadedType.of(PrivilegedActionException.class),
+                TypeDescription.ForLoadedType.of(PrivilegedExceptionAction.class),
                 JavaType.ACCESS_CONTROL_CONTEXT.getTypeStub(),
                 TypeDescription.ForLoadedType.of(Permission[].class)));
         SIGNATURES.put(new MethodDescription.SignatureToken("getContext",
@@ -179,6 +179,7 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
      * @param property The property to control if the access controller should be used even
      *                 if available or {@code null} if such a property should not be available.
      */
+    @UsingReflection.Priority(Integer.MAX_VALUE)
     public AccessControllerPlugin(String property) {
         super(declaresMethod(isAnnotatedWith(Enhance.class)));
         this.property = property;
