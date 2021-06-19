@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 19. June 2021: version 1.11.5
+
+- Remove `AccessController` API to replace with weaved access control via `AccessControllerPlugin`.
+
 ### 19. June 2021: version 1.11.4
 
 - Add constant for Java 18
