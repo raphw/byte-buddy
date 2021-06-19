@@ -124,6 +124,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     public static final ClassFileVersion JAVA_V17 = new ClassFileVersion(Opcodes.V17);
 
     /**
+     * The class file version of Java 18.
+     */
+    public static final ClassFileVersion JAVA_V18 = new ClassFileVersion(Opcodes.V17 + 1);
+
+    /**
      * A version locator for the executing JVM.
      */
     private static final VersionLocator VERSION_LOCATOR = doPrivileged(VersionLocator.Resolver.INSTANCE);
@@ -209,6 +214,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             return JAVA_V16;
         } else if (javaVersionString.equals("1.17") || javaVersionString.equals("17")) {
             return JAVA_V17;
+        } else if (javaVersionString.equals("1.18") || javaVersionString.equals("18")) {
+            return JAVA_V18;
         } else {
             if (OpenedClassReader.EXPERIMENTAL) {
                 try {
@@ -268,6 +275,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                 return JAVA_V16;
             case 17:
                 return JAVA_V17;
+            case 18:
+                return JAVA_V18;
             default:
                 if (OpenedClassReader.EXPERIMENTAL && javaVersion > 0) {
                     return new ClassFileVersion(BASE_VERSION + javaVersion);
