@@ -114,8 +114,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         if: failure()
         with:
-          name: dist-without-markdown
-          path: byte-buddy/byte-buddy-dep/target/surefire-reports
+          path: byte-buddy/byte-buddy-dep/target/surefire-reports/
   coverage:
     name: Coverage
     runs-on: ubuntu-18.04
