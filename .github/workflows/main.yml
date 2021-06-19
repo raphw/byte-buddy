@@ -114,7 +114,9 @@ jobs:
       - uses: actions/upload-artifact@v2
         if: failure()
         with:
-          path: byte-buddy/byte-buddy-dep/target/surefire-reports/
+          path: |
+            /home/runner/work/byte-buddy/byte-buddy/byte-buddy-dep/target/surefire-reports/*.dumpstream
+            /home/runner/work/byte-buddy/byte-buddy/byte-buddy-dep/*.log
   coverage:
     name: Coverage
     runs-on: ubuntu-18.04
