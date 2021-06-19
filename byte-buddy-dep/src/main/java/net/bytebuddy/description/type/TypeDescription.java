@@ -36,8 +36,8 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.JavaType;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -6795,6 +6795,26 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
+             * Resolves a generic type to a builder of the same type.
+             *
+             * @param type The type to resolve.
+             * @return A builder for the given type.
+             */
+            public static Builder of(java.lang.reflect.Type type) {
+                return of(Sort.describe(type));
+            }
+
+            /**
+             * Resolves a generic type description to a builder of the same type.
+             *
+             * @param typeDescription The type to resolve.
+             * @return A builder for the given type.
+             */
+            public static Builder of(TypeDescription.Generic typeDescription) {
+                return typeDescription.accept(Visitor.INSTANCE);
+            }
+
+            /**
              * Creates a raw type of a type description.
              *
              * @param type The type to represent as a raw type.
@@ -7219,6 +7239,57 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             protected abstract Generic doBuild();
 
             /**
+             * A visitor to resolve a generic type to a {@link Builder}.
+             */
+            protected enum Visitor implements Generic.Visitor<Builder> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Builder onGenericArray(Generic genericArray) {
+                    return new OfGenericArrayType(genericArray.getComponentType(), genericArray.getDeclaredAnnotations());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Builder onWildcard(Generic wildcard) {
+                    throw new IllegalArgumentException("Cannot resolve wildcard type " + wildcard + " to builder");
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Builder onParameterizedType(Generic parameterizedType) {
+                    return new OfParameterizedType(parameterizedType.asErasure(),
+                            parameterizedType.getOwnerType(),
+                            parameterizedType.getTypeArguments(),
+                            parameterizedType.getDeclaredAnnotations());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Builder onTypeVariable(Generic typeVariable) {
+                    return new OfTypeVariable(typeVariable.getSymbol(), typeVariable.getDeclaredAnnotations());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Builder onNonGenericType(Generic typeDescription) {
+                    return typeDescription.isArray()
+                            ? typeDescription.getComponentType().accept(this).asArray().annotate(typeDescription.getDeclaredAnnotations())
+                            : new OfNonGenericType(typeDescription.asErasure(), typeDescription.getOwnerType(), typeDescription.getDeclaredAnnotations());
+                }
+            }
+
+            /**
              * A generic type builder for building a non-generic type.
              */
             @HashCodeAndEqualsPlugin.Enhance
@@ -7250,7 +7321,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param typeDescription The type's erasure.
                  * @param ownerType       The raw type's raw declaring type or {@code null} if no such type is defined.
                  */
-                private OfNonGenericType(TypeDescription typeDescription, TypeDescription ownerType) {
+                protected OfNonGenericType(TypeDescription typeDescription, TypeDescription ownerType) {
                     this(typeDescription, ownerType == null
                             ? Generic.UNDEFINED
                             : ownerType.asGenericType());

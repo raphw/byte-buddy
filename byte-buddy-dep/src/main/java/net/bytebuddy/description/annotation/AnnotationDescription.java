@@ -25,6 +25,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
 import java.lang.annotation.*;
@@ -36,6 +37,7 @@ import java.security.PrivilegedAction;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
 /**
  * An annotation description describes {@link java.lang.annotation.Annotation} meta data of a class without this class
@@ -59,7 +61,15 @@ public interface AnnotationDescription {
     AnnotationDescription.Loadable<?> UNDEFINED = null;
 
     /**
-     * Returns the value of this annotation.
+     * Returns a value of this annotation.
+     *
+     * @param property The name of the property being accessed.
+     * @return The value for the supplied property.
+     */
+    AnnotationValue<?, ?> getValue(String property);
+
+    /**
+     * Returns a value of this annotation.
      *
      * @param property The property being accessed.
      * @return The value for the supplied property.
@@ -405,6 +415,18 @@ public interface AnnotationDescription {
         private static final ElementType[] DEFAULT_TARGET = new ElementType[]{ElementType.ANNOTATION_TYPE,
                 ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.METHOD,
                 ElementType.PACKAGE, ElementType.PARAMETER, ElementType.TYPE};
+
+        /**
+         * {@inheritDoc}
+         */
+        public AnnotationValue<?, ?> getValue(String property) {
+            MethodList<MethodDescription.InDefinedShape> candidates = getAnnotationType().getDeclaredMethods().filter(named(property).and(takesArguments(0)));
+            if (candidates.size() == 1) {
+                return getValue(candidates.getOnly());
+            } else {
+                throw new IllegalArgumentException("Unknown property of " + getAnnotationType() + ": " + property);
+            }
+        }
 
         /**
          * {@inheritDoc}

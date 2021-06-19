@@ -155,6 +155,11 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
         super.testTypeAnnotationNonGenericInnerType();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testWildcardCannotBeResolved() {
+        TypeDescription.Generic.Builder.of(TypeDescription.Generic.Builder.unboundWildcard());
+    }
+
     private TypeDescription.Generic describe(Type type, TypeDescription.Generic.AnnotationReader annotationReader) {
         if (type instanceof WildcardType) {
             WildcardType wildcardType = (WildcardType) type;
@@ -167,29 +172,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
     }
 
     private TypeDescription.Generic.Builder builder(Type type, TypeDescription.Generic.AnnotationReader annotationReader) {
-        if (type instanceof TypeVariable) {
-            return TypeDescription.Generic.Builder.typeVariable(((TypeVariable<?>) type).getName()).annotate(annotationReader.asList());
-        } else if (type instanceof Class) {
-            return (((Class<?>) type).isArray() ? builder(((Class<?>) type).getComponentType(), annotationReader.ofComponentType()).asArray() : TypeDescription.Generic.Builder.rawType(
-                    (Class<?>) type,
-                    ((Class<?>) type).getDeclaringClass() == null ? null : builder(((Class<?>) type).getDeclaringClass(), annotationReader.ofOwnerType()).build())).annotate(annotationReader.asList());
-        } else if (type instanceof GenericArrayType) {
-            return builder(((GenericArrayType) type).getGenericComponentType(), annotationReader.ofComponentType()).asArray().annotate(annotationReader.asList());
-        } else if (type instanceof ParameterizedType) {
-            ParameterizedType parameterizedType = (ParameterizedType) type;
-            List<TypeDescription.Generic> parameters = new ArrayList<TypeDescription.Generic>(parameterizedType.getActualTypeArguments().length);
-            int index = 0;
-            for (Type parameter : parameterizedType.getActualTypeArguments()) {
-                parameters.add(describe(parameter, annotationReader.ofTypeArgument(index++)));
-            }
-            return TypeDescription.Generic.Builder.parameterizedType(TypeDescription.ForLoadedType.of((Class<?>) parameterizedType.getRawType()),
-                    parameterizedType.getOwnerType() == null
-                            ? null
-                            : describe(parameterizedType.getOwnerType(), annotationReader.ofOwnerType()),
-                    parameters).annotate(annotationReader.asList());
-        } else {
-            throw new AssertionError("Unexpected type: " + type);
-        }
+        return TypeDescription.Generic.Builder.of(TypeDefinition.Sort.describe(type, annotationReader));
     }
 
     @SuppressWarnings("unused")
