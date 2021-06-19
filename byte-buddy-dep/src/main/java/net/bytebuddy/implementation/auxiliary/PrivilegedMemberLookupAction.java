@@ -39,7 +39,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
- * A {@link PrivilegedExceptionAction} to lookup a method constant using an {@link java.security.AccessController}.
+ * A {@link PrivilegedExceptionAction} to lookup a method constant using an {@code java.security.AccessController}.
  */
 public enum PrivilegedMemberLookupAction implements AuxiliaryType {
 

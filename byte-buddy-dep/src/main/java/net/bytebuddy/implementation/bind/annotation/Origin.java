@@ -80,10 +80,10 @@ public @interface Origin {
     boolean cache() default true;
 
     /**
-     * Determines if the method should be resolved by using an {@link java.security.AccessController} using the privileges of the generated class.
-     * Doing so requires the generation of an auxiliary class that implements {@link java.security.PrivilegedExceptionAction}.
+     * Determines if the method should be resolved by using an {@code java.security.AccessController} using the privileges of the generated class.
+     * Doing so requires the generation of an auxiliary class that implements {@code java.security.PrivilegedExceptionAction}.
      *
-     * @return {@code true} if the class should be looked up using an {@link java.security.AccessController}.
+     * @return {@code true} if the class should be looked up using an {@code java.security.AccessController}.
      */
     boolean privileged() default false;
 

@@ -1239,7 +1239,7 @@ public interface ClassFileLocator extends Closeable {
          */
         @AccessControllerPlugin.Enhance
         private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return AccessController.doPrivileged(action); // action.run();
+            return action.run();
         }
 
         /**

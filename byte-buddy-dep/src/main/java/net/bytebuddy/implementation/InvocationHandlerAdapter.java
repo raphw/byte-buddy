@@ -65,12 +65,12 @@ public abstract class InvocationHandlerAdapter implements Implementation.Composa
     private static final boolean CACHED = true;
 
     /**
-     * Indicates that a lookup of a method constant should not be looked up using an {@link java.security.AccessController}.
+     * Indicates that a lookup of a method constant should not be looked up using an {@code java.security.AccessController}.
      */
     private static final boolean UNPRIVILEGED = false;
 
     /**
-     * Indicates that a lookup of a method constant should be looked up using an {@link java.security.AccessController}.
+     * Indicates that a lookup of a method constant should be looked up using an {@code java.security.AccessController}.
      */
     private static final boolean PRIVILEGED = true;
 
@@ -96,7 +96,7 @@ public abstract class InvocationHandlerAdapter implements Implementation.Composa
     protected final boolean cached;
 
     /**
-     * Determines if the {@link java.lang.reflect.Method} instances are retrieved by using an {@link java.security.AccessController}.
+     * Determines if the {@link java.lang.reflect.Method} instances are retrieved by using an {@code java.security.AccessController}.
      */
     protected final boolean privileged;
 
@@ -117,7 +117,7 @@ public abstract class InvocationHandlerAdapter implements Implementation.Composa
      * @param fieldName  The name of the field.
      * @param cached     Determines if the {@link java.lang.reflect.Method} instances that are handed to the
      *                   intercepted methods are cached in {@code static} fields.
-     * @param privileged Determines if the {@link java.lang.reflect.Method} instances are retrieved by using an {@link java.security.AccessController}.
+     * @param privileged Determines if the {@link java.lang.reflect.Method} instances are retrieved by using an {@code java.security.AccessController}.
      * @param returning  Determines if this implementation is returning the result value or is dropping it.
      * @param assigner   The assigner to apply when defining this implementation.
      */
@@ -216,7 +216,7 @@ public abstract class InvocationHandlerAdapter implements Implementation.Composa
     public abstract Implementation withAssigner(Assigner assigner);
 
     /**
-     * Configures that the method constants supplied to the invocation handler adapter are resolved using an {@link java.security.AccessController}.
+     * Configures that the method constants supplied to the invocation handler adapter are resolved using an {@code java.security.AccessController}.
      *
      * @return This instrumentation with a privileged lookup configured.
      */
@@ -279,7 +279,8 @@ public abstract class InvocationHandlerAdapter implements Implementation.Composa
     public interface WithoutPrivilegeConfiguration extends AssignerConfigurable {
 
         /**
-         * Configures that the method constants supplied to the invocation handler adapter are resolved using an {@link java.security.AccessController}.
+         * Configures that the method constants supplied to the invocation handler adapter are resolved
+         * using an {@code java.security.AccessController}.
          *
          * @return This instrumentation with a privileged lookup configured.
          */
@@ -311,7 +312,7 @@ public abstract class InvocationHandlerAdapter implements Implementation.Composa
          * @param cached            Determines if the {@link java.lang.reflect.Method} instances that are handed to the
          *                          intercepted methods are cached in {@code static} fields.
          * @param privileged        Determines if the {@link java.lang.reflect.Method} instances are retrieved by
-         *                          using an {@link java.security.AccessController}.
+         *                          using an {@code java.security.AccessController}.
          * @param returning         Determines if this implementation is returning the result value or is dropping it.
          * @param assigner          The assigner to apply when defining this implementation.
          * @param invocationHandler The invocation handler to which all method calls are delegated.
@@ -425,7 +426,7 @@ public abstract class InvocationHandlerAdapter implements Implementation.Composa
          * @param cached              Determines if the {@link java.lang.reflect.Method} instances that are handed to the
          *                            intercepted methods are cached in {@code static} fields.
          * @param privileged          Determines if the {@link java.lang.reflect.Method} instances are retrieved by using
-         *                            an {@link java.security.AccessController}.
+         *                            an {@code java.security.AccessController}.
          * @param returning           Determines if this implementation is returning the result value or is dropping it.
          * @param assigner            The assigner to apply when defining this implementation.
          * @param fieldLocatorFactory The field locator factory to use.

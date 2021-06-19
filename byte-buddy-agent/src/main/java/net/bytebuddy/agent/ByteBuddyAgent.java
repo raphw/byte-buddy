@@ -52,7 +52,7 @@ import java.util.jar.*;
  * <b>Important</b>: This class's name is known to the Byte Buddy main application and must not be altered.
  * </p>
  * <p>
- * <b>Note</b>: Byte Buddy does not execute code using an {@link java.security.AccessController}. If a security manager
+ * <b>Note</b>: Byte Buddy does not execute code using an {@code java.security.AccessController}. If a security manager
  * is present, the user of this class is responsible for assuring any required privileges.
  * </p>
  */

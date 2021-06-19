@@ -55,9 +55,9 @@ public @interface SuperMethod {
     boolean cached() default true;
 
     /**
-     * Indicates if the instance assigned to this parameter should be looked up using an {@link java.security.AccessController}.
+     * Indicates if the instance assigned to this parameter should be looked up using an {@code java.security.AccessController}.
      *
-     * @return {@code true} if this method should be looked up using an {@link java.security.AccessController}.
+     * @return {@code true} if this method should be looked up using an {@code java.security.AccessController}.
      */
     boolean privileged() default false;
 
@@ -140,7 +140,7 @@ public @interface SuperMethod {
             private final boolean cached;
 
             /**
-             * {@code true} if this method should be looked up using an {@link java.security.AccessController}.
+             * {@code true} if this method should be looked up using an {@code java.security.AccessController}.
              */
             private final boolean privileged;
 
@@ -149,7 +149,7 @@ public @interface SuperMethod {
              *
              * @param specialMethodInvocation The special method invocation that represents the super method call.
              * @param cached                  {@code true} if the method constant should be cached.
-             * @param privileged              {@code true} if this method should be looked up using an {@link java.security.AccessController}.
+             * @param privileged              {@code true} if this method should be looked up using an {@code java.security.AccessController}.
              */
             protected DelegationMethod(Implementation.SpecialMethodInvocation specialMethodInvocation, boolean cached, boolean privileged) {
                 this.specialMethodInvocation = specialMethodInvocation;
