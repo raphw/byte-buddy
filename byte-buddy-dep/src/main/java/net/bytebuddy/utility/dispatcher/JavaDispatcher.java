@@ -443,6 +443,32 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 return DynamicClassLoader.invoker();
             }
         }
+
+        /**
+         * An unsafe invoker that uses Byte Buddy's invocation context. This is only meant to be used if dynamic class generation
+         * is not supported, e.g. on an Android device.
+         */
+        enum Unsafe implements Invoker {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public Object newInstance(Constructor<?> constructor, Object[] argument) throws InstantiationException, IllegalAccessException, InvocationTargetException {
+                return constructor.newInstance(argument);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Object invoke(Method method, Object instance, Object[] argument) throws IllegalAccessException, InvocationTargetException {
+                return method.invoke(instance, argument);
+            }
+        }
     }
 
     /**
@@ -1278,6 +1304,8 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                         .defineClass(Invoker.class.getName() + "$Dispatcher", binaryRepresentation, 0, binaryRepresentation.length, new ProtectionDomain(null, null))
                         .getConstructor(NO_PARAMETER)
                         .newInstance(NO_ARGUMENT);
+            } catch (UnsupportedOperationException ignored) {
+                return Invoker.Unsafe.INSTANCE;
             } catch (Exception exception) {
                 throw new IllegalStateException("Failed to create invoker for " + Invoker.class.getName(), exception);
             }
