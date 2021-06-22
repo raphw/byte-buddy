@@ -85,6 +85,11 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     private int threads;
 
     /**
+     * If {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
+     */
+    private boolean lazy;
+
+    /**
      * Creates a new abstract Byte Buddy task extension.
      */
     protected AbstractByteBuddyTaskExtension() {
@@ -275,6 +280,24 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      */
     public void setThreads(int threads) {
         this.threads = threads;
+    }
+
+    /**
+     * Returns {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
+     *
+     * @return {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
+     */
+    public boolean isLazy() {
+        return lazy;
+    }
+
+    /**
+     * If set to {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
+     *
+     * @param lazy {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
+     */
+    public void setLazy(boolean lazy) {
+        this.lazy = lazy;
     }
 
     /**

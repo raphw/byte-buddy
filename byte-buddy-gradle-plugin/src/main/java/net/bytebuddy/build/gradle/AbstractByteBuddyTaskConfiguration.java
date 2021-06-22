@@ -75,11 +75,16 @@ public abstract class AbstractByteBuddyTaskConfiguration<
             byteBuddyTask.dependsOn(compileTask);
             extension.configure(byteBuddyTask);
             configureDirectories(sourceSet.getJava(), compileTask, byteBuddyTask);
-            project.getGradle().getTaskGraph().whenReady(new TaskExecutionGraphAdjustmentAction(project,
+            Action<TaskExecutionGraph> action = new TaskExecutionGraphAdjustmentAction(project,
                     name,
                     extension.getAdjustment(),
                     byteBuddyTask,
-                    compileTask));
+                    compileTask);
+            if (extension.isLazy()) {
+                project.getGradle().getTaskGraph().whenReady(action);
+            } else {
+                action.execute(project.getGradle().getTaskGraph());
+            }
         }
     }
 
