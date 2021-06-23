@@ -66,6 +66,16 @@ public enum Adjustment {
         protected Iterable<Task> resolve(Project project, TaskExecutionGraph graph) {
             return graph.getAllTasks();
         }
+    },
+
+    /**
+     * Does not resolve any tasks.
+     */
+    NONE {
+        @Override
+        protected Iterable<Task> resolve(Project project, TaskExecutionGraph graph) {
+            return Collections.<Task>emptySet();
+        }
     };
 
     /**
