@@ -67,7 +67,7 @@ public class JavaDispatcherTest {
 
     @Test
     public void testNonStaticAdjustedDispatcher() throws Exception {
-        assertThat(JavaDispatcher.of(NonStaticAdjustedSample.class).run().getMethod(Object.class, "equals", new Class<?>[]{Object.class}),
+        assertThat(JavaDispatcher.of(NonStaticAdjustedSample.class, null, generate).run().getMethod(Object.class, "equals", new Class<?>[]{Object.class}),
                 is(Object.class.getMethod("equals", Object.class)));
     }
 
@@ -144,13 +144,35 @@ public class JavaDispatcherTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testJavaSecurity() {
-        JavaDispatcher.of(ProtectionDomain.class);
+        JavaDispatcher.of(ProtectionDomain.class, null, generate);
     }
 
     @JavaVersionRule.Enforce(9)
     @Test(expected = UnsupportedOperationException.class)
     public void testMethodHandleLookup() {
-        JavaDispatcher.of(MethodHandles.class).run().lookup();
+        JavaDispatcher.of(MethodHandles.class, null, generate).run().lookup();
+    }
+
+    @Test(expected = IllegalAccessException.class)
+    public void testInvokerNotCreatable() throws Exception {
+        JavaDispatcher.Invoker.Unsafe.class.getDeclaredConstructor().newInstance();
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(9)
+    public void testCallerNotLeakingContext() throws Exception {
+        Class<?> caller = JavaDispatcher.of(JavaDispatcherCaller.class, JavaDispatcherTest.class.getClassLoader(), generate).run().caller();
+        assertThat(caller.getClassLoader(), not(sameInstance(JavaDispatcherTest.class.getClassLoader())));
+        assertThat(caller.getProtectionDomain(), not(sameInstance(JavaDispatcherTest.class.getProtectionDomain())));
+    }
+
+    @SuppressWarnings({"unchecked", "unused"})
+    public static Class<?> caller() throws Exception {
+        Class<?> type = Class.forName("java.lang.StackWalker");
+        Class<?> option = Class.forName("java.lang.StackWalker$Option");
+        return (Class<?>) type.getMethod("getCallerClass").invoke(type.getMethod("getInstance", option).invoke(
+                null,
+                Enum.valueOf((Class) option, "RETAIN_CLASS_REFERENCE")));
     }
 
     @JavaDispatcher.Proxied("java.lang.Object")
@@ -267,5 +289,12 @@ public class JavaDispatcherTest {
 
         @JavaDispatcher.IsStatic
         Object lookup();
+    }
+
+    @JavaDispatcher.Proxied("net.bytebuddy.utility.dispatcher.JavaDispatcherTest")
+    public interface JavaDispatcherCaller {
+
+        @JavaDispatcher.IsStatic
+        Class<?> caller() throws Exception;
     }
 }

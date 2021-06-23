@@ -448,12 +448,15 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
          * An unsafe invoker that uses Byte Buddy's invocation context. This is only meant to be used if dynamic class generation
          * is not supported, e.g. on an Android device.
          */
-        enum Unsafe implements Invoker {
+        @HashCodeAndEqualsPlugin.Enhance
+        class Unsafe implements Invoker {
 
             /**
-             * The singleton instance.
+             * A private constructor to avoid instantiation from a foreign location to avoid leaking Byte Buddy's context.
              */
-            INSTANCE;
+            private Unsafe() {
+                /* do nothing */
+            }
 
             /**
              * {@inheritDoc}
@@ -1305,7 +1308,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                         .getConstructor(NO_PARAMETER)
                         .newInstance(NO_ARGUMENT);
             } catch (UnsupportedOperationException ignored) {
-                return Invoker.Unsafe.INSTANCE;
+                return new Invoker.Unsafe();
             } catch (Exception exception) {
                 throw new IllegalStateException("Failed to create invoker for " + Invoker.class.getName(), exception);
             }
