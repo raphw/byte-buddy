@@ -78,6 +78,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
             Action<TaskExecutionGraph> action = new TaskExecutionGraphAdjustmentAction(project,
                     name,
                     extension.getAdjustment(),
+                    extension.isStrict(),
                     byteBuddyTask,
                     compileTask);
             if (extension.isLazy()) {
@@ -119,6 +120,11 @@ public abstract class AbstractByteBuddyTaskConfiguration<
         private final Adjustment adjustment;
 
         /**
+         * If {@code true}, dependency resolution errors should result in a build error.
+         */
+        private final boolean strict;
+
+        /**
          * The Byte Buddy task that is injected.
          */
         private final Task byteBuddyTask;
@@ -134,12 +140,14 @@ public abstract class AbstractByteBuddyTaskConfiguration<
          * @param project       The current project.
          * @param name          The name of the task.
          * @param adjustment    The adjustment to apply.
+         * @param strict        If {@code true}, dependency resolution errors should result in a build error.
          * @param byteBuddyTask The Byte Buddy task that is injected.
          * @param compileTask   The compile task to which the Byte Buddy task is appended to.
          */
         protected TaskExecutionGraphAdjustmentAction(Project project,
                                                      String name,
                                                      Adjustment adjustment,
+                                                     boolean strict,
                                                      Task byteBuddyTask,
                                                      Task compileTask) {
             this.project = project;
@@ -147,6 +155,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
             this.adjustment = adjustment;
             this.byteBuddyTask = byteBuddyTask;
             this.compileTask = compileTask;
+            this.strict = strict;
         }
 
         /**
@@ -154,15 +163,26 @@ public abstract class AbstractByteBuddyTaskConfiguration<
          */
         public void execute(TaskExecutionGraph graph) {
             for (Task task : adjustment.resolve(project, graph)) {
-                if (!(task.getName().equals(name)
-                        && task.getProject().equals(project))
-                        && task.getTaskDependencies().getDependencies(task).contains(compileTask)) {
-                    task.dependsOn(byteBuddyTask);
-                    project.getLogger().debug("Altered task '{}' of project '{}' to depend on '{}' of project '{}'",
-                            task.getName(),
-                            task.getProject().getName(),
-                            name,
-                            project.getName());
+                try {
+                    if (!(task.getName().equals(name)
+                            && task.getProject().equals(project))
+                            && task.getTaskDependencies().getDependencies(task).contains(compileTask)) {
+                        task.dependsOn(byteBuddyTask);
+                        project.getLogger().debug("Altered task '{}' of project '{}' to depend on '{}' of project '{}'",
+                                task.getName(),
+                                task.getProject().getName(),
+                                name,
+                                project.getName());
+                    }
+                } catch (RuntimeException exception) {
+                    if (strict) {
+                        throw exception;
+                    } else {
+                        project.getLogger().warn("Failed to resolve '{}' of project '{}' - transformed classes might not be visible to dependant tasks",
+                                task.getName(),
+                                task.getProject().getName(),
+                                exception);
+                    }
                 }
             }
         }

@@ -80,6 +80,11 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     private Adjustment adjustment;
 
     /**
+     * Determines if a failed task dependency adjustment should result in an error or should only be logged as a warning.
+     */
+    private boolean strict;
+
+    /**
      * The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
      */
     private int threads;
@@ -99,7 +104,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         failOnLiveInitializer = true;
         warnOnEmptyTypeSet = true;
         discovery = Discovery.EMPTY;
-        adjustment = Adjustment.SELF;
+        adjustment = Adjustment.FULL;
     }
 
     /**
@@ -262,6 +267,24 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      */
     public void setAdjustment(Adjustment adjustment) {
         this.adjustment = adjustment;
+    }
+
+    /**
+     * Determines if a failed dependency resolution should result in a build error or be logged as a warning.
+     *
+     * @return {@code true} if a failed dependency resolution should result in a build error.
+     */
+    public boolean isStrict() {
+        return strict;
+    }
+
+    /**
+     * Determines if a failed dependency resolution should result in a build error or be logged as a warning.
+     *
+     * @param strict {@code true} if a failed dependency resolution should result in a build error.
+     */
+    public void setStrict(boolean strict) {
+        this.strict = strict;
     }
 
     /**
