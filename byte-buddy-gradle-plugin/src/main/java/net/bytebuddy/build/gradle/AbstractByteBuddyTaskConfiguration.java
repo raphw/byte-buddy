@@ -178,9 +178,11 @@ public abstract class AbstractByteBuddyTaskConfiguration<
                     if (strict) {
                         throw exception;
                     } else {
-                        project.getLogger().warn("Failed to resolve '{}' of project '{}' - transformed classes might not be visible to dependant tasks",
+                        project.getLogger().warn("Failed to resolve potential dependency for task '{}' of project '{}' on '{}' of project '{}' - dependency must be declared manually if appropriate",
                                 task.getName(),
                                 task.getProject().getName(),
+                                name,
+                                project.getName(),
                                 exception);
                     }
                 }
