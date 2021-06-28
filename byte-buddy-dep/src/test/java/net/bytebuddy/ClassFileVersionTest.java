@@ -54,17 +54,17 @@ public class ClassFileVersionTest {
 
     @Test
     public void testLatestVersion() throws Exception {
-        Pattern pattern = Pattern.compile("JAVA_V[0-9]+");
-        ClassFileVersion latest = null;
-        for (Field field : ClassFileVersion.class.getFields()) {
+        double version = 0d;
+        int value = 0;
+        Pattern pattern = Pattern.compile("V[0-9]+(_[0-9]+)?");
+        for (Field field : Opcodes.class.getFields()) {
             if (pattern.matcher(field.getName()).matches()) {
-                ClassFileVersion classFileVersion = (ClassFileVersion) field.get(null);
-                if (latest == null || classFileVersion.isGreaterThan(latest)) {
-                    latest = classFileVersion;
+                if (version < Double.parseDouble(field.getName().substring(1).replace('_', '.'))) {
+                    value = field.getInt(null);
                 }
             }
         }
-        assertThat(ClassFileVersion.latest(), is(latest));
+        assertThat(ClassFileVersion.latest().getMajorVersion(), is((short) value));
     }
 
     @Test(expected = IllegalArgumentException.class)
