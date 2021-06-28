@@ -84,10 +84,10 @@ public class OpenedClassReader {
      */
     public static ClassReader of(byte[] binaryRepresentation) {
         if (EXPERIMENTAL) {
-            ClassFileVersion classFileVersion = ClassFileVersion.ofClassFile(binaryRepresentation);
-            if (classFileVersion.isGreaterThan(ClassFileVersion.JAVA_V14)) {
-                binaryRepresentation[6] = (byte) (ClassFileVersion.JAVA_V14.getMajorVersion() >>> 8);
-                binaryRepresentation[7] = (byte) ClassFileVersion.JAVA_V14.getMajorVersion();
+            ClassFileVersion classFileVersion = ClassFileVersion.ofClassFile(binaryRepresentation), latest = ClassFileVersion.latest();
+            if (classFileVersion.isGreaterThan(latest)) {
+                binaryRepresentation[6] = (byte) (latest.getMajorVersion() >>> 8);
+                binaryRepresentation[7] = (byte) latest.getMajorVersion();
                 ClassReader classReader = new ClassReader(binaryRepresentation);
                 binaryRepresentation[6] = (byte) (classFileVersion.getMajorVersion() >>> 8);
                 binaryRepresentation[7] = (byte) classFileVersion.getMajorVersion();

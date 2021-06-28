@@ -126,7 +126,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     /**
      * The class file version of Java 18.
      */
-    public static final ClassFileVersion JAVA_V18 = new ClassFileVersion(Opcodes.V17 + 1);
+    public static final ClassFileVersion JAVA_V18 = new ClassFileVersion(Opcodes.V18);
 
     /**
      * A version locator for the executing JVM.
@@ -284,6 +284,15 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                     throw new IllegalArgumentException("Unknown Java version: " + javaVersion);
                 }
         }
+    }
+
+    /**
+     * Returns the latest officially supported Java version when experimental support is not enabled.
+     *
+     * @return The latest officially supported Java version.
+     */
+    public static ClassFileVersion latest() {
+        return ClassFileVersion.JAVA_V18;
     }
 
     /**

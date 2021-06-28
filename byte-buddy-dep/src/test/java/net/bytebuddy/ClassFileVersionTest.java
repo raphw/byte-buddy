@@ -52,6 +52,21 @@ public class ClassFileVersionTest {
         assertThat(ClassFileVersion.of(Object.class).getMinorMajorVersion(), not(0));
     }
 
+    @Test
+    public void testLatestVersion() throws Exception {
+        Pattern pattern = Pattern.compile("JAVA_V[0-9]+");
+        ClassFileVersion latest = null;
+        for (Field field : ClassFileVersion.class.getFields()) {
+            if (pattern.matcher(field.getName()).matches()) {
+                ClassFileVersion classFileVersion = (ClassFileVersion) field.get(null);
+                if (latest == null || classFileVersion.isGreaterThan(latest)) {
+                    latest = classFileVersion;
+                }
+            }
+        }
+        assertThat(ClassFileVersion.latest(), is(latest));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalClassFile() throws Exception {
         ClassFileVersion.ofClassFile(new byte[0]);
