@@ -73,9 +73,26 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     private Discovery discovery;
 
     /**
+     * Determines what tasks are considered when adjusting the task dependency graph to include the Byte Buddy task.
+     * By default, only the altered task's project's task is considered but the adjustment can include subprojects or
+     * the entire project graph. Note that it might not always be legal to resolve such recursive dependencies.
+     */
+    private Adjustment adjustment;
+
+    /**
+     * Determines if a failed task dependency adjustment should result in an error or should only be logged as a warning.
+     */
+    private boolean strict;
+
+    /**
      * The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
      */
     private int threads;
+
+    /**
+     * If {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
+     */
+    private boolean lazy;
 
     /**
      * Creates a new abstract Byte Buddy task extension.
@@ -87,6 +104,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         failOnLiveInitializer = true;
         warnOnEmptyTypeSet = true;
         discovery = Discovery.EMPTY;
+        adjustment = Adjustment.FULL;
     }
 
     /**
@@ -225,12 +243,48 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     }
 
     /**
-     * Determines the discovery being used for finding plugins on the class path.
+     * Determines the discovery for finding plugins on the class path.
      *
      * @param discovery The discovery for finding plugins on the class path.
      */
     public void setDiscovery(Discovery discovery) {
         this.discovery = discovery;
+    }
+
+    /**
+     * Determines the adjustment for tasks that might depend on post-processed compile tasks.
+     *
+     * @return The adjustment for tasks that might depend on post-processed compile tasks.
+     */
+    public Adjustment getAdjustment() {
+        return adjustment;
+    }
+
+    /**
+     * Determines the adjustment for tasks that might depend on post-processed compile tasks.
+     *
+     * @param adjustment The adjustment for tasks that might depend on post-processed compile tasks.
+     */
+    public void setAdjustment(Adjustment adjustment) {
+        this.adjustment = adjustment;
+    }
+
+    /**
+     * Determines if a failed dependency resolution should result in a build error or be logged as a warning.
+     *
+     * @return {@code true} if a failed dependency resolution should result in a build error.
+     */
+    public boolean isStrict() {
+        return strict;
+    }
+
+    /**
+     * Determines if a failed dependency resolution should result in a build error or be logged as a warning.
+     *
+     * @param strict {@code true} if a failed dependency resolution should result in a build error.
+     */
+    public void setStrict(boolean strict) {
+        this.strict = strict;
     }
 
     /**
@@ -249,6 +303,24 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      */
     public void setThreads(int threads) {
         this.threads = threads;
+    }
+
+    /**
+     * Returns {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
+     *
+     * @return {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
+     */
+    public boolean isLazy() {
+        return lazy;
+    }
+
+    /**
+     * If set to {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
+     *
+     * @param lazy {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
+     */
+    public void setLazy(boolean lazy) {
+        this.lazy = lazy;
     }
 
     /**
