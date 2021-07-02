@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 2. July 2021: version 1.11.6
+
+- Add fallback for `JavaDispatcher` that works on Android and other platforms that do not support dynamic class definitions.
+- Make Gradle task dependency resolution more robust and configurable.
+- Update ASM and support Java 18 without experimental configuration.
+
 ### 19. June 2021: version 1.11.5
 
 - Remove `AccessController` API to replace with weaved access control via `AccessControllerPlugin`.
