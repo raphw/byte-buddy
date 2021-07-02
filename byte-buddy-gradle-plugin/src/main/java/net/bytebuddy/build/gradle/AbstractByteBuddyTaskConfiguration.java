@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.build.gradle;
 
+import groovy.lang.Closure;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -82,7 +83,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
                     byteBuddyTask,
                     compileTask);
             if (extension.isLazy()) {
-                project.getGradle().getTaskGraph().whenReady(action);
+                project.getGradle().getTaskGraph().whenReady(new TaskExecutionGraphClosure(action, project.getGradle().getTaskGraph()));
             } else {
                 action.execute(project.getGradle().getTaskGraph());
             }
@@ -90,7 +91,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
     }
 
     /**
-     * Configures the directories of the compile and Byte Buddy tasks.
+     * Configures the direTaskExecutionGraphctories of the compile and Byte Buddy tasks.
      *
      * @param source        The source directory set.
      * @param compileTask   The compile task.
@@ -187,6 +188,43 @@ public abstract class AbstractByteBuddyTaskConfiguration<
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * A closure to execute an action on the {@link TaskExecutionGraph}. Older Gradle versions do not offer an overloaded method that accepts an
+     * action such that a dispatch requires an explicit wrapping with a {@link Closure}.
+     */
+    protected static class TaskExecutionGraphClosure extends Closure<Void> {
+
+        /**
+         * The action to execute.
+         */
+        private final Action<TaskExecutionGraph> action;
+
+        /**
+         * The task execution graph to use.
+         */
+        private final TaskExecutionGraph taskExecutionGraph;
+
+        /**
+         * Creates a new closure for executing an action on the task execution graph.
+         *
+         * @param action             The action to execute.
+         * @param taskExecutionGraph The task execution graph to use.
+         */
+        protected TaskExecutionGraphClosure(Action<TaskExecutionGraph> action, TaskExecutionGraph taskExecutionGraph) {
+            super(null);
+            this.action = action;
+            this.taskExecutionGraph = taskExecutionGraph;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Void call(Object... argument) {
+            action.execute(taskExecutionGraph);
+            return null;
         }
     }
 }
