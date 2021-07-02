@@ -110,7 +110,7 @@ jobs:
           distribution: zulu
           architecture: x64
       - name: Build project
-        run: ./mvnw -s .mvn/nossl.settings.xml verify -Pintegration -Pjava${{ matrix.java }}
+        run: ./mvnw -s .mvn/nossl.settings.xml -U verify -Pintegration -Pjava${{ matrix.java }}
   coverage:
     name: Coverage
     runs-on: ubuntu-18.04
