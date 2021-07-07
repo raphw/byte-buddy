@@ -129,7 +129,7 @@ public enum MethodInvocation {
     }
 
     /**
-     * An illegal implicit method invocation.
+     * An illegal implicit method invocation. 非法的隐式方法调用
      */
     protected enum IllegalInvocation implements WithImplicitInvocationTargetType {
 

@@ -119,7 +119,7 @@ public enum Duplication implements StackManipulation {
     }
 
     /**
-     * A duplication that flips a value over the second value on the operand stack.
+     * A duplication that flips a value over the second value on the operand stack. 将一个值翻转到操作数堆栈上的第二个值上的一种复制
      */
     protected enum WithFlip implements StackManipulation {
 

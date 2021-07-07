@@ -39,13 +39,13 @@ import java.util.Collections;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * This annotation instructs Byte Buddy to inject a proxy class that calls a method's super method with
+ * This annotation instructs Byte Buddy to inject a proxy class that calls a method's super method with 此注释指示Byte Buddy注入代理类，该代理类使用显式参数调用方法的super方法
  * explicit arguments. For this, the {@link Morph.Binder}
- * needs to be installed for an interface type that takes an argument of the array type {@link java.lang.Object} and
+ * needs to be installed for an interface type that takes an argument of the array type {@link java.lang.Object} and  为此，需要为接口类型安装{@link Morph.Binder}，该接口类型接受数组类型 {@link java.lang.Object} 的参数并返回非数组类型的 {@link java.lang.Object}
  * returns a non-array type of {@link java.lang.Object}. This is an alternative to using the
  * {@link net.bytebuddy.implementation.bind.annotation.SuperCall} or
  * {@link net.bytebuddy.implementation.bind.annotation.DefaultCall} annotations which call a super
- * method using the same arguments as the intercepted method was invoked with.
+ * method using the same arguments as the intercepted method was invoked with. 这是使用{@link net.bytebuddy.implementation.bind.annotation.SuperCall} 或 {@link net.bytebuddy.implementation.bind.annotation.DefaultCall} 注解的替代方法，这些注解使用与被调用的方法
  *
  * @see net.bytebuddy.implementation.MethodDelegation
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
@@ -80,28 +80,28 @@ public @interface Morph {
     Class<?> defaultTarget() default void.class;
 
     /**
-     * A binder for the {@link net.bytebuddy.implementation.bind.annotation.Morph} annotation.
+     * A binder for the {@link net.bytebuddy.implementation.bind.annotation.Morph} annotation. {@link net.bytebuddy.implementation.bind.annotation.Morph}注解绑定器
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> {
 
         /**
-         * A reference to the serializable proxy method.
+         * A reference to the serializable proxy method. 对可序列化代理方法的引用
          */
         private static final MethodDescription.InDefinedShape SERIALIZABLE_PROXY;
 
         /**
-         * A reference to the default method method.
+         * A reference to the default method method. 对默认方法的引用
          */
         private static final MethodDescription.InDefinedShape DEFAULT_METHOD;
 
         /**
-         * A reference to the default target method.
+         * A reference to the default target method. 对默认目标方法的引用
          */
         private static final MethodDescription.InDefinedShape DEFAULT_TARGET;
 
         /*
-         * Looks up references for all annotation properties of the morph annotation.
+         * Looks up references for all annotation properties of the morph annotation. 查找 @Morph 注解的所有注解属性的方法引用
          */
         static {
             MethodList<MethodDescription.InDefinedShape> methodList = TypeDescription.ForLoadedType.of(Morph.class).getDeclaredMethods();
@@ -111,14 +111,14 @@ public @interface Morph {
         }
 
         /**
-         * The method which is overridden for generating the proxy class.
+         * The method which is overridden for generating the proxy class. 用于生成代理类的方法被重写
          */
         private final MethodDescription forwardingMethod;
 
         /**
          * Creates a new binder.
          *
-         * @param forwardingMethod The method which is overridden for generating the proxy class.
+         * @param forwardingMethod The method which is overridden for generating the proxy class. 用于生成代理类的方法被重写
          */
         protected Binder(MethodDescription forwardingMethod) {
             this.forwardingMethod = forwardingMethod;
@@ -128,7 +128,7 @@ public @interface Morph {
          * Installs a given type for use on a {@link net.bytebuddy.implementation.bind.annotation.Morph}
          * annotation. The given type must be an interface without any super interfaces and a single method which
          * maps an {@link java.lang.Object} array to a {@link java.lang.Object} type. The use of generics is
-         * permitted.
+         * permitted. 安装给定类型以用于 {@link net.bytebuddy.implementation.bind.annotation.Morph} 注解。 给定的类型必须是没有任何超级接口的接口，并且必须是将 {@link java.lang.Object} 数组映射到 {@link java.lang.Object} 类型的单个方法。 允许使用泛型
          *
          * @param type The type to install.
          * @return A binder for the {@link net.bytebuddy.implementation.bind.annotation.Morph}
@@ -139,13 +139,13 @@ public @interface Morph {
         }
 
         /**
-         * Installs a given type for use on a {@link net.bytebuddy.implementation.bind.annotation.Morph}
+         * Installs a given type for use on a {@link net.bytebuddy.implementation.bind.annotation.Morph} 安装给定类型以用于{@link net.bytebuddy.implementation.bind.annotation.Morph}注解
          * annotation. The given type must be an interface without any super interfaces and a single method which
          * maps an {@link java.lang.Object} array to a {@link java.lang.Object} type. The use of generics is
          * permitted.
          *
-         * @param typeDescription The type to install.
-         * @return A binder for the {@link net.bytebuddy.implementation.bind.annotation.Morph}
+         * @param typeDescription The type to install. 要安装的类型
+         * @return A binder for the {@link net.bytebuddy.implementation.bind.annotation.Morph} {@link net.bytebuddy.implementation.bind.annotation.Morph}注解的绑定器
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> install(TypeDescription typeDescription) {
@@ -153,10 +153,10 @@ public @interface Morph {
         }
 
         /**
-         * Extracts the only method of a given type and validates to fit the constraints of the morph annotation.
+         * Extracts the only method of a given type and validates to fit the constraints of the morph annotation. 提取给定类型的唯一方法，并进行验证以适合变形注解的约束
          *
-         * @param typeDescription The type to extract the method from.
-         * @return The only method after validation.
+         * @param typeDescription The type to extract the method from. 从中提取方法的类型
+         * @return The only method after validation. 验证后的唯一方法
          */
         private static MethodDescription onlyMethod(TypeDescription typeDescription) {
             if (!typeDescription.isInterface()) {
@@ -213,24 +213,24 @@ public @interface Morph {
         }
 
         /**
-         * A default method locator is responsible for looking up a default method to a given source method.
+         * A default method locator is responsible for looking up a default method to a given source method. 默认方法定位器负责查找给定源方法的默认方法
          */
         protected interface DefaultMethodLocator {
 
             /**
-             * Locates the correct default method to a given source method.
+             * Locates the correct default method to a given source method. 将正确的默认方法定位到给定的源方法
              *
              * @param implementationTarget The current implementation target.
              * @param source               The source method for which a default method should be looked up.
              * @return A special method invocation of the default method or an illegal special method invocation,
-             * if no suitable invocation could be located.
+             * if no suitable invocation could be located. 默认方法的特殊方法调用或非法的特殊方法调用(如果找不到合适的调用)
              */
             Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
                                                            MethodDescription source);
 
             /**
              * An implicit default method locator that only permits the invocation of a default method if the source
-             * method itself represents a method that was defined on a default method interface.
+             * method itself represents a method that was defined on a default method interface. 一种隐式默认方法定位器，仅当源方法本身表示在默认方法接口上定义的方法时，才允许调用默认方法
              */
             enum Implicit implements DefaultMethodLocator {
 
@@ -246,7 +246,7 @@ public @interface Morph {
             }
 
             /**
-             * An explicit default method locator attempts to look up a default method in the specified interface type.
+             * An explicit default method locator attempts to look up a default method in the specified interface type. 显式默认方法定位器尝试在指定的接口类型中查找默认方法
              */
             @HashCodeAndEqualsPlugin.Enhance
             class Explicit implements DefaultMethodLocator {
@@ -277,29 +277,29 @@ public @interface Morph {
         }
 
         /**
-         * A proxy that implements the installed interface in order to allow for a morphed super method invocation.
+         * A proxy that implements the installed interface in order to allow for a morphed super method invocation. 实现已安装接口以便允许变形的超级方法调用的代理
          */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class RedirectionProxy implements AuxiliaryType, StackManipulation {
 
             /**
-             * The name of the field that carries an instance for invoking a super method on.
+             * The name of the field that carries an instance for invoking a super method on. 字段的名称，该字段包含用于在上调用超级方法的实例
              */
             protected static final String FIELD_NAME = "target";
 
             /**
-             * The interface type that is implemented by the generated proxy.
+             * The interface type that is implemented by the generated proxy. 由生成的代理实现的接口类型
              */
             private final TypeDescription morphingType;
 
             /**
-             * The type that is instrumented on which the super method is invoked.
+             * The type that is instrumented on which the super method is invoked. 在其上调用超级方法的插桩类型
              */
             private final TypeDescription instrumentedType;
 
             /**
              * The special method invocation to be executed by the morphing type via an accessor on the
-             * instrumented type.
+             * instrumented type.  变形类型通过插桩类型上的访问器执行的特殊方法调用
              */
             private final Implementation.SpecialMethodInvocation specialMethodInvocation;
 
@@ -309,17 +309,17 @@ public @interface Morph {
             private final Assigner assigner;
 
             /**
-             * Determines if the generated proxy should be {@link java.io.Serializable}.
+             * Determines if the generated proxy should be {@link java.io.Serializable}. 确定生成的代理是否应为{@link java.io.Serializable}.
              */
             private final boolean serializableProxy;
 
             /**
              * Creates a new redirection proxy.
              *
-             * @param morphingType            The interface type that is implemented by the generated proxy.
-             * @param instrumentedType        The type that is instrumented on which the super method is invoked.
+             * @param morphingType            The interface type that is implemented by the generated proxy.            由生成的代理实现的接口类型
+             * @param instrumentedType        The type that is instrumented on which the super method is invoked.       在其上调用超级方法的插桩类型
              * @param specialMethodInvocation The special method invocation to be executed by the morphing type via
-             *                                an accessor on the instrumented type.
+             *                                an accessor on the instrumented type.                     变形类型通过插桩类型上的访问器执行的特殊方法调用
              * @param assigner                The assigner to use.
              * @param serializableProxy       {@code true} if the proxy should be serializable.
              */
@@ -375,7 +375,7 @@ public @interface Morph {
             }
 
             /**
-             * Creates an instance of the proxy when instrumenting a static method.
+             * Creates an instance of the proxy when instrumenting a static method. 在插桩静态方法时创建代理实例
              */
             protected enum StaticFieldConstructor implements Implementation {
 
@@ -385,7 +385,7 @@ public @interface Morph {
                 INSTANCE;
 
                 /**
-                 * A reference of the {@link Object} type default constructor.
+                 * A reference of the {@link Object} type default constructor. {@link Object}类型默认构造函数的引用
                  */
                 private final MethodDescription objectTypeDefaultConstructor;
 
@@ -410,7 +410,7 @@ public @interface Morph {
             }
 
             /**
-             * Creates an instance of the proxy when instrumenting an instance method.
+             * Creates an instance of the proxy when instrumenting an instance method. 检测实例方法时，创建代理的实例
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class InstanceFieldConstructor implements Implementation {
@@ -421,9 +421,9 @@ public @interface Morph {
                 private final TypeDescription instrumentedType;
 
                 /**
-                 * Creates a new instance field constructor implementation.
+                 * Creates a new instance field constructor implementation. 创建新的实例字段构造函数实现
                  *
-                 * @param instrumentedType The instrumented type.
+                 * @param instrumentedType The instrumented type. 插桩类型
                  */
                 protected InstanceFieldConstructor(TypeDescription instrumentedType) {
                     this.instrumentedType = instrumentedType;
@@ -442,13 +442,13 @@ public @interface Morph {
                 }
 
                 /**
-                 * The byte code appender that implements the constructor.
+                 * The byte code appender that implements the constructor. 实现构造函数的字节码附加器
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 protected static class Appender implements ByteCodeAppender {
 
                     /**
-                     * The field that carries the instance on which the super method is invoked.
+                     * The field that carries the instance on which the super method is invoked. 包含在其上调用super方法的实例的字段
                      */
                     private final FieldDescription fieldDescription;
 
@@ -481,13 +481,13 @@ public @interface Morph {
             }
 
             /**
-             * Implements a the method call of the morphing method.
+             * Implements a the method call of the morphing method. 实现变形方法的方法调用
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class MethodCall implements Implementation {
 
                 /**
-                 * The accessor method to invoke from the proxy's method.
+                 * The accessor method to invoke from the proxy's method. 要从代理的方法调用的访问器方法
                  */
                 private final MethodDescription accessorMethod;
 
@@ -499,7 +499,7 @@ public @interface Morph {
                 /**
                  * Creates a new method call implementation for a proxy method.
                  *
-                 * @param accessorMethod The accessor method to invoke from the proxy's method.
+                 * @param accessorMethod The accessor method to invoke from the proxy's method. 要从代理的方法调用的访问器方法
                  * @param assigner       The assigner to be used.
                  */
                 protected MethodCall(MethodDescription accessorMethod, Assigner assigner) {
@@ -518,7 +518,7 @@ public @interface Morph {
                 }
 
                 /**
-                 * The byte code appender to implement the method.
+                 * The byte code appender to implement the method. 实现方法的字节码附加器
                  */
                 @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 protected class Appender implements ByteCodeAppender {

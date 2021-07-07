@@ -330,8 +330,8 @@ public interface AgentBuilder {
     AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, Collection<? extends JavaModule> modules);
 
     /**
-     * Assures that all modules of the supplied types are read by the module of any instrumented type and vice versa.
-     * If the current VM does not support the Java module system, calling this method has no effect and this instance is returned.
+     * Assures that all modules of the supplied types are read by the module of any instrumented type and vice versa. 确保所提供类型的所有模块都由任何检测类型的模块读取，反之亦然
+     * If the current VM does not support the Java module system, calling this method has no effect and this instance is returned. 如果当前VM不支持Java模块系统，则调用此方法无效，并返回此实例
      *
      * @param instrumentation The instrumentation instance that is used for adding a module read-dependency.
      * @param type            The types for which to assure their module-visibility from and to any instrumented class.
@@ -3255,13 +3255,13 @@ public interface AgentBuilder {
             /**
              * <p>
              * A description strategy that always describes Java types using a {@link TypePool} unless a type cannot be resolved by a pool and a loaded
-             * {@link Class} instance  is available. Doing so can cause overhead as processing loaded types is supported very efficiently by a JVM.
+             * {@link Class} instance  is available. Doing so can cause overhead as processing loaded types is supported very efficiently by a JVM. 一种总是使用{@link TypePool}来描述Java类型的描述策略，除非类型不能通过池来解析，并且加载了{@link Class}的实例可用。这样做会导致开销，因为JVM非常有效地支持处理已加载的类型
              * </p>
              * <p>
              * Avoiding the usage of loaded types can improve robustness as this approach does not rely on the Java reflection API which triggers eager
              * validation of this loaded type which can fail an application if optional types are used by any types field or method signatures. Also, it
              * is possible to guarantee debugging meta data to be available also for retransformed or redefined types if a {@link TypeStrategy} specifies
-             * the extraction of such meta data.
+             * the extraction of such meta data. 避免使用加载类型可以提高健壮性，因为这种方法不依赖于Java反射API，后者会触发对加载类型的即时验证，如果任何类型字段或方法签名使用了可选类型，则应用程序可能会失败。同样，如果{@link TypeStrategy}指定了对这些元数据的提取，也可以保证调试元数据对于经过转换或重新定义的类型也可用
              * </p>
              */
             POOL_FIRST(false) {
@@ -3296,7 +3296,7 @@ public interface AgentBuilder {
             /**
              * Creates a description strategy that uses this strategy but loads any super type. If a super type is not yet loaded,
              * this causes this super type to never be instrumented. Therefore, this option should only be used if all instrumented
-             * types are guaranteed to be top-level types.
+             * types are guaranteed to be top-level types. 创建一个使用此策略但加载任何超类型的描述策略。如果一个超级类型还没有被加载，这将导致这个超级类型永远不会被检测。因此，只有当所有检测类型都保证是顶级类型时，才应该使用此选项
              *
              * @return This description strategy where all super types are loaded during the instrumentation.
              * @see SuperTypeLoading
@@ -3328,7 +3328,7 @@ public interface AgentBuilder {
         /**
          * <p>
          * A description strategy that enforces the loading of any super type of a type description but delegates the actual type description
-         * to another description strategy.
+         * to another description strategy. 一种描述策略，强制加载类型描述的任何超类型，但将实际的类型描述委托给另一种描述策略
          * </p>
          * <p>
          * <b>Warning</b>: When using this description strategy, a type is not instrumented if any of its subtypes is loaded first.
@@ -4211,18 +4211,18 @@ public interface AgentBuilder {
 
     /**
      * <p>
-     * A redefinition strategy regulates how already loaded classes are modified by a built agent.
+     * A redefinition strategy regulates how already loaded classes are modified by a built agent. 重新定义策略控制已加载的类如何被构建的代理修改
      * </p>
      * <p>
-     * <b>Important</b>: Most JVMs do not support changes of a class's structure after a class was already
-     * loaded. Therefore, it is typically required that this class file transformer was built while enabling
+     * <b>Important</b>: Most JVMs do not support changes of a class's structure after a class was already   大多数JVM不支持在类已经加载之后更改类的结构
+     * loaded. Therefore, it is typically required that this class file transformer was built while enabling 因此，通常需要在启用 {@link AgentBuilder#disableClassFormatChanges()} 的同时构建此类文件转换器
      * {@link AgentBuilder#disableClassFormatChanges()}.
      * </p>
      */
     enum RedefinitionStrategy {
 
         /**
-         * Disables redefinition such that already loaded classes are not affected by the agent.
+         * Disables redefinition such that already loaded classes are not affected by the agent. 禁用重新定义，以便已加载的类不受代理影响
          */
         DISABLED(false, false) {
             @Override
@@ -4257,7 +4257,7 @@ public interface AgentBuilder {
          * <p>
          * Applies a <b>redefinition</b> to all classes that are already loaded and that would have been transformed if
          * the built agent was registered before they were loaded. The created {@link ClassFileTransformer} is <b>not</b>
-         * registered for applying retransformations.
+         * registered for applying retransformations. 将重新定义应用于已加载的所有类，如果在加载生成代理之前注册了这些类，则这些类将被转换。创建的 {@link ClassFileTransformer} 未注册以应用重传
          * </p>
          * <p>
          * Using this strategy, a redefinition is applied as a single transformation request. This means that a single illegal
@@ -4287,16 +4287,16 @@ public interface AgentBuilder {
          * <p>
          * Applies a <b>retransformation</b> to all classes that are already loaded and that would have been transformed if
          * the built agent was registered before they were loaded. The created {@link ClassFileTransformer} is registered
-         * for applying retransformations.
+         * for applying retransformations. 将 重新转换 应用于所有已加载的类，如果在加载生成代理之前注册了这些类，则这些类将被转换。创建的 {@link ClassFileTransformer} 被注册以应用重新转换
          * </p>
          * <p>
          * Using this strategy, a retransformation is applied as a single transformation request. This means that a single illegal
-         * retransformation of a class causes the entire retransformation attempt to fail.
+         * retransformation of a class causes the entire retransformation attempt to fail. 使用这种策略，可以将 重新转换 作为单个转换请求应用。这意味着一个类的一次非法 重新转换 会导致整个 重新转换 尝试失败
          * </p>
          * <p>
          * <b>Note</b>: When applying a redefinition, it is normally required to use a {@link TypeStrategy} that applies
          * a redefinition instead of rebasing classes such as {@link TypeStrategy.Default#REDEFINE}. Also, consider
-         * the constrains given by this type strategy.
+         * the constrains given by this type strategy.  应用重定义时，通常需要使用{@link TypeStrategy}来应用重定义，而不是对 {@link TypeStrategy.Default#REDEFINE} 等类进行重定。同时，考虑这种类型策略所给出的约束
          * </p>
          */
         RETRANSFORMATION(true, true) {
@@ -5340,7 +5340,7 @@ public interface AgentBuilder {
             Iterable<Iterable<Class<?>>> resolve(Instrumentation instrumentation);
 
             /**
-             * A discovery strategy that considers all loaded types supplied by {@link Instrumentation#getAllLoadedClasses()}.
+             * A discovery strategy that considers all loaded types supplied by {@link Instrumentation#getAllLoadedClasses()}. 考虑{@link Instrumentation#getAllLoadedClasses()}提供的所有加载类型的发现策略
              */
             enum SinglePass implements DiscoveryStrategy {
 
@@ -5358,7 +5358,7 @@ public interface AgentBuilder {
             /**
              * A discovery strategy that considers all loaded types supplied by {@link Instrumentation#getAllLoadedClasses()}. For each reiteration,
              * this strategy checks if additional types were loaded after the previously supplied types. Doing so, types that were loaded during
-             * instrumentations can be retransformed as such types are not passed to any class file transformer.
+             * instrumentations can be retransformed as such types are not passed to any class file transformer. 考虑{@link Instrumentation#getAllLoadedClasses()}提供的所有加载类型的发现策略。对于每次重复，该策略检查是否在先前提供的类型之后加载了其他类型。这样，在检测过程中加载的类型就可以被重新转换，因为这些类型不会被传递给任何类文件转换器
              */
             enum Reiterating implements DiscoveryStrategy {
 
@@ -5462,7 +5462,7 @@ public interface AgentBuilder {
             }
 
             /**
-             * An explicit discovery strategy that only attempts the redefinition of specific types.
+             * An explicit discovery strategy that only attempts the redefinition of specific types. 只尝试重新定义特定类型的显式发现策略
              */
             @HashCodeAndEqualsPlugin.Enhance
             class Explicit implements DiscoveryStrategy {
@@ -6193,7 +6193,7 @@ public interface AgentBuilder {
             }
 
             /**
-             * Does consider the retransformation or redefinition of a loaded type.
+             * Does consider the retransformation or redefinition of a loaded type. 不考虑对加载类型的重新转换或重新定义
              *
              * @param typeMatcher         A type matcher to apply.
              * @param ignoredTypeMatcher  The ignored type matcher to apply.
@@ -6223,7 +6223,7 @@ public interface AgentBuilder {
                             listener.onComplete(typeDescription.getName(), type.getClassLoader(), module, classBeingRedefined != null);
                         }
                     } catch (Throwable ignored) {
-                        // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
+                        // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation. 忽略侦听器为模拟转换行为而抛出的异常
                     }
                 }
             }
@@ -6291,7 +6291,7 @@ public interface AgentBuilder {
                                             AgentBuilder.Listener listener) throws UnmodifiableClassException, ClassNotFoundException;
 
             /**
-             * An iterator that allows prepending of iterables to be applied previous to another iterator.
+             * An iterator that allows prepending of iterables to be applied previous to another iterator. 一种迭代器，允许在另一个迭代器之前先使用可迭代对象
              */
             protected static class PrependableIterator implements Iterator<List<Class<?>>> {
 
@@ -6353,7 +6353,7 @@ public interface AgentBuilder {
             }
 
             /**
-             * A collector that applies a <b>redefinition</b> of already loaded classes.
+             * A collector that applies a <b>redefinition</b> of already loaded classes. 一个应用重定义的已加载类的收集器
              */
             protected static class ForRedefinition extends Collector {
 
@@ -6418,20 +6418,20 @@ public interface AgentBuilder {
     }
 
     /**
-     * Implements the instrumentation of the {@code LambdaMetafactory} if this feature is enabled.
+     * Implements the instrumentation of the {@code LambdaMetafactory} if this feature is enabled. 如果启用了该特性，则实现{@code LambdaMetafactory}的插装
      */
     enum LambdaInstrumentationStrategy {
 
         /**
          * A strategy that enables instrumentation of the {@code LambdaMetafactory} if such a factory exists on the current VM.
          * Classes representing lambda expressions that are created by Byte Buddy are fully compatible to those created by
-         * the JVM and can be serialized or deserialized to one another. The classes do however show a few differences:
+         * the JVM and can be serialized or deserialized to one another. The classes do however show a few differences: 如果当前VM上存在这样的工厂，则支持插装{@code LambdaMetafactory}的策略。由Byte Buddy创建的表示lambda表达式的类与JVM创建的类完全兼容，可以相互序列化或反序列化。然而，这些类确实显示了一些区别:
          * <ul>
          * <li>Byte Buddy's classes are public with a public executing transformer. Doing so, it is not necessary to instantiate a
          * non-capturing lambda expression by reflection. This is done because Byte Buddy is not necessarily capable
          * of using reflection due to an active security manager.</li>
          * <li>Byte Buddy's classes are not marked as synthetic as an agent builder does not instrument synthetic classes
-         * by default.</li>
+         * by default.</li> Byte Buddy的类是公共的，有一个公共执行转换器。这样做，就没有必要通过反射来实例化一个非捕获lambda表达式。之所以这样做，是因为由于使用了活动的安全管理器，Byte Buddy不一定能够使用反射。字节伙伴的类不会被标记为合成类，因为默认情况下代理生成器不会工具合成类
          * </ul>
          */
         ENABLED {

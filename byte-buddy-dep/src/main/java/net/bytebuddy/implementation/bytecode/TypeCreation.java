@@ -13,12 +13,12 @@ import org.objectweb.asm.Opcodes;
 public class TypeCreation implements StackManipulation {
 
     /**
-     * The type that is being created.
+     * The type that is being created. 正在创建的类型
      */
     private final TypeDescription typeDescription;
 
     /**
-     * Constructs a new type creation.
+     * Constructs a new type creation. 构造一个新的类型创建
      *
      * @param typeDescription The type to be create.
      */
@@ -27,10 +27,10 @@ public class TypeCreation implements StackManipulation {
     }
 
     /**
-     * Creates a type creation for the given type.
+     * Creates a type creation for the given type. 为给定类型创建类型创建
      *
      * @param typeDescription The type to be create.
-     * @return A stack manipulation that represents the creation of the given type.
+     * @return A stack manipulation that represents the creation of the given type. 表示给定类型的创建的堆栈操作
      */
     public static StackManipulation of(TypeDescription typeDescription) {
         if (typeDescription.isArray() || typeDescription.isPrimitive() || typeDescription.isAbstract()) {

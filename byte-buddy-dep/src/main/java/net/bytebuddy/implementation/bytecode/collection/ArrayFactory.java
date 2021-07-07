@@ -244,13 +244,13 @@ public class ArrayFactory implements CollectionFactory {
     }
 
     /**
-     * A stack manipulation for creating an array as defined by the enclosing array factory.
+     * A stack manipulation for creating an array as defined by the enclosing array factory. 用于创建由封闭数组工厂定义的数组的堆栈操作
      */
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class ArrayStackManipulation implements StackManipulation {
 
         /**
-         * A list of value load instructions that are to be stored inside the created array.
+         * A list of value load instructions that are to be stored inside the created array. 要存储在所创建数组中的值加载指令的列表
          */
         private final List<? extends StackManipulation> stackManipulations;
 

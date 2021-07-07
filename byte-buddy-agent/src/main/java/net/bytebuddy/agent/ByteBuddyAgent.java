@@ -95,7 +95,7 @@ public class ByteBuddyAgent {
     private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
 
     /**
-     * Represents a no-op argument for a dynamic agent attachment.
+     * Represents a no-op argument for a dynamic agent attachment. 表示动态代理附件的无操作参数
      */
     private static final String WITHOUT_ARGUMENT = null;
 
@@ -150,7 +150,7 @@ public class ByteBuddyAgent {
     private static final File CANNOT_SELF_RESOLVE = null;
 
     /**
-     * The attachment type evaluator to be used for determining if an attachment requires an external process.
+     * The attachment type evaluator to be used for determining if an attachment requires an external process. 用于确定附件是否需要外部进程的附件类型计算器
      */
     private static final AttachmentTypeEvaluator ATTACHMENT_TYPE_EVALUATOR = AccessController.doPrivileged(AttachmentTypeEvaluator.InstallationAction.INSTANCE);
 
@@ -199,7 +199,7 @@ public class ByteBuddyAgent {
      * Attaches the given agent Jar on the target process which must be a virtual machine process. The default attachment provider
      * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
      * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown.
-     *
+     * 将给定的代理Jar附加到必须是虚拟机进程的目标进程上。默认附件提供程序用于应用附件。此操作将一直阻止，直到连接完成。如果当前VM没有向远程VM提供任何已知形式的附件，则抛出{@link IllegalStateException}
      * @param agentJar  The agent jar file.
      * @param processId The target process id.
      * @param argument  The argument to provide to the agent.
@@ -299,14 +299,14 @@ public class ByteBuddyAgent {
      * If an agent cannot be installed, an {@link IllegalStateException} is thrown.
      * </p>
      * <p>
-     * <b>Important</b>: This is a rather computation-heavy operation. Therefore, this operation is
-     * not repeated after an agent was successfully installed for the first time. Instead, the previous
-     * instrumentation instance is returned. However, invoking this method requires synchronization
+     * <b>Important</b>: This is a rather computation-heavy operation. Therefore, this operation is     这是一个相当计算量的操作。因此，在首次成功安装代理之后，不会重复此操作
+     * not repeated after an agent was successfully installed for the first time. Instead, the previous 相反，返回上一个 instrumentation 实例
+     * instrumentation instance is returned. However, invoking this method requires synchronization     但是，调用此方法需要同步，以便在安装之后应调用 {@link ByteBuddyAgent#getInstrumentation()}
      * such that subsequently to an installation, {@link ByteBuddyAgent#getInstrumentation()} should
      * be invoked instead.
      * </p>
      *
-     * @return An instrumentation instance representing the currently running JVM.
+     * @return An instrumentation instance representing the currently running JVM. 表示当前运行的JVM的检测实例
      */
     public static Instrumentation install() {
         return install(AttachmentProvider.DEFAULT);
@@ -317,7 +317,7 @@ public class ByteBuddyAgent {
      * access routes for different JVMs and JVM versions or it might not be available at all.
      * If a Java agent cannot be installed by using the supplied attachment provider, an
      * {@link IllegalStateException} is thrown. The same happens if the default process provider
-     * cannot resolve a process id for the current VM.
+     * cannot resolve a process id for the current VM. 使用 Java attach API 安装 Java 代理。这个API在不同的JVM和JVM版本的不同访问路径下可用，或者根本不可用。如果无法使用提供的附件提供程序安装Java代理，则抛出{@link IllegalStateException}。如果默认进程提供程序无法解析当前VM的进程id，也会发生同样的情况
      *
      * @param attachmentProvider The attachment provider to use for the installation.
      * @return An instrumentation instance representing the currently running JVM.
@@ -360,7 +360,7 @@ public class ByteBuddyAgent {
     }
 
     /**
-     * Installs a Java agent on a target VM.
+     * Installs a Java agent on a target VM. 在目标VM上安装Java代理
      *
      * @param attachmentProvider The attachment provider to use.
      * @param processId          The process id of the target JVM process.
@@ -385,9 +385,9 @@ public class ByteBuddyAgent {
         }
     }
 
-    /**
+    /** 通过外部进程将Java代理安装到当前VM
      * Installs a Java agent to the current VM via an external process. This is typically required starting with OpenJDK 9
-     * when the {@code jdk.attach.allowAttachSelf} property is set to {@code false} what is the default setting.
+     * when the {@code jdk.attach.allowAttachSelf} property is set to {@code false} what is the default setting. 当{@code jdk.attach.allowAttachSelf}属性设置为{@code false}这是默认设置时，通常需要从openjdk9开始执行此操作
      *
      * @param externalAttachment A description of the external attachment.
      * @param processId          The process id of the current process.
@@ -482,7 +482,7 @@ public class ByteBuddyAgent {
     }
 
     /**
-     * Quotes a value if it contains a white space.
+     * Quotes a value if it contains a white space. 如果值包含空格，则将其引为引号
      *
      * @param value The value to quote.
      * @return The value being quoted if necessary.
@@ -495,7 +495,7 @@ public class ByteBuddyAgent {
 
     /**
      * Performs the actual lookup of the {@link java.lang.instrument.Instrumentation} from an installed
-     * Byte Buddy agent.
+     * Byte Buddy agent. 从已安装的 ByteBuddy 执行 {@link java.lang.instrument.Instrumentation} 的实际查找
      *
      * @return The Byte Buddy agent's {@link java.lang.instrument.Instrumentation} instance.
      */
@@ -512,13 +512,13 @@ public class ByteBuddyAgent {
     }
 
     /**
-     * An attachment provider is responsible for making the Java attachment API available.
+     * An attachment provider is responsible for making the Java attachment API available. 附件提供者负责使Java附件API可用
      */
     @SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "Safe initialization is implied")
     public interface AttachmentProvider {
 
         /**
-         * The default attachment provider to be used.
+         * The default attachment provider to be used. 要使用的默认附件提供程序
          */
         AttachmentProvider DEFAULT = new Compound(ForJigsawVm.INSTANCE,
                 ForJ9Vm.INSTANCE,
@@ -535,7 +535,7 @@ public class ByteBuddyAgent {
         Accessor attempt();
 
         /**
-         * An accessor for a JVM's attachment API.
+         * An accessor for a JVM's attachment API. JVM的附件API的访问器
          */
         interface Accessor {
 
@@ -571,7 +571,7 @@ public class ByteBuddyAgent {
             ExternalAttachment getExternalAttachment();
 
             /**
-             * A canonical implementation of an unavailable accessor.
+             * A canonical implementation of an unavailable accessor. 不可用访问器的规范实现
              */
             enum Unavailable implements Accessor {
 
@@ -597,7 +597,7 @@ public class ByteBuddyAgent {
             }
 
             /**
-             * Describes an external attachment to a Java virtual machine.
+             * Describes an external attachment to a Java virtual machine. 描述Java虚拟机的外部附件
              */
             class ExternalAttachment {
 
@@ -713,7 +713,7 @@ public class ByteBuddyAgent {
                 }
 
                 /**
-                 * A simple implementation of an accessible accessor that allows for external attachment.
+                 * A simple implementation of an accessible accessor that allows for external attachment. 允许外部连接的可访问访问访问器的简单实现
                  */
                 protected static class WithExternalAttachment extends Simple {
 
@@ -762,7 +762,7 @@ public class ByteBuddyAgent {
         }
 
         /**
-         * An attachment provider that locates the attach API directly from the system class loader.
+         * An attachment provider that locates the attach API directly from the system class loader. 直接从系统类加载器定位附加API的附件提供程序
          */
         enum ForJigsawVm implements AttachmentProvider {
 
@@ -779,7 +779,7 @@ public class ByteBuddyAgent {
 
         /**
          * An attachment provider that locates the attach API directly from the system class loader expecting
-         * an IBM J9 VM.
+         * an IBM J9 VM. 一个附件提供程序，它直接从系统类加载程序（需要IBMJ9VM）中查找附件API
          */
         enum ForJ9Vm implements AttachmentProvider {
 
@@ -796,25 +796,25 @@ public class ByteBuddyAgent {
 
         /**
          * An attachment provider that is dependant on the existence of a <i>tools.jar</i> file on the local
-         * file system.
+         * file system. 依赖于<i>tools.jar</i>本地文件系统上的文件
          */
         enum ForToolsJarVm implements AttachmentProvider {
 
             /**
-             * An attachment provider that locates the <i>tools.jar</i> from a Java home directory.
+             * An attachment provider that locates the <i>tools.jar</i> from a Java home directory. 定位<i>tools.jar</i>从Java主目录
              */
             JVM_ROOT("../lib/tools.jar"),
 
             /**
              * An attachment provider that locates the <i>tools.jar</i> from a Java installation directory.
              * In practice, several virtual machines do not return the JRE's location for the
-             * <i>java.home</i> property against the property's specification.
+             * <i>java.home</i> property against the property's specification. 定位<i>tools.jar</i>从Java安装目录。实际上，有几个虚拟机不返回<i>java.home</i>属性与属性的规范相对应
              */
             JDK_ROOT("lib/tools.jar"),
 
             /**
              * An attachment provider that locates the <i>tools.jar</i> as it is set for several JVM
-             * installations on Apple Macintosh computers.
+             * installations on Apple Macintosh computers. 定位<i>tools.jar</i>因为它是为Apple Macintosh计算机上的几个JVM安装设置的
              */
             MACINTOSH("../Classes/classes.jar");
 
@@ -852,7 +852,7 @@ public class ByteBuddyAgent {
         }
 
         /**
-         * An attachment provider using a custom protocol implementation for HotSpot on Unix.
+         * An attachment provider using a custom protocol implementation for HotSpot on Unix. 在Unix上使用自定义协议实现的 HotSpot 提供程序
          */
         enum ForUnixHotSpotVm implements AttachmentProvider {
 
@@ -874,7 +874,7 @@ public class ByteBuddyAgent {
         /**
          * A compound attachment provider that attempts the attachment by delegation to other providers. If
          * none of the providers of this compound provider is capable of providing a valid accessor, an
-         * non-available accessor is returned.
+         * non-available accessor is returned. 复合附件提供程序，它尝试通过委托给其他提供程序来进行附件。如果此复合提供程序的任何提供程序都不能提供有效的访问器，则返回不可用的访问器
          */
         class Compound implements AttachmentProvider {
 
@@ -922,19 +922,19 @@ public class ByteBuddyAgent {
     }
 
     /**
-     * A process provider is responsible for providing the process id of the current VM.
+     * A process provider is responsible for providing the process id of the current VM.  进程提供程序负责提供当前VM的进程id
      */
     public interface ProcessProvider {
 
         /**
-         * Resolves a process id for the current JVM.
+         * Resolves a process id for the current JVM. 解析当前JVM的进程id
          *
-         * @return The resolved process id.
+         * @return The resolved process id. 解析的进程id
          */
         String resolve();
 
         /**
-         * Supplies the current VM's process id.
+         * Supplies the current VM's process id. 提供当前VM的进程id
          */
         enum ForCurrentVm implements ProcessProvider {
 
@@ -944,12 +944,12 @@ public class ByteBuddyAgent {
             INSTANCE;
 
             /**
-             * The best process provider for the current VM.
+             * The best process provider for the current VM. 当前VM的最佳进程提供程序
              */
             private final ProcessProvider dispatcher;
 
             /**
-             * Creates a process provider that supplies the current VM's process id.
+             * Creates a process provider that supplies the current VM's process id. 创建提供当前VM进程id的流程提供程序
              */
             ForCurrentVm() {
                 dispatcher = ForJava9CapableVm.make();
@@ -961,7 +961,7 @@ public class ByteBuddyAgent {
             }
 
             /**
-             * A process provider for a legacy VM that reads the process id from its JMX properties.
+             * A process provider for a legacy VM that reads the process id from its JMX properties. 旧VM的进程提供程序，从其JMX属性中读取进程id
              */
             protected enum ForLegacyVm implements ProcessProvider {
 
@@ -983,7 +983,7 @@ public class ByteBuddyAgent {
             }
 
             /**
-             * A process provider for a Java 9 capable VM with access to the introduced process API.
+             * A process provider for a Java 9 capable VM with access to the introduced process API. 支持Java9的VM的进程提供程序，可以访问引入的进程API
              */
             protected static class ForJava9CapableVm implements ProcessProvider {
 
@@ -1010,7 +1010,7 @@ public class ByteBuddyAgent {
 
                 /**
                  * Attempts to create a dispatcher for a Java 9 VM and falls back to a legacy dispatcher
-                 * if this is not possible.
+                 * if this is not possible. 尝试为Java9VM创建一个调度程序，如果不可能，则返回到旧的调度程序
                  *
                  * @return A dispatcher for the current VM.
                  */
@@ -1039,12 +1039,12 @@ public class ByteBuddyAgent {
     }
 
     /**
-     * An agent provider is responsible for handling and providing the jar file of an agent that is being attached.
+     * An agent provider is responsible for handling and providing the jar file of an agent that is being attached. 代理提供者负责处理和提供要附加的代理的jar文件
      */
     protected interface AgentProvider {
 
         /**
-         * Provides an agent jar file for attachment.
+         * Provides an agent jar file for attachment. 为附件提供代理jar文件
          *
          * @return The provided agent.
          * @throws IOException If the agent cannot be written to disk.
@@ -1052,7 +1052,7 @@ public class ByteBuddyAgent {
         File resolve() throws IOException;
 
         /**
-         * An agent provider for a temporary Byte Buddy agent.
+         * An agent provider for a temporary Byte Buddy agent. 临时代理的代理提供程序
          */
         enum ForByteBuddyAgent implements AgentProvider {
 
@@ -1069,7 +1069,7 @@ public class ByteBuddyAgent {
             /**
              * Attempts to resolve the {@link Installer} class from this jar file if it can be located. Doing so, it is possible
              * to avoid the creation of a temporary jar file which can remain undeleted on Windows operating systems where the agent
-             * is linked by a class loader such that {@link File#deleteOnExit()} does not have an effect.
+             * is linked by a class loader such that {@link File#deleteOnExit()} does not have an effect. 尝试从此jar文件解析{@link Installer}类（如果可以找到）。这样做，就可以避免创建一个临时jar文件，该文件在Windows操作系统上保持未删除状态，在Windows操作系统中，代理由类加载器链接，这样{@link File#deleteOnExit()}就不会有效果
              *
              * @return This jar file's location or {@code null} if this jar file's location is inaccessible.
              * @throws IOException If an I/O exception occurs.
@@ -1096,7 +1096,7 @@ public class ByteBuddyAgent {
                 if (!agentJar.isFile() || !agentJar.canRead()) {
                     return CANNOT_SELF_RESOLVE;
                 }
-                // It is necessary to check the manifest of the containing file as this code can be shaded into another artifact.
+                // It is necessary to check the manifest of the containing file as this code can be shaded into another artifact. 有必要检查包含文件的清单，因为此代码可能被着色到另一个工件中
                 JarInputStream jarInputStream = new JarInputStream(new FileInputStream(agentJar));
                 try {
                     Manifest manifest = jarInputStream.getManifest();
@@ -1121,10 +1121,10 @@ public class ByteBuddyAgent {
             }
 
             /**
-             * Creates an agent jar file containing the {@link Installer} class.
+             * Creates an agent jar file containing the {@link Installer} class. 创建包含{@link Installer}类的代理jar文件
              *
-             * @return The agent jar file.
-             * @throws IOException If an I/O exception occurs.
+             * @return The agent jar file. 代理jar文件
+             * @throws IOException If an I/O exception occurs. IO异常发生
              */
             private static File createJarFile() throws IOException {
                 InputStream inputStream = Installer.class.getResourceAsStream('/' + Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
@@ -1133,7 +1133,7 @@ public class ByteBuddyAgent {
                 }
                 try {
                     File agentJar = File.createTempFile(AGENT_FILE_NAME, JAR_FILE_EXTENSION);
-                    agentJar.deleteOnExit(); // Agent jar is required until VM shutdown due to lazy class loading.
+                    agentJar.deleteOnExit(); // Agent jar is required until VM shutdown due to lazy class loading. 代理jar是必需的，直到VM由于延迟类加载而关闭
                     Manifest manifest = new Manifest();
                     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, MANIFEST_VERSION_VALUE);
                     manifest.getMainAttributes().put(new Attributes.Name(AGENT_CLASS_PROPERTY), Installer.class.getName());
@@ -1172,7 +1172,7 @@ public class ByteBuddyAgent {
         }
 
         /**
-         * An agent provider that supplies an existing agent that is not deleted after attachment.
+         * An agent provider that supplies an existing agent that is not deleted after attachment. 一种代理提供程序，它提供一个在附加后未被删除的现有代理
          */
         class ForExistingAgent implements AgentProvider {
 
@@ -1198,20 +1198,20 @@ public class ByteBuddyAgent {
     }
 
     /**
-     * An attachment evaluator is responsible for deciding if an agent can be attached from the current process.
+     * An attachment evaluator is responsible for deciding if an agent can be attached from the current process.  附件评估员负责决定是否可以从当前进程中附加代理
      */
     protected interface AttachmentTypeEvaluator {
 
         /**
-         * Checks if the current VM requires external attachment for the supplied process id.
+         * Checks if the current VM requires external attachment for the supplied process id. 检查当前VM是否需要提供进程id的外部附件
          *
-         * @param processId The process id of the process to which to attach.
-         * @return {@code true} if the current VM requires external attachment for the supplied process.
+         * @param processId The process id of the process to which to attach. 要附加到的进程的进程id
+         * @return {@code true} if the current VM requires external attachment for the supplied process. 如果当前VM需要为提供的进程提供外部连接
          */
         boolean requiresExternalAttachment(String processId);
 
         /**
-         * An installation action for creating an attachment type evaluator.
+         * An installation action for creating an attachment type evaluator. 用于创建附件类型计算器的安装操作
          */
         enum InstallationAction implements PrivilegedAction<AttachmentTypeEvaluator> {
 
@@ -1221,7 +1221,7 @@ public class ByteBuddyAgent {
             INSTANCE;
 
             /**
-             * The OpenJDK's property for specifying the legality of self-attachment.
+             * The OpenJDK's property for specifying the legality of self-attachment. OpenJDK的属性，用于指定自我连接的合法性
              */
             private static final String JDK_ALLOW_SELF_ATTACH = "jdk.attach.allowAttachSelf";
 
@@ -1258,7 +1258,7 @@ public class ByteBuddyAgent {
         }
 
         /**
-         * An attachment type evaluator that checks a process id against the current process id.
+         * An attachment type evaluator that checks a process id against the current process id. 一种附件类型求值器，用于对照当前进程id和提供进程id
          */
         class ForJava9CapableVm implements AttachmentTypeEvaluator {
 

@@ -895,7 +895,7 @@ public @interface FieldProxy {
             private final TypeDescription instrumentedType;
 
             /**
-             * The field resolver to use.
+             * The field resolver to use. 要使用的字段解析程序
              */
             private final FieldResolver fieldResolver;
 

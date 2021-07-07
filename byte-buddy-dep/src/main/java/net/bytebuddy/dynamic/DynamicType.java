@@ -1889,10 +1889,10 @@ public interface DynamicType {
                  * method. When rebasing a type, it therefore becomes possible to invoke a non-virtual method's super method
                  * when a preexisting method body is replaced.</li>
                  * <li>If a virtual method is inherited from a super type, it is overridden. The overridden method is available
-                 * for super method invocation.</li>
+                 * for super method invocation.</li> 如果虚拟方法是从超类型继承的，则它会被覆盖。 重写的方法可用于超级方法调用
                  * </ol>
                  *
-                 * @param implementation The implementation for implementing the previously defined or matched method.
+                 * @param implementation The implementation for implementing the previously defined or matched method. 用于实现先前定义或匹配的方法的实现
                  * @return A new builder where the previously defined or matched method is implemented by the
                  * supplied implementation.
                  */
@@ -4675,7 +4675,7 @@ public interface DynamicType {
         /**
          * Returns the loaded main class. 返回加载的主类
          *
-         * @return A loaded class representation of this dynamic type.
+         * @return A loaded class representation of this dynamic type. 此动态类型的已加载类表示形式
          */
         Class<? extends T> getLoaded();
 

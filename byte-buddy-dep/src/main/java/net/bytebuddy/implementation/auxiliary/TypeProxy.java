@@ -32,7 +32,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A type proxy creates accessor methods for all overridable methods of a given type by subclassing the given type and
- * delegating all method calls to accessor methods of the instrumented type it was created for.
+ * delegating all method calls to accessor methods of the instrumented type it was created for. 类型代理为给定类型的所有可重写方法创建访问器方法，方法是对给定类型进行子类化，并将所有方法调用委派给为其创建的检测类型的访问器方法
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class TypeProxy implements AuxiliaryType {
@@ -111,7 +111,7 @@ public class TypeProxy implements AuxiliaryType {
     }
 
     /**
-     * A stack manipulation that throws an abstract method error in case that a given super method cannot be invoked.
+     * A stack manipulation that throws an abstract method error in case that a given super method cannot be invoked. 一种堆栈操作，在给定的超级方法不能被调用时抛出一个抽象方法错误
      */
     protected enum AbstractMethodErrorThrow implements StackManipulation {
 

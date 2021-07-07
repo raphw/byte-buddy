@@ -34,9 +34,9 @@ public interface AuxiliaryType {
      * @param auxiliaryTypeName     The fully qualified binary name for this auxiliary type. The type should be in
      *                              the same package than the instrumented type this auxiliary type is providing services
      *                              to in order to allow package-private access. 此辅助类型的完全限定二进制名称。该类型应与此辅助类型提供服务的检测类型位于同一个包中，以便允许包专用访问
-     * @param classFileVersion      The class file version the auxiliary class should be written in.
+     * @param classFileVersion      The class file version the auxiliary class should be written in. 辅助类应该写入的类文件版本
      * @param methodAccessorFactory A factory for accessor methods.
-     * @return A dynamically created type representing this auxiliary type.
+     * @return A dynamically created type representing this auxiliary type. 表示此辅助类型的动态创建的类型
      */
     DynamicType make(String auxiliaryTypeName, ClassFileVersion classFileVersion, MethodAccessorFactory methodAccessorFactory);
 

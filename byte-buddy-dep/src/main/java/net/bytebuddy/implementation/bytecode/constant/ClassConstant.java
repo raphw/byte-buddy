@@ -61,12 +61,12 @@ public enum ClassConstant implements StackManipulation {
     DOUBLE(Double.class);
 
     /**
-     * The size of a {@link java.lang.Class} on the operand stack.
+     * The size of a {@link java.lang.Class} on the operand stack. 操作数堆栈上 {@link java.lang.Class} 的大小
      */
     private static final Size SIZE = StackSize.SINGLE.toIncreasingSize();
 
     /**
-     * The field name that stores a reference to the primitive type representation.
+     * The field name that stores a reference to the primitive type representation. 存储对基元类型表示的引用的字段名
      */
     private static final String PRIMITIVE_TYPE_FIELD = "TYPE";
 
@@ -138,12 +138,12 @@ public enum ClassConstant implements StackManipulation {
     protected static class ForReferenceType implements StackManipulation {
 
         /**
-         * The type which should be loaded onto the operand stack as a class value.
+         * The type which should be loaded onto the operand stack as a class value. 应作为类值加载到操作数堆栈的类型
          */
         private final TypeDescription typeDescription;
 
         /**
-         * Creates a stack manipulation that represents loading a class constant onto the stack.
+         * Creates a stack manipulation that represents loading a class constant onto the stack. 创建表示将类常量加载到堆栈的堆栈操作
          *
          * @param typeDescription A description of the class to load onto the stack.
          */

@@ -28,17 +28,17 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
 
 /**
  * Implementations of this interface represent an instrumented type that is subject to change. Implementations
- * should however be immutable and return new instance when its builder methods are invoked. 此接口的实现表示一个可更改的插入指令的类型。然而，实现应该是不可变的，并在调用其生成器方法时返回新实例
+ * should however be immutable and return new instance when its builder methods are invoked. 此接口的实现表示一个可更改插桩类型。然而，实现应该是不可变的，并在调用其生成器方法时返回新实例
  */
 public interface InstrumentedType extends TypeDescription {
-    // 字节码生成器类型，代表了最后生成 Suject 对象，包含了字节码的结构等
+    // 字节码生成器类型，代表了最后生成 Subject 对象，包含了字节码的结构等
     /**
-     * Creates a new instrumented type that includes a new field.
+     * Creates a new instrumented type that includes a new field. 创建一个包含新字段的新插桩类型
      *
-     * @param token A token that represents the field's shape. This token must represent types in their detached state.
-     * @return A new instrumented type that is equal to this instrumented type but with the additional field.
+     * @param token A token that represents the field's shape. This token must represent types in their detached state. 表示字段形状的标记，该标记必须表示处于分离状态的类型
+     * @return A new instrumented type that is equal to this instrumented type but with the additional field. 等于该插桩类型的新插桩类型，但带有附加字段，也就是基于当前的插桩类型，添加附加字段
      */
-    InstrumentedType withField(FieldDescription.Token token);
+    InstrumentedType withField(FieldDescription.Token token); // 往插桩类型中添加字段
 
     /**
      * Creates a new instrumented type that includes a new method or constructor.
@@ -46,18 +46,18 @@ public interface InstrumentedType extends TypeDescription {
      * @param token A token that represents the method's shape. This token must represent types in their detached state.
      * @return A new instrumented type that is equal to this instrumented type but with the additional method.
      */
-    InstrumentedType withMethod(MethodDescription.Token token);
+    InstrumentedType withMethod(MethodDescription.Token token); // 往插桩类型中添加方法
 
     /**
-     * Creates a new instrumented type with changed modifiers.
+     * Creates a new instrumented type with changed modifiers. 创建修改描述符的新插桩类型
      *
      * @param modifiers The instrumented type's modifiers.
      * @return A new instrumented type that is equal to this instrumented type but with the given modifiers.
      */
-    InstrumentedType withModifiers(int modifiers);
+    InstrumentedType withModifiers(int modifiers); // 修改插桩类型的描述符
 
     /**
-     * Creates a new instrumented type with the given interfaces implemented.
+     * Creates a new instrumented type with the given interfaces implemented. 使用实现的给定接口创建新的插桩类型
      *
      * @param interfaceTypes The interface types to implement.
      * @return A new instrumented type that is equal to this instrumented type but with the given interfaces implemented.
@@ -65,7 +65,7 @@ public interface InstrumentedType extends TypeDescription {
     InstrumentedType withInterfaces(TypeList.Generic interfaceTypes);
 
     /**
-     * Creates a new instrumented type with the given type variable defined.
+     * Creates a new instrumented type with the given type variable defined. 使用定义的给定类型变量创建新的插桩类型
      *
      * @param typeVariable The type variable to declare.
      * @return A new instrumented type that is equal to this instrumented type but with the given type variable declared.
@@ -73,7 +73,7 @@ public interface InstrumentedType extends TypeDescription {
     InstrumentedType withTypeVariable(TypeVariableToken typeVariable);
 
     /**
-     * Creates a new instrumented type with the given annotations.
+     * Creates a new instrumented type with the given annotations. 使用给定的注释创建新的插桩类型
      *
      * @param annotationDescriptions The annotations to add to the instrumented type.
      * @return A new instrumented type that is equal to this instrumented type but annotated with the given annotations
@@ -82,7 +82,7 @@ public interface InstrumentedType extends TypeDescription {
 
     /**
      * Creates a new instrumented type with the supplied nest host. An instrumented type can be its own nest host.
-     * Setting a nest host removes all nest members from the instrumented type.
+     * Setting a nest host removes all nest members from the instrumented type. 使用提供的嵌套主机创建新的插桩类型。插桩类型可以是它自己的嵌套主机。设置嵌套主机将从插桩类型中删除所有嵌套成员。
      *
      * @param nestHost The nest host of the created instrumented type.
      * @return A new instrumented type with the supplied type as its nest host.
@@ -166,9 +166,9 @@ public interface InstrumentedType extends TypeDescription {
 
     /**
      * Returns the {@link net.bytebuddy.implementation.LoadedTypeInitializer}s that were registered
-     * for this instrumented type.
+     * for this instrumented type. 返回为此插桩类型注册的 {@link net.bytebuddy.implementation.LoadedTypeInitializer}
      *
-     * @return The registered loaded type initializers for this instrumented type.
+     * @return The registered loaded type initializers for this instrumented type. 为此插桩类型注册的已加载类型初始值设定项
      */
     LoadedTypeInitializer getLoadedTypeInitializer();
 
@@ -180,9 +180,9 @@ public interface InstrumentedType extends TypeDescription {
     TypeInitializer getTypeInitializer();
 
     /**
-     * Validates the instrumented type to define a legal Java type.
+     * Validates the instrumented type to define a legal Java type. 验证插桩类型以定义合法的Java类型
      *
-     * @return This instrumented type as a non-modifiable type description.
+     * @return This instrumented type as a non-modifiable type description. 此插桩类型为不可编辑的类型描述
      */
     TypeDescription validated();
 
@@ -264,7 +264,7 @@ public interface InstrumentedType extends TypeDescription {
     interface Prepareable {
 
         /**
-         * Prepares a given instrumented type. 准备给定的插桩类
+         * Prepares a given instrumented type. 准备 给定的插桩类，也就是可以往给定插桩类添加一些额外的信息
          *
          * @param instrumentedType The instrumented type in its current form. 当前形式的插桩类
          * @return The prepared instrumented type. 准备好的插桩类
@@ -280,17 +280,17 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * Creates an instrumented type that represents the provided type. 创建表示所提供类型的插桩类型
          *
-         * @param typeDescription The type to represent.
-         * @return An appropriate instrumented type.
+         * @param typeDescription The type to represent. 要表示的类型
+         * @return An appropriate instrumented type. 一个合适的插桩类型
          */
         InstrumentedType.WithFlexibleName represent(TypeDescription typeDescription);
 
         /**
          * Creates a new instrumented type as a subclass. 创建一个新的插桩类型作为子类
          *
-         * @param name       The type's name.
-         * @param modifiers  The type's modifiers.
-         * @param superClass The type's super class.
+         * @param name       The type's name.       类名
+         * @param modifiers  The type's modifiers.  描述符
+         * @param superClass The type's super class. 超类
          * @return A new instrumented type representing a subclass of the given parameters. 一种新的插桩类型，表示给定参数的子类
          */
         InstrumentedType.WithFlexibleName subclass(String name, int modifiers, TypeDescription.Generic superClass);
@@ -380,37 +380,37 @@ public interface InstrumentedType extends TypeDescription {
         ));
 
         /**
-         * The binary name of the instrumented type. 插入指令的类型的二进制名称
+         * The binary name of the instrumented type. 插桩类型的二进制名称
          */
         private final String name;
 
         /**
-         * The modifiers of the instrumented type. 插入指令类型的修饰符
+         * The modifiers of the instrumented type. 插桩类型的修饰符
          */
         private final int modifiers;
 
         /**
-         * The generic super type of the instrumented type. 插入指令的类型的泛型超类型
+         * The generic super type of the instrumented type. 插桩类型的泛型超类型
          */
         private final Generic superClass;
 
         /**
-         * The instrumented type's type variables in their tokenized form. 插入指令的类型的类型变量的标记形式
+         * The instrumented type's type variables in their tokenized form. 插桩类型的类型变量的标记形式
          */
         private final List<? extends TypeVariableToken> typeVariables;
 
         /**
-         * A list of interfaces of the instrumented type. 检测类型的接口列表
+         * A list of interfaces of the instrumented type. 插桩类型的接口列表
          */
         private final List<? extends Generic> interfaceTypes;
 
         /**
-         * A list of field tokens describing the fields of the instrumented type. 描述检测类型字段的字段标记列表
+         * A list of field tokens describing the fields of the instrumented type. 描述插桩类型字段的字段标记列表
          */
         private final List<? extends FieldDescription.Token> fieldTokens;
 
         /**
-         * A list of method tokens describing the methods of the instrumented type. 描述检测类型的方法的方法标记的列表
+         * A list of method tokens describing the methods of the instrumented type. 描述插桩类型的方法的方法标记的列表
          */
         private final List<? extends MethodDescription.Token> methodTokens;
 
@@ -420,17 +420,17 @@ public interface InstrumentedType extends TypeDescription {
         private final List<? extends AnnotationDescription> annotationDescriptions;
 
         /**
-         * The type initializer of the instrumented type. 插入指令的类型的类型初始值设定项
+         * The type initializer of the instrumented type. 插桩类型的类型初始值设定项
          */
         private final TypeInitializer typeInitializer;
 
         /**
-         * The loaded type initializer of the instrumented type. 插入指令类型的已加载类型初始值设定项
+         * The loaded type initializer of the instrumented type. 插桩类型的已加载类型初始值设定项
          */
         private final LoadedTypeInitializer loadedTypeInitializer;
 
         /**
-         * The declaring type of the instrumented type or {@code null} if no such type exists. 插入指令的类型的声明类型，如果不存在此类类型，则为{@code null}
+         * The declaring type of the instrumented type or {@code null} if no such type exists. 插桩类型的声明类型，如果不存在此类类型，则为{@code null}
          */
         private final TypeDescription declaringType;
 

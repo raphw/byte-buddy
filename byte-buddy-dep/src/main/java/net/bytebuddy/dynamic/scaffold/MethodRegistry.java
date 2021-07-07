@@ -29,10 +29,10 @@ public interface MethodRegistry {
      * Prepends the given method definition to this method registry, i.e. this configuration is applied first. 将给定的方法定义前置到此方法注册表，即首先应用此配置
      *
      * @param methodMatcher            A matcher to identify any method that this definition concerns. 用于标识此定义所涉及的任何方法的匹配器
-     * @param handler                  The handler to instrument any matched method. 对任何匹配方法进行指桩的处理程序
-     * @param attributeAppenderFactory A method attribute appender to apply to any matched method. 应用于任何匹配方法的方法属性附加器
-     * @param transformer              The method transformer to be applied to implemented methods. 要应用于实现方法的方法转换器
-     * @return An adapted version of this method registry. 此方法注册表的改编版本
+     * @param handler                  The handler to instrument any matched method.                   对任何匹配方法进行指桩的处理程序
+     * @param attributeAppenderFactory A method attribute appender to apply to any matched method.     应用于任何匹配方法的方法属性附加器
+     * @param transformer              The method transformer to be applied to implemented methods.    要应用于实现方法的方法转换器
+     * @return An adapted version of this method registry.                                             此方法注册表的改编版本
      */
     MethodRegistry prepend(LatentMatcher<? super MethodDescription> methodMatcher,
                            Handler handler,
@@ -170,7 +170,7 @@ public interface MethodRegistry {
         }
 
         /**
-         * A handler for a method that is implemented as byte code. 作为字节码实现的方法的处理器
+         * A handler for a method that is implemented as byte code. 作为字节码实现方法的处理器
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForImplementation implements Handler {
@@ -666,8 +666,8 @@ public interface MethodRegistry {
                 Map<MethodAttributeAppender.Factory, MethodAttributeAppender> attributeAppenderCache = new HashMap<MethodAttributeAppender.Factory, MethodAttributeAppender>();
                 LinkedHashMap<MethodDescription, Compiled.Entry> entries = new LinkedHashMap<MethodDescription, Compiled.Entry>();
                 Implementation.Target implementationTarget = implementationTargetFactory.make(instrumentedType, methodGraph, classFileVersion);
-                for (Map.Entry<MethodDescription, Entry> entry : implementations.entrySet()) { // 遍历需要重新实现的 implementations
-                    Handler.Compiled cachedHandler = compilationCache.get(entry.getValue().getHandler()); // 获取 重新组装的 各种实现 比如 MethodCall appender 之类的，而最终的实现都是靠 ByteCodeAppender 托底
+                for (Map.Entry<MethodDescription, Entry> entry : implementations.entrySet()) {            // 遍历需要重新实现的 implementations
+                    Handler.Compiled cachedHandler = compilationCache.get(entry.getValue().getHandler()); // 获取重新组装的各种实现 比如MethodCall appender之类的，而最终的实现都是靠 ByteCodeAppender 托底
                     if (cachedHandler == null) {
                         cachedHandler = entry.getValue().getHandler().compile(implementationTarget);
                         compilationCache.put(entry.getValue().getHandler(), cachedHandler);

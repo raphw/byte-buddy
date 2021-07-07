@@ -44,7 +44,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * <p>
  * A target method parameter that is annotated with this annotation allows to forward an intercepted method
  * invocation to another instance. The instance to which a method call is forwarded must be of the most specific
- * type that declares the intercepted method on the intercepted type.
+ * type that declares the intercepted method on the intercepted type. 使用此注解注释的目标方法参数允许将截获的方法调用转发到另一个实例。方法调用转发到的实例必须是在被拦截类型上声明被拦截方法的最特定类型
  * </p>
  * <p>
  * Unfortunately, before Java 8, the Java Class Library does not define any interface type which takes a single

@@ -23,7 +23,7 @@ import java.util.List;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * A type builder that creates an instrumented type as a subclass, i.e. a type that is not based on an existing class file. 类型生成器，它创建一个检测类型作为子类，即不基于现有类文件的类型
+ * A type builder that creates an instrumented type as a subclass, i.e. a type that is not based on an existing class file. 类型生成器，它创建一个插桩类型作为子类，即不基于现有类文件的类型
  *
  * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of. 动态类型可以保证是其子类型的已加载类型
  */
@@ -31,15 +31,15 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase.Adapter<T> {
 
     /**
-     * The constructor strategy to apply onto the instrumented type. 应用于检测类型的构造方法
+     * The constructor strategy to apply onto the instrumented type. 应用于插桩类型的构造方法
      */
     private final ConstructorStrategy constructorStrategy;
 
     /**
      * Creates a new type builder for creating a subclass. 创建一个新的类型生成器以创建子类
      *
-     * @param instrumentedType             An instrumented type representing the subclass. 表示子类 instrumented 类型
-     * @param classFileVersion             The class file version to use for types that are not based on an existing class file.
+     * @param instrumentedType             An instrumented type representing the subclass. 表示子类插桩类型
+     * @param classFileVersion             The class file version to use for types that are not based on an existing class file. 用于不基于现有类文件的类型的类文件版本
      * @param auxiliaryTypeNamingStrategy  The naming strategy to use for naming auxiliary types.
      * @param annotationValueFilterFactory The annotation value filter factory to use.
      * @param annotationRetention          The annotation retention strategy to use.
@@ -47,8 +47,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param methodGraphCompiler          The method graph compiler to use.
      * @param typeValidation               Determines if a type should be explicitly validated.
      * @param classWriterStrategy          The class writer strategy to use.
-     * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
-     * @param constructorStrategy          The constructor strategy to apply onto the instrumented type.
+     * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation. 匹配器，用于识别应从仪器中排除的方法
+     * @param constructorStrategy          The constructor strategy to apply onto the instrumented type. 应用于插桩类型的构造方法
      */
     public SubclassDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
                                       ClassFileVersion classFileVersion,
@@ -194,7 +194,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     /**
-     * Applies this builder's constructor strategy to the given instrumented type. 将此构建器的构造函数策略应用于给定的 instrumented 类型
+     * Applies this builder's constructor strategy to the given instrumented type. 将此构建器的构造函数策略应用于给定的插桩类型
      *
      * @param instrumentedType The instrumented type to apply the constructor onto.
      * @return The instrumented type with the constructor strategy applied onto.
@@ -209,7 +209,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     /**
-     * A matcher that locates all methods that are overridable and not ignored or that are directly defined on the instrumented type. 定位所有可重写且不被忽略或直接在插入指令的类型上定义的方法的匹配器
+     * A matcher that locates all methods that are overridable and not ignored or that are directly defined on the instrumented type. 定位所有可重写且不被忽略或直接在插桩类型上定义的方法的匹配器
      */
     @HashCodeAndEqualsPlugin.Enhance
     protected static class InstrumentableMatcher implements LatentMatcher<MethodDescription> {
@@ -220,7 +220,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         private final LatentMatcher<? super MethodDescription> ignoredMethods;
 
         /**
-         * Creates a latent method matcher that matches all methods that are to be instrumented by a {@link SubclassDynamicTypeBuilder}. 创建一个潜在的方法匹配器，它匹配 {@link SubclassDynamicTypeBuilder} 要检测的所有方法.
+         * Creates a latent method matcher that matches all methods that are to be instrumented by a {@link SubclassDynamicTypeBuilder}. 创建一个潜在的方法匹配器，它匹配 {@link SubclassDynamicTypeBuilder} 要插桩的所有方法
          *
          * @param ignoredMethods A matcher for the ignored methods.
          */

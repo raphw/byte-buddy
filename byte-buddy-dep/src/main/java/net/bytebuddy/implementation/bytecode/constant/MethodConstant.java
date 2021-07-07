@@ -76,7 +76,7 @@ public abstract class MethodConstant implements StackManipulation {
     }
 
     /**
-     * Returns a list of type constant load operations for the given list of parameters.
+     * Returns a list of type constant load operations for the given list of parameters. 返回给定参数列表的类型常量加载操作列表
      *
      * @param parameterTypes A list of all type descriptions that should be represented as type constant
      *                       load operations.
@@ -246,7 +246,7 @@ public abstract class MethodConstant implements StackManipulation {
 
     /**
      * Creates a {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant} for loading
-     * a {@link java.lang.reflect.Constructor} instance onto the operand stack.
+     * a {@link java.lang.reflect.Constructor} instance onto the operand stack.  创建用于将 {@link java.lang.reflect.Constructor} 实例加载到操作数堆栈的 {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant}
      */
     protected static class ForConstructor extends MethodConstant implements CanCache {
 
@@ -261,7 +261,7 @@ public abstract class MethodConstant implements StackManipulation {
         private static final MethodDescription.InDefinedShape GET_DECLARED_CONSTRUCTOR;
 
         /*
-         * Looks up the method used for creating the manipulation.
+         * Looks up the method used for creating the manipulation. 查找用于创建操纵的方法
          */
         static {
             try {
@@ -301,7 +301,7 @@ public abstract class MethodConstant implements StackManipulation {
     }
 
     /**
-     * Performs a privileged lookup of a method constant by using an {@link AccessController}.
+     * Performs a privileged lookup of a method constant by using an {@link AccessController}. 使用 {@link AccessController} 对方法常量执行特权查找
      */
     protected static class PrivilegedLookup implements StackManipulation, CanCache {
 
@@ -311,7 +311,7 @@ public abstract class MethodConstant implements StackManipulation {
         private static final MethodDescription.InDefinedShape DO_PRIVILEGED;
 
         /*
-         * Locates the access controller's do privileged method.
+         * Locates the access controller's do privileged method. 定位访问控制器的do特权方法
          */
         static {
             try {

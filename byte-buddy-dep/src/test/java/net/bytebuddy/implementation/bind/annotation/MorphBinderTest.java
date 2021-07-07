@@ -43,6 +43,11 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         return new Morph.Binder(morphMethod);
     }
 
+    @Test
+    public void testInitia() {
+        System.out.println(new Morph.Binder(morphMethod));
+    }
+
     @Override
     @Before
     public void setUp() throws Exception {

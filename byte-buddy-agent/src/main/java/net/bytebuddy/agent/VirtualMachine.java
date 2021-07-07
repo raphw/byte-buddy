@@ -14,11 +14,11 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * An implementation for attachment on a virtual machine. This interface mimics the tooling API's virtual
  * machine interface to allow for similar usage by {@link ByteBuddyAgent} where all calls are made via
- * reflection such that this structural typing suffices for interoperability.
+ * reflection such that this structural typing suffices for interoperability. 虚拟机上连接的实现。此接口模仿工具API的虚拟机接口，允许{@link ByteBuddyAgent}使用类似的用法，其中所有调用都是通过反射进行的，这样这种结构类型就足以实现互操作性
  * </p>
  * <p>
  * <b>Note</b>: Implementations are required to declare a static method {@code attach(String)} returning an
- * instance of a class that declares the methods defined by {@link VirtualMachine}.
+ * instance of a class that declares the methods defined by {@link VirtualMachine}. 实现需要声明一个静态方法{@code attach(String)}，该方法返回一个类的实例，该类声明了{@link VirtualMachine}定义的方法
  * </p>
  */
 public interface VirtualMachine {
@@ -156,7 +156,7 @@ public interface VirtualMachine {
         protected abstract void write(byte[] buffer) throws IOException;
 
         /**
-         * A virtual machine implementation for a HotSpot VM running on Unix.
+         * A virtual machine implementation for a HotSpot VM running on Unix. 在Unix上运行的 HotSpot VM的虚拟机实现
          */
         public static class OnUnix extends ForHotSpot {
 

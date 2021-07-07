@@ -41,11 +41,11 @@ import java.util.*;
  * <li>The implementation is able to prepare an instrumented type by adding fields and/or helper methods that are
  * required for the methods implemented by this implementation. Furthermore,
  * {@link LoadedTypeInitializer}s and byte code for the type initializer can be registered for the instrumented
- * type.</li> Implementation 能够去准备一个instrumentedType，通过添加 field 和 辅助类（ 以便于添加方法的的 Implementation。此外，LoadedTypeInitializer 和 类型初始化的字节码，可以被注册为 instrumentedType
+ * type.</li> Implementation 能够去准备一个插桩类型，通过添加 字段 和 辅助类（以便于添加方法的的 Implementation。此外，LoadedTypeInitializer 和 类型初始化的字节码，可以被注册为 instrumentedType
  * <li>Any implementation is required to supply a byte code appender that is responsible for providing the byte code
  * to the instrumented methods that were delegated to this implementation. This byte code appender is also
  * be responsible for providing implementations for the methods added in step <i>1</i>.</li>
- * </ol> Implementation 提供一个code appender，可以被用来做方法的实现的委托调用。code appender 也负责去提供在 step 1 中添加的类型
+ * </ol> Implementation 提供一个code appender，可以被用来做方法实现的委托调用。code appender 也负责去提供在 step 1 中添加的类型
  * <p>&nbsp;</p>
  * An implementation should provide meaningful implementations of both {@link java.lang.Object#equals(Object)}
  * and {@link Object#hashCode()} if it wants to avoid to be used twice within the creation of a dynamic type. For two
@@ -64,7 +64,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
     ByteCodeAppender appender(Target implementationTarget);
 
     /**
-     * Represents an implementation that can be chained together with another implementation. 表示可以与另一个实现链接在一起的 implementation
+     * Represents an implementation that can be chained together with another implementation. 表示可以与另一个实现链接在一起的实现
      */
     interface Composable extends Implementation {
 
@@ -72,7 +72,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
          * Appends the supplied implementation to this implementation. 将提供的实现附加到此实现
          *
          * @param implementation The subsequent implementation.
-         * @return An implementation that combines this implementation with the provided one.
+         * @return An implementation that combines this implementation with the provided one. 将此实现与提供的实现相结合的实现
          */
         Implementation andThen(Implementation implementation);
 
@@ -80,7 +80,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
          * Appends the supplied composable implementation to this implementation. 将提供的可组合实现附加到此实现
          *
          * @param implementation The subsequent composable implementation.
-         * @return A composable implementation that combines this implementation with the provided one.
+         * @return A composable implementation that combines this implementation with the provided one. 一种可组合的实现，将该实现与提供的实现相结合
          */
         Composable andThen(Composable implementation);
     }
@@ -88,9 +88,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
     /**
      * Represents an type-specific method invocation on the current instrumented type which is not legal from outside
      * the type such as a super method or default method invocation. Legal instances of special method invocations must
-     * be equal to one another if they represent the same invocation target. 特殊的方法调用。比如class A 和 class B extends A。现在只有在 B 内才能调用 super 方法。但是可以通过修改字节码的方式，委托调用 super 方法。这就是特殊的方式调用，但不限于上面描述的场景
+     * be equal to one another if they represent the same invocation target. 特殊的方法调用。比如 class A 和 class B extends A。现在只有在 B 内才能调用 super 方法。但是可以通过修改字节码的方式，委托调用 super 方法。这就是特殊的方式调用，但不限于上面描述的场景
      */
-    interface SpecialMethodInvocation extends StackManipulation {
+    interface  SpecialMethodInvocation extends StackManipulation {
 
         /**
          * Returns the method that represents this special method invocation. This method can be different even for
@@ -109,7 +109,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
         TypeDescription getTypeDescription();
 
         /**
-         * A canonical implementation of an illegal {@link Implementation.SpecialMethodInvocation}.
+         * A canonical implementation of an illegal {@link Implementation.SpecialMethodInvocation}. 非法 {@link Implementation.SpecialMethodInvocation} 的规范实现
          */
         enum Illegal implements SpecialMethodInvocation {
 
@@ -178,12 +178,12 @@ public interface Implementation extends InstrumentedType.Prepareable {
             private final MethodDescription methodDescription;
 
             /**
-             * The type description that is represented by this legal special method invocation.
+             * The type description that is represented by this legal special method invocation.   此合法特殊方法调用表示的类型描述
              */
             private final TypeDescription typeDescription;
 
             /**
-             * A stack manipulation representing the method's invocation on the type description.
+             * A stack manipulation representing the method's invocation on the type description.  表示方法在类型描述上的调用的堆栈操作
              */
             private final StackManipulation stackManipulation;
 
@@ -236,14 +236,14 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
     /** 可以理解 Target 和 Implementation 一致
      * The target of an implementation. Implementation targets must be immutable and can be queried without altering
-     * the implementation result. An implementation target provides information on the type that is to be created     implementation target提供有关要创建的类型的信息，其中实现负责缓存昂贵的计算，特别是需要反射查找的此类计算
+     * the implementation result. An implementation target provides information on the type that is to be created     实现目标提供有关要创建的类型的信息，其中实现负责缓存昂贵的计算，特别是需要反射查找的此类计算
      * where it is the implementation's responsibility to cache expensive computations, especially such computations
-     * that require reflective look-up. 一个 implementation 的目标。目标必须是不可变得，并且查询时返回固定结果，不能有随机的结果。Target 提供生成 implementation 的一切信息
+     * that require reflective look-up. 一个实现目标。目标必须是不可变得，并且查询时返回固定结果，不能有随机的结果。 目标提供生成实现的一切信息
      */
     interface Target {
 
         /**
-         * Returns a description of the instrumented type. 返回检测类型的描述
+         * Returns a description of the instrumented type. 返回插桩类型的描述
          *
          * @return A description of the instrumented type.
          */
@@ -253,7 +253,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
          * Identifies the origin type of an implementation. The origin type describes the type that is subject to
          * any form of enhancement. If a subclass of a given type is generated, the base type of this subclass
          * describes the origin type. If a given type is redefined or rebased, the origin type is described by the
-         * instrumented type itself. 标识 implementation 的源类型。原始类型描述了受任何形式增强影响的类型。如果生成给定类型的子类，则该子类的基类型描述源类型。如果给定类型被重新定义或重设基准，则原始类型由插入指令的类型本身描述
+         * instrumented type itself. 标识实现的源类型。原始类型描述了受任何形式增强影响的类型。如果生成给定类型的子类，则该子类的基类型描述源类型。如果给定类型被重新定义或重设基准，则原始类型由插桩类型本身描述
          *
          * @return The origin type of this implementation.
          */
@@ -272,7 +272,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
          * not be ambiguous or an illegal special method invocation is returned. 创建一个特殊的方法调用，用于调用具有给定令牌的默认方法。默认方法调用不能不明确，否则返回非法的特殊方法调用
          *
          * @param token A token of the method that is to be invoked as a default method.
-         * @return The corresponding default method invocation which might be illegal if the requested invocation is not legal or ambiguous.
+         * @return The corresponding default method invocation which might be illegal if the requested invocation is not legal or ambiguous. 相应的默认方法调用，如果请求的调用不合法或不明确，则该调用可能是非法的
          */
         SpecialMethodInvocation invokeDefault(MethodDescription.SignatureToken token);
 
@@ -289,9 +289,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
         /**
          * Invokes a dominant method, i.e. if the method token can be invoked as a super method invocation, this invocation is considered dominant.
          * Alternatively, a method invocation is attempted on an interface type as a default method invocation only if this invocation is not ambiguous
-         * for several interfaces. 调用主导方法，即如果方法令牌可以作为 超方法调用 调用，则此调用被视为主导调用。或者，仅当某个接口类型上的方法调用对多个接口不具有歧义性时，才尝试将该接口类型上的方法调用作为默认方法调用
+         * for several interfaces. 调用主导方法，即如果方法标记可以作为 超方法调用 调用，则此调用被视为主导调用。或者，仅当某个接口类型上的方法调用对多个接口不具有歧义性时，才尝试将该接口类型上的方法调用作为默认方法调用
          *
-         * @param token The method token representing the method to be invoked.
+         * @param token The method token representing the method to be invoked. 表示要调用的方法的方法标记
          * @return A special method invocation for a method representing the method token. 表示方法标记的方法的特殊方法调用
          */
         SpecialMethodInvocation invokeDominant(MethodDescription.SignatureToken token);
@@ -302,12 +302,12 @@ public interface Implementation extends InstrumentedType.Prepareable {
         interface Factory {
 
             /**
-             * Creates an implementation target.
+             * Creates an implementation target. 创建一个实现目标
              *
              * @param instrumentedType The instrumented type.
              * @param methodGraph      A method graph of the instrumented type.
              * @param classFileVersion The type's class file version.
-             * @return An implementation target for the instrumented type.
+             * @return An implementation target for the instrumented type. 对于插桩类型的一个实现目标
              */
             Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, ClassFileVersion classFileVersion);
         }
@@ -432,9 +432,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
     }
 
     /**
-     * The context for an implementation application. An implementation context represents a mutable data structure
-     * where any registration is irrevocable. Calling methods on an implementation context should be considered equally
-     * sensitive as calling a {@link org.objectweb.asm.MethodVisitor}. As such, an implementation context and a
+     * The context for an implementation application. An implementation context represents a mutable data structure     实现上下文表示一个可变的数据结构，其中任何注册都是不可撤销的
+     * where any registration is irrevocable. Calling methods on an implementation context should be considered equally 在实现上下文上调用方法应该被认为与调用 {@link org.objectweb.asm.MethodVisitor} 同样敏感
+     * sensitive as calling a {@link org.objectweb.asm.MethodVisitor}. As such, an implementation context and a         因此，实现上下文和 {@link org.objectweb.asm.MethodVisitor} 是创建新Java类型的补充
      * {@link org.objectweb.asm.MethodVisitor} are complementary for creating an new Java type. 包含了一个 {@link Implementation} 有关的上下文信息
      */
     interface Context extends MethodAccessorFactory {
@@ -443,13 +443,13 @@ public interface Implementation extends InstrumentedType.Prepareable {
          * Registers an auxiliary type as required for the current implementation. Registering a type will cause the
          * creation of this type even if this type is not effectively used for the current implementation. 注册上下文信息，这个是子类的一个实现，不难看出 auxiliaryTypes 保存了所有辅助类的信息
          *
-         * @param auxiliaryType The auxiliary type that is required for the current implementation.
+         * @param auxiliaryType The auxiliary type that is required for the current implementation. 当前实现所需的辅助类型
          * @return A description of the registered auxiliary type.
          */
         TypeDescription register(AuxiliaryType auxiliaryType);
 
         /**
-         * Caches a single value by storing it in form of a {@code private}, {@code final} and {@code static} field.
+         * Caches a single value by storing it in form of a {@code private}, {@code final} and {@code static} field.    通过以{@code private}、{@code final}和{@code static}字段的形式存储单个值来缓存该值
          * By caching values, expensive instance creations can be avoided and object identity can be preserved.
          * The field is initiated in a generated class's static initializer. 缓存 field 的定义
          *
@@ -570,10 +570,10 @@ public interface Implementation extends InstrumentedType.Prepareable {
                                  ClassFileVersion auxiliaryClassFileVersion);
         }
 
-        /**
+        /** 不允许任何注入静态初始值设定项块的实现上下文
          * An implementation context that does not allow for any injections into the static initializer block. This can be useful when
          * redefining a class when it is not allowed to add methods to a class what is an implicit requirement when copying the static
-         * initializer block into another method.
+         * initializer block into another method. 在重新定义类时，如果不允许向类中添加方法（将静态初始值设定项块复制到另一个方法时是隐式要求），则这将非常有用
          */
         class Disabled extends ExtractableView.AbstractBase {
 
@@ -817,7 +817,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
                 return fieldCache;
             }
-            // 使用 asm 的接口 classVisitor.visitField，生成类文件
+            // 使用 asm 的接口 classVisitor.visitField，生成类文件，所遇到的主要是 委托方法 中调用 插桩类 委托的原方法（不过，由于方法的名称被占用--这个方法被开放，并用作调用委托方法），因此方法名在委托方法中注册，并在该方法中生成
             @Override
             public void drain(TypeInitializer.Drain drain,
                               ClassVisitor classVisitor,
@@ -1028,8 +1028,8 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  * Creates a new accessor method.
                  *
                  * @param instrumentedType  The instrumented type.
-                 * @param methodDescription The method that is being accessed.
-                 * @param suffix            The suffix to append to the accessor method's name.
+                 * @param methodDescription The method that is being accessed. 正在访问的方法
+                 * @param suffix            The suffix to append to the accessor method's name. 附加到访问器方法名称的后缀
                  */
                 protected AccessorMethod(TypeDescription instrumentedType, MethodDescription methodDescription, String suffix) {
                     this.instrumentedType = instrumentedType;
@@ -1277,8 +1277,8 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * Returns this delegation record with the minimal visibility represented by the supplied access type. 以所提供的访问类表示的最小可见性返回此委派记录
                  *
-                 * @param accessType The access type to enforce.
-                 * @return A new version of this delegation record with the minimal implied visibility.
+                 * @param accessType The access type to enforce. 要强制的访问类型
+                 * @return A new version of this delegation record with the minimal implied visibility. 此委派记录的新版本具有最小的隐含可见性
                  */
                 protected abstract DelegationRecord with(AccessType accessType);
 
@@ -1355,7 +1355,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 }
 
                 /**
-                 * Creates a delegation to an accessor method.
+                 * Creates a delegation to an accessor method. 创建对访问器方法的委托
                  *
                  * @param methodDescription        The accessor method.
                  * @param visibility               The method's visibility.

@@ -24,7 +24,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isSetter;
 
 /**
  * This {@link net.bytebuddy.implementation.bind.MethodDelegationBinder} binds
- * method by analyzing annotations found on the <i>target</i> method that is subject to a method binding.
+ * method by analyzing annotations found on the <i>target</i> method that is subject to a method binding. 此{@link net.bytebuddy.implementation.bind.MethodDelegationBinder}通过分析在 <i>target</i> 方法上找到的注释（通过方法绑定）来绑定方法
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinder {
@@ -44,7 +44,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     }
 
     /**
-     * Creates a new method delegation binder that binds method based on annotations found on the target method.
+     * Creates a new method delegation binder that binds method based on annotations found on the target method. 创建一个新的方法委托绑定器，该绑定器根据在目标方法上找到的注释来绑定方法
      *
      * @param parameterBinders A list of parameter binder delegates. Each such delegate is responsible for creating a
      *                         {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.ParameterBinding}
@@ -79,7 +79,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         private final MethodDescription candidate;
 
         /**
-         * A list of handlers for each parameter. 每个参数的处理程序列表
+         * A list of handlers for each parameter. 候选方法的每个参数处理程序列表
          */
         private final List<DelegationProcessor.Handler> handlers;
 
@@ -107,7 +107,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                                   MethodDelegationBinder.TerminationHandler terminationHandler,
                                   MethodInvoker methodInvoker,
                                   Assigner assigner) {
-            if (!candidate.isAccessibleTo(implementationTarget.getInstrumentedType())) {
+            if (!candidate.isAccessibleTo(implementationTarget.getInstrumentedType())) { // 插桩类型是否可见代理类型的候选方法
                 return MethodBinding.Illegal.INSTANCE;
             }
             StackManipulation methodTermination = terminationHandler.resolve(assigner, typing, source, candidate);
@@ -185,17 +185,17 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
 
         /**
          * <p>
-         * Implements a parameter binder that binds a fixed value to a parameter with a given annotation.
+         * Implements a parameter binder that binds a fixed value to a parameter with a given annotation. 实现参数绑定程序，该绑定程序将固定值绑定到具有给定注释的参数
          * </p>
          * <p>
          * This binder is only capable to store values that can either be expressed as Java byte code or as a constant pool value. This
          * includes primitive types, {@link String} values, {@link Class} values which can also be expressed as {@link TypeDescription}
          * instances or method handles and method types for classes of a version at least of Java 7. The latter instances can also be
-         * expressed as unloaded {@link JavaConstant} representations.
+         * expressed as unloaded {@link JavaConstant} representations. 该绑定器仅能够存储可以表示为Java字节码或常量池值的值。 这包括原始类型，{@link String}值，{@link Class}值，这些值也可以表示为 {@link TypeDescription}实例或方法句柄以及至少是Java 7版本的类的方法类型。 也可以表示为已卸载的{@link JavaConstant}表示形式
          * </p>
          * <p>
          * <b>Important</b>: When supplying a method handle or a method type, all types that are implied must be visible to the instrumented
-         * type or an {@link IllegalAccessException} will be thrown at runtime.
+         * type or an {@link IllegalAccessException} will be thrown at runtime. 提供方法句柄或方法类型时，所有隐含的类型必须对所插桩类型可见，否则将在运行时引发{@link IllegalAccessException}
          * </p>
          *
          * @param <S> The bound annotation's type.

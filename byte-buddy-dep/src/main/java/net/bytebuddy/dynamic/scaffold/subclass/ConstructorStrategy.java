@@ -29,10 +29,10 @@ public interface ConstructorStrategy {
 
     /**
      * Extracts constructors for a given super type. The extracted constructor signatures will then be imitated by the
-     * created dynamic type.
+     * created dynamic type. 提取给定超类的构造函数。 然后，提取的构造函数签名将由创建的动态类型模仿
      *
-     * @param instrumentedType The type for which the constructors should be created.
-     * @return A list of tokens that describe the constructors that are to be implemented.
+     * @param instrumentedType The type for which the constructors should be created. 应该为其创建构造函数的类型
+     * @return A list of tokens that describe the constructors that are to be implemented. 描述要实现的构造函数的标记列表
      */
     List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType);
 

@@ -42,14 +42,14 @@ public interface MethodDelegationBinder {
     interface Record {
 
         /**
-         * Attempts a binding of a source method to this compiled target.
+         * Attempts a binding of a source method to this compiled target. 尝试将源方法绑定到此已编译目标
          *
-         * @param implementationTarget The target of the current implementation onto which this binding is to be applied.
-         * @param source               The method that is to be bound to the {@code target} method.
+         * @param implementationTarget The target of the current implementation onto which this binding is to be applied. 此绑定将应用到的当前实现的目标
+         * @param source               The method that is to be bound to the {@code target} method. 绑定到 {@code target} 方法的方法
          * @param terminationHandler   The termination handler to apply.
          * @param methodInvoker        The method invoker to use.
          * @param assigner             The assigner to use.
-         * @return A binding representing this attempt to bind the {@code source} method to the {@code target} method.
+         * @return A binding representing this attempt to bind the {@code source} method to the {@code target} method. 表示此尝试将 {@code source} 方法绑定到 {@code target} 方法的绑定
          */
         MethodBinding bind(Implementation.Target implementationTarget,
                            MethodDescription source,
@@ -58,7 +58,7 @@ public interface MethodDelegationBinder {
                            Assigner assigner);
 
         /**
-         * A compiled method delegation binder that only yields illegal bindings.
+         * A compiled method delegation binder that only yields illegal bindings. 一个仅产生非法绑定的已编译方法委托活页夹
          */
         enum Illegal implements Record {
 
@@ -110,13 +110,13 @@ public interface MethodDelegationBinder {
         }
 
         /**
-         * A method invocation that enforces a virtual invocation that is dispatched on a given type.
+         * A method invocation that enforces a virtual invocation that is dispatched on a given type. 一种方法调用，它强制执行在给定类型上分派的虚拟调用
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Virtual implements MethodInvoker {
 
             /**
-             * The type on which a method should be invoked virtually.
+             * The type on which a method should be invoked virtually. 虚拟地调用方法的类型
              */
             private final TypeDescription typeDescription;
 
@@ -138,19 +138,19 @@ public interface MethodDelegationBinder {
 
     /**
      * A binding attempt for a single parameter. Implementations of this type are a suggestion of composing a 对单个参数的绑定尝试
-     * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding} 这种类型的实现建议使用net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding.Builder组成net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding
+     * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding} 这种类型的实现建议使用 net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding.Builder 组成 net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding
      * by using a
      * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding.Builder}.
      * However, method bindings can also be composed without this type which is merely a suggestion. 但是，方法绑定也可以在没有这种类型的情况下进行组合，而这种类型只是一个建议
      *
-     * @param <T> The type of the identification token for this parameter binding.
+     * @param <T> The type of the identification token for this parameter binding. 用于此参数绑定的标识标记的类型
      */
     interface ParameterBinding<T> extends StackManipulation {
 
         /**
          * Returns an identification token for this binding. 返回此绑定的标识令牌
          *
-         * @return An identification token unique to this binding.
+         * @return An identification token unique to this binding. 此绑定唯一的标识标记
          */
         T getIdentificationToken();
 
@@ -188,21 +188,21 @@ public interface MethodDelegationBinder {
         class Anonymous implements ParameterBinding<Object> {
 
             /**
-             * A pseudo-token that is not exposed and therefore anonymous.
+             * A pseudo-token that is not exposed and therefore anonymous. 不公开的伪标记，因此是匿名的
              */
             @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
             private final Object anonymousToken;
 
             /**
-             * The stack manipulation that represents the loading of the parameter binding onto the stack.
+             * The stack manipulation that represents the loading of the parameter binding onto the stack. 表示将参数绑定加载到堆栈上的堆栈操作
              */
             private final StackManipulation delegate;
 
             /**
-             * Creates a new, anonymous parameter binding.
+             * Creates a new, anonymous parameter binding. 创建一个新的匿名参数绑定
              *
              * @param delegate The stack manipulation that is responsible for loading the parameter value for this
-             *                 target method parameter onto the stack.
+             *                 target method parameter onto the stack. 负责将此目标方法参数的参数值加载到堆栈上的堆栈操作
              */
             public Anonymous(StackManipulation delegate) {
                 this.delegate = delegate;
@@ -715,7 +715,7 @@ public interface MethodDelegationBinder {
 
     /**
      * Implementations of this interface are able to attempt the resolution of two successful bindings of a method
-     * to two different target methods in order to identify a dominating binding.
+     * to two different target methods in order to identify a dominating binding. 此接口的实现能够尝试将方法的两个成功绑定解析为两个不同的目标方法，以便识别主导绑定
      */
     @SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "Safe initialization is implied")
     interface AmbiguityResolver {
@@ -730,7 +730,7 @@ public interface MethodDelegationBinder {
                 ParameterLengthResolver.INSTANCE);
 
         /**
-         * Attempts to resolve to conflicting bindings.
+         * Attempts to resolve to conflicting bindings. 尝试解决冲突的绑定
          *
          * @param source The source method that was bound to both target methods.
          * @param left   The first successful binding of the {@code source} method.
@@ -744,17 +744,17 @@ public interface MethodDelegationBinder {
         Resolution resolve(MethodDescription source, MethodBinding left, MethodBinding right);
 
         /**
-         * A resolution state of an attempt to resolve two conflicting bindings.
+         * A resolution state of an attempt to resolve two conflicting bindings. 尝试解决两个冲突绑定的解析状态
          */
         enum Resolution {
 
             /**
-             * Describes a resolution state where no information about dominance could be gathered.
+             * Describes a resolution state where no information about dominance could be gathered. 描述解决状态，在该状态下无法收集有关主导信息
              */
             UNKNOWN(true),
 
             /**
-             * Describes a resolution state where the left method dominates the right method.
+             * Describes a resolution state where the left method dominates the right method. 描述其中左方法主导右方法的解决状态
              */
             LEFT(false),
 
@@ -764,7 +764,7 @@ public interface MethodDelegationBinder {
             RIGHT(false),
 
             /**
-             * Describes a resolution state where both methods have inflicting dominance over each other.
+             * Describes a resolution state where both methods have inflicting dominance over each other. 描述其中两种方法相互之间都具有支配地位的解决状态
              */
             AMBIGUOUS(true);
 
@@ -792,7 +792,7 @@ public interface MethodDelegationBinder {
             }
 
             /**
-             * Merges two resolutions in order to determine their compatibility.
+             * Merges two resolutions in order to determine their compatibility. 合并两个分辨率以确定它们的兼容性
              *
              * @param other The resolution this resolution is to be checked against.
              * @return The merged resolution.
@@ -831,7 +831,7 @@ public interface MethodDelegationBinder {
         }
 
         /**
-         * An ambiguity resolver that always resolves in the specified direction.
+         * An ambiguity resolver that always resolves in the specified direction. 始终沿指定方向解析的歧义解析器
          */
         enum Directional implements AmbiguityResolver {
 
@@ -924,7 +924,7 @@ public interface MethodDelegationBinder {
     interface TerminationHandler {
 
         /**
-         * Creates a stack manipulation that is to be applied after the method return.
+         * Creates a stack manipulation that is to be applied after the method return. 创建在方法返回后要应用的堆栈操作
          *
          * @param assigner The supplied assigner.
          * @param typing   The typing to apply.
@@ -955,7 +955,7 @@ public interface MethodDelegationBinder {
             },
 
             /**
-             * A termination handler that drops the delegate method's return value.
+             * A termination handler that drops the delegate method's return value. 终止处理程序，用于删除委托方法的返回值
              */
             DROPPING {
                 @Override
@@ -1009,7 +1009,7 @@ public interface MethodDelegationBinder {
             this.ambiguityResolver = ambiguityResolver;
             this.bindingResolver = bindingResolver;
         }
-
+        // 查找可以代理源方法的代理方法 源方法就是这里的 source, 代理方法就是 methodInvoker 代表的类及其父类获取的所有虚方法，尝试惊醒关系绑定
         @Override
         public MethodBinding bind(Implementation.Target implementationTarget,
                                   MethodDescription source,

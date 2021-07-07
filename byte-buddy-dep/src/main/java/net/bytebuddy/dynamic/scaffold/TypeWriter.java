@@ -84,7 +84,7 @@ public interface TypeWriter<T> {
 
         /**
          * Returns the field attribute appender that matches a given field description or a default field
-         * attribute appender if no appender was registered for the given field.
+         * attribute appender if no appender was registered for the given field. 返回与给定字段描述匹配的字段属性appender，如果没有为给定字段注册appender，则返回默认字段属性appender
          *
          * @param fieldDescription The field description of interest.
          * @return The registered field attribute appender for the given field or the default appender if no such
@@ -93,14 +93,14 @@ public interface TypeWriter<T> {
         Record target(FieldDescription fieldDescription);
 
         /**
-         * An entry of a field pool that describes how a field is implemented.
+         * An entry of a field pool that describes how a field is implemented. 字段池的一个条目，描述字段是如何实现的
          *
          * @see net.bytebuddy.dynamic.scaffold.TypeWriter.FieldPool
          */
         interface Record {
 
             /**
-             * Determines if this record is implicit, i.e is not defined by a {@link FieldPool}.
+             * Determines if this record is implicit, i.e is not defined by a {@link FieldPool}. 确定此条目是否是隐式的，即不是由{@link FieldPool}定义的。
              *
              * @return {@code true} if this record is implicit.
              */
@@ -145,13 +145,13 @@ public interface TypeWriter<T> {
             void apply(FieldVisitor fieldVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory);
 
             /**
-             * A record for a simple field without a default value where all of the field's declared annotations are appended.
+             * A record for a simple field without a default value where all of the field's declared annotations are appended. 一个没有默认值的简单字段的条目，其中附加了该字段所有声明的注解
              */
             @HashCodeAndEqualsPlugin.Enhance
             class ForImplicitField implements Record {
 
                 /**
-                 * The implemented field.
+                 * The implemented field. 实现的字段
                  */
                 private final FieldDescription fieldDescription;
 
@@ -206,7 +206,7 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * A record for a rich field with attributes and a potential default value. 具有属性和潜在默认值的丰富字段的记录
+             * A record for a rich field with attributes and a potential default value. 具有属性和潜在默认值的丰富字段条目
              */
             @HashCodeAndEqualsPlugin.Enhance
             class ForExplicitField implements Record {
@@ -367,7 +367,7 @@ public interface TypeWriter<T> {
 
             /**
              * Applies the body of this entry. Applying the body of an entry is only possible if a method is implemented, i.e. the sort of this
-             * entry is {@link Record.Sort#IMPLEMENTED}.
+             * entry is {@link Record.Sort#IMPLEMENTED}. 应用此条目的正文。只有在实现了一个方法的情况下才能应用条目的主体，也就是说，这个条目的类型是{@link Record.Sort#IMPLEMENTED}
              *
              * @param methodVisitor                The method visitor to which this entry should be applied.
              * @param implementationContext        The implementation context to which this entry should be applied.
@@ -395,7 +395,7 @@ public interface TypeWriter<T> {
             ByteCodeAppender.Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext);
 
             /**
-             * The sort of an entry. 一个条目的类型
+             * The sort of an entry. 条目的类型
              */
             enum Sort {
 
@@ -415,12 +415,12 @@ public interface TypeWriter<T> {
                 IMPLEMENTED(true, true);
 
                 /**
-                 * Indicates if this sort defines a method, with or without byte code.
+                 * Indicates if this sort defines a method, with or without byte code. 指示此类型是否定义方法（带或不带字节码）
                  */
                 private final boolean define;
 
                 /**
-                 * Indicates if this sort defines byte code.
+                 * Indicates if this sort defines byte code. 指示此类型是否定义字节码
                  */
                 private final boolean implement;
 
@@ -553,27 +553,27 @@ public interface TypeWriter<T> {
                 public static class WithBody extends ForDefinedMethod {
 
                     /**
-                     * The implemented method.
+                     * The implemented method. 要实现的方法
                      */
                     private final MethodDescription methodDescription;
 
                     /**
-                     * The byte code appender to apply.
+                     * The byte code appender to apply.  要应用的字节码追加器
                      */
                     private final ByteCodeAppender byteCodeAppender;
 
                     /**
-                     * The method attribute appender to apply.
+                     * The method attribute appender to apply. 要应用的方法属性附加器
                      */
                     private final MethodAttributeAppender methodAttributeAppender;
 
                     /**
-                     * The represented method's minimum visibility.
+                     * The represented method's minimum visibility. 表示方法的最小可见性
                      */
                     private final Visibility visibility;
 
                     /**
-                     * Creates a new record for an implemented method without attributes or a modifier resolver. 为没有属性或修饰符解析器的已实现方法创建新记录
+                     * Creates a new record for an implemented method without attributes or a modifier resolver. 为没有属性或修饰符解析器的已实现方法创建新条目
                      *
                      * @param methodDescription The implemented method.
                      * @param byteCodeAppender  The byte code appender to apply.
@@ -1009,41 +1009,41 @@ public interface TypeWriter<T> {
                 }
             }
 
-            /**
+            /** 附加方法实现的访问器桥的包装器
              * A wrapper that appends accessor bridges for a method's implementation. The bridges are only added if
              * {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Record#apply(ClassVisitor, Implementation.Context, AnnotationValueFilter.Factory)}
-             * is invoked such that bridges are not appended for methods that are rebased or redefined as such types already have bridge methods in place.
+             * is invoked such that bridges are not appended for methods that are rebased or redefined as such types already have bridge methods in place. 只有当 {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Record#apply(ClassVisitor, Implementation.Context, AnnotationValueFilter.Factory)} 被调用时，桥才会被添加，这样桥就不会被附加到重基或重定义的方法上，因为这些类型已经有了桥方法
              */
             @HashCodeAndEqualsPlugin.Enhance
             class AccessBridgeWrapper implements Record {
 
                 /**
-                 * The delegate for implementing the bridge's target.
+                 * The delegate for implementing the bridge's target. 执行桥目标的代表
                  */
                 private final Record delegate;
 
                 /**
-                 * The instrumented type that defines the bridge methods and the bridge target.
+                 * The instrumented type that defines the bridge methods and the bridge target. 定义桥方法和桥目标的插桩类型
                  */
                 private final TypeDescription instrumentedType;
 
                 /**
-                 * The target of the bridge method.
+                 * The target of the bridge method. 桥方法的目标
                  */
                 private final MethodDescription bridgeTarget;
 
                 /**
-                 * A collection of all tokens representing all bridge methods.
+                 * A collection of all tokens representing all bridge methods. 表示所有桥方法的所有标记集合
                  */
                 private final Set<MethodDescription.TypeToken> bridgeTypes;
 
                 /**
-                 * The attribute appender being applied for the bridge target.
+                 * The attribute appender being applied for the bridge target. 应用于网桥目标的属性附加器
                  */
                 private final MethodAttributeAppender attributeAppender;
 
                 /**
-                 * Creates a wrapper for adding accessor bridges.
+                 * Creates a wrapper for adding accessor bridges. 创建用于添加访问器桥的包装器
                  *
                  * @param delegate          The delegate for implementing the bridge's target.
                  * @param instrumentedType  The instrumented type that defines the bridge methods and the bridge target.
@@ -1318,7 +1318,7 @@ public interface TypeWriter<T> {
     /**
      * A default implementation of a {@link net.bytebuddy.dynamic.scaffold.TypeWriter}. {@link net.bytebuddy.dynamic.scaffold.TypeWriter} 的默认实现
      *
-     * @param <S> The best known loaded type for the dynamically created type. 动态创建的类型的最著名的加载类型
+     * @param <S> The best known loaded type for the dynamically created type. 动态创建类型的最著名加载类型
      */
     @HashCodeAndEqualsPlugin.Enhance
     abstract class Default<S> implements TypeWriter<S> {
@@ -1347,7 +1347,7 @@ public interface TypeWriter<T> {
         }
 
         /**
-         * The instrumented type to be created. 要创建的插入指令的类型
+         * The instrumented type to be created. 要创建的插桩类型
          */
         protected final TypeDescription instrumentedType;
 
@@ -1626,10 +1626,10 @@ public interface TypeWriter<T> {
          * @param typeValidation               Determines if a type should be explicitly validated.
          * @param classWriterStrategy          The class writer strategy to use.
          * @param typePool                     The type pool to use for computing stack map frames, if required.
-         * @param originalType                 The original type that is being redefined or rebased. 正在重新定义或重设基准的原始类型
+         * @param originalType                 The original type that is being redefined or rebased.               正在重新定义或重设基准的原始类型
          * @param classFileLocator             The class file locator for locating the original type's class file. 用于定位原始类型的类文件的类文件定位器
-         * @param methodRebaseResolver         The method rebase resolver to use for rebasing names. 用于重新设置名称的方法重新设置解析器的基础
-         * @param <U>                          A loaded type that the instrumented type guarantees to subclass. 插桩类型保证为子类的已加载类型
+         * @param methodRebaseResolver         The method rebase resolver to use for rebasing names.               用于重新设置名称的方法重新设置解析器的基础
+         * @param <U>                          A loaded type that the instrumented type guarantees to subclass.    插桩类型保证为子类的已加载类型
          * @return A suitable type writer.
          */
         public static <U> TypeWriter<U> forRebasing(MethodRegistry.Prepared methodRegistry,
@@ -1676,15 +1676,15 @@ public interface TypeWriter<T> {
         /**
          * Creates a type writer for decorating a type. 创建用于装饰类型的类型编写器
          *
-         * @param instrumentedType             The instrumented type.
-         * @param classFileVersion             The class file version to use when no explicit class file version is applied.
-         * @param auxiliaryTypes               A list of explicitly required auxiliary types.
-         * @param methods                      The methods to instrument.
-         * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
-         * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
-         * @param annotationValueFilterFactory The annotation value filter factory to apply.
-         * @param annotationRetention          The annotation retention to apply.
-         * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
+         * @param instrumentedType             The instrumented type. 插桩类型
+         * @param classFileVersion             The class file version to use when no explicit class file version is applied. 没有应用显式类文件版本时要使用的类文件版本
+         * @param auxiliaryTypes               A list of explicitly required auxiliary types. 明确要求的辅助类型的列表
+         * @param methods                      The methods to instrument. 插桩方法
+         * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type. 应用于插桩类型的属性附加器
+         * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.    要应用于类编写器的ASM访问者包装器
+         * @param annotationValueFilterFactory The annotation value filter factory to apply.  要应用的注解值筛选器工厂
+         * @param annotationRetention          The annotation retention to apply.             要应用的注解保留
+         * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.    要应用的辅助类型的命名策略
          * @param implementationContextFactory The implementation context factory to apply.
          * @param typeValidation               Determines if a type should be explicitly validated.
          * @param classWriterStrategy          The class writer strategy to use.
@@ -1746,7 +1746,7 @@ public interface TypeWriter<T> {
         protected class UnresolvedType {
 
             /**
-             * The type's binary representation.
+             * The type's binary representation. 类型的二进制表示
              */
             private final byte[] binaryRepresentation;
 
@@ -1759,7 +1759,7 @@ public interface TypeWriter<T> {
              * Creates a new unresolved type.
              *
              * @param binaryRepresentation The type's binary representation.
-             * @param auxiliaryTypes       A list of auxiliary types for this unresolved type.
+             * @param auxiliaryTypes       A list of auxiliary types for this unresolved type. 此未解析类型的辅助类型列表
              */
             protected UnresolvedType(byte[] binaryRepresentation, List<? extends DynamicType> auxiliaryTypes) {
                 this.binaryRepresentation = binaryRepresentation;
@@ -2418,7 +2418,7 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * Represents the constraint of an annotation type.
+                 * Represents the constraint of an annotation type. 表示注解类型的约束
                  */
                 enum ForAnnotation implements Constraint {
 
@@ -2538,7 +2538,7 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * Represents the constraint implied by a class file version.
+                 * Represents the constraint implied by a class file version. 表示类文件版本隐含的约束
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 class ForClassFileVersion implements Constraint {
@@ -2667,7 +2667,7 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * A constraint implementation that summarizes several constraints.
+                 * A constraint implementation that summarizes several constraints. 总结了几个约束的约束实现
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 class Compound implements Constraint {
@@ -2935,22 +2935,22 @@ public interface TypeWriter<T> {
             private static final MethodVisitor IGNORE_METHOD = null;
 
             /**
-             * Indicates that an annotation should be ignored.
+             * Indicates that an annotation should be ignored. 指示应忽略注解
              */
             private static final AnnotationVisitor IGNORE_ANNOTATION = null;
 
             /**
-             * The original type's description.
+             * The original type's description. 原始类型的描述
              */
             protected final TypeDescription originalType;
 
             /**
-             * The class file locator for locating the original type's class file.
+             * The class file locator for locating the original type's class file. 用于定位原始类型的类文件的类文件定位器
              */
             protected final ClassFileLocator classFileLocator;
 
             /**
-             * Creates a new inlining type writer.
+             * Creates a new inlining type writer. 创建新的内联类型编写器
              *
              * @param instrumentedType             The instrumented type to be created.
              * @param classFileVersion             The class file specified by the user.
@@ -4323,14 +4323,14 @@ public interface TypeWriter<T> {
                         private final MethodVisitor actualMethodVisitor;
 
                         /**
-                         * The method pool entry to apply.
+                         * The method pool entry to apply. 要应用的方法池条目
                          */
                         private final MethodPool.Record record;
 
                         /**
-                         * Creates a new attribute obtaining method visitor.
+                         * Creates a new attribute obtaining method visitor. 创建一个新的属性获取方法
                          *
-                         * @param actualMethodVisitor The method visitor of the actual method.
+                         * @param actualMethodVisitor The method visitor of the actual method. 实际方法的方法访问者
                          * @param record              The method pool entry to apply.
                          */
                         protected AttributeObtainingMethodVisitor(MethodVisitor actualMethodVisitor, MethodPool.Record record) {
@@ -4390,7 +4390,7 @@ public interface TypeWriter<T> {
             /**
              * A default type writer that only applies a type decoration. 只应用类型修饰的默认类型编写器
              *
-             * @param <V> The best known loaded type for the dynamically created type. 动态创建的类型的最著名的加载类型
+             * @param <V> The best known loaded type for the dynamically created type. 动态创建的类型的最著名加载类型
              */
             protected static class WithDecorationOnly<V> extends ForInlining<V> {
 
@@ -4615,8 +4615,8 @@ public interface TypeWriter<T> {
             /**
              * Creates a new default type writer for creating a new type that is not based on an existing class file. 创建新的默认类型编写器，用于创建不基于现有类文件的新类型
              *
-             * @param instrumentedType             The instrumented type to be created.
-             * @param classFileVersion             The class file version to write the instrumented type in and to apply when creating auxiliary types.
+             * @param instrumentedType             The instrumented type to be created. 被创建的插桩类型
+             * @param classFileVersion             The class file version to write the instrumented type in and to apply when creating auxiliary types. 将插桩类型写入并在创建辅助类型时应用的类文件版本
              * @param fieldPool                    The field pool to use.
              * @param methodPool                   The method pool to use.
              * @param auxiliaryTypes               A list of auxiliary types to add to the created type.

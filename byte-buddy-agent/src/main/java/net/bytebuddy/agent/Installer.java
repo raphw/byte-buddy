@@ -3,7 +3,7 @@ package net.bytebuddy.agent;
 import java.lang.instrument.Instrumentation;
 
 /**
- * An installer class which defined the hook-in methods that are required by the Java agent specification.
+ * An installer class which defined the hook-in methods that are required by the Java agent specification. 一个安装程序类，它定义了Java代理规范所需的方法中的钩子
  */
 public class Installer {
 

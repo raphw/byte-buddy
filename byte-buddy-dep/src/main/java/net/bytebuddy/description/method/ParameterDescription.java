@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Description of the parameter of a Java method or constructor. Java方法或构造函数的参数说明
+ * Description of the parameter of a Java method or constructor. Java方法或构造函数的参数描述
  */
 public interface ParameterDescription extends AnnotationSource,
         NamedElement.WithRuntimeName,

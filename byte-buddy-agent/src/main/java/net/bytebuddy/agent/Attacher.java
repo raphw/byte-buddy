@@ -5,7 +5,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * A Java program that attaches a Java agent to an external process.
+ * A Java program that attaches a Java agent to an external process. 将Java代理程序附加到外部进程的Java程序
  */
 public class Attacher {
 
@@ -65,7 +65,7 @@ public class Attacher {
     }
 
     /**
-     * Installs a Java agent on a target VM.
+     * Installs a Java agent on a target VM. 在目标VM上安装Java代理
      *
      * @param virtualMachineType The virtual machine type to use for the external attachment.
      * @param processId          The id of the process being target of the external attachment.

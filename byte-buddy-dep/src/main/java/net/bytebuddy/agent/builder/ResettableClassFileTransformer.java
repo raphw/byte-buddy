@@ -4,13 +4,13 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 
 /**
- * A class file transformer that can reset its transformation.
+ * A class file transformer that can reset its transformation. 可以重置其转换的类文件转换器
  */
 public interface ResettableClassFileTransformer extends ClassFileTransformer {
 
     /**
      * <p>
-     * Deregisters this class file transformer and redefines any transformed class to its state without this
+     * Deregisters this class file transformer and redefines any transformed class to its state without this   如果启用了提供的重新定义策略，则取消注册此类文件转换器，并将任何转换的类重新定义为其状态，而不应用此类文件转换器
      * class file transformer applied, if the supplied redefinition strategy is enabled. If it is not enabled,
      * only the {@link net.bytebuddy.agent.builder.AgentBuilder.InstallationListener} is informed about the
      * resetting without undoing any code changes.

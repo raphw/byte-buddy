@@ -20,7 +20,7 @@ public interface LoadedTypeInitializer {
 
     /**
      * Callback that is invoked on the creation of an instrumented type. If the loaded type initializer is alive, this
-     * method should be implemented empty instead of throwing an exception. 在创建检测类型时调用的回调。如果加载的类型初始值设定项是活动的，则此方法应实现为空，而不是引发异常
+     * method should be implemented empty instead of throwing an exception. 在创建插桩类型时调用的回调。如果加载的类型初始值设定项是活动的，则此方法应实现为空，而不是引发异常
      *
      * @param type The manifestation of the instrumented type.
      */

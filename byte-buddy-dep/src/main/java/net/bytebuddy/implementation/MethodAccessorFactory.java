@@ -15,7 +15,7 @@ public interface MethodAccessorFactory {
      * Registers an accessor method for a
      * {@link Implementation.SpecialMethodInvocation} which cannot itself be
      * triggered invoked directly from outside a type. The method is registered on the instrumented type
-     * with package-private visibility, similarly to a Java compiler's accessor methods. 为 {@link Implementation.SpecialMethodInvocation} 注册访问器方法，该方法本身不能从类型外部直接触发或调用。该方法以包私有可见性在插入指令的类型上注册，类似于Java编译器的访问器方法
+     * with package-private visibility, similarly to a Java compiler's accessor methods. 为 {@link Implementation.SpecialMethodInvocation} 注册访问器方法，该方法本身不能从类型外部直接触发或调用。该方法以包私有可见性在插桩类型上注册，类似于Java编译器的访问器方法
      *
      * @param specialMethodInvocation The special method invocation.
      * @param accessType              The required access type.

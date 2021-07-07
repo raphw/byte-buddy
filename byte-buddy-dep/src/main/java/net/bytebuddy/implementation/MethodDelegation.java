@@ -36,12 +36,12 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * This implementation delegates an method call to another method which can either be {@code static} by providing
  * a reference to a {@link java.lang.Class} or an instance method when another object is provided. The potential
  * targets of the method delegation can further be filtered by applying a filter. The method delegation can be
- * customized by invoking the {@code MethodDelegation}'s several builder methods.
- * <h3>Without any customization, the method delegation will work as follows:</h3>
- * <span style="text-decoration: underline">Binding an instrumented method to a given delegate method</span>
- * <p>&nbsp;</p> 方法将被一个参数一个参数地绑定
+ * customized by invoking the {@code MethodDelegation}'s several builder methods. 此实现将方法调用委托给另一个方法，该方法可以通过提供对{@link java.lang.Class}的引用或一个实例方法（如果提供了另一个对象）来进行{@code static}调用。 方法委派的潜在目标可以通过应用过滤器进一步过滤。 可以通过调用{@code MethodDelegation}的多个构建器方法来自定义方法委托
+ * <h3>Without any customization, the method delegation will work as follows:</h3> 在没有任何自定义的情况下，方法委派将按以下方式工作
+ * <span style="text-decoration: underline">Binding an instrumented method to a given delegate method</span> 将插桩方法绑定到给定的委托方法
+ * <p>&nbsp;</p>
  * A method will be bound parameter by parameter. Considering a method {@code Foo#bar} being bound to a method
- * {@code Qux#baz}, the method delegation will be decided on basis of the following annotations: 考虑到方法 {@code Foo#bar} 绑定到方法 {@code Qux#baz} ，将根据以下注释决定方法委托
+ * {@code Qux#baz}, the method delegation will be decided on basis of the following annotations: 一个方法将逐个参数绑定。考虑到方法 {@code Foo#bar} 绑定到方法 {@code Qux#baz} ，将根据以下注释决定方法委托
  * <ul>
  * <li>{@link net.bytebuddy.implementation.bind.annotation.Argument}: 此注解将 {@code Foo#bar} 的 {@code n} 第个参数绑定到用此注解注释的 {@code Qux#baz} 参数，其中 {@code n} 是 {@code @Argument} 注释的强制参数
  * This annotation will bind the {@code n}-th parameter of {@code Foo#bar} to that parameter of {@code Qux#baz}that
@@ -51,12 +51,12 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * that is annotated with {@code AllArguments}.</li>
  * <li>{@link net.bytebuddy.implementation.bind.annotation.This}: A parameter
  * of {@code Qux#baz} that is annotated with {@code This} will be assigned the instance that is instrumented for
- * a non-static method.</li>
+ * a non-static method.</li> 用 {@code This} 注释的 {@code Qux＃baz} 参数将分配为非静态方法的插桩实例
  * <li>{@link net.bytebuddy.implementation.bind.annotation.Super}: A parameter that is annotated with
- * this annotation is assigned a proxy that allows calling an instrumented type's super methods.</li>
+ * this annotation is assigned a proxy that allows calling an instrumented type's super methods.</li> 用该注解注释的参数被分配了一个代理，该代理允许调用已插桩类型的super方法
  * <li>{@link net.bytebuddy.implementation.bind.annotation.Default}: A parameter that is annotated with
  * this annotation is assigned a proxy that allows calling an instrumented type's directly implemented interfaces'
- * default methods.</li>
+ * default methods.</li> 用该注解注释的参数被分配了一个代理，该代理允许调用插桩类型的直接实现的接口的默认方法
  * <li>{@link net.bytebuddy.implementation.bind.annotation.SuperCall}: A parameter
  * of {@code Qux#baz} that is annotated with {@code SuperCall} will be assigned an instance of a type implementing both
  * {@link java.lang.Runnable} and {@link java.util.concurrent.Callable} which will invoke the instrumented method on the
@@ -64,7 +64,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * The return value is only emitted for the {@link java.util.concurrent.Callable#call()} method which additionally
  * requires to catch any unchecked exceptions that might be thrown by the original method's implementation. If a
  * source method is abstract, using this annotation excludes the method with this parameter annotation from being bound
- * to this source method.
+ * to this source method. 将为使用{@code SuperCall}注释的{@code Qux#baz}参数分配一个实例类型，该实例同时实现{@link java.lang.Runnable}和{@link java.util.concurrent.Callable} 它将在调用任一接口的方法时调用插桩方法（也就是原始方法）。使用方法调用的原始参数进行调用。仅为{@link java.util.concurrent.Callable#call()}方法发出返回值，该方法还需要捕获原始方法的实现可能引发的任何未经检查的异常。 如果源方法是抽象的，则使用此注释会将
  * </li>
  * <li>{@link net.bytebuddy.implementation.bind.annotation.DefaultCall}:
  * This annotation is similar to the {@link net.bytebuddy.implementation.bind.annotation.SuperCall}
@@ -156,7 +156,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * <p>
  * <b>Important</b>: For invoking a method on another instance, use the {@link MethodCall} implementation. A method delegation
  * intends to bind a interceptor class and its resolution algorithm will not necessarily yield a delegation to the intercepted
- * method.
+ * method. 要在另一个实例上调用方法，请使用{@link MethodCall}实现。 方法委托旨在绑定一个拦截器类，并且其解析算法不一定会向该拦截方法产生委托
  * </p>
  *
  * @see MethodCall
@@ -200,7 +200,7 @@ public class MethodDelegation implements Implementation.Composable {
     /**
      * Creates a new method delegation.
      *
-     * @param implementationDelegate The implementation delegate to use by this method delegator.
+     * @param implementationDelegate The implementation delegate to use by this method delegator. 此方法委托者使用的实现委托
      * @param parameterBinders       The parameter binders to use by this method delegator.
      * @param ambiguityResolver      The ambiguity resolver to use by this method delegator.
      * @param bindingResolver        The binding resolver being used to select the relevant method binding.
@@ -246,7 +246,7 @@ public class MethodDelegation implements Implementation.Composable {
      * a valid delegation target, the target method must be visible and accessible to the instrumented type. This is the case if
      * the target type is either public or in the same package as the instrumented type and if the target method is either public
      * or non-private and in the same package as the instrumented type. Private methods can only be used as a delegation target if
-     * the interception is targeting the instrumented type.
+     * the interception is targeting the instrumented type. 委托任何拦截的方法来调用由提供的类型声明的{@code static}方法。 要被视为有效的委派目标，目标方法必须对插桩类型可见且可访问。 如果目标类型是公共类型或与检测类型相同的程序包，并且目标方法是公共或非私有且与检测类型相同的程序包，则为这种情况。 如果侦听的目标是检测类型，则私有方法只能用作委托目标
      *
      * @param type The target type for the delegation.
      * @return A method delegation that redirects method calls to a static method of the supplied type.
@@ -485,7 +485,7 @@ public class MethodDelegation implements Implementation.Composable {
      * Creates a configuration builder for a method delegation that is pre-configured with the ambiguity resolvers defined by
      * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver#DEFAULT} and the parameter binders
      * defined by {@link net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder.ParameterBinder#DEFAULTS}.
-     *
+     * 为方法委托创建配置构建器，该方法委托已使用 {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver#DEFAULT} 的歧义解析器和 {@link net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder.ParameterBinder#DEFAULTS} 定义的参数绑定器进行了预配置
      * @return A method delegation configuration with pre-configuration.
      */
     public static WithCustomProperties withDefaultConfiguration() {
@@ -554,17 +554,17 @@ public class MethodDelegation implements Implementation.Composable {
     }
 
     /**
-     * An implementation delegate is responsible for executing the actual method delegation and for resolving the target methods.
+     * An implementation delegate is responsible for executing the actual method delegation and for resolving the target methods. 实现委托负责执行实际的方法委托并解决目标方法
      */
     protected interface ImplementationDelegate extends InstrumentedType.Prepareable {
 
         /**
-         * A name prefix for fields.
+         * A name prefix for fields. 字段的名称前缀
          */
         String FIELD_NAME_PREFIX = "delegate";
 
         /**
-         * Compiles this implementation delegate.
+         * Compiles this implementation delegate. 编译此实现委托
          *
          * @param instrumentedType The instrumented type.
          * @return A compiled implementation delegate.
@@ -577,15 +577,15 @@ public class MethodDelegation implements Implementation.Composable {
         interface Compiled {
 
             /**
-             * Resolves a stack manipulation that prepares the delegation invocation.
+             * Resolves a stack manipulation that prepares the delegation invocation. 解决准备委派调用的堆栈操作
              *
-             * @param instrumentedMethod The instrumented method.
-             * @return A stack manipulation that is applied prior to loading arguments and executing the method call.
+             * @param instrumentedMethod The instrumented method. 插桩方法
+             * @return A stack manipulation that is applied prior to loading arguments and executing the method call. 在加载参数和执行方法调用之前应用的堆栈操作
              */
             StackManipulation prepare(MethodDescription instrumentedMethod);
 
             /**
-             * Resolves an invoker to use for invoking the delegation target.
+             * Resolves an invoker to use for invoking the delegation target. 解析调用方用来调用委托目标的调用程序
              *
              * @return The method invoker to use.
              */
@@ -773,7 +773,7 @@ public class MethodDelegation implements Implementation.Composable {
         }
 
         /**
-         * An implementation delegate for invoking methods on a field that is declared by the instrumented type or a super type. 用于在由 instrumented 类型或超类型声明的字段上调用方法的实现委托
+         * An implementation delegate for invoking methods on a field that is declared by the instrumented type or a super type. 用于在由插桩类型或超类声明的字段上调用方法的实现委托
          */
         @HashCodeAndEqualsPlugin.Enhance
         abstract class ForField implements ImplementationDelegate {
@@ -844,7 +844,7 @@ public class MethodDelegation implements Implementation.Composable {
             protected abstract FieldDescription resolve(TypeDescription instrumentedType);
 
             /**
-             * An implementation target for a static field that is declared by the instrumented type and that is assigned an instance.
+             * An implementation target for a static field that is declared by the instrumented type and that is assigned an instance. 静态字段的实现目标，该静态字段由插桩类型声明并分配了一个实例
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class WithInstance extends ForField {
@@ -860,7 +860,7 @@ public class MethodDelegation implements Implementation.Composable {
                 private final TypeDescription.Generic fieldType;
 
                 /**
-                 * Creates a new implementation delegate for invoking methods on a supplied instance.
+                 * Creates a new implementation delegate for invoking methods on a supplied instance. 创建一个新的实现委托，以在提供的实例上调用方法
                  *
                  * @param fieldName           The name of the field that is target of the delegation.
                  * @param methodGraphCompiler The method graph compiler to use.
@@ -948,7 +948,7 @@ public class MethodDelegation implements Implementation.Composable {
         }
 
         /**
-         * An implementation delegate for constructing an instance.
+         * An implementation delegate for constructing an instance. 用于构造实例的实现委托
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForConstruction implements ImplementationDelegate {
@@ -1011,17 +1011,17 @@ public class MethodDelegation implements Implementation.Composable {
     protected static class Appender implements ByteCodeAppender {
 
         /**
-         * The implementation target of this implementation.
+         * The implementation target of this implementation. 本次实现的实现目标
          */
         private final Target implementationTarget;
 
         /**
-         * The method delegation binder processor which is responsible for implementing the method delegation.
+         * The method delegation binder processor which is responsible for implementing the method delegation. 负责实现方法委托的方法委托绑定处理器
          */
         private final MethodDelegationBinder.Record processor;
 
         /**
-         * A termination handler for a method delegation binder.
+         * A termination handler for a method delegation binder. 方法委托绑定器的终止处理程序
          */
         private final MethodDelegationBinder.TerminationHandler terminationHandler;
 
@@ -1067,7 +1067,7 @@ public class MethodDelegation implements Implementation.Composable {
     }
 
     /**
-     * A {@link MethodDelegation} with custom configuration.
+     * A {@link MethodDelegation} with custom configuration. 具有自定义配置的{@link MethodDelegation}
      */
     @HashCodeAndEqualsPlugin.Enhance
     public static class WithCustomProperties {
@@ -1146,10 +1146,10 @@ public class MethodDelegation implements Implementation.Composable {
 
         /**
          * Configures this method delegation to use the supplied parameter binders when deciding what value to assign to
-         * a parameter of a delegation target.
+         * a parameter of a delegation target. 配置此方法委派，以便在确定要分配给委派目标的参数的值时使用提供的参数绑定程序
          *
-         * @param parameterBinder The parameter binders to use.
-         * @return A new delegation configuration which also applies the supplied parameter binders.
+         * @param parameterBinder The parameter binders to use. 要使用的参数绑定器
+         * @return A new delegation configuration which also applies the supplied parameter binders. 一个新的委派配置，也将应用提供的参数绑定程序
          */
         public WithCustomProperties withBinders(TargetMethodAnnotationDrivenBinder.ParameterBinder<?>... parameterBinder) {
             return withBinders(Arrays.asList(parameterBinder));
@@ -1157,7 +1157,7 @@ public class MethodDelegation implements Implementation.Composable {
 
         /**
          * Configures this method delegation to use the supplied parameter binders when deciding what value to assign to
-         * a parameter of a delegation target.
+         * a parameter of a delegation target. 配置此方法委派，以便在确定要分配给委派目标的参数的值时使用提供的参数绑定程序
          *
          * @param parameterBinders The parameter binders to use.
          * @return A new delegation configuration which also applies the supplied parameter binders.
@@ -1230,9 +1230,9 @@ public class MethodDelegation implements Implementation.Composable {
          * This is the case if the method's declaring type is either public or in the same package as the instrumented type and if the method
          * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
          * a delegation target if the delegation is targeting the instrumented type.
-         *
-         * @param target The target instance for the delegation.
-         * @return A method delegation that redirects method calls to a static method of the supplied type.
+         * 委托任何拦截方法来调用由提供的实例或者器任何父类型声明的非{@code static}方法，要被视为有效的委派目标，方法必须对插住类型可见且可访问，如何方法的声明类型是公共的或与插桩类型在同一包中，并且该方法是公共或非私有的且与插桩类型在同一包中，则是这种情况，如果委托是针对插桩类型的，则私有方法只能用作委托目标
+         * @param target The target instance for the delegation. 委托的目标实例
+         * @return A method delegation that redirects method calls to a static method of the supplied type. 将方法调用重定向到提供的类型的静态方法的方法委托
          */
         public MethodDelegation to(Object target) {
             return to(target, MethodGraph.Compiler.DEFAULT);
@@ -1343,7 +1343,7 @@ public class MethodDelegation implements Implementation.Composable {
          *
          * @param target              The target instance for the delegation.
          * @param type                The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
-         * @param fieldName           The name of the field that is holding the {@code target} instance.
+         * @param fieldName           The name of the field that is holding the {@code target} instance. 拥有{@code target}实例的字段的名称
          * @param methodGraphCompiler The method graph compiler to use.
          * @return A method delegation that redirects method calls to a static method of the supplied type. 将方法调用重定向到提供的类型的静态方法的方法委托
          */
