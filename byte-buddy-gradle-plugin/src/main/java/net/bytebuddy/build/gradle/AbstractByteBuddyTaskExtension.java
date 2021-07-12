@@ -80,9 +80,9 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     private Adjustment adjustment;
 
     /**
-     * Determines if a failed task dependency adjustment should result in an error or should only be logged as a warning.
+     * Determines the reaction upon a failed task dependency resolution.
      */
-    private boolean strict;
+    private Adjustment.ErrorHandler adjustmentErrorHandler;
 
     /**
      * The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
@@ -105,6 +105,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         warnOnEmptyTypeSet = true;
         discovery = Discovery.EMPTY;
         adjustment = Adjustment.FULL;
+        adjustmentErrorHandler = Adjustment.ErrorHandler.WARN;
     }
 
     /**
@@ -270,21 +271,21 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     }
 
     /**
-     * Determines if a failed dependency resolution should result in a build error or be logged as a warning.
+     * Returns the error handler to be used when a task dependency cannot be resolved.
      *
-     * @return {@code true} if a failed dependency resolution should result in a build error.
+     * @return The error handler to be used when a task dependency cannot be resolved.
      */
-    public boolean isStrict() {
-        return strict;
+    public Adjustment.ErrorHandler getAdjustmentErrorHandler() {
+        return adjustmentErrorHandler;
     }
 
     /**
-     * Determines if a failed dependency resolution should result in a build error or be logged as a warning.
+     * Sets the error handler to be used when a task dependency cannot be resolved.
      *
-     * @param strict {@code true} if a failed dependency resolution should result in a build error.
+     * @param adjustmentErrorHandler The error handler to be used when a task dependency cannot be resolved.
      */
-    public void setStrict(boolean strict) {
-        this.strict = strict;
+    public void setAdjustmentErrorHandler(Adjustment.ErrorHandler adjustmentErrorHandler) {
+        this.adjustmentErrorHandler = adjustmentErrorHandler;
     }
 
     /**

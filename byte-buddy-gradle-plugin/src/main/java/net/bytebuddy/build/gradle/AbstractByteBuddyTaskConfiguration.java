@@ -79,7 +79,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
             Action<TaskExecutionGraph> action = new TaskExecutionGraphAdjustmentAction(project,
                     name,
                     extension.getAdjustment(),
-                    extension.isStrict(),
+                    extension.getAdjustmentErrorHandler(),
                     byteBuddyTask,
                     compileTask);
             if (extension.isLazy()) {
@@ -121,9 +121,9 @@ public abstract class AbstractByteBuddyTaskConfiguration<
         private final Adjustment adjustment;
 
         /**
-         * If {@code true}, dependency resolution errors should result in a build error.
+         * An error handler if an adjustment cannot be applied.
          */
-        private final boolean strict;
+        private final Adjustment.ErrorHandler adjustmentErrorHandler;
 
         /**
          * The Byte Buddy task that is injected.
@@ -141,22 +141,22 @@ public abstract class AbstractByteBuddyTaskConfiguration<
          * @param project       The current project.
          * @param name          The name of the task.
          * @param adjustment    The adjustment to apply.
-         * @param strict        If {@code true}, dependency resolution errors should result in a build error.
+         * @param adjustmentErrorHandler  An error handler if an adjustment cannot be applied.
          * @param byteBuddyTask The Byte Buddy task that is injected.
          * @param compileTask   The compile task to which the Byte Buddy task is appended to.
          */
         protected TaskExecutionGraphAdjustmentAction(Project project,
                                                      String name,
                                                      Adjustment adjustment,
-                                                     boolean strict,
+                                                     Adjustment.ErrorHandler adjustmentErrorHandler,
                                                      Task byteBuddyTask,
                                                      Task compileTask) {
             this.project = project;
             this.name = name;
             this.adjustment = adjustment;
+            this.adjustmentErrorHandler = adjustmentErrorHandler;
             this.byteBuddyTask = byteBuddyTask;
             this.compileTask = compileTask;
-            this.strict = strict;
         }
 
         /**
@@ -176,16 +176,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
                                 project.getName());
                     }
                 } catch (RuntimeException exception) {
-                    if (strict) {
-                        throw exception;
-                    } else {
-                        project.getLogger().warn("Failed to resolve potential dependency for task '{}' of project '{}' on '{}' of project '{}' - dependency must be declared manually if appropriate",
-                                task.getName(),
-                                task.getProject().getName(),
-                                name,
-                                project.getName(),
-                                exception);
-                    }
+                    adjustmentErrorHandler.apply(project, name, task, exception);
                 }
             }
         }

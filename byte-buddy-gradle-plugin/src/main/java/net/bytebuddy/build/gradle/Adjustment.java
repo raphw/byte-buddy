@@ -82,10 +82,61 @@ public enum Adjustment {
      * Resolves the task dependencies per project.
      *
      * @param project The project of the compile task.
-     * @param graph The task execution graph.
+     * @param graph   The task execution graph.
      * @return An iterable of all tasks to adjust.
      */
     protected abstract Iterable<Task> resolve(Project project, TaskExecutionGraph graph);
+
+    /**
+     * An error handler to react on failures to adjust the task graph.
+     */
+    public enum ErrorHandler {
+
+        /**
+         * An error handler that fails the build with the original exception upon an adjustment error.
+         */
+        FAIL {
+            @Override
+            protected void apply(Project project, String name, Task task, RuntimeException exception) {
+                throw exception;
+            }
+        },
+
+        /**
+         * An error handler that logs a warning upon an adjustment error.
+         */
+        WARN {
+            @Override
+            protected void apply(Project project, String name, Task task, RuntimeException exception) {
+                project.getLogger().warn("Failed to resolve potential dependency for task '{}' of project '{}' on '{}' of project '{}' - dependency must be declared manually if appropriate",
+                        task.getName(),
+                        task.getProject().getName(),
+                        name,
+                        project.getName(),
+                        exception);
+            }
+        },
+
+        /**
+         * An error handler that ignores any adjustment errors.
+         */
+        IGNORE {
+            @Override
+            protected void apply(Project project, String name, Task task, RuntimeException exception) {
+                /* do nothing */
+            }
+        };
+
+        /**
+         * Applies this handler upon an exception caused by an adjustment.
+         *
+         * @param project   The project that applies the Byte Buddy task.
+         * @param name      The name of the Byte Buddy task.
+         * @param task      The task being adjusted or being investigated for adjustment.
+         * @param exception The exception that was yielded during adjustment.
+         */
+        protected abstract void apply(Project project, String name, Task task, RuntimeException exception);
+    }
 
     /**
      * An {@link Iterable} that concatenates multiple iterables of {@link Task}s.
