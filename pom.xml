@@ -95,6 +95,7 @@
         <version.plugin.spotbugs>4.2.0</version.plugin.spotbugs>
         <version.plugin.modulemaker>1.7</version.plugin.modulemaker>
         <version.plugin.license>3.0</version.plugin.license>
+        <version.plugin.japicmp>0.15.3</version.plugin.japicmp>
         <version.android.sdk>4.1.1.4</version.android.sdk>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
         <spotbugs.skip>false</spotbugs.skip>
@@ -450,6 +451,7 @@
             <properties>
                 <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
                 <version.plugin.javadoc>3.2.0</version.plugin.javadoc>
+                <version.plugin.japicmp>0.13.1</version.plugin.japicmp>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
