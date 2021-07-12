@@ -91,7 +91,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
     }
 
     /**
-     * Configures the direTaskExecutionGraphctories of the compile and Byte Buddy tasks.
+     * Configures the directories of the compile and Byte Buddy tasks.
      *
      * @param source        The source directory set.
      * @param compileTask   The compile task.
