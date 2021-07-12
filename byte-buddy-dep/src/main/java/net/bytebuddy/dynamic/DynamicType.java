@@ -5828,6 +5828,13 @@ public interface DynamicType {
          * @return A mapping from the fully qualified names of all auxiliary types to their loaded class representations.
          */
         Map<TypeDescription, Class<?>> getLoadedAuxiliaryTypes();
+
+        /**
+         * Returns all loaded types that are implied by this dynamic type.
+         *
+         * @return All loaded types that are implied by this dynamic type.
+         */
+        Map<TypeDescription, Class<?>> getAllLoaded();
     }
 
     /**
@@ -6210,10 +6217,16 @@ public interface DynamicType {
              * {@inheritDoc}
              */
             public Map<TypeDescription, Class<?>> getLoadedAuxiliaryTypes() {
-                Map<TypeDescription, Class<?>> loadedAuxiliaryTypes = new HashMap<TypeDescription, Class<?>>(
-                        loadedTypes);
+                Map<TypeDescription, Class<?>> loadedAuxiliaryTypes = new HashMap<TypeDescription, Class<?>>(loadedTypes);
                 loadedAuxiliaryTypes.remove(typeDescription);
                 return loadedAuxiliaryTypes;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Map<TypeDescription, Class<?>> getAllLoaded() {
+                return new HashMap<TypeDescription, Class<?>>(loadedTypes);
             }
         }
     }

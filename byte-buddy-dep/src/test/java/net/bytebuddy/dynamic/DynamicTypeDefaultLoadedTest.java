@@ -56,5 +56,8 @@ public class DynamicTypeDefaultLoadedTest {
         assertThat(dynamicType.getLoadedAuxiliaryTypes().size(), is(1));
         assertThat(dynamicType.getLoadedAuxiliaryTypes().keySet(), hasItem(auxiliaryTypeDescription));
         assertThat(dynamicType.getLoadedAuxiliaryTypes().get(auxiliaryTypeDescription), CoreMatchers.<Class<?>>is(AUXILIARY_TYPE));
+        assertThat(dynamicType.getAllLoaded().size(), is(2));
+        assertThat(dynamicType.getAllLoaded().keySet(), hasItem(mainTypeDescription));
+        assertThat(dynamicType.getAllLoaded().keySet(), hasItem(auxiliaryTypeDescription));
     }
 }
