@@ -251,6 +251,7 @@
                 </executions>
                 <configuration>
                     <name>net.bytebuddy</name>
+                    <version>${project.version}</version>
                     <multirelease>true</multirelease>
                     <packages>${packages.list}</packages>
                     <exports>${packages.list}</exports>
