@@ -73,7 +73,7 @@ jobs:
           distribution: zulu
           architecture: x86
       - name: Build project
-        run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
+        run: ./mvnw verify -Djapicmp.skip=true -Pintegration -Pjava${{ matrix.java }}
   hotspot-unsupported:
     name: HotSpot (unsupported)
     strategy:
