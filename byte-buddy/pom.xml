@@ -28,7 +28,7 @@
     <properties>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
-        <packages.list>
+        <packages.list.external>
             net.bytebuddy,
             net.bytebuddy.agent.builder,
             net.bytebuddy.asm,
@@ -65,7 +65,10 @@
             ${shade.target},
             ${shade.target}.signature,
             ${shade.target}.commons
-        </packages.list>
+        </packages.list.external>
+        <packages.list.internal>
+            net.bytebuddy.utility.dispatcher
+        </packages.list.internal>
     </properties>
 
     <!--
@@ -225,7 +228,7 @@
                     <instructions>
                         <Multi-Release>true</Multi-Release>
                         <!-- Cannot use wildcards because of use of the shade plugin which imports from 'byte-buddy-dep'. -->
-                        <Export-Package>${packages.list}</Export-Package>
+                        <Export-Package>${packages.list.external}</Export-Package>
                     </instructions>
                 </configuration>
             </plugin>
@@ -253,8 +256,8 @@
                     <name>net.bytebuddy</name>
                     <version>${project.version}</version>
                     <multirelease>true</multirelease>
-                    <packages>${packages.list}</packages>
-                    <exports>${packages.list}</exports>
+                    <packages>${packages.list.external},${packages.list.internal}</packages>
+                    <exports>${packages.list.external}</exports>
                     <static-requires>
                         java.instrument,
                         jdk.unsupported,
