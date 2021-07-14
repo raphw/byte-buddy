@@ -81,7 +81,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     @Mock
     private ParameterDescription firstParameter, secondParameter;
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes", "cast"})
     private static MethodDelegationBinder.ParameterBinding<?> prepareArgumentBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder,
                                                                                     Class<? extends Annotation> annotationType,
                                                                                     Object identificationToken) {
@@ -90,7 +90,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(parameterBinding.isValid()).thenReturn(true);
         when(parameterBinding.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
         when(parameterBinding.getIdentificationToken()).thenReturn(identificationToken);
-        when(parameterBinder.bind(any(AnnotationDescription.Loadable.class),
+        when(((TargetMethodAnnotationDrivenBinder.ParameterBinder) parameterBinder).bind(any(AnnotationDescription.Loadable.class),
                 any(MethodDescription.class),
                 any(ParameterDescription.class),
                 any(Implementation.Target.class),
