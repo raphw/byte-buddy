@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 14. July 2021: version 1.11.7
+
+- Introduce a more complex error handler for Gradle builds in favor of strict mode.
+- Include method for reading all loaded `Class` values of a loaded dynamic type.
+- Include Byte Buddy version in *module-info*.
+- Fix package list in *module-info*.
+
 ### 2. July 2021: version 1.11.6
 
 - Add fallback for `JavaDispatcher` that works on Android and other platforms that do not support dynamic class definitions.
