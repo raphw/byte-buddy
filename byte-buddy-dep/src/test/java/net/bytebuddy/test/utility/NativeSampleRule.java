@@ -52,7 +52,7 @@ public class NativeSampleRule implements MethodRule {
         }
 
         public void evaluate() {
-            Logger.getLogger("net.bytebuddy").warning("Ignored test case that requires the native sample class: " + error);
+            Logger.getLogger("net.bytebuddy").info("Omitting test case that requires the native sample class: " + error);
         }
     }
 }

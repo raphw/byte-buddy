@@ -11946,6 +11946,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     private static class NoExceptionHandler extends Throwable {
 
         /**
+         * The class's serial version UID.
+         */
+        private static final long serialVersionUID = 1L;
+
+        /**
          * A description of the {@link NoExceptionHandler} type.
          */
         private static final TypeDescription DESCRIPTION = TypeDescription.ForLoadedType.of(NoExceptionHandler.class);

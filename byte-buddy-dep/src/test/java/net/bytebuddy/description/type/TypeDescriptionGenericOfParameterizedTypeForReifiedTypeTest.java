@@ -13,6 +13,7 @@ public class TypeDescriptionGenericOfParameterizedTypeForReifiedTypeTest {
     private static final String FOO = "foo", BAR = "bar";
 
     @Test
+    @SuppressWarnings("cast")
     public void testSuperType() throws Exception {
         TypeDescription.Generic typeDescription = new TypeDescription.Generic.OfParameterizedType.ForReifiedType(TypeDescription.ForLoadedType.of(Sample.class)
                 .getSuperClass());
@@ -41,6 +42,7 @@ public class TypeDescriptionGenericOfParameterizedTypeForReifiedTypeTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testInterfaceType() throws Exception {
         TypeDescription.Generic typeDescription = new TypeDescription.Generic.OfParameterizedType.ForReifiedType(TypeDescription.ForLoadedType.of(Sample.class)
                 .getInterfaces().getOnly());
@@ -66,6 +68,7 @@ public class TypeDescriptionGenericOfParameterizedTypeForReifiedTypeTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testNonGenericIntermediateType() throws Exception {
         TypeDescription.Generic typeDescription = TypeDescription.Generic.OfNonGenericType.ForReifiedErasure.of(TypeDescription.ForLoadedType.of(NonGenericSample.class))
                 .getSuperClass()

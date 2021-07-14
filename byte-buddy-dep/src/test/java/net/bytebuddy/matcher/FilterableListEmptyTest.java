@@ -8,7 +8,7 @@ import static org.mockito.Mockito.mock;
 
 public class FilterableListEmptyTest {
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     private FilterableList empty = new FilterableList.Empty();
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -33,19 +33,19 @@ public class FilterableListEmptyTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public void testSubListZero() throws Exception {
         assertThat(empty.subList(0, 0), is(empty));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public void testSubListOverflow() throws Exception {
         empty.subList(1, 1);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     public void testSubListBounds() throws Exception {
         empty.subList(1, 0);
     }

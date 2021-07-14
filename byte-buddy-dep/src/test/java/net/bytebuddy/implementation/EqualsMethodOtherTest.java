@@ -468,12 +468,22 @@ public class EqualsMethodOtherTest {
     public static class EqualsBase {
 
         @Override
+        public int hashCode() {
+            return 0;
+        }
+
+        @Override
         public boolean equals(Object other) {
             return true;
         }
     }
 
     public static class NonEqualsBase {
+
+        @Override
+        public int hashCode() {
+            return 0;
+        }
 
         @Override
         public boolean equals(Object other) {

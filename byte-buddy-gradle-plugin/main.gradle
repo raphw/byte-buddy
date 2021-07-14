@@ -8,6 +8,18 @@ group = pom.parent.groupId.text().toString()
 version = pom.parent.version.text().toString()
 description = pom.description.text().toString()
 
+compileJava {
+    options.warnings = true
+    options.deprecation = true
+    options.compilerArgs += ["-Xlint:all,-options,-processing"]
+}
+
+compileTestJava {
+    options.warnings = true
+    options.deprecation = true
+    options.compilerArgs += ["-Xlint:all,-options,-processing"]
+}
+
 // Gradle cannot process all version strings such that JavaVersion.current() fails.
 def raw = System.getProperty("java.version")
 def current

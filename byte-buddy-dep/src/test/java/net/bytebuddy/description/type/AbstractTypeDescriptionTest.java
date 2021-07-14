@@ -52,7 +52,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     private final List<Class<?>> standardTypes;
 
     protected AbstractTypeDescriptionTest() {
-        standardTypes = Arrays.asList(
+        standardTypes = Arrays.<Class<?>>asList(
                 Object.class,
                 Object[].class,
                 SampleClass.class,
@@ -132,6 +132,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testPrecondition() throws Exception {
         assertThat(describe(SampleClass.class), not(describe(SampleInterface.class)));
         assertThat(describe(SampleClass.class), not(describe(SampleAnnotation.class)));
@@ -279,6 +280,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testDeclaringType() throws Exception {
         for (Class<?> type : standardTypes) {
             assertThat(describe(type).getDeclaringType(), type.getDeclaringClass() == null
@@ -310,6 +312,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testEnclosingType() throws Exception {
         for (Class<?> type : standardTypes) {
             assertThat(describe(type).getEnclosingType(), type.getEnclosingClass() == null
@@ -332,6 +335,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testEquals() throws Exception {
         TypeDescription identical = describe(SampleClass.class);
         assertThat(identical, is(identical));
@@ -957,6 +961,8 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
             U extends Callable<? extends Callable<U>>,
             V extends ArrayList<? super ArrayList<V>>,
             W extends Callable<W[]>> extends ArrayList<T> implements Callable<T> {
+
+        private static final long serialVersionUID = 1L;
 
         public T call() throws Exception {
             return null;

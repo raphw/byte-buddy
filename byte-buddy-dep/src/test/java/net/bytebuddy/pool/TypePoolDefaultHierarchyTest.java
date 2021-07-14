@@ -48,6 +48,7 @@ public class TypePoolDefaultHierarchyTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testChildSecond() throws Exception {
         TypePool typePool = new TypePool.Default(cacheProvider, classFileLocator, TypePool.Default.ReaderMode.FAST, parentPool);
         when(parentPool.describe(FOO)).thenReturn(resolution);

@@ -786,7 +786,7 @@ public class ByteBuddyTutorialExamplesTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     class LoggingMemoryDatabase extends MemoryDatabase {
 
         public List<String> load(String info) {

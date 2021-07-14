@@ -38,6 +38,7 @@ public class TypePoolClassLoadingTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testArrayClass() throws Exception {
         TypePool.Resolution resolution = typePool.describe(Object[].class.getName());
         assertThat(resolution.isResolved(), is(true));
@@ -45,6 +46,7 @@ public class TypePoolClassLoadingTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testPrimitiveClass() throws Exception {
         TypePool.Resolution resolution = typePool.describe(int.class.getName());
         assertThat(resolution.isResolved(), is(true));

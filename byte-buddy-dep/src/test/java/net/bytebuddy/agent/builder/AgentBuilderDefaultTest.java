@@ -2339,8 +2339,8 @@ public class AgentBuilderDefaultTest {
                 new AgentBuilder.Default.CircularityLock.Default());
         final ClassLoader classLoader = mock(ClassLoader.class);
         final ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
-        doAnswer(new Answer() {
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+        doAnswer(new Answer<Void>() {
+            public Void answer(InvocationOnMock invocation) throws Throwable {
                 assertThat(executingTransformer.transform(classLoader,
                         FOO,
                         Object.class,
@@ -2379,8 +2379,9 @@ public class AgentBuilderDefaultTest {
                 new AgentBuilder.CircularityLock.Default());
         final ClassLoader classLoader = mock(ClassLoader.class);
         final ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
-        doAnswer(new Answer() {
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+        doAnswer(new Answer<Void>() {
+
+            public Void answer(InvocationOnMock invocation) {
                 assertThat(executingTransformer.transform(JavaModule.ofType(Object.class).unwrap(),
                         classLoader,
                         FOO,

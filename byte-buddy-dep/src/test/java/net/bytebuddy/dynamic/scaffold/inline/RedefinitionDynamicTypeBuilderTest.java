@@ -40,7 +40,7 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
         return new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE).redefine(Foo.class);
     }
 
-    protected DynamicType.Builder createDisabledRetention(Class<?> annotatedClass) {
+    protected DynamicType.Builder<?> createDisabledRetention(Class<?> annotatedClass) {
         return new ByteBuddy().with(AnnotationRetention.DISABLED).redefine(annotatedClass);
     }
 

@@ -523,10 +523,10 @@ public class InvokeDynamicTest {
         InvokeDynamic.lambda(InvokeDynamicTest.class.getMethod("value"), ExecutorService.class);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private Enum<?> makeEnum() throws Exception {
-        Class type = Class.forName(SAMPLE_ENUM);
-        return Enum.valueOf(type, INSTANCE);
+        Class<?> type = Class.forName(SAMPLE_ENUM);
+        return Enum.valueOf((Class) type, INSTANCE);
     }
 
     public static class Simple {

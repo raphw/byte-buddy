@@ -58,10 +58,8 @@ public class ConstructorStrategyForDefaultConstructorTest {
     @Mock
     private AnnotationValue<?, ?> defaultValue;
 
-    private MethodDescription.Token stripped;
-
     @Before
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "cast"})
     public void setUp() throws Exception {
         when(methodRegistry.append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
@@ -81,19 +79,10 @@ public class ConstructorStrategyForDefaultConstructorTest {
         when(token.getAnnotations()).thenReturn(new AnnotationList.Empty());
         when(token.getDefaultValue()).thenReturn((AnnotationValue) defaultValue);
         when(token.getReceiverType()).thenReturn(typeDescription);
-        stripped = new MethodDescription.Token(FOO,
-                MODIFIERS,
-                Collections.<TypeVariableToken>emptyList(),
-                typeDescription,
-                Collections.<ParameterDescription.Token>emptyList(),
-                Collections.<TypeDescription.Generic>emptyList(),
-                Collections.<AnnotationDescription>emptyList(),
-                defaultValue,
-                TypeDescription.Generic.UNDEFINED);
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testSingleConstructorsStrategy() throws Exception {
         assertThat(new ConstructorStrategy.ForDefaultConstructor().extractConstructors(instrumentedType),
                 is(Collections.singletonList(new MethodDescription.Token(Opcodes.ACC_PUBLIC))));
@@ -102,7 +91,7 @@ public class ConstructorStrategyForDefaultConstructorTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testSingleConstructorsStrategyNoSuperConstuctorExtract() throws Exception {
         TypeDescription noConstructor = mock(TypeDescription.class);
         TypeDescription.Generic noConstructorSuper = mock(TypeDescription.Generic.class);
@@ -112,7 +101,7 @@ public class ConstructorStrategyForDefaultConstructorTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testSingleConstructorsStrategyNoSuperConstuctorInject() throws Exception {
         TypeDescription noConstructor = mock(TypeDescription.class);
         TypeDescription.Generic noConstructorSuper = mock(TypeDescription.Generic.class);
@@ -122,7 +111,7 @@ public class ConstructorStrategyForDefaultConstructorTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testSingleConstructorsStrategyMultipleSuperConstuctorInject() throws Exception {
         TypeDescription noConstructor = mock(TypeDescription.class);
         TypeDescription.Generic noConstructorSuper = mock(TypeDescription.Generic.class);

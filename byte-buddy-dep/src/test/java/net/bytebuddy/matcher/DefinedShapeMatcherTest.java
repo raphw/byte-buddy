@@ -22,7 +22,7 @@ public class DefinedShapeMatcherTest extends AbstractElementMatcherTest<DefinedS
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testMatch() throws Exception {
         when(matcher.matches(resolvedDependant)).thenReturn(true);
         when(dependent.asDefined()).thenReturn((ByteCodeElement.TypeDependant) resolvedDependant);
@@ -34,7 +34,7 @@ public class DefinedShapeMatcherTest extends AbstractElementMatcherTest<DefinedS
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testNoMatch() throws Exception {
         when(matcher.matches(resolvedDependant)).thenReturn(true);
         when(dependent.asDefined()).thenReturn((ByteCodeElement.TypeDependant) otherResolvedDependant);

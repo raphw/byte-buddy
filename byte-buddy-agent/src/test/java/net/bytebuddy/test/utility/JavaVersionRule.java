@@ -76,7 +76,7 @@ public class JavaVersionRule implements MethodRule {
         }
 
         public void evaluate() {
-            Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Requires a Java version " +
+            Logger.getLogger("net.bytebuddy").info("Omitting test case: Requires a Java version " +
                     "of " + sort + " " + requiredVersion
                     + (target == void.class ? "" : (" for target " + target)));
         }
@@ -85,7 +85,7 @@ public class JavaVersionRule implements MethodRule {
     private static class OpenJ9Statement extends Statement {
 
         public void evaluate() {
-            Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Test not supported on OpenJ9");
+            Logger.getLogger("net.bytebuddy").info("Omitting test case: Test not supported on OpenJ9");
         }
     }
 }

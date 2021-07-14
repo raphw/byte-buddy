@@ -90,7 +90,7 @@ public class TypeCacheTest {
             assertThat(typeCache.insert(classLoader, key, Void.class), is((Object) Void.class));
             assertThat(typeCache.find(classLoader, key), is((Object) Void.class));
         } catch (AssertionError ignored) {
-            Logger.getLogger("net.bytebuddy").warning("Cache was not cleared, possibly due to weak references not being collected, retrying...");
+            Logger.getLogger("net.bytebuddy").info("Cache was not cleared, possibly due to weak references not being collected, retrying...");
             for (int index = 0; index < 50; index++) {
                 System.gc();
                 Thread.sleep(50L);

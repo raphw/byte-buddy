@@ -22,7 +22,7 @@ public class MethodParameterTypesMatcherTest extends AbstractElementMatcherTest<
     private TypeList.Generic typeList;
 
     @Mock
-    private ParameterList parameterList;
+    private ParameterList<?> parameterList;
 
     @SuppressWarnings("unchecked")
     public MethodParameterTypesMatcherTest() {

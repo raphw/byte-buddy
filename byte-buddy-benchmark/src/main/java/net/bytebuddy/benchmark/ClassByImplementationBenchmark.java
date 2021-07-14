@@ -322,7 +322,7 @@ public class ClassByImplementationBenchmark {
         enhancer.setUseCache(false);
         enhancer.setClassLoader(newClassLoader());
         enhancer.setSuperclass(baseClass);
-        CallbackHelper callbackHelper = new CallbackHelper(Object.class, new Class[]{baseClass}) {
+        CallbackHelper callbackHelper = new CallbackHelper(Object.class, new Class<?>[]{baseClass}) {
             protected Object getCallback(Method method) {
                 if (method.getDeclaringClass() == baseClass) {
                     return new FixedValue() {

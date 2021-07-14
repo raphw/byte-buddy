@@ -38,7 +38,7 @@ public class TypeDescriptionGenericVisitorValidatorForTypeAnnotations {
     private TypeDescription.Generic legal, illegal, duplicate, otherLegal, otherIllegal;
 
     @Before
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void setUp() throws Exception {
         when(otherLegal.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(true);
         when(otherIllegal.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(false);

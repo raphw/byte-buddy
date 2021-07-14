@@ -90,7 +90,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(parameterBinding.isValid()).thenReturn(true);
         when(parameterBinding.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
         when(parameterBinding.getIdentificationToken()).thenReturn(identificationToken);
-        when(((TargetMethodAnnotationDrivenBinder.ParameterBinder) parameterBinder).bind(any(AnnotationDescription.Loadable.class),
+        when(parameterBinder.bind(any(AnnotationDescription.Loadable.class),
                 any(MethodDescription.class),
                 any(ParameterDescription.class),
                 any(Implementation.Target.class),
@@ -241,7 +241,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testBindingByDefault() throws Exception {
         when(targetMethod.isAccessibleTo(instrumentedType)).thenReturn(true);
         when(assignmentBinding.isValid()).thenReturn(true);

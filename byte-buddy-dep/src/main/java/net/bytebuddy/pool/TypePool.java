@@ -6291,7 +6291,7 @@ public interface TypePool {
 
                     @Override
                     @CachedReturnPlugin.Enhance("resolved")
-                    @SuppressWarnings("unchecked")
+                    @SuppressWarnings({"unchecked", "rawtypes"})
                     protected AnnotationValue<TypeDescription, Class<?>> doResolve() {
                         Resolution resolution = typePool.describe(typeName);
                         return resolution.isResolved()
@@ -6389,7 +6389,7 @@ public interface TypePool {
 
                     @Override
                     @CachedReturnPlugin.Enhance("resolved")
-                    @SuppressWarnings("unchecked")
+                    @SuppressWarnings({"unchecked", "rawtypes"})
                     protected AnnotationValue<EnumerationDescription, Enum<?>> doResolve() {
                         Resolution resolution = typePool.describe(typeName);
                         if (!resolution.isResolved()) {

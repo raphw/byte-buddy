@@ -597,7 +597,7 @@ public interface AnnotationDescription {
          * @param annotation The annotation to convert.
          * @return A mapping of property names to their annotation value.
          */
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("rawtypes")
         private static Map<String, AnnotationValue<?, ?>> asValue(Annotation annotation) {
             Map<String, AnnotationValue<?, ?>> annotationValues = new HashMap<String, AnnotationValue<?, ?>>();
             for (Method property : annotation.annotationType().getDeclaredMethods()) {
@@ -632,7 +632,7 @@ public interface AnnotationDescription {
          * @param value The annotations value.
          * @return An annotation value representation.
          */
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "rawtypes"})
         public static AnnotationValue<?, ?> asValue(Object value, Class<?> type) {
             // Because enums can implement annotation interfaces, the enum property needs to be checked first.
             if (Enum.class.isAssignableFrom(type)) {
@@ -673,7 +673,7 @@ public interface AnnotationDescription {
         /**
          * {@inheritDoc}
          */
-        @SuppressWarnings("deprecation")
+        @SuppressWarnings({"deprecation", "rawtypes"})
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
         public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
             if (!property.getDeclaringType().represents(annotation.annotationType())) {
@@ -946,7 +946,7 @@ public interface AnnotationDescription {
          * @param value    A description of the enumeration value to define.
          * @return A builder with the additional enumeration property.
          */
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "rawtypes"})
         public Builder define(String property, EnumerationDescription value) {
             return define(property, AnnotationValue.ForEnumerationDescription.<Enum>of(value));
         }
@@ -991,7 +991,7 @@ public interface AnnotationDescription {
          * @param typeDescription A description of the type to define as a property value.
          * @return A builder with the additional class property.
          */
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "rawtypes"})
         public Builder define(String property, TypeDescription typeDescription) {
             return define(property, AnnotationValue.ForTypeDescription.<Class>of(typeDescription));
         }
@@ -1042,7 +1042,7 @@ public interface AnnotationDescription {
          * @param value           Descriptions of the enumerations to be contained by the array.
          * @return A builder with the additional enumeration property.
          */
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "rawtypes"})
         public Builder defineEnumerationArray(String property, TypeDescription enumerationType, EnumerationDescription... value) {
             return define(property, AnnotationValue.ForDescriptionArray.<Enum>of(enumerationType, value));
         }

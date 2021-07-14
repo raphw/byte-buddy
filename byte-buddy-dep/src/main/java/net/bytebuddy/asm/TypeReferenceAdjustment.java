@@ -569,7 +569,7 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
             }
 
             @Override
-            public void visitInvokeDynamicInsn(String name, String descriptor, Handle handle, Object[] argument) {
+            public void visitInvokeDynamicInsn(String name, String descriptor, Handle handle, Object... argument) {
                 resolve(Type.getType(descriptor));
                 resolve(handle);
                 for (Object anArgument : argument) {

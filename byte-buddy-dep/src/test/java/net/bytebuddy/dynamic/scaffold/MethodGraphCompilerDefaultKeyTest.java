@@ -76,21 +76,21 @@ public class MethodGraphCompilerDefaultKeyTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testInitialEntryCannotInject() throws Exception {
         new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key.Harmonized(FOO, -1, Collections.emptyMap()))
                 .inject(mock(MethodGraph.Compiler.Default.Key.Harmonized.class), Visibility.PUBLIC);
     }
 
     @Test(expected = IllegalStateException.class)
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testInitialEntryCannotBeTransformed() throws Exception {
         new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key.Harmonized(FOO, -1, Collections.emptyMap()))
                 .asNode(mock(MethodGraph.Compiler.Default.Merger.class));
     }
 
     @Test(expected = IllegalStateException.class)
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testInitialEntryCannotExposeKey() throws Exception {
         new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key.Harmonized(FOO, -1, Collections.emptyMap()))
                 .getKey();

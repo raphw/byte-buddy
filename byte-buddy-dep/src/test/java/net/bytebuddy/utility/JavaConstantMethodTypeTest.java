@@ -22,7 +22,6 @@ public class JavaConstantMethodTypeTest {
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testMethodTypeOfLoadedType() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.of(void.class, Foo.class);
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
@@ -30,7 +29,6 @@ public class JavaConstantMethodTypeTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testMethodTypeOfMethod() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.of(Foo.class.getDeclaredMethod(BAR, Void.class));
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
@@ -39,7 +37,6 @@ public class JavaConstantMethodTypeTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testMethodTypeOfStaticMethod() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.of(Foo.class.getDeclaredMethod(QUX, Void.class));
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
@@ -47,7 +44,6 @@ public class JavaConstantMethodTypeTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testMethodTypeOfConstructor() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.of(Foo.class.getDeclaredConstructor(Void.class));
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
@@ -55,7 +51,7 @@ public class JavaConstantMethodTypeTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("cast")
     public void testMethodTypeOfGetter() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.ofGetter(Foo.class.getDeclaredField(BAR));
         assertThat(methodType.getReturnType(), is((TypeDescription) TypeDescription.ForLoadedType.of(Void.class)));
@@ -63,6 +59,7 @@ public class JavaConstantMethodTypeTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testMethodTypeOfStaticGetter() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.ofGetter(Foo.class.getDeclaredField(QUX));
         assertThat(methodType.getReturnType(), is((TypeDescription) TypeDescription.ForLoadedType.of(Void.class)));
@@ -70,7 +67,6 @@ public class JavaConstantMethodTypeTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testMethodTypeOfSetter() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.ofSetter(Foo.class.getDeclaredField(BAR));
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
@@ -78,7 +74,6 @@ public class JavaConstantMethodTypeTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testMethodTypeOfStaticSetter() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.ofSetter(Foo.class.getDeclaredField(QUX));
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
@@ -86,6 +81,7 @@ public class JavaConstantMethodTypeTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testMethodTypeOfConstant() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.ofConstant(new Foo(null));
         assertThat(methodType.getReturnType(), is((TypeDescription) TypeDescription.ForLoadedType.of(Foo.class)));
@@ -93,7 +89,6 @@ public class JavaConstantMethodTypeTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     @JavaVersionRule.Enforce(7)
     public void testMethodTypeOfLoadedMethodType() throws Exception {
         Object loadedMethodType = JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class)

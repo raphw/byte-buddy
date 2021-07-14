@@ -879,7 +879,7 @@ public interface MethodGraph {
                     } else if (!(other instanceof Key)) {
                         return false;
                     }
-                    Key key = (Key) other;
+                    Key<?> key = (Key<?>) other;
                     return internalName.equals(key.internalName)
                             && parameterCount == key.parameterCount
                             && !Collections.disjoint(getIdentifiers(), key.getIdentifiers());

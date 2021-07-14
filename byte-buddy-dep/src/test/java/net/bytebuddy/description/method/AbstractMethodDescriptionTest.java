@@ -142,6 +142,7 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testMethodDeclaringType() throws Exception {
         assertThat(describe(firstMethod).getDeclaringType(), is((TypeDescription) TypeDescription.ForLoadedType.of(firstMethod.getDeclaringClass())));
         assertThat(describe(secondMethod).getDeclaringType(), is((TypeDescription) TypeDescription.ForLoadedType.of(secondMethod.getDeclaringClass())));
@@ -768,7 +769,7 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes", "cast"})
     public void testIsDefault() throws Exception {
         Map<String, AnnotationValue<?, ?>> properties = new LinkedHashMap<String, AnnotationValue<?, ?>>();
         properties.put("boolean_property", AnnotationValue.ForConstant.of(true));

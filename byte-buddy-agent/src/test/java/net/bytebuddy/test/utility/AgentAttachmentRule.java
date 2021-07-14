@@ -62,7 +62,7 @@ public class AgentAttachmentRule implements MethodRule {
         }
 
         public void evaluate() {
-            Logger.getLogger("net.bytebuddy").warning("Ignoring test case: " + reason);
+            Logger.getLogger("net.bytebuddy").info("Omitting test case: " + reason);
         }
     }
 }

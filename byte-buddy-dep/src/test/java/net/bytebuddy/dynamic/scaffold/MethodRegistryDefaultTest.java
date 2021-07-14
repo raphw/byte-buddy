@@ -173,7 +173,7 @@ public class MethodRegistryDefaultTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testMatchedFirst() throws Exception {
         when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
         when(firstFilter.matches(instrumentedMethod)).thenReturn(true);
@@ -190,7 +190,7 @@ public class MethodRegistryDefaultTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testMatchedSecond() throws Exception {
         when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
         when(secondFilter.matches(instrumentedMethod)).thenReturn(true);
@@ -207,7 +207,7 @@ public class MethodRegistryDefaultTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testMultipleRegistryDoesNotPrepareMultipleTimes() throws Exception {
         when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
         when(firstFilter.matches(instrumentedMethod)).thenReturn(true);
@@ -231,7 +231,7 @@ public class MethodRegistryDefaultTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testCompiledAppendingMatchesFirstAppended() throws Exception {
         when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
         when(firstFilter.matches(instrumentedMethod)).thenReturn(true);
@@ -254,7 +254,7 @@ public class MethodRegistryDefaultTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testCompiledPrependingMatchesLastPrepended() throws Exception {
         when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
         when(firstFilter.matches(instrumentedMethod)).thenReturn(true);
@@ -277,7 +277,7 @@ public class MethodRegistryDefaultTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testCompiledAppendingMatchesSecondAppendedIfFirstDoesNotMatch() throws Exception {
         when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
         when(firstFilter.matches(instrumentedMethod)).thenReturn(false);

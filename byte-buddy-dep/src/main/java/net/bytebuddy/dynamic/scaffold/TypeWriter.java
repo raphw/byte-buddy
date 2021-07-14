@@ -3776,7 +3776,7 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethod, Object[] bootstrapArgument) {
+                public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethod, Object... bootstrapArgument) {
                     constraint.assertInvokeDynamic();
                     for (Object constant : bootstrapArgument) {
                         if (constant instanceof ConstantDynamic) {

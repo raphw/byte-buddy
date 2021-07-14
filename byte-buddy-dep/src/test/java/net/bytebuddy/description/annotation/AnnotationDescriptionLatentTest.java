@@ -11,7 +11,7 @@ import java.lang.reflect.Method;
 
 public class AnnotationDescriptionLatentTest extends AbstractAnnotationDescriptionTest {
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private static AnnotationDescription build(Annotation annotation) throws Exception {
         AnnotationDescription.Builder builder = AnnotationDescription.Builder.ofType(annotation.annotationType());
         for (Method method : annotation.annotationType().getDeclaredMethods()) {

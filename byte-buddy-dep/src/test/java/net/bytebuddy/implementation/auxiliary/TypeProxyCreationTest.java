@@ -202,6 +202,7 @@ public class TypeProxyCreationTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testForConstructorConstruction() throws Exception {
         when(implementationTarget.getInstrumentedType()).thenReturn(foo);
         when(invocationFactory.invoke(eq(implementationTarget), eq(foo), any(MethodDescription.class)))

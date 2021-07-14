@@ -20,6 +20,7 @@ public class TypeDescriptionGenericOfNonGenericTypeForReifiedErasureTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testGenerifiedType() throws Exception {
         TypeDescription.Generic typeDescription = TypeDescription.Generic.OfNonGenericType.ForReifiedErasure.of(TypeDescription.ForLoadedType.of(Qux.class));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
@@ -71,6 +72,7 @@ public class TypeDescriptionGenericOfNonGenericTypeForReifiedErasureTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testNonGenericIntermediateType() throws Exception {
         TypeDescription.Generic typeDescription = TypeDescription.Generic.OfNonGenericType.ForReifiedErasure.of(TypeDescription.ForLoadedType.of(GenericIntermediate.class))
                 .getSuperClass();

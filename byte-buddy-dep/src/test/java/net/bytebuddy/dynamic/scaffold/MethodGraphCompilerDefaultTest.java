@@ -1646,6 +1646,7 @@ public class MethodGraphCompilerDefaultTest {
             }
         }
 
+        @SuppressWarnings("rawtypes")
         public static class Raw extends Intermediate {
 
             public void foo(Number t) {

@@ -160,6 +160,7 @@ public class FieldAccessorOtherTest {
     }
 
     @Test
+    @SuppressWarnings("rawtypes")
     public void testStaticFieldOfOtherClass() throws Exception {
         DynamicType.Loaded<Callable> loaded = new ByteBuddy()
                 .subclass(Callable.class)

@@ -141,6 +141,7 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testNonGenericSuperClassHierarchyResolutionIsLazy() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         assertThat(describe(NonGenericType.class, classFileLocator, new TypePool.CacheProvider.Simple()).getSuperClass().asErasure(),
@@ -150,6 +151,7 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testNonGenericSuperClassNavigatedHierarchyResolutionIsLazy() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         assertThat(describe(NonGenericType.class, classFileLocator, new TypePool.CacheProvider.Simple()).getSuperClass().getSuperClass().asErasure(),
@@ -160,6 +162,7 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testNonGenericSuperInterfaceHierarchyResolutionIsLazy() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         assertThat(describe(NonGenericType.class, classFileLocator, new TypePool.CacheProvider.Simple()).getInterfaces().getOnly().asErasure(),
@@ -169,6 +172,7 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testNonGenericSuperInterfaceNavigatedHierarchyResolutionIsLazy() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         assertThat(describe(NonGenericType.class, classFileLocator, new TypePool.CacheProvider.Simple()).getInterfaces().getOnly()
@@ -179,6 +183,7 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testGenericSuperClassHierarchyResolutionIsLazy() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         assertThat(describe(GenericType.class, classFileLocator, new TypePool.CacheProvider.Simple()).getSuperClass().asErasure(),
@@ -188,6 +193,7 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testGenericSuperClassNavigatedHierarchyResolutionIsLazy() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         assertThat(describe(GenericType.class, classFileLocator, new TypePool.CacheProvider.Simple()).getSuperClass().getSuperClass().asErasure(),
@@ -198,6 +204,7 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testGenericSuperInterfaceHierarchyResolutionIsLazy() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         assertThat(describe(GenericType.class, classFileLocator, new TypePool.CacheProvider.Simple()).getInterfaces().getOnly().asErasure(),
@@ -207,6 +214,7 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testGenericSuperInterfaceNavigatedHierarchyResolutionIsLazy() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         assertThat(describe(GenericType.class, classFileLocator, new TypePool.CacheProvider.Simple()).getInterfaces().getOnly()

@@ -70,6 +70,7 @@ public abstract class AbstractFieldDescriptionTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testFieldDeclaringType() throws Exception {
         assertThat(describe(first).getDeclaringType(), is((TypeDescription) TypeDescription.ForLoadedType.of(first.getDeclaringClass())));
         assertThat(describe(second).getDeclaringType(), is((TypeDescription) TypeDescription.ForLoadedType.of(second.getDeclaringClass())));
@@ -184,6 +185,7 @@ public abstract class AbstractFieldDescriptionTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testGenericTypes() throws Exception {
         assertThat(describe(genericField).getType(), is(TypeDefinition.Sort.describe(genericField.getGenericType())));
         assertThat(describe(genericField).getType().asErasure(), is((TypeDescription) TypeDescription.ForLoadedType.of(genericField.getType())));

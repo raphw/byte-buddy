@@ -203,6 +203,7 @@ public class GenericSignatureResolutionTest {
             V extends ArrayList<? super ArrayList<V>>,
             W extends Callable<W[]>> extends ArrayList<T> implements Callable<T> {
 
+        private static final long serialVersionUID = 1L;
     }
 
     @SuppressWarnings("unused")

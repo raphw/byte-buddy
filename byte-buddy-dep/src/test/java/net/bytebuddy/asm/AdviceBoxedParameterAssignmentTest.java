@@ -98,6 +98,7 @@ public class AdviceBoxedParameterAssignmentTest {
         }
 
         @Advice.OnMethodEnter
+        @SuppressWarnings("cast")
         private static void enter(@Advice.AllArguments(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object[] value) {
             value = new Object[]{(byte) NUMERIC_VALUE};
         }

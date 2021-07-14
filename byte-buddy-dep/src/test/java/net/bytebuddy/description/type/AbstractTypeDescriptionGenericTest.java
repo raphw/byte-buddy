@@ -861,7 +861,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     @Test
     public void testNestedInnerMethod() throws Exception {
-        Class<?> innerType = new NestedInnerMethod().foo();
+        Class<?> innerType = new NestedInnerMethod<Void>().foo();
         TypeDescription.Generic foo = describeReturnType(innerType.getDeclaredMethod(FOO));
         assertThat(foo.getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(foo.getSymbol(), is(T));
@@ -918,6 +918,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testParameterizedTypeSuperClassResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -966,6 +967,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testParameterizedTypeInterfaceResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -996,6 +998,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testParameterizedTypeRawSuperClassResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(BAR));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -1022,6 +1025,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testParameterizedTypeRawInterfaceTypeResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(BAR));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -1043,6 +1047,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testParameterizedTypePartiallyRawSuperClassResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(QUX));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -1056,6 +1061,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testParameterizedTypePartiallyRawInterfaceTypeResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(QUX));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -1069,6 +1075,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testParameterizedTypeNestedPartiallyRawSuperClassResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(BAZ));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -1082,6 +1089,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testParameterizedTypeNestedPartiallyRawInterfaceTypeResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(BAZ));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -1303,6 +1311,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testIntermediateRawType() throws Exception {
         TypeDescription.Generic type = describeType(IntermediateRaw.class.getDeclaredField(FOO)).getSuperClass().getSuperClass().getSuperClass();
         FieldDescription fieldDescription = type.getDeclaredFields().filter(named(BAR)).getOnly();
@@ -1866,17 +1875,17 @@ public abstract class AbstractTypeDescriptionGenericTest {
             /* empty */
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("rawtypes")
         public class Raw<S> extends Base implements BaseInterface {
             /* empty */
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("rawtypes")
         public class PartiallyRaw<S> extends Intermediate {
             /* empty */
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("rawtypes")
         public class NestedPartiallyRaw<S> extends NestedIntermediate {
             /* empty */
         }
@@ -1897,6 +1906,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
             /* empty */
         }
 
+        @SuppressWarnings("rawtypes")
         public static class Extension extends Intermediate {
             /* empty */
         }
@@ -1916,6 +1926,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
             /* empty */
         }
 
+        @SuppressWarnings("rawtypes")
         public static class Extension extends GenericIntermediate {
             /* empty */
         }
@@ -1946,7 +1957,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
             return u;
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("rawtypes")
         public static class Raw extends MemberVariable {
             /* empty */
         }

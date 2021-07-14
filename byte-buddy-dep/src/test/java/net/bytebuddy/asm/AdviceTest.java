@@ -3543,6 +3543,8 @@ public class AdviceTest {
 
     public static class ExceptionWriterSample extends RuntimeException {
 
+        private static final long serialVersionUID = 1L;
+
         public static boolean exception;
 
         public String foo() {

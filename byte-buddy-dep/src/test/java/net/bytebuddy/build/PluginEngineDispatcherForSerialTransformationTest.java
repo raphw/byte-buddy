@@ -71,8 +71,9 @@ public class PluginEngineDispatcherForSerialTransformationTest {
                 };
             }
         };
-        Mockito.doAnswer(new Answer() {
-            public Object answer(InvocationOnMock invocationOnMock) {
+        Mockito.doAnswer(new Answer<Void>() {
+
+            public Void answer(InvocationOnMock invocationOnMock) {
                 ((Runnable) invocationOnMock.getArgument(0)).run();
                 return null;
             }

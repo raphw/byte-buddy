@@ -28,14 +28,14 @@ public class LatentMatcherDisjunctionTest {
     private TypeDescription typeDescription;
 
     @Before
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void setUp() throws Exception {
         when(left.resolve(typeDescription)).thenReturn((ElementMatcher) leftMatcher);
         when(right.resolve(typeDescription)).thenReturn((ElementMatcher) rightMatcher);
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testManifestation() throws Exception {
         assertThat(new LatentMatcher.Disjunction(left, right).resolve(typeDescription),
                 hasPrototype((ElementMatcher) none().or((ElementMatcher) leftMatcher).or((ElementMatcher) rightMatcher)));

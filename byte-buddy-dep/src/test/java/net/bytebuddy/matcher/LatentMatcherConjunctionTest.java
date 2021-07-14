@@ -28,14 +28,14 @@ public class LatentMatcherConjunctionTest {
     private TypeDescription typeDescription;
 
     @Before
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void setUp() throws Exception {
         when(left.resolve(typeDescription)).thenReturn((ElementMatcher) leftMatcher);
         when(right.resolve(typeDescription)).thenReturn((ElementMatcher) rightMatcher);
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testManifestation() throws Exception {
         assertThat(new LatentMatcher.Conjunction(left, right).resolve(typeDescription),
                 hasPrototype((ElementMatcher) any().and((ElementMatcher) leftMatcher).and((ElementMatcher) rightMatcher)));

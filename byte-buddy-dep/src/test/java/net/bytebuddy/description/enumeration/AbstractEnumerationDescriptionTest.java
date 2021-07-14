@@ -59,6 +59,7 @@ public abstract class AbstractEnumerationDescriptionTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testType() throws Exception {
         assertThat(describe(Sample.FIRST).getEnumerationType(), is((TypeDescription) TypeDescription.ForLoadedType.of(Sample.class)));
         assertThat(describe(Sample.SECOND).getEnumerationType(), is((TypeDescription) TypeDescription.ForLoadedType.of(Sample.class)));

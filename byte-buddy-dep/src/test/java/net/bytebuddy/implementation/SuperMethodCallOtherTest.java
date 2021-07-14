@@ -73,7 +73,7 @@ public class SuperMethodCallOtherTest {
     private MethodDescription.SignatureToken token;
 
     @Mock
-    private MethodList superClassMethods;
+    private MethodList<MethodDescription.InDefinedShape> superClassMethods;
 
     @Before
     public void setUp() throws Exception {
@@ -101,7 +101,7 @@ public class SuperMethodCallOtherTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testStaticMethod() throws Exception {
         when(typeDescription.getSuperClass()).thenReturn(superClass);
         when(methodDescription.isStatic()).thenReturn(true);
@@ -115,7 +115,7 @@ public class SuperMethodCallOtherTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testNoSuper() throws Exception {
         when(typeDescription.getSuperClass()).thenReturn(superClass);
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());

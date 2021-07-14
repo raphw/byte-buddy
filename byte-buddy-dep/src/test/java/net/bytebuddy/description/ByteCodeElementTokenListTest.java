@@ -23,7 +23,7 @@ public class ByteCodeElementTokenListTest {
     private TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testTransformation() throws Exception {
         when(original.accept(visitor)).thenReturn((ByteCodeElement.Token) transformed);
         ByteCodeElement.Token.TokenList<?> tokenList = new ByteCodeElement.Token.TokenList(original).accept(visitor);

@@ -498,6 +498,7 @@ public class TypeDescriptionGenericVisitorAssignerTest {
     @SuppressWarnings({"unused", "unchecked"})
     private static class GenericTypes<T, S, U extends T, V extends List<?>> {
 
+        @SuppressWarnings("rawtypes")
         private Collection collectionRaw;
 
         private Collection<?> collectionWildcard;
@@ -520,22 +521,28 @@ public class TypeDescriptionGenericVisitorAssignerTest {
 
         private Collection<? super U> collectionLowerBoundTypeVariableU;
 
+        @SuppressWarnings("rawtypes")
         private Collection[] collectionRawArray;
 
+        @SuppressWarnings("rawtypes")
         private List listRaw;
 
         private List<?> listWildcard;
 
+        @SuppressWarnings("rawtypes")
         private List[] listRawArray;
 
         private List<?>[] listWildcardArray;
 
+        @SuppressWarnings("rawtypes")
         private AbstractList abstractListRaw;
 
+        @SuppressWarnings("rawtypes")
         private ArrayList arrayListRaw;
 
         private ArrayList<?> arrayListWildcard;
 
+        @SuppressWarnings("rawtypes")
         private ArrayList[] arrayListRawArray;
 
         private ArrayList<T> arrayListTypeVariableT;

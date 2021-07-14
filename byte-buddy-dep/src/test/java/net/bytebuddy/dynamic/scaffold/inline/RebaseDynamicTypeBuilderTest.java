@@ -50,7 +50,7 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
         return new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE).rebase(Foo.class);
     }
 
-    protected DynamicType.Builder createDisabledRetention(Class<?> annotatedClass) {
+    protected DynamicType.Builder<?> createDisabledRetention(Class<?> annotatedClass) {
         return new ByteBuddy().with(AnnotationRetention.DISABLED).rebase(annotatedClass);
     }
 

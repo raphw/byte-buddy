@@ -25,7 +25,7 @@ public class ClassReflectionInjectionAvailableRule implements MethodRule {
     private static class NoOpStatement extends Statement {
 
         public void evaluate() {
-            Logger.getLogger("net.bytebuddy").info("Ignored test case that can only be executed if class file injection is available");
+            Logger.getLogger("net.bytebuddy").info("Omitting test case that can only be executed if class file injection is available");
         }
     }
 }

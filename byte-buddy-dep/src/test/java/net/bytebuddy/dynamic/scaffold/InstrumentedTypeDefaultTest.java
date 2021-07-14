@@ -475,6 +475,7 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test
+    @SuppressWarnings("cast")
     public void testSuperClass() {
         assertThat(makePlainInstrumentedType().getSuperClass(), is(TypeDescription.Generic.OBJECT));
         assertThat(makePlainInstrumentedType().getSuperClass(), not((TypeDescription.Generic) TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Integer.class)));

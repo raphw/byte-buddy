@@ -2259,7 +2259,7 @@ public interface AnnotationValue<T, S> {
          * @param typeDescription A description of the types contained in the array.
          * @return A description of the array of enumeration values.
          */
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "rawtypes", "cast"})
         public static AnnotationValue<TypeDescription[], Class<?>[]> of(TypeDescription[] typeDescription) {
             List<AnnotationValue<TypeDescription, Class<?>>> values = new ArrayList<AnnotationValue<TypeDescription, Class<?>>>(typeDescription.length);
             for (TypeDescription value : typeDescription) {

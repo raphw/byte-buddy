@@ -168,7 +168,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void testEnumerationDefinition() throws Exception {
         Class<? extends Enum<?>> type = new ByteBuddy()
                 .makeEnumeration(FOO, BAR)
@@ -183,10 +183,10 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(type.isInterface(), is(false));
         assertThat(type.isAnnotation(), is(false));
         assertThat(type.isEnum(), is(true));
-        Enum foo = Enum.valueOf((Class) type, FOO);
+        Enum<?> foo = Enum.valueOf((Class) type, FOO);
         assertThat(foo.name(), is(FOO));
         assertThat(foo.ordinal(), is(0));
-        Enum bar = Enum.valueOf((Class) type, BAR);
+        Enum<?> bar = Enum.valueOf((Class) type, BAR);
         assertThat(bar.name(), is(BAR));
         assertThat(bar.ordinal(), is(1));
     }

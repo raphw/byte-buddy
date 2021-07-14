@@ -50,7 +50,7 @@ public class AccessControllerRule implements MethodRule  {
     private static class NoOpStatement extends Statement {
 
         public void evaluate() {
-            Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Requires access controller API");
+            Logger.getLogger("net.bytebuddy").info("Omitting test case: Requires access controller API");
         }
     }
 }

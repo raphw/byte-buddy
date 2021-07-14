@@ -13,11 +13,12 @@ public class PackagePrivateType {
         /* empty */
     }
 
-    static interface InterfaceType {
+    interface InterfaceType {
         /* empty */
     }
 
     static class ExceptionType extends Exception {
-        /* empty */
+
+        private static final long serialVersionUID = 1L;
     }
 }

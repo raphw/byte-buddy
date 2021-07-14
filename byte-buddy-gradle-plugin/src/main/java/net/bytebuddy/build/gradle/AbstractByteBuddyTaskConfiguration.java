@@ -189,6 +189,11 @@ public abstract class AbstractByteBuddyTaskConfiguration<
     protected static class TaskExecutionGraphClosure extends Closure<Void> {
 
         /**
+         * The serial version UID.
+         */
+        private static final long serialVersionUID = 1L;
+
+        /**
          * The action to execute.
          */
         private final Action<TaskExecutionGraph> action;

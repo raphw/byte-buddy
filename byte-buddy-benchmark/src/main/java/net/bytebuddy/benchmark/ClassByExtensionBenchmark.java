@@ -453,7 +453,7 @@ public class ClassByExtensionBenchmark {
         enhancer.setInterceptDuringConstruction(true);
         enhancer.setClassLoader(newClassLoader());
         enhancer.setSuperclass(baseClass);
-        CallbackHelper callbackHelper = new CallbackHelper(baseClass, new Class[0]) {
+        CallbackHelper callbackHelper = new CallbackHelper(baseClass, new Class<?>[0]) {
             protected Object getCallback(Method method) {
                 if (method.getDeclaringClass() == baseClass) {
                     return new MethodInterceptor() {
