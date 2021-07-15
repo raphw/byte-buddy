@@ -20,6 +20,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.utility.Invoker;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
@@ -62,7 +63,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
      * Contains an invoker that makes sure that reflective dispatchers make invocations from an isolated {@link ClassLoader} and
      * not from within Byte Buddy's context. This way, no privilege context can be leaked by accident.
      */
-    private static final Invoker INVOKER = doPrivileged(Invoker.CreationAction.INSTANCE);
+    private static final Invoker INVOKER = doPrivileged(new InvokerCreationAction());
 
     /**
      * The proxy type.
@@ -397,80 +398,38 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     }
 
     /**
-     * An invoker is a deliberate indirection to wrap indirect calls. This way, reflective call are never dispatched from Byte Buddy's
-     * context but always from a synthetic layer that does not own any privileges.
+     * A privileged action for creating an {@link Invoker}.
      */
-    protected interface Invoker {
+    @HashCodeAndEqualsPlugin.Enhance
+    private static class InvokerCreationAction implements PrivilegedAction<Invoker> {
 
         /**
-         * Creates a new instance via {@link Constructor#newInstance(Object...)}.
-         *
-         * @param constructor The constructor to invoke.
-         * @param argument    The constructor arguments.
-         * @return The constructed instance.
-         * @throws InstantiationException    If the instance cannot be constructed.
-         * @throws IllegalAccessException    If the constructor is accessed illegally.
-         * @throws InvocationTargetException If the invocation causes an error.
+         * {@inheritDoc}
          */
-        Object newInstance(Constructor<?> constructor, Object[] argument) throws InstantiationException, IllegalAccessException, InvocationTargetException;
+        public Invoker run() {
+            return DynamicClassLoader.invoker();
+        }
+    }
+
+    /**
+     * An {@link Invoker} that uses Byte Buddy's invocation context to use if dynamic class loading is not supported, for example on Android,
+     * and that do not use secured contexts, where this security measure is obsolete to begin with.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    private static class DirectInvoker implements Invoker {
 
         /**
-         * Invokes a method via {@link Method#invoke(Object, Object...)}.
-         *
-         * @param method   The method to invoke.
-         * @param instance The instance upon which to invoke the method or {@code null} if the method is static.
-         * @param argument The method arguments.
-         * @return The return value of the method or {@code null} if the method is {@code void}.
-         * @throws IllegalAccessException    If the method is accessed illegally.
-         * @throws InvocationTargetException If the invocation causes an error.
+         * {@inheritDoc}
          */
-        Object invoke(Method method, Object instance, Object[] argument) throws IllegalAccessException, InvocationTargetException;
-
-        /**
-         * A creation action for creating an {@link Invoker}.
-         */
-        enum CreationAction implements PrivilegedAction<Invoker> {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            /**
-             * {@inheritDoc}
-             */
-            public Invoker run() {
-                return DynamicClassLoader.invoker();
-            }
+        public Object newInstance(Constructor<?> constructor, Object[] argument) throws InstantiationException, IllegalAccessException, InvocationTargetException {
+            return constructor.newInstance(argument);
         }
 
         /**
-         * An unsafe invoker that uses Byte Buddy's invocation context. This is only meant to be used if dynamic class generation
-         * is not supported, e.g. on an Android device.
+         * {@inheritDoc}
          */
-        @HashCodeAndEqualsPlugin.Enhance
-        class Unsafe implements Invoker {
-
-            /**
-             * A private constructor to avoid instantiation from a foreign location to avoid leaking Byte Buddy's context.
-             */
-            private Unsafe() {
-                /* do nothing */
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public Object newInstance(Constructor<?> constructor, Object[] argument) throws InstantiationException, IllegalAccessException, InvocationTargetException {
-                return constructor.newInstance(argument);
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public Object invoke(Method method, Object instance, Object[] argument) throws IllegalAccessException, InvocationTargetException {
-                return method.invoke(instance, argument);
-            }
+        public Object invoke(Method method, Object instance, Object[] argument) throws IllegalAccessException, InvocationTargetException {
+            return method.invoke(instance, argument);
         }
     }
 
@@ -1308,7 +1267,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                         .getConstructor(NO_PARAMETER)
                         .newInstance(NO_ARGUMENT);
             } catch (UnsupportedOperationException ignored) {
-                return new Invoker.Unsafe();
+                return new DirectInvoker();
             } catch (Exception exception) {
                 throw new IllegalStateException("Failed to create invoker for " + Invoker.class.getName(), exception);
             }
