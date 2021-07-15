@@ -153,11 +153,6 @@ public class JavaDispatcherTest {
         JavaDispatcher.of(MethodHandles.class, null, generate).run().lookup();
     }
 
-    @Test(expected = IllegalAccessException.class)
-    public void testInvokerNotCreatable() throws Exception {
-        JavaDispatcher.Invoker.Unsafe.class.getDeclaredConstructor().newInstance();
-    }
-
     @Test
     @JavaVersionRule.Enforce(9)
     public void testCallerNotLeakingContext() throws Exception {
