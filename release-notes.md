@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 15. July 2021: version 1.11.8
+
+- Fix package exposure for `JavaDispatcher` class when Byte Buddy is used as a module.
+
 ### 14. July 2021: version 1.11.7
 
 - Introduce a more complex error handler for Gradle builds in favor of strict mode.
