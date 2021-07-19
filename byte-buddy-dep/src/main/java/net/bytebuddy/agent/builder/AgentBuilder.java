@@ -9220,7 +9220,7 @@ public interface AgentBuilder {
                             new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader().or(isExtensionClassLoader())),
                             new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.")
                                     .and(not(ElementMatchers.nameStartsWith(NamingStrategy.SuffixingRandom.BYTE_BUDDY_RENAME_PACKAGE + ".")))
-                                    .or(nameStartsWith("sun.reflect."))
+                                    .or(nameStartsWith("sun.reflect.").or(nameStartsWith("jdk.reflect.")))
                                     .<TypeDescription>or(isSynthetic()))),
                     Collections.<Transformation>emptyList());
         }
