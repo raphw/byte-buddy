@@ -15,6 +15,7 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
@@ -108,6 +109,10 @@ public class ByteBuddyTest {
         assertThat(type.getMethod("equals", Object.class).invoke(record, new Object()), is((Object) false));
         assertThat(type.getMethod("equals", Object.class).invoke(record, record), is((Object) true));
         assertThat(type.getMethod("toString").invoke(record), is((Object) (type.getSimpleName() + "[foo=bar]")));
+        Object[] parameter = (Object[]) Constructor.class.getMethod("getParameters").invoke(type.getDeclaredConstructor(String.class));
+        assertThat(parameter.length, is(1));
+        assertThat(Class.forName("java.lang.reflect.Parameter").getMethod("getName").invoke(parameter[0]), is((Object) "foo"));
+        assertThat(Class.forName("java.lang.reflect.Parameter").getMethod("getModifiers").invoke(parameter[0]), is((Object) 0));
     }
 
     @Test

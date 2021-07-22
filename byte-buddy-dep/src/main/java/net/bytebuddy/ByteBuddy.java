@@ -1485,7 +1485,9 @@ public class ByteBuddy {
             List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(instrumentedType.getRecordComponents().size());
             for (RecordComponentDescription.InDefinedShape recordComponent : instrumentedType.getRecordComponents()) {
                 tokens.add(new ParameterDescription.Token(recordComponent.getType(),
-                        recordComponent.getDeclaredAnnotations().filter(targetsElement(ElementType.CONSTRUCTOR))));
+                        recordComponent.getDeclaredAnnotations().filter(targetsElement(ElementType.CONSTRUCTOR)),
+                        recordComponent.getActualName(),
+                        ModifierContributor.EMPTY_MASK));
             }
             return Collections.singletonList(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                     Opcodes.ACC_PUBLIC,
