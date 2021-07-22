@@ -31,7 +31,7 @@ public interface NamedElement {
     String EMPTY_NAME = "";
 
     /**
-     * Returns the name of this element as it is found in the source code. If no such name exists,
+     * Returns the display name of this element as it is found in the source code. If no such name exists,
      * an empty string is returned.
      *
      * @return The name of this element as given in a Java program's source code.
@@ -44,16 +44,18 @@ public interface NamedElement {
     interface WithRuntimeName extends NamedElement {
 
         /**
-         * Returns the internalName of this byte code element.
+         * Returns the binary name of this byte code element. If no well-defined internal name is known for this element,
+         * the actual name is returned.
          *
-         * @return The internalName of this byte code element as visible from within a running Java application.
+         * @return The binary ame of this byte code element as visible from within a running Java application.
          */
         String getName();
 
         /**
-         * Returns the internal internalName of this byte code element.
+         * Returns the internal name of this byte code element. If no well-defined internal name is known for this element,
+         * the actual name is returned.
          *
-         * @return The internal internalName of this byte code element as used within the Java class file format.
+         * @return The internal name of this byte code element as used within the Java class file format.
          */
         String getInternalName();
     }

@@ -228,9 +228,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     int getActualModifiers(boolean superFlag);
 
     /**
-     * Returns the simple internalName of this type.
+     * Returns the simple name of this type.
      *
-     * @return The simple internalName of this type.
+     * @return The simple name of this type.
      */
     String getSimpleName();
 
