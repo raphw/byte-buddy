@@ -3138,7 +3138,7 @@ public class MethodCall implements Implementation.Composable {
                 public TerminationHandler make(TypeDescription instrumentedType) {
                     if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
                         throw new IllegalStateException("Cannot set " + fieldDescription + " from " + instrumentedType);
-                    } else if (!fieldDescription.isAccessibleTo(instrumentedType)) {
+                    } else if (!fieldDescription.isVisibleTo(instrumentedType)) {
                         throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
                     }
                     return new FieldSetting(fieldDescription);
@@ -3171,7 +3171,7 @@ public class MethodCall implements Implementation.Composable {
                 public TerminationHandler make(TypeDescription instrumentedType) {
                     TypeDefinition current = instrumentedType;
                     do {
-                        FieldList<?> candidates = current.getDeclaredFields().filter(isAccessibleTo(instrumentedType).and(matcher));
+                        FieldList<?> candidates = current.getDeclaredFields().filter(isVisibleTo(instrumentedType).and(matcher));
                         if (candidates.size() == 1) {
                             return new FieldSetting(candidates.getOnly());
                         } else if (candidates.size() == 2) {
