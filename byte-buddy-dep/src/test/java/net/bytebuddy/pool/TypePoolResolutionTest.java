@@ -3,10 +3,10 @@ package net.bytebuddy.pool;
 import net.bytebuddy.description.type.TypeDescription;
 import org.junit.Test;
 
+import static junit.framework.TestCase.fail;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -21,11 +21,15 @@ public class TypePoolResolutionTest {
         assertThat(new TypePool.Resolution.Simple(typeDescription).resolve(), is(typeDescription));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testIllegalResolution() throws Exception {
         assertThat(new TypePool.Resolution.Illegal(FOO).isResolved(), is(false));
-        new TypePool.Resolution.Illegal(FOO).resolve();
-        fail();
+        try {  
+            new TypePool.Resolution.Illegal(FOO).resolve();
+            fail();
+        } catch (TypePool.Resolution.NoSuchTypeException exception) {
+            assertThat(exception.getName(), is(FOO));
+        }
     }
 
     @Test

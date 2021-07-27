@@ -89,6 +89,7 @@ public interface TypePool {
          * of the returned type description.
          *
          * @return The type description that is represented by this resolution.
+         * @throws NoSuchTypeException If this resolution is unresolved.
          */
         TypeDescription resolve();
 
@@ -158,7 +159,42 @@ public interface TypePool {
              * {@inheritDoc}
              */
             public TypeDescription resolve() {
-                throw new IllegalStateException("Cannot resolve type description for " + name);
+                throw new NoSuchTypeException(name);
+            }
+        }
+
+        /**
+         * An exception that indicates that a {@link TypePool} could not resolve a {@link TypeDescription} for a given name.
+         */
+        class NoSuchTypeException extends IllegalStateException {
+
+            /**
+             * The serial version UID.
+             */
+            private static final long serialVersionUID = 1L;
+
+            /**
+             * The name of the type that could not be resolved.
+             */
+            private final String name;
+
+            /**
+             * Creates a new exception to indicate an unresolved type.
+             *
+             * @param name The name of the type that could not be resolved.
+             */
+            public NoSuchTypeException(String name) {
+                super("Cannot resolve type description for " + name);
+                this.name = name;
+            }
+
+            /**
+             * Returns the name of the type that could not be resolved.
+             *
+             * @return The name of the type that could not be resolved.
+             */
+            public String getName() {
+                return name;
             }
         }
     }
