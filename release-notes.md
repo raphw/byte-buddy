@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 27. July 2021: version 1.11.9
+
+- Include *jdk.reflect* package in default ignore matcher.
+- Retain parameter names for constructor of Java record as it is done by *javac*.
+- Throw `NoSuchTypeException` on non-resolved types rather then `IllegalStateException`.
+- Weaken visibility checks for fields set by `MethodCall`.
+
 ### 15. July 2021: version 1.11.8
 
 - Fix package exposure for `JavaDispatcher` class when Byte Buddy is used as a module.
