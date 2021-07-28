@@ -17,6 +17,8 @@ package net.bytebuddy.build.gradle;
 
 import groovy.lang.Closure;
 import net.bytebuddy.build.EntryPoint;
+import org.gradle.api.Action;
+import org.gradle.api.Task;
 import org.gradle.util.ConfigureUtil;
 
 import java.util.ArrayList;
@@ -85,6 +87,11 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     private Adjustment.ErrorHandler adjustmentErrorHandler;
 
     /**
+     * The adjustment post processor that is applied after the graph dependencies are is resolved.
+     */
+    private Action<Task> adjustmentPostProcessor;
+
+    /**
      * The number of threads to use for transforming or {@code 0} if the transformation should be applied in the main thread.
      */
     private int threads;
@@ -106,6 +113,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         discovery = Discovery.EMPTY;
         adjustment = Adjustment.FULL;
         adjustmentErrorHandler = Adjustment.ErrorHandler.WARN;
+        adjustmentPostProcessor = Adjustment.NoOpPostProcessor.INSTANCE;
     }
 
     /**
@@ -286,6 +294,24 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      */
     public void setAdjustmentErrorHandler(Adjustment.ErrorHandler adjustmentErrorHandler) {
         this.adjustmentErrorHandler = adjustmentErrorHandler;
+    }
+
+    /**
+     * Returns the adjustment post processor that is applied after the graph dependencies are is resolved.
+     *
+     * @return The adjustment post processor to apply.
+     */
+    public Action<Task> getAdjustmentPostProcessor() {
+        return adjustmentPostProcessor;
+    }
+
+    /**
+     * Sets the adjustment post processor that is applied after the graph dependencies are resolved.
+     *
+     * @param adjustmentPostProcessor The adjustment post processor to apply.
+     */
+    public void setAdjustmentPostProcessor(Action<Task> adjustmentPostProcessor) {
+        this.adjustmentPostProcessor = adjustmentPostProcessor;
     }
 
     /**

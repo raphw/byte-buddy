@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.build.gradle;
 
+import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.execution.TaskExecutionGraph;
@@ -226,6 +227,24 @@ public enum Adjustment {
             public void remove() {
                 throw new UnsupportedOperationException("remove");
             }
+        }
+    }
+
+    /**
+     * A non-operational post processor.
+     */
+    protected enum NoOpPostProcessor implements Action<Task> {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        /**
+         * {@inheritDoc}
+         */
+        public void execute(Task task) {
+            /* do nothing */
         }
     }
 }
