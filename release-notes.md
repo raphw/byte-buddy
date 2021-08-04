@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 4. August 2021: version 1.11.10
+
+- Added option for Gradle plugin to register `adjustmentPostProcessor` to manually add task dependencies.
+
 ### 27. July 2021: version 1.11.9
 
 - Include *jdk.reflect* package in default ignore matcher.
