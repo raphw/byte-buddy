@@ -80,6 +80,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
                     name,
                     extension.getAdjustment(),
                     extension.getAdjustmentErrorHandler(),
+                    extension.getAdjustmentPostProcessor(),
                     byteBuddyTask,
                     compileTask);
             if (extension.isLazy()) {
@@ -126,6 +127,11 @@ public abstract class AbstractByteBuddyTaskConfiguration<
         private final Adjustment.ErrorHandler adjustmentErrorHandler;
 
         /**
+         * A post processor to adjust the task graph.
+         */
+        private final Action<Task> adjustmentPostProcessor;
+
+        /**
          * The Byte Buddy task that is injected.
          */
         private final Task byteBuddyTask;
@@ -138,23 +144,26 @@ public abstract class AbstractByteBuddyTaskConfiguration<
         /**
          * Creates a new task execution graph adjustment action.
          *
-         * @param project       The current project.
-         * @param name          The name of the task.
-         * @param adjustment    The adjustment to apply.
+         * @param project                 The current project.
+         * @param name                    The name of the task.
+         * @param adjustment              The adjustment to apply.
          * @param adjustmentErrorHandler  An error handler if an adjustment cannot be applied.
-         * @param byteBuddyTask The Byte Buddy task that is injected.
-         * @param compileTask   The compile task to which the Byte Buddy task is appended to.
+         * @param adjustmentPostProcessor A post processor to adjust the task graph.
+         * @param byteBuddyTask           The Byte Buddy task that is injected.
+         * @param compileTask             The compile task to which the Byte Buddy task is appended to.
          */
         protected TaskExecutionGraphAdjustmentAction(Project project,
                                                      String name,
                                                      Adjustment adjustment,
                                                      Adjustment.ErrorHandler adjustmentErrorHandler,
+                                                     Action<Task> adjustmentPostProcessor,
                                                      Task byteBuddyTask,
                                                      Task compileTask) {
             this.project = project;
             this.name = name;
             this.adjustment = adjustment;
             this.adjustmentErrorHandler = adjustmentErrorHandler;
+            this.adjustmentPostProcessor = adjustmentPostProcessor;
             this.byteBuddyTask = byteBuddyTask;
             this.compileTask = compileTask;
         }
@@ -179,6 +188,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
                     adjustmentErrorHandler.apply(project, name, task, exception);
                 }
             }
+            adjustmentPostProcessor.execute(byteBuddyTask);
         }
     }
 
