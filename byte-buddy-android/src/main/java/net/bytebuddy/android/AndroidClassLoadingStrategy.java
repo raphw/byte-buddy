@@ -463,7 +463,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                         } catch (IllegalAccessException exception) {
                             throw new IllegalStateException("Cannot access an Android dex file translation method", exception);
                         } catch (InvocationTargetException exception) {
-                            throw new IllegalStateException("Cannot invoke Android dex file translation method", exception.getCause());
+                            throw new IllegalStateException("Cannot invoke Android dex file translation method", exception.getTargetException());
                         }
                     }
 
@@ -526,7 +526,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                         } catch (InstantiationException exception) {
                             throw new IllegalStateException("Cannot instantiate dex context", exception);
                         } catch (InvocationTargetException exception) {
-                            throw new IllegalStateException("Cannot invoke Android dex file translation method", exception.getCause());
+                            throw new IllegalStateException("Cannot invoke Android dex file translation method", exception.getTargetException());
                         }
                     }
 
@@ -772,7 +772,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access BaseDexClassLoader#addDexPath(String, boolean)", exception);
                     } catch (InvocationTargetException exception) {
-                        Throwable cause = exception.getCause();
+                        Throwable cause = exception.getTargetException();
                         if (cause instanceof IOException) {
                             throw (IOException) cause;
                         } else {

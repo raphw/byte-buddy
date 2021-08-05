@@ -1098,7 +1098,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                         return dispatcher.invoke(argument);
                     }
                 } catch (InvocationTargetException exception) {
-                    throw exception.getCause();
+                    throw exception.getTargetException();
                 }
             } catch (RuntimeException exception) {
                 throw exception;

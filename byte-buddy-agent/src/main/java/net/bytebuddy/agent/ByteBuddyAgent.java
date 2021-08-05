@@ -196,7 +196,7 @@ public class ByteBuddyAgent {
         } catch (ClassNotFoundException ignored) {
             return action.run();
         } catch (InvocationTargetException exception) {
-            throw new IllegalStateException("Failed to invoke access controller", exception.getCause());
+            throw new IllegalStateException("Failed to invoke access controller", exception.getTargetException());
         } catch (IllegalAccessException exception) {
             throw new IllegalStateException("Failed to access access controller", exception);
         } catch (NoSuchMethodException exception) {
@@ -1383,7 +1383,7 @@ public class ByteBuddyAgent {
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access Java 9 process API", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error when accessing Java 9 process API", exception.getCause());
+                        throw new IllegalStateException("Error when accessing Java 9 process API", exception.getTargetException());
                     }
                 }
             }
@@ -1655,7 +1655,7 @@ public class ByteBuddyAgent {
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access Java 9 process API", exception);
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Error when accessing Java 9 process API", exception.getCause());
+                    throw new IllegalStateException("Error when accessing Java 9 process API", exception.getTargetException());
                 }
             }
         }

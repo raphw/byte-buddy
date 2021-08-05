@@ -625,7 +625,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO + BAR).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+            assertThat(exception.getTargetException(), instanceOf(RuntimeException.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
@@ -644,7 +644,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO + BAR).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+            assertThat(exception.getTargetException(), instanceOf(RuntimeException.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 2));
@@ -662,7 +662,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO + BAR).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+            assertThat(exception.getTargetException(), instanceOf(RuntimeException.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 0));
@@ -680,7 +680,7 @@ public class AdviceTest {
             type.getDeclaredMethod(BAR + BAZ).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(NullPointerException.class));
+            assertThat(exception.getTargetException(), instanceOf(NullPointerException.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
@@ -699,7 +699,7 @@ public class AdviceTest {
             type.getDeclaredMethod(BAR + BAZ).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(NullPointerException.class));
+            assertThat(exception.getTargetException(), instanceOf(NullPointerException.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 2));
@@ -717,7 +717,7 @@ public class AdviceTest {
             type.getDeclaredMethod(BAR + BAZ).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(NullPointerException.class));
+            assertThat(exception.getTargetException(), instanceOf(NullPointerException.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 0));
@@ -786,7 +786,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO + BAR).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+            assertThat(exception.getTargetException(), instanceOf(RuntimeException.class));
         }
         assertThat(type.getDeclaredField(THROWABLE).get(null), instanceOf(RuntimeException.class));
     }
@@ -803,7 +803,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+            assertThat(exception.getTargetException(), instanceOf(RuntimeException.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(INSIDE).get(null), is((Object) 0));
@@ -822,7 +822,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+            assertThat(exception.getTargetException(), instanceOf(RuntimeException.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(INSIDE).get(null), is((Object) 1));
@@ -855,7 +855,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(Exception.class));
+            assertThat(exception.getTargetException(), instanceOf(Exception.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(INSIDE).get(null), is((Object) 0));
@@ -874,7 +874,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(Exception.class));
+            assertThat(exception.getTargetException(), instanceOf(Exception.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(INSIDE).get(null), is((Object) 1));
@@ -1144,7 +1144,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(IllegalStateException.class));
+            assertThat(exception.getTargetException(), instanceOf(IllegalStateException.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
@@ -1162,7 +1162,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(Exception.class));
+            assertThat(exception.getTargetException(), instanceOf(Exception.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 0));
@@ -1180,7 +1180,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+            assertThat(exception.getTargetException(), instanceOf(RuntimeException.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
@@ -1198,7 +1198,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(IOException.class));
+            assertThat(exception.getTargetException(), instanceOf(IOException.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
@@ -1216,7 +1216,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(ClassCastException.class));
+            assertThat(exception.getTargetException(), instanceOf(ClassCastException.class));
         }
     }
 
@@ -1243,7 +1243,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(ClassCastException.class));
+            assertThat(exception.getTargetException(), instanceOf(ClassCastException.class));
         }
     }
 
@@ -1386,7 +1386,7 @@ public class AdviceTest {
             type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause().getClass().getName(), is(ExceptionWriterSample.class.getName()));
+            assertThat(exception.getTargetException().getClass().getName(), is(ExceptionWriterSample.class.getName()));
         }
     }
 
@@ -1983,7 +1983,7 @@ public class AdviceTest {
             constructor.newInstance();
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(UnsupportedOperationException.class));
+            assertThat(exception.getTargetException(), instanceOf(UnsupportedOperationException.class));
         }
     }
 
@@ -1996,7 +1996,7 @@ public class AdviceTest {
             constructor.newInstance();
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(UnsupportedOperationException.class));
+            assertThat(exception.getTargetException(), instanceOf(UnsupportedOperationException.class));
         }
     }
 
@@ -2009,7 +2009,7 @@ public class AdviceTest {
             constructor.newInstance();
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(UnsupportedOperationException.class));
+            assertThat(exception.getTargetException(), instanceOf(UnsupportedOperationException.class));
         }
     }
 

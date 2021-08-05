@@ -604,7 +604,7 @@ public interface AnnotationDescription {
                 try {
                     annotationValues.put(property.getName(), asValue(property.invoke(annotation, NO_ARGUMENT), property.getReturnType()));
                 } catch (InvocationTargetException exception) {
-                    Throwable cause = exception.getCause();
+                    Throwable cause = exception.getTargetException();
                     if (cause instanceof TypeNotPresentException) {
                         annotationValues.put(property.getName(), new AnnotationValue.ForMissingType<Void, Void>(((TypeNotPresentException) cause).typeName()));
                     } else if (cause instanceof EnumConstantNotPresentException) {
@@ -616,7 +616,7 @@ public interface AnnotationDescription {
                                 new MethodDescription.ForLoadedMethod(((AnnotationTypeMismatchException) cause).element()),
                                 ((AnnotationTypeMismatchException) cause).foundType()));
                     } else if (!(cause instanceof IncompleteAnnotationException)) {
-                        throw new IllegalStateException("Cannot read " + property, exception.getCause());
+                        throw new IllegalStateException("Cannot read " + property, cause);
                     }
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access " + property, exception);
@@ -692,7 +692,7 @@ public interface AnnotationDescription {
                 }
                 return asValue(method.invoke(annotation, NO_ARGUMENT), method.getReturnType()).filter(property);
             } catch (InvocationTargetException exception) {
-                Throwable cause = exception.getCause();
+                Throwable cause = exception.getTargetException();
                 if (cause instanceof TypeNotPresentException) {
                     return new AnnotationValue.ForMissingType<Void, Void>(((TypeNotPresentException) cause).typeName());
                 } else if (cause instanceof EnumConstantNotPresentException) {

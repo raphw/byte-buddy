@@ -63,7 +63,7 @@ public class Installer {
         } catch (NoSuchMethodException ignored) {
             /* security manager not available on current VM */
         } catch (InvocationTargetException exception) {
-            Throwable cause = exception.getCause();
+            Throwable cause = exception.getTargetException();
             if (cause instanceof RuntimeException) {
                 throw (RuntimeException) cause;
             } else {

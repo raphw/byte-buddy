@@ -119,7 +119,7 @@ public class AdviceTypeTest {
             assertThat(type.getDeclaredMethod(BAR, this.type, this.type).invoke(type.getDeclaredConstructor().newInstance(), value, value), is((Object) value));
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+            assertThat(exception.getTargetException(), instanceOf(RuntimeException.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));

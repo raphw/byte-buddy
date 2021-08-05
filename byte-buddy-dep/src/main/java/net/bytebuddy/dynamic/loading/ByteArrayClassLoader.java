@@ -549,7 +549,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access class loading lock for " + name + " on " + classLoader, exception);
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Error when getting " + name + " on " + classLoader, exception);
+                    throw new IllegalStateException("Error when getting " + name + " on " + classLoader, exception.getTargetException());
                 }
             }
 
@@ -617,7 +617,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access class loading lock for " + name + " on " + classLoader, exception);
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Error when getting " + name + " on " + classLoader, exception);
+                    throw new IllegalStateException("Error when getting " + name + " on " + classLoader, exception.getTargetException());
                 }
             }
         }
@@ -766,7 +766,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access " + getDefinedPackage, exception);
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Cannot invoke " + getDefinedPackage, exception.getCause());
+                    throw new IllegalStateException("Cannot invoke " + getDefinedPackage, exception.getTargetException());
                 }
             }
         }

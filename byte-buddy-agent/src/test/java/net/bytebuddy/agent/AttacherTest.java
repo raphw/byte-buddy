@@ -46,7 +46,7 @@ public class AttacherTest {
             constructor.newInstance();
             fail();
         } catch (InvocationTargetException exception) {
-            throw (Exception) exception.getCause();
+            throw (Exception) exception.getTargetException();
         }
     }
 

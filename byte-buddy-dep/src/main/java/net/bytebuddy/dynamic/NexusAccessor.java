@@ -301,7 +301,7 @@ public class NexusAccessor {
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access: " + clean, exception);
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Cannot invoke: " + clean, exception.getCause());
+                    throw new IllegalStateException("Cannot invoke: " + clean, exception.getTargetException());
                 }
             }
 
@@ -318,7 +318,7 @@ public class NexusAccessor {
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access: " + register, exception);
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Cannot invoke: " + register, exception.getCause());
+                    throw new IllegalStateException("Cannot invoke: " + register, exception.getTargetException());
                 }
             }
         }

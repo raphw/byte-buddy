@@ -65,7 +65,7 @@ public class TargetTypeTest {
             constructor.newInstance();
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause().getClass(), CoreMatchers.<Class<?>>is(UnsupportedOperationException.class));
+            assertThat(exception.getTargetException().getClass(), CoreMatchers.<Class<?>>is(UnsupportedOperationException.class));
         }
     }
 

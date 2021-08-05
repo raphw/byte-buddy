@@ -69,7 +69,7 @@ public class AnnotationDescriptionLatentTest extends AbstractAnnotationDescripti
                     throw new IllegalArgumentException("Unexpected annotation property: " + method);
                 }
             } catch (InvocationTargetException exception) {
-                Throwable cause = exception.getCause();
+                Throwable cause = exception.getTargetException();
                 if (cause instanceof TypeNotPresentException) {
                     builder = builder.define(method.getName(), new AnnotationValue.ForMissingType<Void, Void>(((TypeNotPresentException) cause).typeName()));
                 } else if (cause instanceof EnumConstantNotPresentException) {

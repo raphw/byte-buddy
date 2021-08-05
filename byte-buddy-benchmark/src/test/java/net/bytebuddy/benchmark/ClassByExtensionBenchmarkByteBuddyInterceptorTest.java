@@ -17,7 +17,7 @@ public class ClassByExtensionBenchmarkByteBuddyInterceptorTest {
             constructor.newInstance();
             fail();
         } catch (InvocationTargetException exception) {
-            throw (UnsupportedOperationException) exception.getCause();
+            throw (UnsupportedOperationException) exception.getTargetException();
         }
     }
 
@@ -29,7 +29,7 @@ public class ClassByExtensionBenchmarkByteBuddyInterceptorTest {
             constructor.newInstance();
             fail();
         } catch (InvocationTargetException exception) {
-            throw (UnsupportedOperationException) exception.getCause();
+            throw (UnsupportedOperationException) exception.getTargetException();
         }
     }
 }

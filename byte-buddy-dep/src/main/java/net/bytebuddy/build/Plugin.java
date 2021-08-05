@@ -409,7 +409,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         } catch (IllegalAccessException exception) {
                             throw new IllegalStateException("Failed to access " + constructor, exception);
                         } catch (InvocationTargetException exception) {
-                            throw new IllegalStateException("Error during construction of" + constructor, exception.getCause());
+                            throw new IllegalStateException("Error during construction of" + constructor, exception.getTargetException());
                         }
                     }
                 }
@@ -716,7 +716,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                             } catch (IllegalAccessException exception) {
                                 throw new IllegalStateException(exception);
                             } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException(exception.getCause());
+                                throw new IllegalStateException(exception.getTargetException());
                             } catch (NoSuchMethodException ignored) {
                                 return Resolution.Unresolved.INSTANCE;
                             }

@@ -86,7 +86,7 @@ public class InstallerTest {
             constructor.newInstance();
             fail();
         } catch (InvocationTargetException exception) {
-            throw (Exception) exception.getCause();
+            throw (Exception) exception.getTargetException();
         }
     }
 }

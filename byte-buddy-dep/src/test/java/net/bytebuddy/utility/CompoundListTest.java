@@ -32,7 +32,7 @@ public class CompoundListTest {
             constructor.newInstance();
             fail();
         } catch (InvocationTargetException exception) {
-            throw exception.getCause();
+            throw exception.getTargetException();
         }
     }
 

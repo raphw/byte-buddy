@@ -170,7 +170,7 @@ public class ByteBuddyMojoTest {
                 assertMethod(classLoader.loadClass("foo.Bar"), FOO, QUX);
                 fail();
             } catch (InvocationTargetException exception) {
-                assertThat(exception.getCause(), instanceOf(NullPointerException.class));
+                assertThat(exception.getTargetException(), instanceOf(NullPointerException.class));
             }
         } finally {
             for (File file : files) {

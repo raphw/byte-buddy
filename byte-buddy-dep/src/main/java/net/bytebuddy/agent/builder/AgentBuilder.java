@@ -11143,7 +11143,7 @@ public interface AgentBuilder {
                         } catch (InstantiationException exception) {
                             throw new IllegalStateException("Cannot instantiate " + executingTransformer.getDeclaringClass(), exception);
                         } catch (InvocationTargetException exception) {
-                            throw new IllegalStateException("Cannot invoke " + executingTransformer, exception.getCause());
+                            throw new IllegalStateException("Cannot invoke " + executingTransformer, exception.getTargetException());
                         }
                     }
                 }

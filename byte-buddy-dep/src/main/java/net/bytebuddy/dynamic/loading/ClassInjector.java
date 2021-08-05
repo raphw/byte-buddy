@@ -136,9 +136,9 @@ public interface ClassInjector {
         private static final System SYSTEM = doPrivileged(JavaDispatcher.of(System.class));
 
         /**
-         * A proxy for {@code java.lang.SecurityManager} if available.
+         * The {@code java.lang.SecurityManager#checkPermission} method or {@code null} if not available.
          */
-        private static final SecurityManager SECURITY_MANAGER = doPrivileged(JavaDispatcher.of(SecurityManager.class));
+        private static final Method CHECK_PERMISSION = doPrivileged(CheckPermissionAction.INSTANCE);
 
         /**
          * The class loader into which the classes are to be injected.
@@ -515,7 +515,7 @@ public interface ClassInjector {
                             return Direct.make();
                         }
                     } catch (InvocationTargetException exception) {
-                        return new Initializable.Unavailable(exception.getCause().getMessage());
+                        return new Initializable.Unavailable(exception.getTargetException().getMessage());
                     } catch (Exception exception) {
                         return new Initializable.Unavailable(exception.getMessage());
                     }
@@ -641,7 +641,9 @@ public interface ClassInjector {
                     Object securityManager = SYSTEM.getSecurityManager();
                     if (securityManager != null) {
                         try {
-                            SECURITY_MANAGER.checkPermission(securityManager, SUPPRESS_ACCESS_CHECKS);
+                            CHECK_PERMISSION.invoke(securityManager, SUPPRESS_ACCESS_CHECKS);
+                        } catch (InvocationTargetException exception) {
+                            return new Dispatcher.Unavailable(exception.getTargetException().getMessage());
                         } catch (Exception exception) {
                             return new Dispatcher.Unavailable(exception.getMessage());
                         }
@@ -658,7 +660,7 @@ public interface ClassInjector {
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access java.lang.ClassLoader#findClass", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#findClass", exception.getCause());
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#findClass", exception.getTargetException());
                     }
                 }
 
@@ -671,7 +673,7 @@ public interface ClassInjector {
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access java.lang.ClassLoader#defineClass", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#defineClass", exception.getCause());
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#defineClass", exception.getTargetException());
                     }
                 }
 
@@ -685,7 +687,7 @@ public interface ClassInjector {
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access java.lang.ClassLoader#getDefinedPackage", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#getDefinedPackage", exception.getCause());
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#getDefinedPackage", exception.getTargetException());
                     }
                 }
 
@@ -698,7 +700,7 @@ public interface ClassInjector {
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access java.lang.ClassLoader#getPackage", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#getPackage", exception.getCause());
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#getPackage", exception.getTargetException());
                     }
                 }
 
@@ -727,7 +729,7 @@ public interface ClassInjector {
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access java.lang.ClassLoader#definePackage", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#definePackage", exception.getCause());
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#definePackage", exception.getTargetException());
                     }
                 }
 
@@ -771,7 +773,7 @@ public interface ClassInjector {
                         } catch (IllegalAccessException exception) {
                             throw new IllegalStateException("Could not access java.lang.ClassLoader#getClassLoadingLock", exception);
                         } catch (InvocationTargetException exception) {
-                            throw new IllegalStateException("Error invoking java.lang.ClassLoader#getClassLoadingLock", exception.getCause());
+                            throw new IllegalStateException("Error invoking java.lang.ClassLoader#getClassLoadingLock", exception.getTargetException());
                         }
                     }
                 }
@@ -978,7 +980,9 @@ public interface ClassInjector {
                     Object securityManager = SYSTEM.getSecurityManager();
                     if (securityManager != null) {
                         try {
-                            SECURITY_MANAGER.checkPermission(securityManager, SUPPRESS_ACCESS_CHECKS);
+                            CHECK_PERMISSION.invoke(securityManager, SUPPRESS_ACCESS_CHECKS);
+                        } catch (InvocationTargetException exception) {
+                            return new Dispatcher.Unavailable(exception.getTargetException().getMessage());
                         } catch (Exception exception) {
                             return new Dispatcher.Unavailable(exception.getMessage());
                         }
@@ -993,9 +997,9 @@ public interface ClassInjector {
                     try {
                         return getClassLoadingLock.invoke(accessor, classLoader, name);
                     } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access (accessor)::getClassLoadingLock", exception);
+                        throw new IllegalStateException("Could not access ClassLoader::getClassLoadingLock", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking (accessor)::getClassLoadingLock", exception.getCause());
+                        throw new IllegalStateException("Error invoking ClassLoader::getClassLoadingLock", exception.getTargetException());
                     }
                 }
 
@@ -1006,9 +1010,9 @@ public interface ClassInjector {
                     try {
                         return (Class<?>) findLoadedClass.invoke(accessor, classLoader, name);
                     } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access (accessor)::findLoadedClass", exception);
+                        throw new IllegalStateException("Could not access ClassLoader::findLoadedClass", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking (accessor)::findLoadedClass", exception.getCause());
+                        throw new IllegalStateException("Error invoking ClassLoader::findLoadedClass", exception.getTargetException());
                     }
                 }
 
@@ -1019,9 +1023,9 @@ public interface ClassInjector {
                     try {
                         return (Class<?>) defineClass.invoke(accessor, classLoader, name, binaryRepresentation, 0, binaryRepresentation.length, protectionDomain);
                     } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access (accessor)::defineClass", exception);
+                        throw new IllegalStateException("Could not access ClassLoader::defineClass", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking (accessor)::defineClass", exception.getCause());
+                        throw new IllegalStateException("Error invoking ClassLoader::defineClass", exception.getTargetException());
                     }
                 }
 
@@ -1035,9 +1039,9 @@ public interface ClassInjector {
                     try {
                         return (Package) getDefinedPackage.invoke(accessor, classLoader, name);
                     } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access (accessor)::getDefinedPackage", exception);
+                        throw new IllegalStateException("Could not access ClassLoader::getDefinedPackage", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking (accessor)::getDefinedPackage", exception.getCause());
+                        throw new IllegalStateException("Error invoking ClassLoader::getDefinedPackage", exception.getTargetException());
                     }
                 }
 
@@ -1048,9 +1052,9 @@ public interface ClassInjector {
                     try {
                         return (Package) getPackage.invoke(accessor, classLoader, name);
                     } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access (accessor)::getPackage", exception);
+                        throw new IllegalStateException("Could not access ClassLoader::getPackage", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking (accessor)::getPackage", exception.getCause());
+                        throw new IllegalStateException("Error invoking ClassLoader::getPackage", exception.getTargetException());
                     }
                 }
 
@@ -1078,9 +1082,9 @@ public interface ClassInjector {
                                 implementationVendor,
                                 sealBase);
                     } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access (accessor)::definePackage", exception);
+                        throw new IllegalStateException("Could not access ClassLoader::definePackage", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking (accessor)::definePackage", exception.getCause());
+                        throw new IllegalStateException("Error invoking ClassLoader::definePackage", exception.getTargetException());
                     }
                 }
             }
@@ -1233,7 +1237,9 @@ public interface ClassInjector {
                     Object securityManager = SYSTEM.getSecurityManager();
                     if (securityManager != null) {
                         try {
-                            SECURITY_MANAGER.checkPermission(securityManager, SUPPRESS_ACCESS_CHECKS);
+                            CHECK_PERMISSION.invoke(securityManager, SUPPRESS_ACCESS_CHECKS);
+                        } catch (InvocationTargetException exception) {
+                            return new Dispatcher.Unavailable(exception.getTargetException().getMessage());
                         } catch (Exception exception) {
                             return new Dispatcher.Unavailable(exception.getMessage());
                         }
@@ -1250,7 +1256,7 @@ public interface ClassInjector {
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access java.lang.ClassLoader#findClass", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#findClass", exception.getCause());
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#findClass", exception.getTargetException());
                     }
                 }
 
@@ -1263,7 +1269,7 @@ public interface ClassInjector {
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access java.lang.ClassLoader#defineClass", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#defineClass", exception.getCause());
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#defineClass", exception.getTargetException());
                     }
                 }
 
@@ -1277,7 +1283,7 @@ public interface ClassInjector {
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access java.lang.ClassLoader#getDefinedPackage", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#getDefinedPackage", exception.getCause());
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#getDefinedPackage", exception.getTargetException());
                     }
                 }
 
@@ -1290,7 +1296,7 @@ public interface ClassInjector {
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access java.lang.ClassLoader#getPackage", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#getPackage", exception.getCause());
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#getPackage", exception.getTargetException());
                     }
                 }
 
@@ -1319,7 +1325,7 @@ public interface ClassInjector {
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access java.lang.ClassLoader#definePackage", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#definePackage", exception.getCause());
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#definePackage", exception.getTargetException());
                     }
                 }
 
@@ -1363,7 +1369,7 @@ public interface ClassInjector {
                         } catch (IllegalAccessException exception) {
                             throw new IllegalStateException("Could not access java.lang.ClassLoader#getClassLoadingLock", exception);
                         } catch (InvocationTargetException exception) {
-                            throw new IllegalStateException("Error invoking java.lang.ClassLoader#getClassLoadingLock", exception.getCause());
+                            throw new IllegalStateException("Error invoking java.lang.ClassLoader#getClassLoadingLock", exception.getTargetException());
                         }
                     }
                 }
@@ -1476,21 +1482,6 @@ public interface ClassInjector {
         }
 
         /**
-         * A proxy of {@code java.lang.SecurityManager}.
-         */
-        @JavaDispatcher.Proxied("java.lang.SecurityManager")
-        protected interface SecurityManager {
-
-            /**
-             * Checks the given permissions on the supplied security manager.
-             *
-             * @param value      The security manager to use.
-             * @param permission The permissions to validate.
-             */
-            void checkPermission(Object value, Permission permission);
-        }
-
-        /**
          * A proxy of {@code java.lang.System}.
          */
         @JavaDispatcher.Proxied("java.lang.System")
@@ -1504,6 +1495,30 @@ public interface ClassInjector {
             @JavaDispatcher.IsStatic
             @JavaDispatcher.Defaults
             Object getSecurityManager();
+        }
+
+        /**
+         * A privileged action to resolve {@code java.lang.SecurityManager#checkPermission} method or
+         * {@code null}, if this method is not available.
+         */
+        protected enum CheckPermissionAction implements PrivilegedAction<Method> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but be nulled out")
+            public Method run() {
+                try {
+                    return Class.forName("java.lang.SecurityManager").getMethod("checkPermission", Permission.class);
+                } catch (Exception ignored) {
+                    return null;
+                }
+            }
         }
     }
 
@@ -1625,7 +1640,7 @@ public interface ClassInjector {
                 try {
                     result.put(entry.getKey(), (Class<?>) DEFINE_CLASS.invoke(lookup, entry.getValue()));
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Failed to define " + entry.getKey() + " using " + lookup, exception.getCause());
+                    throw new IllegalStateException("Failed to define " + entry.getKey() + " using " + lookup, exception.getTargetException());
                 } catch (Exception exception) {
                     throw new IllegalStateException("Failed to define " + entry.getKey() + " using " + lookup, exception);
                 }
@@ -1731,9 +1746,9 @@ public interface ClassInjector {
         private static final System SYSTEM = doPrivileged(JavaDispatcher.of(System.class));
 
         /**
-         * A proxy for {@code java.lang.SecurityManager} if available.
+         * The {@code java.lang.SecurityManager#checkPermission} method or {@code null} if not available.
          */
-        private static final SecurityManager SECURITY_MANAGER = doPrivileged(JavaDispatcher.of(SecurityManager.class));
+        private static final Method CHECK_PERMISSION = doPrivileged(CheckPermissionAction.INSTANCE);
 
         /**
          * A lock for the bootstrap loader when injecting.
@@ -2021,7 +2036,9 @@ public interface ClassInjector {
                     Object securityManager = SYSTEM.getSecurityManager();
                     if (securityManager != null) {
                         try {
-                            SECURITY_MANAGER.checkPermission(securityManager, SUPPRESS_ACCESS_CHECKS);
+                            CHECK_PERMISSION.invoke(securityManager, SUPPRESS_ACCESS_CHECKS);
+                        } catch (InvocationTargetException exception) {
+                            return new Unavailable(exception.getTargetException().getMessage());
                         } catch (Exception exception) {
                             return new Unavailable(exception.getMessage());
                         }
@@ -2044,7 +2061,7 @@ public interface ClassInjector {
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access Unsafe::defineClass", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking Unsafe::defineClass", exception.getCause());
+                        throw new IllegalStateException("Error invoking Unsafe::defineClass", exception.getTargetException());
                     }
                 }
             }
@@ -2285,21 +2302,6 @@ public interface ClassInjector {
         }
 
         /**
-         * A proxy of {@code java.lang.SecurityManager}.
-         */
-        @JavaDispatcher.Proxied("java.lang.SecurityManager")
-        protected interface SecurityManager {
-
-            /**
-             * Checks the given permissions on the supplied security manager.
-             *
-             * @param value      The security manager to use.
-             * @param permission The permissions to validate.
-             */
-            void checkPermission(Object value, Permission permission);
-        }
-
-        /**
          * A proxy of {@code java.lang.System}.
          */
         @JavaDispatcher.Proxied("java.lang.System")
@@ -2313,6 +2315,30 @@ public interface ClassInjector {
             @JavaDispatcher.IsStatic
             @JavaDispatcher.Defaults
             Object getSecurityManager();
+        }
+
+        /**
+         * A privileged action to resolve {@code java.lang.SecurityManager#checkPermission} method or
+         * {@code null}, if this method is not available.
+         */
+        protected enum CheckPermissionAction implements PrivilegedAction<Method> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but be nulled out")
+            public Method run() {
+                try {
+                    return Class.forName("java.lang.SecurityManager").getMethod("checkPermission", Permission.class);
+                } catch (Exception ignored) {
+                    return null;
+                }
+            }
         }
     }
 

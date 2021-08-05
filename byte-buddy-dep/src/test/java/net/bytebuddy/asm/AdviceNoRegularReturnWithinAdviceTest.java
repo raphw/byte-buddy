@@ -74,7 +74,7 @@ public class AdviceNoRegularReturnWithinAdviceTest {
             type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+            assertThat(exception.getTargetException(), instanceOf(RuntimeException.class));
         }
     }
 
