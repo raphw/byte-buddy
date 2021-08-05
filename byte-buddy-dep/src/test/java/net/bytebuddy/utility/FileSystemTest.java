@@ -1,5 +1,6 @@
 package net.bytebuddy.utility;
 
+import net.bytebuddy.ClassFileVersion;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,5 +69,12 @@ public class FileSystemTest {
             inputStream.close();
         }
         assertThat(source.exists(), is(true));
+    }
+
+    @Test
+    public void testFileSystemType() {
+        assertThat(FileSystem.INSTANCE.getClass(), is((Object) (ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V7)
+                ? FileSystem.ForNio2CapableVm.class
+                : FileSystem.ForLegacyVm.class)));
     }
 }

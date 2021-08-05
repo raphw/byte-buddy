@@ -22,10 +22,13 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
+import net.bytebuddy.utility.privilege.GetMethodAction;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.PrivilegedAction;
 
 /**
@@ -47,6 +50,13 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * A dispatcher to interact with {@code java.lang.Module}.
      */
     protected static final Module MODULE = doPrivileged(JavaDispatcher.of(Module.class));
+
+    /**
+     * The {@code java.lang.Module#getClassLoader} method or {@code null} if not available. This method
+     * cannot be resolved using a {@link JavaDispatcher} as it is call site sensitive to a potential
+     * security manager.
+     */
+    private static final Method GET_CLASS_LOADER = doPrivileged(new GetMethodAction("java.lang.Module", "getClassLoader"));
 
     /**
      * The {@code java.lang.Module} instance this wrapper represents.
@@ -141,7 +151,13 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @return The class loader of the represented module.
      */
     public ClassLoader getClassLoader() {
-        return MODULE.getClassLoader(module);
+        try {
+            return (ClassLoader) GET_CLASS_LOADER.invoke(module);
+        } catch (IllegalAccessException exception) {
+            throw new IllegalStateException("Cannot access class loader for " + module, exception);
+        } catch (InvocationTargetException exception) {
+            throw new IllegalStateException("Cannot read class loader for " + module, exception.getTargetException());
+        }
     }
 
     /**
@@ -269,14 +285,6 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @throws IOException If an I/O exception occurs.
          */
         InputStream getResourceAsStream(Object value, String name) throws IOException;
-
-        /**
-         * Returns the module's class loader.
-         *
-         * @param value The {@code java.lang.Module}
-         * @return The module's class loader.
-         */
-        ClassLoader getClassLoader(Object value);
 
         /**
          * Returns {@code true} if the source module exports the supplied package to the target module.

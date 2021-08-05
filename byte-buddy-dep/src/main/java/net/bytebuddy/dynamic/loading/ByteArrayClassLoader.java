@@ -547,9 +547,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 try {
                     return method.invoke(classLoader, name);
                 } catch (IllegalAccessException exception) {
-                    throw new IllegalStateException("Cannot access class loading lock for " + name + " on " + classLoader, exception);
+                    throw new IllegalStateException(exception);
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Error when getting " + name + " on " + classLoader, exception.getTargetException());
+                    throw new IllegalStateException(exception.getTargetException());
                 }
             }
 
@@ -615,9 +615,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 try {
                     return invokeWithArguments.invoke(bindTo.invoke(methodHandle, classLoader), (Object) new Object[]{name});
                 } catch (IllegalAccessException exception) {
-                    throw new IllegalStateException("Cannot access class loading lock for " + name + " on " + classLoader, exception);
+                    throw new IllegalStateException(exception);
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Error when getting " + name + " on " + classLoader, exception.getTargetException());
+                    throw new IllegalStateException(exception.getTargetException());
                 }
             }
         }
@@ -764,9 +764,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 try {
                     return (Package) getDefinedPackage.invoke(classLoader, name);
                 } catch (IllegalAccessException exception) {
-                    throw new IllegalStateException("Cannot access " + getDefinedPackage, exception);
+                    throw new IllegalStateException(exception);
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Cannot invoke " + getDefinedPackage, exception.getTargetException());
+                    throw new IllegalStateException(exception.getTargetException());
                 }
             }
         }
