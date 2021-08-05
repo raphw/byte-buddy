@@ -45,6 +45,7 @@ import java.security.Permission;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -1529,6 +1530,11 @@ public interface ClassInjector {
         private static final MethodHandles.Lookup METHOD_HANDLES_LOOKUP = doPrivileged(JavaDispatcher.of(MethodHandles.Lookup.class));
 
         /**
+         * A reference to {@code java.lang.invoke.MethodHandles$Lookup#defineClass} or {@code null} if the method is not available.
+         */
+        private static final Method DEFINE_CLASS = doPrivileged(DefineClassAction.INSTANCE);
+
+        /**
          * Indicates a lookup instance's package lookup mode.
          */
         private static final int PACKAGE_LOOKUP = 0x8;
@@ -1618,8 +1624,10 @@ public interface ClassInjector {
                     throw new IllegalArgumentException(entry.getKey() + " must be defined in the same package as " + lookup);
                 }
                 try {
-                    result.put(entry.getKey(), METHOD_HANDLES_LOOKUP.defineClass(lookup, entry.getValue()));
-                } catch (IllegalAccessException exception) {
+                    result.put(entry.getKey(), (Class<?>) DEFINE_CLASS.invoke(lookup, entry.getValue()));
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Failed to define " + entry.getKey() + " using " + lookup, exception.getCause());
+                } catch (Exception exception) {
                     throw new IllegalStateException("Failed to define " + entry.getKey() + " using " + lookup, exception);
                 }
             }
@@ -1632,7 +1640,7 @@ public interface ClassInjector {
          * @return {@code true} if the current VM is capable of defining classes using a lookup.
          */
         public static boolean isAvailable() {
-            return ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).isAtLeast(ClassFileVersion.JAVA_V9);
+            return DEFINE_CLASS != null;
         }
 
         /**
@@ -1673,16 +1681,30 @@ public interface ClassInjector {
                  * @return The modifiers indicating the instance's lookup modes.
                  */
                 int lookupModes(Object lookup);
+            }
+        }
 
-                /**
-                 * Defines a class.
-                 *
-                 * @param lookup               The {@code java.lang.invoke.MethodHandles$Lookup} instance to use.
-                 * @param binaryRepresentation The defined class's binary representation.
-                 * @return The defined class.
-                 * @throws IllegalAccessException If the class definition is accessing an illegal package.
-                 */
-                Class<?> defineClass(Object lookup, byte[] binaryRepresentation) throws IllegalAccessException;
+        /**
+         * A privileged action to resolve {@code java.lang.invoke.MethodHandles$Lookup#defineClass}, or {@code null},
+         * if not available. This method must be invoked reflectively since the security manager checks the scope of
+         * invocation for this method such that no {@link JavaDispatcher} can be used.
+         */
+        protected enum DefineClassAction implements PrivilegedAction<Method> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public Method run() {
+                try {
+                    return Class.forName("java.lang.invoke.MethodHandles$Lookup").getMethod("defineClass", byte[].class);
+                } catch (Exception ignored) {
+                    return null;
+                }
             }
         }
     }
