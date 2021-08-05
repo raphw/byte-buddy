@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 6. August 2021: version 1.11.12
+
+- Always use reflection and not a `JavaDispatcher` when a method potentially checks the access context via a security manager.
+
+### 5. August 2021: version 1.11.11
+
+- Do not pollute access context for security manager when defining classes via a method handle lookup.
+
 ### 4. August 2021: version 1.11.10
 
 - Added option for Gradle plugin to register `adjustmentPostProcessor` to manually add task dependencies.
