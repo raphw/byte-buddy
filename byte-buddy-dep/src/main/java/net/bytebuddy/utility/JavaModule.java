@@ -156,7 +156,12 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
         } catch (IllegalAccessException exception) {
             throw new IllegalStateException("Cannot access class loader for " + module, exception);
         } catch (InvocationTargetException exception) {
-            throw new IllegalStateException("Cannot read class loader for " + module, exception.getTargetException());
+            Throwable cause = exception.getTargetException();
+            if (cause instanceof RuntimeException) {
+                throw (RuntimeException) cause;
+            } else {
+                throw new IllegalStateException("Cannot read class loader for " + module, cause);
+            }
         }
     }
 
