@@ -1687,7 +1687,7 @@ public interface ClassInjector {
         /**
          * A privileged action to resolve {@code java.lang.invoke.MethodHandles$Lookup#defineClass}, or {@code null},
          * if not available. This method must be invoked reflectively since the security manager checks the scope of
-         * invocation for this method such that no {@link JavaDispatcher} can be used.
+         * invocation for this method such that {@link JavaDispatcher} cannot be used.
          */
         protected enum DefineClassAction implements PrivilegedAction<Method> {
 
@@ -1699,6 +1699,7 @@ public interface ClassInjector {
             /**
              * {@inheritDoc}
              */
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but be nulled out")
             public Method run() {
                 try {
                     return Class.forName("java.lang.invoke.MethodHandles$Lookup").getMethod("defineClass", byte[].class);
