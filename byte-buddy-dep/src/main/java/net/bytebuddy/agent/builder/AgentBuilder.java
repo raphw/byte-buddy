@@ -5093,7 +5093,7 @@ public interface AgentBuilder {
              */
             public void onWarmUpError(Class<?> type, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
                 synchronized (printStream) {
-                    printStream.printf(PREFIX + " FAILED_WARUMP %s on %s%n", classFileTransformer, type);
+                    printStream.printf(PREFIX + " ERROR_WARMUP %s on %s%n", classFileTransformer, type);
                     throwable.printStackTrace(printStream);
                 }
             }
@@ -5102,7 +5102,7 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public void onAfterWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
-                printStream.printf(PREFIX + " AFTER_WARMUP transformed = %b - %s on %s%n", transformed, classFileTransformer, types);
+                printStream.printf(PREFIX + " AFTER_WARMUP %s %s on %s%n", transformed ? "transformed" : "not transformed", classFileTransformer, types);
             }
         }
 
@@ -9841,7 +9841,9 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
-                    warmupStrategy.with(types),
+                    types.isEmpty()
+                            ? warmupStrategy
+                            : warmupStrategy.with(types),
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -10598,9 +10600,7 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public WarmupStrategy with(Collection<Class<?>> types) {
-                    return types.isEmpty()
-                            ? this
-                            : new Enabled(new LinkedHashSet<Class<?>>(types));
+                    return new Enabled(new LinkedHashSet<Class<?>>(types));
                 }
             }
 

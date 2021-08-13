@@ -8,6 +8,7 @@ import org.mockito.Mock;
 
 import java.io.PrintStream;
 import java.lang.instrument.Instrumentation;
+import java.util.Collections;
 
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
@@ -35,6 +36,9 @@ public class AgentBuilderInstallationListenerTest {
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onInstall(instrumentation, classFileTransformer);
         assertThat(AgentBuilder.InstallationListener.NoOp.INSTANCE.onError(instrumentation, classFileTransformer, throwable), is(throwable));
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onReset(instrumentation, classFileTransformer);
+        AgentBuilder.InstallationListener.NoOp.INSTANCE.onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
+        AgentBuilder.InstallationListener.NoOp.INSTANCE.onWarmUpError(Object.class, classFileTransformer, throwable);
+        AgentBuilder.InstallationListener.NoOp.INSTANCE.onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, false);
         verifyZeroInteractions(instrumentation, classFileTransformer, throwable);
     }
 
@@ -45,6 +49,9 @@ public class AgentBuilderInstallationListenerTest {
         pseudoAdapter.onInstall(instrumentation, classFileTransformer);
         assertThat(pseudoAdapter.onError(instrumentation, classFileTransformer, throwable), is(throwable));
         pseudoAdapter.onReset(instrumentation, classFileTransformer);
+        pseudoAdapter.onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
+        pseudoAdapter.onWarmUpError(Object.class, classFileTransformer, throwable);
+        pseudoAdapter.onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, false);
         verifyZeroInteractions(instrumentation, classFileTransformer, throwable);
     }
 
@@ -53,6 +60,9 @@ public class AgentBuilderInstallationListenerTest {
         AgentBuilder.InstallationListener.ErrorSuppressing.INSTANCE.onBeforeInstall(instrumentation, classFileTransformer);
         AgentBuilder.InstallationListener.ErrorSuppressing.INSTANCE.onInstall(instrumentation, classFileTransformer);
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onReset(instrumentation, classFileTransformer);
+        AgentBuilder.InstallationListener.NoOp.INSTANCE.onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
+        AgentBuilder.InstallationListener.NoOp.INSTANCE.onWarmUpError(Object.class, classFileTransformer, throwable);
+        AgentBuilder.InstallationListener.NoOp.INSTANCE.onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, false);
         verifyZeroInteractions(instrumentation, classFileTransformer, throwable);
     }
 
@@ -97,6 +107,35 @@ public class AgentBuilderInstallationListenerTest {
         AgentBuilder.InstallationListener installationListener = new AgentBuilder.InstallationListener.StreamWriting(printStream);
         installationListener.onReset(instrumentation, classFileTransformer);
         verify(printStream).printf("[Byte Buddy] RESET %s on %s%n", classFileTransformer, instrumentation);
+        verifyNoMoreInteractions(printStream);
+    }
+
+    @Test
+    public void testStreamWritingListenerBeforeWarmUp() throws Exception {
+        PrintStream printStream = mock(PrintStream.class);
+        AgentBuilder.InstallationListener installationListener = new AgentBuilder.InstallationListener.StreamWriting(printStream);
+        installationListener.onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
+        verify(printStream).printf("[Byte Buddy] BEFORE_WARMUP %s on %s%n", classFileTransformer, Collections.singleton(Object.class));
+        verifyNoMoreInteractions(printStream);
+    }
+
+    @Test
+    public void testStreamWritingListenerWarmUpError() throws Exception {
+        PrintStream printStream = mock(PrintStream.class);
+        AgentBuilder.InstallationListener installationListener = new AgentBuilder.InstallationListener.StreamWriting(printStream);
+        installationListener.onWarmUpError(Object.class, classFileTransformer, throwable);
+        verify(printStream).printf("[Byte Buddy] ERROR_WARMUP %s on %s%n", classFileTransformer, Object.class);
+        verifyNoMoreInteractions(printStream);
+        verify(throwable).printStackTrace(printStream);
+        verifyNoMoreInteractions(throwable);
+    }
+
+    @Test
+    public void testStreamWritingListenerAfterWarmUp() throws Exception {
+        PrintStream printStream = mock(PrintStream.class);
+        AgentBuilder.InstallationListener installationListener = new AgentBuilder.InstallationListener.StreamWriting(printStream);
+        installationListener.onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, true);
+        verify(printStream).printf("[Byte Buddy] AFTER_WARMUP %s %s on %s%n", "transformed", classFileTransformer, Collections.singleton(Object.class));
         verifyNoMoreInteractions(printStream);
     }
 
@@ -150,6 +189,36 @@ public class AgentBuilderInstallationListenerTest {
         installationListener.onReset(instrumentation, classFileTransformer);
         verify(first).onReset(instrumentation, classFileTransformer);
         verify(second).onReset(instrumentation, classFileTransformer);
+        verifyNoMoreInteractions(first, second);
+    }
+
+    @Test
+    public void testCompoundListenerBeforeWarmUp() throws Exception {
+        AgentBuilder.InstallationListener first = mock(AgentBuilder.InstallationListener.class), second = mock(AgentBuilder.InstallationListener.class);
+        AgentBuilder.InstallationListener installationListener = new AgentBuilder.InstallationListener.Compound(first, second);
+        installationListener.onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
+        verify(first).onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
+        verify(second).onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
+        verifyNoMoreInteractions(first, second);
+    }
+
+    @Test
+    public void testCompoundListenerWarmUpError() throws Exception {
+        AgentBuilder.InstallationListener first = mock(AgentBuilder.InstallationListener.class), second = mock(AgentBuilder.InstallationListener.class);
+        AgentBuilder.InstallationListener installationListener = new AgentBuilder.InstallationListener.Compound(first, second);
+        installationListener.onWarmUpError(Object.class, classFileTransformer, throwable);
+        verify(first).onWarmUpError(Object.class, classFileTransformer, throwable);
+        verify(second).onWarmUpError(Object.class, classFileTransformer, throwable);
+        verifyNoMoreInteractions(first, second);
+    }
+
+    @Test
+    public void testCompoundListenerAfterWarmUp() throws Exception {
+        AgentBuilder.InstallationListener first = mock(AgentBuilder.InstallationListener.class), second = mock(AgentBuilder.InstallationListener.class);
+        AgentBuilder.InstallationListener installationListener = new AgentBuilder.InstallationListener.Compound(first, second);
+        installationListener.onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, true);
+        verify(first).onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, true);
+        verify(second).onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, true);
         verifyNoMoreInteractions(first, second);
     }
 
