@@ -72,10 +72,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.io.*;
-import java.lang.instrument.ClassDefinition;
-import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.Instrumentation;
-import java.lang.instrument.UnmodifiableClassException;
+import java.lang.instrument.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -303,6 +300,44 @@ public interface AgentBuilder {
      * @return A new instance of this agent builder that does not apply any implicit changes to the received class file.
      */
     AgentBuilder disableClassFormatChanges();
+
+    /**
+     * <p>
+     * Warms up the generated {@link ClassFileTransformer} to trigger class loading of classes used by the transformer
+     * prior to its actual use. Ideally, warmup should include classes that cause a transformation and classes that
+     * are ignored. Warming up can be especially useful when transforming classes on the boot path, where circularity
+     * errors are more likely. At the same time, warming up might load classes that are expected to be unloaded
+     * when this agent is installed.
+     * </p>
+     * <p>
+     * <b>Important</b>: Warming up is applied just as a regular transformation and will also invoke the {@link Listener}.
+     * This is done to avoid that listener classes can cause circularities. It is the users responsibility to suppress
+     * such log output, if necessary.
+     * </p>
+     *
+     * @param type The types to include in the warmup.
+     * @return A new agent builder that considers the supplied classes in its warmup.
+     */
+    AgentBuilder warmUp(Class<?>... type);
+
+    /**
+     * <p>
+     * Warms up the generated {@link ClassFileTransformer} to trigger class loading of classes used by the transformer
+     * prior to its actual use. Ideally, warmup should include classes that cause a transformation and classes that
+     * are ignored. Warming up can be especially useful when transforming classes on the boot path, where circularity
+     * errors are more likely. At the same time, warming up might load classes that are expected to be unloaded
+     * when this agent is installed.
+     * </p>
+     * <p>
+     * <b>Important</b>: Warming up is applied just as a regular transformation and will also invoke the {@link Listener}.
+     * This is done to avoid that listener classes can cause circularities. It is the users responsibility to suppress
+     * such log output, if necessary.
+     * </p>
+     *
+     * @param types The types to include in the warmup.
+     * @return A new agent builder that considers the supplied classes in its warmup.
+     */
+    AgentBuilder warmUp(Collection<Class<?>> types);
 
     /**
      * Assures that all modules of the supplied types are read by the module of any instrumented type. If the current VM does not support
@@ -4771,6 +4806,32 @@ public interface AgentBuilder {
         void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer);
 
         /**
+         * Invoked before a warump is executed.
+         *
+         * @param types                The types that are used for the warmup.
+         * @param classFileTransformer The class file transformer that is warmed up.
+         */
+        void onBeforeWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer);
+
+        /**
+         * Invoked when a class yields an unexpected error that is not catched by the listener.
+         *
+         * @param type                 The type that caused the error.
+         * @param classFileTransformer The class file transformer that is warmed up.
+         * @param throwable            The throwable that represents the error.
+         */
+        void onWarmUpError(Class<?> type, ResettableClassFileTransformer classFileTransformer, Throwable throwable);
+
+        /**
+         * Invoked after a warump is executed.
+         *
+         * @param types                The types that are used for the warmup.
+         * @param classFileTransformer The class file transformer that is warmed up.
+         * @param transformed          {@code true} if at least one class caused an actual transformation.
+         */
+        void onAfterWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer, boolean transformed);
+
+        /**
          * A non-operational listener that does not do anything.
          */
         enum NoOp implements InstallationListener {
@@ -4805,6 +4866,27 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                /* do nothing */
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onBeforeWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer) {
+                /* do nothing */
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onWarmUpError(Class<?> type, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
+                /* do nothing */
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onAfterWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
                 /* do nothing */
             }
         }
@@ -4846,6 +4928,27 @@ public interface AgentBuilder {
             public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 /* do nothing */
             }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onBeforeWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer) {
+                /* do nothing */
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onWarmUpError(Class<?> type, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
+                /* do nothing */
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onAfterWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
+                /* do nothing */
+            }
         }
 
         /**
@@ -4878,6 +4981,27 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                /* do nothing */
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onBeforeWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer) {
+                /* do nothing */
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onWarmUpError(Class<?> type, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
+                /* do nothing */
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onAfterWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
                 /* do nothing */
             }
         }
@@ -4956,6 +5080,30 @@ public interface AgentBuilder {
             public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 printStream.printf(PREFIX + " RESET %s on %s%n", classFileTransformer, instrumentation);
             }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onBeforeWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer) {
+                printStream.printf(PREFIX + " BEFORE_WARMUP %s on %s%n", classFileTransformer, types);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onWarmUpError(Class<?> type, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
+                synchronized (printStream) {
+                    printStream.printf(PREFIX + " FAILED_WARUMP %s on %s%n", classFileTransformer, type);
+                    throwable.printStackTrace(printStream);
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onAfterWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
+                printStream.printf(PREFIX + " AFTER_WARMUP transformed = %b - %s on %s%n", transformed, classFileTransformer, types);
+            }
         }
 
         /**
@@ -5031,6 +5179,33 @@ public interface AgentBuilder {
             public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 for (InstallationListener installationListener : installationListeners) {
                     installationListener.onReset(instrumentation, classFileTransformer);
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onBeforeWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer) {
+                for (InstallationListener installationListener : installationListeners) {
+                    installationListener.onBeforeWarmUp(types, classFileTransformer);
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onWarmUpError(Class<?> type, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
+                for (InstallationListener installationListener : installationListeners) {
+                    installationListener.onWarmUpError(type, classFileTransformer, throwable);
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void onAfterWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
+                for (InstallationListener installationListener : installationListeners) {
+                    installationListener.onAfterWarmUp(types, classFileTransformer, transformed);
                 }
             }
         }
@@ -9105,6 +9280,11 @@ public interface AgentBuilder {
         protected final NativeMethodStrategy nativeMethodStrategy;
 
         /**
+         * The warmup strategy to use.
+         */
+        protected final WarmupStrategy warmupStrategy;
+
+        /**
          * A decorator to wrap the created class file transformer.
          */
         protected final TransformerDecorator transformerDecorator;
@@ -9203,6 +9383,7 @@ public interface AgentBuilder {
                     TypeStrategy.Default.REBASE,
                     LocationStrategy.ForClassLoader.STRONG,
                     NativeMethodStrategy.Disabled.INSTANCE,
+                    WarmupStrategy.NoOp.INSTANCE,
                     TransformerDecorator.NoOp.INSTANCE,
                     new InitializationStrategy.SelfInjection.Split(),
                     RedefinitionStrategy.DISABLED,
@@ -9235,6 +9416,7 @@ public interface AgentBuilder {
          * @param typeStrategy                     The definition handler to use.
          * @param locationStrategy                 The location strategy to use.
          * @param nativeMethodStrategy             The native method strategy to apply.
+         * @param warmupStrategy                   The warmup strategy to use.
          * @param transformerDecorator             A decorator to wrap the created class file transformer.
          * @param initializationStrategy           The initialization strategy to use for transformed types.
          * @param redefinitionStrategy             The redefinition strategy to apply.
@@ -9259,6 +9441,7 @@ public interface AgentBuilder {
                           TypeStrategy typeStrategy,
                           LocationStrategy locationStrategy,
                           NativeMethodStrategy nativeMethodStrategy,
+                          WarmupStrategy warmupStrategy,
                           TransformerDecorator transformerDecorator,
                           InitializationStrategy initializationStrategy,
                           RedefinitionStrategy redefinitionStrategy,
@@ -9281,6 +9464,7 @@ public interface AgentBuilder {
             this.typeStrategy = typeStrategy;
             this.locationStrategy = locationStrategy;
             this.nativeMethodStrategy = nativeMethodStrategy;
+            this.warmupStrategy = warmupStrategy;
             this.transformerDecorator = transformerDecorator;
             this.initializationStrategy = initializationStrategy;
             this.redefinitionStrategy = redefinitionStrategy;
@@ -9413,6 +9597,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9441,6 +9626,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9469,6 +9655,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9497,6 +9684,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9525,6 +9713,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9553,6 +9742,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9581,6 +9771,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     NativeMethodStrategy.ForPrefix.of(prefix),
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9609,6 +9800,48 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     NativeMethodStrategy.Disabled.INSTANCE,
+                    warmupStrategy,
+                    transformerDecorator,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
+                    redefinitionResubmissionStrategy,
+                    injectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    descriptionStrategy,
+                    fallbackStrategy,
+                    classFileBufferStrategy,
+                    installationListener,
+                    ignoreMatcher,
+                    transformations);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public AgentBuilder warmUp(Class<?>... type) {
+            return warmUp(Arrays.asList(type));
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public AgentBuilder warmUp(Collection<Class<?>> types) {
+            for (Class<?> type : types) {
+                if (type.isPrimitive() || type.isArray()) {
+                    throw new IllegalArgumentException("Cannot warm up primitive or array type: " + type);
+                }
+            }
+            return new Default(byteBuddy,
+                    listener,
+                    circularityLock,
+                    poolStrategy,
+                    typeStrategy,
+                    locationStrategy,
+                    nativeMethodStrategy,
+                    warmupStrategy.with(types),
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9637,6 +9870,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     new TransformerDecorator.Compound(this.transformerDecorator, transformerDecorator),
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9665,6 +9899,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9693,6 +9928,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9721,6 +9957,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9749,6 +9986,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9777,6 +10015,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9805,6 +10044,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9833,6 +10073,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9861,6 +10102,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    warmupStrategy,
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -9891,6 +10133,7 @@ public interface AgentBuilder {
                             : TypeStrategy.Default.REDEFINE_FROZEN,
                     locationStrategy,
                     NativeMethodStrategy.Disabled.INSTANCE,
+                    warmupStrategy,
                     transformerDecorator,
                     InitializationStrategy.NoOp.INSTANCE,
                     redefinitionStrategy,
@@ -10139,6 +10382,10 @@ public interface AgentBuilder {
                     installation.getResubmissionEnforcer()));
             installation.getInstallationListener().onBeforeInstall(instrumentation, classFileTransformer);
             try {
+                warmupStrategy.apply(classFileTransformer,
+                        locationStrategy,
+                        redefinitionStrategy,
+                        installation.getInstallationListener());
                 if (redefinitionStrategy.isRetransforming()) {
                     DISPATCHER.addTransformer(instrumentation, classFileTransformer, true);
                 } else {
@@ -10296,6 +10543,180 @@ public interface AgentBuilder {
                         throw new IllegalArgumentException("A prefix for native methods is not supported: " + instrumentation);
                     }
                     DISPATCHER.setNativeMethodPrefix(instrumentation, classFileTransformer, prefix);
+                }
+            }
+        }
+
+        /**
+         * A strategy to warm up a {@link ClassFileTransformer} before using it to eagerly load classes and to avoid
+         * circularity errors when classes are loaded during actual transformation for the first time.
+         */
+        protected interface WarmupStrategy {
+
+            /**
+             * Applies this warm up strategy.
+             *
+             * @param classFileTransformer The class file transformer to warm up.
+             * @param locationStrategy     The location strategy to use.
+             * @param redefinitionStrategy The redefinition strategy being used.
+             * @param listener             The listener to notify over warmup events.
+             */
+            void apply(ResettableClassFileTransformer classFileTransformer,
+                       LocationStrategy locationStrategy,
+                       RedefinitionStrategy redefinitionStrategy,
+                       InstallationListener listener);
+
+            /**
+             * Adds the provided types to this warmup strategy.
+             *
+             * @param types The types to add.
+             * @return An appropriate warmup strategy.
+             */
+            WarmupStrategy with(Collection<Class<?>> types);
+
+            /**
+             * A non-operational warmup strategy.
+             */
+            enum NoOp implements WarmupStrategy {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void apply(ResettableClassFileTransformer classFileTransformer,
+                                  LocationStrategy locationStrategy,
+                                  RedefinitionStrategy redefinitionStrategy,
+                                  InstallationListener listener) {
+                    /* do nothing */
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public WarmupStrategy with(Collection<Class<?>> types) {
+                    return types.isEmpty()
+                            ? this
+                            : new Enabled(new LinkedHashSet<Class<?>>(types));
+                }
+            }
+
+            /**
+             * An enabled warmup strategy.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class Enabled implements WarmupStrategy {
+
+                /**
+                 * A dispatcher for invoking a {@link ClassFileTransformer} when the module system is available.
+                 */
+                private static final Dispatcher DISPATCHER = Default.doPrivileged(JavaDispatcher.of(Dispatcher.class));
+
+                /**
+                 * The types to warm up.
+                 */
+                private final Set<Class<?>> types;
+
+                /**
+                 * Creates a new enabled warmup strategy.
+                 *
+                 * @param types The types to warm up.
+                 */
+                protected Enabled(Set<Class<?>> types) {
+                    this.types = types;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void apply(ResettableClassFileTransformer classFileTransformer,
+                                  LocationStrategy locationStrategy,
+                                  RedefinitionStrategy redefinitionStrategy,
+                                  InstallationListener listener) {
+                    listener.onBeforeWarmUp(types, classFileTransformer);
+                    boolean transformed = false;
+                    for (Class<?> type : types) {
+                        try {
+                            JavaModule module = JavaModule.ofType(type);
+                            byte[] binaryRepresentation = locationStrategy.classFileLocator(type.getClassLoader(), module)
+                                    .locate(type.getName())
+                                    .resolve();
+                            if (module == null) {
+                                transformed |= classFileTransformer.transform(type.getClassLoader(),
+                                        Type.getInternalName(type),
+                                        NO_LOADED_TYPE,
+                                        type.getProtectionDomain(),
+                                        binaryRepresentation) != null;
+                                if (redefinitionStrategy.isEnabled()) {
+                                    transformed |= classFileTransformer.transform(type.getClassLoader(),
+                                            Type.getInternalName(type),
+                                            type,
+                                            type.getProtectionDomain(),
+                                            binaryRepresentation) != null;
+                                }
+                            } else {
+                                transformed |= DISPATCHER.transform(classFileTransformer,
+                                        module.unwrap(),
+                                        type.getClassLoader(),
+                                        Type.getInternalName(type),
+                                        NO_LOADED_TYPE,
+                                        type.getProtectionDomain(),
+                                        binaryRepresentation) != null;
+                                if (redefinitionStrategy.isEnabled()) {
+                                    transformed |= DISPATCHER.transform(classFileTransformer,
+                                            module.unwrap(),
+                                            type.getClassLoader(),
+                                            Type.getInternalName(type),
+                                            type,
+                                            type.getProtectionDomain(),
+                                            binaryRepresentation) != null;
+                                }
+                            }
+                        } catch (Throwable throwable) {
+                            listener.onWarmUpError(type, classFileTransformer, throwable);
+                        }
+                    }
+                    listener.onAfterWarmUp(types, classFileTransformer, transformed);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public WarmupStrategy with(Collection<Class<?>> types) {
+                    Set<Class<?>> combined = new LinkedHashSet<Class<?>>(this.types);
+                    combined.addAll(types);
+                    return new Enabled(combined);
+                }
+
+                /**
+                 * A dispatcher to interact with a {@link ClassFileTransformer} when the module system is active.
+                 */
+                @JavaDispatcher.Proxied("java.lang.instrument.ClassFileTransformer")
+                protected interface Dispatcher {
+
+                    /**
+                     * Transforms a class.
+                     *
+                     * @param target               The transformer to use for transformation.
+                     * @param module               The Java module of the transformed class.
+                     * @param classLoader          The class loader of the transformed class or {@code null} if loaded by the boot loader.
+                     * @param name                 The internal name of the transformed class.
+                     * @param classBeingRedefined  The class being redefined or {@code null} if not a retransformation.
+                     * @param protectionDomain     The class's protection domain.
+                     * @param binaryRepresentation The class's binary representation.
+                     * @return The transformed class file or {@code null} if untransformed.
+                     * @throws IllegalClassFormatException If the class file cannot be generated.
+                     */
+                    byte[] transform(ClassFileTransformer target,
+                                     @JavaDispatcher.Proxied("java.lang.Module") Object module,
+                                     ClassLoader classLoader,
+                                     String name,
+                                     Class<?> classBeingRedefined,
+                                     ProtectionDomain protectionDomain,
+                                     byte[] binaryRepresentation) throws IllegalClassFormatException;
                 }
             }
         }
@@ -11479,6 +11900,20 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
+            public AgentBuilder warmUp(Class<?>... type) {
+                return materialize().warmUp(type);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public AgentBuilder warmUp(Collection<Class<?>> types) {
+                return materialize().warmUp(types);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, Class<?>... type) {
                 return materialize().assureReadEdgeTo(instrumentation, type);
             }
@@ -11697,6 +12132,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        warmupStrategy,
                         transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
@@ -11774,6 +12210,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        warmupStrategy,
                         transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
@@ -11835,6 +12272,7 @@ public interface AgentBuilder {
              * @param typeStrategy                     The definition handler to use.
              * @param locationStrategy                 The location strategy to use.
              * @param nativeMethodStrategy             The native method strategy to apply.
+             * @param warmupStrategy                   The warmup strategy to use.
              * @param transformerDecorator             A decorator to wrap the created class file transformer.
              * @param initializationStrategy           The initialization strategy to use for transformed types.
              * @param redefinitionStrategy             The redefinition strategy to apply.
@@ -11859,6 +12297,7 @@ public interface AgentBuilder {
                                  TypeStrategy typeStrategy,
                                  LocationStrategy locationStrategy,
                                  NativeMethodStrategy nativeMethodStrategy,
+                                 WarmupStrategy warmupStrategy,
                                  TransformerDecorator transformerDecorator,
                                  InitializationStrategy initializationStrategy,
                                  RedefinitionStrategy redefinitionStrategy,
@@ -11881,6 +12320,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        warmupStrategy,
                         transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
@@ -11912,6 +12352,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        warmupStrategy,
                         transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
@@ -11950,6 +12391,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        warmupStrategy,
                         transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
@@ -11981,6 +12423,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        warmupStrategy,
                         transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
@@ -12054,6 +12497,7 @@ public interface AgentBuilder {
                             typeStrategy,
                             locationStrategy,
                             nativeMethodStrategy,
+                            warmupStrategy,
                             transformerDecorator,
                             initializationStrategy,
                             redefinitionStrategy,

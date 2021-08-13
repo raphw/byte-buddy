@@ -80,11 +80,21 @@ public class RandomString {
      * @param length The length of the random {@link String}.
      */
     public RandomString(int length) {
+        this(length, new Random());
+    }
+
+    /**
+     * Creates a random {@link java.lang.String} provider where each value is of the given length.
+     *
+     * @param length The length of the random {@link String}.
+     * @param random The random number generator to use.
+     */
+    public RandomString(int length, Random random) {
         if (length <= 0) {
             throw new IllegalArgumentException("A random string's length cannot be zero or negative");
         }
         this.length = length;
-        random = new Random();
+        this.random = random;
     }
 
     /**
