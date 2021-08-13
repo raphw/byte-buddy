@@ -5427,7 +5427,7 @@ public interface AgentBuilder {
          * <p>
          * <b>Note</b>: When applying a redefinition, it is normally required to use a {@link TypeStrategy} that applies
          * a redefinition instead of rebasing classes such as {@link TypeStrategy.Default#REDEFINE}. Also, consider
-         * the constrains given by this type strategy.
+         * the constraints given by this type strategy.
          * </p>
          */
         REDEFINITION(true, false) {
@@ -5469,7 +5469,7 @@ public interface AgentBuilder {
          * <p>
          * <b>Note</b>: When applying a retransformation, it is normally required to use a {@link TypeStrategy} that applies
          * a redefinition instead of rebasing classes such as {@link TypeStrategy.Default#REDEFINE}. Also, consider
-         * the constrains given by this type strategy.
+         * the constraints given by this type strategy.
          * </p>
          */
         RETRANSFORMATION(true, true) {
