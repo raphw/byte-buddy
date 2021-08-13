@@ -2876,12 +2876,12 @@ public interface TypeWriter<T> {
                 enum ForInterface implements Constraint {
 
                     /**
-                     * An interface type with the constrains for the Java versions 5 to 7.
+                     * An interface type with the constraints for the Java versions 5 to 7.
                      */
                     CLASSIC(true),
 
                     /**
-                     * An interface type with the constrains for the Java versions 8+.
+                     * An interface type with the constraints for the Java versions 8+.
                      */
                     JAVA_8(false);
 
@@ -3171,12 +3171,12 @@ public interface TypeWriter<T> {
                 enum ForAnnotation implements Constraint {
 
                     /**
-                     * An annotation type with the constrains for the Java versions 5 to 7.
+                     * An annotation type with the constraints for the Java versions 5 to 7.
                      */
                     CLASSIC(true),
 
                     /**
-                     * An annotation type with the constrains for the Java versions 8+.
+                     * An annotation type with the constraints for the Java versions 8+.
                      */
                     JAVA_8(false);
 
