@@ -2124,6 +2124,12 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(installationListener);
     }
 
+    @Test
+    public void testWithWarmUpNoTypes() throws Exception {
+        AgentBuilder builder = new AgentBuilder.Default(byteBuddy);
+        assertThat(builder.warmUp(), sameInstance(builder));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testWithWarmUpPrimitive() throws Exception {
         new AgentBuilder.Default(byteBuddy).warmUp(void.class);

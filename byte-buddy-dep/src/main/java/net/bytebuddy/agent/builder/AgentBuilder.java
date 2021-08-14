@@ -9829,6 +9829,9 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public AgentBuilder warmUp(Collection<Class<?>> types) {
+            if (types.isEmpty()) {
+                return this;
+            }
             for (Class<?> type : types) {
                 if (type.isPrimitive() || type.isArray()) {
                     throw new IllegalArgumentException("Cannot warm up primitive or array type: " + type);
@@ -9841,9 +9844,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
-                    types.isEmpty()
-                            ? warmupStrategy
-                            : warmupStrategy.with(types),
+                    warmupStrategy.with(types),
                     transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
