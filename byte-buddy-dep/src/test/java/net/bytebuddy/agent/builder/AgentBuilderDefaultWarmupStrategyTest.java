@@ -29,6 +29,9 @@ public class AgentBuilderDefaultWarmupStrategyTest {
     private AgentBuilder.LocationStrategy locationStrategy;
 
     @Mock
+    private AgentBuilder.CircularityLock circularityLock;
+
+    @Mock
     private AgentBuilder.InstallationListener listener;
 
     @Mock
@@ -39,9 +42,11 @@ public class AgentBuilderDefaultWarmupStrategyTest {
         AgentBuilder.Default.WarmupStrategy.NoOp.INSTANCE.apply(classFileTransformer,
                 locationStrategy,
                 AgentBuilder.RedefinitionStrategy.DISABLED,
+                circularityLock,
                 listener);
         verifyZeroInteractions(classFileTransformer);
         verifyZeroInteractions(locationStrategy);
+        verifyZeroInteractions(circularityLock);
         verifyZeroInteractions(listener);
     }
 
@@ -52,6 +57,7 @@ public class AgentBuilderDefaultWarmupStrategyTest {
         new AgentBuilder.Default.WarmupStrategy.Enabled(Collections.<Class<?>>singleton(Object.class)).apply(classFileTransformer,
                 locationStrategy,
                 AgentBuilder.RedefinitionStrategy.DISABLED,
+                circularityLock,
                 listener);
         transform(verify(classFileTransformer),
                 JavaModule.ofType(Object.class),
@@ -63,6 +69,9 @@ public class AgentBuilderDefaultWarmupStrategyTest {
         verifyNoMoreInteractions(classFileTransformer);
         verify(locationStrategy).classFileLocator(null, JavaModule.ofType(Object.class));
         verifyNoMoreInteractions(locationStrategy);
+        verify(circularityLock).release();
+        verify(circularityLock).acquire();
+        verifyNoMoreInteractions(circularityLock);
         verify(listener).onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
         verify(listener).onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, false);
         verifyNoMoreInteractions(listener);
@@ -82,6 +91,7 @@ public class AgentBuilderDefaultWarmupStrategyTest {
         new AgentBuilder.Default.WarmupStrategy.Enabled(Collections.<Class<?>>singleton(Object.class)).apply(classFileTransformer,
                 locationStrategy,
                 AgentBuilder.RedefinitionStrategy.DISABLED,
+                circularityLock,
                 listener);
         transform(verify(classFileTransformer),
                 JavaModule.ofType(Object.class),
@@ -93,6 +103,9 @@ public class AgentBuilderDefaultWarmupStrategyTest {
         verifyNoMoreInteractions(classFileTransformer);
         verify(locationStrategy).classFileLocator(null, JavaModule.ofType(Object.class));
         verifyNoMoreInteractions(locationStrategy);
+        verify(circularityLock).release();
+        verify(circularityLock).acquire();
+        verifyNoMoreInteractions(circularityLock);
         verify(listener).onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
         verify(listener).onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, true);
         verifyNoMoreInteractions(listener);
@@ -105,6 +118,7 @@ public class AgentBuilderDefaultWarmupStrategyTest {
         new AgentBuilder.Default.WarmupStrategy.Enabled(Collections.<Class<?>>singleton(Object.class)).apply(classFileTransformer,
                 locationStrategy,
                 AgentBuilder.RedefinitionStrategy.REDEFINITION,
+                circularityLock,
                 listener);
         transform(verify(classFileTransformer),
                 JavaModule.ofType(Object.class),
@@ -123,6 +137,9 @@ public class AgentBuilderDefaultWarmupStrategyTest {
         verifyNoMoreInteractions(classFileTransformer);
         verify(locationStrategy).classFileLocator(null, JavaModule.ofType(Object.class));
         verifyNoMoreInteractions(locationStrategy);
+        verify(circularityLock).release();
+        verify(circularityLock).acquire();
+        verifyNoMoreInteractions(circularityLock);
         verify(listener).onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
         verify(listener).onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, false);
         verifyNoMoreInteractions(listener);
@@ -142,6 +159,7 @@ public class AgentBuilderDefaultWarmupStrategyTest {
         new AgentBuilder.Default.WarmupStrategy.Enabled(Collections.<Class<?>>singleton(Object.class)).apply(classFileTransformer,
                 locationStrategy,
                 AgentBuilder.RedefinitionStrategy.DISABLED,
+                circularityLock,
                 listener);
         transform(verify(classFileTransformer),
                 JavaModule.ofType(Object.class),
@@ -153,6 +171,9 @@ public class AgentBuilderDefaultWarmupStrategyTest {
         verifyNoMoreInteractions(classFileTransformer);
         verify(locationStrategy).classFileLocator(null, JavaModule.ofType(Object.class));
         verifyNoMoreInteractions(locationStrategy);
+        verify(circularityLock).release();
+        verify(circularityLock).acquire();
+        verifyNoMoreInteractions(circularityLock);
         verify(listener).onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
         verify(listener).onWarmUpError(Object.class, classFileTransformer, throwable);
         verify(listener).onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, false);

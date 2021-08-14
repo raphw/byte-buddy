@@ -10387,6 +10387,7 @@ public interface AgentBuilder {
                 warmupStrategy.apply(classFileTransformer,
                         locationStrategy,
                         redefinitionStrategy,
+                        circularityLock,
                         installation.getInstallationListener());
                 if (redefinitionStrategy.isRetransforming()) {
                     DISPATCHER.addTransformer(instrumentation, classFileTransformer, true);
@@ -10561,11 +10562,13 @@ public interface AgentBuilder {
              * @param classFileTransformer The class file transformer to warm up.
              * @param locationStrategy     The location strategy to use.
              * @param redefinitionStrategy The redefinition strategy being used.
+             * @param circularityLock      The circularity lock to use.
              * @param listener             The listener to notify over warmup events.
              */
             void apply(ResettableClassFileTransformer classFileTransformer,
                        LocationStrategy locationStrategy,
                        RedefinitionStrategy redefinitionStrategy,
+                       CircularityLock circularityLock,
                        InstallationListener listener);
 
             /**
@@ -10592,6 +10595,7 @@ public interface AgentBuilder {
                 public void apply(ResettableClassFileTransformer classFileTransformer,
                                   LocationStrategy locationStrategy,
                                   RedefinitionStrategy redefinitionStrategy,
+                                  CircularityLock circularityLock,
                                   InstallationListener listener) {
                     /* do nothing */
                 }
@@ -10635,6 +10639,7 @@ public interface AgentBuilder {
                 public void apply(ResettableClassFileTransformer classFileTransformer,
                                   LocationStrategy locationStrategy,
                                   RedefinitionStrategy redefinitionStrategy,
+                                  CircularityLock circularityLock,
                                   InstallationListener listener) {
                     listener.onBeforeWarmUp(types, classFileTransformer);
                     boolean transformed = false;
@@ -10644,36 +10649,41 @@ public interface AgentBuilder {
                             byte[] binaryRepresentation = locationStrategy.classFileLocator(type.getClassLoader(), module)
                                     .locate(type.getName())
                                     .resolve();
-                            if (module == null) {
-                                transformed |= classFileTransformer.transform(type.getClassLoader(),
-                                        Type.getInternalName(type),
-                                        NO_LOADED_TYPE,
-                                        type.getProtectionDomain(),
-                                        binaryRepresentation) != null;
-                                if (redefinitionStrategy.isEnabled()) {
+                            circularityLock.release();
+                            try {
+                                if (module == null) {
                                     transformed |= classFileTransformer.transform(type.getClassLoader(),
                                             Type.getInternalName(type),
-                                            type,
+                                            NO_LOADED_TYPE,
                                             type.getProtectionDomain(),
                                             binaryRepresentation) != null;
-                                }
-                            } else {
-                                transformed |= DISPATCHER.transform(classFileTransformer,
-                                        module.unwrap(),
-                                        type.getClassLoader(),
-                                        Type.getInternalName(type),
-                                        NO_LOADED_TYPE,
-                                        type.getProtectionDomain(),
-                                        binaryRepresentation) != null;
-                                if (redefinitionStrategy.isEnabled()) {
+                                    if (redefinitionStrategy.isEnabled()) {
+                                        transformed |= classFileTransformer.transform(type.getClassLoader(),
+                                                Type.getInternalName(type),
+                                                type,
+                                                type.getProtectionDomain(),
+                                                binaryRepresentation) != null;
+                                    }
+                                } else {
                                     transformed |= DISPATCHER.transform(classFileTransformer,
                                             module.unwrap(),
                                             type.getClassLoader(),
                                             Type.getInternalName(type),
-                                            type,
+                                            NO_LOADED_TYPE,
                                             type.getProtectionDomain(),
                                             binaryRepresentation) != null;
+                                    if (redefinitionStrategy.isEnabled()) {
+                                        transformed |= DISPATCHER.transform(classFileTransformer,
+                                                module.unwrap(),
+                                                type.getClassLoader(),
+                                                Type.getInternalName(type),
+                                                type,
+                                                type.getProtectionDomain(),
+                                                binaryRepresentation) != null;
+                                    }
                                 }
+                            } finally {
+                                circularityLock.acquire();
                             }
                         } catch (Throwable throwable) {
                             listener.onWarmUpError(type, classFileTransformer, throwable);

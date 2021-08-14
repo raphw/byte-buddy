@@ -2083,6 +2083,58 @@ public class AgentBuilderDefaultTest {
     }
 
     @Test
+    public void testWithWarmUp() throws Exception {
+        when(dynamicType.getBytes()).thenReturn(BAZ);
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
+                .thenReturn(true);
+        ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(poolStrategy)
+                .with(typeStrategy)
+                .with(installationListener)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .ignore(none())
+                .warmUp(REDEFINED)
+                .type(typeMatcher).transform(transformer)
+                .installOn(instrumentation);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false);
+        verify(listener).onTransformation(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false, dynamicType);
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false);
+        verifyNoMoreInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer);
+        verifyNoMoreInteractions(instrumentation);
+        verify(initializationStrategy).dispatcher();
+        verifyNoMoreInteractions(initializationStrategy);
+        verify(dispatcher).apply(builder);
+        verify(dispatcher).register(eq(dynamicType),
+                eq(REDEFINED.getClassLoader()),
+                eq(REDEFINED.getProtectionDomain()),
+                eq(AgentBuilder.InjectionStrategy.UsingReflection.INSTANCE));
+        verifyNoMoreInteractions(dispatcher);
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
+        verifyNoMoreInteractions(typeMatcher);
+        verify(transformer).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
+        verifyNoMoreInteractions(transformer);
+        verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
+        verify(installationListener).onBeforeWarmUp(Collections.<Class<?>>singleton(REDEFINED), classFileTransformer);
+        verify(installationListener).onAfterWarmUp(Collections.<Class<?>>singleton(REDEFINED), classFileTransformer, true);
+        verify(installationListener).onInstall(instrumentation, classFileTransformer);
+        verifyNoMoreInteractions(installationListener);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testWithWarmUpPrimitive() throws Exception {
+        new AgentBuilder.Default(byteBuddy).warmUp(void.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testWithWarmUpArray() throws Exception {
+        new AgentBuilder.Default(byteBuddy).warmUp(Object[].class);
+    }
+
+    @Test
     public void testAuxiliaryTypeInitialization() throws Exception {
         when(dynamicType.getAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>singletonMap(TypeDescription.ForLoadedType.of(AUXILIARY), QUX));
         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>();
