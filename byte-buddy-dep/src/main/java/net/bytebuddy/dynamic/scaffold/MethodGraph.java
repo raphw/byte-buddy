@@ -569,12 +569,25 @@ public interface MethodGraph {
                 List<TypeDescription.Generic> interfaceTypes = typeDefinition.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>();
                 for (TypeDescription.Generic interfaceType : interfaceTypes) {
-                    interfaceGraphs.put(interfaceType.asErasure(), snapshots.get(interfaceType).asGraph(merger));
+                    Key.Store<T> store = snapshots.get(interfaceType);
+                    if (store == null) {
+                        throw new IllegalStateException("Failed to resolve interface type " + interfaceType + " from " + snapshots.keySet());
+                    }
+                    interfaceGraphs.put(interfaceType.asErasure(), store.asGraph(merger));
+                }
+                Key.Store<T> store;
+                if (superClass == null) {
+                    store = null;
+                } else {
+                    store = snapshots.get(superClass);
+                    if (store == null) {
+                        throw new IllegalStateException("Failed to resolve super class " + superClass + " from " + snapshots.keySet());
+                    }
                 }
                 return new Linked.Delegation(rootStore.asGraph(merger),
-                        superClass == null
+                        store == null
                                 ? Empty.INSTANCE
-                                : snapshots.get(superClass).asGraph(merger),
+                                : store.asGraph(merger),
                         interfaceGraphs);
             }
 
