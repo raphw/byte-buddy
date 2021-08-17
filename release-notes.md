@@ -86,13 +86,13 @@ Byte Buddy release notes
 - Add method to get possibly known class file version of TypeDescription.
 - Correctly consider generic array type when computing erasure.
 
-### 9. Mars 2021: version 1.10.22
+### 9. March 2021: version 1.10.22
 
 - Refactor `JavaConstant` API and fix handle resolution.
 - Adjust bootstrap method validation to account for possible dynamic constants.
 - Make class loaders parallel capable.
 - Correct code for attaching to Windows VMs with 32 bit.
-- Allow configuration for Gradle plugin to consider class path as incremental. 
+- Allow configuration for Gradle plugin to consider class path as incremental.
 
 ### 21. February 2021: version 1.10.21
 
@@ -136,7 +136,7 @@ Byte Buddy release notes
 
 ### 23. September 2020: version 1.10.16
 
-- Update to ASM 9 for full support of sealed types. 
+- Update to ASM 9 for full support of sealed types.
 
 ### 19. September 2020: version 1.10.15
 
@@ -273,7 +273,7 @@ Byte Buddy release notes
 - Add Java 14 compatibility.
 - Refactor emulated attach mechanism and use JNA in order to prepare supporting other mechanisms in the future.
 - Reinterrupt threads if interruption exceptions are catched in threads not owned by Byte Buddy.
-- Refactor class file dumping. 
+- Refactor class file dumping.
 - Publish Gradle plugin to Gradle plugin repository.
 
 ### 24. May 2019: version 1.9.13
@@ -493,9 +493,9 @@ Byte Buddy release notes
 
 - Add implementations for `HashCodeMethod`, `EqualsMethod` and `ToStringMethod` including build tool plugins.
 - Refactor handling of stack map frame translation within `Advice` to allow for handling of methods with inconsistent stack map frames if the method arguments are copied.
-- Make argument copying the default choice if exit advice is enabled. 
+- Make argument copying the default choice if exit advice is enabled.
 - Fix a bug in parameter annotation computation within `Advice`.
-- Update to ASM 6.1.1.  
+- Update to ASM 6.1.1.
 
 ### 13. March 2018: version 1.8.0
 
@@ -910,7 +910,7 @@ Byte Buddy release notes
 ### 11. July 2016: version 1.4.9
 
 - Added additional implementations of a `DescriptionStrategy` for `POOL_LAST` and `POOL_FIRST` resolution.
- 
+
 ### 6. July 2016: version 1.4.8
 
 - Allow to skip execution of instrumented method from `Advice` via entry advice indicated by return value.
@@ -1076,7 +1076,7 @@ Byte Buddy release notes
 ### 10. March 2016: version 1.3.2
 
 - Added possibility to suppress `Throwable` from advice methods when using the `Advice` instrumentation.
- 
+
 ### 9. March 2016: version 1.3.1
 
 - Added possibility to use contravariant parameters within the `Advice` adapter for ASM.
@@ -1111,7 +1111,7 @@ Byte Buddy release notes
 
 - Fixed interface assertion of the custom binder types to accept default methods.
 - Improved documentation.
- 
+
 ### 26. January 2016: version 1.1.0
 
 - Refactored `AgentBuilder` API to be more streamlined with the general API and improved documentation.
@@ -1310,7 +1310,7 @@ Corrected incorrect deployment of version 0.6.7 which does not use a dependency 
 
 - Made the `TypeDescription.ForLoadedType` class loader agnostic. Before, a class that was loaded by multiple class
   loaders would have been considered inequal what is not true for the byte code level.
-  
+
 ### 23. April 2015: version 0.6.2
 
 - Added additional class validation such that it becomes impossible to define members on classes that do not fit
@@ -1368,7 +1368,7 @@ Corrected incorrect deployment of version 0.6.7 which does not use a dependency 
 
 ### 5. December 2014: version 0.5.1
 
-Added the `andThen` method to the `SuperMethodCall` instrumentation in order to allow for a more convenient 
+Added the `andThen` method to the `SuperMethodCall` instrumentation in order to allow for a more convenient
 executingTransformer interception where a hard-coded super method call is required by the Java verifier.
 
 ### 3. December 2014: version 0.5
@@ -1382,7 +1382,7 @@ executingTransformer interception where a hard-coded super method call is requir
 
 ### 26. November 2014: version 0.4.1
 
-- Refactored the implementation of the `VoidAwareAssigner` which would otherwise cause unexpected behavior in its 
+- Refactored the implementation of the `VoidAwareAssigner` which would otherwise cause unexpected behavior in its
   default state.
 - Added a missing boxing instruction to the `InvocationHandlerAdapter`.
 
@@ -1390,9 +1390,9 @@ executingTransformer interception where a hard-coded super method call is requir
 
 - Extended `Instrumentation.Context` to support field accessors.
 - Added the `TypePool` abstraction and added a default implementation.
-- Refactored annotations to have an intermediate form as `AnnotationDescription` which does not need to 
+- Refactored annotations to have an intermediate form as `AnnotationDescription` which does not need to
   represent loaded values.
-- Refactored several built-in `Instrumentation`, among others, all implementations now support `TypeDescription` 
+- Refactored several built-in `Instrumentation`, among others, all implementations now support `TypeDescription`
   in addition to loaded `Class` as their arguments
 - Added several annotations that apply to the `MethodDelegation`.
 
@@ -1408,12 +1408,12 @@ executingTransformer interception where a hard-coded super method call is requir
 - Added support for accessing a JVM's HotSwap features and a Java agent.
 - Added latent a child-first `ClassLoadingStrategy` and manifest versions of the `WRAPPER` and `CHILD_FIRST` default
   class loading strategies.
-  
+
 ### 20. June 2014: version 0.2.1
 
 - Added proper support for defining class initializers. Added support for field caching from method instrumentations,
 mainly for allowing the reuse of `Method` instances for the `@Origin` annotation and the `InvocationHandlerAdapter`.
-  
+
 ### 16. June 2014: version 0.2
 
  - Changed the semantics of the `@SuperCall` to be only bindable, if a super method can be invoked. Before, an
@@ -1423,7 +1423,7 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
  - Refactored the invocation of super methods to be created by an `Instrumentation.Target`. For a future release,
    this hopefully allows for class redefinitions using today's API for creating subclasses.
  - Upgraded to ASM 5.0.3.
- 
+
 ### 02. May 2014: version 0.1
 
 - First general release.
