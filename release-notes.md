@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 18. August 2021: version 1.11.13
+
+- Introduce `warmUp` to further avoid circularities when using `AgentBuilder`.
+- Fix ignore matcher of `AgentBuilder` to include *jdk.internal.reflect* package by default.
+
 ### 6. August 2021: version 1.11.12
 
 - Always use reflection and not a `JavaDispatcher` when a method potentially checks the access context via a security manager.
