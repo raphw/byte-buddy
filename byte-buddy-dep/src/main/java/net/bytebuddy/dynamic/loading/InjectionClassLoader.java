@@ -84,7 +84,7 @@ public abstract class InjectionClassLoader extends ClassLoader {
     /**
      * Seals the class loader and returns {@code true} if the class loader was not sealed previously.
      *
-     * @return {@code true} if the class loader was not sealed previously
+     * @return {@code true} if the class loader was not sealed previously.
      */
     public boolean seal() {
         return !sealed.getAndSet(true);
