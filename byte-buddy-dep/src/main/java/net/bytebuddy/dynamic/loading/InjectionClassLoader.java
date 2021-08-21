@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * <p>
@@ -58,7 +59,7 @@ public abstract class InjectionClassLoader extends ClassLoader {
     /**
      * Indicates if this class loader is sealed, i.e. forbids runtime injection.
      */
-    private final boolean sealed;
+    private final AtomicBoolean sealed;
 
     /**
      * Creates a new injection class loader.
@@ -68,7 +69,7 @@ public abstract class InjectionClassLoader extends ClassLoader {
      */
     protected InjectionClassLoader(ClassLoader parent, boolean sealed) {
         super(parent);
-        this.sealed = sealed;
+        this.sealed = new AtomicBoolean(sealed);
     }
 
     /**
@@ -77,7 +78,16 @@ public abstract class InjectionClassLoader extends ClassLoader {
      * @return {@code true} if this class loader is sealed.
      */
     public boolean isSealed() {
-        return sealed;
+        return sealed.get();
+    }
+
+    /**
+     * Seals the class loader and returns {@code true} if the class loader was not sealed previously.
+     *
+     * @return {@code true} if the class loader was not sealed previously
+     */
+    public boolean seal() {
+        return !sealed.getAndSet(true);
     }
 
     /**
@@ -100,7 +110,7 @@ public abstract class InjectionClassLoader extends ClassLoader {
      * @throws ClassNotFoundException If the class could not be loaded.
      */
     public Map<String, Class<?>> defineClasses(Map<String, byte[]> typeDefinitions) throws ClassNotFoundException {
-        if (sealed) {
+        if (sealed.get()) {
             throw new IllegalStateException("Cannot inject classes into a sealed class loader");
         }
         return doDefineClasses(typeDefinitions);

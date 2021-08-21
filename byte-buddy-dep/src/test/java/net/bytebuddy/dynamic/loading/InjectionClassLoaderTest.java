@@ -43,4 +43,18 @@ public class InjectionClassLoaderTest {
         when(classLoader.defineClasses(Collections.singletonMap(FOO, binaryRepresentation))).thenThrow(new ClassNotFoundException(FOO));
         InjectionClassLoader.Strategy.INSTANCE.load(classLoader, Collections.singletonMap(typeDescription, binaryRepresentation));
     }
+
+    @Test
+    public void testSealed() {
+        InjectionClassLoader classLoader = new InjectionClassLoader(null, false) {
+            @Override
+            protected Map<String, Class<?>> doDefineClasses(Map<String, byte[]> typeDefinitions) {
+                throw new UnsupportedOperationException();
+            }
+        };
+        assertThat(classLoader.isSealed(), is(false));
+        assertThat(classLoader.seal(), is(true));
+        assertThat(classLoader.isSealed(), is(true));
+        assertThat(classLoader.seal(), is(false));
+    }
 }
