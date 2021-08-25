@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.isToString;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -50,6 +51,22 @@ public class InvocationHandlerAdapterTest {
         assertThat(foo.methods.size(), is(2));
         assertThat(foo.methods.get(0), not(sameInstance(foo.methods.get(1))));
         instance.assertZeroCalls();
+    }
+
+    @Test
+    public void testStaticAdapterWithoutCacheNoParameters() throws Exception {
+        FooBar fooBar = new FooBar();
+        DynamicType.Loaded<Object> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .method(isToString())
+                .intercept(InvocationHandlerAdapter.of(fooBar).withoutMethodCache())
+                .make()
+                .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.toString(), nullValue(String.class));
     }
 
     @Test
@@ -245,6 +262,16 @@ public class InvocationHandlerAdapterTest {
         public long bar(int o) {
             register(BAR);
             return o;
+        }
+    }
+
+    public static class FooBar implements InvocationHandler {
+
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (args != null) {
+                throw new AssertionError();
+            }
+            return null;
         }
     }
 }

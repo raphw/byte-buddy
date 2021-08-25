@@ -24,6 +24,7 @@ import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
+import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.utility.CompoundList;
 
@@ -70,6 +71,13 @@ public @interface AllArguments {
      * included in the array containing the arguments.
      */
     boolean includeSelf() default false;
+
+    /**
+     * Determines if a {@code null} value should be assigned if the instrumented method does not declare any parameters.
+     *
+     * @return {@code true} if a {@code null} value should be assigned if the instrumented method does not declare any parameters.
+     */
+    boolean nullIfEmpty() default false;
 
     /**
      * A directive for how an {@link net.bytebuddy.implementation.bind.annotation.AllArguments}
@@ -155,6 +163,9 @@ public @interface AllArguments {
                 throw new IllegalStateException("Expected an array type for all argument annotation on " + source);
             }
             boolean includeThis = !source.isStatic() && annotation.load().includeSelf();
+            if (!includeThis && source.getParameters().isEmpty() && annotation.load().nullIfEmpty()) {
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE);
+            }
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size() + (includeThis ? 1 : 0));
             int offset = source.isStatic() || includeThis ? 0 : 1;
             for (TypeDescription.Generic sourceParameter : includeThis

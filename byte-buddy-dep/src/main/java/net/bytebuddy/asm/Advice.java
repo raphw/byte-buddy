@@ -1298,6 +1298,54 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public StackManipulation resolveIncrement(int value) {
                     throw new IllegalStateException("Cannot write to constant value: " + stackManipulation);
                 }
+
+                /**
+                 * A constant value that can be written to.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                public static class Writable implements Target {
+
+                    /**
+                     * The reading stack manipulation.
+                     */
+                    private final StackManipulation read;
+
+                    /**
+                     * The writing stack manipulation.
+                     */
+                    private final StackManipulation write;
+
+                    /**
+                     * Creates a writable target.
+                     * @param read  The reading stack manipulation.
+                     * @param write The writing stack manipulation.
+                     */
+                    public Writable(StackManipulation read, StackManipulation write) {
+                        this.read = read;
+                        this.write = write;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public StackManipulation resolveRead() {
+                        return read;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public StackManipulation resolveWrite() {
+                        return write;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public StackManipulation resolveIncrement(int value) {
+                        throw new IllegalStateException("Cannot increment mutable constant value: " + write);
+                    }
+                }
             }
         }
 
@@ -1905,6 +1953,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             private final Assigner.Typing typing;
 
+            private final boolean nullIfEmpty;
+
             /**
              * Creates a new offset mapping for an array containing all arguments.
              *
@@ -1912,7 +1962,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param annotation The mapped annotation.
              */
             protected ForAllArguments(TypeDescription.Generic target, AllArguments annotation) {
-                this(target, annotation.readOnly(), annotation.typing());
+                this(target, annotation.readOnly(), annotation.typing(), annotation.nullIfEmpty());
             }
 
             /**
@@ -1922,10 +1972,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param readOnly {@code true} if the array is read-only.
              * @param typing   The typing to apply.
              */
-            public ForAllArguments(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
+            public ForAllArguments(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, boolean nullIfEmpty) {
                 this.target = target;
                 this.readOnly = readOnly;
                 this.typing = typing;
+                this.nullIfEmpty = nullIfEmpty;
             }
 
             /**
@@ -1936,6 +1987,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   Assigner assigner,
                                   ArgumentHandler argumentHandler,
                                   Sort sort) {
+                if (nullIfEmpty && instrumentedMethod.getParameters().isEmpty()) {
+                    return readOnly
+                            ? new Target.ForStackManipulation(NullConstant.INSTANCE)
+                            : new Target.ForStackManipulation.Writable(NullConstant.INSTANCE, Removal.SINGLE);
+                }
                 List<StackManipulation> valueReads = new ArrayList<StackManipulation>(instrumentedMethod.getParameters().size());
                 for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
                     StackManipulation readAssignment = assigner.assign(parameterDescription.getType(), target, typing);
@@ -10959,6 +11015,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return The typing to apply upon assignment.
          */
         Assigner.Typing typing() default Assigner.Typing.STATIC;
+
+        /**
+         * Determines if a {@code null} value should be assigned if the instrumented method does not declare any parameters.
+         *
+         * @return {@code true} if a {@code null} value should be assigned if the instrumented method does not declare any parameters.
+         */
+        boolean nullIfEmpty() default false;
     }
 
     /**

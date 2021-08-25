@@ -28,6 +28,7 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.constant.MethodConstant;
+import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
@@ -248,7 +249,9 @@ public abstract class InvocationHandlerAdapter implements Implementation.Composa
                 FieldAccess.forField(fieldDescription).read(),
                 MethodVariableAccess.loadThis(),
                 cached ? methodConstant.cached() : methodConstant,
-                ArrayFactory.forType(TypeDescription.Generic.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
+                instrumentedMethod.getParameters().isEmpty()
+                        ? NullConstant.INSTANCE
+                        : ArrayFactory.forType(TypeDescription.Generic.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(INVOCATION_HANDLER_TYPE.getDeclaredMethods().filter(isAbstract()).getOnly()),
                 returning ? new StackManipulation.Compound(assigner.assign(TypeDescription.Generic.OBJECT,
                         instrumentedMethod.getReturnType(),
