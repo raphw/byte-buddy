@@ -1021,6 +1021,28 @@ public class AdviceTest {
     }
 
     @Test
+    public void testAllArgumentsNoArgumentNull() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(NoArguments.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testAllArgumentsNoArgumentWriteNoEffect() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(NoArgumentsWrite.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
     public void testOriginAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -2043,6 +2065,14 @@ public class AdviceTest {
         new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(Advice.to(BoxedArgumentsCannotWrite.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNoArgumentsCannotWrite() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(NoArgumentsCannotWrite.class).on(named(FOO)))
                 .make();
     }
 
@@ -3537,6 +3567,32 @@ public class AdviceTest {
 
         @Advice.OnMethodEnter
         private static void enter(@Advice.AllArguments Object[] value) {
+            value = new Object[0];
+        }
+    }
+
+    public static class NoArguments {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.AllArguments(nullIfEmpty = true) Object[] value) {
+            if (value != null) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    public static class NoArgumentsWrite {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.AllArguments(readOnly = false, nullIfEmpty = true) Object[] value) {
+            value = new Object[0];
+        }
+    }
+
+    public static class NoArgumentsCannotWrite {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.AllArguments(nullIfEmpty = true) Object[] value) {
             value = new Object[0];
         }
     }

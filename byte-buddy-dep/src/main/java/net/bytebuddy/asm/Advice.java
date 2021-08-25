@@ -11018,6 +11018,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         /**
          * Determines if a {@code null} value should be assigned if the instrumented method does not declare any parameters.
+         * If this option is set and a value is written to annotated parameter, the operation remains without effect.
          *
          * @return {@code true} if a {@code null} value should be assigned if the instrumented method does not declare any parameters.
          */

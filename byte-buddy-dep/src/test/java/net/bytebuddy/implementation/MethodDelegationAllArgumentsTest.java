@@ -7,7 +7,9 @@ import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import org.junit.Test;
 
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.isToString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MethodDelegationAllArgumentsTest {
@@ -72,6 +74,18 @@ public class MethodDelegationAllArgumentsTest {
         assertThat(instance.foo(QUX, BAZ), is((Object) instance));
     }
 
+    @Test
+    public void testNoArguments() throws Exception {
+        DynamicType.Loaded<Object> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .method(isToString())
+                .intercept(MethodDelegation.to(NoArguments.class))
+                .make()
+                .load(NoArguments.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.toString(), nullValue(String.class));
+    }
+
     public static class Foo {
 
         public Object foo(int i1, Integer i2) {
@@ -123,6 +137,14 @@ public class MethodDelegationAllArgumentsTest {
             assertThat(args[1], is((Object) QUX));
             assertThat(args[2], is((Object) BAZ));
             return args[0];
+        }
+    }
+
+    public static class NoArguments {
+
+        public static String intercept(@AllArguments(nullIfEmpty = true) Object[] args) {
+            assertThat(args, nullValue(Object[].class));
+            return null;
         }
     }
 }

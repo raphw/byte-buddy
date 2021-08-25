@@ -1052,6 +1052,11 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     protected static class ProxiedInvocationHandler implements InvocationHandler {
 
         /**
+         * Indicates that an invocation handler does not provide any arguments.
+         */
+        private static final Object[] NO_ARGUMENTS = new Object[0];
+
+        /**
          * The proxied type's name.
          */
         private final String name;
@@ -1095,7 +1100,9 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                     if (dispatcher == null) {
                         throw new IllegalStateException("No proxy target found for " + method);
                     } else {
-                        return dispatcher.invoke(argument);
+                        return dispatcher.invoke(argument == null
+                                ? NO_ARGUMENTS
+                                : argument);
                     }
                 } catch (InvocationTargetException exception) {
                     throw exception.getTargetException();
