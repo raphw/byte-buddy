@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 31. August 2021: version 1.11.14
+
+- Adjust `InvocationHandlerAdapter` to use `null` for methods without parameters as specified by contract.
+- Offer option to use `null` for `MethodDelegation` and `Advice` if method has no parameters.
+- Add method to seal unsealed class loaders after the fact.
+- Use correct type for resolving security manager method in `ByteBuddyAgent`.
+
 ### 18. August 2021: version 1.11.13
 
 - Introduce `warmUp` to further avoid circularities when using `AgentBuilder`.
