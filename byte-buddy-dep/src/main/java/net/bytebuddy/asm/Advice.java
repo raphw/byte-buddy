@@ -1317,6 +1317,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     /**
                      * Creates a writable target.
+                     *
                      * @param read  The reading stack manipulation.
                      * @param write The writing stack manipulation.
                      */
@@ -1953,6 +1954,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             private final Assigner.Typing typing;
 
+            /**
+             * {@code true} if a {@code null} value should be assigned if the
+             * instrumented method does not declare any parameters.
+             */
             private final boolean nullIfEmpty;
 
             /**
@@ -1968,9 +1973,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Creates a new offset mapping for an array containing all arguments.
              *
-             * @param target   The component target type.
-             * @param readOnly {@code true} if the array is read-only.
-             * @param typing   The typing to apply.
+             * @param target      The component target type.
+             * @param readOnly    {@code true} if the array is read-only.
+             * @param typing      The typing to apply.
+             * @param nullIfEmpty {@code true} if a {@code null} value should be assigned if the
+             *                    instrumented method does not declare any parameters.
              */
             public ForAllArguments(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, boolean nullIfEmpty) {
                 this.target = target;
