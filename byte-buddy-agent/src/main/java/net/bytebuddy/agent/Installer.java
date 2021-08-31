@@ -56,11 +56,13 @@ public class Installer {
         try {
             Object securityManager = System.class.getMethod("getSecurityManager").invoke(null);
             if (securityManager != null) {
-                securityManager.getClass()
+                Class.forName("java.lang.SecurityManager")
                         .getMethod("checkPermission", Permission.class)
                         .invoke(securityManager, new RuntimePermission("getInstrumentation"));
             }
         } catch (NoSuchMethodException ignored) {
+            /* security manager not available on current VM */
+        } catch (ClassNotFoundException ignored) {
             /* security manager not available on current VM */
         } catch (InvocationTargetException exception) {
             Throwable cause = exception.getTargetException();
