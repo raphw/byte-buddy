@@ -129,7 +129,9 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
             builder = builder
                     .defineField(name, methodDescription.getReturnType().asErasure(), methodDescription.isStatic()
                             ? Ownership.STATIC
-                            : Ownership.MEMBER, Visibility.PRIVATE, SyntheticState.SYNTHETIC, FieldPersistence.TRANSIENT)
+                            : Ownership.MEMBER, methodDescription.isStatic()
+                            ? FieldPersistence.PLAIN
+                            : FieldPersistence.TRANSIENT, Visibility.PRIVATE, SyntheticState.SYNTHETIC)
                     .visit(Advice.withCustomMapping()
                             .bind(CacheField.class, new CacheFieldOffsetMapping(name))
                             .to(adviceByType.get(methodDescription.getReturnType().isPrimitive()

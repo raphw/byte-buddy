@@ -21,7 +21,6 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.MemberRemoval;
 import net.bytebuddy.build.AccessControllerPlugin;
-import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.PackageDescription;
@@ -1626,14 +1625,8 @@ public interface ClassInjector {
          *
          * @return {@code true} if the current VM is capable of defining classes using a lookup.
          */
-        @CachedReturnPlugin.Enhance("AVAILABLE")
         public static boolean isAvailable() {
-            try {
-                Class.forName("java.lang.Module", false, ClassLoadingStrategy.BOOTSTRAP_LOADER);
-                return true;
-            } catch (ClassNotFoundException ignored) {
-                return false;
-            }
+            return JavaType.MODULE.isAvailable();
         }
 
         /**

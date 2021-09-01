@@ -255,8 +255,18 @@ public enum JavaType {
      *
      * @return {@code true} if this type is available on the current JVM.
      */
-    @CachedReturnPlugin.Enhance("available")
     public boolean isAvailable() {
+        return doIsAvailable();
+    }
+
+    /**
+     * Returns {@code true} if this type is available on the current VM. By boxing the result,
+     * the result can be cached efficiently what is not possible when using a primitive type.
+     *
+     * @return {@code true} if this type is available on the current JVM.
+     */
+    @CachedReturnPlugin.Enhance("available")
+    private Boolean doIsAvailable() {
         try {
             load();
             return true;
