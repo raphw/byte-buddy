@@ -134,7 +134,9 @@ public class Nexus extends WeakReference<ClassLoader> {
     public static void initialize(Class<?> type, int identification) throws Exception {
         Object typeInitializer = TYPE_INITIALIZERS.remove(new Nexus(type, identification));
         if (typeInitializer != null) {
-            typeInitializer.getClass().getMethod("onLoad", Class.class).invoke(typeInitializer, type);
+            Class.forName("net.bytebuddy.implementation.LoadedTypeInitializer",
+                    true,
+                    type.getClassLoader()).getMethod("onLoad", Class.class).invoke(typeInitializer, type);
         }
     }
 

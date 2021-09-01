@@ -29,8 +29,8 @@ import org.objectweb.asm.Type;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
+import java.security.Permission;
 import java.security.PrivilegedAction;
-import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,6 +42,12 @@ import java.util.Map;
  * <p>
  * By default, this dispatcher uses the Java {@link Proxy} for creating dispatchers. By setting {@code net.bytebuddy.generate} to
  * {@code true}, Byte Buddy can generate proxies manually as byte code to mostly avoid reflection and boxing of arguments as arrays.
+ * </p>
+ * <p>
+ * If a security manager is active, the <i>net.bytebuddy.createJavaDispatcher</i> runtime permission is required. Any dispatching
+ * will be executed from a separate class loader and an unnamed module but with the {@link java.security.ProtectionDomain} of
+ * the {@link JavaDispatcher} class. It is not permitted to invoke methods of the {@code java.security.AccessController} class or
+ * to resolve a {@code java.lang.invoke.MethodHandle$Lookup}.
  * </p>
  *
  * @param <T> The resolved type.
@@ -155,6 +161,27 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
      */
     @SuppressWarnings("unchecked")
     public T run() {
+        try {
+            Object securityManager = System.class.getMethod("getSecurityManager").invoke(null);
+            if (securityManager != null) {
+                Class.forName("java.lang.SecurityManager")
+                        .getMethod("checkPermission", Permission.class)
+                        .invoke(securityManager, new RuntimePermission("net.bytebuddy.createJavaDispatcher"));
+            }
+        } catch (NoSuchMethodException ignored) {
+            /* security manager not available on current VM */
+        } catch (ClassNotFoundException ignored) {
+            /* security manager not available on current VM */
+        } catch (InvocationTargetException exception) {
+            Throwable cause = exception.getTargetException();
+            if (cause instanceof RuntimeException) {
+                throw (RuntimeException) cause;
+            } else {
+                throw new IllegalStateException("Failed to assert access rights using security manager", cause);
+            }
+        } catch (IllegalAccessException exception) {
+            throw new IllegalStateException("Failed to access security manager", exception);
+        }
         Map<Method, Dispatcher> dispatchers = new HashMap<Method, Dispatcher>();
         boolean defaults = proxy.isAnnotationPresent(Defaults.class);
         String name = proxy.getAnnotation(Proxied.class).value();
@@ -546,6 +573,11 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
              * A dispatcher for a {@code boolean} type.
              */
             BOOLEAN(false, Opcodes.ICONST_0, Opcodes.IRETURN, 1),
+
+            /**
+             * A dispatcher for a {@code boolean} type that returns {@code true}.
+             */
+            BOOLEAN_REVERSE(true, Opcodes.ICONST_1, Opcodes.IRETURN, 1),
 
             /**
              * A dispatcher for a {@code byte} type.
@@ -1198,7 +1230,11 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             byte[] binaryRepresentation = classWriter.toByteArray();
             try {
                 return new DynamicClassLoader(proxy.getClassLoader())
-                        .defineClass(proxy.getName() + "$Proxy", binaryRepresentation, 0, binaryRepresentation.length, new ProtectionDomain(null, null))
+                        .defineClass(proxy.getName() + "$Proxy",
+                                binaryRepresentation,
+                                0,
+                                binaryRepresentation.length,
+                                JavaDispatcher.class.getProtectionDomain())
                         .getConstructor(NO_PARAMETER)
                         .newInstance(NO_ARGUMENT);
             } catch (Exception exception) {
@@ -1207,7 +1243,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         }
 
         /**
-         * Resolves a {@link Invoker} for a seperate class loader.
+         * Resolves a {@link Invoker} for a separate class loader.
          *
          * @return The created {@link Invoker}.
          */
@@ -1270,7 +1306,11 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             byte[] binaryRepresentation = classWriter.toByteArray();
             try {
                 return (Invoker) new DynamicClassLoader(Invoker.class.getClassLoader())
-                        .defineClass(Invoker.class.getName() + "$Dispatcher", binaryRepresentation, 0, binaryRepresentation.length, new ProtectionDomain(null, null))
+                        .defineClass(Invoker.class.getName() + "$Dispatcher",
+                                binaryRepresentation,
+                                0,
+                                binaryRepresentation.length,
+                                JavaDispatcher.class.getProtectionDomain())
                         .getConstructor(NO_PARAMETER)
                         .newInstance(NO_ARGUMENT);
             } catch (UnsupportedOperationException ignored) {

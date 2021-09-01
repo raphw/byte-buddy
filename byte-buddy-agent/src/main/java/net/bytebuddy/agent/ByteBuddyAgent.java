@@ -53,13 +53,14 @@ import java.util.jar.*;
  * </p>
  * <p>
  * <b>Note</b>: Byte Buddy does not execute code using an {@code java.security.AccessController}. If a security manager
- * is present, the user of this class is responsible for assuring any required privileges.
+ * is present, the user of this class is responsible for assuring any required privileges. To read an
+ * {@link Instrumentation}, the <i>net.bytebuddy.agent.getInstrumentation</i> runtime permission is required.
  * </p>
  */
 public class ByteBuddyAgent {
 
     /**
-     * Indicates that the agent should not resolve it's own code location for a self-attachment.
+     * Indicates that the agent should not resolve its own code location for a self-attachment.
      */
     public static final String LATENT_RESOLVE = "net.bytebuddy.agent.latent";
 

@@ -37,7 +37,7 @@ public class FileSystemTest {
 
     @Test
     public void testMove() throws Exception {
-        FileSystem.INSTANCE.move(source, target);
+        FileSystem.getInstance().move(source, target);
         InputStream inputStream = new FileInputStream(target);
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -55,7 +55,7 @@ public class FileSystemTest {
 
     @Test
     public void testCopy() throws Exception {
-        FileSystem.INSTANCE.copy(source, target);
+        FileSystem.getInstance().copy(source, target);
         InputStream inputStream = new FileInputStream(target);
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -73,7 +73,7 @@ public class FileSystemTest {
 
     @Test
     public void testFileSystemType() {
-        assertThat(FileSystem.INSTANCE.getClass(), is((Object) (ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V7)
+        assertThat(FileSystem.getInstance().getClass(), is((Object) (ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V7)
                 ? FileSystem.ForNio2CapableVm.class
                 : FileSystem.ForLegacyVm.class)));
     }

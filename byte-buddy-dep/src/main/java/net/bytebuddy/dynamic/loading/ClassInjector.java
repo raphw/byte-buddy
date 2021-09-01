@@ -21,6 +21,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.MemberRemoval;
 import net.bytebuddy.build.AccessControllerPlugin;
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.PackageDescription;
@@ -914,27 +915,27 @@ public interface ClassInjector {
                             .defineMethod("findLoadedClass", Class.class, Visibility.PUBLIC)
                             .withParameters(ClassLoader.class, String.class)
                             .intercept(MethodCall.invoke(ClassLoader.class
-                                    .getDeclaredMethod("findLoadedClass", String.class))
+                                            .getDeclaredMethod("findLoadedClass", String.class))
                                     .onArgument(0)
                                     .withArgument(1))
                             .defineMethod("defineClass", Class.class, Visibility.PUBLIC)
                             .withParameters(ClassLoader.class, String.class, byte[].class, int.class, int.class,
                                     ProtectionDomain.class)
                             .intercept(MethodCall.invoke(ClassLoader.class
-                                    .getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class, ProtectionDomain.class))
+                                            .getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class, ProtectionDomain.class))
                                     .onArgument(0)
                                     .withArgument(1, 2, 3, 4, 5))
                             .defineMethod("getPackage", Package.class, Visibility.PUBLIC)
                             .withParameters(ClassLoader.class, String.class)
                             .intercept(MethodCall.invoke(ClassLoader.class
-                                    .getDeclaredMethod("getPackage", String.class))
+                                            .getDeclaredMethod("getPackage", String.class))
                                     .onArgument(0)
                                     .withArgument(1))
                             .defineMethod("definePackage", Package.class, Visibility.PUBLIC)
                             .withParameters(ClassLoader.class, String.class, String.class, String.class, String.class,
                                     String.class, String.class, String.class, URL.class)
                             .intercept(MethodCall.invoke(ClassLoader.class
-                                    .getDeclaredMethod("definePackage", String.class, String.class, String.class, String.class, String.class, String.class, String.class, URL.class))
+                                            .getDeclaredMethod("definePackage", String.class, String.class, String.class, String.class, String.class, String.class, String.class, URL.class))
                                     .onArgument(0)
                                     .withArgument(1, 2, 3, 4, 5, 6, 7, 8));
                     if (getDefinedPackage != null) {
@@ -1523,13 +1524,6 @@ public interface ClassInjector {
         private static final MethodHandles.Lookup METHOD_HANDLES_LOOKUP = doPrivileged(JavaDispatcher.of(MethodHandles.Lookup.class));
 
         /**
-         * A reference to {@code java.lang.invoke.MethodHandles$Lookup#defineClass} or {@code null} if the method is not available.
-         */
-        private static final Method DEFINE_CLASS = doPrivileged(new GetMethodAction("java.lang.invoke.MethodHandles$Lookup",
-                "defineClass",
-                byte[].class));
-
-        /**
          * Indicates a lookup instance's package lookup mode.
          */
         private static final int PACKAGE_LOOKUP = 0x8;
@@ -1619,9 +1613,7 @@ public interface ClassInjector {
                     throw new IllegalArgumentException(entry.getKey() + " must be defined in the same package as " + lookup);
                 }
                 try {
-                    result.put(entry.getKey(), (Class<?>) DEFINE_CLASS.invoke(lookup, entry.getValue()));
-                } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException(exception.getTargetException());
+                    result.put(entry.getKey(), METHOD_HANDLES_LOOKUP.defineClass(lookup, entry.getValue()));
                 } catch (Exception exception) {
                     throw new IllegalStateException(exception);
                 }
@@ -1634,8 +1626,14 @@ public interface ClassInjector {
          *
          * @return {@code true} if the current VM is capable of defining classes using a lookup.
          */
+        @CachedReturnPlugin.Enhance("AVAILABLE")
         public static boolean isAvailable() {
-            return DEFINE_CLASS != null;
+            try {
+                Class.forName("java.lang.Module", false, ClassLoadingStrategy.BOOTSTRAP_LOADER);
+                return true;
+            } catch (ClassNotFoundException ignored) {
+                return false;
+            }
         }
 
         /**
@@ -1676,6 +1674,16 @@ public interface ClassInjector {
                  * @return The modifiers indicating the instance's lookup modes.
                  */
                 int lookupModes(Object lookup);
+
+                /**
+                 * Defines the represented class.
+                 *
+                 * @param lookup               The lookup instance.
+                 * @param binaryRepresentation The binary representation.
+                 * @return The defined class.
+                 * @throws IllegalAccessException If the definition implies an illegal access.
+                 */
+                Class<?> defineClass(Object lookup, byte[] binaryRepresentation) throws IllegalAccessException;
             }
         }
     }

@@ -22,13 +22,10 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
-import net.bytebuddy.utility.privilege.GetMethodAction;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.security.PrivilegedAction;
 
 /**
@@ -50,13 +47,6 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * A dispatcher to interact with {@code java.lang.Module}.
      */
     protected static final Module MODULE = doPrivileged(JavaDispatcher.of(Module.class));
-
-    /**
-     * The {@code java.lang.Module#getClassLoader} method or {@code null} if not available. This method
-     * cannot be resolved using a {@link JavaDispatcher} as it is call site sensitive to a potential
-     * security manager.
-     */
-    private static final Method GET_CLASS_LOADER = doPrivileged(new GetMethodAction("java.lang.Module", "getClassLoader"));
 
     /**
      * The {@code java.lang.Module} instance this wrapper represents.
@@ -151,18 +141,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @return The class loader of the represented module.
      */
     public ClassLoader getClassLoader() {
-        try {
-            return (ClassLoader) GET_CLASS_LOADER.invoke(module);
-        } catch (IllegalAccessException exception) {
-            throw new IllegalStateException("Cannot access class loader for " + module, exception);
-        } catch (InvocationTargetException exception) {
-            Throwable cause = exception.getTargetException();
-            if (cause instanceof RuntimeException) {
-                throw (RuntimeException) cause;
-            } else {
-                throw new IllegalStateException("Cannot read class loader for " + module, cause);
-            }
-        }
+        return MODULE.getClassLoader(module);
     }
 
     /**
@@ -280,6 +259,14 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @return The module's (implicit or explicit) name.
          */
         String getName(Object value);
+
+        /**
+         * Returns the class loader of a module.
+         *
+         * @param value The {@code java.lang.Module} for which to return a class loader.
+         * @return The module's class loader.
+         */
+        ClassLoader getClassLoader(Object value);
 
         /**
          * Returns a resource stream for this module for a resource of the given name or {@code null} if such a resource does not exist.

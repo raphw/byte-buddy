@@ -8821,7 +8821,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        @CachedReturnPlugin.Enhance
+        @CachedReturnPlugin.Enhance("classFileVersion")
         public ClassFileVersion getClassFileVersion() {
             try {
                 return ClassFileVersion.of(type);

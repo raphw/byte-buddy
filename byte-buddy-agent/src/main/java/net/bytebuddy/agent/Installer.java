@@ -58,7 +58,7 @@ public class Installer {
             if (securityManager != null) {
                 Class.forName("java.lang.SecurityManager")
                         .getMethod("checkPermission", Permission.class)
-                        .invoke(securityManager, new RuntimePermission("getInstrumentation"));
+                        .invoke(securityManager, new RuntimePermission("net.bytebuddy.agent.getInstrumentation"));
             }
         } catch (NoSuchMethodException ignored) {
             /* security manager not available on current VM */

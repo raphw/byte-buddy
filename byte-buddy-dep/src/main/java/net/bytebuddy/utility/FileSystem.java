@@ -15,14 +15,13 @@
  */
 package net.bytebuddy.utility;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.AccessControllerPlugin;
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.security.PrivilegedAction;
 
 /**
@@ -31,9 +30,19 @@ import java.security.PrivilegedAction;
 public abstract class FileSystem {
 
     /**
-     * The file system accessor to use.
+     * Returns the {@link FileSystem} instance to use.
+     *
+     * @return The {@link FileSystem} instance to use.
      */
-    public static final FileSystem INSTANCE = doPrivileged(CreationAction.INSTANCE);
+    @CachedReturnPlugin.Enhance("INSTANCE")
+    public static FileSystem getInstance() {
+        try {
+            Class.forName("java.nio.file.Files", false, ClassLoadingStrategy.BOOTSTRAP_LOADER);
+            return new ForNio2CapableVm();
+        } catch (ClassNotFoundException ignored) {
+            return new ForLegacyVm();
+        }
+    }
 
     /**
      * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
@@ -64,32 +73,6 @@ public abstract class FileSystem {
      * @throws IOException If an I/O exception occurs.
      */
     public abstract void move(File source, File target) throws IOException;
-
-    /**
-     * An action to create a dispatcher for a {@link FileSystem}.
-     */
-    protected enum CreationAction implements PrivilegedAction<FileSystem> {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        /**
-         * {@inheritDoc}
-         */
-        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger fallback")
-        public FileSystem run() {
-            try {
-                Class<?> files = Class.forName("java.nio.file.Files"),
-                        path = Class.forName("java.nio.file.Path"),
-                        copyOption = Class.forName("[Ljava.nio.file.CopyOption;");
-                return new ForNio2CapableVm(files.getMethod("copy", path, path, copyOption), files.getMethod("move", path, path, copyOption));
-            } catch (Exception ignored) {
-                return new ForLegacyVm();
-            }
-        }
-    }
 
     /**
      * A file system representation for a VM that does not support NIO2.
@@ -146,80 +129,32 @@ public abstract class FileSystem {
     protected static class ForNio2CapableVm extends FileSystem {
 
         /**
-         * Indicates a static method invocation.
-         */
-        private static final Object STATIC_MEMBER = null;
-
-        /**
          * A dispatcher to resolve a {@link File} to a {@code java.nio.file.Path}.
          */
         private static final Dispatcher DISPATCHER = doPrivileged(JavaDispatcher.of(Dispatcher.class));
+
+        /**
+         * A dispatcher to resolve a dispatcher for {@code java.nio.file.Files}.
+         */
+        private static final Files FILES = doPrivileged(JavaDispatcher.of(Files.class));
 
         /**
          * A dispatcher to interact with {@code java.nio.file.StandardCopyOption}.
          */
         private static final StandardCopyOption STANDARD_COPY_OPTION = doPrivileged(JavaDispatcher.of(StandardCopyOption.class));
 
-        /**
-         * The {@code java.nio.file.Files#copy} method.
-         */
-        private final Method copy;
-
-        /**
-         * The {@code java.nio.file.Files#move} method.
-         */
-        private final Method move;
-
-        /**
-         * Creates a new NIO2-capable file system dispatcher.
-         *
-         * @param copy The {@code java.nio.file.Files#copy} method.
-         * @param move The {@code java.nio.file.Files#move} method.
-         */
-        protected ForNio2CapableVm(Method copy, Method move) {
-            this.copy = copy;
-            this.move = move;
-        }
-
         @Override
         public void copy(File source, File target) throws IOException {
             Object[] option = STANDARD_COPY_OPTION.toArray(1);
             option[0] = STANDARD_COPY_OPTION.valueOf("REPLACE_EXISTING");
-            try {
-                copy.invoke(STATIC_MEMBER, DISPATCHER.toPath(source), DISPATCHER.toPath(target), option);
-            } catch (IllegalAccessException exception) {
-                throw new IllegalStateException(exception);
-            } catch (InvocationTargetException exception) {
-                Throwable cause = exception.getTargetException();
-                if (cause instanceof RuntimeException) {
-                    throw (RuntimeException) cause;
-                } else if (cause instanceof IOException) {
-                    throw (IOException) cause;
-                } else {
-                    throw new IllegalStateException(cause);
-                }
-            }
+            FILES.copy(DISPATCHER.toPath(source), DISPATCHER.toPath(target), option);
         }
 
         @Override
         public void move(File source, File target) throws IOException {
             Object[] option = STANDARD_COPY_OPTION.toArray(1);
             option[0] = STANDARD_COPY_OPTION.valueOf("REPLACE_EXISTING");
-            try {
-                move.invoke(STATIC_MEMBER, DISPATCHER.toPath(source), DISPATCHER.toPath(target), option);
-            } catch (IllegalAccessException exception) {
-                throw new IllegalStateException(exception);
-            } catch (InvocationTargetException exception) {
-                Throwable cause = exception.getTargetException();
-                if (cause instanceof RuntimeException) {
-                    throw (RuntimeException) cause;
-                } else if (cause instanceof IOException) {
-                    throw (IOException) cause;
-                } else {
-                    throw new IllegalStateException(cause);
-                }
-            }
-
+            FILES.move(DISPATCHER.toPath(source), DISPATCHER.toPath(target), option);
         }
 
         /**
@@ -236,6 +171,41 @@ public abstract class FileSystem {
              * @throws IOException If an I/O exception occurs.
              */
             Object toPath(File value) throws IOException;
+        }
+
+        /**
+         * A dispatcher to access the {@code java.nio.file.Files} API.
+         */
+        @JavaDispatcher.Proxied("java.nio.file.Files")
+        protected interface Files {
+
+            /**
+             * Copies a file.
+             *
+             * @param source The source {@code java.nio.file.Path}.
+             * @param target The target {@code java.nio.file.Path}.
+             * @param option An array of copy options.
+             * @return The copied file.
+             * @throws IOException If an I/O exception occurs.
+             */
+            @JavaDispatcher.IsStatic
+            Object copy(@JavaDispatcher.Proxied("java.nio.file.Path") Object source,
+                        @JavaDispatcher.Proxied("java.nio.file.Path") Object target,
+                        @JavaDispatcher.Proxied("java.nio.file.CopyOption") Object[] option) throws IOException;
+
+            /**
+             * Moves a file.
+             *
+             * @param source The source {@code java.nio.file.Path}.
+             * @param target The target {@code java.nio.file.Path}.
+             * @param option An array of copy options.
+             * @return The moved file.
+             * @throws IOException If an I/O exception occurs.
+             */
+            @JavaDispatcher.IsStatic
+            Object move(@JavaDispatcher.Proxied("java.nio.file.Path") Object source,
+                        @JavaDispatcher.Proxied("java.nio.file.Path") Object target,
+                        @JavaDispatcher.Proxied("java.nio.file.CopyOption") Object[] option) throws IOException;
         }
 
         /**

@@ -3351,7 +3351,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         } else if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
                             throw new IOException("Could not create directory: " + target.getParent());
                         } else if (resolved != null && !resolved.equals(target)) {
-                            FileSystem.INSTANCE.copy(resolved, target);
+                            FileSystem.getInstance().copy(resolved, target);
                         } else if (!target.equals(resolved)) {
                             InputStream inputStream = element.getInputStream();
                             try {

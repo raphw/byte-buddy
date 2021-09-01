@@ -1,6 +1,7 @@
 package net.bytebuddy.utility.dispatcher;
 
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.Invoker;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -11,9 +12,12 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.security.Permission;
+import java.security.PermissionCollection;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Enumeration;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -155,10 +159,31 @@ public class JavaDispatcherTest {
 
     @Test
     @JavaVersionRule.Enforce(9)
-    public void testCallerNotLeakingContext() throws Exception {
+    public void testCallerSeparateClassLoader() throws Exception {
         Class<?> caller = JavaDispatcher.of(JavaDispatcherCaller.class, JavaDispatcherTest.class.getClassLoader(), generate).run().caller();
-        assertThat(caller.getClassLoader(), not(sameInstance(JavaDispatcherTest.class.getClassLoader())));
-        assertThat(caller.getProtectionDomain(), not(sameInstance(JavaDispatcherTest.class.getProtectionDomain())));
+        assertThat(caller.getClassLoader(), not(sameInstance(JavaDispatcher.class.getClassLoader())));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(9)
+    public void testCallerInheritsPermissions() throws Exception {
+        Class<?> caller = JavaDispatcher.of(JavaDispatcherCaller.class, JavaDispatcherTest.class.getClassLoader(), generate).run().caller();
+        PermissionCollection permissions = caller.getProtectionDomain().getPermissions();
+        Enumeration<Permission> enumeration = JavaDispatcher.class.getProtectionDomain().getPermissions().elements();
+        while (enumeration.hasMoreElements()) {
+            assertThat(permissions.implies(enumeration.nextElement()), is(true));
+        }
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(9)
+    public void testCallerDoesNotEscalatePermissions() throws Exception {
+        Class<?> caller = JavaDispatcher.of(JavaDispatcherCaller.class, JavaDispatcherTest.class.getClassLoader(), generate).run().caller();
+        PermissionCollection permissions = JavaDispatcher.class.getProtectionDomain().getPermissions();
+        Enumeration<Permission> enumeration = caller.getProtectionDomain().getPermissions().elements();
+        while (enumeration.hasMoreElements()) {
+            assertThat(permissions.implies(enumeration.nextElement()), is(true));
+        }
     }
 
     @SuppressWarnings({"unchecked", "unused"})

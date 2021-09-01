@@ -6010,7 +6010,7 @@ public interface DynamicType {
          * {@inheritDoc}
          */
         public File inject(File jar) throws IOException {
-            FileSystem.INSTANCE.move(doInject(jar, File.createTempFile(jar.getName(), TEMP_SUFFIX)), jar);
+            FileSystem.getInstance().move(doInject(jar, File.createTempFile(jar.getName(), TEMP_SUFFIX)), jar);
             return jar;
         }
 
