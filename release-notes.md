@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 2. September 2021: version 1.11.15
+
+- Add *net.bytebuddy* prefix to Byte Buddy specific privileges.
+- Rework `JavaDispatcher` to require specific privilege but use Byte Buddy's protection domain for dispatchers, once acquired.
+
 ### 31. August 2021: version 1.11.14
 
 - Adjust `InvocationHandlerAdapter` to use `null` for methods without parameters as specified by contract.
