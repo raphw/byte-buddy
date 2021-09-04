@@ -1150,12 +1150,19 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  *
                  * @param instrumentedType  The instrumented type.
                  * @param methodDescription The method that is being accessed.
+                 * @param typeDescription   The targeted type of the accessor method.
                  * @param suffix            The suffix to append to the accessor method's name.
                  */
-                protected AccessorMethod(TypeDescription instrumentedType, MethodDescription methodDescription, String suffix) {
+                protected AccessorMethod(TypeDescription instrumentedType,
+                                         MethodDescription methodDescription,
+                                         TypeDescription typeDescription,
+                                         String suffix) {
                     this.instrumentedType = instrumentedType;
                     this.methodDescription = methodDescription;
-                    name = methodDescription.getInternalName() + "$" + ACCESSOR_METHOD_SUFFIX + "$" + suffix;
+                    name = methodDescription.getInternalName()
+                            + "$" + ACCESSOR_METHOD_SUFFIX
+                            + "$" + suffix
+                            + (typeDescription.isInterface() ? "$" + RandomString.hashOf(typeDescription.hashCode()) : "");
                 }
 
                 /**
@@ -1534,9 +1541,10 @@ public interface Implementation extends InstrumentedType.Prepareable {
                                                    String suffix,
                                                    AccessType accessType,
                                                    SpecialMethodInvocation specialMethodInvocation) {
-                    this(new AccessorMethod(instrumentedType, specialMethodInvocation.getMethodDescription(), suffix),
-                            accessType.getVisibility(),
-                            specialMethodInvocation);
+                    this(new AccessorMethod(instrumentedType,
+                            specialMethodInvocation.getMethodDescription(),
+                            specialMethodInvocation.getTypeDescription(),
+                            suffix), accessType.getVisibility(), specialMethodInvocation);
                 }
 
                 /**

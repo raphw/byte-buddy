@@ -5,6 +5,9 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.DefaultCall;
+import net.bytebuddy.implementation.bind.annotation.DefaultMethod;
+import net.bytebuddy.implementation.bind.annotation.SuperCall;
+import net.bytebuddy.implementation.bind.annotation.SuperMethod;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
@@ -24,6 +27,8 @@ public class MethodDelegationDefaultCallTest {
     private static final String FOO = "foo", QUX = "qux";
 
     private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
+
+    private static final String SINGLE_DEFAULT_METHOD_CLASS = "net.bytebuddy.test.precompiled.SingleDefaultMethodClass";
 
     private static final String CONFLICTING_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodConflictingInterface";
 
@@ -125,6 +130,20 @@ public class MethodDelegationDefaultCallTest {
         assertThat(method.invoke(instance), is((Object) FOO));
     }
 
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testSuperAndDefaultMethod() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Class.forName(SINGLE_DEFAULT_METHOD_CLASS))
+                .implement(Class.forName(SINGLE_DEFAULT_METHOD))
+                .intercept(MethodDelegation.to(SampleSuperAndInterfaceClass.class))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        Method method = loaded.getLoaded().getMethod(FOO);
+        assertThat(method.invoke(instance), is((Object) FOO + FOO));
+    }
+
     public static class RunnableClass {
 
         public static Object foo(@DefaultCall Runnable runnable) {
@@ -154,6 +173,13 @@ public class MethodDelegationDefaultCallTest {
         public static String bar(@DefaultCall(serializableProxy = true) Callable<String> callable) throws Exception {
             assertThat(callable, instanceOf(Serializable.class));
             return callable.call();
+        }
+    }
+
+    public static class SampleSuperAndInterfaceClass {
+
+        public static String bar(@DefaultCall Callable<?> defaultMethod, @SuperCall Callable<?> superMethod) throws Exception {
+            return defaultMethod.call().toString() + superMethod.call();
         }
     }
 }
