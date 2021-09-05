@@ -62,6 +62,13 @@ import java.lang.reflect.Method;
  * to the instrumented type or an {@link IllegalAccessError} will be thrown at runtime.
  * </p>
  *
+ * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.Origin} annotation. This annotation
+ * should be used only in combination with method delegation
+ * ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}).
+ * For {@link net.bytebuddy.asm.Advice} ASM visitor use alternative annotation from
+ * <code>net.bytebuddy.asm.Advice</code> package.
+ * </p>
+ *
  * @see net.bytebuddy.implementation.MethodDelegation
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */
