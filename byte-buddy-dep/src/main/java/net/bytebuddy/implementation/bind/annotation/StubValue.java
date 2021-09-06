@@ -36,6 +36,13 @@ import java.lang.annotation.*;
  * {@code null} if a method returns a reference type or {@code void} or a boxed primitive of the return type
  * representing the numeric value {@code 0}.
  *
+ * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.StubValue} annotation. This
+ * annotation should be used only in combination with method delegation
+ * ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}).
+ * For {@link net.bytebuddy.asm.Advice} ASM visitor use alternative annotation from
+ * <code>net.bytebuddy.asm.Advice</code> package.
+ * </p>
+ *
  * @see net.bytebuddy.implementation.MethodDelegation
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */

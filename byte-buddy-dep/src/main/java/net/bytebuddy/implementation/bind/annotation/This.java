@@ -32,6 +32,13 @@ import java.lang.annotation.*;
  * the instrumented method is not static. Otherwise, the method with this parameter annotation will be excluded from
  * the list of possible binding candidates of the static source method.
  *
+ * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.This} annotation. This annotation
+ * should be used only in combination with method delegation
+ * ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}).
+ * For {@link net.bytebuddy.asm.Advice} ASM visitor use alternative annotation from
+ * <code>net.bytebuddy.asm.Advice</code> package.
+ * </p>
+ *
  * @see net.bytebuddy.implementation.MethodDelegation
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */

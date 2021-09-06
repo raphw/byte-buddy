@@ -10903,6 +10903,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * <b>Important</b>: Parameters with this option must not be used when from a constructor in combination with
      * {@link OnMethodEnter} where the {@code this} reference is not available.
      * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.This}
+     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
+     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
+     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * </p>
      *
      * @see Advice
      * @see OnMethodEnter
@@ -10945,6 +10951,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * Indicates that the annotated parameter should be mapped to the parameter with index {@link Argument#value()} of
      * the instrumented method.
+     *
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Argument}
+     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
+     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
+     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * </p>
      *
      * @see Advice
      * @see OnMethodEnter
@@ -10996,6 +11008,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * Assigns an array containing all arguments of the instrumented method to the annotated parameter. The annotated parameter must
      * be an array type. If the annotation indicates writability, the assigned array must have at least as many values as the
      * instrumented method or an {@link ArrayIndexOutOfBoundsException} is thrown.
+     *
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.AllArguments}
+     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
+     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
+     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * </p>
      */
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
@@ -11134,6 +11152,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * setting {@link ClassWriter#COMPUTE_MAXS}. This is however only relevant when writing to a non-static field.
      * </p>
      *
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldValue}
+     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
+     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
+     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * </p>
+     *
      * @see Advice
      * @see OnMethodEnter
      * @see OnMethodExit
@@ -11191,6 +11215,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * <p>
      * <b>Note</b>: A constant representing a {@link Method} or {@link Constructor} is not cached but is recreated for
      * every read.
+     * </p>
+     *
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Origin}
+     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
+     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
+     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
      * </p>
      *
      * @see Advice
@@ -11322,6 +11352,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * Indicates that the annotated parameter should always return a default a boxed version of the instrumented methods return value
      * (i.e. {@code 0} for numeric values, {@code false} for {@code boolean} types and {@code null} for reference types). The annotated
      * parameter must be of type {@link Object} and cannot be assigned a value.
+     *
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.StubValue}
+     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
+     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
+     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * </p>
      *
      * @see Advice
      * @see OnMethodEnter

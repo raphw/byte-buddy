@@ -45,6 +45,13 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * to be an illegal candidate for binding.
  * </p>
  *
+ * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.FieldValue} annotation. This annotation
+ * should be used only in combination with method delegation
+ * ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}).
+ * For {@link net.bytebuddy.asm.Advice} ASM visitor use alternative annotation from
+ * <code>net.bytebuddy.asm.Advice</code> package.
+ * </p>
+ *
  * @see net.bytebuddy.implementation.MethodDelegation
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  * @see net.bytebuddy.implementation.bind.annotation.RuntimeType

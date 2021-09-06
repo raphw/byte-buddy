@@ -38,6 +38,13 @@ import java.lang.annotation.*;
  * annotation is excluded from the list of possible binding candidates to this particular source method. The same happens,
  * if the source method parameter at the specified index is not assignable to the annotated parameter.
  *
+ * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.Argument} annotation. This annotation
+ * should be used only in combination with method delegation
+ * ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}).
+ * For {@link net.bytebuddy.asm.Advice} ASM visitor use alternative annotation from
+ * <code>net.bytebuddy.asm.Advice</code> package.
+ * </p>
+ *
  * @see net.bytebuddy.implementation.MethodDelegation
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  * @see net.bytebuddy.implementation.bind.annotation.RuntimeType
