@@ -1,7 +1,7 @@
 package net.bytebuddy.utility.dispatcher;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.utility.Invoker;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -10,6 +10,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.security.Permission;
@@ -184,6 +185,15 @@ public class JavaDispatcherTest {
         while (enumeration.hasMoreElements()) {
             assertThat(permissions.implies(enumeration.nextElement()), is(true));
         }
+    }
+
+    @Test
+    public void testDynamicClassLoaderResolverType() throws Exception {
+        Field resolver = JavaDispatcher.class.getDeclaredField("RESOLVER");
+        resolver.setAccessible(true);
+        assertThat(resolver.get(null), instanceOf(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V9)
+                ? JavaDispatcher.DynamicClassLoader.Resolver.ForModuleSystem.class
+                : JavaDispatcher.DynamicClassLoader.Resolver.NoOp.class));
     }
 
     @SuppressWarnings({"unchecked", "unused"})

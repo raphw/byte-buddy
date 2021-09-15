@@ -66,6 +66,13 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     private static final boolean GENERATE = Boolean.parseBoolean(doPrivileged(new GetSystemPropertyAction(GENERATE_PROPERTY)));
 
     /**
+     * A resolver to assure that a type's package and module are exported to the created class loader.
+     * This should normally always be the case, but if another library is shading Byte Buddy or otherwise
+     * manipulates the module graph, this might become necessary.
+     */
+    private static final DynamicClassLoader.Resolver RESOLVER = doPrivileged(DynamicClassLoader.Resolver.CreationAction.INSTANCE);
+
+    /**
      * Contains an invoker that makes sure that reflective dispatchers make invocations from an isolated {@link ClassLoader} and
      * not from within Byte Buddy's context. This way, no privilege context can be leaked by accident.
      */
@@ -1170,10 +1177,11 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         /**
          * Creates a new dynamic class loader.
          *
-         * @param parent The parent class loader.
+         * @param target The proxied type.
          */
-        protected DynamicClassLoader(ClassLoader parent) {
-            super(parent);
+        protected DynamicClassLoader(Class<?> target) {
+            super(target.getClassLoader());
+            RESOLVER.accept(this, target);
         }
 
         /**
@@ -1229,7 +1237,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             classWriter.visitEnd();
             byte[] binaryRepresentation = classWriter.toByteArray();
             try {
-                return new DynamicClassLoader(proxy.getClassLoader())
+                return new DynamicClassLoader(proxy)
                         .defineClass(proxy.getName() + "$Proxy",
                                 binaryRepresentation,
                                 0,
@@ -1305,7 +1313,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             classWriter.visitEnd();
             byte[] binaryRepresentation = classWriter.toByteArray();
             try {
-                return (Invoker) new DynamicClassLoader(Invoker.class.getClassLoader())
+                return (Invoker) new DynamicClassLoader(Invoker.class)
                         .defineClass(Invoker.class.getName() + "$Dispatcher",
                                 binaryRepresentation,
                                 0,
@@ -1317,6 +1325,128 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 return new DirectInvoker();
             } catch (Exception exception) {
                 throw new IllegalStateException("Failed to create invoker for " + Invoker.class.getName(), exception);
+            }
+        }
+
+        /**
+         * A resolver to make adjustments that are possibly necessary to withhold module graph guarantees.
+         */
+        protected interface Resolver {
+
+            /**
+             * Adjusts a module graph if necessary.
+             *
+             * @param classLoader The class loader to adjust.
+             * @param target      The targeted class for which a proxy is created.
+             */
+            void accept(ClassLoader classLoader, Class<?> target);
+
+            /**
+             * An action to create a resolver.
+             */
+            enum CreationAction implements PrivilegedAction<Resolver> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                public Resolver run() {
+                    try {
+                        Class<?> module = Class.forName("java.lang.Module", false, null);
+                        return new ForModuleSystem(Class.class.getMethod("getModule"),
+                                module.getMethod("isExported", String.class),
+                                module.getMethod("addExports", String.class, module),
+                                ClassLoader.class.getMethod("getUnnamedModule"));
+                    } catch (Exception ignored) {
+                        return NoOp.INSTANCE;
+                    }
+                }
+            }
+
+            /**
+             * A non-operational resolver for VMs that do not support the module system.
+             */
+            enum NoOp implements Resolver {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void accept(ClassLoader classLoader, Class<?> target) {
+                    /* do nothing */
+                }
+            }
+
+            /**
+             * A resolver for VMs that do support the module system.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForModuleSystem implements Resolver {
+
+                /**
+                 * The {@code java.lang.Class#getModule} method.
+                 */
+                private final Method getModule;
+
+                /**
+                 * The {@code java.lang.Module#isExported} method.
+                 */
+                private final Method isExported;
+
+                /**
+                 * The {@code java.lang.Module#addExports} method.
+                 */
+                private final Method addExports;
+
+                /**
+                 * The {@code java.lang.ClassLoader#getUnnamedModule} method.
+                 */
+                private final Method getUnnamedModule;
+
+                /**
+                 * Creates a new resolver for a VM that supports the module system.
+                 *
+                 * @param getModule        The {@code java.lang.Class#getModule} method.
+                 * @param isExported       The {@code java.lang.Module#isExported} method.
+                 * @param addExports       The {@code java.lang.Module#addExports} method.
+                 * @param getUnnamedModule The {@code java.lang.ClassLoader#getUnnamedModule} method.
+                 */
+                protected ForModuleSystem(Method getModule,
+                                          Method isExported,
+                                          Method addExports,
+                                          Method getUnnamedModule) {
+                    this.getModule = getModule;
+                    this.isExported = isExported;
+                    this.addExports = addExports;
+                    this.getUnnamedModule = getUnnamedModule;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
+                public void accept(ClassLoader classLoader, Class<?> target) {
+                    Package location = target.getPackage();
+                    if (location != null) {
+                        try {
+                            Object module = getModule.invoke(target);
+                            if (!(Boolean) isExported.invoke(module, location.getName())) {
+                                addExports.invoke(module, location.getName(), getUnnamedModule.invoke(classLoader));
+                            }
+                        } catch (Exception exception) {
+                            throw new IllegalStateException("Failed to adjust module graph for dispatcher", exception);
+                        }
+                    }
+                }
             }
         }
     }
