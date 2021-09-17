@@ -34,11 +34,8 @@ import java.util.List;
 
 /**
  * <p>
- * Parameters that are annotated with this annotation will be assigned a collection (or an array) containing
- * all arguments of the source method. Currently, this annotation supports the following collection types:
- * <ul>
- * <li>Array</li>
- * </ul>
+ * Parameters that are annotated with this annotation will be assigned an array of all arguments of the instrumented
+ * method.
  * </p>
  * <p>
  * By default, this annotation applies a
