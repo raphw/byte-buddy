@@ -220,11 +220,7 @@ public class ByteBuddyAgent {
      * Byte Buddy agent.
      */
     public static Instrumentation getInstrumentation() {
-        Instrumentation instrumentation = doGetInstrumentation();
-        if (instrumentation == null) {
-            throw new IllegalStateException("The Byte Buddy agent is not initialized");
-        }
-        return instrumentation;
+        return doGetInstrumentation(true);
     }
 
     /**
@@ -603,12 +599,12 @@ public class ByteBuddyAgent {
      * @return An instrumentation instance representing the currently running JVM.
      */
     public static synchronized Instrumentation install(AttachmentProvider attachmentProvider, ProcessProvider processProvider) {
-        Instrumentation instrumentation = doGetInstrumentation();
+        Instrumentation instrumentation = doGetInstrumentation(false);
         if (instrumentation != null) {
             return instrumentation;
         }
         install(attachmentProvider, processProvider.resolve(), WITHOUT_ARGUMENT, AgentProvider.ForByteBuddyAgent.INSTANCE, false);
-        return doGetInstrumentation();
+        return doGetInstrumentation(true);
     }
 
     /**
@@ -754,19 +750,25 @@ public class ByteBuddyAgent {
 
     /**
      * Performs the actual lookup of the {@link java.lang.instrument.Instrumentation} from an installed
-     * Byte Buddy agent.
+     * Byte Buddy agent, or {@code null} if not present.
      *
+     * @param required {@code true} if a {@code null} return value is prohibited.
      * @return The Byte Buddy agent's {@link java.lang.instrument.Instrumentation} instance.
      */
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Legal outcome where reflection communicates errors by throwing an exception")
-    private static Instrumentation doGetInstrumentation() {
+    private static Instrumentation doGetInstrumentation(boolean required) {
+        Instrumentation instrumentation;
         try {
-            return (Instrumentation) ClassLoader.getSystemClassLoader()
-                    .loadClass(Installer.class.getName())
+            instrumentation = (Instrumentation) Class.forName(Installer.class.getName(), true, ClassLoader.getSystemClassLoader())
                     .getMethod(INSTRUMENTATION_METHOD)
                     .invoke(STATIC_MEMBER);
         } catch (Exception ignored) {
-            return UNAVAILABLE;
+            instrumentation = UNAVAILABLE;
+        }
+        if (required && instrumentation == null) {
+            throw new IllegalStateException("The Byte Buddy agent is not initialized or unavailable");
+        } else {
+            return instrumentation;
         }
     }
 
