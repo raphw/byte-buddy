@@ -29,15 +29,18 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import java.lang.annotation.*;
 
 /**
+ * <p>
  * Parameters that are annotated with this annotation will be assigned the value of the parameter of the source method
  * with the given parameter. For example, if source method {@code foo(String, Integer)} is bound to target method
  * {@code bar(@Argument(1) Integer)}, the second parameter of {@code foo} will be bound to the first argument of
  * {@code bar}.
- * <p>&nbsp;</p>
+ * </p>
+ * <p>
  * If a source method has less parameters than specified by {@link Argument#value()}, the method carrying this parameter
  * annotation is excluded from the list of possible binding candidates to this particular source method. The same happens,
  * if the source method parameter at the specified index is not assignable to the annotated parameter.
- *
+ * </p>
+ * <p>
  * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.Argument} annotation. This annotation
  * should be used only in combination with method delegation
  * ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}).

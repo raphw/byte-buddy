@@ -44,7 +44,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
  * to be an illegal candidate for binding.
  * </p>
- *
+ * <p>
  * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.FieldValue} annotation. This annotation
  * should be used only in combination with method delegation
  * ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}).

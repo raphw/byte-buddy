@@ -23,7 +23,7 @@ jobs:
           restore-keys: ${{ runner.os }}-maven-
       - uses: actions/setup-java@v2
         with:
-          java-version: 17-ea
+          java-version: 18-ea
           distribution: adopt-hotspot
           architecture: x64
       - name: Install JDK and build project
@@ -35,7 +35,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-18.04, macOS-10.15, windows-2019]
-        java: [8, 11, 16]
+        java: [8, 11, 17]
         distribution: [adopt-hotspot, adopt-openj9]
     runs-on: ${{ matrix.os }}
     steps:
@@ -79,7 +79,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [9, 10, 12, 13, 14, 15]
+        java: [9, 10, 12, 13, 14, 15, 16]
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
@@ -134,7 +134,7 @@ jobs:
           distribution: adopt-hotspot
           architecture: x64
       - name: Build project
-        run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pintegration
+        run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pintegration -Pextras
   release:
     name: Release new version
     runs-on: ubuntu-18.04

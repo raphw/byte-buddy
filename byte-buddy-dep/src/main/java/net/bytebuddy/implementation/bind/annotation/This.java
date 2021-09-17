@@ -28,10 +28,12 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import java.lang.annotation.*;
 
 /**
+ * <p>
  * Parameters that are annotated with this annotation will be assigned a reference to the instrumented object, if
  * the instrumented method is not static. Otherwise, the method with this parameter annotation will be excluded from
  * the list of possible binding candidates of the static source method.
- *
+ * </p>
+ * <p>
  * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.This} annotation. This annotation
  * should be used only in combination with method delegation
  * ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}).

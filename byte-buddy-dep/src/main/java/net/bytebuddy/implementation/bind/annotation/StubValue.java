@@ -29,13 +29,15 @@ import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import java.lang.annotation.*;
 
 /**
+ * <p>
  * A stub value represents the (boxed) default value of the intercepted method's return type. This value can
  * only be assigned to a {@link java.lang.Object} parameter. This annotation is useful to conditionally return a
  * default value from a method when using an {@link java.lang.Object} return type in combination with the
  * {@link net.bytebuddy.implementation.bind.annotation.RuntimeType} annotation. The value is either representing
  * {@code null} if a method returns a reference type or {@code void} or a boxed primitive of the return type
  * representing the numeric value {@code 0}.
- *
+ * </p>
+ * <p>
  * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.StubValue} annotation. This
  * annotation should be used only in combination with method delegation
  * ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}).

@@ -33,19 +33,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * <p>
  * Parameters that are annotated with this annotation will be assigned a collection (or an array) containing
  * all arguments of the source method. Currently, this annotation supports the following collection types:
  * <ul>
  * <li>Array</li>
  * </ul>
- * <p>&nbsp;</p>
+ * </p>
+ * <p>
  * By default, this annotation applies a
  * {@link net.bytebuddy.implementation.bind.annotation.AllArguments.Assignment#STRICT}
  * assignment of the source method's parameters to the array. This implies that parameters that are not assignable to
  * the annotated array's component type make the method with this parameter unbindable. To avoid this, you can
  * use a {@link net.bytebuddy.implementation.bind.annotation.AllArguments.Assignment#SLACK} assignment
  * which simply skips non-assignable values instead.
- *
+ * </p>
+ * <p>
  * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.AllArguments} annotation. This annotation
  * should be used only in combination with method delegation
  * ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}).

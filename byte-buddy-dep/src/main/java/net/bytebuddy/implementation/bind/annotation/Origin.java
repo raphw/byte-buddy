@@ -61,7 +61,7 @@ import java.lang.reflect.Method;
  * <b>Important:</b> A method handle or method type reference can only be used if the referenced method's types are all visible
  * to the instrumented type or an {@link IllegalAccessError} will be thrown at runtime.
  * </p>
- *
+ * <p>
  * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.Origin} annotation. This annotation
  * should be used only in combination with method delegation
  * ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}).
