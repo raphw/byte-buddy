@@ -23,7 +23,7 @@ jobs:
           restore-keys: ${{ runner.os }}-maven-
       - uses: actions/setup-java@v2
         with:
-          java-version: 18-ea
+          java-version: 17-ea
           distribution: adopt-hotspot
           architecture: x64
       - name: Install JDK and build project
@@ -35,7 +35,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-18.04, macOS-10.15, windows-2019]
-        java: [8, 11, 17]
+        java: [8, 11]
         distribution: [adopt-hotspot, adopt-openj9]
     runs-on: ${{ matrix.os }}
     steps:
