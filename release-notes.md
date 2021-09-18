@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 17. September 2021: version 1.11.16
+
+- Avoid naming conflicts when adding super and default method delegation for the same method using `MethodDelegation`.
+- Fix module visibility for `Invoker` to avoid breakage if Byte Buddy is shaded into another module with different package exports.
+
 ### 2. September 2021: version 1.11.15
 
 - Add *net.bytebuddy* prefix to Byte Buddy specific privileges.
