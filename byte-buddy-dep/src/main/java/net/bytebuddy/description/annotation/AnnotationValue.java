@@ -244,6 +244,63 @@ public interface AnnotationValue<T, S> {
             public String toSourceString(TypeDescription value) {
                 return value.getActualName() + ".class";
             }
+        },
+
+        /**
+         * A rendering dispatcher for Java 17 onward.
+         */
+        JAVA_17_CAPABLE_VM('{', '}', ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).isLessThan(ClassFileVersion.JAVA_V17)) {
+            @Override
+            public String toSourceString(byte value) {
+                return "(byte)0x" + Integer.toHexString(value & 0xFF);
+            }
+
+            @Override
+            public String toSourceString(char value) {
+                StringBuilder stringBuilder = new StringBuilder().append('\'');
+                if (value == '\'') {
+                    stringBuilder.append("\\'");
+                } else {
+                    stringBuilder.append(value);
+                }
+                return stringBuilder.append('\'').toString();
+            }
+
+            @Override
+            public String toSourceString(long value) {
+                return value + "L";
+            }
+
+            @Override
+            public String toSourceString(float value) {
+                return Math.abs(value) <= Float.MAX_VALUE // Float.isFinite(value)
+                        ? value + "f"
+                        : (Float.isInfinite(value) ? (value < 0.0f ? "-1.0f/0.0f" : "1.0f/0.0f") : "0.0f/0.0f");
+            }
+
+            @Override
+            public String toSourceString(double value) {
+                return Math.abs(value) <= Double.MAX_VALUE // Double.isFinite(value)
+                        ? Double.toString(value)
+                        : (Double.isInfinite(value) ? (value < 0.0d ? "-1.0/0.0" : "1.0/0.0") : "0.0/0.0");
+            }
+
+            @Override
+            public String toSourceString(String value) {
+                return "\"" + (value.indexOf('"') == -1
+                        ? value
+                        : value.replace("\"", "\\\"")) + "\"";
+            }
+
+            @Override
+            public String toSourceString(TypeDescription value) {
+                return value.getActualName() + ".class";
+            }
+
+            @Override
+            public String toTypeErrorString(Class<?> type) {
+                return type.getName();
+            }
         };
 
         /**
@@ -258,7 +315,9 @@ public interface AnnotationValue<T, S> {
 
         static {
             ClassFileVersion classFileVersion = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5);
-            if (classFileVersion.isAtLeast(ClassFileVersion.JAVA_V14)) {
+            if (classFileVersion.isAtLeast(ClassFileVersion.JAVA_V17)) {
+                CURRENT = RenderingDispatcher.JAVA_17_CAPABLE_VM;
+            } else if (classFileVersion.isAtLeast(ClassFileVersion.JAVA_V14)) {
                 CURRENT = RenderingDispatcher.JAVA_14_CAPABLE_VM;
             } else if (classFileVersion.isAtLeast(ClassFileVersion.JAVA_V9)) {
                 CURRENT = RenderingDispatcher.JAVA_9_CAPABLE_VM;
@@ -413,6 +472,16 @@ public interface AnnotationValue<T, S> {
             return ARRAY_PREFIX + (componentAsInteger || !sort.isDefined()
                     ? Integer.toString(sort.getTag())
                     : Character.toString((char) sort.getTag()));
+        }
+
+        /**
+         * Resolves a type to be represented in an error message for a mismatched type.
+         *
+         * @param type The represented type.
+         * @return The name to represent.
+         */
+        public String toTypeErrorString(Class<?> type) {
+            return type.toString();
         }
     }
 
@@ -1003,7 +1072,7 @@ public interface AnnotationValue<T, S> {
             } else if (value instanceof Enum<?>) {
                 return new ForMismatchedType<U, U>(property, value.getClass().getName() + '.' + ((Enum<?>) value).name());
             } else {
-                return new ForMismatchedType<U, U>(property, value.getClass().getName() + '[' + value + ']');
+                return new ForMismatchedType<U, U>(property, RenderingDispatcher.CURRENT.toTypeErrorString(value.getClass()) + '[' + value + ']');
             }
         }
 
