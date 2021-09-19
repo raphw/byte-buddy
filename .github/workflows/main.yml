@@ -23,7 +23,7 @@ jobs:
           restore-keys: ${{ runner.os }}-maven-
       - uses: actions/setup-java@v2
         with:
-          java-version: 17
+          java-version: 17-ea
           distribution: temurin
           architecture: x64
       - name: Install JDK and build project
