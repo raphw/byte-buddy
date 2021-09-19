@@ -23,20 +23,43 @@ jobs:
           restore-keys: ${{ runner.os }}-maven-
       - uses: actions/setup-java@v2
         with:
-          java-version: 17-ea
-          distribution: adopt-hotspot
+          java-version: 18-ea
+          distribution: temurin
           architecture: x64
       - name: Install JDK and build project
         run: ./mvnw verify -Pjava17
         continue-on-error: false
-  any-supported:
+  hotspot-supported:
     name: Any (supported)
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-18.04, macOS-10.15, windows-2019]
-        java: [8, 11]
-        distribution: [adopt-hotspot, adopt-openj9]
+        java: [8, 11, 17]
+        distribution: [temurin]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+      - uses: actions/setup-java@v2
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: ${{ matrix.distribution }}
+          architecture: x64
+      - name: Build project
+        run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
+  j9-supported:
+    name: Any (supported)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04, macOS-10.15, windows-2019]
+        java: [8, 11, 16]
+        distribution: [adopt-openj9]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -91,7 +114,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.java }}
-          distribution: adopt-hotspot
+          distribution: temurin
           architecture: x64
       - name: Build project
         run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }} -pl '!byte-buddy-gradle-plugin'
@@ -131,7 +154,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: 8
-          distribution: adopt-hotspot
+          distribution: temurin
           architecture: x64
       - name: Build project
         run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pintegration -Pextras
@@ -144,7 +167,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: 8
-          distribution: adopt-hotspot
+          distribution: temurin
           architecture: x64
       - name: Publish new version
         run: |
