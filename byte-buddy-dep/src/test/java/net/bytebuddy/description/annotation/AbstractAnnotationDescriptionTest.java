@@ -405,7 +405,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(17)
+    @JavaVersionRule.Enforce(18)
     public void testDefectiveAnnotationWrongArityState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(DefectiveAnnotation.class.getMethod("wrongArity"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
