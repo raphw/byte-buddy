@@ -399,7 +399,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
-    @JavaVersionRule.Enforce(17)
+    @JavaVersionRule.Enforce(18)
     public void testDefectiveAnnotationWrongArity() throws Exception {
         describe(broken).prepare(DefectiveAnnotation.class).load().wrongArity();
     }
