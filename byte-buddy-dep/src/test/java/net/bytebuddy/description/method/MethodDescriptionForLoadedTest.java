@@ -1,7 +1,6 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.test.utility.JavaVersionRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
@@ -33,7 +32,6 @@ public class MethodDescriptionForLoadedTest extends AbstractMethodDescriptionTes
     @Test
     @Override
     @JavaVersionRule.Enforce(17)
-    @Ignore("Awaiting CI server update for EA versions")
     public void testEnumConstructorAnnotation() throws Exception {
         super.testEnumConstructorAnnotation();
     }

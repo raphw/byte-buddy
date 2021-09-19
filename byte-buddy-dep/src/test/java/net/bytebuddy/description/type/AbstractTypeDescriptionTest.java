@@ -19,7 +19,6 @@ import net.bytebuddy.test.visibility.Sample;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -36,8 +35,9 @@ import java.util.*;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -758,7 +758,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     @JavaVersionRule.Enforce(17)
-    @Ignore("Awaiting CI server update for EA versions")
     public void testSealed() throws Exception {
         Class<?> sealed = Class.forName("net.bytebuddy.test.precompiled.Sealed");
         assertThat(describe(sealed).isSealed(), is(true));

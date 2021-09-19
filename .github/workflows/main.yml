@@ -91,7 +91,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.java }}
-          distribution: temurin
+          distribution: adopt-hotspot
           architecture: x64
       - name: Build project
         run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }} -pl '!byte-buddy-gradle-plugin'
@@ -131,7 +131,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: 8
-          distribution: temurin
+          distribution: adopt-hotspot
           architecture: x64
       - name: Build project
         run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pintegration -Pextras
@@ -144,7 +144,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: 8
-          distribution: temurin
+          distribution: adopt-hotspot
           architecture: x64
       - name: Publish new version
         run: |

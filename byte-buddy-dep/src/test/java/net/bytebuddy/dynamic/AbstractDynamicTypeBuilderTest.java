@@ -33,7 +33,6 @@ import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -882,7 +881,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
                 .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(TypeDescription.ForLoadedType.of(Collection.class),
-                        TypeDescription.Generic.Builder.unboundWildcard())
+                                TypeDescription.Generic.Builder.unboundWildcard())
                         .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
                         .asArray()
                         .build())
@@ -923,8 +922,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
         MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
                 .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(TypeDescription.ForLoadedType.of(Collection.class),
-                        TypeDescription.Generic.Builder.unboundWildcard(AnnotationDescription.Builder.ofType(typeAnnotationType)
-                                .define(VALUE, INTEGER_VALUE).build()))
+                                TypeDescription.Generic.Builder.unboundWildcard(AnnotationDescription.Builder.ofType(typeAnnotationType)
+                                        .define(VALUE, INTEGER_VALUE).build()))
                         .build())
                 .make()
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
@@ -943,7 +942,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
                 .defineField(FOO, TypeDescription.Generic.Builder.rawType(TypeDescription.ForLoadedType.of(Nested.Inner.class),
-                        TypeDescription.Generic.Builder.rawType(Nested.class).build())
+                                TypeDescription.Generic.Builder.rawType(Nested.class).build())
                         .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
                         .build())
                 .make()
@@ -963,8 +962,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
         MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
                 .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(TypeDescription.ForLoadedType.of(GenericNested.Inner.class),
-                        TypeDescription.Generic.Builder.parameterizedType(GenericNested.class, Void.class).build(),
-                        Collections.<TypeDefinition>emptyList())
+                                TypeDescription.Generic.Builder.parameterizedType(GenericNested.class, Void.class).build(),
+                                Collections.<TypeDefinition>emptyList())
                         .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
                         .build())
                 .make()
@@ -1481,7 +1480,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
-    @Ignore("Awaiting CI server update for EA versions")
     @JavaVersionRule.Enforce(17)
     public void testPermittedSubclasses() throws Exception {
         TypeDescription sample = new TypeDescription.Latent("foo.Qux",
