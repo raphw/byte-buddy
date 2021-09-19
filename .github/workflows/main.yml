@@ -23,43 +23,20 @@ jobs:
           restore-keys: ${{ runner.os }}-maven-
       - uses: actions/setup-java@v2
         with:
-          java-version: 18-ea
+          java-version: 17
           distribution: temurin
           architecture: x64
       - name: Install JDK and build project
         run: ./mvnw verify -Pjava17
         continue-on-error: false
-  hotspot-supported:
+  any-supported:
     name: Any (supported)
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-18.04, macOS-10.15, windows-2019]
-        java: [8, 11, 17]
-        distribution: [temurin]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
-      - uses: actions/setup-java@v2
-        with:
-          java-version: ${{ matrix.java }}
-          distribution: ${{ matrix.distribution }}
-          architecture: x64
-      - name: Build project
-        run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
-  j9-supported:
-    name: Any (supported)
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-18.04, macOS-10.15, windows-2019]
-        java: [8, 11, 16]
-        distribution: [adopt-openj9]
+        java: [8, 11]
+        distribution: [temurin, adopt-openj9]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -142,7 +119,7 @@ jobs:
   coverage:
     name: Coverage
     runs-on: ubuntu-18.04
-    needs: [hotspot-ea, hotspot-supported, hotspot-unsupported, hotspot-legacy, j9-supported]
+    needs: [hotspot-ea, any-supported, hotspot-unsupported, hotspot-legacy]
     if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v2
