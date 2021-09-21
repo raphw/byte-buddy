@@ -516,6 +516,7 @@ public class InvokeDynamicTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(8)
     public void testGenericLambda() throws Exception {
         TypeDescription.Generic generic = TypeDescription.Generic.Builder.parameterizedType(GenericFunction.class,
                 String.class,
