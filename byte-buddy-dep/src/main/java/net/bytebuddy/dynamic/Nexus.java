@@ -136,7 +136,7 @@ public class Nexus extends WeakReference<ClassLoader> {
         if (typeInitializer != null) {
             Class.forName("net.bytebuddy.implementation.LoadedTypeInitializer",
                     true,
-                    type.getClassLoader()).getMethod("onLoad", Class.class).invoke(typeInitializer, type);
+                    typeInitializer.getClass().getClassLoader()).getMethod("onLoad", Class.class).invoke(typeInitializer, type);
         }
     }
 
