@@ -5,7 +5,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -61,24 +61,50 @@ public class FramePaddingMethodVisitorTest {
     public void testFramePadding() throws Exception {
         Method method = MethodVisitor.class.getDeclaredMethod(name, type);
         FramePaddingMethodVisitor visitor = new FramePaddingMethodVisitor(methodVisitor);
+        visitor.visitFrame(0, 0, null, 0, null);
+        visitor.visitFrame(0, 0, null, 0, null);
         method.invoke(visitor, argument);
-        visitor.visitFrame(0, 0, null, 0, null);
-        visitor.visitFrame(0, 0, null, 0, null);
-        method.invoke(verify(methodVisitor), argument);
-        verify(methodVisitor, times(2)).visitFrame(0, 0, null, 0, null);
-        verify(methodVisitor).visitInsn(Opcodes.NOP);
-        verifyNoMoreInteractions(methodVisitor);
+        InOrder inOrder = inOrder(methodVisitor);
+        inOrder.verify(methodVisitor).visitFrame(0, 0, null, 0, null);
+        inOrder.verify(methodVisitor).visitInsn(Opcodes.NOP);
+        inOrder.verify(methodVisitor).visitFrame(0, 0, null, 0, null);
+        method.invoke(inOrder.verify(methodVisitor), argument);
+        inOrder.verifyNoMoreInteractions();
     }
 
     @Test
-    public void testNoFramePaddingInsn() throws Exception {
+    public void testNoFramePadding() throws Exception {
         Method method = MethodVisitor.class.getDeclaredMethod(name, type);
         FramePaddingMethodVisitor visitor = new FramePaddingMethodVisitor(methodVisitor);
         visitor.visitFrame(0, 0, null, 0, null);
         method.invoke(visitor, argument);
         visitor.visitFrame(0, 0, null, 0, null);
-        method.invoke(verify(methodVisitor), argument);
-        verify(methodVisitor, times(2)).visitFrame(0, 0, null, 0, null);
-        verifyNoMoreInteractions(methodVisitor);
+        InOrder inOrder = inOrder(methodVisitor);
+        inOrder.verify(methodVisitor).visitFrame(0, 0, null, 0, null);
+        method.invoke(inOrder.verify(methodVisitor), argument);
+        inOrder.verify(methodVisitor).visitFrame(0, 0, null, 0, null);
+        inOrder.verifyNoMoreInteractions();
+    }
+
+    @Test
+    public void testFramePaddingWithLabelMapping() throws Exception {
+        Label label = new Label();
+        Method method = MethodVisitor.class.getDeclaredMethod(name, type);
+        FramePaddingMethodVisitor visitor = new FramePaddingMethodVisitor(methodVisitor);
+        visitor.visitLabel(label);
+        visitor.visitFrame(0, 0, null, 0, null);
+        visitor.visitFrame(0, 0, null, 0, null);
+        method.invoke(visitor, argument);
+        visitor.visitFrame(0, 1, new Object[]{label}, 1, new Object[]{label});
+        InOrder inOrder = inOrder(methodVisitor);
+        inOrder.verify(methodVisitor).visitLabel(label);
+        inOrder.verify(methodVisitor).visitFrame(0, 0, null, 0, null);
+        inOrder.verify(methodVisitor).visitInsn(Opcodes.NOP);
+        inOrder.verify(methodVisitor).visitFrame(0, 0, null, 0, null);
+        ArgumentCaptor<Label> captor = ArgumentCaptor.forClass(Label.class);
+        inOrder.verify(methodVisitor).visitLabel(captor.capture());
+        method.invoke(inOrder.verify(methodVisitor), argument);
+        inOrder.verify(methodVisitor).visitFrame(0, 1, new Object[]{captor.getValue()}, 1, new Object[]{captor.getValue()});
+        inOrder.verifyNoMoreInteractions();
     }
 }
