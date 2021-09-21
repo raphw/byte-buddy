@@ -219,8 +219,8 @@ public class MethodCallProxy implements AuxiliaryType {
         /**
          * {@inheritDoc}
          */
-        public MethodGraph.Linked compile(TypeDescription typeDescription) {
-            return compile(typeDescription, typeDescription);
+        public MethodGraph.Linked compile(TypeDefinition typeDefinition) {
+            return compile(typeDefinition, typeDefinition.asErasure());
         }
 
         /**

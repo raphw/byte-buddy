@@ -2,6 +2,8 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -127,10 +129,10 @@ public class InvokeDynamicTest {
                 .subclass(Simple.class)
                 .method(isDeclaredBy(Simple.class))
                 .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named("bootstrapArrayArguments")).getOnly(),
-                        INTEGER, LONG, FLOAT, DOUBLE, FOO,
-                        TypeDescription.ForLoadedType.of(CLASS),
-                        JavaConstant.MethodType.ofLoaded(methodType(CLASS)),
-                        JavaConstant.MethodHandle.ofLoaded(methodHandle()))
+                                INTEGER, LONG, FLOAT, DOUBLE, FOO,
+                                TypeDescription.ForLoadedType.of(CLASS),
+                                JavaConstant.MethodType.ofLoaded(methodType(CLASS)),
+                                JavaConstant.MethodHandle.ofLoaded(methodHandle()))
                         .withoutArguments())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
@@ -158,10 +160,10 @@ public class InvokeDynamicTest {
                 .subclass(Simple.class)
                 .method(isDeclaredBy(Simple.class))
                 .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named("bootstrapExplicitArguments")).getOnly(),
-                        INTEGER, LONG, FLOAT, DOUBLE, FOO,
-                        TypeDescription.ForLoadedType.of(CLASS),
-                        JavaConstant.MethodType.ofLoaded(methodType(CLASS)),
-                        JavaConstant.MethodHandle.ofLoaded(methodHandle()))
+                                INTEGER, LONG, FLOAT, DOUBLE, FOO,
+                                TypeDescription.ForLoadedType.of(CLASS),
+                                JavaConstant.MethodType.ofLoaded(methodType(CLASS)),
+                                JavaConstant.MethodHandle.ofLoaded(methodHandle()))
                         .withoutArguments())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
@@ -513,6 +515,27 @@ public class InvokeDynamicTest {
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().make().call(), is(FOO));
     }
 
+    @Test
+    public void testGenericLambda() throws Exception {
+        TypeDescription.Generic generic = TypeDescription.Generic.Builder.parameterizedType(GenericFunction.class,
+                String.class,
+                Integer.class).build();
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod(FOO, generic, Visibility.PUBLIC)
+                .intercept(InvokeDynamic.lambda(
+                        new MethodDescription.ForLoadedMethod(String.class.getMethod("length")),
+                        generic))
+                .make()
+                .load(GenericFunction.class.getClassLoader())
+                .getLoaded();
+        @SuppressWarnings("unchecked")
+        GenericFunction<String, Integer> target = (GenericFunction<String, Integer>) type
+                .getMethod(FOO)
+                .invoke(type.getConstructor().newInstance());
+        assertThat(target.apply(BAR), is(BAR.length()));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testLambdaMetaFactoryNoInterface() throws Exception {
         InvokeDynamic.lambda(InvokeDynamicTest.class.getMethod("value"), Object.class);
@@ -580,6 +603,11 @@ public class InvokeDynamicTest {
     public interface FunctionalFactoryWithValue {
 
         Callable<String> make(String argument);
+    }
+
+    public interface GenericFunction<T, S> {
+
+        S apply(T value);
     }
 
     public static String value() {

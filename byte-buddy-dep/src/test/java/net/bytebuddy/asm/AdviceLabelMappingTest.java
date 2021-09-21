@@ -6,7 +6,6 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -20,7 +19,6 @@ public class AdviceLabelMappingTest {
     public void testLabelWithJumpMapping() throws Exception {
         new ByteBuddy()
                 .subclass(Runnable.class)
-                .visit(DebuggingWrapper.makeDefault(false))
                 .visit(Advice.to(RunnableAdvice.class).on(named("run")))
                 .defineMethod("run", void.class, Visibility.PUBLIC)
                 .intercept(new Implementation.Simple(new ByteCodeAppender() {
@@ -40,7 +38,7 @@ public class AdviceLabelMappingTest {
                         methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V", false);
                         methodVisitor.visitVarInsn(Opcodes.ASTORE, 1);
                         methodVisitor.visitInsn(Opcodes.RETURN);
-                        return new Size(1, 1);
+                        return new Size(2, 1);
                     }
                 }))
                 .make()
@@ -51,16 +49,16 @@ public class AdviceLabelMappingTest {
                 .run();
     }
 
-    public static class RunnableAdvice {
+    private static class RunnableAdvice {
 
         @Advice.OnMethodEnter(suppress = Throwable.class)
-        public static void enter() {
-            System.err.println("enter");
+        private static void enter() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(onThrowable = Throwable.class, suppress = Throwable.class)
-        public static void exit() {
-            System.err.println("exit");
+        private static void exit() {
+            /* empty */
         }
     }
 }

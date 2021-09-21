@@ -16,6 +16,7 @@ public class MethodGraphCompilerForDeclaredMethodsTest {
     @Test
     public void testCompilationInvisible() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
         MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(methodDescription));
         when(methodDescription.isVirtual()).thenReturn(true);
@@ -28,6 +29,7 @@ public class MethodGraphCompilerForDeclaredMethodsTest {
     @Test
     public void testCompilationNonVirtual() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
         MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(methodDescription));
         when(methodDescription.isVirtual()).thenReturn(false);
@@ -40,6 +42,7 @@ public class MethodGraphCompilerForDeclaredMethodsTest {
     @Test
     public void testCompilationNonBridge() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
         MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(methodDescription));
         when(methodDescription.isVirtual()).thenReturn(true);
@@ -52,6 +55,7 @@ public class MethodGraphCompilerForDeclaredMethodsTest {
     @Test
     public void testCompilation() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
         MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         MethodDescription.SignatureToken token = mock(MethodDescription.SignatureToken.class);
         when(methodDescription.asSignatureToken()).thenReturn(token);

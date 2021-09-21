@@ -25,6 +25,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
@@ -49,6 +50,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -233,8 +235,8 @@ public class InvokeDynamic implements Implementation.Composable {
      * @param functionalInterface The functional interface that is an instance of the lambda expression.
      * @return A builder for creating a lambda expression.
      */
-    public static WithImplicitArguments lambda(Method method, Class<?> functionalInterface) {
-        return lambda(new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface));
+    public static WithImplicitArguments lambda(Method method, Type functionalInterface) {
+        return lambda(new MethodDescription.ForLoadedMethod(method), TypeDefinition.Sort.describe(functionalInterface));
     }
 
     /**
@@ -254,8 +256,8 @@ public class InvokeDynamic implements Implementation.Composable {
      * @param methodGraphCompiler The method graph compiler to use.
      * @return A builder for creating a lambda expression.
      */
-    public static WithImplicitArguments lambda(Method method, Class<?> functionalInterface, MethodGraph.Compiler methodGraphCompiler) {
-        return lambda(new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface), methodGraphCompiler);
+    public static WithImplicitArguments lambda(Method method, Type functionalInterface, MethodGraph.Compiler methodGraphCompiler) {
+        return lambda(new MethodDescription.ForLoadedMethod(method), TypeDefinition.Sort.describe(functionalInterface), methodGraphCompiler);
     }
 
     /**
@@ -274,7 +276,7 @@ public class InvokeDynamic implements Implementation.Composable {
      * @param functionalInterface The functional interface that is an instance of the lambda expression.
      * @return A builder for creating a lambda expression.
      */
-    public static WithImplicitArguments lambda(MethodDescription.InDefinedShape methodDescription, TypeDescription functionalInterface) {
+    public static WithImplicitArguments lambda(MethodDescription.InDefinedShape methodDescription, TypeDefinition functionalInterface) {
         return lambda(methodDescription, functionalInterface, MethodGraph.Compiler.Default.forJavaHierarchy());
     }
 
@@ -296,7 +298,7 @@ public class InvokeDynamic implements Implementation.Composable {
      * @return A builder for creating a lambda expression.
      */
     public static WithImplicitArguments lambda(MethodDescription.InDefinedShape methodDescription,
-                                               TypeDescription functionalInterface,
+                                               TypeDefinition functionalInterface,
                                                MethodGraph.Compiler methodGraphCompiler) {
         if (!functionalInterface.isInterface()) {
             throw new IllegalArgumentException(functionalInterface + " is not an interface type");
@@ -327,7 +329,7 @@ public class InvokeDynamic implements Implementation.Composable {
                         TypeDescription.Generic.UNDEFINED),
                 JavaConstant.MethodType.of(methods.asDefined().getOnly()),
                 JavaConstant.MethodHandle.of(methodDescription),
-                JavaConstant.MethodType.of(methods.asDefined().getOnly())).invoke(methods.asDefined().getOnly().getInternalName());
+                JavaConstant.MethodType.of(methods.getOnly())).invoke(methods.asDefined().getOnly().getInternalName());
     }
 
     /**

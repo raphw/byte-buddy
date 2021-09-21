@@ -92,7 +92,7 @@ public interface MethodGraph {
         /**
          * {@inheritDoc}
          */
-        public Linked compile(TypeDescription typeDescription) {
+        public Linked compile(TypeDefinition typeDefinition) {
             return this;
         }
 
@@ -410,10 +410,10 @@ public interface MethodGraph {
         /**
          * Compiles the given type into a method graph considering the type to be the viewpoint.
          *
-         * @param typeDescription The type to be compiled.
+         * @param typeDefinition The type to be compiled.
          * @return A linked method graph representing the given type.
          */
-        MethodGraph.Linked compile(TypeDescription typeDescription);
+        MethodGraph.Linked compile(TypeDefinition typeDefinition);
 
         /**
          * Compiles the given type into a method graph.
@@ -437,8 +437,8 @@ public interface MethodGraph {
             /**
              * {@inheritDoc}
              */
-            public Linked compile(TypeDescription typeDescription) {
-                return compile(typeDescription, typeDescription);
+            public Linked compile(TypeDefinition typeDefinition) {
+                return compile(typeDefinition, typeDefinition.asErasure());
             }
 
             /**
@@ -461,8 +461,8 @@ public interface MethodGraph {
             /**
              * {@inheritDoc}
              */
-            public Linked compile(TypeDescription typeDescription) {
-                return compile(typeDescription, typeDescription);
+            public Linked compile(TypeDefinition typeDefinition) {
+                return compile(typeDefinition, typeDefinition.asErasure());
             }
         }
 
