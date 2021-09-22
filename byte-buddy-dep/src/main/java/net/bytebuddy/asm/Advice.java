@@ -11756,7 +11756,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             if (!functionalInterface.isInterface()) {
                 throw new IllegalArgumentException(functionalInterface + " is not an interface type");
             }
-            MethodList<?> methods = methodGraphCompiler.compile(functionalInterface)
+            MethodList<?> methods = methodGraphCompiler.compile((TypeDefinition) functionalInterface)
                     .listNodes()
                     .asMethodList()
                     .filter(isAbstract());

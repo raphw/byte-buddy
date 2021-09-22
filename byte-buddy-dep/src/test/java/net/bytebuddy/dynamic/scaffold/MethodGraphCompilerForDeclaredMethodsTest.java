@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
@@ -22,7 +23,7 @@ public class MethodGraphCompilerForDeclaredMethodsTest {
         when(methodDescription.isVirtual()).thenReturn(true);
         when(methodDescription.isBridge()).thenReturn(false);
         when(methodDescription.isVisibleTo(typeDescription)).thenReturn(false);
-        MethodGraph.Linked methodGraph = MethodGraph.Compiler.ForDeclaredMethods.INSTANCE.compile(typeDescription);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.ForDeclaredMethods.INSTANCE.compile((TypeDefinition) typeDescription);
         assertThat(methodGraph.listNodes().size(), is(0));
     }
 
@@ -35,7 +36,7 @@ public class MethodGraphCompilerForDeclaredMethodsTest {
         when(methodDescription.isVirtual()).thenReturn(false);
         when(methodDescription.isBridge()).thenReturn(false);
         when(methodDescription.isVisibleTo(typeDescription)).thenReturn(true);
-        MethodGraph.Linked methodGraph = MethodGraph.Compiler.ForDeclaredMethods.INSTANCE.compile(typeDescription);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.ForDeclaredMethods.INSTANCE.compile((TypeDefinition) typeDescription);
         assertThat(methodGraph.listNodes().size(), is(0));
     }
 
@@ -48,7 +49,7 @@ public class MethodGraphCompilerForDeclaredMethodsTest {
         when(methodDescription.isVirtual()).thenReturn(true);
         when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_BRIDGE);
         when(methodDescription.isVisibleTo(typeDescription)).thenReturn(true);
-        MethodGraph.Linked methodGraph = MethodGraph.Compiler.ForDeclaredMethods.INSTANCE.compile(typeDescription);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.ForDeclaredMethods.INSTANCE.compile((TypeDefinition) typeDescription);
         assertThat(methodGraph.listNodes().size(), is(0));
     }
 
@@ -63,7 +64,7 @@ public class MethodGraphCompilerForDeclaredMethodsTest {
         when(methodDescription.isVirtual()).thenReturn(true);
         when(methodDescription.isBridge()).thenReturn(false);
         when(methodDescription.isVisibleTo(typeDescription)).thenReturn(true);
-        MethodGraph.Linked methodGraph = MethodGraph.Compiler.ForDeclaredMethods.INSTANCE.compile(typeDescription);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.ForDeclaredMethods.INSTANCE.compile((TypeDefinition) typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         assertThat(methodGraph.listNodes().getOnly().getRepresentative(), is((MethodDescription) methodDescription));
     }

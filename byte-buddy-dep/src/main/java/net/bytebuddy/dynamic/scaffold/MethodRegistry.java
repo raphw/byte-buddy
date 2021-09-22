@@ -21,6 +21,7 @@ import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
@@ -468,7 +469,7 @@ public interface MethodRegistry {
                     }
                 }
             }
-            MethodGraph.Linked methodGraph = methodGraphCompiler.compile(instrumentedType);
+            MethodGraph.Linked methodGraph = methodGraphCompiler.compile((TypeDefinition) instrumentedType);
             // Casting required for Java 6 compiler.
             ElementMatcher<? super MethodDescription> relevanceMatcher = (ElementMatcher<? super MethodDescription>) not(anyOf(implementations.keySet()))
                     .and(returns(isVisibleTo(instrumentedType)))

@@ -7,6 +7,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -67,7 +68,7 @@ public class TypeProxyCreationTest {
             modifiers = modifiers | modifierContributor.getMask();
         }
         foo = TypeDescription.ForLoadedType.of(Foo.class);
-        fooMethods = MethodGraph.Compiler.DEFAULT.compile(foo)
+        fooMethods = MethodGraph.Compiler.DEFAULT.compile((TypeDefinition) foo)
                 .listNodes()
                 .asMethodList()
                 .filter(isVirtual().and(not(isFinal())).and(not(isDefaultFinalizer())));

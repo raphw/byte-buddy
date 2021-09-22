@@ -71,7 +71,7 @@
         <version.plugin.install>2.5.2</version.plugin.install>
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
         <version.plugin.staging>1.6.8</version.plugin.staging>
-        <version.plugin.javadoc>3.3.0</version.plugin.javadoc>
+        <version.plugin.javadoc>3.3.1</version.plugin.javadoc>
         <version.plugin.source>3.0.1</version.plugin.source>
         <version.plugin.shade>3.2.4</version.plugin.shade>
         <version.plugin.gpg>1.6</version.plugin.gpg>

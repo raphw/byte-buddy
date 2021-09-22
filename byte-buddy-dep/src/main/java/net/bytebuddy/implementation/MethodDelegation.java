@@ -1201,7 +1201,7 @@ public class MethodDelegation implements Implementation.Composable {
             public Compiled compile(TypeDescription instrumentedType) {
                 MethodList<?> targets = new MethodList.Explicit<MethodDescription>(CompoundList.<MethodDescription>of(
                         instrumentedType.getDeclaredMethods().filter(isStatic().or(isPrivate())),
-                        methodGraphCompiler.compile(instrumentedType).listNodes().asMethodList())
+                        methodGraphCompiler.compile((TypeDefinition) instrumentedType).listNodes().asMethodList())
                 ).filter(named(name).and(takesArguments(0)).and(not(returns(isPrimitive().or(isArray())))));
                 if (targets.size() != 1) {
                     throw new IllegalStateException(instrumentedType + " does not define method without arguments with name " + name + ": " + targets);

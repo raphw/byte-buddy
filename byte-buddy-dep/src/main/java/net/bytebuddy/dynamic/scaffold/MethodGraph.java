@@ -99,7 +99,23 @@ public interface MethodGraph {
         /**
          * {@inheritDoc}
          */
+        @Deprecated
+        public Linked compile(TypeDescription typeDescription) {
+            return this;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
+            return this;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Deprecated
+        public Linked compile(TypeDescription typeDefinition, TypeDescription viewPoint) {
             return this;
         }
     }
@@ -416,6 +432,16 @@ public interface MethodGraph {
         MethodGraph.Linked compile(TypeDefinition typeDefinition);
 
         /**
+         * Compiles the given type into a method graph considering the type to be the viewpoint.
+         *
+         * @param typeDescription The type to be compiled.
+         * @return A linked method graph representing the given type.
+         * @deprecated Use {@link MethodGraph.Compiler#compile(TypeDefinition)}.
+         */
+        @Deprecated
+        MethodGraph.Linked compile(TypeDescription typeDescription);
+
+        /**
          * Compiles the given type into a method graph.
          *
          * @param typeDefinition The type to be compiled.
@@ -423,6 +449,17 @@ public interface MethodGraph {
          * @return A linked method graph representing the given type.
          */
         MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint);
+
+        /**
+         * Compiles the given type into a method graph.
+         *
+         * @param typeDefinition The type to be compiled.
+         * @param viewPoint      The view point that determines the method's visibility.
+         * @return A linked method graph representing the given type.
+         * @deprecated Use {@link MethodGraph.Compiler#compile(TypeDefinition, TypeDescription)}.
+         */
+        @Deprecated
+        MethodGraph.Linked compile(TypeDescription typeDefinition, TypeDescription viewPoint);
 
         /**
          * A flat compiler that simply returns the methods that are declared by the instrumented type.
@@ -444,12 +481,28 @@ public interface MethodGraph {
             /**
              * {@inheritDoc}
              */
+            @Deprecated
+            public Linked compile(TypeDescription typeDescription) {
+                return compile((TypeDefinition) typeDescription, typeDescription);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
                 LinkedHashMap<MethodDescription.SignatureToken, Node> nodes = new LinkedHashMap<MethodDescription.SignatureToken, Node>();
                 for (MethodDescription methodDescription : typeDefinition.getDeclaredMethods().filter(isVirtual().and(not(isBridge())).and(isVisibleTo(viewPoint)))) {
                     nodes.put(methodDescription.asSignatureToken(), new Node.Simple(methodDescription));
                 }
                 return new Linked.Delegation(new MethodGraph.Simple(nodes), Empty.INSTANCE, Collections.<TypeDescription, MethodGraph>emptyMap());
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            @Deprecated
+            public Linked compile(TypeDescription typeDefinition, TypeDescription viewPoint) {
+                return compile((TypeDefinition) typeDefinition, viewPoint);
             }
         }
 
@@ -463,6 +516,22 @@ public interface MethodGraph {
              */
             public Linked compile(TypeDefinition typeDefinition) {
                 return compile(typeDefinition, typeDefinition.asErasure());
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            @Deprecated
+            public Linked compile(TypeDescription typeDescription) {
+                return compile((TypeDefinition) typeDescription, typeDescription);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            @Deprecated
+            public Linked compile(TypeDescription typeDefinition, TypeDescription viewPoint) {
+                return compile((TypeDefinition) typeDefinition, viewPoint);
             }
         }
 

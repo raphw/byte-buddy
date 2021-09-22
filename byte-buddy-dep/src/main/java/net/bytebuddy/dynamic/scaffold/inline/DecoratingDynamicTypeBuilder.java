@@ -492,7 +492,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
         return TypeWriter.Default.<T>forDecoration(instrumentedType,
                 classFileVersion,
                 auxiliaryTypes,
-                CompoundList.of(methodGraphCompiler.compile(instrumentedType)
+                CompoundList.of(methodGraphCompiler.compile((TypeDefinition) instrumentedType)
                         .listNodes()
                         .asMethodList()
                         .filter(not(ignoredMethods.resolve(instrumentedType))), instrumentedType.getDeclaredMethods().filter(not(isVirtual()))),

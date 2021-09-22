@@ -2352,12 +2352,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             ? ElementMatchers.<MethodDescription>isPrivate().and(not(isStatic())).and(named(internalName).and(hasDescriptor(descriptor)))
                             : ElementMatchers.<MethodDescription>failSafe(isPrivate().<MethodDescription>and(not(isStatic())).and(named(internalName).and(hasDescriptor(descriptor)))));
                     if (candidates.isEmpty()) {
-                        candidates = methodGraphCompiler.compile(resolution.resolve(), instrumentedType).listNodes().asMethodList().filter(strict
+                        candidates = methodGraphCompiler.compile((TypeDefinition) resolution.resolve(), instrumentedType).listNodes().asMethodList().filter(strict
                                 ? ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))
                                 : ElementMatchers.<MethodDescription>failSafe(named(internalName).and(hasDescriptor(descriptor))));
                     }
                 } else {
-                    candidates = methodGraphCompiler.compile(resolution.resolve(), instrumentedType).listNodes().asMethodList().filter(strict
+                    candidates = methodGraphCompiler.compile((TypeDefinition) resolution.resolve(), instrumentedType).listNodes().asMethodList().filter(strict
                             ? ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))
                             : ElementMatchers.<MethodDescription>failSafe(named(internalName).and(hasDescriptor(descriptor))));
                 }

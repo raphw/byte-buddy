@@ -113,7 +113,7 @@ public class MethodRegistryDefaultTest {
         when(secondHandler.compile(implementationTarget)).thenReturn(secondCompiledHandler);
         when(thirdType.getTypeInitializer()).thenReturn(typeInitializer);
         when(thirdType.getLoadedTypeInitializer()).thenReturn(loadedTypeInitializer);
-        when(methodGraphCompiler.compile(thirdType)).thenReturn(methodGraph);
+        when(methodGraphCompiler.compile((TypeDefinition) thirdType)).thenReturn(methodGraph);
         when(methodGraph.listNodes()).thenReturn(new MethodGraph.NodeList(Collections.singletonList(new MethodGraph.Node.Simple(instrumentedMethod))));
         when(firstType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
         when(secondType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());

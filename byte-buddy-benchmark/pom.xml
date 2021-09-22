@@ -137,6 +137,7 @@
                                             <excludes>
                                                 <exclude>META-INF/MANIFEST.MF</exclude>
                                                 <exclude>**/module-info.class</exclude>
+                                                <exclude>**/NOTICE</exclude>
                                             </excludes>
                                         </filter>
                                     </filters>
