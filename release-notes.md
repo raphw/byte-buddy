@@ -1,7 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
-### 12. September 2021: version 1.11.17
+### 23. September 2021: version 1.11.18
+
+- Avoid binary incompatibility due to signature change by reintroducing method overload.
+- Use plugin to add annotations for dispatcher methods to avoid breakage when using obfuscators.
+
+### 22. September 2021: version 1.11.17
 
 - Better error message upon attachment failure due to overridden attach socket.
 - Retain label order for instructions in `Advice` to avoid incorrect offsets in stack map frames.
