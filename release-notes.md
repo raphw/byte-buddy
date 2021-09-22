@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 12. September 2021: version 1.11.17
+
+- Better error message upon attachment failure due to overridden attach socket.
+- Retain label order for instructions in `Advice` to avoid incorrect offsets in stack map frames.
+- Change `MethodGraph.Compiler` API to accept generic types.
+- Add plugin to add `Proxied` annotations to all proxied methods of a dispatcher. This avoids problems in obfuscators.
+- Fix resolution of type initializer in a `Nexus`.
+
 ### 17. September 2021: version 1.11.16
 
 - Avoid naming conflicts when adding super and default method delegation for the same method using `MethodDelegation`.
