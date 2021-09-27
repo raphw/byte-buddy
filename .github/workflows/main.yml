@@ -16,16 +16,12 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
       - uses: actions/setup-java@v2
         with:
           java-version: 17-ea
           distribution: temurin
           architecture: x64
+          cache: maven
       - name: Install JDK and build project
         run: ./mvnw verify -Pjava17
         continue-on-error: false
@@ -40,16 +36,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
       - uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
           architecture: x64
+          cache: maven
       - name: Build project
         run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
   hotspot-32:
@@ -62,16 +54,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
       - uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.java }}
           distribution: zulu
           architecture: x86
+          cache: maven
       - name: Build project
         run: ./mvnw verify "-Djapicmp.skip=true" -Pintegration -Pjava${{ matrix.java }}
   hotspot-unsupported:
@@ -83,16 +71,12 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
       - uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.java }}
           distribution: adopt-hotspot
           architecture: x64
+          cache: maven
       - name: Build project
         run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }} -pl '!byte-buddy-gradle-plugin'
   hotspot-legacy:
@@ -123,16 +107,12 @@ jobs:
     if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
       - uses: actions/setup-java@v2
         with:
           java-version: 8
           distribution: adopt-hotspot
           architecture: x64
+          cache: maven
       - name: Build project
         run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pintegration -Pextras
   release:
@@ -146,10 +126,9 @@ jobs:
           java-version: 8
           distribution: adopt-hotspot
           architecture: x64
+          gpg-private-key: ${{ secrets.gpg_secret }}
       - name: Publish new version
         run: |
-          export GPG_TTY=$(tty)
-          echo "${{ secrets.gpg_secret }}" | gpg --batch --import
           git clone ${{ github.repositoryUrl }} .
           git config user.name "${{ github.event.head_commit.committer.name }}"
           git config user.email "${{ github.event.head_commit.committer.email }}"
