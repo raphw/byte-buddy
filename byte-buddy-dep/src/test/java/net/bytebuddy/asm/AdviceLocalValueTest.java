@@ -40,6 +40,32 @@ public class AdviceLocalValueTest {
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
 
+    @Test
+    public void testAdviceWithLocalValueEnter() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(LocalValueEnterAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 0));
+    }
+
+    @Test
+    public void testAdviceWithLocalValueExit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(LocalValueExitAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 0));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
     @SuppressWarnings("unused")
     public static class Sample {
 
@@ -108,4 +134,35 @@ public class AdviceLocalValueTest {
         }
     }
 
+    @SuppressWarnings("unused")
+    public static class LocalValueEnterAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Local(FOO) Object foo) {
+            if (foo != null) {
+                throw new AssertionError();
+            }
+            foo = FOO;
+            if (!foo.equals(FOO)) {
+                throw new AssertionError();
+            }
+            Sample.enter++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class LocalValueExitAdvice {
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Local(FOO) Object foo) {
+            if (!foo.equals(FOO)) {
+                throw new AssertionError();
+            }
+            foo = BAR;
+            if (!foo.equals(BAR)) {
+                throw new AssertionError();
+            }
+            Sample.exit++;
+        }
+    }
 }

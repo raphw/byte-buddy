@@ -5667,20 +5667,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                       int readerFlags) {
                 if ((writerFlags & ClassWriter.COMPUTE_FRAMES) != 0 || classFileVersion.isLessThan(ClassFileVersion.JAVA_V6)) {
                     return NoOp.INSTANCE;
-                } else if (!exitAdvice) {
-                    if (!initialTypes.isEmpty()) {
-                        throw new IllegalStateException("Local parameters are not supported if no exit advice is present");
-                    }
-                    return new Trivial(instrumentedType, instrumentedMethod, (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
+                } else if (!exitAdvice && initialTypes.isEmpty()) {
+                    return new Trivial(instrumentedType,
+                            instrumentedMethod,
+                            (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
                 } else if (copyArguments) {
-                    return new WithPreservedArguments.UsingArgumentCopy(instrumentedType,
+                    return new WithPreservedArguments.WithArgumentCopy(instrumentedType,
                             instrumentedMethod,
                             initialTypes,
                             preMethodTypes,
                             postMethodTypes,
                             (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
                 } else {
-                    return new WithPreservedArguments.RequiringConsistentShape(instrumentedType,
+                    return new WithPreservedArguments.WithoutArgumentCopy(instrumentedType,
                             instrumentedMethod,
                             initialTypes,
                             preMethodTypes,
@@ -6224,7 +6223,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A stack map frame handler that expects that the original argument frames remain preserved throughout the original invocation.
                  */
-                protected static class RequiringConsistentShape extends WithPreservedArguments {
+                protected static class WithoutArgumentCopy extends WithPreservedArguments {
 
                     /**
                      * Creates a new stack map frame handler that expects the original frames to be preserved.
@@ -6237,13 +6236,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param expandFrames                {@code true} if the meta data handler is expected to expand its frames.
                      * @param allowCompactCompletionFrame {@code true} if a completion frame for the method bust be a full frame to reflect an initialization change.
                      */
-                    protected RequiringConsistentShape(TypeDescription instrumentedType,
-                                                       MethodDescription instrumentedMethod,
-                                                       List<? extends TypeDescription> initialTypes,
-                                                       List<? extends TypeDescription> preMethodTypes,
-                                                       List<? extends TypeDescription> postMethodTypes,
-                                                       boolean expandFrames,
-                                                       boolean allowCompactCompletionFrame) {
+                    protected WithoutArgumentCopy(TypeDescription instrumentedType,
+                                                  MethodDescription instrumentedMethod,
+                                                  List<? extends TypeDescription> initialTypes,
+                                                  List<? extends TypeDescription> preMethodTypes,
+                                                  List<? extends TypeDescription> postMethodTypes,
+                                                  boolean expandFrames,
+                                                  boolean allowCompactCompletionFrame) {
                         super(instrumentedType, instrumentedMethod, initialTypes, preMethodTypes, postMethodTypes, expandFrames, allowCompactCompletionFrame);
                     }
 
@@ -6278,7 +6277,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A stack map frame handler that expects that an argument copy of the original method arguments was made.
                  */
-                protected static class UsingArgumentCopy extends WithPreservedArguments {
+                protected static class WithArgumentCopy extends WithPreservedArguments {
 
                     /**
                      * Creates a new stack map frame handler that expects an argument copy.
@@ -6290,12 +6289,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param postMethodTypes    A list of virtual method arguments that are available after the instrumented method has completed.
                      * @param expandFrames       {@code true} if the meta data handler is expected to expand its frames.
                      */
-                    protected UsingArgumentCopy(TypeDescription instrumentedType,
-                                                MethodDescription instrumentedMethod,
-                                                List<? extends TypeDescription> initialTypes,
-                                                List<? extends TypeDescription> preMethodTypes,
-                                                List<? extends TypeDescription> postMethodTypes,
-                                                boolean expandFrames) {
+                    protected WithArgumentCopy(TypeDescription instrumentedType,
+                                               MethodDescription instrumentedMethod,
+                                               List<? extends TypeDescription> initialTypes,
+                                               List<? extends TypeDescription> preMethodTypes,
+                                               List<? extends TypeDescription> postMethodTypes,
+                                               boolean expandFrames) {
                         super(instrumentedType, instrumentedMethod, initialTypes, preMethodTypes, postMethodTypes, expandFrames, true);
                     }
 

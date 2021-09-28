@@ -1982,14 +1982,6 @@ public class AdviceTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testLocalParameterWithoutExitIsIllegal() throws Exception {
-        new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(EnterLocalVariableNotAllowedAdvice.class).on(named(FOO)))
-                .make();
-    }
-
-    @Test(expected = IllegalStateException.class)
     public void testNonResolvedAdvice() throws Exception {
         Advice.to(TypeDescription.ForLoadedType.of(TrivialAdvice.class));
     }
