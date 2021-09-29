@@ -491,6 +491,12 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             requiresDependencyResolution = ResolutionScope.COMPILE)
     public static class ForProductionTypes extends ByteBuddyMojo {
 
+        /**
+         * Determines that the class path should be resolved with runtime scope rather than compile scope.
+         */
+        @Parameter(defaultValue = "false", required = true)
+        public boolean runtimeClassPath;
+
         @Override
         protected String getOutputDirectory() {
             return project.getBuild().getOutputDirectory();
@@ -508,7 +514,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         @Override
         protected List<String> getClassPathElements() throws MojoFailureException {
             try {
-                return project.getCompileClasspathElements();
+                return runtimeClassPath
+                        ? project.getRuntimeClasspathElements()
+                        : project.getCompileClasspathElements();
             } catch (DependencyResolutionRequiredException e) {
                 throw new MojoFailureException("Could not resolve class path", e);
             }
