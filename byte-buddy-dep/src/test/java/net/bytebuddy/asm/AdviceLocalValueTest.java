@@ -22,9 +22,9 @@ public class AdviceLocalValueTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
-        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+        assertThat(type.getMethod(FOO).invoke(type.getConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getField(EXIT).get(null), is((Object) 1));
     }
 
     @Test
@@ -35,9 +35,9 @@ public class AdviceLocalValueTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
-        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+        assertThat(type.getMethod(FOO).invoke(type.getConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getField(EXIT).get(null), is((Object) 1));
     }
 
     @Test
@@ -48,9 +48,9 @@ public class AdviceLocalValueTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
-        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 0));
+        assertThat(type.getMethod(FOO).invoke(type.getConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getField(EXIT).get(null), is((Object) 0));
     }
 
     @Test
@@ -61,9 +61,9 @@ public class AdviceLocalValueTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
-        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 0));
-        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+        assertThat(type.getMethod(FOO).invoke(type.getConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getField(ENTER).get(null), is((Object) 0));
+        assertThat(type.getField(EXIT).get(null), is((Object) 1));
     }
 
     @SuppressWarnings("unused")
@@ -155,7 +155,7 @@ public class AdviceLocalValueTest {
 
         @Advice.OnMethodExit
         private static void exit(@Advice.Local(FOO) Object foo) {
-            if (!foo.equals(FOO)) {
+            if (foo != null) {
                 throw new AssertionError();
             }
             foo = BAR;

@@ -7361,6 +7361,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         interface Resolved extends Dispatcher {
 
             /**
+             * Returns the named types defined by this advice.
+             *
+             * @return The named types defined by this advice.
+             */
+            Map<String, TypeDefinition> getNamedTypes();
+
+            /**
              * Binds this dispatcher for resolution to a specific method.
              *
              * @param instrumentedType      The instrumented type.
@@ -7397,13 +7404,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @return {@code true} if the first discovered line number information should be prepended to the advice code.
                  */
                 boolean isPrependLineNumber();
-
-                /**
-                 * Returns the named types declared by this enter advice.
-                 *
-                 * @return The named types declared by this enter advice.
-                 */
-                Map<String, TypeDefinition> getNamedTypes();
             }
 
             /**
@@ -7736,16 +7736,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                   ClassReader classReader,
                                                                   Unresolved methodEnter,
                                                                   PostProcessor.Factory postProcessorFactory) {
-                Map<String, TypeDefinition> namedTypes = methodEnter.getNamedTypes();
+                Map<String, TypeDefinition> namedTypes = new HashMap<String, TypeDefinition>(methodEnter.getNamedTypes()), uninitializedNamedTypes = new HashMap<String, TypeDefinition>();
                 for (Map.Entry<String, TypeDefinition> entry : this.namedTypes.entrySet()) {
-                    TypeDefinition typeDefinition = this.namedTypes.get(entry.getKey());
-                    if (typeDefinition == null) {
-                        throw new IllegalStateException(adviceMethod + " attempts use of undeclared local variable " + entry.getKey());
-                    } else if (!typeDefinition.equals(entry.getValue())) {
-                        throw new IllegalStateException(adviceMethod + " does not read variable " + entry.getKey() + " as " + typeDefinition);
+                    TypeDefinition typeDefinition = namedTypes.get(entry.getKey()), uninitializedTypeDefinition = uninitializedNamedTypes.get(entry.getKey());
+                    if (typeDefinition == null && uninitializedTypeDefinition == null) {
+                        namedTypes.put(entry.getKey(), entry.getValue());
+                        uninitializedNamedTypes.put(entry.getKey(), entry.getValue());
+                    } else if (!(typeDefinition == null ? uninitializedTypeDefinition : typeDefinition).equals(entry.getValue())) {
+                        throw new IllegalStateException("Local variable for " + entry.getKey() + " is defined with inconsistent types");
                     }
                 }
-                return Resolved.ForMethodExit.of(adviceMethod, postProcessorFactory.make(adviceMethod, true), namedTypes, userFactories, classReader, methodEnter.getAdviceType());
+                return Resolved.ForMethodExit.of(adviceMethod, postProcessorFactory.make(adviceMethod, true), namedTypes, uninitializedNamedTypes, userFactories, classReader, methodEnter.getAdviceType());
             }
 
             /**
@@ -8204,11 +8205,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     protected Map<Integer, TypeDefinition> resolveInitializationTypes(ArgumentHandler argumentHandler) {
-                        SortedMap<Integer, TypeDefinition> namedTypes = new TreeMap<Integer, TypeDefinition>();
-                        for (Map.Entry<String, TypeDefinition> entry : this.namedTypes.entrySet()) {
-                            namedTypes.put(argumentHandler.named(entry.getKey()), entry.getValue());
+                        SortedMap<Integer, TypeDefinition> resolved = new TreeMap<Integer, TypeDefinition>();
+                        for (Map.Entry<String, TypeDefinition> entry : namedTypes.entrySet()) {
+                            resolved.put(argumentHandler.named(entry.getKey()), entry.getValue());
                         }
-                        return namedTypes;
+                        return resolved;
                     }
 
                     /**
@@ -8422,6 +8423,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract static class ForMethodExit extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodExit {
 
                     /**
+                     * A mapping of uninitialized local variables by their name.
+                     */
+                    private final Map<String, TypeDefinition> uninitializedNamedTypes;
+
+                    /**
                      * {@code true} if the arguments of the instrumented method should be copied before executing the instrumented method.
                      */
                     private final boolean backupArguments;
@@ -8429,17 +8435,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new resolved dispatcher for implementing method exit advice.
                      *
-                     * @param adviceMethod  The represented advice method.
-                     * @param postProcessor The post processor to apply.
-                     * @param namedTypes    A mapping of all available local variables by their name to their type.
-                     * @param userFactories A list of user-defined factories for offset mappings.
-                     * @param classReader   The class reader for parsing the advice method's class file.
-                     * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
+                     * @param adviceMethod            The represented advice method.
+                     * @param postProcessor           The post processor to apply.
+                     * @param namedTypes              A mapping of all available local variables by their name to their type.
+                     * @param uninitializedNamedTypes A mapping of all uninitialized local variables by their name to their type.
+                     * @param userFactories           A list of user-defined factories for offset mappings.
+                     * @param classReader             The class reader for parsing the advice method's class file.
+                     * @param enterType               The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      */
                     @SuppressWarnings("unchecked")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                             PostProcessor postProcessor,
                                             Map<String, TypeDefinition> namedTypes,
+                                            Map<String, TypeDefinition> uninitializedNamedTypes,
                                             List<? extends OffsetMapping.Factory<?>> userFactories,
                                             ClassReader classReader,
                                             TypeDefinition enterType) {
@@ -8461,23 +8469,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(REPEAT_ON).resolve(TypeDescription.class),
                                 classReader);
+                        this.uninitializedNamedTypes = uninitializedNamedTypes;
                         backupArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(BACKUP_ARGUMENTS).resolve(Boolean.class);
                     }
 
                     /**
                      * Resolves exit advice that handles exceptions depending on the specification of the exit advice.
                      *
-                     * @param adviceMethod  The advice method.
-                     * @param postProcessor The post processor to apply.
-                     * @param namedTypes    A mapping of all available local variables by their name to their type.
-                     * @param userFactories A list of user-defined factories for offset mappings.
-                     * @param classReader   The class reader for parsing the advice method's class file.
-                     * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
+                     * @param adviceMethod            The advice method.
+                     * @param postProcessor           The post processor to apply.
+                     * @param namedTypes              A mapping of all available local variables by their name to their type.
+                     * @param uninitializedNamedTypes A mapping of all uninitialized local variables by their name to their type.
+                     * @param userFactories           A list of user-defined factories for offset mappings.
+                     * @param classReader             The class reader for parsing the advice method's class file.
+                     * @param enterType               The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      * @return An appropriate exit handler.
                      */
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
                                                                PostProcessor postProcessor,
                                                                Map<String, TypeDefinition> namedTypes,
+                                                               Map<String, TypeDefinition> uninitializedNamedTypes,
                                                                List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                ClassReader classReader,
                                                                TypeDefinition enterType) {
@@ -8485,15 +8496,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 .ofType(OnMethodExit.class)
                                 .getValue(ON_THROWABLE).resolve(TypeDescription.class);
                         return throwable.represents(NoExceptionHandler.class)
-                                ? new WithoutExceptionHandler(adviceMethod, postProcessor, namedTypes, userFactories, classReader, enterType)
-                                : new WithExceptionHandler(adviceMethod, postProcessor, namedTypes, userFactories, classReader, enterType, throwable);
+                                ? new WithoutExceptionHandler(adviceMethod, postProcessor, namedTypes, uninitializedNamedTypes, userFactories, classReader, enterType)
+                                : new WithExceptionHandler(adviceMethod, postProcessor, namedTypes, uninitializedNamedTypes, userFactories, classReader, enterType, throwable);
+                    }
+
+                    @Override
+                    public Map<String, TypeDefinition> getNamedTypes() {
+                        return uninitializedNamedTypes;
                     }
 
                     @Override
                     protected Map<Integer, TypeDefinition> resolveInitializationTypes(ArgumentHandler argumentHandler) {
-                        return adviceMethod.getReturnType().represents(void.class)
-                                ? Collections.<Integer, TypeDefinition>emptyMap()
-                                : Collections.<Integer, TypeDefinition>singletonMap(argumentHandler.exit(), adviceMethod.getReturnType());
+                        SortedMap<Integer, TypeDefinition> resolved = new TreeMap<Integer, TypeDefinition>();
+                        for (Map.Entry<String, TypeDefinition> entry : uninitializedNamedTypes.entrySet()) {
+                            resolved.put(argumentHandler.named(entry.getKey()), entry.getValue());
+                        }
+                        if (!adviceMethod.getReturnType().represents(void.class)) {
+                            resolved.put(argumentHandler.exit(), adviceMethod.getReturnType());
+                        }
+                        return resolved;
                     }
 
                     @Override
@@ -8624,23 +8645,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates a new resolved dispatcher for implementing method exit advice that handles exceptions.
                          *
-                         * @param adviceMethod  The represented advice method.
-                         * @param postProcessor The post processor to apply.
-                         * @param namedTypes    A mapping of all available local variables by their name to their type.
-                         * @param userFactories A list of user-defined factories for offset mappings.
-                         * @param classReader   The class reader for parsing the advice method's class file.
-                         * @param enterType     The type of the value supplied by the enter advice method or
-                         *                      a description of {@code void} if no such value exists.
-                         * @param throwable     The type of the handled throwable type for which this advice is invoked.
+                         * @param adviceMethod            The represented advice method.
+                         * @param postProcessor           The post processor to apply.
+                         * @param namedTypes              A mapping of all available local variables by their name to their type.
+                         * @param uninitializedNamedTypes A mapping of all uninitialized local variables by their name to their type.
+                         * @param userFactories           A list of user-defined factories for offset mappings.
+                         * @param classReader             The class reader for parsing the advice method's class file.
+                         * @param enterType               The type of the value supplied by the enter advice method or
+                         *                                a description of {@code void} if no such value exists.
+                         * @param throwable               The type of the handled throwable type for which this advice is invoked.
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                        PostProcessor postProcessor,
                                                        Map<String, TypeDefinition> namedTypes,
+                                                       Map<String, TypeDefinition> uninitializedNamedTypes,
                                                        List<? extends OffsetMapping.Factory<?>> userFactories,
                                                        ClassReader classReader,
                                                        TypeDefinition enterType,
                                                        TypeDescription throwable) {
-                            super(adviceMethod, postProcessor, namedTypes, userFactories, classReader, enterType);
+                            super(adviceMethod, postProcessor, namedTypes, uninitializedNamedTypes, userFactories, classReader, enterType);
                             this.throwable = throwable;
                         }
 
@@ -8660,21 +8683,23 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates a new resolved dispatcher for implementing method exit advice that does not handle exceptions.
                          *
-                         * @param adviceMethod  The represented advice method.
-                         * @param postProcessor The post processor to apply.
-                         * @param namedTypes    A mapping of all available local variables by their name to their type.
-                         * @param userFactories A list of user-defined factories for offset mappings.
-                         * @param classReader   A class reader to query for the class file of the advice method.
-                         * @param enterType     The type of the value supplied by the enter advice method or
-                         *                      a description of {@code void} if no such value exists.
+                         * @param adviceMethod            The represented advice method.
+                         * @param postProcessor           The post processor to apply.
+                         * @param namedTypes              A mapping of all available local variables by their name to their type.
+                         * @param uninitializedNamedTypes A mapping of all uninitialized local variables by their name to their type.
+                         * @param userFactories           A list of user-defined factories for offset mappings.
+                         * @param classReader             A class reader to query for the class file of the advice method.
+                         * @param enterType               The type of the value supplied by the enter advice method or
+                         *                                a description of {@code void} if no such value exists.
                          */
                         protected WithoutExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                           PostProcessor postProcessor,
                                                           Map<String, TypeDefinition> namedTypes,
+                                                          Map<String, TypeDefinition> uninitializedNamedTypes,
                                                           List<? extends OffsetMapping.Factory<?>> userFactories,
                                                           ClassReader classReader,
                                                           TypeDefinition enterType) {
-                            super(adviceMethod, postProcessor, namedTypes, userFactories, classReader, enterType);
+                            super(adviceMethod, postProcessor, namedTypes, uninitializedNamedTypes, userFactories, classReader, enterType);
                         }
 
                         /**
@@ -9096,6 +9121,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                    Delegator delegator) {
                     super(adviceMethod, postProcessor, factories, throwableType, relocatableType, OffsetMapping.Factory.AdviceType.DELEGATION);
                     this.delegator = delegator;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Map<String, TypeDefinition> getNamedTypes() {
+                    return Collections.emptyMap();
                 }
 
                 /**
@@ -9558,13 +9590,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public boolean isPrependLineNumber() {
                         return prependLineNumber;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Map<String, TypeDefinition> getNamedTypes() {
-                        return Collections.emptyMap();
                     }
 
                     @Override
@@ -10048,10 +10073,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             super(OpenedClassReader.ASM_API, methodVisitor);
             this.instrumentedMethod = instrumentedMethod;
             preparationStart = new Label();
+            Map<String, TypeDefinition> namedTypes = new HashMap<String, TypeDefinition>();
+            namedTypes.putAll(methodEnter.getNamedTypes());
+            namedTypes.putAll(methodExit.getNamedTypes());
             argumentHandler = methodExit.getArgumentHandlerFactory().resolve(instrumentedMethod,
                     methodEnter.getAdviceType(),
                     methodExit.getAdviceType(),
-                    methodEnter.getNamedTypes());
+                    namedTypes);
             List<TypeDescription> initialTypes = CompoundList.of(methodExit.getAdviceType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodExit.getAdviceType().asErasure()), argumentHandler.getNamedTypes());
