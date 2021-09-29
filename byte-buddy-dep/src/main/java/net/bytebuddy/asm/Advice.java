@@ -4176,7 +4176,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A mapping of all available local variables by their name to their type.
                  */
-                protected final TreeMap<String, TypeDefinition> namedTypes;
+                protected final SortedMap<String, TypeDefinition> namedTypes;
 
                 /**
                  * The enter type or {@code void} if no enter type is defined.
@@ -4193,7 +4193,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected Default(MethodDescription instrumentedMethod,
                                   TypeDefinition exitType,
-                                  TreeMap<String, TypeDefinition> namedTypes,
+                                  SortedMap<String, TypeDefinition> namedTypes,
                                   TypeDefinition enterType) {
                     this.instrumentedMethod = instrumentedMethod;
                     this.namedTypes = namedTypes;
@@ -4293,7 +4293,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected Simple(MethodDescription instrumentedMethod,
                                      TypeDefinition exitType,
-                                     TreeMap<String, TypeDefinition> namedTypes,
+                                     SortedMap<String, TypeDefinition> namedTypes,
                                      TypeDefinition enterType) {
                         super(instrumentedMethod, exitType, namedTypes, enterType);
                     }
@@ -4347,7 +4347,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected Copying(MethodDescription instrumentedMethod,
                                       TypeDefinition exitType,
-                                      TreeMap<String, TypeDefinition> namedTypes,
+                                      SortedMap<String, TypeDefinition> namedTypes,
                                       TypeDefinition enterType) {
                         super(instrumentedMethod, exitType, namedTypes, enterType);
                     }
@@ -4449,7 +4449,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A mapping of all available local variables by their name to their type.
                  */
-                protected final TreeMap<String, TypeDefinition> namedTypes;
+                protected final SortedMap<String, TypeDefinition> namedTypes;
 
                 /**
                  * Creates a new argument handler for an enter advice.
@@ -4462,7 +4462,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected Default(MethodDescription instrumentedMethod,
                                   MethodDescription adviceMethod,
                                   TypeDefinition exitType,
-                                  TreeMap<String, TypeDefinition> namedTypes) {
+                                  SortedMap<String, TypeDefinition> namedTypes) {
                     this.instrumentedMethod = instrumentedMethod;
                     this.adviceMethod = adviceMethod;
                     this.exitType = exitType;
@@ -4518,7 +4518,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected ForMethodEnter(MethodDescription instrumentedMethod,
                                              MethodDescription adviceMethod,
                                              TypeDefinition exitType,
-                                             TreeMap<String, TypeDefinition> namedTypes) {
+                                             SortedMap<String, TypeDefinition> namedTypes) {
                         super(instrumentedMethod, adviceMethod, exitType, namedTypes);
                     }
 
@@ -4576,7 +4576,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected ForMethodExit(MethodDescription instrumentedMethod,
                                             MethodDescription adviceMethod,
                                             TypeDefinition exitType,
-                                            TreeMap<String, TypeDefinition> namedTypes,
+                                            SortedMap<String, TypeDefinition> namedTypes,
                                             TypeDefinition enterType,
                                             StackSize throwableSize) {
                         super(instrumentedMethod, adviceMethod, exitType, namedTypes);
@@ -4635,10 +4635,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected ForInstrumentedMethod resolve(MethodDescription instrumentedMethod,
                                                         TypeDefinition enterType,
                                                         TypeDefinition exitType,
-                                                        Map<String, TypeDefinition> namedTypes) {
+                                                        SortedMap<String, TypeDefinition> namedTypes) {
                     return new ForInstrumentedMethod.Default.Simple(instrumentedMethod,
                             exitType,
-                            new TreeMap<String, TypeDefinition>(namedTypes),
+                            namedTypes,
                             enterType);
                 }
             },
@@ -4651,10 +4651,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected ForInstrumentedMethod resolve(MethodDescription instrumentedMethod,
                                                         TypeDefinition enterType,
                                                         TypeDefinition exitType,
-                                                        Map<String, TypeDefinition> namedTypes) {
+                                                        SortedMap<String, TypeDefinition> namedTypes) {
                     return new ForInstrumentedMethod.Default.Copying(instrumentedMethod,
                             exitType,
-                            new TreeMap<String, TypeDefinition>(namedTypes),
+                            namedTypes,
                             enterType);
                 }
             };
@@ -4671,7 +4671,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected abstract ForInstrumentedMethod resolve(MethodDescription instrumentedMethod,
                                                              TypeDefinition enterType,
                                                              TypeDefinition exitType,
-                                                             Map<String, TypeDefinition> namedTypes);
+                                                             SortedMap<String, TypeDefinition> namedTypes);
         }
     }
 
@@ -10073,7 +10073,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             super(OpenedClassReader.ASM_API, methodVisitor);
             this.instrumentedMethod = instrumentedMethod;
             preparationStart = new Label();
-            Map<String, TypeDefinition> namedTypes = new HashMap<String, TypeDefinition>();
+            SortedMap<String, TypeDefinition> namedTypes = new TreeMap<String, TypeDefinition>();
             namedTypes.putAll(methodEnter.getNamedTypes());
             namedTypes.putAll(methodExit.getNamedTypes());
             argumentHandler = methodExit.getArgumentHandlerFactory().resolve(instrumentedMethod,
