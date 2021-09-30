@@ -4313,7 +4313,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public int variable(int index) {
                         return index < (instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size()
                                 ? index
-                                : index + (exitType.represents(void.class) ? 0 : 1) + StackSize.of(namedTypes.values()) + (enterType.represents(void.class) ? 0 : 1);
+                                : index + (exitType.represents(void.class) ? 0 : 1) + namedTypes.size() + (enterType.represents(void.class) ? 0 : 1);
                     }
 
                     /**
