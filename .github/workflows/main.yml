@@ -74,7 +74,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.java }}
-          distribution: adopt-hotspot
+          distribution: zulu
           architecture: x64
           cache: maven
       - name: Build project
