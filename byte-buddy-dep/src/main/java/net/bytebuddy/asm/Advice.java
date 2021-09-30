@@ -4676,7 +4676,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * A post processor for advice methods that is invoked after advice is executed.
+     * A post processor for advice methods that is invoked after advice is executed. A post processor
+     * is invoked after the instrumented method and only after a regular completion of the method. When
+     * invoked, the advice method's return value is placed on the stack as the only value. Upon
+     * completion, a compatible value or the same value must still be on top of the stack. A frame is added
+     * subsequently to the post processor's execution, making it feasible to add a jump instruction to the
+     * end of the method after which no further byte code instructions must be issued. This also applies
+     * to compound post processors.
      */
     public interface PostProcessor {
 
