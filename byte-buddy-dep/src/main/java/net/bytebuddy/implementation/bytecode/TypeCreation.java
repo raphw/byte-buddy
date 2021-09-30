@@ -25,7 +25,7 @@ import org.objectweb.asm.Opcodes;
  * A stack manipulation for creating an <i>undefined</i> type on which a constructor is to be called.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class TypeCreation implements StackManipulation {
+public class TypeCreation extends StackManipulation.AbstractBase {
 
     /**
      * The type that is being created.
@@ -35,7 +35,7 @@ public class TypeCreation implements StackManipulation {
     /**
      * Constructs a new type creation.
      *
-     * @param typeDescription The type to be create.
+     * @param typeDescription The type to be created.
      */
     protected TypeCreation(TypeDescription typeDescription) {
         this.typeDescription = typeDescription;
@@ -44,7 +44,7 @@ public class TypeCreation implements StackManipulation {
     /**
      * Creates a type creation for the given type.
      *
-     * @param typeDescription The type to be create.
+     * @param typeDescription The type to be created.
      * @return A stack manipulation that represents the creation of the given type.
      */
     public static StackManipulation of(TypeDescription typeDescription) {
@@ -52,13 +52,6 @@ public class TypeCreation implements StackManipulation {
             throw new IllegalArgumentException(typeDescription + " is not instantiable");
         }
         return new TypeCreation(typeDescription);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public boolean isValid() {
-        return true;
     }
 
     /**

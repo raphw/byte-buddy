@@ -93,7 +93,7 @@ public enum DoubleConstant implements StackManipulation {
      * A stack manipulation for loading a {@code double} value from a class's constant pool onto the operand stack.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class ConstantPool implements StackManipulation {
+    protected static class ConstantPool extends StackManipulation.AbstractBase {
 
         /**
          * The {@code double} value to be loaded onto the operand stack.
@@ -107,13 +107,6 @@ public enum DoubleConstant implements StackManipulation {
          */
         protected ConstantPool(double value) {
             this.value = value;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isValid() {
-            return true;
         }
 
         /**

@@ -25,7 +25,7 @@ import org.objectweb.asm.MethodVisitor;
  * Represents a {@link java.lang.String} value that is stored in a type's constant pool.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class TextConstant implements StackManipulation {
+public class TextConstant extends StackManipulation.AbstractBase {
 
     /**
      * The text value to load onto the operand stack.
@@ -39,13 +39,6 @@ public class TextConstant implements StackManipulation {
      */
     public TextConstant(String text) {
         this.text = text;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public boolean isValid() {
-        return true;
     }
 
     /**

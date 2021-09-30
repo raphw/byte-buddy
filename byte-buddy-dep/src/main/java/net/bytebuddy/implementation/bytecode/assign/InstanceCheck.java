@@ -26,7 +26,7 @@ import org.objectweb.asm.Opcodes;
  * Implements an {@code instanceof} check.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class InstanceCheck implements StackManipulation {
+public class InstanceCheck extends StackManipulation.AbstractBase {
 
     /**
      * The type to apply the instance check against.
@@ -53,13 +53,6 @@ public class InstanceCheck implements StackManipulation {
             throw new IllegalArgumentException("Cannot check an instance against a primitive type: " + typeDescription);
         }
         return new InstanceCheck(typeDescription);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public boolean isValid() {
-        return true;
     }
 
     /**

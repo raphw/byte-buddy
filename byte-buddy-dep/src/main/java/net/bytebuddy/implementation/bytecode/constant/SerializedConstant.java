@@ -31,7 +31,7 @@ import java.io.*;
  * A constant that represents a value in its serialized form.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class SerializedConstant implements StackManipulation {
+public class SerializedConstant extends StackManipulation.AbstractBase {
 
     /**
      * A charset that does not change the supplied byte array upon encoding or decoding.
@@ -74,13 +74,6 @@ public class SerializedConstant implements StackManipulation {
         } catch (IOException exception) {
             throw new IllegalStateException("Cannot serialize " + value, exception);
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public boolean isValid() {
-        return true;
     }
 
     /**

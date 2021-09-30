@@ -26,7 +26,7 @@ import org.objectweb.asm.Opcodes;
  * An exact invocation of a method handle with a polymorphic signature.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class HandleInvocation implements StackManipulation {
+public class HandleInvocation extends StackManipulation.AbstractBase {
 
     /**
      * The name of the {@code java.lang.invoke.MethodHandle} type.
@@ -50,13 +50,6 @@ public class HandleInvocation implements StackManipulation {
      */
     public HandleInvocation(JavaConstant.MethodType methodType) {
         this.methodType = methodType;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public boolean isValid() {
-        return true;
     }
 
     /**

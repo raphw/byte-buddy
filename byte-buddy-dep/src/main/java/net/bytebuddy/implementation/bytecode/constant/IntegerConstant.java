@@ -149,7 +149,7 @@ public enum IntegerConstant implements StackManipulation {
      * legal for single byte integer values.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class SingleBytePush implements StackManipulation {
+    protected static class SingleBytePush extends StackManipulation.AbstractBase {
 
         /**
          * The single byte value to be loaded onto the operand stack.
@@ -168,13 +168,6 @@ public enum IntegerConstant implements StackManipulation {
         /**
          * {@inheritDoc}
          */
-        public boolean isValid() {
-            return true;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitIntInsn(Opcodes.BIPUSH, value);
             return SIZE;
@@ -186,7 +179,7 @@ public enum IntegerConstant implements StackManipulation {
      * legal for up to two byte integer values.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class TwoBytePush implements StackManipulation {
+    protected static class TwoBytePush extends StackManipulation.AbstractBase {
 
         /**
          * The two byte value to be loaded onto the operand stack.
@@ -205,13 +198,6 @@ public enum IntegerConstant implements StackManipulation {
         /**
          * {@inheritDoc}
          */
-        public boolean isValid() {
-            return true;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitIntInsn(Opcodes.SIPUSH, value);
             return SIZE;
@@ -222,7 +208,7 @@ public enum IntegerConstant implements StackManipulation {
      * A stack manipulation that loads a JVM-integer value from a constant pool value onto the operand stack.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class ConstantPool implements StackManipulation {
+    protected static class ConstantPool extends StackManipulation.AbstractBase {
 
         /**
          * The JVM-integer value to load onto the operand stack.
@@ -236,13 +222,6 @@ public enum IntegerConstant implements StackManipulation {
          */
         protected ConstantPool(int value) {
             this.value = value;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isValid() {
-            return true;
         }
 
         /**

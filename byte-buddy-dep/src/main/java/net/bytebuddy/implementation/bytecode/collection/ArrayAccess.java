@@ -171,14 +171,7 @@ public enum ArrayAccess {
      * A stack manipulation for loading an array's value.
      */
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-    protected class Loader implements StackManipulation {
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isValid() {
-            return true;
-        }
+    protected class Loader extends StackManipulation.AbstractBase {
 
         /**
          * {@inheritDoc}
@@ -193,14 +186,7 @@ public enum ArrayAccess {
      * A stack manipulation for storing an array's value.
      */
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-    protected class Putter implements StackManipulation {
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isValid() {
-            return true;
-        }
+    protected class Putter extends StackManipulation.AbstractBase {
 
         /**
          * {@inheritDoc}

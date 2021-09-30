@@ -944,7 +944,7 @@ public @interface FieldProxy {
          * A proxy type for accessing a field either by a getter or a setter.
          */
         @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-        protected class AccessorProxy implements AuxiliaryType, StackManipulation {
+        protected class AccessorProxy extends StackManipulation.AbstractBase implements AuxiliaryType {
 
             /**
              * The name of the field that stores the accessed instance if any.
@@ -1013,13 +1013,6 @@ public @interface FieldProxy {
                         .intercept(fieldDescription.isStatic()
                                 ? StaticFieldConstructor.INSTANCE
                                 : new InstanceFieldConstructor(instrumentedType)), fieldDescription, assigner, methodAccessorFactory).make();
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public boolean isValid() {
-                return true;
             }
 
             /**

@@ -263,7 +263,7 @@ public enum PrimitiveWideningDelegate {
      * A stack manipulation that widens a primitive type into a more general primitive type.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class WideningStackManipulation implements StackManipulation {
+    protected static class WideningStackManipulation extends StackManipulation.AbstractBase {
 
         /**
          * The opcode for executing the conversion.
@@ -284,13 +284,6 @@ public enum PrimitiveWideningDelegate {
         protected WideningStackManipulation(int conversionOpcode, Size size) {
             this.conversionOpcode = conversionOpcode;
             this.size = size;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isValid() {
-            return true;
         }
 
         /**

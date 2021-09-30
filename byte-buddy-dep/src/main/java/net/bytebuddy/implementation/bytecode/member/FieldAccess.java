@@ -225,14 +225,7 @@ public enum FieldAccess {
         /**
          * An abstract base implementation for accessing a field value.
          */
-        private abstract class AbstractFieldInstruction implements StackManipulation {
-
-            /**
-             * {@inheritDoc}
-             */
-            public boolean isValid() {
-                return true;
-            }
+        private abstract class AbstractFieldInstruction extends StackManipulation.AbstractBase {
 
             /**
              * {@inheritDoc}

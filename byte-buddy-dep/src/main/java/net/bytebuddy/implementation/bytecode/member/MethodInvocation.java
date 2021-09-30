@@ -333,7 +333,7 @@ public enum MethodInvocation {
      * An implementation of a method invoking stack manipulation.
      */
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-    protected class Invocation implements WithImplicitInvocationTargetType {
+    protected class Invocation extends StackManipulation.AbstractBase implements WithImplicitInvocationTargetType {
 
         /**
          * The method to be invoked.
@@ -363,13 +363,6 @@ public enum MethodInvocation {
         protected Invocation(MethodDescription.InDefinedShape methodDescription, TypeDescription typeDescription) {
             this.typeDescription = typeDescription;
             this.methodDescription = methodDescription;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isValid() {
-            return true;
         }
 
         /**
@@ -439,7 +432,7 @@ public enum MethodInvocation {
      * Performs a dynamic method invocation of the given method.
      */
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-    protected class DynamicInvocation implements StackManipulation {
+    protected class DynamicInvocation extends StackManipulation.AbstractBase {
 
         /**
          * The internal name of the method that is to be bootstrapped.
@@ -490,13 +483,6 @@ public enum MethodInvocation {
         /**
          * {@inheritDoc}
          */
-        public boolean isValid() {
-            return true;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             StringBuilder stringBuilder = new StringBuilder("(");
             for (TypeDescription parameterType : parameterTypes) {
@@ -527,7 +513,7 @@ public enum MethodInvocation {
      * Performs a method invocation on a method handle with a polymorphic type signature.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class HandleInvocation implements StackManipulation {
+    protected static class HandleInvocation extends StackManipulation.AbstractBase {
 
         /**
          * The internal name of the method handle type.
@@ -553,13 +539,6 @@ public enum MethodInvocation {
         protected HandleInvocation(MethodDescription.InDefinedShape methodDescription, HandleType type) {
             this.methodDescription = methodDescription;
             this.type = type;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isValid() {
-            return true;
         }
 
         /**

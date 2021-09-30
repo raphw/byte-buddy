@@ -200,7 +200,7 @@ public @interface Pipe {
          * {@link net.bytebuddy.implementation.bind.annotation.Pipe} annotation.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        protected static class Redirection implements AuxiliaryType, StackManipulation {
+        protected static class Redirection extends StackManipulation.AbstractBase implements AuxiliaryType {
 
             /**
              * The prefix for naming fields to store method arguments.
@@ -293,13 +293,6 @@ public @interface Pipe {
                     builder = builder.defineField(field.getKey(), field.getValue(), Visibility.PRIVATE);
                 }
                 return builder.make();
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public boolean isValid() {
-                return true;
             }
 
             /**

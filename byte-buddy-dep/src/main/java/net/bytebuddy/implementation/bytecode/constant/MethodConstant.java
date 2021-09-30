@@ -41,7 +41,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
  * Represents the creation of a {@link java.lang.reflect.Method} value which can be created from a given
  * set of constant pool values and can therefore be considered a constant in the broader meaning.
  */
-public abstract class MethodConstant implements StackManipulation {
+public abstract class MethodConstant extends StackManipulation.AbstractBase {
 
     /**
      * The {@code java.security.AccessController#doPrivileged(PrivilegedExceptionAction)} method or {@code null} if
@@ -138,13 +138,6 @@ public abstract class MethodConstant implements StackManipulation {
             typeConstants.add(ClassConstant.of(parameterType));
         }
         return typeConstants;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public boolean isValid() {
-        return true;
     }
 
     /**

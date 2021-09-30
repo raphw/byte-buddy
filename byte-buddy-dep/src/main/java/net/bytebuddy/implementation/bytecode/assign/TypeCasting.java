@@ -29,7 +29,7 @@ import org.objectweb.asm.Opcodes;
  * A stack manipulation for a type down casting. Such castings are not implicit but must be performed explicitly.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class TypeCasting implements StackManipulation {
+public class TypeCasting extends StackManipulation.AbstractBase {
 
     /**
      * The type description to which a value should be casted.
@@ -56,13 +56,6 @@ public class TypeCasting implements StackManipulation {
             throw new IllegalArgumentException("Cannot cast to primitive type: " + typeDefinition);
         }
         return new TypeCasting(typeDefinition.asErasure());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public boolean isValid() {
-        return true;
     }
 
     /**

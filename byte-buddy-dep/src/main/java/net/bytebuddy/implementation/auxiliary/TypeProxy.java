@@ -380,7 +380,7 @@ public class TypeProxy implements AuxiliaryType {
      * All constructor parameters will be assigned their default values when this stack operation is applied.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    public static class ForSuperMethodByConstructor implements StackManipulation {
+    public static class ForSuperMethodByConstructor extends StackManipulation.AbstractBase {
 
         /**
          * The type for the type proxy to subclass or implement.
@@ -431,13 +431,6 @@ public class TypeProxy implements AuxiliaryType {
         /**
          * {@inheritDoc}
          */
-        public boolean isValid() {
-            return true;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             TypeDescription proxyType = implementationContext
                     .register(new TypeProxy(proxiedType,
@@ -469,7 +462,7 @@ public class TypeProxy implements AuxiliaryType {
      * the instrumented type must lie on top of the operand stack.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    public static class ForSuperMethodByReflectionFactory implements StackManipulation {
+    public static class ForSuperMethodByReflectionFactory extends StackManipulation.AbstractBase {
 
         /**
          * The type for which a proxy type is created.
@@ -512,13 +505,6 @@ public class TypeProxy implements AuxiliaryType {
         /**
          * {@inheritDoc}
          */
-        public boolean isValid() {
-            return true;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             TypeDescription proxyType = implementationContext.register(new TypeProxy(proxiedType,
                     implementationTarget,
@@ -539,7 +525,7 @@ public class TypeProxy implements AuxiliaryType {
      * a given interface and loads an instance of this proxy onto the operand stack.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    public static class ForDefaultMethod implements StackManipulation {
+    public static class ForDefaultMethod extends StackManipulation.AbstractBase {
 
         /**
          * The proxied interface type.
@@ -569,13 +555,6 @@ public class TypeProxy implements AuxiliaryType {
             this.proxiedType = proxiedType;
             this.implementationTarget = implementationTarget;
             this.serializableProxy = serializableProxy;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isValid() {
-            return true;
         }
 
         /**

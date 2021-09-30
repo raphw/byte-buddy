@@ -437,14 +437,7 @@ public class HashCodeMethod implements Implementation {
              * The stack manipulation to apply before the hash value computation.
              */
             @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-            protected class BeforeInstruction implements StackManipulation {
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isValid() {
-                    return true;
-                }
+            protected class BeforeInstruction extends StackManipulation.AbstractBase {
 
                 /**
                  * {@inheritDoc}
@@ -462,14 +455,7 @@ public class HashCodeMethod implements Implementation {
              * The stack manipulation to apply after the hash value computation.
              */
             @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-            protected class AfterInstruction implements StackManipulation {
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isValid() {
-                    return true;
-                }
+            protected class AfterInstruction extends StackManipulation.AbstractBase {
 
                 /**
                  * {@inheritDoc}

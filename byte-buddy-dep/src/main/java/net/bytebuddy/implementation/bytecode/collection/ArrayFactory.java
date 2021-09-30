@@ -234,7 +234,7 @@ public class ArrayFactory implements CollectionFactory {
          * An array creator implementation for reference types.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class ForReferenceType implements ArrayCreator {
+        class ForReferenceType extends StackManipulation.AbstractBase implements ArrayCreator {
 
             /**
              * The internal name of this array's non-primitive component type.
@@ -248,13 +248,6 @@ public class ArrayFactory implements CollectionFactory {
              */
             protected ForReferenceType(TypeDescription referenceType) {
                 this.internalTypeName = referenceType.getInternalName();
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public boolean isValid() {
-                return true;
             }
 
             /**

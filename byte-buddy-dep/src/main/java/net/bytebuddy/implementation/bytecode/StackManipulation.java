@@ -174,6 +174,19 @@ public interface StackManipulation {
     }
 
     /**
+     * An abstract base implementation of a valid stack manipulation.
+     */
+    abstract class AbstractBase implements StackManipulation {
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isValid() {
+            return true;
+        }
+    }
+
+    /**
      * An immutable stack manipulation that aggregates a sequence of other stack manipulations.
      */
     @HashCodeAndEqualsPlugin.Enhance
@@ -237,7 +250,7 @@ public interface StackManipulation {
      * An implementation of {@link StackManipulation} that simplifies functional invocations via lambda expressions.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    class Simple implements StackManipulation {
+    class Simple extends StackManipulation.AbstractBase {
 
         /**
          * The dispatcher to use.
@@ -251,13 +264,6 @@ public interface StackManipulation {
          */
         public Simple(Dispatcher dispatcher) {
             this.dispatcher = dispatcher;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isValid() {
-            return true;
         }
 
         /**

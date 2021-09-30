@@ -305,7 +305,7 @@ public @interface Morph {
          * A proxy that implements the installed interface in order to allow for a morphed super method invocation.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        protected static class RedirectionProxy implements AuxiliaryType, StackManipulation {
+        protected static class RedirectionProxy extends StackManipulation.AbstractBase implements AuxiliaryType {
 
             /**
              * The name of the field that carries an instance for invoking a super method on.
@@ -381,13 +381,6 @@ public @interface Morph {
                         .method(ElementMatchers.<MethodDescription>isAbstract().and(isDeclaredBy(morphingType)))
                         .intercept(new MethodCall(methodAccessorFactory.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT), assigner))
                         .make();
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public boolean isValid() {
-                return true;
             }
 
             /**

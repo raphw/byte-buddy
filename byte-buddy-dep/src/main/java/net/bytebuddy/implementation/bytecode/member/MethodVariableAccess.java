@@ -202,7 +202,7 @@ public enum MethodVariableAccess {
      * A stack manipulation that loads all parameters of a given method onto the operand stack.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    public static class MethodLoading implements StackManipulation {
+    public static class MethodLoading extends StackManipulation.AbstractBase {
 
         /**
          * The method for which all parameters are loaded onto the operand stack.
@@ -223,13 +223,6 @@ public enum MethodVariableAccess {
         protected MethodLoading(MethodDescription methodDescription, TypeCastingHandler typeCastingHandler) {
             this.methodDescription = methodDescription;
             this.typeCastingHandler = typeCastingHandler;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isValid() {
-            return true;
         }
 
         /**
@@ -338,7 +331,7 @@ public enum MethodVariableAccess {
      * A stack manipulation for loading a variable of a method's local variable array onto the operand stack.
      */
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-    protected class OffsetLoading implements StackManipulation {
+    protected class OffsetLoading extends StackManipulation.AbstractBase {
 
         /**
          * The offset of the local variable array from which the variable should be loaded.
@@ -357,13 +350,6 @@ public enum MethodVariableAccess {
         /**
          * {@inheritDoc}
          */
-        public boolean isValid() {
-            return true;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitVarInsn(loadOpcode, offset);
             return size.toIncreasingSize();
@@ -374,7 +360,7 @@ public enum MethodVariableAccess {
      * A stack manipulation for storing a variable into a method's local variable array.
      */
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-    protected class OffsetWriting implements StackManipulation {
+    protected class OffsetWriting extends StackManipulation.AbstractBase {
 
         /**
          * The offset of the local variable array to which the value should be written.
@@ -393,13 +379,6 @@ public enum MethodVariableAccess {
         /**
          * {@inheritDoc}
          */
-        public boolean isValid() {
-            return true;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitVarInsn(storeOpcode, offset);
             return size.toDecreasingSize();
@@ -410,7 +389,7 @@ public enum MethodVariableAccess {
      * A stack manipulation that increments an integer variable.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class OffsetIncrementing implements StackManipulation {
+    protected static class OffsetIncrementing extends StackManipulation.AbstractBase {
 
         /**
          * The index of the local variable array from which the variable should be loaded.
@@ -431,13 +410,6 @@ public enum MethodVariableAccess {
         protected OffsetIncrementing(int offset, int value) {
             this.offset = offset;
             this.value = value;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isValid() {
-            return true;
         }
 
         /**

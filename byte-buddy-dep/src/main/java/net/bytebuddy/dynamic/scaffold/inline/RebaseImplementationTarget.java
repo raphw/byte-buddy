@@ -187,7 +187,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
                 stackManipulations.add(stackManipulation);
                 return new RebasedMethodInvocation(resolvedMethod, instrumentedType, new Compound(stackManipulations), prependedParameters);
             } else {
-                return Illegal.INSTANCE;
+                return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
             }
         }
 
@@ -220,7 +220,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
                     CompoundList.of(token.getParameterTypes(), prependedParameters)))) {
                 return this;
             } else {
-                return Illegal.INSTANCE;
+                return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
             }
         }
     }

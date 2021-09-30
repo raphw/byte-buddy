@@ -181,14 +181,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
         /**
          * An abstract base implementation of a valid special method invocation.
          */
-        abstract class AbstractBase implements SpecialMethodInvocation {
-
-            /**
-             * {@inheritDoc}
-             */
-            public boolean isValid() {
-                return true;
-            }
+        abstract class AbstractBase extends StackManipulation.AbstractBase implements SpecialMethodInvocation {
 
             @Override
             @CachedReturnPlugin.Enhance("hashCode")

@@ -419,7 +419,7 @@ public class MethodCallProxy implements AuxiliaryType {
      * as the target method itself.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    public static class AssignableSignatureCall implements StackManipulation {
+    public static class AssignableSignatureCall extends StackManipulation.AbstractBase {
 
         /**
          * The special method invocation to be proxied by this stack manipulation.
@@ -444,13 +444,6 @@ public class MethodCallProxy implements AuxiliaryType {
                                        boolean serializable) {
             this.specialMethodInvocation = specialMethodInvocation;
             this.serializable = serializable;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isValid() {
-            return true;
         }
 
         /**

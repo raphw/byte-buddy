@@ -29,7 +29,7 @@ import org.objectweb.asm.Type;
  * A constant representing a {@link JavaConstant}.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class JavaConstantValue implements StackManipulation {
+public class JavaConstantValue extends StackManipulation.AbstractBase {
 
     /**
      * The instance to load onto the operand stack.
@@ -43,13 +43,6 @@ public class JavaConstantValue implements StackManipulation {
      */
     public JavaConstantValue(JavaConstant constant) {
         this.constant = constant;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public boolean isValid() {
-        return true;
     }
 
     /**

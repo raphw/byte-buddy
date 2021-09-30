@@ -100,7 +100,7 @@ public enum FloatConstant implements StackManipulation {
      * A stack manipulation for loading a {@code float} value from a class's constant pool onto the operand stack.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class ConstantPool implements StackManipulation {
+    protected static class ConstantPool extends StackManipulation.AbstractBase {
 
         /**
          * The {@code float} value to be loaded onto the operand stack.
@@ -114,13 +114,6 @@ public enum FloatConstant implements StackManipulation {
          */
         protected ConstantPool(float value) {
             this.value = value;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isValid() {
-            return true;
         }
 
         /**

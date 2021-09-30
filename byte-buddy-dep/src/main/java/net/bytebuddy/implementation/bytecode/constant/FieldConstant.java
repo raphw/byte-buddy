@@ -29,7 +29,7 @@ import java.lang.reflect.Field;
 /**
  * Represents a {@link Field} constant for a given type.
  */
-public class FieldConstant implements StackManipulation {
+public class FieldConstant extends StackManipulation.AbstractBase {
 
     /**
      * The field to be represent as a {@link Field}.
@@ -52,13 +52,6 @@ public class FieldConstant implements StackManipulation {
      */
     public StackManipulation cached() {
         return new Cached(this);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public boolean isValid() {
-        return true;
     }
 
     /**

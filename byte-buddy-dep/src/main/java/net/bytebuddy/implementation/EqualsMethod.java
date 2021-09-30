@@ -469,14 +469,7 @@ public class EqualsMethod implements Implementation {
              * The stack manipulation to apply before the equality computation.
              */
             @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-            protected class BeforeInstruction implements StackManipulation {
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isValid() {
-                    return true;
-                }
+            protected class BeforeInstruction extends StackManipulation.AbstractBase {
 
                 /**
                  * {@inheritDoc}
@@ -498,14 +491,7 @@ public class EqualsMethod implements Implementation {
              * The stack manipulation to apply after the equality computation.
              */
             @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-            protected class AfterInstruction implements StackManipulation {
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean isValid() {
-                    return true;
-                }
+            protected class AfterInstruction extends StackManipulation.AbstractBase {
 
                 /**
                  * {@inheritDoc}
@@ -815,7 +801,7 @@ public class EqualsMethod implements Implementation {
      * A conditional return aborts the equality computation if a given condition was reached.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class ConditionalReturn implements StackManipulation {
+    protected static class ConditionalReturn extends StackManipulation.AbstractBase {
 
         /**
          * An empty array.
@@ -913,13 +899,6 @@ public class EqualsMethod implements Implementation {
          */
         protected StackManipulation returningTrue() {
             return new ConditionalReturn(jumpCondition, Opcodes.ICONST_1);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isValid() {
-            return true;
         }
 
         /**
