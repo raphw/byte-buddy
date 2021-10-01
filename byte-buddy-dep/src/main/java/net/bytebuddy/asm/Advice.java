@@ -20,7 +20,6 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationValue;
-import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -67,7 +66,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.annotationType;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
@@ -11428,475 +11426,274 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /* empty */
     }
 
-    /**
-     * A limitation of non-{@linkplain net.bytebuddy.asm.Advice.OnMethodEnter#inline() inlined advices} is that the {@code readOnly} property
-     * of annotations that bind values to advice method parameters cannot be used.
-     * <p>
-     * The {@code @AssignTo.*} family of annotation provide alternative means to bind values for non-inlined advices:
-     * </p>
-     * <ul>
-     *     <li>
-     *         {@link AssignTo.Argument}:
-     *         Substitute of {@link net.bytebuddy.asm.Advice.Argument#readOnly()}.
-     *     </li>
-     *     <li>
-     *         {@link AssignTo.Field}:
-     *         Substitute of {@link net.bytebuddy.asm.Advice.FieldValue#readOnly()}.
-     *     </li>
-     *     <li>
-     *         {@link AssignTo.Return}:
-     *         Substitute of {@link net.bytebuddy.asm.Advice.Return#readOnly()}.
-     *     </li>
-     *     <li>
-     *         {@link AssignTo.Thrown}:
-     *         Substitute of {@link net.bytebuddy.asm.Advice.Thrown#readOnly()}.
-     *     </li>
-     *     <li>
-     *         {@link AssignTo}:
-     *         Substitute of binding multiple values in a single method.
-     *         Works by returning an {@code Object[]} from the advice method.
-     *     </li>
-     * </ul>
-     *
-     * Taking an argument assignment as an example, the resulting code looks like this when decompiled:
-     * <pre>
-     *     public String assignToArgument(String arg) {
-     *         String var10000;
-     *         try {
-     *             // result of inline = false
-     *             var10000 = org.example.Advice.onEnter(s);
-     *         } catch (Throwable var3) {
-     *             // result of suppress = Throwable.class
-     *             var3.printStackTrace();
-     *             var10000 = null;
-     *         }
-     *
-     *         // this is the result of the @AssignTo.Argument(0) post processor
-     *         // it's just a piece of code that's executed after the advice that has access to the return value of the advice (var10000)
-     *         // this assignment takes care of type conversions, according to {@link Argument#typing()}
-     *         String var2 = var10000;
-     *         // the null check avoids that we override the argument with null in case of an suppressed exception within the advice
-     *         if (var2 != null) {
-     *             // the actual assignment to the argument
-     *             arg = var2;
-     *         }
-     *
-     *         return arg;
-     *     }
-     * </pre>
-     */
-    @Retention(RetentionPolicy.RUNTIME)
-    @java.lang.annotation.Target(ElementType.METHOD)
-    public @interface AssignTo {
-        /**
-         * Overrides an argument of the instrumented method with the object at index {@link Argument#index()}
-         * of the {@code Object[]} returned from the advice.
-         */
-        Argument[] arguments() default {};
+    @HashCodeAndEqualsPlugin.Enhance
+    public abstract static class AssignReturned implements PostProcessor {
+
+        public static final int NO_INDEX = -1;
+
+        protected final TypeDescription.Generic type;
+
+        protected final boolean exit;
+
+        protected AssignReturned(TypeDescription.Generic type, boolean exit) {
+            this.type = type;
+            this.exit = exit;
+        }
 
         /**
-         * Overrides a field of the instrumented class with the object at index {@link Field#index()}
-         * of the {@code Object[]} returned from the advice.
+         * {@inheritDoc}
          */
-        Field[] fields() default {};
+        public StackManipulation resolve(TypeDescription instrumentedType,
+                                         MethodDescription instrumentedMethod,
+                                         Assigner assigner,
+                                         ArgumentHandler argumentHandler) {
+            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>();
+            for (Handler handler : handlers()) {
+                stackManipulations.add(value(handler, exit ? argumentHandler.exit() : argumentHandler.enter()));
+                stackManipulations.add(handler.resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler));
+            }
+            return type.isPrimitive()
+                    ? new StackManipulation.Compound(stackManipulations)
+                    : new NullCheck(new StackManipulation.Compound(stackManipulations), exit ? argumentHandler.exit() : argumentHandler.enter());
+        }
 
-        /**
-         * Overrides the return value of the instrumented method with the object at index {@link Return#index()}
-         * of the {@code Object[]} returned from the advice.
-         */
-        Return[] returns() default {};
+        protected abstract Iterable<Handler> handlers();
 
+        protected abstract StackManipulation value(Handler handler, int offset);
+
+        @Documented
         @Retention(RetentionPolicy.RUNTIME)
         @java.lang.annotation.Target(ElementType.METHOD)
-        @interface Argument {
+        public @interface ToArgument {
 
-            /**
-             * Returns the index of the mapped parameter.
-             *
-             * @return The index of the mapped parameter.
-             */
             int value();
 
-            /**
-             * The typing that should be applied when assigning the argument.
-             *
-             * @return The typing to apply upon assignment.
-             */
-            Assigner.Typing typing() default Assigner.Typing.STATIC;
+            int index() default NO_INDEX;
 
-            /**
-             * Used in combination with {@link AssignTo} to select the index of the returned {@code Object[]} that should be used for the assignment.
-             *
-             * @return the index of the {@code Object[]} that should be used for the assignment.
-             */
-            int index() default -1;
-        }
+            Assigner.Typing typing() default Assigner.Typing.DYNAMIC;
 
-        @Retention(RetentionPolicy.RUNTIME)
-        @java.lang.annotation.Target(ElementType.METHOD)
-        @interface Field {
-            /**
-             * Returns the name of the field.
-             *
-             * @return The name of the field.
-             */
-            String value();
+            class Handler implements AssignReturned.Handler {
 
-            /**
-             * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
-             * is set to {@code void}, the field is looked up implicitly within the instrumented class's class hierarchy.
-             * The value can also be set to {@link TargetType} in order to look up the type on the instrumented type.
-             *
-             * @return The type that declares the field, {@code void} if this type should be determined implicitly or
-             * {@link TargetType} for the instrumented type.
-             */
-            Class<?> declaringType() default Void.class;
+                private final int value;
 
-            /**
-             * The typing that should be applied when assigning the field value.
-             *
-             * @return The typing to apply upon assignment.
-             */
-            Assigner.Typing typing() default Assigner.Typing.STATIC;
+                private final int index;
 
-            /**
-             * Used in combination with {@link AssignTo} to select the index of the returned {@code Object[]} that should be used for the assignment.
-             *
-             * @return the index of the {@code Object[]} that should be used for the assignment.
-             */
-            int index() default -1;
-        }
+                private final Assigner.Typing typing;
 
-        @Retention(RetentionPolicy.RUNTIME)
-        @java.lang.annotation.Target(ElementType.METHOD)
-        @interface Return {
+                private final TypeDescription.Generic type;
 
-            /**
-             * Determines the typing that is applied when assigning the return value.
-             *
-             * @return The typing to apply when assigning the annotated parameter.
-             */
-            Assigner.Typing typing() default Assigner.Typing.STATIC;
-
-            /**
-             * Used in combination with {@link AssignTo} to select the index of the returned {@code Object[]} that should be used for the assignment.
-             *
-             * @return the index of the {@code Object[]} that should be used for the assignment.
-             */
-            int index() default -1;
-        }
-
-        @Retention(RetentionPolicy.RUNTIME)
-        @java.lang.annotation.Target(ElementType.METHOD)
-        @interface Thrown {
-
-            /**
-             * Determines the typing that is applied when assigning the thrown value.
-             *
-             * @return The typing to apply when assigning the annotated parameter.
-             */
-            Assigner.Typing typing() default Assigner.Typing.STATIC;
-
-            /**
-             * Used in combination with {@link AssignTo} to select the index of the returned {@code Object[]} that should be used for the assignment.
-             *
-             * @return the index of the {@code Object[]} that should be used for the assignment.
-             */
-            int index() default -1;
-        }
-    }
-
-    public static class AssignToPostProcessorFactory implements Advice.PostProcessor.Factory {
-        private static FieldLocator getFieldLocator(TypeDescription instrumentedType, AssignTo.Field assignTo) {
-            if (assignTo.declaringType() == Void.class) {
-                return new FieldLocator.ForClassHierarchy(instrumentedType);
-            } else {
-                final TypeDescription declaringType = TypeDescription.ForLoadedType.of(assignTo.declaringType());
-                if (!declaringType.represents(TargetType.class) && !instrumentedType.isAssignableTo(declaringType)) {
-                    throw new IllegalStateException(declaringType + " is no super type of " + instrumentedType);
+                protected Handler(int value, int index, Assigner.Typing typing, TypeDescription.Generic type) {
+                    this.value = value;
+                    this.index = index;
+                    this.typing = typing;
+                    this.type = type;
                 }
-                return new FieldLocator.ForExactType(declaringType);
-            }
-        }
 
-        @Override
-        public Advice.PostProcessor make(final MethodDescription.InDefinedShape adviceMethod, final boolean exit) {
-            final AnnotationList annotations = adviceMethod.getDeclaredAnnotations()
-                    .filter(annotationType(AssignTo.Argument.class)
-                            .or(annotationType(AssignTo.Field.class))
-                            .or(annotationType(AssignTo.Return.class))
-                            .or(annotationType(AssignTo.Thrown.class))
-                            .or(annotationType(AssignTo.class)));
-            if (annotations.isEmpty()) {
-                return Advice.PostProcessor.NoOp.INSTANCE;
-            }
-            final List<Advice.PostProcessor> postProcessors = new ArrayList<>();
-            for (AnnotationDescription annotation : annotations) {
-                if (annotation.getAnnotationType().represents(AssignTo.Argument.class)) {
-                    final AssignTo.Argument assignToArgument = annotations.getOnly().prepare(AssignTo.Argument.class).load();
-                    postProcessors.add(createAssignToArgumentPostProcessor(adviceMethod, exit, assignToArgument));
-                } else if (annotation.getAnnotationType().represents(AssignTo.Field.class)) {
-                    final AssignTo.Field assignToField = annotations.getOnly().prepare(AssignTo.Field.class).load();
-                    postProcessors.add(createAssignToFieldPostProcessor(adviceMethod, exit, assignToField));
-                } else if (annotation.getAnnotationType().represents(AssignTo.Return.class)) {
-                    final AssignTo.Return assignToReturn = annotations.getOnly().prepare(AssignTo.Return.class).load();
-                    postProcessors.add(createAssignToReturnPostProcessor(adviceMethod, exit, assignToReturn));
-                } else if (annotation.getAnnotationType().represents(AssignTo.Thrown.class)) {
-                    final AssignTo.Thrown assignToThrown = annotations.getOnly().prepare(AssignTo.Thrown.class).load();
-                    postProcessors.add(createAssignToThrownPostProcessor(adviceMethod, exit, assignToThrown));
-                } else if (annotation.getAnnotationType().represents(AssignTo.class)) {
-                    final AssignTo assignTo = annotations.getOnly().prepare(AssignTo.class).load();
-                    for (AssignTo.Argument assignToArgument : assignTo.arguments()) {
-                        postProcessors.add(createAssignToArgumentPostProcessor(adviceMethod, exit, assignToArgument));
+                /**
+                 * {@inheritDoc}
+                 */
+                public int getIndex() {
+                    return index;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public StackManipulation resolve(TypeDescription instrumentedType,
+                                                 MethodDescription instrumentedMethod,
+                                                 Assigner assigner,
+                                                 ArgumentHandler argumentHandler) {
+                    if (instrumentedMethod.getParameters().size() < value) {
+                        throw new IllegalStateException();
                     }
-                    for (AssignTo.Field assignToField : assignTo.fields()) {
-                        postProcessors.add(createAssignToFieldPostProcessor(adviceMethod, exit, assignToField));
+                    StackManipulation assignment = assigner.assign(type,
+                            instrumentedMethod.getParameters().get(value).getType(),
+                            typing);
+                    if (!assignment.isValid()) {
+                        throw new IllegalStateException();
                     }
-                    for (AssignTo.Return assignToReturn : assignTo.returns()) {
-                        postProcessors.add(createAssignToReturnPostProcessor(adviceMethod, exit, assignToReturn));
+                    return new StackManipulation.Compound(assignment,
+                            MethodVariableAccess.of(instrumentedMethod.getParameters().get(value).getType())
+                                    .storeAt(argumentHandler.argument(instrumentedMethod.getParameters().get(value).getOffset())));
+                }
+
+                public static class Factory implements AssignReturned.Handler.Factory<ToArgument> {
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Class<ToArgument> getAnnotationType() {
+                        return ToArgument.class;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public AssignReturned.Handler make(MethodDescription.InDefinedShape advice,
+                                                       boolean exit,
+                                                       AnnotationDescription.Loadable<? extends ToArgument> annotation) {
+                        int value = annotation.load().value();
+                        if (value < 0) {
+                            throw new IllegalStateException();
+                        }
+                        return new Handler(value,
+                                annotation.load().index(),
+                                annotation.load().typing(),
+                                advice.getReturnType());
                     }
                 }
             }
-            return new Advice.PostProcessor() {
-                @Override
-                public StackManipulation resolve(TypeDescription typeDescription, MethodDescription methodDescription, Assigner assigner, Advice.ArgumentHandler argumentHandler) {
-                    final Label jumpToIfNull = new Label();
-                    return new StackManipulation.Compound(
-                            new AddNullCheck(jumpToIfNull,
-                                    adviceMethod.getReturnType(),
-                                    MethodVariableAccess.of(adviceMethod.getReturnType()).loadFrom(exit ? argumentHandler.exit() : argumentHandler.enter())),
-                            new AssignToPostProcessorFactory.Compound(postProcessors).resolve(typeDescription,
-                                    methodDescription,
-                                    assigner,
-                                    argumentHandler),
-                            new AddLabel(jumpToIfNull)
-                    );
-                }
-            };
         }
 
-        private Advice.PostProcessor createAssignToReturnPostProcessor(final MethodDescription.InDefinedShape adviceMethod, final boolean exit, final AssignTo.Return assignToReturn) {
-            return new Advice.PostProcessor() {
-                @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Advice.ArgumentHandler argumentHandler) {
-                    if (assignToReturn.index() != -1) {
-                        return objectArrayStackManipulation(adviceMethod,
-                                assigner,
-                                false,
-                                argumentHandler,
-                                exit,
-                                assignToReturn.index(),
-                                instrumentedMethod.getReturnType(),
-                                MethodVariableAccess.of(instrumentedMethod.getReturnType()).storeAt(argumentHandler.returned()));
-                    } else {
-                        return scalarStackManipulation(adviceMethod,
-                                assigner,
-                                false,
-                                argumentHandler,
-                                exit,
-                                instrumentedMethod.getReturnType(),
-                                MethodVariableAccess.of(instrumentedMethod.getReturnType()).storeAt(argumentHandler.returned()),
-                                assignToReturn.typing());
+        @HashCodeAndEqualsPlugin.Enhance
+        protected static class ForArray extends AssignReturned {
+
+            private final Map<Handler, Integer> handlers;
+
+            protected ForArray(TypeDescription.Generic type, boolean exit, Collection<Handler> handlers) {
+                super(type, exit);
+                this.handlers = new LinkedHashMap<>();
+                for (Handler handler : handlers) {
+                    int index = handler.getIndex();
+                    if (index <= NO_INDEX) {
+                        throw new IllegalStateException("Handler on array requires positive index");
                     }
+                    this.handlers.put(handler, index);
                 }
-            };
-        }
-
-        private Advice.PostProcessor createAssignToThrownPostProcessor(final MethodDescription.InDefinedShape adviceMethod, final boolean exit, final AssignTo.Thrown assignToThrown) {
-            return new Advice.PostProcessor() {
-                @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Advice.ArgumentHandler argumentHandler) {
-                    if (assignToThrown.index() != -1) {
-                        return objectArrayStackManipulation(adviceMethod,
-                                assigner,
-                                false,
-                                argumentHandler,
-                                exit,
-                                assignToThrown.index(),
-                                TypeDescription.THROWABLE.asGenericType(),
-                                MethodVariableAccess.REFERENCE.storeAt(argumentHandler.thrown()));
-                    } else {
-                        return scalarStackManipulation(adviceMethod,
-                                assigner,
-                                false,
-                                argumentHandler,
-                                exit,
-                                TypeDescription.THROWABLE.asGenericType(),
-                                MethodVariableAccess.REFERENCE.storeAt(argumentHandler.thrown()),
-                                assignToThrown.typing());
-                    }
-                }
-            };
-        }
-
-        private StackManipulation objectArrayStackManipulation(MethodDescription.InDefinedShape adviceMethod, Assigner assigner, boolean loadThis, Advice.ArgumentHandler argumentHandler, boolean exit,
-                                                               int index, TypeDescription.Generic targetType, StackManipulation store) {
-            if (!adviceMethod.getReturnType().represents(Object[].class)) {
-                throw new IllegalStateException("Advice method has to return Object[] when setting an index");
             }
-            StackManipulation load = MethodVariableAccess.REFERENCE.loadFrom(exit ? argumentHandler.exit() : argumentHandler.enter());
-            return new StackManipulation.Compound(
-                    loadThis ? MethodVariableAccess.loadThis() : StackManipulation.Trivial.INSTANCE,
-                    load,
-                    IntegerConstant.forValue(index),
-                    ArrayAccess.REFERENCE.load(),
-                    assigner.assign(TypeDescription.Generic.OBJECT, targetType, Assigner.Typing.DYNAMIC),
-                    store
-            );
-        }
 
-        private StackManipulation scalarStackManipulation(MethodDescription.InDefinedShape adviceMethod, Assigner assigner, boolean loadThis, Advice.ArgumentHandler argumentHandler,
-                                                          boolean exit, TypeDescription.Generic target, StackManipulation store, Assigner.Typing typing) {
-            final StackManipulation assign = assigner.assign(adviceMethod.getReturnType(), target, typing);
-            if (!assign.isValid()) {
-                throw new IllegalStateException("Cannot assign " + adviceMethod.getReturnType() + " to " + target + " in advice method " + adviceMethod.toGenericString());
+            @Override
+            protected Iterable<Handler> handlers() {
+                return handlers.keySet();
             }
-            StackManipulation load = MethodVariableAccess.of(adviceMethod.getReturnType()).loadFrom(exit ? argumentHandler.exit() : argumentHandler.enter());
-            return new StackManipulation.Compound(
-                    loadThis ? MethodVariableAccess.loadThis() : StackManipulation.Trivial.INSTANCE,
-                    load,
-                    assign,
-                    store
-            );
+
+            @Override
+            protected StackManipulation value(Handler handler, int offset) {
+                return new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadFrom(offset),
+                        IntegerConstant.forValue(handlers.get(handler)),
+                        ArrayAccess.of(type.getComponentType()).load());
+            }
         }
 
-        private Advice.PostProcessor createAssignToFieldPostProcessor(final MethodDescription.InDefinedShape adviceMethod, final boolean exit, final AssignTo.Field assignToField) {
-            return new Advice.PostProcessor() {
-                @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Advice.ArgumentHandler argumentHandler) {
-                    final FieldDescription field = getFieldLocator(instrumentedType, assignToField).locate(assignToField.value()).getField();
+        @HashCodeAndEqualsPlugin.Enhance
+        protected static class ForScalar extends AssignReturned {
 
-                    if (!field.isStatic() && instrumentedMethod.isStatic()) {
-                        throw new IllegalStateException("Cannot read non-static field " + field + " from static method " + instrumentedMethod);
-                    } else if (instrumentedMethod.isConstructor() && !exit) {
-                        throw new IllegalStateException("Cannot access non-static field before calling constructor: " + instrumentedMethod);
-                    }
+            private final Collection<Handler> handlers;
 
-                    if (assignToField.index() != -1) {
-                        return objectArrayStackManipulation(adviceMethod,
-                                assigner,
-                                true,
-                                argumentHandler,
-                                exit,
-                                assignToField.index(),
-                                field.getType(),
-                                FieldAccess.forField(field).write());
-                    } else {
-                        return scalarStackManipulation(adviceMethod,
-                                assigner,
-                                true,
-                                argumentHandler,
-                                exit,
-                                field.getType(),
-                                FieldAccess.forField(field).write(),
-                                assignToField.typing());
+            protected ForScalar(TypeDescription.Generic type, boolean exit, Collection<Handler> handlers) {
+                super(type, exit);
+                this.handlers = handlers;
+                for (Handler handler : handlers) {
+                    int index = handler.getIndex();
+                    if (index > NO_INDEX) {
+                        throw new IllegalStateException("Handler on array requires negative index");
                     }
                 }
-            };
+            }
+
+            @Override
+            protected Iterable<Handler> handlers() {
+                return handlers;
+            }
+
+            @Override
+            protected StackManipulation value(Handler handler, int offset) {
+                return MethodVariableAccess.of(type).loadFrom(offset);
+            }
         }
 
-        private Advice.PostProcessor createAssignToArgumentPostProcessor(final MethodDescription.InDefinedShape adviceMethod, final boolean exit, final AssignTo.Argument assignToArgument) {
-            return new Advice.PostProcessor() {
-                @Override
-                public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Advice.ArgumentHandler argumentHandler) {
-                    final ParameterDescription param = instrumentedMethod.getParameters().get(assignToArgument.value());
-                    if (assignToArgument.index() != -1) {
-                        return objectArrayStackManipulation(adviceMethod,
-                                assigner,
-                                false,
-                                argumentHandler,
-                                exit,
-                                assignToArgument.index(),
-                                param.getType(),
-                                MethodVariableAccess.store(param));
-                    } else {
-                        return scalarStackManipulation(adviceMethod,
-                                assigner,
-                                false,
-                                argumentHandler,
-                                exit,
-                                param.getType(),
-                                MethodVariableAccess.store(param),
-                                assignToArgument.typing());
-                    }
-                }
-            };
-        }
+        @HashCodeAndEqualsPlugin.Enhance
+        protected static class NullCheck implements StackManipulation {
 
-        public static class Compound implements Advice.PostProcessor {
+            private final StackManipulation stackManipulation;
 
-            /**
-             * The represented post processors.
-             */
-            private final List<Advice.PostProcessor> postProcessors;
+            private final int offset;
 
-            /**
-             * Creates a new compound post processor.
-             *
-             * @param postProcessors The represented post processors.
-             */
-            public Compound(List<Advice.PostProcessor> postProcessors) {
-                this.postProcessors = postProcessors;
+            protected NullCheck(StackManipulation stackManipulation, int offset) {
+                this.stackManipulation = stackManipulation;
+                this.offset = offset;
             }
 
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(TypeDescription instrumentedType,
-                                             MethodDescription instrumentedMethod,
-                                             Assigner assigner,
-                                             Advice.ArgumentHandler argumentHandler) {
-                List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(postProcessors.size());
-                for (Advice.PostProcessor postProcessor : postProcessors) {
-                    stackManipulations.add(postProcessor.resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler));
-                }
-                return new StackManipulation.Compound(stackManipulations);
-            }
-        }
-
-        private static class AddNullCheck implements StackManipulation {
-            private final Label jumpToIfNull;
-            private final TypeDescription.Generic type;
-            private final StackManipulation load;
-
-            public AddNullCheck(Label jumpToIfNull, TypeDescription.Generic type, StackManipulation load) {
-                this.jumpToIfNull = jumpToIfNull;
-                this.type = type;
-                this.load = load;
-            }
-
-            @Override
             public boolean isValid() {
-                return true;
+                return stackManipulation.isValid();
             }
 
-            @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context context) {
-                Size size = new Size(0, 0);
-                if (!type.isPrimitive()) {
-                    size = size.aggregate(load.apply(methodVisitor, context));
-                    methodVisitor.visitJumpInsn(Opcodes.IFNULL, jumpToIfNull);
-                }
-                return size;
-            }
-        }
-
-        private static class AddLabel implements StackManipulation {
-            private final Label label;
-
-            public AddLabel(Label label) {
-                this.label = label;
-            }
-
-            @Override
-            public boolean isValid() {
-                return true;
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context context) {
+            /**
+             * {@inheritDoc}
+             */
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                Label label = new Label();
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, offset);
+                methodVisitor.visitJumpInsn(Opcodes.IFNULL, label);
+                Size size = stackManipulation.apply(methodVisitor, implementationContext);
                 methodVisitor.visitLabel(label);
-                return new Size(0, 0);
+                return size.aggregate(new Size(0, 1));
+            }
+        }
+
+        public interface Handler {
+
+            int getIndex();
+
+            StackManipulation resolve(TypeDescription instrumentedType,
+                                      MethodDescription instrumentedMethod,
+                                      Assigner assigner,
+                                      ArgumentHandler argumentHandler);
+
+            interface Factory<T extends Annotation> {
+
+                Class<T> getAnnotationType();
+
+                Handler make(MethodDescription.InDefinedShape advice,
+                             boolean exit,
+                             AnnotationDescription.Loadable<? extends T> annotation);
+            }
+        }
+
+        @HashCodeAndEqualsPlugin.Enhance
+        public static class Factory implements PostProcessor.Factory {
+
+            private final List<? extends Handler.Factory<?>> factories;
+
+            public Factory() {
+                this(Arrays.asList(new ToArgument.Handler.Factory()));
+            }
+
+            public Factory(List<? extends Handler.Factory<?>> factories) {
+                this.factories = factories;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            @SuppressWarnings("unchecked")
+            public PostProcessor make(MethodDescription.InDefinedShape advice, boolean exit) {
+                if (advice.getReturnType().represents(void.class)) {
+                    return NoOp.INSTANCE;
+                }
+                Map<String, Handler.Factory<?>> factories = new HashMap<>();
+                for (Handler.Factory<?> factory : this.factories) {
+                    if (factories.put(factory.getAnnotationType().getName(), factory) != null) {
+                        throw new IllegalStateException("Duplicate registration of handler for " + factory.getAnnotationType());
+                    }
+                }
+                Map<Class<?>, Handler> handlers = new LinkedHashMap<>();
+                for (AnnotationDescription annotation : advice.getDeclaredAnnotations()) {
+                    Handler.Factory<?> factory = factories.get(annotation.getAnnotationType().getName());
+                    if (factory != null) {
+                        if (handlers.put(factory.getAnnotationType(), factory.make(advice,
+                                exit,
+                                (AnnotationDescription.Loadable) annotation.prepare(factory.getAnnotationType()))) != null) {
+                            throw new IllegalStateException("Duplicate handler registration for " + annotation.getAnnotationType());
+                        }
+                    }
+                }
+                return advice.getReturnType().isArray()
+                    ? new ForArray(advice.getReturnType(), exit, handlers.values())
+                    : new ForScalar(advice.getReturnType(), exit, handlers.values());
             }
         }
     }

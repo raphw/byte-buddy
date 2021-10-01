@@ -17,8 +17,9 @@ public class AdviceAnnotationTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {Advice.Argument.class, ElementType.PARAMETER},
                 {Advice.AllArguments.class, ElementType.PARAMETER},
+                {Advice.Argument.class, ElementType.PARAMETER},
+                {Advice.AssignReturned.ToArgument.class, ElementType.METHOD},
                 {Advice.FieldValue.class, ElementType.PARAMETER},
                 {Advice.Enter.class, ElementType.PARAMETER},
                 {Advice.Exit.class, ElementType.PARAMETER},
@@ -30,7 +31,7 @@ public class AdviceAnnotationTest {
                 {Advice.Unused.class, ElementType.PARAMETER},
                 {Advice.StubValue.class, ElementType.PARAMETER},
                 {Advice.OnMethodEnter.class, ElementType.METHOD},
-                {Advice.OnMethodExit.class, ElementType.METHOD}
+                {Advice.OnMethodExit.class, ElementType.METHOD},
         });
     }
 
