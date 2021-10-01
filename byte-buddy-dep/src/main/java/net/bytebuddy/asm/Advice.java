@@ -11447,19 +11447,32 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                          MethodDescription instrumentedMethod,
                                          Assigner assigner,
                                          ArgumentHandler argumentHandler) {
-            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>();
-            for (Handler handler : handlers()) {
-                stackManipulations.add(value(handler, exit ? argumentHandler.exit() : argumentHandler.enter()));
-                stackManipulations.add(handler.resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler));
+            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(getHandlers().size());
+            for (Handler handler : getHandlers()) {
+                stackManipulations.add(handler.resolve(instrumentedType,
+                        instrumentedMethod,
+                        assigner,
+                        argumentHandler,
+                        getType(),
+                        toLoadInstruction(handler, exit ? argumentHandler.exit() : argumentHandler.enter())));
             }
             return type.isPrimitive()
                     ? new StackManipulation.Compound(stackManipulations)
                     : new NullCheck(new StackManipulation.Compound(stackManipulations), exit ? argumentHandler.exit() : argumentHandler.enter());
         }
 
-        protected abstract Iterable<Handler> handlers();
+        protected abstract TypeDescription.Generic getType();
 
-        protected abstract StackManipulation value(Handler handler, int offset);
+        protected abstract Collection<Handler> getHandlers();
+
+        protected abstract StackManipulation toLoadInstruction(Handler handler, int offset);
+
+        @Documented
+        @Retention(RetentionPolicy.RUNTIME)
+        @java.lang.annotation.Target(ElementType.METHOD)
+        public @interface AsScalar {
+            /* empty */
+        }
 
         @Documented
         @Retention(RetentionPolicy.RUNTIME)
@@ -11474,7 +11487,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 int index() default NO_INDEX;
 
-                Assigner.Typing typing() default Assigner.Typing.DYNAMIC;
+                Assigner.Typing typing() default Assigner.Typing.STATIC;
             }
 
             class Handler implements AssignReturned.Handler {
@@ -11485,13 +11498,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 private final Assigner.Typing typing;
 
-                private final TypeDescription.Generic type;
-
-                protected Handler(int value, int index, Assigner.Typing typing, TypeDescription.Generic type) {
+                protected Handler(int value, int index, Assigner.Typing typing) {
                     this.value = value;
                     this.index = index;
                     this.typing = typing;
-                    this.type = type;
                 }
 
                 /**
@@ -11507,19 +11517,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public StackManipulation resolve(TypeDescription instrumentedType,
                                                  MethodDescription instrumentedMethod,
                                                  Assigner assigner,
-                                                 ArgumentHandler argumentHandler) {
-                    if (instrumentedMethod.getParameters().size() < value) {
+                                                 ArgumentHandler argumentHandler,
+                                                 TypeDescription.Generic type,
+                                                 StackManipulation value) {
+                    if (instrumentedMethod.getParameters().size() < this.value) {
                         throw new IllegalStateException();
                     }
                     StackManipulation assignment = assigner.assign(type,
-                            instrumentedMethod.getParameters().get(value).getType(),
+                            instrumentedMethod.getParameters().get(this.value).getType(),
                             typing);
                     if (!assignment.isValid()) {
                         throw new IllegalStateException();
                     }
-                    return new StackManipulation.Compound(assignment,
-                            MethodVariableAccess.of(instrumentedMethod.getParameters().get(value).getType())
-                                    .storeAt(argumentHandler.argument(instrumentedMethod.getParameters().get(value).getOffset())));
+                    return new StackManipulation.Compound(value,
+                            assignment,
+                            MethodVariableAccess.of(instrumentedMethod.getParameters().get(this.value).getType())
+                                    .storeAt(argumentHandler.argument(instrumentedMethod.getParameters().get(this.value).getOffset())));
                 }
 
                 public static class Factory implements AssignReturned.Handler.Factory<ToArguments> {
@@ -11543,9 +11556,341 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             if (value < 0) {
                                 throw new IllegalStateException();
                             }
-                            handlers.add(new Handler(value, argument.index(), argument.typing(), advice.getReturnType()));
+                            handlers.add(new Handler(value, argument.index(), argument.typing()));
                         }
                         return handlers;
+                    }
+                }
+            }
+        }
+
+        @Documented
+        @Retention(RetentionPolicy.RUNTIME)
+        @java.lang.annotation.Target(ElementType.METHOD)
+        public @interface ToThis {
+
+            int index() default NO_INDEX;
+
+            Assigner.Typing typing() default Assigner.Typing.STATIC;
+
+            class Handler implements AssignReturned.Handler {
+
+                private final int index;
+
+                private final Assigner.Typing typing;
+
+                protected Handler(int index, Assigner.Typing typing) {
+                    this.index = index;
+                    this.typing = typing;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int getIndex() {
+                    return index;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public StackManipulation resolve(TypeDescription instrumentedType,
+                                                 MethodDescription instrumentedMethod,
+                                                 Assigner assigner,
+                                                 ArgumentHandler argumentHandler,
+                                                 TypeDescription.Generic type,
+                                                 StackManipulation value) {
+                    if (instrumentedMethod.isStatic()) {
+                        throw new IllegalStateException();
+                    }
+                    StackManipulation assignment = assigner.assign(type,
+                            instrumentedType.asGenericType(),
+                            typing);
+                    if (!assignment.isValid()) {
+                        throw new IllegalStateException();
+                    }
+                    return new StackManipulation.Compound(value,
+                            assignment,
+                            MethodVariableAccess.REFERENCE.storeAt(argumentHandler.argument(0)));
+                }
+
+                public static class Factory implements AssignReturned.Handler.Factory<ToThis> {
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Class<ToThis> getAnnotationType() {
+                        return ToThis.class;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public List<AssignReturned.Handler> make(MethodDescription.InDefinedShape advice,
+                                                             boolean exit,
+                                                             AnnotationDescription.Loadable<? extends ToThis> annotation) {
+                        return Collections.<AssignReturned.Handler>singletonList(new Handler(annotation.load().index(), annotation.load().typing()));
+                    }
+                }
+            }
+        }
+
+        @Documented
+        @Retention(RetentionPolicy.RUNTIME)
+        @java.lang.annotation.Target(ElementType.METHOD)
+        public @interface ToFields {
+
+            ToField[] value();
+
+            @interface ToField {
+
+                String value() default OffsetMapping.ForField.Unresolved.BEAN_PROPERTY;
+
+                Class<?> declaringType() default void.class;
+
+                int index() default NO_INDEX;
+
+                Assigner.Typing typing() default Assigner.Typing.STATIC;
+            }
+
+            class Handler implements AssignReturned.Handler {
+
+                private final int index;
+
+                private final String name;
+
+                private final TypeDescription declaringType;
+
+                private final Assigner.Typing typing;
+
+                protected Handler(int index,
+                                  String name,
+                                  TypeDescription declaringType,
+                                  Assigner.Typing typing) {
+                    this.index = index;
+                    this.name = name;
+                    this.declaringType = declaringType;
+                    this.typing = typing;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int getIndex() {
+                    return index;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public StackManipulation resolve(TypeDescription instrumentedType,
+                                                 MethodDescription instrumentedMethod,
+                                                 Assigner assigner,
+                                                 ArgumentHandler argumentHandler,
+                                                 TypeDescription.Generic type,
+                                                 StackManipulation value) {
+                    FieldLocator locator;
+                    if (declaringType.represents(void.class)) {
+                        locator = new FieldLocator.ForClassHierarchy(instrumentedType);
+                    } else if (instrumentedType.isAssignableTo(declaringType)) {
+                        locator = new FieldLocator.ForExactType(declaringType);
+                    } else {
+                        throw new IllegalStateException();
+                    }
+                    FieldLocator.Resolution resolution = locator.locate(name);
+                    StackManipulation stackManipulation;
+                    if (!resolution.isResolved()) {
+                        throw new IllegalStateException();
+                    } else if (!resolution.getField().isVisibleTo(instrumentedType)) {
+                        throw new IllegalStateException();
+                    } else if (resolution.getField().isStatic()) {
+                        stackManipulation = StackManipulation.Trivial.INSTANCE;
+                    } else if (instrumentedMethod.isStatic()) {
+                        throw new IllegalStateException();
+                    } else {
+                        stackManipulation = MethodVariableAccess.loadThis();
+                    }
+                    StackManipulation assignment = assigner.assign(type,
+                            resolution.getField().getType(),
+                            typing);
+                    if (!assignment.isValid()) {
+                        throw new IllegalStateException();
+                    }
+                    return new StackManipulation.Compound(stackManipulation,
+                            value,
+                            assignment,
+                            FieldAccess.forField(resolution.getField()).write());
+                }
+
+                public static class Factory implements AssignReturned.Handler.Factory<ToFields> {
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Class<ToFields> getAnnotationType() {
+                        return ToFields.class;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public List<AssignReturned.Handler> make(MethodDescription.InDefinedShape advice,
+                                                             boolean exit,
+                                                             AnnotationDescription.Loadable<? extends ToFields> annotation) {
+                        List<AssignReturned.Handler> handlers = new ArrayList<>();
+                        for (ToFields.ToField field : annotation.load().value()) {
+                            handlers.add(new Handler(field.index(),
+                                    field.value(),
+                                    TypeDescription.ForLoadedType.of(field.declaringType()),
+                                    field.typing()));
+                        }
+                        return handlers;
+                    }
+                }
+            }
+        }
+
+        @Documented
+        @Retention(RetentionPolicy.RUNTIME)
+        @java.lang.annotation.Target(ElementType.METHOD)
+        public @interface ToReturned {
+
+            int index() default NO_INDEX;
+
+            Assigner.Typing typing() default Assigner.Typing.STATIC;
+
+            class Handler implements AssignReturned.Handler {
+
+                private final int index;
+
+                private final Assigner.Typing typing;
+
+                protected Handler(int index, Assigner.Typing typing) {
+                    this.index = index;
+                    this.typing = typing;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int getIndex() {
+                    return index;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public StackManipulation resolve(TypeDescription instrumentedType,
+                                                 MethodDescription instrumentedMethod,
+                                                 Assigner assigner,
+                                                 ArgumentHandler argumentHandler,
+                                                 TypeDescription.Generic type,
+                                                 StackManipulation value) {
+                    if (instrumentedMethod.getReturnType().represents(void.class)) {
+                        return StackManipulation.Trivial.INSTANCE;
+                    }
+                    StackManipulation assignment = assigner.assign(type, instrumentedMethod.getReturnType(), typing);
+                    if (!assignment.isValid()) {
+                        throw new IllegalStateException();
+                    }
+                    return new StackManipulation.Compound(value,
+                            assignment,
+                            MethodVariableAccess.of(instrumentedMethod.getReturnType()).storeAt(argumentHandler.returned()));
+                }
+
+                public static class Factory implements AssignReturned.Handler.Factory<ToReturned> {
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Class<ToReturned> getAnnotationType() {
+                        return ToReturned.class;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public List<AssignReturned.Handler> make(MethodDescription.InDefinedShape advice,
+                                                             boolean exit,
+                                                             AnnotationDescription.Loadable<? extends ToReturned> annotation) {
+                        if (!exit) {
+                            throw new IllegalStateException();
+                        }
+                        return Collections.<AssignReturned.Handler>singletonList(new ToReturned.Handler(annotation.load().index(), annotation.load().typing()));
+                    }
+                }
+            }
+        }
+
+        @Documented
+        @Retention(RetentionPolicy.RUNTIME)
+        @java.lang.annotation.Target(ElementType.METHOD)
+        public @interface ToThrown {
+
+            int index() default NO_INDEX;
+
+            Assigner.Typing typing() default Assigner.Typing.STATIC;
+
+            class Handler implements AssignReturned.Handler {
+
+                private final int index;
+
+                private final Assigner.Typing typing;
+
+                protected Handler(int index, Assigner.Typing typing) {
+                    this.index = index;
+                    this.typing = typing;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int getIndex() {
+                    return index;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public StackManipulation resolve(TypeDescription instrumentedType,
+                                                 MethodDescription instrumentedMethod,
+                                                 Assigner assigner,
+                                                 ArgumentHandler argumentHandler,
+                                                 TypeDescription.Generic type,
+                                                 StackManipulation value) {
+                    if (instrumentedMethod.getReturnType().represents(void.class)) {
+                        return StackManipulation.Trivial.INSTANCE;
+                    }
+                    StackManipulation assignment = assigner.assign(type, instrumentedMethod.getReturnType(), typing);
+                    if (!assignment.isValid()) {
+                        throw new IllegalStateException();
+                    }
+                    return new StackManipulation.Compound(value,
+                            assignment,
+                            MethodVariableAccess.of(instrumentedMethod.getReturnType()).storeAt(argumentHandler.thrown()));
+                }
+
+                public static class Factory implements AssignReturned.Handler.Factory<ToThrown> {
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Class<ToThrown> getAnnotationType() {
+                        return ToThrown.class;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public List<AssignReturned.Handler> make(MethodDescription.InDefinedShape advice,
+                                                             boolean exit,
+                                                             AnnotationDescription.Loadable<? extends ToThrown> annotation) {
+                        if (!exit) {
+                            throw new IllegalStateException();
+                        } else if (advice.getDeclaredAnnotations().ofType(OnMethodExit.class).load().onThrowable() == NoExceptionHandler.class) {
+                            throw new IllegalStateException();
+                        }
+                        return Collections.<AssignReturned.Handler>singletonList(new ToThrown.Handler(annotation.load().index(), annotation.load().typing()));
                     }
                 }
             }
@@ -11571,12 +11916,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            protected Iterable<Handler> handlers() {
+            protected TypeDescription.Generic getType() {
+                return type.getComponentType();
+            }
+
+            @Override
+            protected Collection<Handler> getHandlers() {
                 return handlers.keySet();
             }
 
             @Override
-            protected StackManipulation value(Handler handler, int offset) {
+            protected StackManipulation toLoadInstruction(Handler handler, int offset) {
                 return new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadFrom(offset),
                         IntegerConstant.forValue(handlers.get(handler)),
                         ArrayAccess.of(type.getComponentType()).load());
@@ -11603,12 +11953,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            protected Iterable<Handler> handlers() {
+            protected TypeDescription.Generic getType() {
+                return type;
+            }
+
+            @Override
+            protected Collection<Handler> getHandlers() {
                 return handlers;
             }
 
             @Override
-            protected StackManipulation value(Handler handler, int offset) {
+            protected StackManipulation toLoadInstruction(Handler handler, int offset) {
                 return MethodVariableAccess.of(type).loadFrom(offset);
             }
         }
@@ -11652,7 +12007,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             StackManipulation resolve(TypeDescription instrumentedType,
                                       MethodDescription instrumentedMethod,
                                       Assigner assigner,
-                                      ArgumentHandler argumentHandler);
+                                      ArgumentHandler argumentHandler,
+                                      TypeDescription.Generic type,
+                                      StackManipulation value);
 
             interface Factory<T extends Annotation> {
 
@@ -11670,7 +12027,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             private final List<? extends Handler.Factory<?>> factories;
 
             public Factory() {
-                this(Arrays.asList(new ToArguments.Handler.Factory()));
+                this(Arrays.asList(new ToArguments.Handler.Factory(),
+                        new ToThis.Handler.Factory(),
+                        new ToFields.Handler.Factory(),
+                        new ToReturned.Handler.Factory(),
+                        new ToThrown.Handler.Factory()));
             }
 
             public Factory(List<? extends Handler.Factory<?>> factories) {
@@ -11692,7 +12053,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
                 Map<Class<?>, List<Handler>> handlers = new LinkedHashMap<>();
+                boolean scalar = false;
                 for (AnnotationDescription annotation : advice.getDeclaredAnnotations()) {
+                    if (annotation.getAnnotationType().represents(AsScalar.class)) {
+                        scalar = true;
+                        continue;
+                    }
                     Handler.Factory<?> factory = factories.get(annotation.getAnnotationType().getName());
                     if (factory != null) {
                         if (handlers.put(factory.getAnnotationType(), factory.make(advice,
@@ -11702,7 +12068,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
                 }
-                return advice.getReturnType().isArray()
+                return !scalar && advice.getReturnType().isArray()
                         ? new ForArray(advice.getReturnType(), exit, handlers.values())
                         : new ForScalar(advice.getReturnType(), exit, handlers.values());
             }
