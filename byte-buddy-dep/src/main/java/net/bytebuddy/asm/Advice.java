@@ -11464,13 +11464,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @Documented
         @Retention(RetentionPolicy.RUNTIME)
         @java.lang.annotation.Target(ElementType.METHOD)
-        public @interface ToArgument {
+        public @interface ToArguments {
 
-            int value();
+            ToArgument[] value();
 
-            int index() default NO_INDEX;
+            @interface ToArgument {
 
-            Assigner.Typing typing() default Assigner.Typing.DYNAMIC;
+                int value();
+
+                int index() default NO_INDEX;
+
+                Assigner.Typing typing() default Assigner.Typing.DYNAMIC;
+            }
 
             class Handler implements AssignReturned.Handler {
 
@@ -11517,29 +11522,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     .storeAt(argumentHandler.argument(instrumentedMethod.getParameters().get(value).getOffset())));
                 }
 
-                public static class Factory implements AssignReturned.Handler.Factory<ToArgument> {
+                public static class Factory implements AssignReturned.Handler.Factory<ToArguments> {
 
                     /**
                      * {@inheritDoc}
                      */
-                    public Class<ToArgument> getAnnotationType() {
-                        return ToArgument.class;
+                    public Class<ToArguments> getAnnotationType() {
+                        return ToArguments.class;
                     }
 
                     /**
                      * {@inheritDoc}
                      */
-                    public AssignReturned.Handler make(MethodDescription.InDefinedShape advice,
-                                                       boolean exit,
-                                                       AnnotationDescription.Loadable<? extends ToArgument> annotation) {
-                        int value = annotation.load().value();
-                        if (value < 0) {
-                            throw new IllegalStateException();
+                    public List<AssignReturned.Handler> make(MethodDescription.InDefinedShape advice,
+                                                             boolean exit,
+                                                             AnnotationDescription.Loadable<? extends ToArguments> annotation) {
+                        List<AssignReturned.Handler> handlers = new ArrayList<>();
+                        for (ToArgument argument : annotation.load().value()) {
+                            int value = argument.value();
+                            if (value < 0) {
+                                throw new IllegalStateException();
+                            }
+                            handlers.add(new Handler(value, argument.index(), argument.typing(), advice.getReturnType()));
                         }
-                        return new Handler(value,
-                                annotation.load().index(),
-                                annotation.load().typing(),
-                                advice.getReturnType());
+                        return handlers;
                     }
                 }
             }
@@ -11550,15 +11556,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             private final Map<Handler, Integer> handlers;
 
-            protected ForArray(TypeDescription.Generic type, boolean exit, Collection<Handler> handlers) {
+            protected ForArray(TypeDescription.Generic type, boolean exit, Collection<List<Handler>> handlers) {
                 super(type, exit);
                 this.handlers = new LinkedHashMap<>();
-                for (Handler handler : handlers) {
-                    int index = handler.getIndex();
-                    if (index <= NO_INDEX) {
-                        throw new IllegalStateException("Handler on array requires positive index");
+                for (List<Handler> collection : handlers) {
+                    for (Handler handler : collection) {
+                        int index = handler.getIndex();
+                        if (index <= NO_INDEX) {
+                            throw new IllegalStateException("Handler on array requires positive index for " + handler);
+                        }
+                        this.handlers.put(handler, index);
                     }
-                    this.handlers.put(handler, index);
                 }
             }
 
@@ -11578,15 +11586,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @HashCodeAndEqualsPlugin.Enhance
         protected static class ForScalar extends AssignReturned {
 
-            private final Collection<Handler> handlers;
+            private final List<Handler> handlers;
 
-            protected ForScalar(TypeDescription.Generic type, boolean exit, Collection<Handler> handlers) {
+            protected ForScalar(TypeDescription.Generic type, boolean exit, Collection<List<Handler>> handlers) {
                 super(type, exit);
-                this.handlers = handlers;
-                for (Handler handler : handlers) {
-                    int index = handler.getIndex();
-                    if (index > NO_INDEX) {
-                        throw new IllegalStateException("Handler on array requires negative index");
+                this.handlers = new ArrayList<>();
+                for (List<Handler> collection : handlers) {
+                    for (Handler handler : collection) {
+                        int index = handler.getIndex();
+                        if (index > NO_INDEX) {
+                            throw new IllegalStateException("Handler on array requires negative index for " + handler);
+                        }
+                        this.handlers.add(handler);
                     }
                 }
             }
@@ -11647,9 +11658,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 Class<T> getAnnotationType();
 
-                Handler make(MethodDescription.InDefinedShape advice,
-                             boolean exit,
-                             AnnotationDescription.Loadable<? extends T> annotation);
+                List<Handler> make(MethodDescription.InDefinedShape advice,
+                                   boolean exit,
+                                   AnnotationDescription.Loadable<? extends T> annotation);
             }
         }
 
@@ -11659,7 +11670,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             private final List<? extends Handler.Factory<?>> factories;
 
             public Factory() {
-                this(Arrays.asList(new ToArgument.Handler.Factory()));
+                this(Arrays.asList(new ToArguments.Handler.Factory()));
             }
 
             public Factory(List<? extends Handler.Factory<?>> factories) {
@@ -11680,7 +11691,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException("Duplicate registration of handler for " + factory.getAnnotationType());
                     }
                 }
-                Map<Class<?>, Handler> handlers = new LinkedHashMap<>();
+                Map<Class<?>, List<Handler>> handlers = new LinkedHashMap<>();
                 for (AnnotationDescription annotation : advice.getDeclaredAnnotations()) {
                     Handler.Factory<?> factory = factories.get(annotation.getAnnotationType().getName());
                     if (factory != null) {
@@ -11692,8 +11703,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
                 return advice.getReturnType().isArray()
-                    ? new ForArray(advice.getReturnType(), exit, handlers.values())
-                    : new ForScalar(advice.getReturnType(), exit, handlers.values());
+                        ? new ForArray(advice.getReturnType(), exit, handlers.values())
+                        : new ForScalar(advice.getReturnType(), exit, handlers.values());
             }
         }
     }
