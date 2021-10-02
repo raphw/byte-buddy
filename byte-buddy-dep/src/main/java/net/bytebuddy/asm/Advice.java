@@ -11653,6 +11653,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * <p>
+         * Assigns the advice method's return value to the {@code this} reference of the instrumented method.
+         * </p>
+         * <p>
+         * <b>Important</b>: This annotation has no effect unless an {@link AssignReturned} post processor is explicitly registered.
+         * </p>
+         */
         @Documented
         @Retention(RetentionPolicy.RUNTIME)
         @java.lang.annotation.Target(ElementType.METHOD)
@@ -11758,6 +11766,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * <p>
+         * Assigns the advice method's return value to a given field.
+         * </p>
+         * <p>
+         * <b>Important</b>: This annotation has no effect unless an {@link AssignReturned} post processor is explicitly registered.
+         * </p>
+         */
         @Documented
         @Retention(RetentionPolicy.RUNTIME)
         @java.lang.annotation.Target(ElementType.METHOD)
@@ -11928,6 +11944,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * <p>
+         * Assigns the advice method's return value to the instrumented method's return value. This annotation can only be used
+         * with exit advice marked with {@link OnMethodExit}.
+         * </p>
+         * <p>
+         * <b>Important</b>: This annotation has no effect unless an {@link AssignReturned} post processor is explicitly registered.
+         * </p>
+         */
         @Documented
         @Retention(RetentionPolicy.RUNTIME)
         @java.lang.annotation.Target(ElementType.METHOD)
@@ -12027,6 +12052,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * <p>
+         * Assigns the advice method's return value to the instrumented method's return value. This annotation can only be used
+         * with exit advice marked with {@link OnMethodExit}.
+         * </p>
+         * <p>
+         * <b>Important</b>: This annotation has no effect unless an {@link AssignReturned} post processor is explicitly registered.
+         * </p>
+         */
         @Documented
         @Retention(RetentionPolicy.RUNTIME)
         @java.lang.annotation.Target(ElementType.METHOD)
@@ -12117,6 +12151,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * A post processor implementation of {@link AssignReturned} that works on the value of an array.
+         */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class ForArray extends AssignReturned {
 
@@ -12154,6 +12191,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * A post processor implementation of {@link AssignReturned} that uses the returned value as such.
+         */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class ForScalar extends AssignReturned {
 
@@ -12189,13 +12229,29 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * A stack manipulation that applies a null-check on the returned value which indicates if an assignment
+         * should be skipped, if discovered.
+         */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class NullCheck implements StackManipulation {
 
+            /**
+             * The wrapped stack manipulation in case the value is not {@code null}.
+             */
             private final StackManipulation stackManipulation;
 
+            /**
+             * The offset of the value to check for being {@code null}.
+             */
             private final int offset;
 
+            /**
+             * Creates a null-check wrapper.
+             *
+             * @param stackManipulation The wrapped stack manipulation in case the value is not {@code null}.
+             * @param offset            The offset of the value to check for being {@code null}.
+             */
             protected NullCheck(StackManipulation stackManipulation, int offset) {
                 this.stackManipulation = stackManipulation;
                 this.offset = offset;
@@ -12221,10 +12277,32 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * A handler for an {@link AssignReturned} post processor to assign a value that was returned by
+         * advice to a value of the instrumented method.
+         */
         public interface Handler {
 
+            /**
+             * Returns the array offset which this handler intends to assign or a negative value if this handler
+             * intends to assign a scalar value.
+             *
+             * @return The array offset which this handler intends to assign or a negative value if this handler
+             * intends to assign a scalar value.
+             */
             int getIndex();
 
+            /**
+             * Resolves this handler.
+             *
+             * @param instrumentedType   The instrumented type.
+             * @param instrumentedMethod The instrumented method.
+             * @param assigner           The assigner to use.
+             * @param argumentHandler    The argument handler for the handled advice method.
+             * @param type               The type that this handler receives for assignment.
+             * @param value              An instruction to load the handled value onto the operand stack.
+             * @return The stack manipulation resolved by this handler.
+             */
             StackManipulation resolve(TypeDescription instrumentedType,
                                       MethodDescription instrumentedMethod,
                                       Assigner assigner,
@@ -12232,21 +12310,56 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                       TypeDescription.Generic type,
                                       StackManipulation value);
 
+            /**
+             * A factory for resolving a handler for a given advice method.
+             *
+             * @param <T> The annotation type that activates this handler factory.
+             */
             interface Factory<T extends Annotation> {
 
+                /**
+                 * Returns the annotation type that activates this handler factory.
+                 *
+                 * @return The annotation type that activates this handler factory.
+                 */
                 Class<T> getAnnotationType();
 
+                /**
+                 * Resolves a list of handlers for this factory.
+                 *
+                 * @param advice     The advice method for which to resolve handlers.
+                 * @param exit       {@code true} if this factory is applied for exit advice.
+                 * @param annotation The annotation that activated this handler factory.
+                 * @return A list of handlers to apply.
+                 */
                 List<Handler> make(MethodDescription.InDefinedShape advice,
                                    boolean exit,
                                    AnnotationDescription.Loadable<? extends T> annotation);
 
+                /**
+                 * A simple implementation of a {@link Handler.Factory} that resolves a given list of {@link Handler}s.
+                 *
+                 * @param <S> The annotation type that activates this handler factory.
+                 */
                 @HashCodeAndEqualsPlugin.Enhance
                 class Simple<S extends Annotation> implements Factory<S> {
 
+                    /**
+                     * The annotation type that activates this handler factory.
+                     */
                     private final Class<S> type;
 
+                    /**
+                     * The handlers this factory should return.
+                     */
                     private final List<Handler> handlers;
 
+                    /**
+                     * Creates a new simple handler.
+                     *
+                     * @param type     The annotation type that activates this handler factory.
+                     * @param handlers The handlers this factory should return.
+                     */
                     public Simple(Class<S> type, List<Handler> handlers) {
                         this.type = type;
                         this.handlers = handlers;
@@ -12271,11 +12384,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * A factory to create a {@link AssignReturned} post processor. This processor is only added if the advice
+         * method does not return {@code void}.
+         */
         @HashCodeAndEqualsPlugin.Enhance
         public static class Factory implements PostProcessor.Factory {
 
+            /**
+             * The handler factories to apply.
+             */
             private final List<? extends Handler.Factory<?>> factories;
 
+            /**
+             * Creates a new factory which a preresolved list of handler factories.
+             */
             public Factory() {
                 this(Arrays.asList(new ToArguments.Handler.Factory(),
                         new ToThis.Handler.Factory(),
@@ -12284,20 +12407,46 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         new ToThrown.Handler.Factory()));
             }
 
+            /**
+             * Creates a new factory.
+             *
+             * @param factories The handler factories to apply.
+             */
             protected Factory(List<? extends Handler.Factory<?>> factories) {
                 this.factories = factories;
             }
 
-            public Factory with(Handler.Factory<?> factory) {
-                return new Factory(CompoundList.of(factories, factory));
-            }
-
+            /**
+             * Includes a list of handlers upon discovering an annotation of a given type.
+             *
+             * @param type    The annotation type that activates the handler factory.
+             * @param handler The handlers to use upon discovery.
+             * @return A new {@link AssignReturned.Factory} that includes the provided handlers.
+             */
             public Factory with(Class<? extends Annotation> type, Handler... handler) {
                 return with(type, Arrays.asList(handler));
             }
 
+            /**
+             * Includes a list of handlers upon discovering an annotation of a given type.
+             *
+             * @param type     The annotation type that activates the handler factory.
+             * @param handlers The handlers to use upon discovery.
+             * @return A new {@link AssignReturned.Factory} that includes the provided handlers.
+             */
+            @SuppressWarnings("unchecked")
             public Factory with(Class<? extends Annotation> type, List<Handler> handlers) {
-                return new Factory(CompoundList.of(factories, new Handler.Factory.Simple<>(type, handlers)));
+                return with(new Handler.Factory.Simple(type, handlers)));
+            }
+
+            /**
+             * Includes the provided handler factory.
+             *
+             * @param factory The handler factory to include.
+             * @return new {@link AssignReturned.Factory} that includes the provided handler factory.
+             */
+            public Factory with(Handler.Factory<?> factory) {
+                return new Factory(CompoundList.of(factories, factory));
             }
 
             /**
