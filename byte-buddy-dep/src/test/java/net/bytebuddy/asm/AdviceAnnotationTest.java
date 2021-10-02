@@ -19,7 +19,12 @@ public class AdviceAnnotationTest {
         return Arrays.asList(new Object[][]{
                 {Advice.AllArguments.class, ElementType.PARAMETER},
                 {Advice.Argument.class, ElementType.PARAMETER},
+                {Advice.AssignReturned.AsScalar.class, ElementType.METHOD},
                 {Advice.AssignReturned.ToArguments.class, ElementType.METHOD},
+                {Advice.AssignReturned.ToFields.class, ElementType.METHOD},
+                {Advice.AssignReturned.ToReturned.class, ElementType.METHOD},
+                {Advice.AssignReturned.ToThis.class, ElementType.METHOD},
+                {Advice.AssignReturned.ToThrown.class, ElementType.METHOD},
                 {Advice.FieldValue.class, ElementType.PARAMETER},
                 {Advice.Enter.class, ElementType.PARAMETER},
                 {Advice.Exit.class, ElementType.PARAMETER},
