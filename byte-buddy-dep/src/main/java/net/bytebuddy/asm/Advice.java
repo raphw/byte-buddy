@@ -12436,7 +12436,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             @SuppressWarnings("unchecked")
             public Factory with(Class<? extends Annotation> type, List<Handler> handlers) {
-                return with(new Handler.Factory.Simple(type, handlers)));
+                return with(new Handler.Factory.Simple(type, handlers));
             }
 
             /**
