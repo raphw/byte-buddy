@@ -3305,6 +3305,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected static class Factory implements OffsetMapping.Factory<Local> {
 
                 /**
+                 * A description of the {@link Local#value()} method.
+                 */
+                protected static final MethodDescription.InDefinedShape LOCAL_VALUE = TypeDescription.ForLoadedType.of(Local.class)
+                        .getDeclaredMethods()
+                        .filter(named("value"))
+                        .getOnly();
+
+                /**
                  * The mapping of type names to their type that are available.
                  */
                 private final Map<String, TypeDefinition> namedTypes;
@@ -3331,7 +3339,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Local> annotation,
                                           AdviceType adviceType) {
-                    String name = annotation.load().value();
+                    String name = annotation.getValue(LOCAL_VALUE).resolve(String.class);
                     TypeDefinition namedType = namedTypes.get(name);
                     if (namedType == null) {
                         throw new IllegalStateException("Named local variable is unknown: " + name);
@@ -7683,7 +7691,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 this.adviceMethod = adviceMethod;
                 namedTypes = new HashMap<String, TypeDefinition>();
                 for (ParameterDescription parameterDescription : adviceMethod.getParameters().filter(isAnnotatedWith(Local.class))) {
-                    String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).load().value();
+                    String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).getValue(OffsetMapping.ForLocalValue.Factory.LOCAL_VALUE).resolve(String.class);
                     TypeDefinition previous = namedTypes.put(name, parameterDescription.getType());
                     if (previous != null && !previous.equals(parameterDescription.getType())) {
                         throw new IllegalStateException("Local variable for " + name + " is defined with inconsistent types");
@@ -9088,7 +9096,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                   PostProcessor.Factory postProcessorFactory) {
                 Map<String, TypeDefinition> namedTypes = methodEnter.getNamedTypes();
                 for (ParameterDescription parameterDescription : adviceMethod.getParameters().filter(isAnnotatedWith(Local.class))) {
-                    String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).load().value();
+                    String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).getValue(OffsetMapping.ForLocalValue.Factory.LOCAL_VALUE).resolve(String.class);
                     TypeDefinition typeDefinition = namedTypes.get(name);
                     if (typeDefinition == null) {
                         throw new IllegalStateException(adviceMethod + " attempts use of undeclared local variable " + name);
@@ -11818,6 +11826,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     INSTANCE;
 
                     /**
+                     * A description of the {@link ToThis#index()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_THIS_INDEX;
+
+                    /**
+                     * A description of the {@link ToThis#typing()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_THIS_TYPING;
+
+                    /*
+                     * Resolves annotation properties.
+                     */
+                    static {
+                        MethodList<MethodDescription.InDefinedShape> toReturnedMethods = TypeDescription.ForLoadedType.of(ToThis.class).getDeclaredMethods();
+                        TO_THIS_INDEX = toReturnedMethods.filter(named("index")).getOnly();
+                        TO_THIS_TYPING = toReturnedMethods.filter(named("typing")).getOnly();
+                    }
+
+                    /**
                      * {@inheritDoc}
                      */
                     public Class<ToThis> getAnnotationType() {
@@ -11830,8 +11857,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public List<AssignReturned.Handler> make(MethodDescription.InDefinedShape advice,
                                                              boolean exit,
                                                              AnnotationDescription.Loadable<? extends ToThis> annotation) {
-                        return Collections.<AssignReturned.Handler>singletonList(new Handler(annotation.load().index(),
-                                annotation.load().typing(),
+                        return Collections.<AssignReturned.Handler>singletonList(new Handler(annotation.getValue(TO_THIS_INDEX).resolve(Integer.class),
+                                annotation.getValue(TO_THIS_TYPING).load(ToThis.class.getClassLoader()).resolve(Assigner.Typing.class),
                                 exit));
                     }
                 }
@@ -12006,6 +12033,46 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     INSTANCE;
 
                     /**
+                     * A description of the {@link ToFields#value()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_FIELDS_VALUE;
+
+                    /**
+                     * A description of the {@link ToField#value()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_FIELD_VALUE;
+
+                    /**
+                     * A description of the {@link ToField#index()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_FIELD_INDEX;
+
+                    /**
+                     * A description of the {@link ToField#declaringType()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_FIELD_DECLARING_TYPE;
+
+                    /**
+                     * A description of the {@link ToField#typing()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_FIELD_TYPING;
+
+                    /*
+                     * Resolves annotation properties.
+                     */
+                    static {
+                        TO_FIELDS_VALUE = TypeDescription.ForLoadedType.of(ToFields.class)
+                                .getDeclaredMethods()
+                                .filter(named("value"))
+                                .getOnly();
+                        MethodList<MethodDescription.InDefinedShape> toFieldMethods = TypeDescription.ForLoadedType.of(ToField.class).getDeclaredMethods();
+                        TO_FIELD_VALUE = toFieldMethods.filter(named("value")).getOnly();
+                        TO_FIELD_INDEX = toFieldMethods.filter(named("index")).getOnly();
+                        TO_FIELD_DECLARING_TYPE = toFieldMethods.filter(named("declaringType")).getOnly();
+                        TO_FIELD_TYPING = toFieldMethods.filter(named("typing")).getOnly();
+                    }
+
+                    /**
                      * {@inheritDoc}
                      */
                     public Class<ToFields> getAnnotationType() {
@@ -12019,11 +12086,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                              boolean exit,
                                                              AnnotationDescription.Loadable<? extends ToFields> annotation) {
                         List<AssignReturned.Handler> handlers = new ArrayList<AssignReturned.Handler>();
-                        for (ToFields.ToField field : annotation.load().value()) {
-                            handlers.add(new Handler(field.index(),
-                                    field.value(),
-                                    TypeDescription.ForLoadedType.of(field.declaringType()),
-                                    field.typing()));
+                        for (AnnotationDescription field : annotation.getValue(TO_FIELDS_VALUE).resolve(AnnotationDescription[].class)) {
+                            handlers.add(new Handler(field.getValue(TO_FIELD_INDEX).resolve(Integer.class),
+                                    field.getValue(TO_FIELD_VALUE).resolve(String.class),
+                                    field.getValue(TO_FIELD_DECLARING_TYPE).resolve(TypeDescription.class),
+                                    field.getValue(TO_FIELD_TYPING).load(ToFields.class.getClassLoader()).resolve(Assigner.Typing.class)));
                         }
                         return handlers;
                     }
@@ -12128,6 +12195,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     INSTANCE;
 
                     /**
+                     * A description of the {@link ToReturned#index()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_RETURNED_INDEX;
+
+                    /**
+                     * A description of the {@link ToReturned#typing()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_RETURNED_TYPING;
+
+                    /*
+                     * Resolves annotation properties.
+                     */
+                    static {
+                        MethodList<MethodDescription.InDefinedShape> toReturnedMethods = TypeDescription.ForLoadedType.of(ToReturned.class).getDeclaredMethods();
+                        TO_RETURNED_INDEX = toReturnedMethods.filter(named("index")).getOnly();
+                        TO_RETURNED_TYPING = toReturnedMethods.filter(named("typing")).getOnly();
+                    }
+
+                    /**
                      * {@inheritDoc}
                      */
                     public Class<ToReturned> getAnnotationType() {
@@ -12143,7 +12229,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (!exit) {
                             throw new IllegalStateException("Cannot write returned value from enter advice " + advice);
                         }
-                        return Collections.<AssignReturned.Handler>singletonList(new ToReturned.Handler(annotation.load().index(), annotation.load().typing()));
+                        return Collections.<AssignReturned.Handler>singletonList(new ToReturned.Handler(annotation.getValue(TO_RETURNED_INDEX).resolve(Integer.class),
+                                annotation.getValue(TO_RETURNED_TYPING).load(ToReturned.class.getClassLoader()).resolve(Assigner.Typing.class)));
                     }
                 }
             }
@@ -12246,6 +12333,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     INSTANCE;
 
                     /**
+                     * A description of the {@link ToThrown#index()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_THROWN_INDEX;
+
+                    /**
+                     * A description of the {@link ToThrown#typing()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_THROWN_TYPING;
+
+                    /*
+                     * Resolves annotation properties.
+                     */
+                    static {
+                        MethodList<MethodDescription.InDefinedShape> toReturnedMethods = TypeDescription.ForLoadedType.of(ToThrown.class).getDeclaredMethods();
+                        TO_THROWN_INDEX = toReturnedMethods.filter(named("index")).getOnly();
+                        TO_THROWN_TYPING = toReturnedMethods.filter(named("typing")).getOnly();
+                    }
+
+                    /**
                      * {@inheritDoc}
                      */
                     public Class<ToThrown> getAnnotationType() {
@@ -12260,10 +12366,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                              AnnotationDescription.Loadable<? extends ToThrown> annotation) {
                         if (!exit) {
                             throw new IllegalStateException("Cannot assign thrown value from enter advice " + advice);
-                        } else if (advice.getDeclaredAnnotations().ofType(OnMethodExit.class).load().onThrowable() == NoExceptionHandler.class) {
+                        } else if (advice.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE).resolve(TypeDescription.class).represents(NoExceptionHandler.class)) {
                             throw new IllegalStateException("Cannot assign thrown value for non-catching exit advice " + advice);
                         }
-                        return Collections.<AssignReturned.Handler>singletonList(new ToThrown.Handler(annotation.load().index(), annotation.load().typing()));
+                        return Collections.<AssignReturned.Handler>singletonList(new ToThrown.Handler(annotation.getValue(TO_THROWN_INDEX).resolve(Integer.class),
+                                annotation.getValue(TO_THROWN_TYPING).load(ToThrown.class.getClassLoader()).resolve(Assigner.Typing.class)));
                     }
                 }
             }
