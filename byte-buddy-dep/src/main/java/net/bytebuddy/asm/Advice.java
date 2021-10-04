@@ -11774,7 +11774,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A handler factory for the {@link ToThis} annotation which assigns an advice method's return value
                  * to the <i>this</i> reference of a non-static method.
                  */
-                @HashCodeAndEqualsPlugin.Enhance
                 public enum Factory implements AssignReturned.Handler.Factory<ToThis> {
 
                     /**
@@ -11963,7 +11962,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A factory to create a handler for a {@link ToFields} annotation.
                  */
-                @HashCodeAndEqualsPlugin.Enhance
                 public enum Factory implements AssignReturned.Handler.Factory<ToFields> {
 
                     /**
@@ -12086,7 +12084,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A factory to create a handler for a {@link ToReturned} annotation.
                  */
-                @HashCodeAndEqualsPlugin.Enhance
                 public enum Factory implements AssignReturned.Handler.Factory<ToReturned> {
 
                     /**
@@ -12205,7 +12202,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A factory to create a handler for a {@link ToThrown} annotation.
                  */
-                @HashCodeAndEqualsPlugin.Enhance
                 public enum Factory implements AssignReturned.Handler.Factory<ToThrown> {
 
                     /**
