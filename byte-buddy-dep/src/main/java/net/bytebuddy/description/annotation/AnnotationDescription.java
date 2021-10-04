@@ -25,6 +25,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
 import java.lang.annotation.*;
@@ -414,6 +415,30 @@ public interface AnnotationDescription {
                 ElementType.PACKAGE, ElementType.PARAMETER, ElementType.TYPE};
 
         /**
+         * A description of the {@link Retention#value()} method.
+         */
+        private static final MethodDescription.InDefinedShape RETENTION_VALUE;
+
+        /**
+         * A description of the {@link Target#value()} method.
+         */
+        private static final MethodDescription.InDefinedShape TARGET_VALUE;
+
+        /*
+         * Resolves common annotation properties.
+         */
+        static {
+            RETENTION_VALUE = TypeDescription.ForLoadedType.of(Retention.class)
+                    .getDeclaredMethods()
+                    .filter(named("value"))
+                    .getOnly();
+            TARGET_VALUE = TypeDescription.ForLoadedType.of(Target.class)
+                    .getDeclaredMethods()
+                    .filter(named("value"))
+                    .getOnly();
+        }
+
+        /**
          * {@inheritDoc}
          */
         public AnnotationValue<?, ?> getValue(String property) {
@@ -435,7 +460,7 @@ public interface AnnotationDescription {
             AnnotationDescription.Loadable<Retention> retention = getAnnotationType().getDeclaredAnnotations().ofType(Retention.class);
             return retention == null
                     ? RetentionPolicy.CLASS
-                    : retention.load().value();
+                    : retention.getValue(RETENTION_VALUE).load(ClassLoadingStrategy.BOOTSTRAP_LOADER).resolve(RetentionPolicy.class);
         }
 
         /**
@@ -445,7 +470,7 @@ public interface AnnotationDescription {
             AnnotationDescription.Loadable<Target> target = getAnnotationType().getDeclaredAnnotations().ofType(Target.class);
             return new HashSet<ElementType>(Arrays.asList(target == null
                     ? DEFAULT_TARGET
-                    : target.load().value()));
+                    : target.getValue(TARGET_VALUE).load(ClassLoadingStrategy.BOOTSTRAP_LOADER).resolve(ElementType[].class)));
         }
 
         /**
