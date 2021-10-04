@@ -4,11 +4,14 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import org.junit.Test;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
 
 public class AdviceAssignReturnedTest {
 
@@ -115,7 +118,12 @@ public class AdviceAssignReturnedTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) BAR));
+        try {
+            assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) BAR));
+            fail();
+        } catch (InvocationTargetException exception) {
+            throw (Exception) exception.getTargetException();
+        }
     }
 
     @Test(expected = RuntimeException.class)
@@ -129,7 +137,12 @@ public class AdviceAssignReturnedTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) BAR));
+        try {
+            assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) BAR));
+            fail();
+        } catch (InvocationTargetException exception) {
+            throw (Exception) exception.getTargetException();
+        }
     }
 
     @Test
@@ -146,6 +159,20 @@ public class AdviceAssignReturnedTest {
         assertThat(type.getMethod(FOO, String[].class).invoke(type.getConstructor().newInstance(), (Object) new String[]{FOO}), is((Object) new String[]{BAR}));
     }
 
+    @Test
+    public void testAssignReturnedToThrownSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(SampleThrowing.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToThrownSuppress.class)
+                        .on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), nullValue(Object.class));
+    }
+
     public static class Sample {
 
         public String foo;
@@ -159,6 +186,13 @@ public class AdviceAssignReturnedTest {
 
         public String[] foo(String[] value) {
             return value;
+        }
+    }
+
+    public static class SampleThrowing {
+
+        public String[] foo(String value) {
+            throw new RuntimeException();
         }
     }
 
@@ -273,7 +307,7 @@ public class AdviceAssignReturnedTest {
     public static class ToThrownScalar {
 
         @Advice.OnMethodExit(onThrowable = Throwable.class)
-        @Advice.AssignReturned.ToReturned
+        @Advice.AssignReturned.ToThrown
         public static RuntimeException exit(@Advice.Argument(0) String argument) {
             if (!FOO.equals(argument)) {
                 throw new AssertionError();
@@ -285,7 +319,7 @@ public class AdviceAssignReturnedTest {
     public static class ToThrownArray {
 
         @Advice.OnMethodExit(onThrowable = Throwable.class)
-        @Advice.AssignReturned.ToReturned(index = 0)
+        @Advice.AssignReturned.ToThrown(index = 0)
         public static Throwable[] exit(@Advice.Argument(0) String argument) {
             if (!FOO.equals(argument)) {
                 throw new AssertionError();
@@ -314,6 +348,18 @@ public class AdviceAssignReturnedTest {
                 throw new AssertionError();
             }
             return new String[]{QUX};
+        }
+    }
+
+    public static class ToThrownSuppress {
+
+        @Advice.OnMethodExit(onThrowable = Throwable.class)
+        @Advice.AssignReturned.ToThrown(index = 0)
+        public static Throwable[] exit(@Advice.Thrown Throwable throwable) {
+            if (!(throwable instanceof RuntimeException)) {
+                throw new AssertionError();
+            }
+            return new Throwable[] {null};
         }
     }
 }

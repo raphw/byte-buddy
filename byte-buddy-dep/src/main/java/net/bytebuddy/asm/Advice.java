@@ -12396,13 +12396,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (instrumentedMethod.getReturnType().represents(void.class)) {
                         return StackManipulation.Trivial.INSTANCE;
                     }
-                    StackManipulation assignment = assigner.assign(type, instrumentedMethod.getReturnType(), typing);
+                    StackManipulation assignment = assigner.assign(type, TypeDefinition.Sort.describe(Throwable.class), typing);
                     if (!assignment.isValid()) {
-                        throw new IllegalStateException("Cannot assign " + type + " to " + instrumentedMethod.getReturnType());
+                        throw new IllegalStateException("Cannot assign " + type + " to " + Throwable.class.getName());
                     }
                     return new StackManipulation.Compound(value,
                             assignment,
-                            MethodVariableAccess.of(instrumentedMethod.getReturnType()).storeAt(argumentHandler.thrown()));
+                            MethodVariableAccess.REFERENCE.storeAt(argumentHandler.thrown()));
                 }
 
                 /**
