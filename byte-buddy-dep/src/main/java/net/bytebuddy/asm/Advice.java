@@ -1615,10 +1615,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Creates a new offset binding for a parameter with a given index.
                  *
                  * @param target   The target type.
-                 * @param argument The annotation that triggers this binding.
+                 * @param annotation The annotation that triggers this binding.
                  */
-                protected Unresolved(TypeDescription.Generic target, Argument argument) {
-                    this(target, argument.readOnly(), argument.typing(), argument.value(), argument.optional());
+                protected Unresolved(TypeDescription.Generic target, AnnotationDescription.Loadable<Argument> annotation) {
+                    this(target, annotation.getValue(Factory.ARGUMENT_READ_ONLY).resolve(Boolean.class),
+                            annotation.getValue(Factory.ARGUMENT_TYPING).load(Argument.class.getClassLoader()).resolve(Assigner.Typing.class),
+                            annotation.getValue(Factory.ARGUMENT_VALUE).resolve(Integer.class),
+                            annotation.getValue(Factory.ARGUMENT_OPTIONAL).resolve(Boolean.class));
                 }
 
                 /**
@@ -1694,6 +1697,37 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     INSTANCE;
 
                     /**
+                     * A description of the {@link Argument#value()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape ARGUMENT_VALUE;
+
+                    /**
+                     * A description of the {@link Argument#readOnly()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape ARGUMENT_READ_ONLY;
+
+                    /**
+                     * A description of the {@link Argument#typing()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape ARGUMENT_TYPING;
+
+                    /**
+                     * A description of the {@link Argument#optional()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape ARGUMENT_OPTIONAL;
+
+                    /*
+                     * Resolves annotation properties.
+                     */
+                    static {
+                        MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(Argument.class).getDeclaredMethods();
+                        ARGUMENT_VALUE = methods.filter(named("value")).getOnly();
+                        ARGUMENT_READ_ONLY = methods.filter(named("readOnly")).getOnly();
+                        ARGUMENT_TYPING = methods.filter(named("typing")).getOnly();
+                        ARGUMENT_OPTIONAL = methods.filter(named("optional")).getOnly();
+                    }
+
+                    /**
                      * {@inheritDoc}
                      */
                     public Class<Argument> getAnnotationType() {
@@ -1706,10 +1740,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                               AnnotationDescription.Loadable<Argument> annotation,
                                               AdviceType adviceType) {
-                        if (adviceType.isDelegation() && !annotation.load().readOnly()) {
+                        if (adviceType.isDelegation() && !annotation.getValue(ARGUMENT_READ_ONLY).resolve(Boolean.class)) {
                             throw new IllegalStateException("Cannot define writable field access for " + target + " when using delegation");
                         } else {
-                            return new ForArgument.Unresolved(target.getType(), annotation.load());
+                            return new ForArgument.Unresolved(target.getType(), annotation);
                         }
                     }
                 }
@@ -1966,8 +2000,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param target     The component target type.
              * @param annotation The mapped annotation.
              */
-            protected ForAllArguments(TypeDescription.Generic target, AllArguments annotation) {
-                this(target, annotation.readOnly(), annotation.typing(), annotation.nullIfEmpty());
+            protected ForAllArguments(TypeDescription.Generic target, AnnotationDescription.Loadable<AllArguments> annotation) {
+                this(target, annotation.getValue(Factory.ALL_ARGUMENTS_READ_ONLY).resolve(Boolean.class),
+                        annotation.getValue(Factory.ALL_ARGUMENTS_TYPING).load(AllArguments.class.getClassLoader()).resolve(Assigner.Typing.class),
+                        annotation.getValue(Factory.ALL_ARGUMENTS_NULL_IF_EMPTY).resolve(Boolean.class));
             }
 
             /**
@@ -2035,6 +2071,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 INSTANCE;
 
                 /**
+                 * A description of the {@link AllArguments#readOnly()} method.
+                 */
+                private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_READ_ONLY;
+
+                /**
+                 * A description of the {@link AllArguments#typing()} method.
+                 */
+                private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_TYPING;
+
+                /**
+                 * A description of the {@link AllArguments#nullIfEmpty()} method.
+                 */
+                private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_NULL_IF_EMPTY;
+
+                /*
+                 * Resolves annotation properties.
+                 */
+                static {
+                    MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(AllArguments.class).getDeclaredMethods();
+                    ALL_ARGUMENTS_READ_ONLY = methods.filter(named("readOnly")).getOnly();
+                    ALL_ARGUMENTS_TYPING = methods.filter(named("typing")).getOnly();
+                    ALL_ARGUMENTS_NULL_IF_EMPTY = methods.filter(named("nullIfEmpty")).getOnly();
+                }
+
+                /**
                  * {@inheritDoc}
                  */
                 public Class<AllArguments> getAnnotationType() {
@@ -2049,12 +2110,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           AdviceType adviceType) {
                     if (!target.getType().represents(Object.class) && !target.getType().isArray()) {
                         throw new IllegalStateException("Cannot use AllArguments annotation on a non-array type");
-                    } else if (adviceType.isDelegation() && !annotation.load().readOnly()) {
+                    } else if (adviceType.isDelegation() && !annotation.getValue(ALL_ARGUMENTS_READ_ONLY).resolve(Boolean.class)) {
                         throw new IllegalStateException("Cannot define writable field access for " + target);
                     } else {
                         return new ForAllArguments(target.getType().represents(Object.class)
                                 ? TypeDescription.Generic.OBJECT
-                                : target.getType().getComponentType(), annotation.load());
+                                : target.getType().getComponentType(), annotation);
                     }
                 }
             }
@@ -3024,8 +3085,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param enterType The enter type.
              * @param enter     The represented annotation.
              */
-            protected ForEnterValue(TypeDescription.Generic target, TypeDescription.Generic enterType, Enter enter) {
-                this(target, enterType, enter.readOnly(), enter.typing());
+            protected ForEnterValue(TypeDescription.Generic target, TypeDescription.Generic enterType, AnnotationDescription.Loadable<Enter> annotation) {
+                this(target,
+                        enterType,
+                        annotation.getValue(Factory.ENTER_READ_ONLY).resolve(Boolean.class),
+                        annotation.getValue(Factory.ENTER_READ_ONLY).load(Enter.class.getClassLoader()).resolve(Assigner.Typing.class));
             }
 
             /**
@@ -3072,6 +3136,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected static class Factory implements OffsetMapping.Factory<Enter> {
 
                 /**
+                 * A description of the {@link Argument#readOnly()} method.
+                 */
+                private static final MethodDescription.InDefinedShape ENTER_READ_ONLY;
+
+                /**
+                 * A description of the {@link Argument#typing()} method.
+                 */
+                private static final MethodDescription.InDefinedShape ENTER_TYPING;
+
+                /*
+                 * Resolves annotation properties.
+                 */
+                static {
+                    MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(Enter.class).getDeclaredMethods();
+                    ENTER_READ_ONLY = methods.filter(named("readOnly")).getOnly();
+                    ENTER_TYPING = methods.filter(named("typing")).getOnly();
+                }
+
+                /**
                  * The supplied type of the enter advice.
                  */
                 private final TypeDefinition enterType;
@@ -3110,10 +3193,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Enter> annotation,
                                           AdviceType adviceType) {
-                    if (adviceType.isDelegation() && !annotation.load().readOnly()) {
+                    if (adviceType.isDelegation() && !annotation.getValue(ENTER_READ_ONLY).resolve(Boolean.class)) {
                         throw new IllegalStateException("Cannot use writable " + target + " on read-only parameter");
                     } else {
-                        return new ForEnterValue(target.getType(), enterType.asGenericType(), annotation.load());
+                        return new ForEnterValue(target.getType(), enterType.asGenericType(), annotation);
                     }
                 }
             }
@@ -11683,10 +11766,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 .getDeclaredMethods()
                                 .filter(named("value"))
                                 .getOnly();
-                        MethodList<MethodDescription.InDefinedShape> toArgumentMethods = TypeDescription.ForLoadedType.of(ToArgument.class).getDeclaredMethods();
-                        TO_ARGUMENT_VALUE = toArgumentMethods.filter(named("value")).getOnly();
-                        TO_ARGUMENT_INDEX = toArgumentMethods.filter(named("index")).getOnly();
-                        TO_ARGUMENT_TYPING = toArgumentMethods.filter(named("typing")).getOnly();
+                        MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(ToArgument.class).getDeclaredMethods();
+                        TO_ARGUMENT_VALUE = methods.filter(named("value")).getOnly();
+                        TO_ARGUMENT_INDEX = methods.filter(named("index")).getOnly();
+                        TO_ARGUMENT_TYPING = methods.filter(named("typing")).getOnly();
                     }
 
                     /**
@@ -11839,9 +11922,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Resolves annotation properties.
                      */
                     static {
-                        MethodList<MethodDescription.InDefinedShape> toReturnedMethods = TypeDescription.ForLoadedType.of(ToThis.class).getDeclaredMethods();
-                        TO_THIS_INDEX = toReturnedMethods.filter(named("index")).getOnly();
-                        TO_THIS_TYPING = toReturnedMethods.filter(named("typing")).getOnly();
+                        MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(ToThis.class).getDeclaredMethods();
+                        TO_THIS_INDEX = methods.filter(named("index")).getOnly();
+                        TO_THIS_TYPING = methods.filter(named("typing")).getOnly();
                     }
 
                     /**
@@ -12065,11 +12148,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 .getDeclaredMethods()
                                 .filter(named("value"))
                                 .getOnly();
-                        MethodList<MethodDescription.InDefinedShape> toFieldMethods = TypeDescription.ForLoadedType.of(ToField.class).getDeclaredMethods();
-                        TO_FIELD_VALUE = toFieldMethods.filter(named("value")).getOnly();
-                        TO_FIELD_INDEX = toFieldMethods.filter(named("index")).getOnly();
-                        TO_FIELD_DECLARING_TYPE = toFieldMethods.filter(named("declaringType")).getOnly();
-                        TO_FIELD_TYPING = toFieldMethods.filter(named("typing")).getOnly();
+                        MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(ToField.class).getDeclaredMethods();
+                        TO_FIELD_VALUE = methods.filter(named("value")).getOnly();
+                        TO_FIELD_INDEX = methods.filter(named("index")).getOnly();
+                        TO_FIELD_DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
+                        TO_FIELD_TYPING = methods.filter(named("typing")).getOnly();
                     }
 
                     /**
@@ -12208,9 +12291,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Resolves annotation properties.
                      */
                     static {
-                        MethodList<MethodDescription.InDefinedShape> toReturnedMethods = TypeDescription.ForLoadedType.of(ToReturned.class).getDeclaredMethods();
-                        TO_RETURNED_INDEX = toReturnedMethods.filter(named("index")).getOnly();
-                        TO_RETURNED_TYPING = toReturnedMethods.filter(named("typing")).getOnly();
+                        MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(ToReturned.class).getDeclaredMethods();
+                        TO_RETURNED_INDEX = methods.filter(named("index")).getOnly();
+                        TO_RETURNED_TYPING = methods.filter(named("typing")).getOnly();
                     }
 
                     /**
@@ -12346,9 +12429,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Resolves annotation properties.
                      */
                     static {
-                        MethodList<MethodDescription.InDefinedShape> toReturnedMethods = TypeDescription.ForLoadedType.of(ToThrown.class).getDeclaredMethods();
-                        TO_THROWN_INDEX = toReturnedMethods.filter(named("index")).getOnly();
-                        TO_THROWN_TYPING = toReturnedMethods.filter(named("typing")).getOnly();
+                        MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(ToThrown.class).getDeclaredMethods();
+                        TO_THROWN_INDEX = methods.filter(named("index")).getOnly();
+                        TO_THROWN_TYPING = methods.filter(named("typing")).getOnly();
                     }
 
                     /**
