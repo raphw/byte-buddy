@@ -2096,6 +2096,29 @@ public interface AnnotationValue<T, S> {
         private static final boolean NO_INITIALIZATION = false;
 
         /**
+         * A map of primitive types to their loaded representation.
+         */
+        private static final Map<TypeDescription, Class<?>> PRIMITIVE_TYPES;
+
+        /*
+         * Initializes the maps of primitive types by their description.
+         */
+        static {
+            PRIMITIVE_TYPES = new HashMap<TypeDescription, Class<?>>();
+            for (Class<?> type : new Class<?>[]{boolean.class,
+                    byte.class,
+                    short.class,
+                    char.class,
+                    int.class,
+                    long.class,
+                    float.class,
+                    double.class,
+                    void.class}) {
+                PRIMITIVE_TYPES.put(TypeDescription.ForLoadedType.of(type), type);
+            }
+        }
+
+        /**
          * A description of the represented type.
          */
         private final TypeDescription typeDescription;
@@ -2156,7 +2179,9 @@ public interface AnnotationValue<T, S> {
         @SuppressWarnings("unchecked")
         public AnnotationValue.Loaded<U> load(ClassLoader classLoader) {
             try {
-                return new Loaded<U>((U) Class.forName(typeDescription.getName(), NO_INITIALIZATION, classLoader));
+                return new Loaded<U>((U) (typeDescription.isPrimitive()
+                        ? PRIMITIVE_TYPES.get(typeDescription)
+                        : Class.forName(typeDescription.getName(), NO_INITIALIZATION, classLoader)));
             } catch (ClassNotFoundException exception) {
                 return new ForMissingType.Loaded<U>(typeDescription.getName(), exception);
             }

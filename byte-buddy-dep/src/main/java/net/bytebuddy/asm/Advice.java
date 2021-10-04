@@ -12501,6 +12501,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Creates a new factory which a preresolved list of handler factories.
              */
+            @SuppressWarnings("unchecked")
             public Factory() {
                 this(Arrays.asList(ToArguments.Handler.Factory.INSTANCE,
                         ToThis.Handler.Factory.INSTANCE,
@@ -12536,7 +12537,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param handlers The handlers to use upon discovery.
              * @return A new {@link AssignReturned.Factory} that includes the provided handlers.
              */
-            @SuppressWarnings("unchecked")
+            @SuppressWarnings({"rawtypes", "unchecked"})
             public Factory with(Class<? extends Annotation> type, List<Handler> handlers) {
                 return with(new Handler.Factory.Simple(type, handlers));
             }

@@ -507,7 +507,7 @@ public interface TypePool {
         static {
             Map<String, TypeDescription> primitiveTypes = new HashMap<String, TypeDescription>();
             Map<String, String> primitiveDescriptors = new HashMap<String, String>();
-            for (Class<?> primitiveType : new Class<?>[]{boolean.class,
+            for (Class<?> type : new Class<?>[]{boolean.class,
                     byte.class,
                     short.class,
                     char.class,
@@ -516,8 +516,8 @@ public interface TypePool {
                     float.class,
                     double.class,
                     void.class}) {
-                primitiveTypes.put(primitiveType.getName(), TypeDescription.ForLoadedType.of(primitiveType));
-                primitiveDescriptors.put(Type.getDescriptor(primitiveType), primitiveType.getName());
+                primitiveTypes.put(type.getName(), TypeDescription.ForLoadedType.of(type));
+                primitiveDescriptors.put(Type.getDescriptor(type), type.getName());
             }
             PRIMITIVE_TYPES = Collections.unmodifiableMap(primitiveTypes);
             PRIMITIVE_DESCRIPTORS = Collections.unmodifiableMap(primitiveDescriptors);
