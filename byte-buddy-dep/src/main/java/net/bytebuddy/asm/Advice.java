@@ -11648,6 +11648,40 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     INSTANCE;
 
                     /**
+                     * A description of the {@link ToArguments#value()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_ARGUMENTS_VALUE;
+
+                    /**
+                     * A description of the {@link ToArgument#value()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_ARGUMENT_VALUE;
+
+                    /**
+                     * A description of the {@link ToArgument#index()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_ARGUMENT_INDEX;
+
+                    /**
+                     * A description of the {@link ToArgument#typing()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_ARGUMENT_TYPING;
+
+                    /*
+                     * Resolves annotation properties.
+                     */
+                    static {
+                        TO_ARGUMENTS_VALUE = TypeDescription.ForLoadedType.of(ToArguments.class)
+                                .getDeclaredMethods()
+                                .filter(named("value"))
+                                .getOnly();
+                        MethodList<MethodDescription.InDefinedShape> toArgumentMethods = TypeDescription.ForLoadedType.of(ToArgument.class).getDeclaredMethods();
+                        TO_ARGUMENT_VALUE = toArgumentMethods.filter(named("value")).getOnly();
+                        TO_ARGUMENT_INDEX = toArgumentMethods.filter(named("index")).getOnly();
+                        TO_ARGUMENT_TYPING = toArgumentMethods.filter(named("typing")).getOnly();
+                    }
+
+                    /**
                      * {@inheritDoc}
                      */
                     public Class<ToArguments> getAnnotationType() {
@@ -11661,12 +11695,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                              boolean exit,
                                                              AnnotationDescription.Loadable<? extends ToArguments> annotation) {
                         List<AssignReturned.Handler> handlers = new ArrayList<AssignReturned.Handler>();
-                        for (ToArgument argument : annotation.load().value()) {
-                            int value = argument.value();
+                        for (AnnotationDescription argument : annotation.getValue(TO_ARGUMENTS_VALUE).resolve(AnnotationDescription[].class)) {
+                            int value = argument.getValue(TO_ARGUMENT_VALUE).resolve(Integer.class);
                             if (value < 0) {
                                 throw new IllegalStateException("An argument cannot have a negative index for " + advice);
                             }
-                            handlers.add(new Handler(value, argument.index(), argument.typing()));
+                            handlers.add(new Handler(value,
+                                    argument.getValue(TO_ARGUMENT_INDEX).resolve(Integer.class),
+                                    argument.getValue(TO_ARGUMENT_TYPING).load(ToArguments.class.getClassLoader()).resolve(Assigner.Typing.class)));
                         }
                         return handlers;
                     }
