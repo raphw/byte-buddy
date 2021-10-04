@@ -17,6 +17,7 @@ package net.bytebuddy.build;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -40,6 +41,55 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
 
     /**
+     * A description of the {@link Enhance#invokeSuper()} method.
+     */
+    private static final MethodDescription.InDefinedShape ENHANCE_INVOKE_SUPER;
+
+    /**
+     * A description of the {@link Enhance#simpleComparisonsFirst()} method.
+     */
+    private static final MethodDescription.InDefinedShape ENHANCE_SIMPLE_COMPARISON_FIRST;
+
+    /**
+     * A description of the {@link Enhance#includeSyntheticFields()} method.
+     */
+    private static final MethodDescription.InDefinedShape ENHANCE_INCLUDE_SYNTHETIC_FIELDS;
+
+    /**
+     * A description of the {@link Enhance#permitSubclassEquality()} method.
+     */
+    private static final MethodDescription.InDefinedShape ENHANCE_PERMIT_SUBCLASS_EQUALITY;
+
+    /**
+     * A description of the {@link Enhance#useTypeHashConstant()} method.
+     */
+    private static final MethodDescription.InDefinedShape ENHANCE_USE_TYPE_HASH_CONSTANT;
+
+    /**
+     * A description of the {@link ValueHandling#value()} method.
+     */
+    private static final MethodDescription.InDefinedShape VALUE_HANDLING_VALUE;
+
+    /**
+     * A description of the {@link Sorted#value()} method.
+     */
+    private static final MethodDescription.InDefinedShape SORTED_VALUE;
+
+    /*
+     * Resolves diverse annotation properties.
+     */
+    static {
+        MethodList<MethodDescription.InDefinedShape> enhanceMethods = TypeDescription.ForLoadedType.of(Enhance.class).getDeclaredMethods();
+        ENHANCE_INVOKE_SUPER = enhanceMethods.filter(named("invokeSuper")).getOnly();
+        ENHANCE_SIMPLE_COMPARISON_FIRST = enhanceMethods.filter(named("simpleComparisonsFirst")).getOnly();
+        ENHANCE_INCLUDE_SYNTHETIC_FIELDS = enhanceMethods.filter(named("includeSyntheticFields")).getOnly();
+        ENHANCE_PERMIT_SUBCLASS_EQUALITY = enhanceMethods.filter(named("permitSubclassEquality")).getOnly();
+        ENHANCE_USE_TYPE_HASH_CONSTANT = enhanceMethods.filter(named("useTypeHashConstant")).getOnly();
+        VALUE_HANDLING_VALUE = TypeDescription.ForLoadedType.of(ValueHandling.class).getDeclaredMethods().filter(named("value")).getOnly();
+        SORTED_VALUE = TypeDescription.ForLoadedType.of(Sorted.class).getDeclaredMethods().filter(named("value")).getOnly();
+    }
+
+    /**
      * {@inheritDoc}
      */
     public Plugin make() {
@@ -57,33 +107,37 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
      * {@inheritDoc}
      */
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
-        Enhance enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class).load();
+        AnnotationDescription.Loadable<Enhance> enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class);
         if (typeDescription.getDeclaredMethods().filter(isHashCode()).isEmpty()) {
-            builder = builder.method(isHashCode()).intercept(enhance.invokeSuper()
-                    .hashCodeMethod(typeDescription, enhance.useTypeHashConstant(), enhance.permitSubclassEquality())
-                    .withIgnoredFields(enhance.includeSyntheticFields()
+            builder = builder.method(isHashCode()).intercept(enhance.getValue(ENHANCE_INVOKE_SUPER).load(Enhance.class.getClassLoader()).resolve(Enhance.InvokeSuper.class)
+                    .hashCodeMethod(typeDescription,
+                            enhance.getValue(ENHANCE_USE_TYPE_HASH_CONSTANT).resolve(Boolean.class),
+                            enhance.getValue(ENHANCE_PERMIT_SUBCLASS_EQUALITY).resolve(Boolean.class))
+                    .withIgnoredFields(enhance.getValue(ENHANCE_INCLUDE_SYNTHETIC_FIELDS).resolve(Boolean.class)
                             ? ElementMatchers.<FieldDescription>none()
                             : ElementMatchers.<FieldDescription>isSynthetic())
                     .withIgnoredFields(new ValueMatcher(ValueHandling.Sort.IGNORE))
                     .withNonNullableFields(nonNullable(new ValueMatcher(ValueHandling.Sort.REVERSE_NULLABILITY))));
         }
         if (typeDescription.getDeclaredMethods().filter(isEquals()).isEmpty()) {
-            EqualsMethod equalsMethod = enhance.invokeSuper()
+            EqualsMethod equalsMethod = enhance.getValue(ENHANCE_INVOKE_SUPER).load(Enhance.class.getClassLoader()).resolve(Enhance.InvokeSuper.class)
                     .equalsMethod(typeDescription)
-                    .withIgnoredFields(enhance.includeSyntheticFields()
+                    .withIgnoredFields(enhance.getValue(ENHANCE_INCLUDE_SYNTHETIC_FIELDS).resolve(Boolean.class)
                             ? ElementMatchers.<FieldDescription>none()
                             : ElementMatchers.<FieldDescription>isSynthetic())
                     .withIgnoredFields(new ValueMatcher(ValueHandling.Sort.IGNORE))
                     .withNonNullableFields(nonNullable(new ValueMatcher(ValueHandling.Sort.REVERSE_NULLABILITY)))
                     .withFieldOrder(AnnotationOrderComparator.INSTANCE);
-            if (enhance.simpleComparisonsFirst()) {
+            if (enhance.getValue(ENHANCE_SIMPLE_COMPARISON_FIRST).resolve(Boolean.class)) {
                 equalsMethod = equalsMethod
                         .withPrimitiveTypedFieldsFirst()
                         .withEnumerationTypedFieldsFirst()
                         .withPrimitiveWrapperTypedFieldsFirst()
                         .withStringTypedFieldsFirst();
             }
-            builder = builder.method(isEquals()).intercept(enhance.permitSubclassEquality() ? equalsMethod.withSubclassEquality() : equalsMethod);
+            builder = builder.method(isEquals()).intercept(enhance.getValue(ENHANCE_PERMIT_SUBCLASS_EQUALITY).resolve(Boolean.class)
+                    ? equalsMethod.withSubclassEquality()
+                    : equalsMethod);
         }
         return builder;
     }
@@ -355,8 +409,8 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
         public int compare(FieldDescription.InDefinedShape left, FieldDescription.InDefinedShape right) {
             AnnotationDescription.Loadable<Sorted> leftAnnotation = left.getDeclaredAnnotations().ofType(Sorted.class);
             AnnotationDescription.Loadable<Sorted> rightAnnotation = right.getDeclaredAnnotations().ofType(Sorted.class);
-            int leftValue = leftAnnotation == null ? Sorted.DEFAULT : leftAnnotation.load().value();
-            int rightValue = rightAnnotation == null ? Sorted.DEFAULT : rightAnnotation.load().value();
+            int leftValue = leftAnnotation == null ? Sorted.DEFAULT : leftAnnotation.getValue(SORTED_VALUE).resolve(Integer.class);
+            int rightValue = rightAnnotation == null ? Sorted.DEFAULT : rightAnnotation.getValue(SORTED_VALUE).resolve(Integer.class);
             if (leftValue > rightValue) {
                 return -1;
             } else if (leftValue < rightValue) {
@@ -392,7 +446,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
          */
         public boolean matches(FieldDescription target) {
             AnnotationDescription.Loadable<ValueHandling> annotation = target.getDeclaredAnnotations().ofType(ValueHandling.class);
-            return annotation != null && annotation.load().value() == sort;
+            return annotation != null && annotation.getValue(VALUE_HANDLING_VALUE).load(ValueHandling.class.getClassLoader()).resolve(ValueHandling.Sort.class) == sort;
         }
     }
 }

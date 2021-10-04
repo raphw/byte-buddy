@@ -15,7 +15,10 @@
  */
 package net.bytebuddy.build;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -24,8 +27,7 @@ import net.bytebuddy.matcher.ElementMatchers;
 
 import java.lang.annotation.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
-import static net.bytebuddy.matcher.ElementMatchers.isToString;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A build tool plugin that adds a {@link Object#toString()} and method to a class if the {@link Enhance} annotation is present and no
@@ -33,6 +35,25 @@ import static net.bytebuddy.matcher.ElementMatchers.isToString;
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class ToStringPlugin implements Plugin, Plugin.Factory {
+
+    /**
+     * A description of the {@link Enhance#prefix()} method.
+     */
+    private static final MethodDescription.InDefinedShape ENHANCE_PREFIX;
+
+    /**
+     * A description of the {@link Enhance#includeSyntheticFields()} method.
+     */
+    private static final MethodDescription.InDefinedShape ENHANCE_INCLUDE_SYNTHETIC_FIELDS;
+
+    /*
+     * Resolves annotation properties.
+     */
+    static {
+        MethodList<MethodDescription.InDefinedShape> enhanceMethods = TypeDescription.ForLoadedType.of(Enhance.class).getDeclaredMethods();
+        ENHANCE_PREFIX = enhanceMethods.filter(named("prefix")).getOnly();
+        ENHANCE_INCLUDE_SYNTHETIC_FIELDS = enhanceMethods.filter(named("includeSyntheticFields")).getOnly();
+    }
 
     /**
      * {@inheritDoc}
@@ -52,10 +73,13 @@ public class ToStringPlugin implements Plugin, Plugin.Factory {
      * {@inheritDoc}
      */
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
-        Enhance enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class).load();
+        AnnotationDescription.Loadable<Enhance> enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class);
         if (typeDescription.getDeclaredMethods().filter(isToString()).isEmpty()) {
-            builder = builder.method(isToString()).intercept(ToStringMethod.prefixedBy(enhance.prefix().getPrefixResolver())
-                    .withIgnoredFields(enhance.includeSyntheticFields()
+            builder = builder.method(isToString()).intercept(ToStringMethod.prefixedBy(enhance.getValue(ENHANCE_PREFIX)
+                            .load(Enhance.class.getClassLoader())
+                            .resolve(Enhance.Prefix.class)
+                            .getPrefixResolver())
+                    .withIgnoredFields(enhance.getValue(ENHANCE_INCLUDE_SYNTHETIC_FIELDS).resolve(Boolean.class)
                             ? ElementMatchers.<FieldDescription>none()
                             : ElementMatchers.<FieldDescription>isSynthetic())
                     .withIgnoredFields(isAnnotatedWith(Exclude.class)));

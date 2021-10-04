@@ -56,6 +56,14 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
     private static final String ADVICE_INFIX = "$";
 
     /**
+     * A description of the {@link Enhance#value()} method.
+     */
+    private static final MethodDescription.InDefinedShape ENHANCE_VALUE = TypeDescription.ForLoadedType.of(Enhance.class)
+            .getDeclaredMethods()
+            .filter(named("value"))
+            .getOnly();
+
+    /**
      * A random string to use for avoid field name collisions.
      */
     @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
@@ -122,7 +130,9 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
             } else if (methodDescription.getReturnType().represents(void.class)) {
                 throw new IllegalStateException("Cannot cache void result for " + methodDescription);
             }
-            String name = methodDescription.getDeclaredAnnotations().ofType(Enhance.class).load().value();
+            String name = methodDescription.getDeclaredAnnotations().ofType(Enhance.class)
+                    .getValue(ENHANCE_VALUE)
+                    .resolve(String.class);
             if (name.length() == 0) {
                 name = methodDescription.getName() + NAME_INFIX + randomString.nextString();
             }
