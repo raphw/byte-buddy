@@ -11570,9 +11570,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 Assigner.Typing typing() default Assigner.Typing.STATIC;
             }
 
+            /**
+             * A handler for a {@link ToArgument} annotation.
+             */
             @HashCodeAndEqualsPlugin.Enhance
             class Handler implements AssignReturned.Handler {
 
+                /**
+                 * The index of the assigned argument.
+                 */
                 private final int value;
 
                 /**
@@ -11586,6 +11592,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private final Assigner.Typing typing;
 
+                /**
+                 * Creates a new handler.
+                 *
+                 * @param value  The index of the assigned argument.
+                 * @param index  The index in the array that is returned which represents the assigned value or a
+                 *               negative value if assigning a scalar value.
+                 * @param typing The typing to apply when assigning the returned value to the targeted value.
+                 */
                 protected Handler(int value, int index, Assigner.Typing typing) {
                     this.value = value;
                     this.index = index;
@@ -11609,13 +11623,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  TypeDescription.Generic type,
                                                  StackManipulation value) {
                     if (instrumentedMethod.getParameters().size() < this.value) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException(instrumentedMethod + " declares less then " + this.value + " parameters");
                     }
                     StackManipulation assignment = assigner.assign(type,
                             instrumentedMethod.getParameters().get(this.value).getType(),
                             typing);
                     if (!assignment.isValid()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot assign " + type + " to " + instrumentedMethod.getParameters().get(this.value).getType());
                     }
                     return new StackManipulation.Compound(value,
                             assignment,
@@ -11623,8 +11637,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     .storeAt(argumentHandler.argument(instrumentedMethod.getParameters().get(this.value).getOffset())));
                 }
 
-                @HashCodeAndEqualsPlugin.Enhance
-                public static class Factory implements AssignReturned.Handler.Factory<ToArguments> {
+                /**
+                 * A factory to create a handler for a {@link ToArguments} annotation.
+                 */
+                public enum Factory implements AssignReturned.Handler.Factory<ToArguments> {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
 
                     /**
                      * {@inheritDoc}
@@ -11639,7 +11660,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public List<AssignReturned.Handler> make(MethodDescription.InDefinedShape advice,
                                                              boolean exit,
                                                              AnnotationDescription.Loadable<? extends ToArguments> annotation) {
-                        List<AssignReturned.Handler> handlers = new ArrayList<>();
+                        List<AssignReturned.Handler> handlers = new ArrayList<AssignReturned.Handler>();
                         for (ToArgument argument : annotation.load().value()) {
                             int value = argument.value();
                             if (value < 0) {
@@ -11682,7 +11703,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             Assigner.Typing typing() default Assigner.Typing.STATIC;
 
             /**
-             * A handler for the {@link ToThis} annotation
+             * A handler for the {@link ToThis} annotation.
              */
             @HashCodeAndEqualsPlugin.Enhance
             class Handler implements AssignReturned.Handler {
@@ -11698,8 +11719,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private final Assigner.Typing typing;
 
+                /**
+                 * {@code true} if this handler is applied on exit advice.
+                 */
                 private final boolean exit;
 
+                /**
+                 * A handler for assigning the {@code this} reference.
+                 *
+                 * @param index  The index in the array that is returned which represents the assigned
+                 *               value or a negative value if assigning a scalar value.
+                 * @param typing The typing to apply when assigning the returned value to the targeted value.
+                 * @param exit   {@code true} if this handler is applied on exit advice.
+                 */
                 protected Handler(int index, Assigner.Typing typing, boolean exit) {
                     this.index = index;
                     this.typing = typing;
@@ -11743,7 +11775,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * to the <i>this</i> reference of a non-static method.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
-                public static class Factory implements AssignReturned.Handler.Factory<ToThis> {
+                public enum Factory implements AssignReturned.Handler.Factory<ToThis> {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
 
                     /**
                      * {@inheritDoc}
@@ -11779,8 +11816,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @java.lang.annotation.Target(ElementType.METHOD)
         public @interface ToFields {
 
+            /**
+             * The field assignments to apply.
+             *
+             * @return The field assignments to apply.
+             */
             ToField[] value();
 
+            /**
+             * Determines what fields are assigned when using a {@link ToFields} annotation.
+             */
             @interface ToField {
 
                 /**
@@ -11817,6 +11862,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 Assigner.Typing typing() default Assigner.Typing.STATIC;
             }
 
+            /**
+             * A handler for a {@link ToField} annotation.
+             */
             @HashCodeAndEqualsPlugin.Enhance
             class Handler implements AssignReturned.Handler {
 
@@ -11915,8 +11963,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             FieldAccess.forField(resolution.getField()).write());
                 }
 
+                /**
+                 * A factory to create a handler for a {@link ToFields} annotation.
+                 */
                 @HashCodeAndEqualsPlugin.Enhance
-                public static class Factory implements AssignReturned.Handler.Factory<ToFields> {
+                public enum Factory implements AssignReturned.Handler.Factory<ToFields> {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
 
                     /**
                      * {@inheritDoc}
@@ -11931,7 +11987,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public List<AssignReturned.Handler> make(MethodDescription.InDefinedShape advice,
                                                              boolean exit,
                                                              AnnotationDescription.Loadable<? extends ToFields> annotation) {
-                        List<AssignReturned.Handler> handlers = new ArrayList<>();
+                        List<AssignReturned.Handler> handlers = new ArrayList<AssignReturned.Handler>();
                         for (ToFields.ToField field : annotation.load().value()) {
                             handlers.add(new Handler(field.index(),
                                     field.value(),
@@ -11973,6 +12029,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             Assigner.Typing typing() default Assigner.Typing.STATIC;
 
+            /**
+             * A handler for a {@link ToReturned} annotation.
+             */
             @HashCodeAndEqualsPlugin.Enhance
             class Handler implements AssignReturned.Handler {
 
@@ -12027,8 +12086,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             MethodVariableAccess.of(instrumentedMethod.getReturnType()).storeAt(argumentHandler.returned()));
                 }
 
+                /**
+                 * A factory to create a handler for a {@link ToReturned} annotation.
+                 */
                 @HashCodeAndEqualsPlugin.Enhance
-                public static class Factory implements AssignReturned.Handler.Factory<ToReturned> {
+                public enum Factory implements AssignReturned.Handler.Factory<ToReturned> {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
 
                     /**
                      * {@inheritDoc}
@@ -12081,9 +12148,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             Assigner.Typing typing() default Assigner.Typing.STATIC;
 
+            /**
+             * A handler for a {@link ToThrown} annotation.
+             */
             @HashCodeAndEqualsPlugin.Enhance
             class Handler implements AssignReturned.Handler {
 
+                /**
+                 * The index in the array that is returned which represents the assigned value or a negative value
+                 * if assigning a scalar value.
+                 */
                 private final int index;
 
                 /**
@@ -12091,6 +12165,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private final Assigner.Typing typing;
 
+                /**
+                 * Creates a new handler to assign a {@link ToThrown} annotation.
+                 *
+                 * @param index  The index in the array that is returned which represents the assigned value or a
+                 *               negative value if assigning a scalar value.
+                 * @param typing The typing to apply when assigning the returned value to the targeted value.
+                 */
                 protected Handler(int index, Assigner.Typing typing) {
                     this.index = index;
                     this.typing = typing;
@@ -12124,8 +12205,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             MethodVariableAccess.of(instrumentedMethod.getReturnType()).storeAt(argumentHandler.thrown()));
                 }
 
+                /**
+                 * A factory to create a handler for a {@link ToThrown} annotation.
+                 */
                 @HashCodeAndEqualsPlugin.Enhance
-                public static class Factory implements AssignReturned.Handler.Factory<ToThrown> {
+                public enum Factory implements AssignReturned.Handler.Factory<ToThrown> {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
 
                     /**
                      * {@inheritDoc}
@@ -12157,11 +12246,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @HashCodeAndEqualsPlugin.Enhance
         protected static class ForArray extends AssignReturned {
 
+            /**
+             * A mapping of the handlers to apply mapped to the index in the array that is returned by the advice method.
+             */
             private final Map<Handler, Integer> handlers;
 
+            /**
+             * Creates a post processor to assign a returned array value by index.
+             *
+             * @param type     The array type that is returned by the advice method.
+             * @param exit     {@code true} if the post processor is applied to exit advice.
+             * @param handlers The handlers to apply.
+             */
             protected ForArray(TypeDescription.Generic type, boolean exit, Collection<List<Handler>> handlers) {
                 super(type, exit);
-                this.handlers = new LinkedHashMap<>();
+                this.handlers = new LinkedHashMap<Handler, Integer>();
                 for (List<Handler> collection : handlers) {
                     for (Handler handler : collection) {
                         int index = handler.getIndex();
@@ -12197,11 +12296,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @HashCodeAndEqualsPlugin.Enhance
         protected static class ForScalar extends AssignReturned {
 
+            /**
+             * The list of handlers to apply.
+             */
             private final List<Handler> handlers;
 
+            /**
+             * Creates a post processor to assign a returned scalar value.
+             *
+             * @param type     The type of the advice method.
+             * @param exit     {@code true} if the post processor is applied to exit advice.
+             * @param handlers The handlers to apply.
+             */
             protected ForScalar(TypeDescription.Generic type, boolean exit, Collection<List<Handler>> handlers) {
                 super(type, exit);
-                this.handlers = new ArrayList<>();
+                this.handlers = new ArrayList<Handler>();
                 for (List<Handler> collection : handlers) {
                     for (Handler handler : collection) {
                         int index = handler.getIndex();
@@ -12400,11 +12509,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * Creates a new factory which a preresolved list of handler factories.
              */
             public Factory() {
-                this(Arrays.asList(new ToArguments.Handler.Factory(),
-                        new ToThis.Handler.Factory(),
-                        new ToFields.Handler.Factory(),
-                        new ToReturned.Handler.Factory(),
-                        new ToThrown.Handler.Factory()));
+                this(Arrays.asList(ToArguments.Handler.Factory.INSTANCE,
+                        ToThis.Handler.Factory.INSTANCE,
+                        ToFields.Handler.Factory.INSTANCE,
+                        ToReturned.Handler.Factory.INSTANCE,
+                        ToThrown.Handler.Factory.INSTANCE));
             }
 
             /**
@@ -12457,13 +12566,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 if (advice.getReturnType().represents(void.class)) {
                     return NoOp.INSTANCE;
                 }
-                Map<String, Handler.Factory<?>> factories = new HashMap<>();
+                Map<String, Handler.Factory<?>> factories = new HashMap<String, Handler.Factory<?>>();
                 for (Handler.Factory<?> factory : this.factories) {
                     if (factories.put(factory.getAnnotationType().getName(), factory) != null) {
                         throw new IllegalStateException("Duplicate registration of handler for " + factory.getAnnotationType());
                     }
                 }
-                Map<Class<?>, List<Handler>> handlers = new LinkedHashMap<>();
+                Map<Class<?>, List<Handler>> handlers = new LinkedHashMap<Class<?>, List<Handler>>();
                 boolean scalar = false;
                 for (AnnotationDescription annotation : advice.getDeclaredAnnotations()) {
                     if (annotation.getAnnotationType().represents(AsScalar.class)) {
