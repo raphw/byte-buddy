@@ -11664,7 +11664,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         for (ToArgument argument : annotation.load().value()) {
                             int value = argument.value();
                             if (value < 0) {
-                                throw new IllegalStateException();
+                                throw new IllegalStateException("An argument cannot have a negative index for " + advice);
                             }
                             handlers.add(new Handler(value, argument.index(), argument.typing()));
                         }
@@ -11755,15 +11755,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  TypeDescription.Generic type,
                                                  StackManipulation value) {
                     if (instrumentedMethod.isStatic()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot assign this reference for static method " + instrumentedMethod);
                     } else if (!exit && instrumentedMethod.isConstructor()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot assign this reference in constructor prior to initialization for " + instrumentedMethod);
                     }
                     StackManipulation assignment = assigner.assign(type,
                             instrumentedType.asGenericType(),
                             typing);
                     if (!assignment.isValid()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot assign " + type + " to " + instrumentedType);
                     }
                     return new StackManipulation.Compound(value,
                             assignment,
@@ -11928,26 +11928,23 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  ArgumentHandler argumentHandler,
                                                  TypeDescription.Generic type,
                                                  StackManipulation value) {
-                    FieldLocator locator;
-                    if (declaringType.represents(void.class)) {
-                        locator = new FieldLocator.ForClassHierarchy(instrumentedType);
-                    } else if (instrumentedType.isAssignableTo(declaringType)) {
-                        locator = new FieldLocator.ForExactType(declaringType);
-                    } else {
-                        throw new IllegalStateException();
-                    }
+                    FieldLocator locator = declaringType.represents(void.class)
+                            ? new FieldLocator.ForClassHierarchy(instrumentedType)
+                            : new FieldLocator.ForExactType(declaringType);
                     FieldLocator.Resolution resolution = name.equals(OffsetMapping.ForField.Unresolved.BEAN_PROPERTY)
                             ? OffsetMapping.ForField.Unresolved.resolveAccessor(locator, instrumentedMethod)
                             : locator.locate(name);
                     StackManipulation stackManipulation;
                     if (!resolution.isResolved()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot resolve field " + name + " for " + instrumentedType);
                     } else if (!resolution.getField().isVisibleTo(instrumentedType)) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException(resolution.getField() + " is not visible to " + instrumentedType);
                     } else if (resolution.getField().isStatic()) {
                         stackManipulation = StackManipulation.Trivial.INSTANCE;
                     } else if (instrumentedMethod.isStatic()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot access member field " + resolution.getField() + " from static " + instrumentedMethod);
+                    } else if (!instrumentedType.isAssignableTo(resolution.getField().getDeclaringType().asErasure())) {
+                        throw new IllegalStateException(instrumentedType + " does not define " + resolution.getField());
                     } else {
                         stackManipulation = MethodVariableAccess.loadThis();
                     }
@@ -11955,7 +11952,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             resolution.getField().getType(),
                             typing);
                     if (!assignment.isValid()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot assign " + type + " to " + resolution.getField());
                     }
                     return new StackManipulation.Compound(stackManipulation,
                             value,
@@ -12079,7 +12076,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                     StackManipulation assignment = assigner.assign(type, instrumentedMethod.getReturnType(), typing);
                     if (!assignment.isValid()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot assign " + type + " to " + instrumentedMethod.getReturnType());
                     }
                     return new StackManipulation.Compound(value,
                             assignment,
@@ -12111,7 +12108,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                              boolean exit,
                                                              AnnotationDescription.Loadable<? extends ToReturned> annotation) {
                         if (!exit) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot write returned value from enter advice " + advice);
                         }
                         return Collections.<AssignReturned.Handler>singletonList(new ToReturned.Handler(annotation.load().index(), annotation.load().typing()));
                     }
@@ -12198,7 +12195,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                     StackManipulation assignment = assigner.assign(type, instrumentedMethod.getReturnType(), typing);
                     if (!assignment.isValid()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot assign " + type + " to " + instrumentedMethod.getReturnType());
                     }
                     return new StackManipulation.Compound(value,
                             assignment,
@@ -12230,9 +12227,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                              boolean exit,
                                                              AnnotationDescription.Loadable<? extends ToThrown> annotation) {
                         if (!exit) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot assign thrown value from enter advice " + advice);
                         } else if (advice.getDeclaredAnnotations().ofType(OnMethodExit.class).load().onThrowable() == NoExceptionHandler.class) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot assign thrown value for non-catching exit advice " + advice);
                         }
                         return Collections.<AssignReturned.Handler>singletonList(new ToThrown.Handler(annotation.load().index(), annotation.load().typing()));
                     }
