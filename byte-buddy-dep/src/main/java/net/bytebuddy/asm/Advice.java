@@ -12060,7 +12060,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
-
         /**
          * <p>
          * Assigns the advice method's return value to the {@code this} reference of the instrumented method.

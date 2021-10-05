@@ -2,6 +2,7 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -243,6 +244,53 @@ public class AdviceAssignReturnedTest {
         assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), nullValue(Object.class));
     }
 
+    @Test
+    public void testAssignReturnedToAllArgumentsDynamicTyped() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToAllArgumentsDynamic.class)
+                        .on(named(BAZ)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getMethod(BAZ, String.class, String.class).invoke(type.getConstructor().newInstance(), FOO, BAR), is((Object) (BAR + FOO)));
+    }
+
+    @Test
+    public void testAssignReturnedToFieldStaticFromNonStatic() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToFieldStatic.class)
+                        .on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getConstructor().newInstance();
+        type.getField(BAR).set(null, FOO);
+        assertThat(type.getMethod(FOO, String.class).invoke(instance, FOO), is((Object) FOO));
+        assertThat(type.getField(BAR).get(null), is((Object) QUX));
+    }
+
+    @Test
+    public void testAssignReturnedToFieldStaticFromStatic() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToFieldStatic.class)
+                        .on(named(BAR)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        type.getField(BAR).set(null, FOO);
+        assertThat(type.getMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
+        assertThat(type.getField(BAR).get(null), is((Object) QUX));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testArgumentTooFewParameters() {
         new ByteBuddy()
@@ -320,9 +368,55 @@ public class AdviceAssignReturnedTest {
                 .make();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testAllArgumentsNotAssignable() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToAllArgumentsNotAssignable.class)
+                        .on(named(BAZ)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldValueNotAssignable() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToFieldNotAssignable.class)
+                        .on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldValueNotFound() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToFieldNotKnown.class)
+                        .on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldValueStatic() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToFieldScalar.class)
+                        .on(named(BAR)))
+                .make();
+    }
+
     public static class Sample {
 
         public String foo;
+
+        public static String bar;
 
         public String foo(String value) {
             return value;
@@ -648,6 +742,60 @@ public class AdviceAssignReturnedTest {
             Sample replacement = new Sample();
             replacement.foo = BAR;
             return replacement;
+        }
+    }
+
+    public static class ToAllArgumentsDynamic {
+
+        @Advice.OnMethodEnter
+        @Advice.AssignReturned.ToAllArguments(typing = Assigner.Typing.DYNAMIC)
+        public static Object enter(@Advice.AllArguments String[] argument) {
+            if (argument.length != 2 || !FOO.equals(argument[0]) || !BAR.equals(argument[1])) {
+                throw new AssertionError();
+            }
+            return new String[] {BAR, FOO};
+        }
+    }
+
+    public static class ToAllArgumentsNotAssignable {
+
+        @Advice.OnMethodEnter
+        @Advice.AssignReturned.ToAllArguments
+        public static Object enter(@Advice.AllArguments String[] argument) {
+            if (argument.length != 2 || !FOO.equals(argument[0]) || !BAR.equals(argument[1])) {
+                throw new AssertionError();
+            }
+            return new String[] {BAR, FOO};
+        }
+    }
+
+    public static class ToFieldNotAssignable {
+
+        @Advice.OnMethodEnter
+        @Advice.AssignReturned.ToFields(@Advice.AssignReturned.ToFields.ToField(FOO))
+        public static Void enter() {
+            throw new AssertionError();
+        }
+    }
+
+    public static class ToFieldNotKnown {
+
+        @Advice.OnMethodEnter
+        @Advice.AssignReturned.ToFields(@Advice.AssignReturned.ToFields.ToField(QUX))
+        public static String enter() {
+            throw new AssertionError();
+        }
+    }
+
+    public static class ToFieldStatic {
+
+        @Advice.OnMethodEnter
+        @Advice.AssignReturned.ToFields(@Advice.AssignReturned.ToFields.ToField(BAR))
+        public static String enter(@Advice.FieldValue(BAR) String field) {
+            if (!FOO.equals(field)) {
+                throw new AssertionError();
+            }
+            return QUX;
         }
     }
 }
