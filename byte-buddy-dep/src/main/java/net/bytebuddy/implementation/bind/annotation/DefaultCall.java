@@ -146,7 +146,7 @@ public @interface DefaultCall {
             StackManipulation stackManipulation;
             if (specialMethodInvocation.isValid()) {
                 stackManipulation = new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class));
-            } else if (annotation.load().nullIfImpossible()) {
+            } else if (annotation.getValue(NULL_IF_IMPOSSIBLE).resolve(Boolean.class)) {
                 stackManipulation = NullConstant.INSTANCE;
             } else {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;

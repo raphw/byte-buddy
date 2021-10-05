@@ -18,6 +18,7 @@ package net.bytebuddy.implementation.bind.annotation;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -32,6 +33,8 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.lang.annotation.*;
 import java.lang.reflect.Method;
+
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * A parameter with this annotation is assigned an instance of {@link Method} which invokes the super implementation of this method.
@@ -86,6 +89,37 @@ public @interface SuperMethod {
         INSTANCE;
 
         /**
+         * A description of the {@link SuperMethod#cached()} method.
+         */
+        private static final MethodDescription.InDefinedShape CACHED;
+
+        /**
+         * A description of the {@link SuperMethod#privileged()} method.
+         */
+        private static final MethodDescription.InDefinedShape PRIVILEGED;
+
+        /**
+         * A description of the {@link SuperMethod#fallbackToDefault()} method.
+         */
+        private static final MethodDescription.InDefinedShape FALLBACK_TO_DEFAULT;
+
+        /**
+         * A description of the {@link SuperMethod#nullIfImpossible()} method.
+         */
+        private static final MethodDescription.InDefinedShape NULL_IF_IMPOSSIBLE;
+
+        /*
+         * Resolves annotation properties.
+         */
+        static {
+            MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(SuperMethod.class).getDeclaredMethods();
+            CACHED = methods.filter(named("cached")).getOnly();
+            PRIVILEGED = methods.filter(named("privileged")).getOnly();
+            FALLBACK_TO_DEFAULT = methods.filter(named("fallbackToDefault")).getOnly();
+            NULL_IF_IMPOSSIBLE = methods.filter(named("nullIfImpossible")).getOnly();
+        }
+
+        /**
          * {@inheritDoc}
          */
         public Class<SuperMethod> getHandledType() {
@@ -104,19 +138,19 @@ public @interface SuperMethod {
             if (!target.getType().asErasure().isAssignableFrom(Method.class)) {
                 throw new IllegalStateException("Cannot assign Method type to " + target);
             } else if (source.isMethod()) {
-                Implementation.SpecialMethodInvocation specialMethodInvocation = (annotation.load().fallbackToDefault()
+                Implementation.SpecialMethodInvocation specialMethodInvocation = (annotation.getValue(FALLBACK_TO_DEFAULT).resolve(Boolean.class)
                         ? implementationTarget.invokeDominant(source.asSignatureToken())
                         : implementationTarget.invokeSuper(source.asSignatureToken())).withCheckedCompatibilityTo(source.asTypeToken());
                 if (specialMethodInvocation.isValid()) {
                     return new MethodDelegationBinder.ParameterBinding.Anonymous(new DelegationMethod(specialMethodInvocation,
-                            annotation.load().cached(),
-                            annotation.load().privileged()));
-                } else if (annotation.load().nullIfImpossible()) {
+                            annotation.getValue(CACHED).resolve(Boolean.class),
+                            annotation.getValue(PRIVILEGED).resolve(Boolean.class)));
+                } else if (annotation.getValue(NULL_IF_IMPOSSIBLE).resolve(Boolean.class)) {
                     return new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE);
                 } else {
                     return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
                 }
-            } else if (annotation.load().nullIfImpossible()) {
+            } else if (annotation.getValue(NULL_IF_IMPOSSIBLE).resolve(Boolean.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE);
             } else {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;

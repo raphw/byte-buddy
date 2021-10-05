@@ -18,6 +18,7 @@ package net.bytebuddy.implementation.bind.annotation;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -26,6 +27,8 @@ import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 
 import java.lang.annotation.*;
+
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * <p>
@@ -71,6 +74,14 @@ public @interface This {
         INSTANCE;
 
         /**
+         * A description of the {@link Pipe#serializableProxy()} method.
+         */
+        private static final MethodDescription.InDefinedShape OPTIONAL = TypeDescription.ForLoadedType.of(This.class)
+                .getDeclaredMethods()
+                .filter(named("optional"))
+                .getOnly();
+
+        /**
          * {@inheritDoc}
          */
         public Class<This> getHandledType() {
@@ -90,7 +101,7 @@ public @interface This {
                 throw new IllegalStateException(target + " uses a primitive type with a @This annotation");
             } else if (target.getType().isArray()) {
                 throw new IllegalStateException(target + " uses an array type with a @This annotation");
-            } else if (source.isStatic() && !annotation.load().optional()) {
+            } else if (source.isStatic() && !annotation.getValue(OPTIONAL).resolve(Boolean.class)) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
             return new MethodDelegationBinder.ParameterBinding.Anonymous(source.isStatic()

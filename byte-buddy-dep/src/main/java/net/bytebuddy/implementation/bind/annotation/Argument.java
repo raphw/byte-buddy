@@ -17,6 +17,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -27,6 +28,8 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 
 import java.lang.annotation.*;
+
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * <p>
@@ -161,6 +164,25 @@ public @interface Argument {
         INSTANCE;
 
         /**
+         * A description of the {@link Argument#value()} method.
+         */
+        private static final MethodDescription.InDefinedShape VALUE;
+
+        /**
+         * A description of the {@link Argument#bindingMechanic()} method.
+         */
+        private static final MethodDescription.InDefinedShape BINDING_MECHANIC;
+
+        /*
+         * Resolves annotation properties.
+         */
+        static {
+            MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(Argument.class).getDeclaredMethods();
+            VALUE = methods.filter(named("value")).getOnly();
+            BINDING_MECHANIC = methods.filter(named("bindingMechanic")).getOnly();
+        }
+
+        /**
          * {@inheritDoc}
          */
         public Class<Argument> getHandledType() {
@@ -176,18 +198,20 @@ public @interface Argument {
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner,
                                                                Assigner.Typing typing) {
-            Argument argument = annotation.load();
-            if (argument.value() < 0) {
+            if (annotation.getValue(VALUE).resolve(Integer.class) < 0) {
                 throw new IllegalArgumentException("@Argument annotation on " + target + " specifies negative index");
-            } else if (source.getParameters().size() <= argument.value()) {
+            } else if (source.getParameters().size() <= annotation.getValue(VALUE).resolve(Integer.class)) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            return argument.bindingMechanic().makeBinding(source.getParameters().get(argument.value()).getType(),
-                    target.getType(),
-                    argument.value(),
-                    assigner,
-                    typing,
-                    source.getParameters().get(argument.value()).getOffset());
+            return annotation.getValue(BINDING_MECHANIC)
+                    .load(Argument.class.getClassLoader())
+                    .resolve(BindingMechanic.class)
+                    .makeBinding(source.getParameters().get(annotation.getValue(VALUE).resolve(Integer.class)).getType(),
+                            target.getType(),
+                            annotation.getValue(VALUE).resolve(Integer.class),
+                            assigner,
+                            typing,
+                            source.getParameters().get(annotation.getValue(VALUE).resolve(Integer.class)).getOffset());
         }
     }
 }

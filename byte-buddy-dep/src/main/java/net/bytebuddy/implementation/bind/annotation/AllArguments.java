@@ -17,6 +17,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -31,6 +32,8 @@ import net.bytebuddy.utility.CompoundList;
 import java.lang.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * <p>
@@ -146,6 +149,31 @@ public @interface AllArguments {
         INSTANCE;
 
         /**
+         * A description of the {@link AllArguments#value()} method.
+         */
+        private static final MethodDescription.InDefinedShape VALUE;
+
+        /**
+         * A description of the {@link AllArguments#includeSelf()} method.
+         */
+        private static final MethodDescription.InDefinedShape INCLUDE_SELF;
+
+        /**
+         * A description of the {@link AllArguments#nullIfEmpty()} method.
+         */
+        private static final MethodDescription.InDefinedShape NULL_IF_EMPTY;
+
+        /*
+         * Resolves annotation properties.
+         */
+        static {
+            MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(AllArguments.class).getDeclaredMethods();
+            VALUE = methods.filter(named("value")).getOnly();
+            INCLUDE_SELF = methods.filter(named("includeSelf")).getOnly();
+            NULL_IF_EMPTY = methods.filter(named("nullIfEmpty")).getOnly();
+        }
+
+        /**
          * {@inheritDoc}
          */
         public Class<AllArguments> getHandledType() {
@@ -169,8 +197,8 @@ public @interface AllArguments {
             } else {
                 throw new IllegalStateException("Expected an array type for all argument annotation on " + source);
             }
-            boolean includeThis = !source.isStatic() && annotation.load().includeSelf();
-            if (!includeThis && source.getParameters().isEmpty() && annotation.load().nullIfEmpty()) {
+            boolean includeThis = !source.isStatic() && annotation.getValue(INCLUDE_SELF).resolve(Boolean.class);
+            if (!includeThis && source.getParameters().isEmpty() && annotation.getValue(NULL_IF_EMPTY).resolve(Boolean.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE);
             }
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size() + (includeThis ? 1 : 0));
@@ -184,7 +212,7 @@ public @interface AllArguments {
                 );
                 if (stackManipulation.isValid()) {
                     stackManipulations.add(stackManipulation);
-                } else if (annotation.load().value().isStrict()) {
+                } else if (annotation.getValue(VALUE).load(AllArguments.class.getClassLoader()).resolve(Assignment.class).isStrict()) {
                     return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
                 }
                 offset += sourceParameter.getStackSize().getSize();

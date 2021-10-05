@@ -94,6 +94,14 @@ public @interface Pipe {
     class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> {
 
         /**
+         * A description of the {@link Pipe#serializableProxy()} method.
+         */
+        private static final MethodDescription.InDefinedShape SERIALIZABLE_PROXY = TypeDescription.ForLoadedType.of(Pipe.class)
+                .getDeclaredMethods()
+                .filter(named("serializableProxy"))
+                .getOnly();
+
+        /**
          * The method which implements the behavior of forwarding a method invocation. This method needs to define
          * a single non-static method with an {@link java.lang.Object} to {@link java.lang.Object} mapping.
          */
@@ -192,7 +200,7 @@ public @interface Pipe {
             return new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType().asErasure(),
                     source,
                     assigner,
-                    annotation.load().serializableProxy()));
+                    annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class)));
         }
 
         /**

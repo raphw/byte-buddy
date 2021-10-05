@@ -17,9 +17,12 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 
 import java.lang.annotation.*;
+
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * Defines a binding priority for a target method. If two target methods can be bound to a source method,
@@ -61,6 +64,14 @@ public @interface BindingPriority {
         INSTANCE;
 
         /**
+         * A description of the {@link BindingPriority#value()} method.
+         */
+        private static final MethodDescription.InDefinedShape VALUE = TypeDescription.ForLoadedType.of(BindingPriority.class)
+                .getDeclaredMethods()
+                .filter(named("value"))
+                .getOnly();
+
+        /**
          * Resolves the explicitly stated binding priority of a method or returns the default value if no such
          * explicit information can be found.
          *
@@ -70,7 +81,7 @@ public @interface BindingPriority {
         private static int resolve(AnnotationDescription.Loadable<BindingPriority> bindingPriority) {
             return bindingPriority == null
                     ? BindingPriority.DEFAULT
-                    : bindingPriority.load().value();
+                    : bindingPriority.getValue(VALUE).resolve(Integer.class);
         }
 
         /**

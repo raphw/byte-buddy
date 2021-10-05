@@ -11,6 +11,8 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.lang.annotation.Annotation;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
@@ -37,11 +39,14 @@ public class BindingPriorityResolverTest extends AbstractAnnotationTest<BindingP
     }
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(left.getTarget()).thenReturn(leftMethod);
         when(right.getTarget()).thenReturn(rightMethod);
         when(leftMethod.getDeclaredAnnotations()).thenReturn(leftAnnotations);
         when(rightMethod.getDeclaredAnnotations()).thenReturn(rightAnnotations);
+        when(highPriority.annotationType()).thenReturn((Class) BindingPriority.class);
+        when(lowPriority.annotationType()).thenReturn((Class) BindingPriority.class);
         when(highPriority.value()).thenReturn(BindingPriority.DEFAULT * 3);
         when(lowPriority.value()).thenReturn(BindingPriority.DEFAULT * 2);
     }

@@ -17,6 +17,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -28,6 +29,8 @@ import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 
 import java.lang.annotation.*;
 import java.util.concurrent.Callable;
+
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * Parameters that are annotated with this annotation will be assigned a proxy for calling the instrumented method's
@@ -83,6 +86,31 @@ public @interface SuperCall {
         INSTANCE;
 
         /**
+         * A description of the {@link SuperCall#serializableProxy()} method.
+         */
+        private static final MethodDescription.InDefinedShape SERIALIZABLE_PROXY;
+
+        /**
+         * A description of the {@link SuperCall#fallbackToDefault()} method.
+         */
+        private static final MethodDescription.InDefinedShape FALLBACK_TO_DEFAULT;
+
+        /**
+         * A description of the {@link SuperCall#nullIfImpossible()} method.
+         */
+        private static final MethodDescription.InDefinedShape NULL_IF_IMPOSSIBLE;
+
+        /*
+         * Resolves annotation properties.
+         */
+        static {
+            MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(SuperCall.class).getDeclaredMethods();
+            SERIALIZABLE_PROXY = methods.filter(named("serializableProxy")).getOnly();
+            FALLBACK_TO_DEFAULT = methods.filter(named("fallbackToDefault")).getOnly();
+            NULL_IF_IMPOSSIBLE = methods.filter(named("nullIfImpossible")).getOnly();
+        }
+
+        /**
          * {@inheritDoc}
          */
         public Class<SuperCall> getHandledType() {
@@ -102,17 +130,17 @@ public @interface SuperCall {
             if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
                 throw new IllegalStateException("A super method call proxy can only be assigned to Runnable or Callable types: " + target);
             } else if (source.isConstructor()) {
-                return annotation.load().nullIfImpossible()
+                return annotation.getValue(NULL_IF_IMPOSSIBLE).resolve(Boolean.class)
                         ? new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE)
                         : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            Implementation.SpecialMethodInvocation specialMethodInvocation = (annotation.load().fallbackToDefault()
+            Implementation.SpecialMethodInvocation specialMethodInvocation = (annotation.getValue(FALLBACK_TO_DEFAULT).resolve(Boolean.class)
                     ? implementationTarget.invokeDominant(source.asSignatureToken())
                     : implementationTarget.invokeSuper(source.asSignatureToken())).withCheckedCompatibilityTo(source.asTypeToken());
             StackManipulation stackManipulation;
             if (specialMethodInvocation.isValid()) {
-                stackManipulation = new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.load().serializableProxy());
-            } else if (annotation.load().nullIfImpossible()) {
+                stackManipulation = new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class));
+            } else if (annotation.getValue(NULL_IF_IMPOSSIBLE).resolve(Boolean.class)) {
                 stackManipulation = NullConstant.INSTANCE;
             } else {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
