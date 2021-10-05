@@ -11631,6 +11631,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * methods that use delegation. When inlining advice code, it is recommended to assign values directly to annotated parameters.
      * </p>
      * <p>
+     * Assignments can either be performed by returning a single value from an advice method or by returning an array with multiple
+     * values. If the return type of an advice method is declared as an array type, the latter is assumed what can be overridden by
+     * annotating the advice method with {@link AsScalar}. With a scalar assignment, the return type's default value is considered
+     * as an indication to skip any assignment what can be configured via the annotation's property. When returning {@code null}
+     * when using an array-typed assignment, the assignment will always be skipped.
+     * </p>
+     * <p>
      * <b>Important</b>: This post processor is not registered by default but requires explicit registration via
      * {@link WithCustomMapping#with(PostProcessor.Factory)}.
      * </p>
@@ -11657,14 +11664,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected final boolean exit;
 
         /**
+         * {@code true} if a default value indicates that no assignment should be conducted.
+         */
+        protected final boolean skipOnDefaultValue;
+
+        /**
          * Creates a new post processor for assigning an advice method's return value.
          *
-         * @param type The advice method's return type.
-         * @param exit {@code true} if this post processor is used within exit advice.
+         * @param type               The advice method's return type.
+         * @param exit               {@code true} if this post processor is used within exit advice.
+         * @param skipOnDefaultValue {@code true} if a default value indicates that no assignment should be conducted.
          */
-        protected AssignReturned(TypeDescription.Generic type, boolean exit) {
+        protected AssignReturned(TypeDescription.Generic type, boolean exit, boolean skipOnDefaultValue) {
             this.type = type;
             this.exit = exit;
+            this.skipOnDefaultValue = skipOnDefaultValue;
         }
 
         /**
@@ -11683,9 +11697,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         getType(),
                         toLoadInstruction(handler, exit ? argumentHandler.exit() : argumentHandler.enter())));
             }
-            return type.isPrimitive()
-                    ? new StackManipulation.Compound(stackManipulations)
-                    : new NullCheck(new StackManipulation.Compound(stackManipulations), exit ? argumentHandler.exit() : argumentHandler.enter());
+            return skipOnDefaultValue
+                    ? DefaultValueSkip.of(new StackManipulation.Compound(stackManipulations), exit ? argumentHandler.exit() : argumentHandler.enter(), type)
+                    : new StackManipulation.Compound(stackManipulations);
         }
 
         /**
@@ -11720,7 +11734,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @Retention(RetentionPolicy.RUNTIME)
         @java.lang.annotation.Target(ElementType.METHOD)
         public @interface AsScalar {
-            /* empty */
+
+            /**
+             * If {@code false}, a default value will cause an assignment. This implies that a suppressed error will
+             * cause an assignment of the default value.
+             *
+             * @return {@code false}, a default value will cause an assignment.
+             */
+            boolean skipOnDefaultValue() default true;
         }
 
         /**
@@ -12739,7 +12760,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param handlers The handlers to apply.
              */
             protected ForArray(TypeDescription.Generic type, boolean exit, Collection<List<Handler>> handlers) {
-                super(type, exit);
+                super(type, exit, true);
                 this.handlers = new LinkedHashMap<Handler, Integer>();
                 for (List<Handler> collection : handlers) {
                     for (Handler handler : collection) {
@@ -12784,12 +12805,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Creates a post processor to assign a returned scalar value.
              *
-             * @param type     The type of the advice method.
-             * @param exit     {@code true} if the post processor is applied to exit advice.
-             * @param handlers The handlers to apply.
+             * @param type               The type of the advice method.
+             * @param exit               {@code true} if the post processor is applied to exit advice.
+             * @param skipOnDefaultValue {@code true} if a default value indicates that no assignment should be conducted.
+             * @param handlers           The handlers to apply.
              */
-            protected ForScalar(TypeDescription.Generic type, boolean exit, Collection<List<Handler>> handlers) {
-                super(type, exit);
+            protected ForScalar(TypeDescription.Generic type, boolean exit, boolean skipOnDefaultValue, Collection<List<Handler>> handlers) {
+                super(type, exit, skipOnDefaultValue);
                 this.handlers = new ArrayList<Handler>();
                 for (List<Handler> collection : handlers) {
                     for (Handler handler : collection) {
@@ -12823,27 +12845,66 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * should be skipped, if discovered.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        protected static class NullCheck implements StackManipulation {
+        protected static class DefaultValueSkip implements StackManipulation {
 
             /**
-             * The wrapped stack manipulation in case the value is not {@code null}.
+             * The wrapped stack manipulation in case the value is not a default value.
              */
             private final StackManipulation stackManipulation;
 
             /**
-             * The offset of the value to check for being {@code null}.
+             * The offset of the value of the returned type.
              */
             private final int offset;
 
             /**
+             * The dispatcher to use.
+             */
+            private final Dispatcher dispatcher;
+
+            /**
              * Creates a null-check wrapper.
              *
-             * @param stackManipulation The wrapped stack manipulation in case the value is not {@code null}.
-             * @param offset            The offset of the value to check for being {@code null}.
+             * @param stackManipulation The wrapped stack manipulation in case the value is not a default value.
+             * @param offset            The offset of the value of the returned type.
+             * @param dispatcher        The dispatcher to use.
              */
-            protected NullCheck(StackManipulation stackManipulation, int offset) {
+            protected DefaultValueSkip(StackManipulation stackManipulation, int offset, Dispatcher dispatcher) {
                 this.stackManipulation = stackManipulation;
                 this.offset = offset;
+                this.dispatcher = dispatcher;
+            }
+
+            /**
+             * Resolves a skipping stack manipulation for the supplied type.
+             *
+             * @param stackManipulation The stack manipulation to wrap.
+             * @param offset            The offset of the value of the returned type.
+             * @param typeDefinition    The type that is returned by the advice method.
+             * @return A suitable stack manipulation.
+             */
+            protected static StackManipulation of(StackManipulation stackManipulation, int offset, TypeDefinition typeDefinition) {
+                Dispatcher dispatcher;
+                if (typeDefinition.isPrimitive()) {
+                    if (typeDefinition.represents(boolean.class)
+                            || typeDefinition.represents(byte.class)
+                            || typeDefinition.represents(short.class)
+                            || typeDefinition.represents(char.class)
+                            || typeDefinition.represents(int.class)) {
+                        dispatcher = Dispatcher.INTEGER;
+                    } else if (typeDefinition.represents(long.class)) {
+                        dispatcher = Dispatcher.LONG;
+                    } else if (typeDefinition.represents(float.class)) {
+                        dispatcher = Dispatcher.FLOAT;
+                    } else if (typeDefinition.represents(double.class)) {
+                        dispatcher = Dispatcher.DOUBLE;
+                    } else {
+                        throw new IllegalArgumentException("Cannot apply skip for " + typeDefinition);
+                    }
+                } else {
+                    dispatcher = Dispatcher.REFERENCE;
+                }
+                return new DefaultValueSkip(stackManipulation, offset, dispatcher);
             }
 
             /**
@@ -12858,11 +12919,91 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 Label label = new Label();
-                methodVisitor.visitVarInsn(Opcodes.ALOAD, offset);
-                methodVisitor.visitJumpInsn(Opcodes.IFNULL, label);
-                Size size = stackManipulation.apply(methodVisitor, implementationContext);
+                Size size = dispatcher.apply(methodVisitor, offset, label).aggregate(stackManipulation.apply(methodVisitor, implementationContext));
                 methodVisitor.visitLabel(label);
-                return size.aggregate(new Size(0, 1));
+                return size;
+            }
+
+            /**
+             * A dispatcher for skipping a default value.
+             */
+            protected enum Dispatcher {
+
+                /**
+                 * A dispatcher for integer types.
+                 */
+                INTEGER {
+                    @Override
+                    protected Size apply(MethodVisitor methodVisitor, int offset, Label label) {
+                        methodVisitor.visitVarInsn(Opcodes.ILOAD, offset);
+                        methodVisitor.visitJumpInsn(Opcodes.IFEQ, label);
+                        return new Size(0, 1);
+                    }
+                },
+
+                /**
+                 * A dispatcher for {@code long}.
+                 */
+                LONG {
+                    @Override
+                    protected Size apply(MethodVisitor methodVisitor, int offset, Label label) {
+                        methodVisitor.visitVarInsn(Opcodes.LLOAD, offset);
+                        methodVisitor.visitInsn(Opcodes.LCONST_0);
+                        methodVisitor.visitInsn(Opcodes.LCMP);
+                        methodVisitor.visitJumpInsn(Opcodes.IFEQ, label);
+                        return new Size(0, 4);
+                    }
+                },
+
+                /**
+                 * A dispatcher for {@code float}.
+                 */
+                FLOAT {
+                    @Override
+                    protected Size apply(MethodVisitor methodVisitor, int offset, Label label) {
+                        methodVisitor.visitVarInsn(Opcodes.FLOAD, offset);
+                        methodVisitor.visitInsn(Opcodes.FCONST_0);
+                        methodVisitor.visitInsn(Opcodes.FCMPL);
+                        methodVisitor.visitJumpInsn(Opcodes.IFEQ, label);
+                        return new Size(0, 2);
+                    }
+                },
+
+                /**
+                 * A dispatcher for {@code double}.
+                 */
+                DOUBLE {
+                    @Override
+                    protected Size apply(MethodVisitor methodVisitor, int offset, Label label) {
+                        methodVisitor.visitVarInsn(Opcodes.DLOAD, offset);
+                        methodVisitor.visitInsn(Opcodes.DCONST_0);
+                        methodVisitor.visitInsn(Opcodes.DCMPL);
+                        methodVisitor.visitJumpInsn(Opcodes.IFEQ, label);
+                        return new Size(0, 4);
+                    }
+                },
+
+                /**
+                 * A dispatcher for reference types.
+                 */
+                REFERENCE {
+                    @Override
+                    protected Size apply(MethodVisitor methodVisitor, int offset, Label label) {
+                        methodVisitor.visitVarInsn(Opcodes.ALOAD, offset);
+                        methodVisitor.visitJumpInsn(Opcodes.IFNULL, label);
+                        return new Size(0, 2);
+                    }
+                };
+
+                /**
+                 * Applies this jump.
+                 *
+                 * @param methodVisitor The method visitor to use.
+                 * @param offset        The offset of the advice return value.
+                 * @param label         The label to jump to if a default value is discovered.
+                 * @return The size of this instruction.
+                 */
+                protected abstract Size apply(MethodVisitor methodVisitor, int offset, Label label);
             }
         }
 
@@ -12981,6 +13122,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         public static class Factory implements PostProcessor.Factory {
 
             /**
+             * A description of the {@link AsScalar#skipOnDefaultValue()} method.
+             */
+            private static final MethodDescription.InDefinedShape SKIP_ON_DEFAULT_VALUE = TypeDescription.ForLoadedType.of(AsScalar.class)
+                    .getDeclaredMethods()
+                    .filter(named("skipOnDefaultValue"))
+                    .getOnly();
+
+            /**
              * The handler factories to apply.
              */
             private final List<? extends Handler.Factory<?>> factories;
@@ -13055,10 +13204,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
                 Map<Class<?>, List<Handler>> handlers = new LinkedHashMap<Class<?>, List<Handler>>();
-                boolean scalar = false;
+                boolean scalar = false, skipOnDefaultValue = true;
                 for (AnnotationDescription annotation : advice.getDeclaredAnnotations()) {
                     if (annotation.getAnnotationType().represents(AsScalar.class)) {
                         scalar = true;
+                        skipOnDefaultValue = annotation.getValue(SKIP_ON_DEFAULT_VALUE).resolve(Boolean.class);
                         continue;
                     }
                     Handler.Factory<?> factory = factories.get(annotation.getAnnotationType().getName());
@@ -13072,7 +13222,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
                 return !scalar && advice.getReturnType().isArray()
                         ? new ForArray(advice.getReturnType(), exit, handlers.values())
-                        : new ForScalar(advice.getReturnType(), exit, handlers.values());
+                        : new ForScalar(advice.getReturnType(), exit, skipOnDefaultValue, handlers.values());
             }
         }
     }
