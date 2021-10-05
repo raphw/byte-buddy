@@ -27,7 +27,16 @@ public class AnnotationValueForTypeDescriptionTest {
                 {float.class},
                 {double.class},
                 {void.class},
-                {Object.class}
+                {Object.class},
+                {boolean[].class},
+                {byte[].class},
+                {short[].class},
+                {char[].class},
+                {int[].class},
+                {long[].class},
+                {float[].class},
+                {double[].class},
+                {Object[].class}
         });
     }
 

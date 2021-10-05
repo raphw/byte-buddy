@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 5. October 2021: version 1.11.19
+
+- Add `Advice.AssignReturned` post processor to allow for assigning values from `Advice` that uses delegation rather than inlining.
+- Allow for declaring `Advice.Local` values from both enter and exit advice.
+- Add option for using runtime class path rather than only compile scope from Byte Buddy Maven plugin.
+- Avoid loading of annotation proxies within Byte Buddy's internal API.
+- Add plugin to add Java `Repeatable` annotations without requiring a JDK 8+.
+
 ### 23. September 2021: version 1.11.18
 
 - Avoid binary incompatibility due to signature change by reintroducing method overload.
