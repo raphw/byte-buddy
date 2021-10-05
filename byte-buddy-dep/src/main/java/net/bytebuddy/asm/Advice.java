@@ -18,6 +18,7 @@ package net.bytebuddy.asm;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.build.RepeatedAnnotationPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
@@ -11736,6 +11737,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Defines a particular assignment for a {@link ToArguments}.
              */
+            @RepeatedAnnotationPlugin.Enhance(ToArguments.class)
             @interface ToArgument {
 
                 /**
@@ -12071,6 +12073,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Determines what fields are assigned when using a {@link ToFields} annotation.
              */
+            @RepeatedAnnotationPlugin.Enhance(ToFields.class)
             @interface ToField {
 
                 /**
