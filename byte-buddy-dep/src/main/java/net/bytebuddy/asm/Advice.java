@@ -3117,9 +3117,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Creates a new offset mapping for the enter type.
              *
-             * @param target    The represented target type.
-             * @param enterType The enter type.
-             * @param enter     The represented annotation.
+             * @param target     The represented target type.
+             * @param enterType  The enter type.
+             * @param annotation The represented annotation.
              */
             protected ForEnterValue(TypeDescription.Generic target, TypeDescription.Generic enterType, AnnotationDescription.Loadable<Enter> annotation) {
                 this(target,
