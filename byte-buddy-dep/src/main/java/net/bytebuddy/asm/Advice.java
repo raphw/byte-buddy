@@ -4868,13 +4868,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
+     * <p>
      * A post processor for advice methods that is invoked after advice is executed. A post processor
      * is invoked after the instrumented method and only after a regular completion of the method. When
-     * invoked, the advice method's return value is placed on the stack as the only value. Upon
-     * completion, a compatible value or the same value must still be on top of the stack. A frame is added
+     * invoked, the advice method's return value is stored in the local variable array. Upon completion,
+     * the local variable array must still be intact and the stack must be empty. A frame is added
      * subsequently to the post processor's execution, making it feasible to add a jump instruction to the
      * end of the method after which no further byte code instructions must be issued. This also applies
      * to compound post processors.
+     * </p>
+     * <p>
+     * <b>Important</b>: A post processor is triggered after the suppression handler. Exceptions triggered
+     * by post processing code will therefore cause those exceptions to be propagated.
+     * </p>
      */
     public interface PostProcessor {
 
@@ -11627,6 +11633,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * <p>
      * <b>Important</b>: This post processor is not registered by default but requires explicit registration via
      * {@link WithCustomMapping#with(PostProcessor.Factory)}.
+     * </p>
+     * <p>
+     * <b>Important</b>: Assignment exceptions will not be handled by a suppression handler but will be propagated.
      * </p>
      */
     @HashCodeAndEqualsPlugin.Enhance
