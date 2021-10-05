@@ -3125,7 +3125,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 this(target,
                         enterType,
                         annotation.getValue(Factory.ENTER_READ_ONLY).resolve(Boolean.class),
-                        annotation.getValue(Factory.ENTER_READ_ONLY).load(Enter.class.getClassLoader()).resolve(Assigner.Typing.class));
+                        annotation.getValue(Factory.ENTER_TYPING).load(Enter.class.getClassLoader()).resolve(Assigner.Typing.class));
             }
 
             /**
