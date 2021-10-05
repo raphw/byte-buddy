@@ -20,6 +20,7 @@ public class AdviceAnnotationTest {
                 {Advice.AllArguments.class, ElementType.PARAMETER},
                 {Advice.Argument.class, ElementType.PARAMETER},
                 {Advice.AssignReturned.AsScalar.class, ElementType.METHOD},
+                {Advice.AssignReturned.ToAllArguments.class, ElementType.METHOD},
                 {Advice.AssignReturned.ToArguments.class, ElementType.METHOD},
                 {Advice.AssignReturned.ToFields.class, ElementType.METHOD},
                 {Advice.AssignReturned.ToReturned.class, ElementType.METHOD},

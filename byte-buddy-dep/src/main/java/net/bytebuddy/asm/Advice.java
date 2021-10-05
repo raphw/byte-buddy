@@ -11746,6 +11746,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Defines a particular assignment for a {@link ToArguments}.
              */
+            @java.lang.annotation.Target({})
             @RepeatedAnnotationPlugin.Enhance(ToArguments.class)
             @interface ToArgument {
 
@@ -11911,6 +11912,154 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
         }
+
+        /**
+         * <p>
+         * Assigns the advice method's return value as an array to a number of arguments which are returned as an array where
+         * each element assigns a single value with the same index as the instrumented method's parameter.
+         * </p>
+         * <p>
+         * <b>Note</b>: If this is the only intended assignment, the return value must either be a nested array or be annotated
+         * with {@link AsScalar} to indicate that the advice method's returned value should be treated as a singular return value.
+         * </p>
+         * <p>
+         * <b>Important</b>: This annotation has no effect unless an {@link AssignReturned} post processor is explicitly registered.
+         * </p>
+         */
+        @Documented
+        @Retention(RetentionPolicy.RUNTIME)
+        @java.lang.annotation.Target(ElementType.METHOD)
+        public @interface ToAllArguments {
+
+            /**
+             * The index in the array that is returned which represents the assigned value. If negative,
+             * a scalar return value is expected.
+             *
+             * @return The index in the array that is returned which represents the assigned value.
+             */
+            int index() default NO_INDEX;
+
+            /**
+             * The typing to apply when assigning the returned value to the targeted value.
+             *
+             * @return The typing to apply when assigning the returned value to the targeted value.
+             */
+            Assigner.Typing typing() default Assigner.Typing.STATIC;
+
+            /**
+             * A handler for a {@link ToAllArguments} annotation.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class Handler implements AssignReturned.Handler {
+
+                /**
+                 * The index in the array that is returned which represents the assigned value or a negative value
+                 * if assigning a scalar value.
+                 */
+                private final int index;
+
+                /**
+                 * The typing to apply when assigning the returned value to the targeted value.
+                 */
+                private final Assigner.Typing typing;
+
+                /**
+                 * Creates a new handler.
+                 *
+                 * @param index  The index in the array that is returned which represents the assigned value or a
+                 *               negative value if assigning a scalar value.
+                 * @param typing The typing to apply when assigning the returned value to the targeted value.
+                 */
+                protected Handler(int index, Assigner.Typing typing) {
+                    this.index = index;
+                    this.typing = typing;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int getIndex() {
+                    return index;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public StackManipulation resolve(TypeDescription instrumentedType,
+                                                 MethodDescription instrumentedMethod,
+                                                 Assigner assigner,
+                                                 ArgumentHandler argumentHandler,
+                                                 TypeDescription.Generic type,
+                                                 StackManipulation value) {
+                    List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(instrumentedMethod.getParameters().size());
+                    if (!type.isArray()) {
+                        StackManipulation assignment = assigner.assign(type, TypeDefinition.Sort.describe(Object[].class), typing);
+                        if (!assignment.isValid()) {
+                            throw new IllegalStateException("Cannot assign " + type + " to " + Object[].class);
+                        }
+                        type = TypeDefinition.Sort.describe(Object[].class);
+                        value = new StackManipulation.Compound(value, assignment);
+                    }
+                    for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
+                        StackManipulation assignment = assigner.assign(type.getComponentType(), parameterDescription.getType(), typing);
+                        if (!assignment.isValid()) {
+                            throw new IllegalStateException("Cannot assign " + type.getComponentType() + " to " + parameterDescription);
+                        }
+                        stackManipulations.add(new StackManipulation.Compound(assignment, MethodVariableAccess.of(parameterDescription.getType())
+                                .storeAt(argumentHandler.argument(parameterDescription.getOffset()))));
+                    }
+                    return new StackManipulation.Compound(value, ArrayAccess.of(type.getComponentType()).forEach(stackManipulations), Removal.SINGLE);
+                }
+
+                /**
+                 * A factory to create a handler for a {@link ToAllArguments} annotation.
+                 */
+                public enum Factory implements AssignReturned.Handler.Factory<ToAllArguments> {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * A description of the {@link ToAllArguments#index()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_ALL_ARGUMENTS_INDEX;
+
+                    /**
+                     * A description of the {@link ToAllArguments#typing()} method.
+                     */
+                    private static final MethodDescription.InDefinedShape TO_ALL_ARGUMENTS_TYPING;
+
+                    /*
+                     * Resolves annotation properties.
+                     */
+                    static {
+                        MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(ToAllArguments.class).getDeclaredMethods();
+                        TO_ALL_ARGUMENTS_INDEX = methods.filter(named("index")).getOnly();
+                        TO_ALL_ARGUMENTS_TYPING = methods.filter(named("typing")).getOnly();
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Class<ToAllArguments> getAnnotationType() {
+                        return ToAllArguments.class;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public List<AssignReturned.Handler> make(MethodDescription.InDefinedShape advice,
+                                                             boolean exit,
+                                                             AnnotationDescription.Loadable<? extends ToAllArguments> annotation) {
+                        return Collections.<AssignReturned.Handler>singletonList(new Handler(annotation.getValue(TO_ALL_ARGUMENTS_INDEX).resolve(Integer.class),
+                                annotation.getValue(TO_ALL_ARGUMENTS_TYPING).load(ToAllArguments.class.getClassLoader()).resolve(Assigner.Typing.class)));
+                    }
+                }
+            }
+        }
+
 
         /**
          * <p>
@@ -12082,6 +12231,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Determines what fields are assigned when using a {@link ToFields} annotation.
              */
+            @java.lang.annotation.Target({})
             @RepeatedAnnotationPlugin.Enhance(ToFields.class)
             @interface ToField {
 
@@ -12842,6 +12992,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @SuppressWarnings("unchecked")
             public Factory() {
                 this(Arrays.asList(ToArguments.Handler.Factory.INSTANCE,
+                        ToAllArguments.Handler.Factory.INSTANCE,
                         ToThis.Handler.Factory.INSTANCE,
                         ToFields.Handler.Factory.INSTANCE,
                         ToReturned.Handler.Factory.INSTANCE,

@@ -7,7 +7,7 @@ import org.junit.Test;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -15,7 +15,7 @@ import static org.junit.Assert.fail;
 
 public class AdviceAssignReturnedTest {
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
     @Test
     public void testAssignReturnedToArgumentScalar() throws Exception {
@@ -43,6 +43,62 @@ public class AdviceAssignReturnedTest {
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) BAR));
+    }
+
+    @Test
+    public void testAssignReturnedToAllArgumentsScalar() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToAllArgumentsScalar.class)
+                        .on(named(BAZ)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getMethod(BAZ, String.class, String.class).invoke(type.getConstructor().newInstance(), FOO, BAR), is((Object) (BAR + FOO)));
+    }
+
+    @Test
+    public void testAssignReturnedToAllArgumentsArray() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToAllArgumentsArray.class)
+                        .on(named(BAZ)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getMethod(BAZ, String.class, String.class).invoke(type.getConstructor().newInstance(), FOO, BAR), is((Object) (BAR + FOO)));
+    }
+
+    @Test
+    public void testAssignThisToArgumentScalar() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToThisScalar.class)
+                        .on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) FOO));
+    }
+
+    @Test
+    public void testAssignThisToArgumentArray() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToThisArray.class)
+                        .on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) FOO));
     }
 
     @Test
@@ -105,6 +161,20 @@ public class AdviceAssignReturnedTest {
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) BAR));
+    }
+
+    @Test
+    public void testAssignReturnedVoid() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToReturnedScalar.class)
+                        .on(named(QUX)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getMethod(QUX, String.class).invoke(type.getConstructor().newInstance(), FOO), nullValue(Object.class));
     }
 
     @Test(expected = RuntimeException.class)
@@ -173,12 +243,101 @@ public class AdviceAssignReturnedTest {
         assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), nullValue(Object.class));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testArgumentTooFewParameters() {
+        new ByteBuddy()
+                .redefine(Object.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToArgumentScalar.class)
+                        .on(isToString()))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testArgumentNotAssignable() throws Exception {
+        new ByteBuddy()
+                .redefine(SampleVoid.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToArgumentScalar.class)
+                        .on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testReturnTypeNotAssignable() throws Exception {
+        new ByteBuddy()
+                .redefine(SampleVoid.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToReturnedScalar.class)
+                        .on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testThrownNotAssignable() throws Exception {
+        new ByteBuddy()
+                .redefine(SampleThrowing.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToThrownNotAssignable.class)
+                        .on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testThisStaticMethod() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToThisScalar.class)
+                        .on(named(BAR)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testThisConstructor() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToThisScalar.class)
+                        .on(isConstructor()))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testThisNotAssignable() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToThisNotAssignable.class)
+                        .on(named(FOO)))
+                .make();
+    }
+
     public static class Sample {
 
         public String foo;
 
         public String foo(String value) {
             return value;
+        }
+
+        public static String bar(String value) {
+            return value;
+        }
+
+        public void qux(String value) {
+            /* empty */
+        }
+
+        public String baz(String left, String right) {
+            return left + right;
         }
     }
 
@@ -189,9 +348,18 @@ public class AdviceAssignReturnedTest {
         }
     }
 
+    public static class SampleVoid {
+
+        public Void foo;
+
+        public Void foo(Void value) {
+            return value;
+        }
+    }
+
     public static class SampleThrowing {
 
-        public String[] foo(String value) {
+        public String foo(String value) {
             throw new RuntimeException();
         }
     }
@@ -235,6 +403,100 @@ public class AdviceAssignReturnedTest {
                 throw new AssertionError();
             }
             return new String[]{QUX};
+        }
+    }
+
+    public static class ToAllArgumentsScalar {
+
+        @Advice.OnMethodEnter
+        @Advice.AssignReturned.AsScalar
+        @Advice.AssignReturned.ToAllArguments
+        public static String[] enter(@Advice.AllArguments String[] argument) {
+            if (argument.length != 2 || !FOO.equals(argument[0]) || !BAR.equals(argument[1])) {
+                throw new AssertionError();
+            }
+            return new String[] {BAR, FOO};
+        }
+
+        @Advice.OnMethodExit
+        @Advice.AssignReturned.AsScalar
+        @Advice.AssignReturned.ToAllArguments
+        public static String[] exit(@Advice.AllArguments String[] argument) {
+            if (argument.length != 2 || !BAR.equals(argument[0]) || !FOO.equals(argument[1])) {
+                throw new AssertionError();
+            }
+            return new String[] {FOO, QUX};
+        }
+    }
+
+    public static class ToAllArgumentsArray {
+
+        @Advice.OnMethodEnter
+        @Advice.AssignReturned.ToAllArguments(index = 0)
+        public static String[][] enter(@Advice.AllArguments String[] argument) {
+            if (argument.length != 2 || !FOO.equals(argument[0]) || !BAR.equals(argument[1])) {
+                throw new AssertionError();
+            }
+            return new String[][] {{BAR, FOO}};
+        }
+
+        @Advice.OnMethodExit
+        @Advice.AssignReturned.ToAllArguments(index = 0)
+        public static String[][] exit(@Advice.AllArguments String[] argument) {
+            if (argument.length != 2 || !BAR.equals(argument[0]) || !FOO.equals(argument[1])) {
+                throw new AssertionError();
+            }
+            return new String[][] {{FOO, QUX}};
+        }
+    }
+
+    public static class ToThisScalar {
+
+        @Advice.OnMethodEnter
+        @Advice.AssignReturned.ToThis
+        public static Sample enter(@Advice.This Sample sample) {
+            if (sample.foo != null) {
+                throw new AssertionError();
+            }
+            Sample replacement = new Sample();
+            replacement.foo = BAR;
+            return replacement;
+        }
+
+        @Advice.OnMethodExit
+        @Advice.AssignReturned.ToThis
+        public static Sample exit(@Advice.This Sample sample) {
+            if (!BAR.equals(sample.foo)) {
+                throw new AssertionError();
+            }
+            Sample replacement = new Sample();
+            replacement.foo = QUX;
+            return replacement;
+        }
+    }
+
+    public static class ToThisArray {
+
+        @Advice.OnMethodEnter
+        @Advice.AssignReturned.ToThis(index = 0)
+        public static Sample[] enter(@Advice.This Sample sample) {
+            if (sample.foo != null) {
+                throw new AssertionError();
+            }
+            Sample replacement = new Sample();
+            replacement.foo = BAR;
+            return new Sample[] {replacement};
+        }
+
+        @Advice.OnMethodExit
+        @Advice.AssignReturned.ToThis(index = 0)
+        public static Sample[] exit(@Advice.This Sample sample) {
+            if (!BAR.equals(sample.foo)) {
+                throw new AssertionError();
+            }
+            Sample replacement = new Sample();
+            replacement.foo = QUX;
+            return new Sample[] {replacement};
         }
     }
 
@@ -359,7 +621,33 @@ public class AdviceAssignReturnedTest {
             if (!(throwable instanceof RuntimeException)) {
                 throw new AssertionError();
             }
-            return new Throwable[] {null};
+            return new Throwable[]{null};
+        }
+    }
+
+    public static class ToThrownNotAssignable {
+
+        @Advice.OnMethodExit(onThrowable = Throwable.class)
+        @Advice.AssignReturned.ToThrown(index = 0)
+        public static Object exit(@Advice.Thrown Throwable throwable) {
+            if (!(throwable instanceof RuntimeException)) {
+                throw new AssertionError();
+            }
+            return new Object();
+        }
+    }
+
+    public static class ToThisNotAssignable {
+
+        @Advice.OnMethodEnter
+        @Advice.AssignReturned.ToThis
+        public static Object enter(@Advice.This Sample sample) {
+            if (sample.foo != null) {
+                throw new AssertionError();
+            }
+            Sample replacement = new Sample();
+            replacement.foo = BAR;
+            return replacement;
         }
     }
 }
