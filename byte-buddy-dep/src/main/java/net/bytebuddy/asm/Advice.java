@@ -1614,7 +1614,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a new offset binding for a parameter with a given index.
                  *
-                 * @param target   The target type.
+                 * @param target     The target type.
                  * @param annotation The annotation that triggers this binding.
                  */
                 protected Unresolved(TypeDescription.Generic target, AnnotationDescription.Loadable<Argument> annotation) {
@@ -1885,8 +1885,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param target     The type that the advice method expects for the {@code this} reference.
              * @param annotation The mapped annotation.
              */
-            protected ForThisReference(TypeDescription.Generic target, This annotation) {
-                this(target, annotation.readOnly(), annotation.typing(), annotation.optional());
+            protected ForThisReference(TypeDescription.Generic target, AnnotationDescription.Loadable<This> annotation) {
+                this(target,
+                        annotation.getValue(Factory.THIS_READ_ONLY).resolve(Boolean.class),
+                        annotation.getValue(Factory.THIS_TYPING).load(This.class.getClassLoader()).resolve(Assigner.Typing.class),
+                        annotation.getValue(Factory.THIS_OPTIONAL).resolve(Boolean.class));
             }
 
             /**
@@ -1946,6 +1949,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 INSTANCE;
 
                 /**
+                 * A description of the {@link This#readOnly()} method.
+                 */
+                private static final MethodDescription.InDefinedShape THIS_READ_ONLY;
+
+                /**
+                 * A description of the {@link This#typing()} method.
+                 */
+                private static final MethodDescription.InDefinedShape THIS_TYPING;
+
+                /**
+                 * A description of the {@link This#optional()} method.
+                 */
+                private static final MethodDescription.InDefinedShape THIS_OPTIONAL;
+
+                /*
+                 * Resolves annotation properties.
+                 */
+                static {
+                    MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(This.class).getDeclaredMethods();
+                    THIS_READ_ONLY = methods.filter(named("readOnly")).getOnly();
+                    THIS_TYPING = methods.filter(named("typing")).getOnly();
+                    THIS_OPTIONAL = methods.filter(named("optional")).getOnly();
+                }
+
+                /**
                  * {@inheritDoc}
                  */
                 public Class<This> getAnnotationType() {
@@ -1958,10 +1986,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<This> annotation,
                                           AdviceType adviceType) {
-                    if (adviceType.isDelegation() && !annotation.load().readOnly()) {
+                    if (adviceType.isDelegation() && !annotation.getValue(THIS_READ_ONLY).resolve(Boolean.class)) {
                         throw new IllegalStateException("Cannot write to this reference for " + target + " in read-only context");
                     } else {
-                        return new ForThisReference(target.getType(), annotation.load());
+                        return new ForThisReference(target.getType(), annotation);
                     }
                 }
             }
@@ -2919,6 +2947,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 INSTANCE;
 
                 /**
+                 * A description of the {@link Origin#value()} method.
+                 */
+                private static final MethodDescription.InDefinedShape ORIGIN_VALUE = TypeDescription.ForLoadedType.of(Origin.class)
+                        .getDeclaredMethods()
+                        .filter(named("value"))
+                        .getOnly();
+
+                /**
                  * {@inheritDoc}
                  */
                 public Class<Origin> getAnnotationType() {
@@ -2940,7 +2976,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     } else if (JavaType.EXECUTABLE.getTypeStub().equals(target.getType().asErasure())) {
                         return OffsetMapping.ForInstrumentedMethod.EXECUTABLE;
                     } else if (target.getType().asErasure().isAssignableFrom(String.class)) {
-                        return ForOrigin.parse(annotation.load().value());
+                        return ForOrigin.parse(annotation.getValue(ORIGIN_VALUE).resolve(String.class));
                     } else {
                         throw new IllegalStateException("Non-supported type " + target.getType() + " for @Origin annotation");
                     }
@@ -3231,12 +3267,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Creates a new offset mapping for the exit type.
              *
-             * @param target   The represented target type.
-             * @param exitType The exit type.
-             * @param exit     The represented annotation.
+             * @param target     The represented target type.
+             * @param exitType   The exit type.
+             * @param annotation The represented annotation.
              */
-            protected ForExitValue(TypeDescription.Generic target, TypeDescription.Generic exitType, Exit exit) {
-                this(target, exitType, exit.readOnly(), exit.typing());
+            protected ForExitValue(TypeDescription.Generic target, TypeDescription.Generic exitType, AnnotationDescription.Loadable<Exit> annotation) {
+                this(target,
+                        exitType,
+                        annotation.getValue(Factory.EXIT_READ_ONLY).resolve(Boolean.class),
+                        annotation.getValue(Factory.EXIT_TYPING).load(Exit.class.getClassLoader()).resolve(Assigner.Typing.class));
             }
 
             /**
@@ -3283,6 +3322,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected static class Factory implements OffsetMapping.Factory<Exit> {
 
                 /**
+                 * A description of the {@link Exit#readOnly()} method.
+                 */
+                private static final MethodDescription.InDefinedShape EXIT_READ_ONLY;
+
+                /**
+                 * A description of the {@link Exit#typing()} method.
+                 */
+                private static final MethodDescription.InDefinedShape EXIT_TYPING;
+
+                /*
+                 * Resolves annotation properties.
+                 */
+                static {
+                    MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(Exit.class).getDeclaredMethods();
+                    EXIT_READ_ONLY = methods.filter(named("readOnly")).getOnly();
+                    EXIT_TYPING = methods.filter(named("typing")).getOnly();
+                }
+
+                /**
                  * The supplied type of the exit advice.
                  */
                 private final TypeDefinition exitType;
@@ -3321,10 +3379,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Exit> annotation,
                                           AdviceType adviceType) {
-                    if (adviceType.isDelegation() && !annotation.load().readOnly()) {
+                    if (adviceType.isDelegation() && !annotation.getValue(EXIT_READ_ONLY).resolve(Boolean.class)) {
                         throw new IllegalStateException("Cannot use writable " + target + " on read-only parameter");
                     } else {
-                        return new ForExitValue(target.getType(), exitType.asGenericType(), annotation.load());
+                        return new ForExitValue(target.getType(), exitType.asGenericType(), annotation);
                     }
                 }
             }
@@ -3459,8 +3517,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param target     The type that the advice method expects for the return value.
              * @param annotation The annotation being bound.
              */
-            protected ForReturnValue(TypeDescription.Generic target, Return annotation) {
-                this(target, annotation.readOnly(), annotation.typing());
+            protected ForReturnValue(TypeDescription.Generic target, AnnotationDescription.Loadable<Return> annotation) {
+                this(target,
+                        annotation.getValue(Factory.RETURN_READ_ONLY).resolve(Boolean.class),
+                        annotation.getValue(Factory.RETURN_TYPING).load(Return.class.getClassLoader()).resolve(Assigner.Typing.class));
             }
 
             /**
@@ -3513,6 +3573,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 INSTANCE;
 
                 /**
+                 * A description of the {@link Return#readOnly()} method.
+                 */
+                private static final MethodDescription.InDefinedShape RETURN_READ_ONLY;
+
+                /**
+                 * A description of the {@link Return#typing()} method.
+                 */
+                private static final MethodDescription.InDefinedShape RETURN_TYPING;
+
+                /*
+                 * Resolves annotation properties.
+                 */
+                static {
+                    MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(Return.class).getDeclaredMethods();
+                    RETURN_READ_ONLY = methods.filter(named("readOnly")).getOnly();
+                    RETURN_TYPING = methods.filter(named("typing")).getOnly();
+                }
+
+                /**
                  * {@inheritDoc}
                  */
                 public Class<Return> getAnnotationType() {
@@ -3525,10 +3604,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Return> annotation,
                                           AdviceType adviceType) {
-                    if (adviceType.isDelegation() && !annotation.load().readOnly()) {
+                    if (adviceType.isDelegation() && !annotation.getValue(RETURN_READ_ONLY).resolve(Boolean.class)) {
                         throw new IllegalStateException("Cannot write return value for " + target + " in read-only context");
                     } else {
-                        return new ForReturnValue(target.getType(), annotation.load());
+                        return new ForReturnValue(target.getType(), annotation);
                     }
                 }
             }
@@ -3561,8 +3640,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param target     The type of parameter that is being accessed.
              * @param annotation The annotation to bind.
              */
-            protected ForThrowable(TypeDescription.Generic target, Thrown annotation) {
-                this(target, annotation.readOnly(), annotation.typing());
+            protected ForThrowable(TypeDescription.Generic target, AnnotationDescription.Loadable<Thrown> annotation) {
+                this(target,
+                        annotation.getValue(Factory.THROWN_READ_ONLY).resolve(Boolean.class),
+                        annotation.getValue(Factory.THROWN_TYPING).load(Thrown.class.getClassLoader()).resolve(Assigner.Typing.class));
             }
 
             /**
@@ -3611,6 +3692,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 INSTANCE;
 
                 /**
+                 * A description of the {@link Thrown#readOnly()} method.
+                 */
+                private static final MethodDescription.InDefinedShape THROWN_READ_ONLY;
+
+                /**
+                 * A description of the {@link Thrown#typing()} method.
+                 */
+                private static final MethodDescription.InDefinedShape THROWN_TYPING;
+
+                /*
+                 * Resolves annotation properties.
+                 */
+                static {
+                    MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(Thrown.class).getDeclaredMethods();
+                    THROWN_READ_ONLY = methods.filter(named("readOnly")).getOnly();
+                    THROWN_TYPING = methods.filter(named("typing")).getOnly();
+                }
+
+                /**
                  * Resolves an appropriate offset mapping factory for the {@link Thrown} parameter annotation.
                  *
                  * @param adviceMethod The exit advice method, annotated with {@link OnMethodExit}.
@@ -3638,10 +3738,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Thrown> annotation,
                                           AdviceType adviceType) {
-                    if (adviceType.isDelegation() && !annotation.load().readOnly()) {
+                    if (adviceType.isDelegation() && !annotation.getValue(THROWN_READ_ONLY).resolve(Boolean.class)) {
                         throw new IllegalStateException("Cannot use writable " + target + " on read-only parameter");
                     } else {
-                        return new ForThrowable(target.getType(), annotation.load());
+                        return new ForThrowable(target.getType(), annotation);
                     }
                 }
             }
@@ -11046,13 +11146,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public @interface This {
 
         /**
-         * Determines if the parameter should be assigned {@code null} if the instrumented method is static or a constructor within an enter advice.
-         *
-         * @return {@code true} if the value assignment is optional.
-         */
-        boolean optional() default false;
-
-        /**
          * <p>
          * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
          * type must be equal to the type declaring the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
@@ -11072,6 +11165,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return The typing to apply upon assignment.
          */
         Assigner.Typing typing() default Assigner.Typing.STATIC;
+
+        /**
+         * Determines if the parameter should be assigned {@code null} if the instrumented method is static or a constructor within an enter advice.
+         *
+         * @return {@code true} if the value assignment is optional.
+         */
+        boolean optional() default false;
     }
 
     /**
