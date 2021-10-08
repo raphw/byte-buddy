@@ -4,6 +4,7 @@
       <pluginExecutionFilter>
         <goals>
           <goal>transform</goal>
+          <goal>transform-runtime</goal>
           <goal>transform-test</goal>
         </goals>
       </pluginExecutionFilter>

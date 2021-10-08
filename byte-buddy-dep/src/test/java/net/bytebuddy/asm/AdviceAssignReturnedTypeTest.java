@@ -56,7 +56,7 @@ public class AdviceAssignReturnedTypeTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getMethod(FOO).invoke(type.getConstructor().newInstance()), is((Object) skipReturn));
+        assertThat(type.getMethod(FOO).invoke(type.getConstructor().newInstance()), is(skipReturn));
     }
 
     @Test
@@ -70,7 +70,7 @@ public class AdviceAssignReturnedTypeTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getMethod(FOO).invoke(type.getConstructor().newInstance()), is((Object) noSkipReturn));
+        assertThat(type.getMethod(FOO).invoke(type.getConstructor().newInstance()), is(noSkipReturn));
     }
 
     public static class BooleanSample {

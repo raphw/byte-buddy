@@ -485,40 +485,56 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * A Byte Buddy plugin that transforms a project's production class files.
      */
-    @Mojo(name = "transform",
-            defaultPhase = LifecyclePhase.PROCESS_CLASSES,
-            threadSafe = true,
-            requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
-    public static class ForProductionTypes extends ByteBuddyMojo {
-
-        /**
-         * Determines that the class path should be resolved with runtime scope rather than compile scope.
-         */
-        @Parameter(defaultValue = "false", required = true)
-        public boolean runtimeClassPath;
+    public abstract static class ForProductionTypes extends ByteBuddyMojo {
 
         @Override
         protected String getOutputDirectory() {
             return project.getBuild().getOutputDirectory();
         }
 
-        /*
-         * (non-Javadoc)
-         * @see net.bytebuddy.build.maven.ByteBuddyMojo#getSourceDirectory()
-         */
         @Override
         protected String getSourceDirectory() {
             return project.getBuild().getSourceDirectory();
         }
 
-        @Override
-        protected List<String> getClassPathElements() throws MojoFailureException {
-            try {
-                return runtimeClassPath
-                        ? project.getRuntimeClasspathElements()
-                        : project.getCompileClasspathElements();
-            } catch (DependencyResolutionRequiredException e) {
-                throw new MojoFailureException("Could not resolve class path", e);
+        /**
+         * A Byte Buddy plugin that transforms a project's production class files where runtime class
+         * path elements are not included.
+         */
+        @Mojo(name = "transform",
+                defaultPhase = LifecyclePhase.PROCESS_CLASSES,
+                threadSafe = true,
+                requiresDependencyResolution = ResolutionScope.COMPILE)
+        public static class WithoutRuntimeDependencies extends ForProductionTypes {
+
+            @Override
+            protected List<String> getClassPathElements() throws MojoFailureException {
+                try {
+                    return project.getCompileClasspathElements();
+                } catch (DependencyResolutionRequiredException e) {
+                    throw new MojoFailureException("Could not resolve class path", e);
+                }
+            }
+
+        }
+
+        /**
+         * A Byte Buddy plugin that transforms a project's production class files where runtime class
+         * path elements are included.
+         */
+        @Mojo(name = "transform-runtime",
+                defaultPhase = LifecyclePhase.PROCESS_CLASSES,
+                threadSafe = true,
+                requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+        public static class WithRuntimeDependencies extends ForProductionTypes {
+
+            @Override
+            protected List<String> getClassPathElements() throws MojoFailureException {
+                try {
+                    return project.getRuntimeClasspathElements();
+                } catch (DependencyResolutionRequiredException e) {
+                    throw new MojoFailureException("Could not resolve class path", e);
+                }
             }
         }
     }
