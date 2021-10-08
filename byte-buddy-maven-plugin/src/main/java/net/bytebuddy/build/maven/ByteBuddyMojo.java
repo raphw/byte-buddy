@@ -488,7 +488,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     @Mojo(name = "transform",
             defaultPhase = LifecyclePhase.PROCESS_CLASSES,
             threadSafe = true,
-            requiresDependencyResolution = ResolutionScope.COMPILE)
+            requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
     public static class ForProductionTypes extends ByteBuddyMojo {
 
         /**
