@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 11. October 2021: version 1.11.20
+
+- Add option for `AsScalar` annotation to assign default value instead of ignoring it.
+- Add *transform-runtime* goal to Byte Buddy Mojo to allow for running plugins with runtime class path included.
+
 ### 5. October 2021: version 1.11.19
 
 - Add `Advice.AssignReturned` post processor to allow for assigning values from `Advice` that uses delegation rather than inlining.
