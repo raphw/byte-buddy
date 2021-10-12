@@ -13220,9 +13220,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
                 }
-                return !scalar && advice.getReturnType().isArray()
-                        ? new ForArray(advice.getReturnType(), exit, handlers.values())
-                        : new ForScalar(advice.getReturnType(), exit, skipOnDefaultValue, handlers.values());
+                if (handlers.isEmpty()) {
+                    return NoOp.INSTANCE;
+                } else {
+                    return !scalar && advice.getReturnType().isArray()
+                            ? new ForArray(advice.getReturnType(), exit, handlers.values())
+                            : new ForScalar(advice.getReturnType(), exit, skipOnDefaultValue, handlers.values());
+                }
             }
         }
     }

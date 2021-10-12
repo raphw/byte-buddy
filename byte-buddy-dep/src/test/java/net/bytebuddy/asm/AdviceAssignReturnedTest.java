@@ -291,6 +291,20 @@ public class AdviceAssignReturnedTest {
         assertThat(type.getField(BAR).get(null), is((Object) QUX));
     }
 
+    @Test
+    public void testAssignReturnedNoHandler() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(ToNothing.class)
+                        .on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) FOO));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testArgumentTooFewParameters() {
         new ByteBuddy()
@@ -793,6 +807,25 @@ public class AdviceAssignReturnedTest {
         @Advice.AssignReturned.ToFields(@Advice.AssignReturned.ToFields.ToField(BAR))
         public static String enter(@Advice.FieldValue(BAR) String field) {
             if (!FOO.equals(field)) {
+                throw new AssertionError();
+            }
+            return QUX;
+        }
+    }
+
+    public static class ToNothing {
+
+        @Advice.OnMethodEnter
+        public static String enter(@Advice.Argument(0) String argument) {
+            if (!FOO.equals(argument)) {
+                throw new AssertionError();
+            }
+            return BAR;
+        }
+
+        @Advice.OnMethodExit
+        public static String exit(@Advice.Argument(0) String argument) {
+            if (!FOO.equals(argument)) {
                 throw new AssertionError();
             }
             return QUX;
