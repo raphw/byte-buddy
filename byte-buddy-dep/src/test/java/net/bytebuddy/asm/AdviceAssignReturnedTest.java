@@ -307,6 +307,36 @@ public class AdviceAssignReturnedTest {
         assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) FOO));
     }
 
+    @Test
+    public void testAssignReturnedWithSkip() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(DebuggingWrapper.makeDefault())
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(WithSkip.class)
+                        .on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) FOO));
+    }
+
+    @Test
+    public void testAssignReturnedWithRepeat() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(DebuggingWrapper.makeDefault())
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(WithRepeat.class)
+                        .on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) FOO));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testArgumentTooFewParameters() {
         new ByteBuddy()
@@ -525,7 +555,7 @@ public class AdviceAssignReturnedTest {
             if (argument.length != 2 || !FOO.equals(argument[0]) || !BAR.equals(argument[1])) {
                 throw new AssertionError();
             }
-            return new String[] {BAR, FOO};
+            return new String[]{BAR, FOO};
         }
 
         @Advice.OnMethodExit
@@ -535,7 +565,7 @@ public class AdviceAssignReturnedTest {
             if (argument.length != 2 || !BAR.equals(argument[0]) || !FOO.equals(argument[1])) {
                 throw new AssertionError();
             }
-            return new String[] {FOO, QUX};
+            return new String[]{FOO, QUX};
         }
     }
 
@@ -547,7 +577,7 @@ public class AdviceAssignReturnedTest {
             if (argument.length != 2 || !FOO.equals(argument[0]) || !BAR.equals(argument[1])) {
                 throw new AssertionError();
             }
-            return new String[][] {{BAR, FOO}};
+            return new String[][]{{BAR, FOO}};
         }
 
         @Advice.OnMethodExit
@@ -556,7 +586,7 @@ public class AdviceAssignReturnedTest {
             if (argument.length != 2 || !BAR.equals(argument[0]) || !FOO.equals(argument[1])) {
                 throw new AssertionError();
             }
-            return new String[][] {{FOO, QUX}};
+            return new String[][]{{FOO, QUX}};
         }
     }
 
@@ -595,7 +625,7 @@ public class AdviceAssignReturnedTest {
             }
             Sample replacement = new Sample();
             replacement.foo = BAR;
-            return new Sample[] {replacement};
+            return new Sample[]{replacement};
         }
 
         @Advice.OnMethodExit
@@ -606,7 +636,7 @@ public class AdviceAssignReturnedTest {
             }
             Sample replacement = new Sample();
             replacement.foo = QUX;
-            return new Sample[] {replacement};
+            return new Sample[]{replacement};
         }
     }
 
@@ -769,7 +799,7 @@ public class AdviceAssignReturnedTest {
             if (argument.length != 2 || !FOO.equals(argument[0]) || !BAR.equals(argument[1])) {
                 throw new AssertionError();
             }
-            return new String[] {BAR, FOO};
+            return new String[]{BAR, FOO};
         }
     }
 
@@ -781,7 +811,7 @@ public class AdviceAssignReturnedTest {
             if (argument.length != 2 || !FOO.equals(argument[0]) || !BAR.equals(argument[1])) {
                 throw new AssertionError();
             }
-            return new String[] {BAR, FOO};
+            return new String[]{BAR, FOO};
         }
     }
 
@@ -825,12 +855,36 @@ public class AdviceAssignReturnedTest {
             return BAR;
         }
 
-        @Advice.OnMethodExit(suppress = Throwable.class, repeatOn = Object.class)
+        @Advice.OnMethodExit(suppress = Throwable.class)
         public static String exit(@Advice.Argument(0) String argument) {
             if (!FOO.equals(argument)) {
                 throw new AssertionError();
             }
             return QUX;
+        }
+    }
+
+    public static class WithSkip {
+
+        @Advice.OnMethodEnter(skipOn = String.class)
+        @Advice.AssignReturned.ToReturned
+        public static String enter(@Advice.Argument(0) String argument) {
+            if (!FOO.equals(argument)) {
+                throw new AssertionError();
+            }
+            return null;
+        }
+    }
+
+    public static class WithRepeat {
+
+        @Advice.OnMethodExit(repeatOn = String.class)
+        @Advice.AssignReturned.ToReturned
+        public static String exit(@Advice.Argument(0) String argument) {
+            if (!FOO.equals(argument)) {
+                throw new AssertionError();
+            }
+            return null;
         }
     }
 }

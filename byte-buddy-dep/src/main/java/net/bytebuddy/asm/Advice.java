@@ -4890,6 +4890,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param instrumentedType     The instrumented type.
          * @param instrumentedMethod   The instrumented method.
          * @param assigner             The assigner to use.
+         * @param argumentHandler      The argument handler to use.
          * @param stackMapFrameHandler The argument handler for the instrumented method.
          * @return The stack manipulation to apply.
          */
@@ -6743,7 +6744,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     } else if (currentFrameDivergence < 3 && endTypes.isEmpty()) {
                         methodVisitor.visitFrame(Opcodes.F_CHOP, currentFrameDivergence, EMPTY, EMPTY.length, EMPTY);
-                        currentFrameDivergence = 0; // TODO: ?
+                        currentFrameDivergence = 0;
                     } else {
                         injectFullFrame(methodVisitor, initialization, CompoundList.of(startTypes, endTypes), Collections.<TypeDescription>emptyList());
                     }
@@ -12876,10 +12877,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Creates a null-check wrapper.
              *
-             * @param stackManipulation The wrapped stack manipulation in case the value is not a default value.
-             * @param stackMapFrameHandler      The stack map frame handler to use.
-             * @param offset            The offset of the value of the returned type.
-             * @param dispatcher        The dispatcher to use.
+             * @param stackManipulation    The wrapped stack manipulation in case the value is not a default value.
+             * @param stackMapFrameHandler The stack map frame handler to use.
+             * @param offset               The offset of the value of the returned type.
+             * @param dispatcher           The dispatcher to use.
              */
             protected DefaultValueSkip(StackManipulation stackManipulation, StackMapFrameHandler stackMapFrameHandler, int offset, Dispatcher dispatcher) {
                 this.stackManipulation = stackManipulation;
@@ -12935,7 +12936,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 Label label = new Label();
                 Size size = dispatcher.apply(methodVisitor, offset, label).aggregate(stackManipulation.apply(methodVisitor, implementationContext));
                 methodVisitor.visitLabel(label);
-                stackMapFrameHandler.injectCompletionFrame(methodVisitor);
+                //stackMapFrameHandler.injectCompletionFrame(methodVisitor); TODO: This needs to work
                 return size;
             }
 
@@ -13235,13 +13236,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
                 }
-                //if (handlers.isEmpty()) {
-                //    return NoOp.INSTANCE;
-                //} else {
-                return !scalar && advice.getReturnType().isArray()
-                        ? new ForArray(advice.getReturnType(), exit, handlers.values())
-                        : new ForScalar(advice.getReturnType(), exit, skipOnDefaultValue, handlers.values());
-                //}
+                if (handlers.isEmpty()) {
+                    return NoOp.INSTANCE;
+                } else {
+                    return !scalar && advice.getReturnType().isArray()
+                            ? new ForArray(advice.getReturnType(), exit, handlers.values())
+                            : new ForScalar(advice.getReturnType(), exit, skipOnDefaultValue, handlers.values());
+                }
             }
         }
     }
