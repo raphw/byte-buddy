@@ -3,7 +3,6 @@ package net.bytebuddy.asm;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -296,7 +295,6 @@ public class AdviceAssignReturnedTest {
     public void testAssignReturnedNoHandler() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.withCustomMapping()
                         .with(new Advice.AssignReturned.Factory())
                         .to(ToNothing.class)
@@ -311,7 +309,6 @@ public class AdviceAssignReturnedTest {
     public void testAssignReturnedWithSkip() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.withCustomMapping()
                         .with(new Advice.AssignReturned.Factory())
                         .to(WithSkip.class)
@@ -326,7 +323,6 @@ public class AdviceAssignReturnedTest {
     public void testAssignReturnedWithRepeat() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.withCustomMapping()
                         .with(new Advice.AssignReturned.Factory())
                         .to(WithRepeat.class)
@@ -867,7 +863,7 @@ public class AdviceAssignReturnedTest {
     public static class WithSkip {
 
         @Advice.OnMethodEnter(skipOn = String.class)
-        @Advice.AssignReturned.ToReturned
+        @Advice.AssignReturned.ToArguments(@Advice.AssignReturned.ToArguments.ToArgument(0))
         public static String enter(@Advice.Argument(0) String argument) {
             if (!FOO.equals(argument)) {
                 throw new AssertionError();
@@ -879,7 +875,7 @@ public class AdviceAssignReturnedTest {
     public static class WithRepeat {
 
         @Advice.OnMethodExit(repeatOn = String.class)
-        @Advice.AssignReturned.ToReturned
+        @Advice.AssignReturned.ToArguments(@Advice.AssignReturned.ToArguments.ToArgument(0))
         public static String exit(@Advice.Argument(0) String argument) {
             if (!FOO.equals(argument)) {
                 throw new AssertionError();

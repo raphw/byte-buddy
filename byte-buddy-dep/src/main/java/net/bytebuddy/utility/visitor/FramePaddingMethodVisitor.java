@@ -73,7 +73,7 @@ public class FramePaddingMethodVisitor extends MethodVisitor {
     @Override
     public void visitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
         if (padding) {
-            if (type == Opcodes.F_SAME) { // TODO: test me
+            if (type == Opcodes.F_SAME) { // fixme: test me
                 return;
             }
             injected = true;
