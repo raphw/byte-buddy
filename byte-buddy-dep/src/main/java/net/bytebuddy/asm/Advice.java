@@ -5637,7 +5637,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         void injectCompletionFrame(MethodVisitor methodVisitor);
 
         /**
-         * A stack map frame handler that can be used within a post processor.
+         * A stack map frame handler that can be used within a post processor. Emitting frames via this
+         * handler is the only legal way for a post processor to produce frames.
          */
         interface ForPostProcessor {
 
@@ -5645,8 +5646,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * Injects a frame that represents the current state.
              *
              * @param methodVisitor The method visitor onto which to apply the stack map frame.
+             * @param stack A list of types that are currently on the stack.
              */
-            void injectIntermediateFrame(MethodVisitor methodVisitor);
+            void injectIntermediateFrame(MethodVisitor methodVisitor, List<? extends TypeDescription> stack);
         }
 
         /**
@@ -5794,7 +5796,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * {@inheritDoc}
              */
-            public void injectIntermediateFrame(MethodVisitor methodVisitor) {
+            public void injectIntermediateFrame(MethodVisitor methodVisitor, List<? extends TypeDescription> stack) {
                 /* do nothing */
             }
         }
@@ -6812,14 +6814,24 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * {@inheritDoc}
                  */
-                public void injectIntermediateFrame(MethodVisitor methodVisitor) {
+                public void injectIntermediateFrame(MethodVisitor methodVisitor, List<? extends TypeDescription> stack) {
                     if (expandFrames) {
-                        injectFullFrame(methodVisitor, initialization, CompoundList.of(startTypes, intermediateTypes), Collections.<TypeDescription>emptyList());
-                    } else if (intermedate) {
-                        methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
-                    } else if (currentFrameDivergence == 0 && intermediateTypes.size() < 4) {
-                        if (intermediateTypes.isEmpty()) {
+                        injectFullFrame(methodVisitor, initialization, CompoundList.of(startTypes, intermediateTypes), stack);
+                    } else if (intermedate && stack.size() < 2) {
+                        if (stack.isEmpty()) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                        } else {
+                            methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[] {Initialization.INITIALIZED.toFrame(stack.get(0))});
+                        }
+                    } else if (currentFrameDivergence == 0
+                            && intermediateTypes.size() < 4
+                            && (stack.isEmpty() || stack.size() < 2 && intermediateTypes.isEmpty())) {
+                        if (intermediateTypes.isEmpty()) {
+                            if (stack.isEmpty()) {
+                                methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                            } else {
+                                methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[] {Initialization.INITIALIZED.toFrame(stack.get(0))});
+                            }
                         } else {
                             Object[] local = new Object[intermediateTypes.size()];
                             int index = 0;
@@ -6828,10 +6840,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
                             methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
                         }
-                    } else if (currentFrameDivergence < 3 && intermediateTypes.isEmpty()) {
+                    } else if (currentFrameDivergence < 3 && intermediateTypes.isEmpty() && stack.isEmpty()) {
                         methodVisitor.visitFrame(Opcodes.F_CHOP, currentFrameDivergence, EMPTY, EMPTY.length, EMPTY);
                     } else {
-                        injectFullFrame(methodVisitor, initialization, CompoundList.of(startTypes, intermediateTypes), Collections.<TypeDescription>emptyList());
+                        injectFullFrame(methodVisitor, initialization, CompoundList.of(startTypes, intermediateTypes), stack);
                     }
                     currentFrameDivergence = intermediateTypes.size() - endTypes.size();
                     intermedate = true;
@@ -13060,7 +13072,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 Label label = new Label();
                 Size size = dispatcher.apply(methodVisitor, offset, label).aggregate(stackManipulation.apply(methodVisitor, implementationContext));
                 methodVisitor.visitLabel(label);
-                stackMapFrameHandler.injectIntermediateFrame(methodVisitor);
+                stackMapFrameHandler.injectIntermediateFrame(methodVisitor, Collections.<TypeDescription>emptyList());
                 return size;
             }
 

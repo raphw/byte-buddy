@@ -73,6 +73,19 @@ public class FramePaddingMethodVisitorTest {
     }
 
     @Test
+    public void testFramePaddingIgnoredOnDuplicateOfSameFrame() throws Exception {
+        Method method = MethodVisitor.class.getDeclaredMethod(name, type);
+        FramePaddingMethodVisitor visitor = new FramePaddingMethodVisitor(methodVisitor);
+        visitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+        visitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+        method.invoke(visitor, argument);
+        InOrder inOrder = inOrder(methodVisitor);
+        inOrder.verify(methodVisitor).visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+        method.invoke(inOrder.verify(methodVisitor), argument);
+        inOrder.verifyNoMoreInteractions();
+    }
+
+    @Test
     public void testNoFramePadding() throws Exception {
         Method method = MethodVisitor.class.getDeclaredMethod(name, type);
         FramePaddingMethodVisitor visitor = new FramePaddingMethodVisitor(methodVisitor);
