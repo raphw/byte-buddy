@@ -6150,6 +6150,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * {@inheritDoc}
                      */
                     protected Object toFrame(TypeDescription typeDescription) {
+                        if (typeDescription.isPrimitive()) {
+                            throw new IllegalArgumentException("Cannot assume primitive uninitialized value: " + typeDescription);
+                        }
                         return Opcodes.UNINITIALIZED_THIS;
                     }
                 },
@@ -9558,7 +9561,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitVarInsn(Opcodes.ASTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
                         }
                         methodSizeHandler.requireStackSize(postProcessor
-                                .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler, stackMapFrameHandler)
+                                .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler, stackMapFrameHandler) // TODO: Retain enter/exit value
                                 .apply(methodVisitor, implementationContext).getMaximalSize());
                         methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter()));
                         stackMapFrameHandler.injectCompletionFrame(methodVisitor);
