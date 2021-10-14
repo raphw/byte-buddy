@@ -120,9 +120,9 @@ public interface MethodRebaseResolver {
         /**
          * A rebased method might require additional arguments in order to create a distinct signature.
          *
-         * @return A list of prepended method parameters.
+         * @return A list of parameters that were appended to the rebased method or constructor.
          */
-        TypeList getPrependedParameters();
+        TypeList getAppendedParameters();
 
         /**
          * A {@link MethodRebaseResolver.Resolution} of a non-rebased method.
@@ -162,7 +162,7 @@ public interface MethodRebaseResolver {
             /**
              * {@inheritDoc}
              */
-            public TypeList getPrependedParameters() {
+            public TypeList getAppendedParameters() {
                 throw new IllegalStateException("Cannot process additional parameters for non-rebased method: " + methodDescription);
             }
         }
@@ -218,7 +218,7 @@ public interface MethodRebaseResolver {
             /**
              * {@inheritDoc}
              */
-            public TypeList getPrependedParameters() {
+            public TypeList getAppendedParameters() {
                 return new TypeList.Empty();
             }
 
@@ -378,7 +378,7 @@ public interface MethodRebaseResolver {
             /**
              * {@inheritDoc}
              */
-            public TypeList getPrependedParameters() {
+            public TypeList getAppendedParameters() {
                 return new TypeList.Explicit(placeholderType);
             }
 

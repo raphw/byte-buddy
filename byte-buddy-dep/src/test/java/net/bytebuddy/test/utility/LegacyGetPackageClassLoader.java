@@ -1,5 +1,7 @@
 package net.bytebuddy.test.utility;
 
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.jar.Manifest;
@@ -11,7 +13,7 @@ import java.util.jar.Manifest;
  */
 public class LegacyGetPackageClassLoader extends URLClassLoader {
     public LegacyGetPackageClassLoader() {
-        super(new URL[0], new URLClassLoader(new URL[0], null));
+        super(new URL[0], new URLClassLoader(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER));
     }
 
     @Override

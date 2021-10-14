@@ -17,8 +17,6 @@ import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
-import java.net.URL;
-import java.net.URLClassLoader;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -66,7 +64,7 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
                 .redefine(Bar.class)
                 .make();
         assertThat(dynamicType.getAuxiliaryTypes().size(), is(0));
-        Class<?> type = dynamicType.load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = dynamicType.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredMethods().length, is(0));
         Field field = type.getDeclaredField(BAR);
@@ -80,7 +78,7 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
                 .constructor(any()).intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()))
                 .make();
         assertThat(dynamicType.getAuxiliaryTypes().size(), is(0));
-        Class<?> type = dynamicType.load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = dynamicType.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredMethods().length, is(0));
         Field field = type.getDeclaredField(BAR);
@@ -94,7 +92,7 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
                 .method(named(BAR)).intercept(StubMethod.INSTANCE)
                 .make();
         assertThat(dynamicType.getAuxiliaryTypes().size(), is(0));
-        Class<?> type = dynamicType.load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = dynamicType.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredMethods().length, is(2));
         assertThat(type.getDeclaredMethod(FOO).invoke(null), nullValue(Object.class));

@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -20,12 +21,11 @@ import net.bytebuddy.test.visibility.PackageAnnotation;
 import net.bytebuddy.test.visibility.Sample;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
+import org.objectweb.asm.ClassReader;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
-import java.net.URL;
-import java.net.URLClassLoader;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -72,7 +72,7 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
                 .rebase(Bar.class)
                 .make();
         assertThat(dynamicType.getAuxiliaryTypes().size(), is(0));
-        Class<?> type = dynamicType.load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = dynamicType.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredMethods().length, is(0));
         Field field = type.getDeclaredField(BAR);
@@ -86,11 +86,40 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
                 .constructor(any()).intercept(SuperMethodCall.INSTANCE)
                 .make();
         assertThat(dynamicType.getAuxiliaryTypes().size(), is(1));
-        Class<?> type = dynamicType.load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = dynamicType.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(2));
         assertThat(type.getDeclaredMethods().length, is(0));
         Field field = type.getDeclaredField(BAR);
         assertThat(field.get(type.getDeclaredConstructor(String.class).newInstance(FOO)), is((Object) FOO));
+    }
+
+    @Test
+    public void testConstructorRebaseSingleAuxiliaryTypeStackMapAdjustment() throws Exception {
+        DynamicType.Unloaded<?> dynamicType = new ByteBuddy()
+                .rebase(Foobar.class)
+                .constructor(any()).intercept(SuperMethodCall.INSTANCE)
+                .make();
+        assertThat(dynamicType.getAuxiliaryTypes().size(), is(1));
+        Class<?> type = dynamicType.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        assertThat(type.getDeclaredConstructors().length, is(2));
+        assertThat(type.getDeclaredMethods().length, is(0));
+        Field field = type.getDeclaredField(BAR);
+        assertThat(field.get(type.getDeclaredConstructor(String.class).newInstance(FOO)), is((Object) BAR));
+    }
+
+    @Test
+    public void testConstructorRebaseSingleAuxiliaryTypeStackMapAdjustmentExpanded() throws Exception {
+        DynamicType.Unloaded<?> dynamicType = new ByteBuddy()
+                .rebase(Foobar.class)
+                .constructor(any()).intercept(SuperMethodCall.INSTANCE)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().readerFlags(ClassReader.EXPAND_FRAMES))
+                .make();
+        assertThat(dynamicType.getAuxiliaryTypes().size(), is(1));
+        Class<?> type = dynamicType.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        assertThat(type.getDeclaredConstructors().length, is(2));
+        assertThat(type.getDeclaredMethods().length, is(0));
+        Field field = type.getDeclaredField(BAR);
+        assertThat(field.get(type.getDeclaredConstructor(String.class).newInstance(FOO)), is((Object) BAR));
     }
 
     @Test
@@ -100,7 +129,7 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
                 .method(named(BAR)).intercept(StubMethod.INSTANCE)
                 .make();
         assertThat(dynamicType.getAuxiliaryTypes().size(), is(0));
-        Class<?> type = dynamicType.load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = dynamicType.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredMethods().length, is(3));
         assertThat(type.getDeclaredMethod(FOO).invoke(null), nullValue(Object.class));
@@ -201,6 +230,22 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
             } finally {
                 foo = FOO;
             }
+        }
+    }
+
+    public static class Foobar {
+
+        public final String bar;
+
+        public Foobar(String foo) {
+            if (foo == null) {
+                throw new AssertionError();
+            }
+            String value = FOO;
+            if (!value.equals(BAR)) {
+                value = BAR;
+            }
+            bar = value;
         }
     }
 }

@@ -10,7 +10,6 @@ import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.AbstractImplementationTargetTest;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.junit.Before;
 import org.junit.Test;
@@ -93,7 +92,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(invokableMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(resolution.isRebased()).thenReturn(true);
         when(resolution.getResolvedMethod()).thenReturn(rebasedMethod);
-        when(resolution.getPrependedParameters()).thenReturn(new TypeList.Empty());
+        when(resolution.getAppendedParameters()).thenReturn(new TypeList.Empty());
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
         Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeSuper(rebasedSignatureToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
@@ -115,7 +114,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(invokableMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(resolution.isRebased()).thenReturn(true);
         when(resolution.getResolvedMethod()).thenReturn(rebasedMethod);
-        when(resolution.getPrependedParameters()).thenReturn(new TypeList.Explicit(TypeDescription.OBJECT));
+        when(resolution.getAppendedParameters()).thenReturn(new TypeList.Explicit(TypeDescription.OBJECT));
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
         Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeSuper(rebasedSignatureToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
@@ -137,7 +136,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(invokableMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(resolution.isRebased()).thenReturn(true);
         when(resolution.getResolvedMethod()).thenReturn(rebasedMethod);
-        when(resolution.getPrependedParameters()).thenReturn(new TypeList.Empty());
+        when(resolution.getAppendedParameters()).thenReturn(new TypeList.Empty());
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(false);
         Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeSuper(rebasedSignatureToken);
         assertThat(specialMethodInvocation.isValid(), is(false));

@@ -40,8 +40,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -155,11 +153,10 @@ public class ByteBuddyTutorialExamplesTest {
     @Test
     public void testTutorialGettingStartedTypePool() throws Exception {
         TypePool typePool = TypePool.Default.ofSystemLoader();
-        ClassLoader classLoader = new URLClassLoader(new URL[0], null); // Assure repeatability.
         Class<?> type = new ByteBuddy().redefine(typePool.describe(UnloadedBar.class.getName()).resolve(), ClassFileLocator.ForClassLoader.ofSystemLoader())
                 .defineField("qux", String.class)
                 .make()
-                .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredField("qux"), notNullValue(java.lang.reflect.Field.class));
     }

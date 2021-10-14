@@ -4,9 +4,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
@@ -16,13 +13,11 @@ import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.Mock;
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -100,6 +95,6 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         assertThat(resolution.getResolvedMethod().getReturnType(), is(genericReturnType));
         assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList<ParameterDescription.InDefinedShape>) new ParameterList.Explicit
                 .ForTypes(resolution.getResolvedMethod(), parameterType)));
-        assertThat(resolution.getPrependedParameters().isEmpty(), is(true));
+        assertThat(resolution.getAppendedParameters().isEmpty(), is(true));
     }
 }

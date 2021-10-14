@@ -3983,6 +3983,11 @@ public interface TypeWriter<T> {
             protected static class WithFullProcessing<V> extends ForInlining<V> {
 
                 /**
+                 * An empty array to indicate missing frames.
+                 */
+                private static final Object[] EMPTY = new Object[0];
+
+                /**
                  * The method registry to use.
                  */
                 private final MethodRegistry.Prepared methodRegistry;
@@ -5343,14 +5348,54 @@ public interface TypeWriter<T> {
                         public void visitCode() {
                             record.applyBody(actualMethodVisitor, implementationContext, annotationValueFilterFactory);
                             actualMethodVisitor.visitEnd();
-                            mv = resolution.isRebased()
-                                    ? cv.visitMethod(resolution.getResolvedMethod().getActualModifiers(),
-                                    resolution.getResolvedMethod().getInternalName(),
-                                    resolution.getResolvedMethod().getDescriptor(),
-                                    resolution.getResolvedMethod().getGenericSignature(),
-                                    resolution.getResolvedMethod().getExceptionTypes().asErasures().toInternalNames())
-                                    : IGNORE_METHOD;
-                            super.visitCode();
+                            if (resolution.isRebased()) {
+                                mv = cv.visitMethod(resolution.getResolvedMethod().getActualModifiers(),
+                                        resolution.getResolvedMethod().getInternalName(),
+                                        resolution.getResolvedMethod().getDescriptor(),
+                                        resolution.getResolvedMethod().getGenericSignature(),
+                                        resolution.getResolvedMethod().getExceptionTypes().asErasures().toInternalNames());
+                                super.visitCode();
+                                if (!resolution.getAppendedParameters().isEmpty()
+                                        && (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0
+                                        && implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
+                                    mv = new FramePaddingMethodVisitor(mv);
+                                    if ((readerFlags & ClassReader.EXPAND_FRAMES) == 0 && resolution.getAppendedParameters().size() < 4) {
+                                        super.visitFrame(Opcodes.F_CHOP, resolution.getAppendedParameters().size(), EMPTY, EMPTY.length, EMPTY);
+                                    } else {
+                                        Object[] frame = new Object[resolution.getResolvedMethod().getParameters().size()
+                                                - resolution.getAppendedParameters().size()
+                                                + 1];
+                                        frame[0] = Opcodes.UNINITIALIZED_THIS;
+                                        for (int index = 1; index < frame.length; index++) {
+                                            TypeDefinition typeDefinition = resolution.getResolvedMethod()
+                                                    .getParameters()
+                                                    .get(index - 1)
+                                                    .getType();
+                                            if (typeDefinition.represents(boolean.class)
+                                                    || typeDefinition.represents(byte.class)
+                                                    || typeDefinition.represents(short.class)
+                                                    || typeDefinition.represents(char.class)
+                                                    || typeDefinition.represents(int.class)) {
+                                                frame[index] = Opcodes.INTEGER;
+                                            } else if (typeDefinition.represents(long.class)) {
+                                                frame[index] = Opcodes.LONG;
+                                            } else if (typeDefinition.represents(float.class)) {
+                                                frame[index] = Opcodes.FLOAT;
+                                            } else if (typeDefinition.represents(double.class)) {
+                                                frame[index] = Opcodes.DOUBLE;
+                                            } else {
+                                                frame[index] = typeDefinition.asErasure().getInternalName();
+                                            }
+                                        }
+                                        super.visitFrame((readerFlags & ClassReader.EXPAND_FRAMES) == 0
+                                                ? Opcodes.F_FULL
+                                                : Opcodes.F_NEW, frame.length, frame, EMPTY.length, EMPTY);
+                                    }
+                                }
+                            } else {
+                                mv = IGNORE_METHOD;
+                                super.visitCode();
+                            }
                         }
 
                         @Override

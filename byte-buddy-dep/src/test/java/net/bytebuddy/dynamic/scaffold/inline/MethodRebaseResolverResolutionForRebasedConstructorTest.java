@@ -5,8 +5,6 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
@@ -14,7 +12,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -74,6 +71,6 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         assertThat(resolution.getResolvedMethod().getReturnType(), is(TypeDescription.Generic.VOID));
         assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList<ParameterDescription.InDefinedShape>) new ParameterList.Explicit
                 .ForTypes(resolution.getResolvedMethod(), parameterType, placeholderType)));
-        assertThat(resolution.getPrependedParameters(), equalTo((TypeList) new TypeList.Explicit(rawPlaceholderType)));
+        assertThat(resolution.getAppendedParameters(), equalTo((TypeList) new TypeList.Explicit(rawPlaceholderType)));
     }
 }

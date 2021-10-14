@@ -100,7 +100,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         Class<?> type = create(Qux.class)
                 .invokable(isTypeInitializer()).intercept(MethodCall.invoke(Qux.class.getDeclaredMethod("invoke")))
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredConstructor().newInstance(), notNullValue(Object.class));
         assertThat(type.getDeclaredField(FOO).get(null), is((Object) FOO));
@@ -112,7 +112,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         Class<?> dynamicType = create(Baz.class)
                 .method(named(FOO)).defaultValue(FOO, String.class)
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(dynamicType.getDeclaredMethods().length, is(1));
         assertThat(dynamicType.getDeclaredMethod(FOO).getDefaultValue(), is((Object) FOO));
@@ -124,7 +124,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         Class<?> dynamicType = create(Class.forName(PARAMETER_NAME_CLASS))
                 .method(named(FOO)).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Class<?> executable = Class.forName("java.lang.reflect.Executable");
         Method getParameters = executable.getDeclaredMethod("getParameters");
@@ -349,7 +349,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .transform(Transformer.ForMethod.withModifiers(MethodManifestation.FINAL))
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Method foo = type.getDeclaredMethod(FOO);
         assertThat(foo.invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
@@ -362,7 +362,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 .field(named(FOO))
                 .transform(Transformer.ForField.withModifiers(Visibility.PUBLIC))
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredField(FOO).getModifiers(), is(Opcodes.ACC_PUBLIC));
     }

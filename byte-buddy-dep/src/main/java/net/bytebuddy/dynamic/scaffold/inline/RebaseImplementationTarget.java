@@ -112,7 +112,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
      */
     private Implementation.SpecialMethodInvocation invokeSuper(MethodRebaseResolver.Resolution resolution) {
         return resolution.isRebased()
-                ? RebasedMethodInvocation.of(resolution.getResolvedMethod(), instrumentedType, resolution.getPrependedParameters())
+                ? RebasedMethodInvocation.of(resolution.getResolvedMethod(), instrumentedType, resolution.getAppendedParameters())
                 : Implementation.SpecialMethodInvocation.Simple.of(resolution.getResolvedMethod(), instrumentedType);
     }
 

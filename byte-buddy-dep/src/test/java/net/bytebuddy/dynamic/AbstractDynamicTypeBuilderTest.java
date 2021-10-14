@@ -47,8 +47,6 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -122,7 +120,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .throwing(Exception.class)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Method method = type.getDeclaredMethod(FOO);
         assertThat(method.getReturnType(), CoreMatchers.<Class<?>>is(Object.class));
@@ -139,7 +137,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .throwing(Exception.class)
                 .withoutCode()
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Method method = type.getDeclaredMethod(FOO);
         assertThat(method.getReturnType(), CoreMatchers.<Class<?>>is(Object.class));
@@ -154,7 +152,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .throwing(Exception.class)
                 .intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()))
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Constructor<?> constructor = type.getDeclaredConstructor(Void.class);
         assertThat(constructor.getExceptionTypes(), is(new Class<?>[]{Exception.class}));
@@ -167,7 +165,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         Class<?> type = createPlain()
                 .defineField(FOO, Void.class, Visibility.PUBLIC)
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Field field = type.getDeclaredField(FOO);
         assertThat(field.getType(), CoreMatchers.<Class<?>>is(Void.class));
@@ -187,7 +185,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .defineField(DOUBLE_FIELD, double.class, Visibility.PUBLIC, Ownership.STATIC).value(DOUBLE_VALUE)
                 .defineField(STRING_FIELD, String.class, Visibility.PUBLIC, Ownership.STATIC).value(FOO)
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredField(BOOLEAN_FIELD).get(null), is((Object) BOOLEAN_VALUE));
         assertThat(type.getDeclaredField(BYTE_FIELD).get(null), is((Object) (byte) INTEGER_VALUE));
@@ -206,7 +204,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .method(named(TO_STRING)).intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .method(named(TO_STRING)).intercept(new Implementation.Simple(new TextConstant(BAR), MethodReturn.REFERENCE))
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
                 .getDeclaredConstructor()
                 .newInstance()
@@ -232,7 +230,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Method method = type.getDeclaredMethod(FOO);
         assertThat(method.invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
@@ -245,7 +243,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .transform(Transformer.ForMethod.withModifiers(MethodManifestation.FINAL))
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredConstructor().newInstance().toString(), is(FOO));
         assertThat(type.getDeclaredMethod(TO_STRING).getModifiers(), is(Opcodes.ACC_FINAL | Opcodes.ACC_PUBLIC));
@@ -258,7 +256,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .field(named(FOO))
                 .transform(Transformer.ForField.withModifiers(Visibility.PUBLIC))
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredField(FOO).getModifiers(), is(Opcodes.ACC_PUBLIC));
     }
@@ -270,7 +268,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .method(named(TO_STRING))
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredConstructor().newInstance().toString(), CoreMatchers.not(FOO));
     }
@@ -282,7 +280,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .defineMethod(FOO, String.class, Visibility.PUBLIC)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
     }
@@ -418,7 +416,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .typeVariable(FOO)
                 .typeVariable(BAR, String.class)
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getTypeParameters().length, is(2));
         assertThat(type.getTypeParameters()[0].getName(), is(FOO));
@@ -440,7 +438,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                     }
                 })
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getTypeParameters().length, is(2));
         assertThat(type.getTypeParameters()[0].getName(), is(FOO));
@@ -456,7 +454,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         Class<?> type = createPlain()
                 .defineField(QUX, list)
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredField(QUX).getGenericType(), is(list));
     }
@@ -470,7 +468,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .typeVariable(FOO, Exception.class)
                 .intercept(StubMethod.INSTANCE)
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(QUX, List.class).getTypeParameters().length, is(1));
         assertThat(type.getDeclaredMethod(QUX, List.class).getTypeParameters()[0].getName(), is(FOO));
@@ -488,7 +486,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .defineField(FOO, String.class, Visibility.PUBLIC)
                 .withHashCodeEquals()
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Object left = type.getDeclaredConstructor().newInstance(), right = type.getDeclaredConstructor().newInstance();
         left.getClass().getDeclaredField(FOO).set(left, FOO);
@@ -503,7 +501,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .defineField(FOO, String.class, Visibility.PUBLIC)
                 .withToString()
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance();
         instance.getClass().getDeclaredField(FOO).set(instance, BAR);
@@ -520,7 +518,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .typeVariable(FOO, Exception.class)
                 .intercept(StubMethod.INSTANCE)
                 .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(TypeDefinition.Sort.describe(type).getDeclaredMethods().filter(named(QUX)).getOnly().getParameters().getOnly().getName(), is(BAR));
         assertThat(TypeDefinition.Sort.describe(type).getDeclaredMethods().filter(named(QUX)).getOnly().getParameters().getOnly().getModifiers(),
