@@ -4887,16 +4887,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Resolves this post processor for a given instrumented method.
          *
-         * @param instrumentedType   The instrumented type.
-         * @param instrumentedMethod The instrumented method.
-         * @param assigner           The assigner to use.
-         * @param argumentHandler    The argument handler for the instrumented method.
+         * @param instrumentedType     The instrumented type.
+         * @param instrumentedMethod   The instrumented method.
+         * @param assigner             The assigner to use.
+         * @param stackMapFrameHandler The argument handler for the instrumented method.
          * @return The stack manipulation to apply.
          */
         StackManipulation resolve(TypeDescription instrumentedType,
                                   MethodDescription instrumentedMethod,
                                   Assigner assigner,
-                                  ArgumentHandler argumentHandler);
+                                  ArgumentHandler argumentHandler,
+                                  StackMapFrameHandler stackMapFrameHandler);
 
         /**
          * A factory for creating a {@link PostProcessor}.
@@ -4977,7 +4978,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription instrumentedMethod,
                                              Assigner assigner,
-                                             ArgumentHandler argumentHandler) {
+                                             ArgumentHandler argumentHandler,
+                                             StackMapFrameHandler stackMapFrameHandler) {
                 return StackManipulation.Trivial.INSTANCE;
             }
 
@@ -5015,10 +5017,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription instrumentedMethod,
                                              Assigner assigner,
-                                             ArgumentHandler argumentHandler) {
+                                             ArgumentHandler argumentHandler,
+                                             StackMapFrameHandler stackMapFrameHandler) {
                 List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(postProcessors.size());
                 for (PostProcessor postProcessor : postProcessors) {
-                    stackManipulations.add(postProcessor.resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler));
+                    stackManipulations.add(postProcessor.resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler, stackMapFrameHandler));
                 }
                 return new StackManipulation.Compound(stackManipulations);
             }
@@ -5597,7 +5600,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * A handler for computing and translating stack map frames.
      */
-    protected interface StackMapFrameHandler {
+    public interface StackMapFrameHandler {
 
         /**
          * Translates a frame.
@@ -6740,6 +6743,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     } else if (currentFrameDivergence < 3 && endTypes.isEmpty()) {
                         methodVisitor.visitFrame(Opcodes.F_CHOP, currentFrameDivergence, EMPTY, EMPTY.length, EMPTY);
+                        currentFrameDivergence = 0; // TODO: ?
                     } else {
                         injectFullFrame(methodVisitor, initialization, CompoundList.of(startTypes, endTypes), Collections.<TypeDescription>emptyList());
                     }
@@ -9199,7 +9203,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitVarInsn(Opcodes.ASTORE, exit ? argumentHandler.exit() : argumentHandler.enter());
                     }
                     methodSizeHandler.requireStackSize(postProcessor
-                            .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler)
+                            .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler, stackMapFrameHandler)
                             .apply(methodVisitor, implementationContext).getMaximalSize());
                     methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, exit ? argumentHandler.exit() : argumentHandler.enter()));
                     stackMapFrameHandler.injectCompletionFrame(methodVisitor);
@@ -9553,7 +9557,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitVarInsn(Opcodes.ASTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
                         }
                         methodSizeHandler.requireStackSize(postProcessor
-                                .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler)
+                                .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler, stackMapFrameHandler)
                                 .apply(methodVisitor, implementationContext).getMaximalSize());
                         methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter()));
                         stackMapFrameHandler.injectCompletionFrame(methodVisitor);
@@ -11687,7 +11691,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         public StackManipulation resolve(TypeDescription instrumentedType,
                                          MethodDescription instrumentedMethod,
                                          Assigner assigner,
-                                         ArgumentHandler argumentHandler) {
+                                         ArgumentHandler argumentHandler,
+                                         StackMapFrameHandler stackMapFrameHandler) {
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(getHandlers().size());
             for (Handler handler : getHandlers()) {
                 stackManipulations.add(handler.resolve(instrumentedType,
@@ -11697,9 +11702,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         getType(),
                         toLoadInstruction(handler, exit ? argumentHandler.exit() : argumentHandler.enter())));
             }
-            return skipOnDefaultValue
-                    ? DefaultValueSkip.of(new StackManipulation.Compound(stackManipulations), exit ? argumentHandler.exit() : argumentHandler.enter(), type)
-                    : new StackManipulation.Compound(stackManipulations);
+            return skipOnDefaultValue ? DefaultValueSkip.of(new StackManipulation.Compound(stackManipulations),
+                    stackMapFrameHandler,
+                    exit ? argumentHandler.exit() : argumentHandler.enter(),
+                    type) : new StackManipulation.Compound(stackManipulations);
         }
 
         /**
@@ -12853,6 +12859,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             private final StackManipulation stackManipulation;
 
             /**
+             * The stack map frame handler to use.
+             */
+            private final StackMapFrameHandler stackMapFrameHandler;
+
+            /**
              * The offset of the value of the returned type.
              */
             private final int offset;
@@ -12866,11 +12877,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * Creates a null-check wrapper.
              *
              * @param stackManipulation The wrapped stack manipulation in case the value is not a default value.
+             * @param stackMapFrameHandler      The stack map frame handler to use.
              * @param offset            The offset of the value of the returned type.
              * @param dispatcher        The dispatcher to use.
              */
-            protected DefaultValueSkip(StackManipulation stackManipulation, int offset, Dispatcher dispatcher) {
+            protected DefaultValueSkip(StackManipulation stackManipulation, StackMapFrameHandler stackMapFrameHandler, int offset, Dispatcher dispatcher) {
                 this.stackManipulation = stackManipulation;
+                this.stackMapFrameHandler = stackMapFrameHandler;
                 this.offset = offset;
                 this.dispatcher = dispatcher;
             }
@@ -12878,12 +12891,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Resolves a skipping stack manipulation for the supplied type.
              *
-             * @param stackManipulation The stack manipulation to wrap.
-             * @param offset            The offset of the value of the returned type.
-             * @param typeDefinition    The type that is returned by the advice method.
+             * @param stackManipulation    The stack manipulation to wrap.
+             * @param stackMapFrameHandler The stack map frame handler to use.
+             * @param offset               The offset of the value of the returned type.
+             * @param typeDefinition       The type that is returned by the advice method.
              * @return A suitable stack manipulation.
              */
-            protected static StackManipulation of(StackManipulation stackManipulation, int offset, TypeDefinition typeDefinition) {
+            protected static StackManipulation of(StackManipulation stackManipulation, StackMapFrameHandler stackMapFrameHandler, int offset, TypeDefinition typeDefinition) {
                 Dispatcher dispatcher;
                 if (typeDefinition.isPrimitive()) {
                     if (typeDefinition.represents(boolean.class)
@@ -12904,7 +12918,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 } else {
                     dispatcher = Dispatcher.REFERENCE;
                 }
-                return new DefaultValueSkip(stackManipulation, offset, dispatcher);
+                return new DefaultValueSkip(stackManipulation, stackMapFrameHandler, offset, dispatcher);
             }
 
             /**
@@ -12921,6 +12935,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 Label label = new Label();
                 Size size = dispatcher.apply(methodVisitor, offset, label).aggregate(stackManipulation.apply(methodVisitor, implementationContext));
                 methodVisitor.visitLabel(label);
+                stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                 return size;
             }
 
@@ -13220,13 +13235,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
                 }
-                if (handlers.isEmpty()) {
-                    return NoOp.INSTANCE;
-                } else {
-                    return !scalar && advice.getReturnType().isArray()
-                            ? new ForArray(advice.getReturnType(), exit, handlers.values())
-                            : new ForScalar(advice.getReturnType(), exit, skipOnDefaultValue, handlers.values());
-                }
+                //if (handlers.isEmpty()) {
+                //    return NoOp.INSTANCE;
+                //} else {
+                return !scalar && advice.getReturnType().isArray()
+                        ? new ForArray(advice.getReturnType(), exit, handlers.values())
+                        : new ForScalar(advice.getReturnType(), exit, skipOnDefaultValue, handlers.values());
+                //}
             }
         }
     }

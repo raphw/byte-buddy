@@ -1493,7 +1493,8 @@ public class AdviceTest {
                             public StackManipulation resolve(TypeDescription instrumentedType,
                                                              MethodDescription instrumentedMethod,
                                                              Assigner assigner,
-                                                             Advice.ArgumentHandler argumentHandler) {
+                                                             Advice.ArgumentHandler argumentHandler,
+                                                             Advice.StackMapFrameHandler stackMapFrameHandler) {
                                 return new StackManipulation.Compound(
                                     MethodVariableAccess.of(advice.getReturnType()).loadFrom(argumentHandler.enter()),
                                     MethodVariableAccess.store(instrumentedMethod.getParameters().get(0))
@@ -1520,7 +1521,8 @@ public class AdviceTest {
                             public StackManipulation resolve(TypeDescription instrumentedType,
                                                              MethodDescription instrumentedMethod,
                                                              Assigner assigner,
-                                                             Advice.ArgumentHandler argumentHandler) {
+                                                             Advice.ArgumentHandler argumentHandler,
+                                                             Advice.StackMapFrameHandler stackMapFrameHandler) {
                                 return new StackManipulation.Compound(
                                         MethodVariableAccess.of(advice.getReturnType()).loadFrom(argumentHandler.enter()),
                                         MethodVariableAccess.store(instrumentedMethod.getParameters().get(0))

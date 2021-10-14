@@ -3,6 +3,7 @@ package net.bytebuddy.asm;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -295,6 +296,7 @@ public class AdviceAssignReturnedTest {
     public void testAssignReturnedNoHandler() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
+                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.withCustomMapping()
                         .with(new Advice.AssignReturned.Factory())
                         .to(ToNothing.class)
@@ -815,7 +817,7 @@ public class AdviceAssignReturnedTest {
 
     public static class ToNothing {
 
-        @Advice.OnMethodEnter
+        @Advice.OnMethodEnter(suppress = Throwable.class)
         public static String enter(@Advice.Argument(0) String argument) {
             if (!FOO.equals(argument)) {
                 throw new AssertionError();
@@ -823,7 +825,7 @@ public class AdviceAssignReturnedTest {
             return BAR;
         }
 
-        @Advice.OnMethodExit
+        @Advice.OnMethodExit(suppress = Throwable.class, repeatOn = Object.class)
         public static String exit(@Advice.Argument(0) String argument) {
             if (!FOO.equals(argument)) {
                 throw new AssertionError();
