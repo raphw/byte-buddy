@@ -1494,7 +1494,7 @@ public class AdviceTest {
                                                              MethodDescription instrumentedMethod,
                                                              Assigner assigner,
                                                              Advice.ArgumentHandler argumentHandler,
-                                                             Advice.StackMapFrameHandler stackMapFrameHandler) {
+                                                             Advice.StackMapFrameHandler.ForPostProcessor stackMapFrameHandler) {
                                 return new StackManipulation.Compound(
                                     MethodVariableAccess.of(advice.getReturnType()).loadFrom(argumentHandler.enter()),
                                     MethodVariableAccess.store(instrumentedMethod.getParameters().get(0))
@@ -1522,7 +1522,7 @@ public class AdviceTest {
                                                              MethodDescription instrumentedMethod,
                                                              Assigner assigner,
                                                              Advice.ArgumentHandler argumentHandler,
-                                                             Advice.StackMapFrameHandler stackMapFrameHandler) {
+                                                             Advice.StackMapFrameHandler.ForPostProcessor stackMapFrameHandler) {
                                 return new StackManipulation.Compound(
                                         MethodVariableAccess.of(advice.getReturnType()).loadFrom(argumentHandler.enter()),
                                         MethodVariableAccess.store(instrumentedMethod.getParameters().get(0))
