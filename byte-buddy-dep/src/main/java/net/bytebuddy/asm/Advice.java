@@ -11860,6 +11860,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected final TypeDescription.Generic type;
 
         /**
+         * The exception handler factory to use.
+         */
+        protected final ExceptionHandler.Factory exceptionHandlerFactory;
+
+        /**
          * {@code true} if this post processor is used within exit advice.
          */
         protected final boolean exit;
@@ -11872,12 +11877,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Creates a new post processor for assigning an advice method's return value.
          *
-         * @param type               The advice method's return type.
-         * @param exit               {@code true} if this post processor is used within exit advice.
-         * @param skipOnDefaultValue {@code true} if a default value indicates that no assignment should be conducted.
+         * @param type                    The advice method's return type.
+         * @param exceptionHandlerFactory The exception handler factory to use.
+         * @param exit                    {@code true} if this post processor is used within exit advice.
+         * @param skipOnDefaultValue      {@code true} if a default value indicates that no assignment should be conducted.
          */
-        protected AssignReturned(TypeDescription.Generic type, boolean exit, boolean skipOnDefaultValue) {
+        protected AssignReturned(TypeDescription.Generic type,
+                                 ExceptionHandler.Factory exceptionHandlerFactory,
+                                 boolean exit,
+                                 boolean skipOnDefaultValue) {
             this.type = type;
+            this.exceptionHandlerFactory = exceptionHandlerFactory;
             this.exit = exit;
             this.skipOnDefaultValue = skipOnDefaultValue;
         }
@@ -11900,10 +11910,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         getType(),
                         toLoadInstruction(handler, exit ? argumentHandler.exit() : argumentHandler.enter())));
             }
-            return skipOnDefaultValue ? DefaultValueSkip.of(new StackManipulation.Compound(stackManipulations),
-                    stackMapFrameHandler,
-                    exit ? argumentHandler.exit() : argumentHandler.enter(),
-                    type) : new StackManipulation.Compound(stackManipulations);
+            StackManipulation stackManipulation = exceptionHandlerFactory.wrap(new StackManipulation.Compound(stackManipulations),
+                    exceptionHandler,
+                    stackMapFrameHandler);
+            return skipOnDefaultValue
+                    ? DefaultValueSkip.of(stackManipulation, stackMapFrameHandler, exit ? argumentHandler.exit() : argumentHandler.enter(), type)
+                    : stackManipulation;
         }
 
         /**
@@ -12959,12 +12971,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Creates a post processor to assign a returned array value by index.
              *
-             * @param type     The array type that is returned by the advice method.
-             * @param exit     {@code true} if the post processor is applied to exit advice.
-             * @param handlers The handlers to apply.
+             * @param type                    The array type that is returned by the advice method.
+             * @param exceptionHandlerFactory The exception handler factory to use.
+             * @param exit                    {@code true} if the post processor is applied to exit advice.
+             * @param handlers                The handlers to apply.
              */
-            protected ForArray(TypeDescription.Generic type, boolean exit, Collection<List<Handler>> handlers) {
-                super(type, exit, true);
+            protected ForArray(TypeDescription.Generic type,
+                               ExceptionHandler.Factory exceptionHandlerFactory,
+                               boolean exit,
+                               Collection<List<Handler>> handlers) {
+                super(type, exceptionHandlerFactory, exit, true);
                 this.handlers = new LinkedHashMap<Handler, Integer>();
                 for (List<Handler> collection : handlers) {
                     for (Handler handler : collection) {
@@ -13009,13 +13025,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Creates a post processor to assign a returned scalar value.
              *
-             * @param type               The type of the advice method.
-             * @param exit               {@code true} if the post processor is applied to exit advice.
-             * @param skipOnDefaultValue {@code true} if a default value indicates that no assignment should be conducted.
-             * @param handlers           The handlers to apply.
+             * @param type                    The type of the advice method.
+             * @param exceptionHandlerFactory The exception handler factory to< use.
+             * @param exit                    {@code true} if the post processor is applied to exit advice.
+             * @param skipOnDefaultValue      {@code true} if a default value indicates that no assignment should be conducted.
+             * @param handlers                The handlers to apply.
              */
-            protected ForScalar(TypeDescription.Generic type, boolean exit, boolean skipOnDefaultValue, Collection<List<Handler>> handlers) {
-                super(type, exit, skipOnDefaultValue);
+            protected ForScalar(TypeDescription.Generic type,
+                                ExceptionHandler.Factory exceptionHandlerFactory,
+                                boolean exit,
+                                boolean skipOnDefaultValue,
+                                Collection<List<Handler>> handlers) {
+                super(type, exceptionHandlerFactory, exit, skipOnDefaultValue);
                 this.handlers = new ArrayList<Handler>();
                 for (List<Handler> collection : handlers) {
                     for (Handler handler : collection) {
@@ -13227,6 +13248,143 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
+         * An exception handler to handle exceptions during assignment.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        protected static class ExceptionHandler implements StackManipulation {
+
+            /**
+             * The stack manipulation that represents the assignment.
+             */
+            private final StackManipulation stackManipulation;
+
+            /**
+             * The exception handler to apply.
+             */
+            private final StackManipulation exceptionHandler;
+
+            /**
+             * The exception type to handle.
+             */
+            private final TypeDescription exceptionType;
+
+            /**
+             * The stack map frame handler to use.
+             */
+            private final StackMapFrameHandler.ForPostProcessor stackMapFrameHandler;
+
+            /**
+             * Creates a new exception handler for an assignment.
+             *
+             * @param stackManipulation    The stack manipulation that represents the assignment.
+             * @param exceptionHandler     The exception handler to apply.
+             * @param exceptionType        The exception type to handle.
+             * @param stackMapFrameHandler The stack map frame handler to use.
+             */
+            protected ExceptionHandler(StackManipulation stackManipulation,
+                                       StackManipulation exceptionHandler,
+                                       TypeDescription exceptionType,
+                                       StackMapFrameHandler.ForPostProcessor stackMapFrameHandler) {
+                this.stackManipulation = stackManipulation;
+                this.exceptionHandler = exceptionHandler;
+                this.exceptionType = exceptionType;
+                this.stackMapFrameHandler = stackMapFrameHandler;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean isValid() {
+                return stackManipulation.isValid() && exceptionHandler.isValid();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                Label start = new Label(), handler = new Label(), end = new Label();
+                methodVisitor.visitTryCatchBlock(start, handler, handler, exceptionType.getInternalName());
+                methodVisitor.visitLabel(start);
+                Size size = stackManipulation.apply(methodVisitor, implementationContext);
+                methodVisitor.visitJumpInsn(Opcodes.GOTO, end);
+                methodVisitor.visitLabel(handler);
+                stackMapFrameHandler.injectIntermediateFrame(methodVisitor, Collections.singletonList(exceptionType));
+                size = exceptionHandler.apply(methodVisitor, implementationContext).aggregate(size);
+                methodVisitor.visitLabel(end);
+                stackMapFrameHandler.injectIntermediateFrame(methodVisitor, Collections.<TypeDescription>emptyList());
+                return size;
+            }
+
+            /**
+             * A factory for wrapping an assignment with an exception handler, if appropriate.
+             */
+            public interface Factory {
+
+                /**
+                 * Wraps the supplied stack manipulation.
+                 *
+                 * @param stackManipulation    The stack manipulation that represents the assignment.
+                 * @param exceptionHandler     The exception handler to apply.
+                 * @param stackMapFrameHandler The stack map frame handler to use.
+                 * @return The resolved stack manipulation.
+                 */
+                StackManipulation wrap(StackManipulation stackManipulation,
+                                       StackManipulation exceptionHandler,
+                                       StackMapFrameHandler.ForPostProcessor stackMapFrameHandler);
+
+                /**
+                 * A non-operational factory that does not produce an exception handler.
+                 */
+                enum NoOp implements Factory {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public StackManipulation wrap(StackManipulation stackManipulation,
+                                                  StackManipulation exceptionHandler,
+                                                  StackMapFrameHandler.ForPostProcessor stackMapFrameHandler) {
+                        return stackManipulation;
+                    }
+                }
+
+                /**
+                 * A factory that creates an exception handler for a given exception type.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class Enabled implements Factory {
+
+                    /**
+                     * The exception type being handled.
+                     */
+                    private final TypeDescription exceptionType;
+
+                    /**
+                     * Creates a factory for an exception handler of the supplied exception type.
+                     *
+                     * @param exceptionType The exception type being handled.
+                     */
+                    protected Enabled(TypeDescription exceptionType) {
+                        this.exceptionType = exceptionType;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public StackManipulation wrap(StackManipulation stackManipulation,
+                                                  StackManipulation exceptionHandler,
+                                                  StackMapFrameHandler.ForPostProcessor stackMapFrameHandler) {
+                        return new ExceptionHandler(stackManipulation, exceptionHandler, exceptionType, stackMapFrameHandler);
+                    }
+                }
+            }
+        }
+
+        /**
          * A handler for an {@link AssignReturned} post processor to assign a value that was returned by
          * advice to a value of the instrumented method.
          */
@@ -13354,6 +13512,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             private final List<? extends Handler.Factory<?>> factories;
 
             /**
+             * The exception handler factory to use.
+             */
+            private final ExceptionHandler.Factory exceptionHandlerFactory;
+
+            /**
              * Creates a new factory which a preresolved list of handler factories.
              */
             @SuppressWarnings("unchecked")
@@ -13363,16 +13526,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         ToThis.Handler.Factory.INSTANCE,
                         ToFields.Handler.Factory.INSTANCE,
                         ToReturned.Handler.Factory.INSTANCE,
-                        ToThrown.Handler.Factory.INSTANCE));
+                        ToThrown.Handler.Factory.INSTANCE), ExceptionHandler.Factory.NoOp.INSTANCE);
             }
 
             /**
              * Creates a new factory.
              *
-             * @param factories The handler factories to apply.
+             * @param factories               The handler factories to apply.
+             * @param exceptionHandlerFactory The exception handler factory to use.
              */
-            protected Factory(List<? extends Handler.Factory<?>> factories) {
+            protected Factory(List<? extends Handler.Factory<?>> factories, ExceptionHandler.Factory exceptionHandlerFactory) {
                 this.factories = factories;
+                this.exceptionHandlerFactory = exceptionHandlerFactory;
             }
 
             /**
@@ -13405,7 +13570,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @return new {@link AssignReturned.Factory} that includes the provided handler factory.
              */
             public Factory with(Handler.Factory<?> factory) {
-                return new Factory(CompoundList.of(factories, factory));
+                return new Factory(CompoundList.of(factories, factory), exceptionHandlerFactory);
+            }
+
+            /**
+             * Configures this post processor to handle exceptions during assignment with the advice's {@link Advice.ExceptionHandler}.
+             *
+             * @param exceptionType The {@link Throwable} type to handle.
+             * @return A new assigning post processor that handles the specified exception types.
+             */
+            public PostProcessor.Factory withSuppressed(Class<? extends Throwable> exceptionType) {
+                return withSuppressed(TypeDescription.ForLoadedType.of(exceptionType));
+            }
+
+            /**
+             * Configures this post processor to handle exceptions during assignment with the advice's {@link Advice.ExceptionHandler}.
+             *
+             * @param exceptionType The {@link Throwable} type to handle.
+             * @return A new assigning post processor that handles the specified exception types.
+             */
+            public PostProcessor.Factory withSuppressed(TypeDescription exceptionType) {
+                if (!exceptionType.isAssignableTo(Throwable.class)) {
+                    throw new IllegalArgumentException(exceptionType + " is not a throwable type");
+                }
+                return new Factory(factories, new ExceptionHandler.Factory.Enabled(exceptionType));
             }
 
             /**
@@ -13443,8 +13631,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return NoOp.INSTANCE;
                 } else {
                     return !scalar && advice.getReturnType().isArray()
-                            ? new ForArray(advice.getReturnType(), exit, handlers.values())
-                            : new ForScalar(advice.getReturnType(), exit, skipOnDefaultValue, handlers.values());
+                            ? new ForArray(advice.getReturnType(), exceptionHandlerFactory, exit, handlers.values())
+                            : new ForScalar(advice.getReturnType(), exceptionHandlerFactory, exit, skipOnDefaultValue, handlers.values());
                 }
             }
         }

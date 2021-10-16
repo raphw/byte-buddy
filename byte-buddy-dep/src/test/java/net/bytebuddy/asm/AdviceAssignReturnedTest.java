@@ -1,6 +1,7 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import org.junit.Test;
@@ -361,6 +362,38 @@ public class AdviceAssignReturnedTest {
         assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) FOO));
     }
 
+    @Test(expected = ClassCastException.class)
+    public void testAssignIncompatible() throws Throwable {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory())
+                        .to(WithIncompatibleAssignment.class)
+                        .on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO);
+        } catch (InvocationTargetException exception) {
+            throw exception.getTargetException();
+        }
+    }
+
+    @Test
+    public void testAssignIncompatibleHandled() throws Throwable {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping()
+                        .with(new Advice.AssignReturned.Factory().withSuppressed(ClassCastException.class))
+                        .to(WithIncompatibleAssignment.class)
+                        .on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) FOO));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testArgumentTooFewParameters() {
         new ByteBuddy()
@@ -480,6 +513,11 @@ public class AdviceAssignReturnedTest {
                         .to(ToFieldScalar.class)
                         .on(named(BAR)))
                 .make();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testHandledNotThrowable() {
+        new Advice.AssignReturned.Factory().withSuppressed(TypeDescription.OBJECT);
     }
 
     public static class Sample {
@@ -933,6 +971,18 @@ public class AdviceAssignReturnedTest {
                 throw new AssertionError();
             }
             return null;
+        }
+    }
+
+    public static class WithIncompatibleAssignment {
+
+        @Advice.OnMethodEnter(suppress = ClassCastException.class)
+        @Advice.AssignReturned.ToArguments(@Advice.AssignReturned.ToArguments.ToArgument(value = 0, typing = Assigner.Typing.DYNAMIC))
+        public static Object enter(@Advice.Argument(0) String argument) {
+            if (!FOO.equals(argument)) {
+                throw new AssertionError();
+            }
+            return new Object();
         }
     }
 }
