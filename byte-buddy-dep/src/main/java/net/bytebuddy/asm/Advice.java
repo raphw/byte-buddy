@@ -13026,7 +13026,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * Creates a post processor to assign a returned scalar value.
              *
              * @param type                    The type of the advice method.
-             * @param exceptionHandlerFactory The exception handler factory to< use.
+             * @param exceptionHandlerFactory The exception handler factory to use.
              * @param exit                    {@code true} if the post processor is applied to exit advice.
              * @param skipOnDefaultValue      {@code true} if a default value indicates that no assignment should be conducted.
              * @param handlers                The handlers to apply.
