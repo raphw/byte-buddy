@@ -410,9 +410,7 @@ public interface AnnotationDescription {
          * An array containing all element types that are a legal annotation target when such a target
          * is not specified explicitly.
          */
-        private static final ElementType[] DEFAULT_TARGET = new ElementType[]{ElementType.ANNOTATION_TYPE,
-                ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.METHOD,
-                ElementType.PACKAGE, ElementType.PARAMETER, ElementType.TYPE};
+        private static final Set<ElementType> DEFAULT_TARGET;
 
         /**
          * A description of the {@link Retention#value()} method.
@@ -428,6 +426,12 @@ public interface AnnotationDescription {
          * Resolves common annotation properties.
          */
         static {
+            DEFAULT_TARGET = new HashSet<ElementType>();
+            for (ElementType elementType : ElementType.values()) {
+                if (!elementType.name().equals("TYPE_PARAMETER")) {
+                    DEFAULT_TARGET.add(elementType);
+                }
+            }
             RETENTION_VALUE = TypeDescription.ForLoadedType.of(Retention.class)
                     .getDeclaredMethods()
                     .filter(named("value"))
@@ -468,9 +472,9 @@ public interface AnnotationDescription {
          */
         public Set<ElementType> getElementTypes() {
             AnnotationDescription.Loadable<Target> target = getAnnotationType().getDeclaredAnnotations().ofType(Target.class);
-            return new HashSet<ElementType>(Arrays.asList(target == null
-                    ? DEFAULT_TARGET
-                    : target.getValue(TARGET_VALUE).load(ClassLoadingStrategy.BOOTSTRAP_LOADER).resolve(ElementType[].class)));
+            return target == null
+                    ? Collections.unmodifiableSet(DEFAULT_TARGET)
+                    : new HashSet<ElementType>(Arrays.asList(target.getValue(TARGET_VALUE).load(ClassLoadingStrategy.BOOTSTRAP_LOADER).resolve(ElementType[].class)));
         }
 
         /**
