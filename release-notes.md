@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 18. October 2021: version 1.11.21
+
+- Allow `Advice.PostProcessor` to emitt frames.
+- Add possibility for `Advice.AssignReturned` to suppress exceptions.
+- Add frame when rebasing constructors to avoid breakage if frames are assumed prior to super constructor call.
+
 ### 11. October 2021: version 1.11.20
 
 - Add option for `AsScalar` annotation to assign default value instead of ignoring it.
