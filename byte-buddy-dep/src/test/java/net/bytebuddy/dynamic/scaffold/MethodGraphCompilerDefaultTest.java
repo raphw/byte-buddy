@@ -1055,6 +1055,19 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
+    @Ignore("Documents known issue")
+    public void testDominantInterfaceMethodTriangle() throws Exception {
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(AmbiguousInterface.TopType.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(12));
+        MethodDescription method = typeDescription.getInterfaces().get(0).getDeclaredMethods().getOnly();
+        MethodGraph.Node node = methodGraph.locate(method.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getRepresentative(), is(method));
+    }
+
+    @Test
     public void testVisibilityExtension() throws Exception {
         TypeDescription typeDescription = new InstrumentedType.Default("foo",
                 Opcodes.ACC_PUBLIC,
@@ -1670,6 +1683,38 @@ public class MethodGraphCompilerDefaultTest {
         }
 
         abstract class ExtensionType extends BaseType implements ExtensionInterface {
+            /* empty */
+        }
+    }
+
+    public interface AmbiguousInterface {
+
+        void foo();
+
+        interface Left {
+
+            void foo();
+        }
+
+        interface Right {
+
+            void foo();
+        }
+
+        interface Top extends Left, Right, AmbiguousInterface {
+
+            void foo();
+        }
+
+        abstract class BaseType implements Left {
+            /* empty */
+        }
+
+        abstract class ExtensionType extends BaseType implements Right {
+            /* empty */
+        }
+
+        abstract class TopType extends ExtensionType implements Top, AmbiguousInterface {
             /* empty */
         }
     }
