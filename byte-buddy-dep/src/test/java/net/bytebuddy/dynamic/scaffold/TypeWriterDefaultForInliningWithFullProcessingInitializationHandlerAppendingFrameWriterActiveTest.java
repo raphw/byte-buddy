@@ -4,12 +4,12 @@ import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.*;
 
 public class TypeWriterDefaultForInliningWithFullProcessingInitializationHandlerAppendingFrameWriterActiveTest {
 
@@ -23,26 +23,22 @@ public class TypeWriterDefaultForInliningWithFullProcessingInitializationHandler
             new TypeWriter.Default.ForInlining.WithFullProcessing.InitializationHandler.Appending.FrameWriter.Active();
 
     @Test
-    public void testNoFrame() throws Exception {
-        frameWriter.emitFrame(methodVisitor);
-        verify(methodVisitor).visitFrame(Opcodes.F_SAME, 0, new Object[0], 0, new Object[0]);
-        verifyZeroInteractions(methodVisitor);
-    }
-
-    @Test
     public void testSameFrame() throws Exception {
-        frameWriter.onFrame(Opcodes.F_SAME, 0);
         frameWriter.emitFrame(methodVisitor);
-        verify(methodVisitor).visitFrame(Opcodes.F_SAME, 0, new Object[0], 0, new Object[0]);
-        verifyZeroInteractions(methodVisitor);
+        InOrder order = inOrder(methodVisitor);
+        order.verify(methodVisitor).visitFrame(Opcodes.F_SAME, 0, new Object[0], 0, new Object[0]);
+        order.verify(methodVisitor).visitInsn(Opcodes.NOP);
+        order.verifyNoMoreInteractions();
     }
 
     @Test
     public void testSameFrame1() throws Exception {
         frameWriter.onFrame(Opcodes.F_SAME1, 0);
         frameWriter.emitFrame(methodVisitor);
-        verify(methodVisitor).visitFrame(Opcodes.F_SAME, 0, new Object[0], 0, new Object[0]);
-        verifyZeroInteractions(methodVisitor);
+        InOrder order = inOrder(methodVisitor);
+        order.verify(methodVisitor).visitFrame(Opcodes.F_SAME, 0, new Object[0], 0, new Object[0]);
+        order.verify(methodVisitor).visitInsn(Opcodes.NOP);
+        order.verifyNoMoreInteractions();
     }
 
     @Test
@@ -50,8 +46,10 @@ public class TypeWriterDefaultForInliningWithFullProcessingInitializationHandler
         frameWriter.onFrame(Opcodes.F_APPEND, 2);
         frameWriter.onFrame(Opcodes.F_CHOP, 1);
         frameWriter.emitFrame(methodVisitor);
-        verify(methodVisitor).visitFrame(Opcodes.F_CHOP, 1, new Object[0], 0, new Object[0]);
-        verifyZeroInteractions(methodVisitor);
+        InOrder order = inOrder(methodVisitor);
+        order.verify(methodVisitor).visitFrame(Opcodes.F_CHOP, 1, new Object[0], 0, new Object[0]);
+        order.verify(methodVisitor).visitInsn(Opcodes.NOP);
+        order.verifyNoMoreInteractions();
     }
 
     @Test
@@ -59,8 +57,10 @@ public class TypeWriterDefaultForInliningWithFullProcessingInitializationHandler
         frameWriter.onFrame(Opcodes.F_FULL, 5);
         frameWriter.onFrame(Opcodes.F_CHOP, 1);
         frameWriter.emitFrame(methodVisitor);
-        verify(methodVisitor).visitFrame(Opcodes.F_FULL, 0, new Object[0], 0, new Object[0]);
-        verifyZeroInteractions(methodVisitor);
+        InOrder order = inOrder(methodVisitor);
+        order.verify(methodVisitor).visitFrame(Opcodes.F_FULL, 0, new Object[0], 0, new Object[0]);
+        order.verify(methodVisitor).visitInsn(Opcodes.NOP);
+        order.verifyNoMoreInteractions();
     }
 
     @Test
@@ -68,8 +68,10 @@ public class TypeWriterDefaultForInliningWithFullProcessingInitializationHandler
         frameWriter.onFrame(Opcodes.F_NEW, 5);
         frameWriter.onFrame(Opcodes.F_CHOP, 1);
         frameWriter.emitFrame(methodVisitor);
-        verify(methodVisitor).visitFrame(Opcodes.F_FULL, 0, new Object[0], 0, new Object[0]);
-        verifyZeroInteractions(methodVisitor);
+        InOrder order = inOrder(methodVisitor);
+        order.verify(methodVisitor).visitFrame(Opcodes.F_FULL, 0, new Object[0], 0, new Object[0]);
+        order.verify(methodVisitor).visitInsn(Opcodes.NOP);
+        order.verifyNoMoreInteractions();
     }
 
     @Test(expected = IllegalStateException.class)

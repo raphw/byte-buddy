@@ -52,7 +52,6 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
-import net.bytebuddy.utility.visitor.FramePaddingMethodVisitor;
 import net.bytebuddy.utility.visitor.MetadataAwareClassVisitor;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.ClassRemapper;
@@ -4406,6 +4405,7 @@ public interface TypeWriter<T> {
                                  */
                                 public void emitFrame(MethodVisitor methodVisitor) {
                                     methodVisitor.visitFrame(Opcodes.F_NEW, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                                    methodVisitor.visitInsn(Opcodes.NOP);
                                 }
                             }
 
@@ -4453,6 +4453,7 @@ public interface TypeWriter<T> {
                                     } else {
                                         methodVisitor.visitFrame(Opcodes.F_CHOP, currentLocalVariableLength, EMPTY, EMPTY.length, EMPTY);
                                     }
+                                    methodVisitor.visitInsn(Opcodes.NOP);
                                     currentLocalVariableLength = 0;
                                 }
                             }
@@ -4604,7 +4605,7 @@ public interface TypeWriter<T> {
                                                 AnnotationValueFilter.Factory annotationValueFilterFactory,
                                                 boolean requireFrames,
                                                 boolean expandFrames) {
-                                super(new FramePaddingMethodVisitor(methodVisitor), instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
+                                super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
                                 appended = new Label();
                                 original = new Label();
                             }
@@ -5358,7 +5359,6 @@ public interface TypeWriter<T> {
                                 if (!resolution.getAppendedParameters().isEmpty()
                                         && (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0
                                         && implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
-                                    mv = new FramePaddingMethodVisitor(mv);
                                     if ((readerFlags & ClassReader.EXPAND_FRAMES) == 0 && resolution.getAppendedParameters().size() < 4) {
                                         super.visitFrame(Opcodes.F_CHOP, resolution.getAppendedParameters().size(), EMPTY, EMPTY.length, EMPTY);
                                     } else {
@@ -5391,6 +5391,7 @@ public interface TypeWriter<T> {
                                                 ? Opcodes.F_FULL
                                                 : Opcodes.F_NEW, frame.length, frame, EMPTY.length, EMPTY);
                                     }
+                                    super.visitInsn(Opcodes.NOP);
                                 }
                             } else {
                                 mv = IGNORE_METHOD;

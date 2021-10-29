@@ -54,7 +54,6 @@ import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.visitor.ExceptionTableSensitiveMethodVisitor;
-import net.bytebuddy.utility.visitor.FramePaddingMethodVisitor;
 import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
 import net.bytebuddy.utility.visitor.StackAwareMethodVisitor;
 import org.objectweb.asm.*;
@@ -535,9 +534,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                    Implementation.Context implementationContext,
                                    int writerFlags,
                                    int readerFlags) {
-        methodVisitor = new FramePaddingMethodVisitor(methodEnter.isPrependLineNumber()
-                ? new LineNumberPrependingMethodVisitor(methodVisitor)
-                : methodVisitor);
+        if (methodEnter.isPrependLineNumber()) {
+            methodVisitor = new LineNumberPrependingMethodVisitor(methodVisitor);
+        }
         if (!methodExit.isAlive()) {
             return new AdviceVisitor.WithoutExitAdvice(methodVisitor,
                     implementationContext,
@@ -4875,11 +4874,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * the local variable array must still be intact and the stack must be empty. A frame is added
      * subsequently to the post processor's execution, making it feasible to add a jump instruction to the
      * end of the method after which no further byte code instructions must be issued. This also applies
-     * to compound post processors.
+     * to compound post processors. If a post processor emits a frame as its last instruction, it should
+     * yield a <i>NOP</i> instruction to avoid that subsequent code starts with a frame.
      * </p>
      * <p>
      * <b>Important</b>: A post processor is triggered after the suppression handler. Exceptions triggered
-     * by post processing code will therefore cause those exceptions to be propagated.
+     * by post processing code will therefore cause those exceptions to be propagated unless the post
+     * processor configures explicit exception handling.
      * </p>
      */
     public interface PostProcessor {
@@ -10541,6 +10542,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             mv.visitLabel(preparationStart);
             methodSizeHandler.requireStackSize(argumentHandler.prepare(mv));
             stackMapFrameHandler.injectStartFrame(mv);
+            mv.visitInsn(Opcodes.NOP);
             onUserStart();
         }
 
@@ -13161,6 +13163,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 Size size = dispatcher.apply(methodVisitor, offset, label).aggregate(stackManipulation.apply(methodVisitor, implementationContext));
                 methodVisitor.visitLabel(label);
                 stackMapFrameHandler.injectIntermediateFrame(methodVisitor, Collections.<TypeDescription>emptyList());
+                methodVisitor.visitInsn(Opcodes.NOP);
                 return size;
             }
 
