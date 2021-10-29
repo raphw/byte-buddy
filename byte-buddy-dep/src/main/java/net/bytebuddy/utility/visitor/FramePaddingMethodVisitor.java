@@ -140,7 +140,10 @@ public class FramePaddingMethodVisitor extends MethodVisitor {
     @Override
     public void visitJumpInsn(int opcode, Label label) {
         reset();
-        super.visitJumpInsn(opcode, label);
+        Label replacement = mapped.get(label);
+        super.visitJumpInsn(opcode, replacement == null
+                ? label
+                : replacement);
     }
 
     @Override

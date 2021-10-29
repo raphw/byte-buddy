@@ -21,10 +21,7 @@ import net.bytebuddy.utility.JavaType;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.*;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -41,15 +38,9 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static junit.framework.TestCase.fail;
-import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
-import static net.bytebuddy.matcher.ElementMatchers.isMethod;
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.CoreMatchers.sameInstance;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -1462,22 +1453,22 @@ public class AdviceTest {
     @Test
     public void testConstructorNoArgumentBackupAndNoFrames() throws Exception {
         Class<?> type = new ByteBuddy()
-            .redefine(NoBackupArguments.class)
-            .visit(Advice.to(NoBackupArguments.class).on(isConstructor().and(takesArguments(0))))
-            .make()
-            .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-            .getLoaded();
+                .redefine(NoBackupArguments.class)
+                .visit(Advice.to(NoBackupArguments.class).on(isConstructor().and(takesArguments(0))))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         assertThat(type.getDeclaredConstructor().newInstance(), notNullValue(Object.class));
     }
 
     @Test
     public void testConstructorNoArgumentBackupAndFrames() throws Exception {
         Class<?> type = new ByteBuddy()
-            .redefine(NoBackupArguments.class)
-            .visit(Advice.to(NoBackupArguments.class).on(isConstructor().and(takesArguments(boolean.class))))
-            .make()
-            .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-            .getLoaded();
+                .redefine(NoBackupArguments.class)
+                .visit(Advice.to(NoBackupArguments.class).on(isConstructor().and(takesArguments(boolean.class))))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         assertThat(type.getDeclaredConstructor(boolean.class).newInstance(false), notNullValue(Object.class));
     }
 
@@ -1497,8 +1488,8 @@ public class AdviceTest {
                                                              Advice.StackMapFrameHandler.ForPostProcessor stackMapFrameHandler,
                                                              StackManipulation exceptionHandler) {
                                 return new StackManipulation.Compound(
-                                    MethodVariableAccess.of(advice.getReturnType()).loadFrom(argumentHandler.enter()),
-                                    MethodVariableAccess.store(instrumentedMethod.getParameters().get(0))
+                                        MethodVariableAccess.of(advice.getReturnType()).loadFrom(argumentHandler.enter()),
+                                        MethodVariableAccess.store(instrumentedMethod.getParameters().get(0))
                                 );
                             }
                         };
@@ -1602,6 +1593,36 @@ public class AdviceTest {
                 .load(Sample.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertThat(type.getMethod(FOO).invoke(type.getConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testLabelPrependingMethod() throws Exception {
+        Class<? extends Runnable> sample = new ByteBuddy()
+                .subclass(Runnable.class)
+                .defineMethod("run", void.class, Visibility.PUBLIC)
+                .intercept(new Implementation.Simple(new StackManipulation.AbstractBase() {
+                    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                        Label start = new Label();
+                        methodVisitor.visitLabel(start);
+                        methodVisitor.visitFrame(Opcodes.F_FULL, 0, new Object[0], 0, new Object[0]);
+                        methodVisitor.visitInsn(Opcodes.ICONST_0);
+                        methodVisitor.visitJumpInsn(Opcodes.IFNE, start);
+                        methodVisitor.visitFrame(Opcodes.F_SAME, 0, new Object[0], 0, new Object[0]);
+                        methodVisitor.visitInsn(Opcodes.RETURN);
+                        return new Size(1, 1);
+                    }
+                }))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
+                .getLoaded();
+        Class<?> type = new ByteBuddy()
+                .redefine(sample)
+                .visit(Advice.to(EmptyDelegationAdvice.class).on(named("run")))
+                .make()
+                .load(sample.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getMethod("run").invoke(type.getConstructor().newInstance()), nullValue(Object.class));
+
     }
 
     @Test(expected = IllegalStateException.class)
@@ -2336,7 +2357,8 @@ public class AdviceTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit() { }
+        private static void exit() {
+        }
     }
 
     @SuppressWarnings("unused")

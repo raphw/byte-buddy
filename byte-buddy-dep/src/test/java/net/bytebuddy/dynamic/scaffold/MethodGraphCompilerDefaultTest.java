@@ -1055,9 +1055,22 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
-    //@Ignore("Documents known issue")
+    @Ignore("Documents known issue")
     public void testDominantInterfaceMethodTriangle() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(AmbiguousInterface.TopType.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(12));
+        MethodDescription method = typeDescription.getInterfaces().get(0).getDeclaredMethods().getOnly();
+        MethodGraph.Node node = methodGraph.locate(method.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getRepresentative(), is(method));
+    }
+
+    @Test
+    @Ignore("Documents known issue")
+    public void testDominantInterfaceMethodTriangleDuplicate() throws Exception {
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(AmbiguousInterface.TopTypeWithDuplication.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
         assertThat(methodGraph.listNodes().size(), is(12));
         MethodDescription method = typeDescription.getInterfaces().get(0).getDeclaredMethods().getOnly();
@@ -1714,7 +1727,11 @@ public class MethodGraphCompilerDefaultTest {
             /* empty */
         }
 
-        abstract class TopType extends ExtensionType implements AmbiguousInterface, Top {
+        abstract class TopType extends ExtensionType implements Top {
+            /* empty */
+        }
+
+        abstract class TopTypeWithDuplication extends ExtensionType implements AmbiguousInterface, Top {
             /* empty */
         }
     }
