@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 29. October 2021: version 1.11.22
+
+- Remove automatic frame padding mechanism in favor of explicit *NOP* instruction after injected blocks.
+
 ### 18. October 2021: version 1.11.21
 
 - Allow `Advice.PostProcessor` to emitt frames.

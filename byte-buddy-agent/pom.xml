@@ -68,7 +68,7 @@
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
-            <version>1.11.21</version>
+            <version>1.11.22</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
