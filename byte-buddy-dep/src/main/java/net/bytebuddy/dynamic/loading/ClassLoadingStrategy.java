@@ -635,7 +635,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          *
          * @return {@code true} if Byte Buddy is executed as a native image using GraalVM.
          */
-        @SuppressFBWarnings(value = "LI_LAZY_INIT_STATIC", justification = "This behaviour is intended.")
+        @SuppressFBWarnings(value = "LI_LAZY_INIT_STATIC", justification = "This behaviour is intended to avoid early binding in native images.")
         public static boolean isGraalNativeRuntime() {
             if (GRAAL_NATIVE_RUNTIME == null) {
                 GRAAL_NATIVE_RUNTIME = "runtime".equals(doPrivileged(new GetSystemPropertyAction("org.graalvm.nativeimage.imagecode")));
