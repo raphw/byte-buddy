@@ -351,7 +351,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         for (TypeDescription typeDescription : types.keySet()) {
             try {
                 Class<?> type = Class.forName(typeDescription.getName(), false, classLoader);
-                if (forbidExisting && type.getClassLoader() != classLoader) {
+                if (!ClassLoadingStrategy.ForPreloadedTypes.isGraalNativeRuntime() && forbidExisting && type.getClassLoader() != classLoader) {
                     throw new IllegalStateException("Class already loaded: " + type);
                 }
                 result.put(typeDescription, type);
@@ -1218,7 +1218,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             for (TypeDescription typeDescription : types.keySet()) {
                 try {
                     Class<?> type = Class.forName(typeDescription.getName(), false, classLoader);
-                    if (forbidExisting && type.getClassLoader() != classLoader) {
+                    if (!ClassLoadingStrategy.ForPreloadedTypes.isGraalNativeRuntime() && forbidExisting && type.getClassLoader() != classLoader) {
                         throw new IllegalStateException("Class already loaded: " + type);
                     }
                     result.put(typeDescription, type);

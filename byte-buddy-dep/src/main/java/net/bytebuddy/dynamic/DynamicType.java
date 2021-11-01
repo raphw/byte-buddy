@@ -6138,9 +6138,13 @@ public interface DynamicType {
              * {@inheritDoc}
              */
             public DynamicType.Loaded<T> load(ClassLoader classLoader) {
-                return classLoader instanceof InjectionClassLoader && !((InjectionClassLoader) classLoader).isSealed()
-                        ? load((InjectionClassLoader) classLoader, InjectionClassLoader.Strategy.INSTANCE)
-                        : load(classLoader, ClassLoadingStrategy.Default.WRAPPER);
+                if (ClassLoadingStrategy.ForPreloadedTypes.isGraalNativeRuntime()) {
+                    return load(classLoader, ClassLoadingStrategy.ForPreloadedTypes.INSTANCE);
+                } else if (classLoader instanceof InjectionClassLoader && !((InjectionClassLoader) classLoader).isSealed()) {
+                    return load((InjectionClassLoader) classLoader, InjectionClassLoader.Strategy.INSTANCE);
+                } else {
+                    return load(classLoader, ClassLoadingStrategy.Default.WRAPPER);
+                }
             }
 
             /**

@@ -15,12 +15,16 @@
  */
 package net.bytebuddy.dynamic.loading;
 
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 
 import java.io.File;
 import java.lang.instrument.Instrumentation;
+import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -472,7 +476,9 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * @return An appropriate class loading strategy for the current JVM that uses a method handles lookup if available.
          */
         public static ClassLoadingStrategy<ClassLoader> withFallback(Callable<?> lookup) {
-            if (ClassInjector.UsingLookup.isAvailable()) {
+            if (ForPreloadedTypes.isGraalNativeRuntime()) {
+                return ForPreloadedTypes.INSTANCE;
+            } else if (ClassInjector.UsingLookup.isAvailable()) {
                 try {
                     return of(lookup.call());
                 } catch (Exception exception) {
@@ -602,6 +608,64 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          */
         public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             return new ClassInjector.UsingUnsafe(classLoader, protectionDomain).inject(types);
+        }
+    }
+
+    /**
+     * A class loading strategy that expects classes to already be available on the provided class loader.
+     * This strategy is mainly intended to work with Graal native images where classes cannot be loaded
+     * dynamically.
+     */
+    enum ForPreloadedTypes implements ClassLoadingStrategy<ClassLoader> {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        /**
+         * {@code true} if Byte Buddy is executed as a native image using GraalVM. This property is purposefully
+         * not loaded from a static initialization block to avoid that it is falsely bound to the wrong value.
+         */
+        private static Boolean GRAAL_NATIVE_RUNTIME;
+
+        /**
+         * Returns {@code true} if Byte Buddy is executed as a native image using GraalVM.
+         *
+         * @return {@code true} if Byte Buddy is executed as a native image using GraalVM.
+         */
+        public static boolean isGraalNativeRuntime() {
+            if (GRAAL_NATIVE_RUNTIME == null) {
+                GRAAL_NATIVE_RUNTIME = "runtime".equals(doPrivileged(new GetSystemPropertyAction("org.graalvm.nativeimage.imagecode")));
+            }
+            return GRAAL_NATIVE_RUNTIME;
+        }
+
+        /**
+         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+         *
+         * @param action The action to execute from a privileged context.
+         * @param <T>    The type of the action's resolved value.
+         * @return The action's resolved value.
+         */
+        @AccessControllerPlugin.Enhance
+        private static <T> T doPrivileged(PrivilegedAction<T> action) {
+            return action.run();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+            Map<TypeDescription, Class<?>> result = new LinkedHashMap<TypeDescription, Class<?>>();
+            for (TypeDescription typeDescription : types.keySet()) {
+                try {
+                    result.put(typeDescription, Class.forName(typeDescription.getName(), false, classLoader));
+                } catch (ClassNotFoundException exception) {
+                    throw new IllegalStateException("Cannot find preexisting class " + typeDescription, exception);
+                }
+            }
+            return result;
         }
     }
 }
