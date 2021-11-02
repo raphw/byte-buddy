@@ -1501,7 +1501,7 @@ public interface MethodGraph {
                                     LinkedHashSet<MethodDescription> candidates = new LinkedHashSet<MethodDescription>();
                                     candidates.add(methodDescription);
                                     TypeDescription target = methodDescription.getDeclaringType().asErasure();
-                                    for (MethodDescription methodDescription : entry.getCandidates()) {
+                                    for (MethodDescription methodDescription : entry.getCandidates()) { // TODO: if non-interface
                                         if (methodDescription.getDeclaringType().asErasure().isAssignableTo(target)) {
                                             candidates.remove(this.methodDescription);
                                             candidates.add(methodDescription);
@@ -1704,7 +1704,30 @@ public interface MethodGraph {
                              * {@inheritDoc}
                              */
                             public Entry<U> inject(Entry<U> entry) {
-                                return new Ambiguous<U>(key.combineWith(entry.getKey()), methodDescriptions, visibility.expandTo(entry.getVisibility()));
+                                LinkedHashSet<MethodDescription> methodDescriptions = new LinkedHashSet<MethodDescription>();
+                                outer:
+                                for (MethodDescription methodDescription : this.methodDescriptions) {
+                                    TypeDescription target = methodDescription.getDeclaringType().asErasure();
+                                    for (MethodDescription candidate : entry.getCandidates()) {
+                                        if (candidate.getDeclaringType().asErasure().isAssignableTo(target)) {
+                                            continue outer;
+                                        }
+                                    }
+                                    methodDescriptions.add(methodDescription);
+                                }
+                                outer:
+                                for (MethodDescription candidate : entry.getCandidates()) {
+                                    TypeDescription target = candidate.getDeclaringType().asErasure();
+                                    for (MethodDescription methodDescription : this.methodDescriptions) {
+                                        if (methodDescription.getDeclaringType().asErasure().isAssignableTo(target)) {
+                                            continue outer;
+                                        }
+                                    }
+                                    methodDescriptions.add(candidate);
+                                }
+                                return methodDescriptions.size() == 1
+                                        ? new Resolved<U>(key.combineWith(entry.getKey()), methodDescriptions.iterator().next(), visibility.expandTo(entry.getVisibility()), Resolved.NOT_MADE_VISIBLE) // TODO: ?
+                                        : new Ambiguous<U>(key.combineWith(entry.getKey()), methodDescriptions, visibility.expandTo(entry.getVisibility()));
                             }
 
                             /**

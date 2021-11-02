@@ -1054,7 +1054,6 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
-    @Ignore("Documents known issue")
     public void testDominantInterfaceMethodTriangle() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(AmbiguousInterface.TopType.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
