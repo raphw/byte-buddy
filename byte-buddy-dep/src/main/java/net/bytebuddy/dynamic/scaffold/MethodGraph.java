@@ -1231,9 +1231,9 @@ public interface MethodGraph {
                         }
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
                         for (Entry<V> entry : store.entries.values()) {
-                            Entry<V> dominantEntry = entries.remove(entry.getKey()), injectedEntry = dominantEntry == null
+                            Entry<V> previous = entries.remove(entry.getKey()), injectedEntry = previous == null
                                     ? entry
-                                    : dominantEntry.inject(entry.getKey(), entry.getVisibility());
+                                    : previous.inject(entry);
                             entries.put(injectedEntry.getKey(), injectedEntry);
                         }
                         return new Store<V>(entries);
@@ -1294,11 +1294,10 @@ public interface MethodGraph {
                         /**
                          * Injects the given key into this entry.
                          *
-                         * @param key        The key to inject into this entry.
-                         * @param visibility The entry's minimal visibility.
+                         * @param entry The entry to be combined.
                          * @return This entry extended with the given key.
                          */
-                        Entry<W> inject(Harmonized<W> key, Visibility visibility);
+                        Entry<W> inject(Entry<W> entry);
 
                         /**
                          * Transforms this entry into a node.
@@ -1363,7 +1362,7 @@ public interface MethodGraph {
                             /**
                              * {@inheritDoc}
                              */
-                            public Entry<U> inject(Harmonized<U> key, Visibility visibility) {
+                            public Entry<U> inject(Entry<U> entry) {
                                 throw new IllegalStateException("Cannot inject into initial entry without a registered method: " + this);
                             }
 
@@ -1497,8 +1496,25 @@ public interface MethodGraph {
                             /**
                              * {@inheritDoc}
                              */
-                            public Entry<U> inject(Harmonized<U> key, Visibility visibility) {
-                                return new Resolved<U>(this.key.combineWith(key), methodDescription, this.visibility.expandTo(visibility), madeVisible);
+                            public Entry<U> inject(Entry<U> entry) {
+                                if (methodDescription.getDeclaringType().isInterface()) {
+                                    LinkedHashSet<MethodDescription> candidates = new LinkedHashSet<MethodDescription>();
+                                    candidates.add(methodDescription);
+                                    TypeDescription target = methodDescription.getDeclaringType().asErasure();
+                                    for (MethodDescription methodDescription : entry.getCandidates()) {
+                                        if (methodDescription.getDeclaringType().asErasure().isAssignableTo(target)) {
+                                            candidates.remove(this.methodDescription);
+                                            candidates.add(methodDescription);
+                                        } else if (!methodDescription.getDeclaringType().asErasure().isAssignableFrom(target)) {
+                                            candidates.add(methodDescription);
+                                        }
+                                    }
+                                    return candidates.size() == 1
+                                            ? new Resolved<U>(key.combineWith(entry.getKey()), candidates.iterator().next(), visibility.expandTo(entry.getVisibility()), madeVisible)
+                                            : new Ambiguous<U>(key.combineWith(entry.getKey()), candidates, visibility.expandTo(entry.getVisibility()));
+                                } else {
+                                    return new Resolved<U>(key.combineWith(entry.getKey()), methodDescription, visibility.expandTo(entry.getVisibility()), madeVisible);
+                                }
                             }
 
                             /**
@@ -1687,8 +1703,8 @@ public interface MethodGraph {
                             /**
                              * {@inheritDoc}
                              */
-                            public Entry<U> inject(Harmonized<U> key, Visibility visibility) {
-                                return new Ambiguous<U>(this.key.combineWith(key), methodDescriptions, this.visibility.expandTo(visibility));
+                            public Entry<U> inject(Entry<U> entry) {
+                                return new Ambiguous<U>(key.combineWith(entry.getKey()), methodDescriptions, visibility.expandTo(entry.getVisibility()));
                             }
 
                             /**
