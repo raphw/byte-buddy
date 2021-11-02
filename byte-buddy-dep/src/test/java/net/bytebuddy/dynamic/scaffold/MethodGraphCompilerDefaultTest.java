@@ -1066,12 +1066,11 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
-    @Ignore("Documents known issue")
     public void testDominantInterfaceMethodTriangleDuplicate() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(AmbiguousInterface.TopTypeWithDuplication.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
         assertThat(methodGraph.listNodes().size(), is(12));
-        MethodDescription method = typeDescription.getInterfaces().get(0).getDeclaredMethods().getOnly();
+        MethodDescription method = typeDescription.getInterfaces().get(1).getDeclaredMethods().getOnly();
         MethodGraph.Node node = methodGraph.locate(method.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(node.getMethodTypes().size(), is(1));
