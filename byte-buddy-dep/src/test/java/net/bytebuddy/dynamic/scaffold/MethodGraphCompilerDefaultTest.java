@@ -12,7 +12,6 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -1078,6 +1077,18 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
+    public void testImplicitImplementation() throws Exception {
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(ImplicitImplementation.ExtendedClass.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(12));
+        MethodDescription method = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly();
+        MethodGraph.Node node = methodGraph.locate(method.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getRepresentative(), is(method));
+    }
+
+    @Test
     public void testVisibilityExtension() throws Exception {
         TypeDescription typeDescription = new InstrumentedType.Default("foo",
                 Opcodes.ACC_PUBLIC,
@@ -1729,6 +1740,20 @@ public class MethodGraphCompilerDefaultTest {
         }
 
         abstract class TopTypeWithDuplication extends ExtensionType implements AmbiguousInterface, Top {
+            /* empty */
+        }
+    }
+
+    interface ImplicitImplementation {
+
+        void foo();
+
+        abstract class BaseClass {
+
+            public abstract void foo();
+        }
+
+        abstract class ExtendedClass extends BaseClass implements ImplicitImplementation {
             /* empty */
         }
     }

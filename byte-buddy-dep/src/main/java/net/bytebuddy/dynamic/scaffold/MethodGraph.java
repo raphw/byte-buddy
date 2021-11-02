@@ -1720,7 +1720,8 @@ public interface MethodGraph {
                                 for (MethodDescription methodDescription : this.methodDescriptions) {
                                     TypeDescription target = methodDescription.getDeclaringType().asErasure();
                                     for (MethodDescription candidate : entry.getCandidates()) {
-                                        if (candidate.getDeclaringType().asErasure().isAssignableTo(target)) {
+                                        TypeDescription typeDescription = candidate.getDeclaringType().asErasure();
+                                        if (!typeDescription.equals(target) && typeDescription.isAssignableTo(target)) {
                                             continue outer;
                                         }
                                     }
