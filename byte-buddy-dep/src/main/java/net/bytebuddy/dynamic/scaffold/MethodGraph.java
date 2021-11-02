@@ -1430,6 +1430,17 @@ public interface MethodGraph {
                             private final boolean madeVisible;
 
                             /**
+                             * Creates a new resolved entry that is not made visible.
+                             *
+                             * @param key               The harmonized key this entry represents.
+                             * @param methodDescription The non-ambiguous, representative method of this entry.
+                             * @param visibility        The minimal required visibility for this method.
+                             */
+                            protected Resolved(Harmonized<U> key, MethodDescription methodDescription, Visibility visibility) {
+                                this(key, methodDescription, visibility, NOT_MADE_VISIBLE);
+                            }
+
+                            /**
                              * Creates a new resolved entry.
                              *
                              * @param key               The harmonized key this entry represents.
@@ -1501,7 +1512,7 @@ public interface MethodGraph {
                                     LinkedHashSet<MethodDescription> candidates = new LinkedHashSet<MethodDescription>();
                                     candidates.add(methodDescription);
                                     TypeDescription target = methodDescription.getDeclaringType().asErasure();
-                                    for (MethodDescription methodDescription : entry.getCandidates()) { // TODO: if non-interface
+                                    for (MethodDescription methodDescription : entry.getCandidates()) {
                                         if (methodDescription.getDeclaringType().asErasure().isAssignableTo(target)) {
                                             candidates.remove(this.methodDescription);
                                             candidates.add(methodDescription);
@@ -1726,7 +1737,7 @@ public interface MethodGraph {
                                     methodDescriptions.add(candidate);
                                 }
                                 return methodDescriptions.size() == 1
-                                        ? new Resolved<U>(key.combineWith(entry.getKey()), methodDescriptions.iterator().next(), visibility.expandTo(entry.getVisibility()), Resolved.NOT_MADE_VISIBLE) // TODO: ?
+                                        ? new Resolved<U>(key.combineWith(entry.getKey()), methodDescriptions.iterator().next(), visibility.expandTo(entry.getVisibility()))
                                         : new Ambiguous<U>(key.combineWith(entry.getKey()), methodDescriptions, visibility.expandTo(entry.getVisibility()));
                             }
 
