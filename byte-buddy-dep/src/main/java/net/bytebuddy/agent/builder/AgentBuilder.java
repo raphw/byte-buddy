@@ -7990,7 +7990,13 @@ public interface AgentBuilder {
     }
 
     /**
+     * <p>
      * Implements the instrumentation of the {@code LambdaMetafactory} if this feature is enabled.
+     * </p>
+     * <p>
+     * <b>Warning</b>: This feature is not recommended for production systems but only for experiments or debugging
+     * purposes. It might no longer work in a future release and makes assumptions over JVM-internal API.
+     * </p>
      */
     enum LambdaInstrumentationStrategy {
 
