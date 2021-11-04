@@ -8027,7 +8027,9 @@ public interface AgentBuilder {
                     byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE)
                             .redefine(lambdaMetaFactory)
                             .visit(new AsmVisitorWrapper.ForDeclaredMethods()
-                                    .method(named("metafactory"), MetaFactoryRedirection.INSTANCE)
+                                    .method(named("metafactory"), DEFINE_CLASS_USING_METHOD_HANDLE_LOOKUP
+                                            ? MetaFactoryRedirection.USING_METHOD_HANDLE_LOOKUP
+                                            : MetaFactoryRedirection.USING_UNSAFE)
                                     .method(named("altMetafactory"), AlternativeMetaFactoryRedirection.INSTANCE))
                             .make()
                             .load(lambdaMetaFactory.getClassLoader(), ClassReloadingStrategy.of(instrumentation));
@@ -8063,6 +8065,28 @@ public interface AgentBuilder {
         private static final String UNSAFE_CLASS = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).isAtLeast(ClassFileVersion.JAVA_V9)
                 ? "jdk/internal/misc/Unsafe"
                 : "sun/misc/Unsafe";
+
+        /**
+         * {@code true} if lambda class replacements should be defined using a method handle lookup.
+         */
+        private static final boolean DEFINE_CLASS_USING_METHOD_HANDLE_LOOKUP;
+
+        /*
+         * Checks if a method handle lookup should be used to define a lambda class replacement.
+         */
+        static {
+            boolean defineClassUsingMethodHandleLookup;
+            try {
+                Class.forName("java.lang.invoke.MethodHandles$Lookup", false, null).getMethod("defineHiddenClass",
+                        byte[].class,
+                        boolean.class,
+                        Class.forName("[Ljava.lang.invoke.MethodHandles$Lookup$ClassOption;", false, null));
+                defineClassUsingMethodHandleLookup = true;
+            } catch (Exception ignored) {
+                defineClassUsingMethodHandleLookup = false;
+            }
+            DEFINE_CLASS_USING_METHOD_HANDLE_LOOKUP = defineClassUsingMethodHandleLookup;
+        }
 
         /**
          * Indicates that an original implementation can be ignored when redefining a method.
@@ -8718,29 +8742,26 @@ public interface AgentBuilder {
          *     MethodType samMethodType,
          *     MethodHandle implMethod,
          *     MethodType instantiatedMethodType) throws Exception {
-         *   Unsafe unsafe = Unsafe.getUnsafe();
-         *   {@code Class<?>} lambdaClass = unsafe.defineAnonymousClass(caller.lookupClass(),
-         *       (byte[]) ClassLoader.getSystemClassLoader().loadClass("net.bytebuddy.agent.builder.LambdaFactory").getDeclaredMethod("make",
-         *           Object.class,
-         *           String.class,
-         *           Object.class,
-         *           Object.class,
-         *           Object.class,
-         *           Object.class,
-         *           boolean.class,
-         *           List.class,
-         *           List.class).invoke(null,
-         *               caller,
-         *               invokedName,
-         *               invokedType,
-         *               samMethodType,
-         *               implMethod,
-         *               instantiatedMethodType,
-         *               false,
-         *               Collections.emptyList(),
-         *               Collections.emptyList()),
-         *       null);
-         *   unsafe.ensureClassInitialized(lambdaClass);
+         *     byte[] binaryRepresentation = (byte[]) ClassLoader.getSystemClassLoader().loadClass("net.bytebuddy.agent.builder.LambdaFactory").getDeclaredMethod("make",
+         *          Object.class,
+         *          String.class,
+         *          Object.class,
+         *          Object.class,
+         *          Object.class,
+         *          Object.class,
+         *          boolean.class,
+         *          List.class,
+         *          List.class).invoke(null,
+         *              caller,
+         *              invokedName,
+         *              invokedType,
+         *              samMethodType,
+         *              implMethod,
+         *              instantiatedMethodType,
+         *              false,
+         *              Collections.emptyList(),
+         *              Collections.emptyList());
+         *   {@code Class<?>} lambdaClass = ...; // JVM dependant resolution
          *   return invokedType.parameterCount() == 0
          *     ? new ConstantCallSite(MethodHandles.constant(invokedType.returnType(), lambdaClass.getDeclaredConstructors()[0].newInstance()))
          *     : new ConstantCallSite(MethodHandles.Lookup.IMPL_LOOKUP.findStatic(lambdaClass, "get$Lambda", invokedType));
@@ -8749,9 +8770,134 @@ public interface AgentBuilder {
         protected enum MetaFactoryRedirection implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
 
             /**
-             * The singleton instance.
+             * A redirection that is using Unsafe for resolution.
              */
-            INSTANCE;
+            USING_UNSAFE(6, 9) {
+                @Override
+                protected void onStoreImplementation(MethodVisitor methodVisitor, int offset) {
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, UNSAFE_CLASS, "getUnsafe", "()L" + UNSAFE_CLASS + ";", false);
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, offset + 1);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, offset + 1);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "lookupClass", "()Ljava/lang/Class;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, offset + 1);
+                    methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, UNSAFE_CLASS, "defineAnonymousClass", "(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, offset);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, offset + 1);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, offset);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, UNSAFE_CLASS, "ensureClassInitialized", "(Ljava/lang/Class;)V", false);
+                }
+            },
+
+            /**
+             * A redirection that is using a method handle lookup.
+             */
+            USING_METHOD_HANDLE_LOOKUP(8, 10) {
+                @Override
+                protected void onStoreImplementation(MethodVisitor methodVisitor, int offset) {
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 4);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "revealDirect", "(Ljava/lang/invoke/MethodHandle;)Ljava/lang/invoke/MethodHandleInfo;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 7);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEINTERFACE, "java/lang/invoke/MethodHandleInfo", "getModifiers", "()I", true);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/reflect/Modifier", "isProtected", "(I)Z", false);
+                    Label first = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.IFEQ, first);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "lookupClass", "()Ljava/lang/Class;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEINTERFACE, "java/lang/invoke/MethodHandleInfo", "getDeclaringClass", "()Ljava/lang/Class;", true);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "Main$VerifyAccess", "isSamePackage", "(Ljava/lang/Class;Ljava/lang/Class;)Z", false);
+                    Label second = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.IFEQ, second);
+                    methodVisitor.visitLabel(first);
+                    methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"[B", "java/lang/invoke/MethodHandleInfo"}, 0, null);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEINTERFACE, "java/lang/invoke/MethodHandleInfo", "getReferenceKind", "()I", true);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 7);
+                    Label third = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.IF_ICMPNE, third);
+                    methodVisitor.visitLabel(second);
+                    methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                    methodVisitor.visitInsn(Opcodes.ICONST_1);
+                    Label forth = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.GOTO, forth);
+                    methodVisitor.visitLabel(third);
+                    methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitLabel(forth);
+                    methodVisitor.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{Opcodes.INTEGER});
+                    methodVisitor.visitVarInsn(Opcodes.ISTORE, 8);
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 8);
+                    Label fifth = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.IFEQ, fifth);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 6);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
+                    methodVisitor.visitInsn(Opcodes.ICONST_1);
+                    methodVisitor.visitInsn(Opcodes.ICONST_2);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/invoke/MethodHandles$Lookup$ClassOption");
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/invoke/MethodHandles$Lookup$ClassOption", "NESTMATE", "Ljava/lang/invoke/MethodHandles$Lookup$ClassOption;");
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_1);
+                    methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/invoke/MethodHandles$Lookup$ClassOption", "STRONG", "Ljava/lang/invoke/MethodHandles$Lookup$ClassOption;");
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "defineHiddenClassWithClassData", "([BLjava/lang/Object;Z[Ljava/lang/invoke/MethodHandles$Lookup$ClassOption;)Ljava/lang/invoke/MethodHandles$Lookup;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 9);
+                    Label sixth = new Label();
+                    methodVisitor.visitLabel(sixth);
+                    Label seventh = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.GOTO, seventh);
+                    methodVisitor.visitLabel(fifth);
+                    methodVisitor.visitFrame(Opcodes.F_APPEND, 1, new Object[]{Opcodes.INTEGER}, 0, null);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 6);
+                    methodVisitor.visitInsn(Opcodes.ICONST_1);
+                    methodVisitor.visitInsn(Opcodes.ICONST_2);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/invoke/MethodHandles$Lookup$ClassOption");
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/invoke/MethodHandles$Lookup$ClassOption", "NESTMATE", "Ljava/lang/invoke/MethodHandles$Lookup$ClassOption;");
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_1);
+                    methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/invoke/MethodHandles$Lookup$ClassOption", "STRONG", "Ljava/lang/invoke/MethodHandles$Lookup$ClassOption;");
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "defineHiddenClass", "([BZ[Ljava/lang/invoke/MethodHandles$Lookup$ClassOption;)Ljava/lang/invoke/MethodHandles$Lookup;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 9);
+                    methodVisitor.visitLabel(seventh);
+                    methodVisitor.visitFrame(Opcodes.F_APPEND, 1, new Object[]{"java/lang/invoke/MethodHandles$Lookup"}, 0, null);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 9);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "lookupClass", "()Ljava/lang/Class;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, offset);
+                }
+            };
+
+            /**
+             * The required length of the operand stack.
+             */
+            private final int stackSize;
+
+            /**
+             * The required length of the local variable array.
+             */
+            private final int localVariableLength;
+
+            /**
+             * Create a new redirection.
+             *
+             * @param stackSize           The required length of the operand stack.
+             * @param localVariableLength The amount of local values required.
+             */
+            MetaFactoryRedirection(int stackSize, int localVariableLength) {
+                this.stackSize = stackSize;
+                this.localVariableLength = localVariableLength;
+            }
 
             /**
              * {@inheritDoc}
@@ -8764,11 +8910,6 @@ public interface AgentBuilder {
                                       int writerFlags,
                                       int readerFlags) {
                 methodVisitor.visitCode();
-                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, UNSAFE_CLASS, "getUnsafe", "()L" + UNSAFE_CLASS + ";", false);
-                methodVisitor.visitVarInsn(Opcodes.ASTORE, 6);
-                methodVisitor.visitVarInsn(Opcodes.ALOAD, 6);
-                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "lookupClass", "()Ljava/lang/Class;", false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/ClassLoader", "getSystemClassLoader", "()Ljava/lang/ClassLoader;", false);
                 methodVisitor.visitLdcInsn("net.bytebuddy.agent.builder.LambdaFactory");
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/ClassLoader", "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;", false);
@@ -8854,16 +8995,12 @@ public interface AgentBuilder {
                 methodVisitor.visitInsn(Opcodes.AASTORE);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;", false);
                 methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "[B");
-                methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, UNSAFE_CLASS, "defineAnonymousClass", "(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;", false);
-                methodVisitor.visitVarInsn(Opcodes.ASTORE, 7);
-                methodVisitor.visitVarInsn(Opcodes.ALOAD, 6);
-                methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, UNSAFE_CLASS, "ensureClassInitialized", "(Ljava/lang/Class;)V", false);
+                methodVisitor.visitVarInsn(Opcodes.ASTORE, 6);
+                onStoreImplementation(methodVisitor, 7);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodType", "parameterCount", "()I", false);
-                Label conditionalDefault = new Label();
-                methodVisitor.visitJumpInsn(Opcodes.IFNE, conditionalDefault);
+                Label parameterCount = new Label();
+                methodVisitor.visitJumpInsn(Opcodes.IFNE, parameterCount);
                 methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
                 methodVisitor.visitInsn(Opcodes.DUP);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
@@ -8877,10 +9014,10 @@ public interface AgentBuilder {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Constructor", "newInstance", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/invoke/MethodHandles", "constant", "(Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;", false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/invoke/ConstantCallSite", "<init>", "(Ljava/lang/invoke/MethodHandle;)V", false);
-                Label conditionalAlternative = new Label();
-                methodVisitor.visitJumpInsn(Opcodes.GOTO, conditionalAlternative);
-                methodVisitor.visitLabel(conditionalDefault);
-                methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{UNSAFE_CLASS, "java/lang/Class"}, 0, null);
+                Label end = new Label();
+                methodVisitor.visitJumpInsn(Opcodes.GOTO, end);
+                methodVisitor.visitLabel(parameterCount);
+                methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"[B", "java/lang/Class"}, 0, null);
                 methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
                 methodVisitor.visitInsn(Opcodes.DUP);
                 methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/invoke/MethodHandles$Lookup", "IMPL_LOOKUP", "Ljava/lang/invoke/MethodHandles$Lookup;");
@@ -8889,13 +9026,21 @@ public interface AgentBuilder {
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "findStatic", "(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;", false);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/invoke/ConstantCallSite", "<init>", "(Ljava/lang/invoke/MethodHandle;)V", false);
-                methodVisitor.visitLabel(conditionalAlternative);
+                methodVisitor.visitLabel(end);
                 methodVisitor.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{"java/lang/invoke/CallSite"});
                 methodVisitor.visitInsn(Opcodes.ARETURN);
-                methodVisitor.visitMaxs(8, 8);
+                methodVisitor.visitMaxs(stackSize, localVariableLength);
                 methodVisitor.visitEnd();
                 return IGNORE_ORIGINAL;
             }
+
+            /**
+             * Invoked prior to the class creation.
+             *
+             * @param methodVisitor The method visitor to use.
+             * @param offset        The offset at which to store the class.
+             */
+            protected abstract void onStoreImplementation(MethodVisitor methodVisitor, int offset);
         }
 
         /**
