@@ -8162,7 +8162,7 @@ public interface AgentBuilder {
          *   int flags = (Integer) argument[3];
          *   int index = 4;
          *  {@code Class<?>[]} markerInterface;
-         *   if ((flags & 2) != 0) {
+         *   if ((flags{@code &} 2) != 0) {
          *     int count = (Integer) argument[index++];
          *     markerInterface = new{@code Class<?>}[count];
          *     System.arraycopy(argument, index, markerInterface, 0, count);
@@ -8171,7 +8171,7 @@ public interface AgentBuilder {
          *     markerInterface = new{@code Class<?>}[0];
          *   }
          *   MethodType[] additionalBridge;
-         *   if ((flags & 2) != 0) {
+         *   if ((flags{@code &} 2) != 0) {
          *     int count = (Integer) argument[index++];
          *     additionalBridge = new MethodType[count];
          *     System.arraycopy(argument, index, additionalBridge, 0, count);
@@ -8183,7 +8183,7 @@ public interface AgentBuilder {
          *   MethodType dynamicMethodType = (MethodType) argument[2];
          *   boolean serializable = (flags & 1) != 0;
          *  {@code List<Class<?>>} markerInterfaces = Arrays.asList(markerInterface);
-         *   List<MethodType> additionalBridges = Arrays.asList(additionalBridge);
+         *  {@code List<MethodType>} additionalBridges = Arrays.asList(additionalBridge);
          *   // ... reminder of method as before
          * }
          * </pre></blockquote>
@@ -8609,7 +8609,7 @@ public interface AgentBuilder {
                  * <blockquote><pre>
                  * MethodHandleInfo info = caller.revealDirect(implementation);
                  * boolean classData = (Modifier.isProtected(info.getModifiers())
-                 *   && !VerifyAccess.isSamePackage(caller.lookupClass(), info.getDeclaringClass()))
+                 *  {@code &&} !VerifyAccess.isSamePackage(caller.lookupClass(), info.getDeclaringClass()))
                  *   || info.getReferenceKind() == Opcodes.H_INVOKESPECIAL;
                  * MethodHandles.Lookup lookup;
                  * if (classData) {
@@ -9302,6 +9302,7 @@ public interface AgentBuilder {
                         /**
                          * Invokes this invocation.
                          *
+                         * @param methodDescription A description of the invoked method.
                          * @return A stack manipulation that represents the invocation.
                          */
                         StackManipulation invoke(MethodDescription methodDescription);
