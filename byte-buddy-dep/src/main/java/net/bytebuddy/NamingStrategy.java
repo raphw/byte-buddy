@@ -354,6 +354,7 @@ public interface NamingStrategy {
          * @param javaLangPackagePrefix The fallback namespace for type's that subclass types within the
          *                              {@code java.*} namespace. If The prefix is set to the empty string,
          *                              no prefix is added.
+         * @param randomString          The random string instance to use.
          */
         public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver, String javaLangPackagePrefix, RandomString randomString) {
             super(suffix, baseNameResolver, javaLangPackagePrefix);
