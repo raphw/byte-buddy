@@ -8348,8 +8348,10 @@ public interface AgentBuilder {
              */
             private static final Loader LOADER = resolve();
 
-            /*
+            /**
              * Resolves the loader for the current VM.
+             *
+             * @return An appropriate loader.
              */
             @SuppressFBWarnings(value = {"DE_MIGHT_IGNORE", "REC_CATCH_EXCEPTION"}, justification = "Exception should not be rethrown but trigger a fallback")
             private static Loader resolve() {
@@ -8605,7 +8607,7 @@ public interface AgentBuilder {
                 }
 
                 /**
-                 * A loader that uses a method handle lookup object to load a class, similar to the following:
+                 * A loader that uses a method handle lookup object to load a class. This is implemented as follows:
                  * <blockquote><pre>
                  * MethodHandleInfo info = caller.revealDirect(implementation);
                  * boolean classData = (Modifier.isProtected(info.getModifiers())

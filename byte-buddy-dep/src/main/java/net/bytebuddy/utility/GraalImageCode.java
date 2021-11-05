@@ -42,19 +42,19 @@ public enum GraalImageCode {
     RUNTIME(true, true),
 
     /**
-     * Indicates that the property
+     * Indicates that a Graal VM property is set to an unknown value.
      */
     UNKNOWN(false, false),
 
     /**
-     * Indicates that
+     * Indicates that no Graal VM property is set.
      */
     NONE(false, false);
 
     /**
      * The current image code.
      */
-    private static GraalImageCode CURRENT;
+    private static GraalImageCode current;
 
     /**
      * Resolves the status of the Graal image code.
@@ -63,7 +63,7 @@ public enum GraalImageCode {
      */
     @SuppressFBWarnings(value = "LI_LAZY_INIT_STATIC", justification = "This behaviour is intended to avoid early binding in native images.")
     public static GraalImageCode getCurrent() {
-        GraalImageCode current = CURRENT;
+        GraalImageCode current = GraalImageCode.current;
         if (current == null) {
             String value = doPrivileged(new GetSystemPropertyAction("org.graalvm.nativeimage.imagecode"));
             if (value == null) {
@@ -77,7 +77,7 @@ public enum GraalImageCode {
             } else {
                 current = GraalImageCode.UNKNOWN;
             }
-            CURRENT = current;
+            GraalImageCode.current = current;
         }
         return current;
     }
