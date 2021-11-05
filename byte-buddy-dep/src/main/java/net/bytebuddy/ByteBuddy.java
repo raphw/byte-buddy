@@ -142,7 +142,7 @@ public class ByteBuddy {
             if (GraalImageCode.getCurrent().isDefined()) {
                 namingStrategy = new NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_PREFIX,
                         NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE,
-                        NamingStrategy.Suffixing.BYTE_BUDDY_RENAME_PACKAGE);
+                        NamingStrategy.BYTE_BUDDY_RENAME_PACKAGE);
                 auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Enumerating(BYTE_BUDDY_DEFAULT_SUFFIX);
             } else {
                 namingStrategy = null;
@@ -151,7 +151,7 @@ public class ByteBuddy {
         } else if (value.equalsIgnoreCase("fixed")) {
             namingStrategy = new NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_PREFIX,
                     NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE,
-                    NamingStrategy.Suffixing.BYTE_BUDDY_RENAME_PACKAGE);
+                    NamingStrategy.BYTE_BUDDY_RENAME_PACKAGE);
             auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Enumerating(BYTE_BUDDY_DEFAULT_SUFFIX);
         } else {
             long seed;
@@ -162,7 +162,7 @@ public class ByteBuddy {
             }
             namingStrategy = new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX,
                     NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE,
-                    NamingStrategy.Suffixing.BYTE_BUDDY_RENAME_PACKAGE,
+                    NamingStrategy.BYTE_BUDDY_RENAME_PACKAGE,
                     new RandomString(RandomString.DEFAULT_LENGTH, new Random(seed)));
             auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Enumerating(BYTE_BUDDY_DEFAULT_SUFFIX);
         }

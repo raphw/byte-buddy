@@ -61,7 +61,7 @@ public class NamingStrategyTest {
     @Test
     public void testSuffixingSubclassConflictingPackageDisabled() throws Exception {
         when(baseNameResolver.resolve(rawTypeDescription)).thenReturn(JAVA_QUX);
-        NamingStrategy namingStrategy = new NamingStrategy.Suffixing(FOO, baseNameResolver, NamingStrategy.Suffixing.NO_PREFIX);
+        NamingStrategy namingStrategy = new NamingStrategy.Suffixing(FOO, baseNameResolver, NamingStrategy.NO_PREFIX);
         assertThat(namingStrategy.subclass(typeDescription), equalTo(JAVA_QUX + "$" + FOO));
         verify(typeDescription).asErasure();
         verifyNoMoreInteractions(typeDescription);
@@ -114,7 +114,7 @@ public class NamingStrategyTest {
     @Test
     public void testSuffixingRandomSubclassConflictingPackageDisabled() throws Exception {
         when(baseNameResolver.resolve(rawTypeDescription)).thenReturn(JAVA_QUX);
-        NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(FOO, baseNameResolver, NamingStrategy.Suffixing.NO_PREFIX);
+        NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(FOO, baseNameResolver, NamingStrategy.NO_PREFIX);
         assertThat(namingStrategy.subclass(typeDescription), startsWith(JAVA_QUX + "$" + FOO + "$"));
         verify(typeDescription).asErasure();
         verifyNoMoreInteractions(typeDescription);

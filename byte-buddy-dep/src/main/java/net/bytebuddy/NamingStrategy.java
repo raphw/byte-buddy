@@ -31,6 +31,16 @@ import net.bytebuddy.utility.RandomString;
 public interface NamingStrategy {
 
     /**
+     * The default package for defining types that are renamed to not be contained in the {@code java} package.
+     */
+    String BYTE_BUDDY_RENAME_PACKAGE = "net.bytebuddy.renamed";
+
+    /**
+     * Indicates that types of the {@code java.*} package should not be prefixed.
+     */
+    String NO_PREFIX = "";
+
+    /**
      * Determines a new name when creating a new type that subclasses the provided type.
      *
      * @param superClass The super type of the created type.
@@ -94,17 +104,6 @@ public interface NamingStrategy {
      */
     @HashCodeAndEqualsPlugin.Enhance
     class Suffixing extends AbstractBase {
-
-        /**
-         * The default package for defining types that are renamed to not be contained in the
-         * {@link net.bytebuddy.NamingStrategy.SuffixingRandom#JAVA_PACKAGE} package.
-         */
-        public static final String BYTE_BUDDY_RENAME_PACKAGE = "net.bytebuddy.renamed";
-
-        /**
-         * Indicates that types of the {@code java.*} package should not be prefixed.
-         */
-        public static final String NO_PREFIX = "";
 
         /**
          * The package prefix of the {@code java.*} packages for which the definition of
