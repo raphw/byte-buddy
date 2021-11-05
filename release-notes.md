@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 5. November 2021: version 1.12.0
+
+- Introduce detection for Graal native image execution.
+- Correctly resolve interface implementations in revers order when compiling method graph.
+- Adjust lambda instrumentation strategy to support Java 17.
+
 ### 29. October 2021: version 1.11.22
 
 - Remove automatic frame padding mechanism in favor of explicit *NOP* instruction after injected blocks.
