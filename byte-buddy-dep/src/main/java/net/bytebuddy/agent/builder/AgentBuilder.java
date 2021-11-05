@@ -8279,38 +8279,33 @@ public interface AgentBuilder {
             /**
              * A loader for the generated lambda class.
              */
-            private static final Loader LOADER;
+            private static final Loader LOADER = resolve();
 
             /*
              * Resolves the loader for the current VM.
              */
-            static {
-                Loader loader = null;
+            @SuppressFBWarnings(value = {"DE_MIGHT_IGNORE", "REC_CATCH_EXCEPTION"}, justification = "Exception should not be rethrown but trigger a fallback")
+            private static Loader resolve() {
                 try {
                     Class.forName("java.lang.invoke.MethodHandles$Lookup", false, null).getMethod("defineHiddenClass",
                             byte[].class,
                             boolean.class,
                             Class.forName("[Ljava.lang.invoke.MethodHandles$Lookup$ClassOption;", false, null));
-                    loader = Loader.UsingMethodHandleLookup.INSTANCE;
+                    return Loader.UsingMethodHandleLookup.INSTANCE;
                 } catch (Exception ignored) {
                     /* do nothing */
                 }
-                if (loader == null) {
-                    for (Loader.UsingUnsafe candidate : Loader.UsingUnsafe.values()) {
-                        try {
-                            Class.forName(candidate.getType().replace('/', '.'),
-                                    false,
-                                    null).getMethod("defineAnonymousClass", Class.class, byte[].class, Object[].class);
-                            loader = candidate;
-                            break;
-                        } catch (Exception ignored) {
-                            /* do nothing */
-                        }
+                for (Loader.UsingUnsafe loader : Loader.UsingUnsafe.values()) {
+                    try {
+                        Class.forName(loader.getType().replace('/', '.'),
+                                false,
+                                null).getMethod("defineAnonymousClass", Class.class, byte[].class, Object[].class);
+                        return loader;
+                    } catch (Exception ignored) {
+                        /* do nothing */
                     }
                 }
-                LOADER = loader == null
-                        ? Loader.Unavailable.INSTANCE
-                        : loader;
+                return Loader.Unavailable.INSTANCE;
             }
 
             /**
