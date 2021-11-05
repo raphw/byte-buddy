@@ -8181,7 +8181,7 @@ public interface AgentBuilder {
          *   MethodType interfaceMethodType = (MethodType) argument[0];
          *   MethodHandle implementation = (MethodHandle) argument[1];
          *   MethodType dynamicMethodType = (MethodType) argument[2];
-         *   boolean serializable = (flags & 1) != 0;
+         *   boolean serializable = (flags{@code &} 1) != 0;
          *  {@code List<Class<?>>} markerInterfaces = Arrays.asList(markerInterface);
          *  {@code List<MethodType>} additionalBridges = Arrays.asList(additionalBridge);
          *   // ... reminder of method as before
