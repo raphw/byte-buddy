@@ -66,10 +66,7 @@ import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.*;
 
 import java.io.*;
 import java.lang.instrument.*;
@@ -8627,7 +8624,7 @@ public interface AgentBuilder {
                  *     MethodHandles.Lookup.ClassOption.NESTMATE,
                  *     MethodHandles.Lookup.ClassOption.STRONG);
                  * }
-                 *{@code Class<?>} lambdaClass = lookup.lookupClass();
+                 * {@code Class<?>} lambdaClass = lookup.lookupClass();
                  * </pre></blockquote>
                  */
                 enum UsingMethodHandleLookup implements Loader {
@@ -8752,7 +8749,7 @@ public interface AgentBuilder {
                  * the class looks similar to the following:
                  * <blockquote><pre>
                  * Unsafe unsafe = Unsafe.getUnsafe();
-                 *{@code Class<?>} lambdaClass = unsafe.defineAnonymousClass(caller.lookupClass(),
+                 * {@code Class<?>} lambdaClass = unsafe.defineAnonymousClass(caller.lookupClass(),
                  *   binaryRepresentation,
                  *   null);
                  * unsafe.ensureClassInitialized(lambdaClass);
@@ -8917,7 +8914,7 @@ public interface AgentBuilder {
                         .method(named(lambdaMethodName)
                                 .and(takesArguments(lambdaMethod.getParameterTypes()))
                                 .and(returns(lambdaMethod.getReturnType())))
-                        .intercept(new LambdaMethodImplementation(targetMethod, specializedLambdaMethod));
+                        .intercept(new LambdaMethodImplementation(TypeDescription.ForLoadedType.of(targetType), targetMethod, specializedLambdaMethod));
                 int index = 0;
                 for (TypeDescription capturedType : factoryMethod.getParameterTypes()) {
                     builder = builder.defineField(FIELD_PREFIX + ++index, capturedType, Visibility.PRIVATE, FieldManifestation.FINAL);
@@ -9115,6 +9112,11 @@ public interface AgentBuilder {
             protected static class LambdaMethodImplementation implements Implementation {
 
                 /**
+                 * The type that defines the lambda expression.
+                 */
+                private final TypeDescription targetType;
+
+                /**
                  * The handle of the target method of the lambda expression.
                  */
                 private final JavaConstant.MethodHandle targetMethod;
@@ -9127,10 +9129,14 @@ public interface AgentBuilder {
                 /**
                  * Creates a implementation of a lambda expression's functional method.
                  *
+                 * @param targetType              The type that defines the lambda expression.
                  * @param targetMethod            The target method of the lambda expression.
                  * @param specializedLambdaMethod The specialized type of the lambda method.
                  */
-                protected LambdaMethodImplementation(JavaConstant.MethodHandle targetMethod, JavaConstant.MethodType specializedLambdaMethod) {
+                protected LambdaMethodImplementation(TypeDescription targetType,
+                                                     JavaConstant.MethodHandle targetMethod,
+                                                     JavaConstant.MethodType specializedLambdaMethod) {
+                    this.targetType = targetType;
                     this.targetMethod = targetMethod;
                     this.specializedLambdaMethod = specializedLambdaMethod;
                 }
@@ -9139,14 +9145,16 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public ByteCodeAppender appender(Target implementationTarget) {
-                    return new Appender(targetMethod.getOwnerType()
-                            .getDeclaredMethods()
-                            .filter(hasMethodName(targetMethod.getName())
-                                    .and(returns(targetMethod.getReturnType()))
-                                    .and(takesArguments(targetMethod.getParameterTypes())))
-                            .getOnly(),
+                    return Appender.of(targetMethod.getOwnerType()
+                                    .getDeclaredMethods()
+                                    .filter(hasMethodName(targetMethod.getName())
+                                            .and(returns(targetMethod.getReturnType()))
+                                            .and(takesArguments(targetMethod.getParameterTypes())))
+                                    .getOnly(),
                             specializedLambdaMethod,
-                            implementationTarget.getInstrumentedType().getDeclaredFields());
+                            implementationTarget.getInstrumentedType().getDeclaredFields(),
+                            targetMethod.getHandleType(),
+                            targetType);
                 }
 
                 /**
@@ -9161,6 +9169,29 @@ public interface AgentBuilder {
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 protected static class Appender implements ByteCodeAppender {
+
+                    /**
+                     * A dispatcher using method handle lookup data, if available.
+                     */
+                    private static final Dispatcher LOOKUP_DATA_DISPATCHER = dispatcher();
+
+                    /**
+                     * Resolves the dispatcher to use for special method invocations.
+                     *
+                     * @return An appropriate dispatcher for the current VM.
+                     */
+                    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                    private static Dispatcher dispatcher() {
+                        try {
+                            Class<?> type = Class.forName("java.lang.invoke.MethodHandles$Lookup", false, null);
+                            type.getMethod("classData", type, String.class, Class.class);
+                            return new Dispatcher.UsingMethodHandle(new MethodDescription.ForLoadedMethod(Class.forName("java.lang.invoke.MethodHandle",
+                                    false,
+                                    null).getMethod("invokeExact", Object[].class)));
+                        } catch (Exception ignored) {
+                            return Dispatcher.UsingDirectInvocation.INSTANCE;
+                        }
+                    }
 
                     /**
                      * The target method of the lambda expression.
@@ -9178,27 +9209,55 @@ public interface AgentBuilder {
                     private final List<FieldDescription.InDefinedShape> declaredFields;
 
                     /**
+                     * The dispatcher to use.
+                     */
+                    private final Dispatcher dispatcher;
+
+                    /**
                      * Creates an appender of a lambda expression's functional method.
                      *
                      * @param targetMethod            The target method of the lambda expression.
                      * @param specializedLambdaMethod The specialized type of the lambda method.
                      * @param declaredFields          The instrumented type's declared fields.
+                     * @param dispatcher              The dispatcher to use.
                      */
                     protected Appender(MethodDescription targetMethod,
                                        JavaConstant.MethodType specializedLambdaMethod,
-                                       List<FieldDescription.InDefinedShape> declaredFields) {
+                                       List<FieldDescription.InDefinedShape> declaredFields,
+                                       Dispatcher dispatcher) {
                         this.targetMethod = targetMethod;
                         this.specializedLambdaMethod = specializedLambdaMethod;
                         this.declaredFields = declaredFields;
+                        this.dispatcher = dispatcher;
+                    }
+
+                    /**
+                     * Resolves an appropriate appender for this lambda expression.
+                     *
+                     * @param targetMethod            The target method of the lambda expression.
+                     * @param specializedLambdaMethod The specialized type of the lambda method.
+                     * @param declaredFields          The instrumented type's declared fields.
+                     * @param handleType              The handle type of the lambda expression's method handle.
+                     * @param targetType              The target type that defines the lambda expression.
+                     * @return An appropriate byte code appender.
+                     */
+                    protected static ByteCodeAppender of(MethodDescription targetMethod,
+                                                         JavaConstant.MethodType specializedLambdaMethod,
+                                                         List<FieldDescription.InDefinedShape> declaredFields,
+                                                         JavaConstant.MethodHandle.HandleType handleType,
+                                                         TypeDescription targetType) {
+                        return new Appender(targetMethod,
+                                specializedLambdaMethod,
+                                declaredFields,
+                                handleType == JavaConstant.MethodHandle.HandleType.INVOKE_SPECIAL || !targetMethod.getDeclaringType().asErasure().isVisibleTo(targetType)
+                                        ? LOOKUP_DATA_DISPATCHER
+                                        : Dispatcher.UsingDirectInvocation.INSTANCE);
                     }
 
                     /**
                      * {@inheritDoc}
                      */
                     public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                        StackManipulation preparation = targetMethod.isConstructor()
-                                ? new StackManipulation.Compound(TypeCreation.of(targetMethod.getDeclaringType().asErasure()), Duplication.SINGLE)
-                                : StackManipulation.Trivial.INSTANCE;
                         List<StackManipulation> fieldAccess = new ArrayList<StackManipulation>(declaredFields.size() * 2 + 1);
                         for (FieldDescription.InDefinedShape fieldDescription : declaredFields) {
                             fieldAccess.add(MethodVariableAccess.loadThis());
@@ -9212,10 +9271,13 @@ public interface AgentBuilder {
                                     Assigner.Typing.DYNAMIC));
                         }
                         return new Size(new StackManipulation.Compound(
-                                preparation,
+                                targetMethod.isConstructor()
+                                        ? new StackManipulation.Compound(TypeCreation.of(targetMethod.getDeclaringType().asErasure()), Duplication.SINGLE)
+                                        : StackManipulation.Trivial.INSTANCE,
+                                dispatcher.initialize(),
                                 new StackManipulation.Compound(fieldAccess),
                                 new StackManipulation.Compound(parameterAccess),
-                                MethodInvocation.invoke(targetMethod),
+                                dispatcher.invoke(targetMethod),
                                 Assigner.DEFAULT.assign(targetMethod.isConstructor()
                                                 ? targetMethod.getDeclaringType().asGenericType()
                                                 : targetMethod.getReturnType(),
@@ -9223,6 +9285,100 @@ public interface AgentBuilder {
                                         Assigner.Typing.DYNAMIC),
                                 MethodReturn.of(specializedLambdaMethod.getReturnType())
                         ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+                    }
+
+                    /**
+                     * A dispatcher for a lambda expression's implementation.
+                     */
+                    protected interface Dispatcher {
+
+                        /**
+                         * Initializes this invocation.
+                         *
+                         * @return A stack manipulation that represents the initialization.
+                         */
+                        StackManipulation initialize();
+
+                        /**
+                         * Invokes this invocation.
+                         *
+                         * @return A stack manipulation that represents the invocation.
+                         */
+                        StackManipulation invoke(MethodDescription methodDescription);
+
+                        /**
+                         * An invocation that is using a direct call to the target method.
+                         */
+                        enum UsingDirectInvocation implements Dispatcher {
+
+                            /**
+                             * The singleton instance.
+                             */
+                            INSTANCE;
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public StackManipulation initialize() {
+                                return StackManipulation.Trivial.INSTANCE;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public StackManipulation invoke(MethodDescription methodDescription) {
+                                return MethodInvocation.invoke(methodDescription);
+                            }
+                        }
+
+                        /**
+                         * An invocation that is using an exact invocation of a method handle.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
+                        class UsingMethodHandle extends StackManipulation.AbstractBase implements Dispatcher {
+
+                            /**
+                             * A description of {@code java.lang.invoke.MethodHandle#invokeExact(Object...)}.
+                             */
+                            private final MethodDescription.InDefinedShape invokeExact;
+
+                            /**
+                             * Creates a new dispatcher that is using a method handle.
+                             *
+                             * @param invokeExact A description of {@code java.lang.invoke.MethodHandle#invokeExact(Object...)}.
+                             */
+                            protected UsingMethodHandle(MethodDescription.InDefinedShape invokeExact) {
+                                this.invokeExact = invokeExact;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public StackManipulation initialize() {
+                                return this;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public StackManipulation invoke(MethodDescription methodDescription) {
+                                return MethodInvocation.invoke(invokeExact);
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                                methodVisitor.visitLdcInsn(new ConstantDynamic(JavaConstant.Dynamic.DEFAULT_NAME,
+                                        "Ljava/lang/invoke/MethodHandle;",
+                                        new Handle(Opcodes.H_INVOKESTATIC,
+                                                "java/lang/invoke/MethodHandles",
+                                                "classData",
+                                                "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;",
+                                                false)));
+                                return new Size(1, 1);
+                            }
+                        }
                     }
                 }
             }

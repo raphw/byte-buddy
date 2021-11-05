@@ -123,6 +123,24 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
     }
 
     @Test
+    public void testFactoryRegularPrepare() throws Exception {
+        MethodVisitor methodVisitor = mock(MethodVisitor.class);
+        AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.REGULAR.onDispatch(methodVisitor);
+        verify(methodVisitor, never()).visitCode();
+        verify(methodVisitor, never()).visitMaxs(anyInt(), anyInt());
+        verify(methodVisitor, never()).visitLineNumber(anyInt(), Mockito.<Label>any());
+    }
+
+    @Test
+    public void testFactoryAlternativePrepare() throws Exception {
+        MethodVisitor methodVisitor = mock(MethodVisitor.class);
+        AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.ALTERNATIVE.onDispatch(methodVisitor);
+        verify(methodVisitor, never()).visitCode();
+        verify(methodVisitor, never()).visitMaxs(anyInt(), anyInt());
+        verify(methodVisitor, never()).visitLineNumber(anyInt(), Mockito.<Label>any());
+    }
+
+    @Test
     @JavaVersionRule.Enforce(7)
     public void testFactoryRegular() throws Exception {
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
