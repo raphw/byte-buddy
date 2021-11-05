@@ -8456,7 +8456,7 @@ public interface AgentBuilder {
                 methodVisitor.visitFrame(Opcodes.F_FULL, 11, new Object[]{"java/lang/invoke/MethodHandles$Lookup", "java/lang/String", "java/lang/invoke/MethodType", "java/lang/invoke/MethodType", "java/lang/invoke/MethodHandle", "java/lang/invoke/MethodType", Opcodes.INTEGER, "java/util/List", "java/util/List", "[B", "java/lang/Class"}, 0, new Object[]{});
                 methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
                 methodVisitor.visitInsn(Opcodes.DUP);
-                methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "demo/Lookup", "IMPL_LOOKUP", "Ljava/lang/invoke/MethodHandles$Lookup;");
+                methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/invoke/MethodHandles$Lookup", "IMPL_LOOKUP", "Ljava/lang/invoke/MethodHandles$Lookup;");
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 10);
                 methodVisitor.visitLdcInsn("get$Lambda");
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
