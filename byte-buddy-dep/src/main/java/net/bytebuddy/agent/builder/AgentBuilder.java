@@ -8357,8 +8357,14 @@ public interface AgentBuilder {
             @SuppressFBWarnings(value = {"DE_MIGHT_IGNORE", "REC_CATCH_EXCEPTION"}, justification = "Exception should not be rethrown but trigger a fallback")
             private static Loader resolve() {
                 try {
-                    Class.forName("java.lang.invoke.MethodHandles$Lookup", false, null).getMethod("defineHiddenClass",
+                    Class<?> type = Class.forName("java.lang.invoke.MethodHandles$Lookup", false, null);
+                    type.getMethod("defineHiddenClass",
                             byte[].class,
+                            boolean.class,
+                            Class.forName("[Ljava.lang.invoke.MethodHandles$Lookup$ClassOption;", false, null));
+                    type.getMethod("defineHiddenClassWithClassData",
+                            byte[].class,
+                            Object.class,
                             boolean.class,
                             Class.forName("[Ljava.lang.invoke.MethodHandles$Lookup$ClassOption;", false, null));
                     return Loader.UsingMethodHandleLookup.INSTANCE;

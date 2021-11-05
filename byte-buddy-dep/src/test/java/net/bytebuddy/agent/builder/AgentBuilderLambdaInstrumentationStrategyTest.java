@@ -5,7 +5,10 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.mockito.Mockito;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -19,6 +22,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class AgentBuilderLambdaInstrumentationStrategyTest {
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
     public void testEnabled() throws Exception {
@@ -117,6 +123,7 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(7)
     public void testFactoryRegular() throws Exception {
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         assertThat(AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.REGULAR.wrap(mock(TypeDescription.class),
@@ -132,6 +139,7 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(7)
     public void testFactoryAlternative() throws Exception {
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         assertThat(AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.ALTERNATIVE.wrap(mock(TypeDescription.class),
