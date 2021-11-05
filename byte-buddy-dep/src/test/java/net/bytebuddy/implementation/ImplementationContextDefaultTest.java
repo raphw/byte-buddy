@@ -257,7 +257,7 @@ public class ImplementationContextDefaultTest {
         when(firstSpecialType.asErasure()).thenReturn(firstSpecialType);
         when(secondSpecialMethod.getDeclaringType()).thenReturn(secondSpecialType);
         when(secondSpecialType.asErasure()).thenReturn(secondSpecialType);
-        when(auxiliaryTypeNamingStrategy.name(instrumentedType)).thenReturn(FOO);
+        when(auxiliaryTypeNamingStrategy.name(eq(instrumentedType), any(AuxiliaryType.class))).thenReturn(FOO);
     }
 
     @Test

@@ -64,9 +64,38 @@ public interface AuxiliaryType {
          * Names an auxiliary type.
          *
          * @param instrumentedType The instrumented type for which an auxiliary type is registered.
+         * @param auxiliaryType The named auxiliary type.
          * @return The fully qualified name for the given auxiliary type.
          */
-        String name(TypeDescription instrumentedType);
+        String name(TypeDescription instrumentedType, AuxiliaryType auxiliaryType);
+
+        /**
+         * A naming strategy for an auxiliary type which attempts an enumeration of types by using the hash code
+         * of the instrumenting instance.
+         */
+        class Enumerating implements NamingStrategy {
+
+            /**
+             * The suffix to append to the instrumented type for creating names for the auxiliary types.
+             */
+            private final String suffix;
+
+            /**
+             * Creates a new suffixing random naming strategy.
+             *
+             * @param suffix The suffix to extend to the instrumented type.
+             */
+            public Enumerating(String suffix) {
+                this.suffix = suffix;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public String name(TypeDescription instrumentedType, AuxiliaryType auxiliaryType) {
+                return instrumentedType.getName() + "$" + suffix + "$" + RandomString.hashOf(auxiliaryType.hashCode());
+            }
+        }
 
         /**
          * A naming strategy for an auxiliary type which returns the instrumented type's name with a fixed extension
@@ -99,7 +128,7 @@ public interface AuxiliaryType {
             /**
              * {@inheritDoc}
              */
-            public String name(TypeDescription instrumentedType) {
+            public String name(TypeDescription instrumentedType, AuxiliaryType auxiliaryType) {
                 return instrumentedType.getName() + "$" + suffix + "$" + randomString.nextString();
             }
         }

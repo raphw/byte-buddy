@@ -523,7 +523,7 @@ public interface MethodRebaseResolver {
                     Resolution resolution;
                     if (instrumentedMethod.isConstructor()) {
                         if (placeholderType == null) {
-                            placeholderType = TrivialType.SIGNATURE_RELEVANT.make(auxiliaryTypeNamingStrategy.name(instrumentedType),
+                            placeholderType = TrivialType.SIGNATURE_RELEVANT.make(auxiliaryTypeNamingStrategy.name(instrumentedType, TrivialType.SIGNATURE_RELEVANT),
                                     classFileVersion,
                                     MethodAccessorFactory.Illegal.INSTANCE);
                         }

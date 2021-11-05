@@ -15,15 +15,12 @@
  */
 package net.bytebuddy.dynamic.loading;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
+import net.bytebuddy.utility.GraalImageCode;
 
 import java.io.File;
 import java.lang.instrument.Instrumentation;
-import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -477,7 +474,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * @return An appropriate class loading strategy for the current JVM that uses a method handles lookup if available.
          */
         public static ClassLoadingStrategy<ClassLoader> withFallback(Callable<?> lookup) {
-            if (ForPreloadedTypes.isGraalNativeRuntime()) {
+            if (GraalImageCode.getCurrent().isNativeImageExecution()) {
                 return ForPreloadedTypes.INSTANCE;
             } else if (ClassInjector.UsingLookup.isAvailable()) {
                 try {
@@ -623,37 +620,6 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * The singleton instance.
          */
         INSTANCE;
-
-        /**
-         * {@code true} if Byte Buddy is executed as a native image using GraalVM. This property is purposefully
-         * not loaded from a static initialization block to avoid that it is falsely bound to the wrong value.
-         */
-        private static Boolean GRAAL_NATIVE_RUNTIME;
-
-        /**
-         * Returns {@code true} if Byte Buddy is executed as a native image using GraalVM.
-         *
-         * @return {@code true} if Byte Buddy is executed as a native image using GraalVM.
-         */
-        @SuppressFBWarnings(value = "LI_LAZY_INIT_STATIC", justification = "This behaviour is intended to avoid early binding in native images.")
-        public static boolean isGraalNativeRuntime() {
-            if (GRAAL_NATIVE_RUNTIME == null) {
-                GRAAL_NATIVE_RUNTIME = "runtime".equals(doPrivileged(new GetSystemPropertyAction("org.graalvm.nativeimage.imagecode")));
-            }
-            return GRAAL_NATIVE_RUNTIME;
-        }
-
-        /**
-         * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
-         *
-         * @param action The action to execute from a privileged context.
-         * @param <T>    The type of the action's resolved value.
-         * @return The action's resolved value.
-         */
-        @AccessControllerPlugin.Enhance
-        private static <T> T doPrivileged(PrivilegedAction<T> action) {
-            return action.run();
-        }
 
         /**
          * {@inheritDoc}

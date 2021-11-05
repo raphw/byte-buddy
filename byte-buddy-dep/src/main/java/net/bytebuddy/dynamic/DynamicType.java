@@ -40,6 +40,7 @@ import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.FileSystem;
+import net.bytebuddy.utility.GraalImageCode;
 import org.objectweb.asm.Opcodes;
 
 import java.io.*;
@@ -6138,7 +6139,7 @@ public interface DynamicType {
              * {@inheritDoc}
              */
             public DynamicType.Loaded<T> load(ClassLoader classLoader) {
-                if (ClassLoadingStrategy.ForPreloadedTypes.isGraalNativeRuntime()) {
+                if (GraalImageCode.getCurrent().isNativeImageExecution()) {
                     return load(classLoader, ClassLoadingStrategy.ForPreloadedTypes.INSTANCE);
                 } else if (classLoader instanceof InjectionClassLoader && !((InjectionClassLoader) classLoader).isSealed()) {
                     return load((InjectionClassLoader) classLoader, InjectionClassLoader.Strategy.INSTANCE);

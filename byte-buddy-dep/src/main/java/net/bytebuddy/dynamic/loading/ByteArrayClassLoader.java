@@ -20,6 +20,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.utility.GraalImageCode;
 import net.bytebuddy.utility.JavaModule;
 
 import java.io.ByteArrayInputStream;
@@ -351,7 +352,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         for (TypeDescription typeDescription : types.keySet()) {
             try {
                 Class<?> type = Class.forName(typeDescription.getName(), false, classLoader);
-                if (!ClassLoadingStrategy.ForPreloadedTypes.isGraalNativeRuntime() && forbidExisting && type.getClassLoader() != classLoader) {
+                if (!GraalImageCode.getCurrent().isNativeImageExecution() && forbidExisting && type.getClassLoader() != classLoader) {
                     throw new IllegalStateException("Class already loaded: " + type);
                 }
                 result.put(typeDescription, type);
@@ -1218,7 +1219,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             for (TypeDescription typeDescription : types.keySet()) {
                 try {
                     Class<?> type = Class.forName(typeDescription.getName(), false, classLoader);
-                    if (!ClassLoadingStrategy.ForPreloadedTypes.isGraalNativeRuntime() && forbidExisting && type.getClassLoader() != classLoader) {
+                    if (!GraalImageCode.getCurrent().isNativeImageExecution() && forbidExisting && type.getClassLoader() != classLoader) {
                         throw new IllegalStateException("Class already loaded: " + type);
                     }
                     result.put(typeDescription, type);

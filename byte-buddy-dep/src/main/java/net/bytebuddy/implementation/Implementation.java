@@ -881,7 +881,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
             public TypeDescription register(AuxiliaryType auxiliaryType) {
                 DynamicType dynamicType = auxiliaryTypes.get(auxiliaryType);
                 if (dynamicType == null) {
-                    dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(instrumentedType), auxiliaryClassFileVersion, this);
+                    dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(instrumentedType, auxiliaryType),
+                            auxiliaryClassFileVersion,
+                            this);
                     auxiliaryTypes.put(auxiliaryType, dynamicType);
                 }
                 return dynamicType.getTypeDescription();

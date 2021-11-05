@@ -90,19 +90,10 @@ public interface NamingStrategy {
     }
 
     /**
-     * A naming strategy that creates a name by concatenating:
-     * <ol>
-     * <li>The super classes package and name</li>
-     * <li>A given suffix string</li>
-     * <li>A random number</li>
-     * </ol>
-     * Between all these elements, a {@code $} sign is included into the name to improve readability. As an exception,
-     * types that subclass classes from the {@code java.**} packages are prefixed with a given package. This is
-     * necessary as it is illegal to define non-bootstrap classes in this name space. The same strategy is applied
-     * when subclassing a signed type which is equally illegal.
+     * A naming strategy that appends a given suffix to a name, without a randomized element.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    class SuffixingRandom extends AbstractBase {
+    class Suffixing extends AbstractBase {
 
         /**
          * The default package for defining types that are renamed to not be contained in the
@@ -132,12 +123,6 @@ public interface NamingStrategy {
         private final String javaLangPackagePrefix;
 
         /**
-         * An instance for creating random seed values.
-         */
-        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
-        private final RandomString randomString;
-
-        /**
          * A resolver for the base name for naming the unnamed type.
          */
         private final BaseNameResolver baseNameResolver;
@@ -149,7 +134,7 @@ public interface NamingStrategy {
          *
          * @param suffix The suffix for the generated class.
          */
-        public SuffixingRandom(String suffix) {
+        public Suffixing(String suffix) {
             this(suffix, BaseNameResolver.ForUnnamedType.INSTANCE);
         }
 
@@ -162,7 +147,7 @@ public interface NamingStrategy {
          *                              {@code java.*} namespace. If The prefix is set to the empty string,
          *                              no prefix is added.
          */
-        public SuffixingRandom(String suffix, String javaLangPackagePrefix) {
+        public Suffixing(String suffix, String javaLangPackagePrefix) {
             this(suffix, BaseNameResolver.ForUnnamedType.INSTANCE, javaLangPackagePrefix);
         }
 
@@ -173,7 +158,7 @@ public interface NamingStrategy {
          * @param suffix           The suffix for the generated class.
          * @param baseNameResolver The base name resolver that is queried for locating the base name.
          */
-        public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver) {
+        public Suffixing(String suffix, BaseNameResolver baseNameResolver) {
             this(suffix, baseNameResolver, BYTE_BUDDY_RENAME_PACKAGE);
         }
 
@@ -187,11 +172,10 @@ public interface NamingStrategy {
          *                              {@code java.*} namespace. If The prefix is set to the empty string,
          *                              no prefix is added.
          */
-        public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver, String javaLangPackagePrefix) {
+        public Suffixing(String suffix, BaseNameResolver baseNameResolver, String javaLangPackagePrefix) {
             this.suffix = suffix;
             this.baseNameResolver = baseNameResolver;
             this.javaLangPackagePrefix = javaLangPackagePrefix;
-            randomString = new RandomString();
         }
 
         @Override
@@ -200,7 +184,7 @@ public interface NamingStrategy {
             if (baseName.startsWith(JAVA_PACKAGE) && !javaLangPackagePrefix.equals("")) {
                 baseName = javaLangPackagePrefix + "." + baseName;
             }
-            return baseName + "$" + suffix + "$" + randomString.nextString();
+            return baseName + "$" + suffix;
         }
 
         /**
@@ -289,6 +273,97 @@ public interface NamingStrategy {
                     return name;
                 }
             }
+        }
+    }
+
+    /**
+     * A naming strategy that creates a name by concatenating:
+     * <ol>
+     * <li>The super classes package and name</li>
+     * <li>A given suffix string</li>
+     * <li>A random number</li>
+     * </ol>
+     * Between all these elements, a {@code $} sign is included into the name to improve readability. As an exception,
+     * types that subclass classes from the {@code java.**} packages are prefixed with a given package. This is
+     * necessary as it is illegal to define non-bootstrap classes in this name space. The same strategy is applied
+     * when subclassing a signed type which is equally illegal.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    class SuffixingRandom extends Suffixing {
+
+        /**
+         * An instance for creating random seed values.
+         */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
+        private final RandomString randomString;
+
+        /**
+         * Creates an immutable naming strategy with a given suffix but moves types that subclass types within
+         * the {@code java.lang} package into Byte Buddy's package namespace. All names are derived from the
+         * unnamed type's super type.
+         *
+         * @param suffix The suffix for the generated class.
+         */
+        public SuffixingRandom(String suffix) {
+            this(suffix, BaseNameResolver.ForUnnamedType.INSTANCE);
+        }
+
+        /**
+         * Creates an immutable naming strategy with a given suffix but moves types that subclass types within
+         * the {@code java.lang} package into Byte Buddy's package namespace.
+         *
+         * @param suffix                The suffix for the generated class.
+         * @param javaLangPackagePrefix The fallback namespace for type's that subclass types within the
+         *                              {@code java.*} namespace. If The prefix is set to the empty string,
+         *                              no prefix is added.
+         */
+        public SuffixingRandom(String suffix, String javaLangPackagePrefix) {
+            this(suffix, BaseNameResolver.ForUnnamedType.INSTANCE, javaLangPackagePrefix);
+        }
+
+        /**
+         * Creates an immutable naming strategy with a given suffix but moves types that subclass types within
+         * the {@code java.lang} package into Byte Buddy's package namespace.
+         *
+         * @param suffix           The suffix for the generated class.
+         * @param baseNameResolver The base name resolver that is queried for locating the base name.
+         */
+        public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver) {
+            this(suffix, baseNameResolver, BYTE_BUDDY_RENAME_PACKAGE);
+        }
+
+        /**
+         * Creates an immutable naming strategy with a given suffix but moves types that subclass types within
+         * the {@code java.lang} package into a given namespace.
+         *
+         * @param suffix                The suffix for the generated class.
+         * @param baseNameResolver      The base name resolver that is queried for locating the base name.
+         * @param javaLangPackagePrefix The fallback namespace for type's that subclass types within the
+         *                              {@code java.*} namespace. If The prefix is set to the empty string,
+         *                              no prefix is added.
+         */
+        public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver, String javaLangPackagePrefix) {
+            this(suffix, baseNameResolver, javaLangPackagePrefix, new RandomString());
+        }
+
+        /**
+         * Creates an immutable naming strategy with a given suffix but moves types that subclass types within
+         * the {@code java.lang} package into a given namespace.
+         *
+         * @param suffix                The suffix for the generated class.
+         * @param baseNameResolver      The base name resolver that is queried for locating the base name.
+         * @param javaLangPackagePrefix The fallback namespace for type's that subclass types within the
+         *                              {@code java.*} namespace. If The prefix is set to the empty string,
+         *                              no prefix is added.
+         */
+        public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver, String javaLangPackagePrefix, RandomString randomString) {
+            super(suffix, baseNameResolver, javaLangPackagePrefix);
+            this.randomString = randomString;
+        }
+
+        @Override
+        protected String name(TypeDescription superClass) {
+            return super.name(superClass) + "$" + randomString.nextString();
         }
     }
 

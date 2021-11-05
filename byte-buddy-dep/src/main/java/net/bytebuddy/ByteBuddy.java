@@ -15,6 +15,7 @@
  */
 package net.bytebuddy;
 
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -53,15 +54,15 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
-import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.JavaConstant;
-import net.bytebuddy.utility.JavaType;
+import net.bytebuddy.utility.*;
+import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Type;
+import java.security.PrivilegedAction;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -103,6 +104,14 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 public class ByteBuddy {
 
     /**
+     * A property that controls the default naming strategy. If not set, Byte Buddy is generating
+     * random names for types that are not named explicitly. If set to {@code fixed}, Byte Buddy is setting
+     * names deterministically without any random element. If set to a numeric value, Byte Buddy
+     * is generating random names using the number as a seed.
+     */
+    public static final String DEFAULT_NAMING_PROPERTY = "net.bytebuddy.naming";
+
+    /**
      * The default prefix for the default {@link net.bytebuddy.NamingStrategy}.
      */
     private static final String BYTE_BUDDY_DEFAULT_PREFIX = "ByteBuddy";
@@ -111,6 +120,67 @@ public class ByteBuddy {
      * The default suffix when defining a {@link AuxiliaryType.NamingStrategy}.
      */
     private static final String BYTE_BUDDY_DEFAULT_SUFFIX = "auxiliary";
+
+    /**
+     * The default naming strategy or {@code null} if no such strategy is set.
+     */
+    private static final NamingStrategy DEFAULT_NAMING_STRATEGY;
+
+    /**
+     * The default auxiliary naming strategy or {@code null} if no such strategy is set.
+     */
+    private static final AuxiliaryType.NamingStrategy DEFAULT_AUXILIARY_NAMING_STRATEGY;
+
+    /*
+     * Resolves the default naming strategy.
+     */
+    static {
+        String value = doPrivileged(new GetSystemPropertyAction(DEFAULT_NAMING_PROPERTY));
+        NamingStrategy namingStrategy;
+        AuxiliaryType.NamingStrategy auxiliaryNamingStrategy;
+        if (value == null) {
+            if (GraalImageCode.getCurrent().isDefined()) {
+                namingStrategy = new NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_PREFIX,
+                        NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE,
+                        NamingStrategy.Suffixing.BYTE_BUDDY_RENAME_PACKAGE);
+                auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Enumerating(BYTE_BUDDY_DEFAULT_SUFFIX);
+            } else {
+                namingStrategy = null;
+                auxiliaryNamingStrategy = null;
+            }
+        } else if (value.equalsIgnoreCase("fixed")) {
+            namingStrategy = new NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_PREFIX,
+                    NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE,
+                    NamingStrategy.Suffixing.BYTE_BUDDY_RENAME_PACKAGE);
+            auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Enumerating(BYTE_BUDDY_DEFAULT_SUFFIX);
+        } else {
+            long seed;
+            try {
+                seed = Long.parseLong(value);
+            } catch (Exception ignored) {
+                throw new IllegalStateException("'net.bytebuddy.naming' is set to an unknown, non-numeric value: " + value);
+            }
+            namingStrategy = new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX,
+                    NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE,
+                    NamingStrategy.Suffixing.BYTE_BUDDY_RENAME_PACKAGE,
+                    new RandomString(RandomString.DEFAULT_LENGTH, new Random(seed)));
+            auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Enumerating(BYTE_BUDDY_DEFAULT_SUFFIX);
+        }
+        DEFAULT_NAMING_STRATEGY = namingStrategy;
+        DEFAULT_AUXILIARY_NAMING_STRATEGY = auxiliaryNamingStrategy;
+    }
+
+    /**
+     * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+     *
+     * @param action The action to execute from a privileged context.
+     * @param <T>    The type of the action's resolved value.
+     * @return The action's resolved value.
+     */
+    @AccessControllerPlugin.Enhance
+    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+        return action.run();
+    }
 
     /**
      * The class file version to use for types that are not based on an existing class file.
@@ -194,8 +264,12 @@ public class ByteBuddy {
      */
     public ByteBuddy(ClassFileVersion classFileVersion) {
         this(classFileVersion,
-                new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX),
-                new AuxiliaryType.NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_SUFFIX),
+                DEFAULT_NAMING_STRATEGY == null
+                        ? new NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_PREFIX)
+                        : DEFAULT_NAMING_STRATEGY,
+                DEFAULT_AUXILIARY_NAMING_STRATEGY == null
+                        ? new AuxiliaryType.NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_SUFFIX)
+                        : DEFAULT_AUXILIARY_NAMING_STRATEGY,
                 AnnotationValueFilter.Default.APPEND_DEFAULTS,
                 AnnotationRetention.ENABLED,
                 Implementation.Context.Default.Factory.INSTANCE,
@@ -701,7 +775,7 @@ public class ByteBuddy {
                         TargetType.class,
                         Visibility.PUBLIC, Ownership.STATIC).withParameters(String.class)
                 .intercept(MethodCall.invoke(enumType.getDeclaredMethods()
-                        .filter(named(EnumerationImplementation.ENUM_VALUE_OF_METHOD_NAME).and(takesArguments(Class.class, String.class))).getOnly())
+                                .filter(named(EnumerationImplementation.ENUM_VALUE_OF_METHOD_NAME).and(takesArguments(Class.class, String.class))).getOnly())
                         .withOwnType().withArgument(0)
                         .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
                 .defineMethod(EnumerationImplementation.ENUM_VALUES_METHOD_NAME,

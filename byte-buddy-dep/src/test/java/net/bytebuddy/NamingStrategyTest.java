@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringStartsWith.startsWith;
@@ -32,6 +33,59 @@ public class NamingStrategyTest {
     @Before
     public void setUp() throws Exception {
         when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
+    }
+
+    @Test
+    public void testSuffixingSubclassNonConflictingPackage() throws Exception {
+        when(rawTypeDescription.getName()).thenReturn(FOO);
+        NamingStrategy namingStrategy = new NamingStrategy.Suffixing(BAR);
+        assertThat(namingStrategy.subclass(typeDescription), equalTo(FOO + "$" + BAR));
+        verify(typeDescription, atLeast(1)).asErasure();
+        verifyNoMoreInteractions(typeDescription);
+        verify(rawTypeDescription).getName();
+        verifyNoMoreInteractions(rawTypeDescription);
+    }
+
+    @Test
+    public void testSuffixingSubclassConflictingPackage() throws Exception {
+        when(baseNameResolver.resolve(rawTypeDescription)).thenReturn(JAVA_QUX);
+        NamingStrategy namingStrategy = new NamingStrategy.Suffixing(FOO, baseNameResolver, BAR);
+        assertThat(namingStrategy.subclass(typeDescription), equalTo(BAR + "." + JAVA_QUX + "$" + FOO));
+        verify(typeDescription).asErasure();
+        verifyNoMoreInteractions(typeDescription);
+        verifyZeroInteractions(rawTypeDescription);
+        verify(baseNameResolver).resolve(rawTypeDescription);
+        verifyNoMoreInteractions(baseNameResolver);
+    }
+
+    @Test
+    public void testSuffixingSubclassConflictingPackageDisabled() throws Exception {
+        when(baseNameResolver.resolve(rawTypeDescription)).thenReturn(JAVA_QUX);
+        NamingStrategy namingStrategy = new NamingStrategy.Suffixing(FOO, baseNameResolver, NamingStrategy.Suffixing.NO_PREFIX);
+        assertThat(namingStrategy.subclass(typeDescription), equalTo(JAVA_QUX + "$" + FOO));
+        verify(typeDescription).asErasure();
+        verifyNoMoreInteractions(typeDescription);
+        verifyZeroInteractions(rawTypeDescription);
+        verify(baseNameResolver).resolve(rawTypeDescription);
+        verifyNoMoreInteractions(baseNameResolver);
+    }
+
+    @Test
+    public void testSuffixingRebase() throws Exception {
+        when(rawTypeDescription.getName()).thenReturn(FOO);
+        NamingStrategy namingStrategy = new NamingStrategy.Suffixing(BAR);
+        assertThat(namingStrategy.rebase(rawTypeDescription), is(FOO));
+        verify(rawTypeDescription).getName();
+        verifyNoMoreInteractions(rawTypeDescription);
+    }
+
+    @Test
+    public void testSuffixingRedefine() throws Exception {
+        when(rawTypeDescription.getName()).thenReturn(FOO);
+        NamingStrategy namingStrategy = new NamingStrategy.Suffixing(BAR);
+        assertThat(namingStrategy.redefine(rawTypeDescription), is(FOO));
+        verify(rawTypeDescription).getName();
+        verifyNoMoreInteractions(rawTypeDescription);
     }
 
     @Test
@@ -60,7 +114,7 @@ public class NamingStrategyTest {
     @Test
     public void testSuffixingRandomSubclassConflictingPackageDisabled() throws Exception {
         when(baseNameResolver.resolve(rawTypeDescription)).thenReturn(JAVA_QUX);
-        NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(FOO, baseNameResolver, NamingStrategy.SuffixingRandom.NO_PREFIX);
+        NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(FOO, baseNameResolver, NamingStrategy.Suffixing.NO_PREFIX);
         assertThat(namingStrategy.subclass(typeDescription), startsWith(JAVA_QUX + "$" + FOO + "$"));
         verify(typeDescription).asErasure();
         verifyNoMoreInteractions(typeDescription);
@@ -86,6 +140,11 @@ public class NamingStrategyTest {
         verify(rawTypeDescription).getName();
         verifyNoMoreInteractions(rawTypeDescription);
     }
+
+
+
+
+
 
     @Test
     public void testBaseNameResolvers() throws Exception {

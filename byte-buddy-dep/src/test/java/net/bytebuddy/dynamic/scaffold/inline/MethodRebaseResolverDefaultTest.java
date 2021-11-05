@@ -15,6 +15,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Collections;
@@ -23,6 +24,8 @@ import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 public class MethodRebaseResolverDefaultTest {
@@ -70,7 +73,7 @@ public class MethodRebaseResolverDefaultTest {
         when(instrumentedType.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(methodDescription));
         when(otherMethod.asToken(matchesPrototype(ElementMatchers.is(instrumentedType)))).thenReturn(otherToken);
         when(methodNameTransformer.transform(methodDescription)).thenReturn(BAR);
-        when(auxiliaryTypeNamingStrategy.name(instrumentedType)).thenReturn(QUX);
+        when(auxiliaryTypeNamingStrategy.name(eq(instrumentedType), any(AuxiliaryType.class))).thenReturn(QUX);
         when(classFileVersion.getMinorMajorVersion()).thenReturn(Opcodes.V1_6);
     }
 
