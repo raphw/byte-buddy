@@ -1,15 +1,22 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.pool.TypePool;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.*;
 
 public class AgentBuilderLambdaInstrumentationStrategyTest {
 
@@ -59,5 +66,83 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
     public void testDisabledIsInstrumented() throws Exception {
         assertThat(AgentBuilder.LambdaInstrumentationStrategy.DISABLED.isInstrumented(Object.class), is(true));
         assertThat(AgentBuilder.LambdaInstrumentationStrategy.DISABLED.isInstrumented(null), is(true));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testLoaderUnavailableThrowsExceptionOnApply() throws Exception {
+        AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.Loader.Unavailable.INSTANCE.apply(mock(MethodVisitor.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testLoaderUnavailableThrowsExceptionOnStackSize() throws Exception {
+        AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.Loader.Unavailable.INSTANCE.getStackSize();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testLoaderUnavailableThrowsExceptionOnLocalVariableArrayLength() throws Exception {
+        AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.Loader.Unavailable.INSTANCE.getLocalVariableLength();
+    }
+
+    @Test
+    public void testLoaderMethodHandleLookup() throws Exception {
+        MethodVisitor methodVisitor = mock(MethodVisitor.class);
+        AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.Loader.UsingMethodHandleLookup.INSTANCE.apply(methodVisitor);
+        verify(methodVisitor, never()).visitCode();
+        verify(methodVisitor, never()).visitMaxs(anyInt(), anyInt());
+        verify(methodVisitor, never()).visitLineNumber(anyInt(), Mockito.<Label>any());
+        assertThat(AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.Loader.UsingMethodHandleLookup.INSTANCE.getStackSize(), is(8));
+        assertThat(AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.Loader.UsingMethodHandleLookup.INSTANCE.getLocalVariableLength(), is(15));
+    }
+
+    @Test
+    public void testLoaderSunMiscUnsafe() throws Exception {
+        MethodVisitor methodVisitor = mock(MethodVisitor.class);
+        AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.Loader.UsingUnsafe.SUN_MISC_UNSAFE.apply(methodVisitor);
+        verify(methodVisitor, never()).visitCode();
+        verify(methodVisitor, never()).visitMaxs(anyInt(), anyInt());
+        verify(methodVisitor, never()).visitLineNumber(anyInt(), Mockito.<Label>any());
+        assertThat(AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.Loader.UsingUnsafe.SUN_MISC_UNSAFE.getStackSize(), is(4));
+        assertThat(AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.Loader.UsingUnsafe.SUN_MISC_UNSAFE.getLocalVariableLength(), is(13));
+    }
+
+    @Test
+    public void testLoaderJdkInternalMiscUnsafe() throws Exception {
+        MethodVisitor methodVisitor = mock(MethodVisitor.class);
+        AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.Loader.UsingUnsafe.JDK_INTERNAL_MISC_UNSAFE.apply(methodVisitor);
+        verify(methodVisitor, never()).visitCode();
+        verify(methodVisitor, never()).visitMaxs(anyInt(), anyInt());
+        verify(methodVisitor, never()).visitLineNumber(anyInt(), Mockito.<Label>any());
+        assertThat(AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.Loader.UsingUnsafe.JDK_INTERNAL_MISC_UNSAFE.getStackSize(), is(4));
+        assertThat(AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.Loader.UsingUnsafe.JDK_INTERNAL_MISC_UNSAFE.getLocalVariableLength(), is(13));
+    }
+
+    @Test
+    public void testFactoryRegular() throws Exception {
+        MethodVisitor methodVisitor = mock(MethodVisitor.class);
+        assertThat(AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.REGULAR.wrap(mock(TypeDescription.class),
+                mock(MethodDescription.class),
+                methodVisitor,
+                mock(Implementation.Context.class),
+                mock(TypePool.class),
+                0,
+                0), nullValue(MethodVisitor.class));
+        verify(methodVisitor).visitCode();
+        verify(methodVisitor).visitMaxs(anyInt(), anyInt());
+        verify(methodVisitor, never()).visitLineNumber(anyInt(), Mockito.<Label>any());
+    }
+
+    @Test
+    public void testFactoryAlternative() throws Exception {
+        MethodVisitor methodVisitor = mock(MethodVisitor.class);
+        assertThat(AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.ALTERNATIVE.wrap(mock(TypeDescription.class),
+                mock(MethodDescription.class),
+                methodVisitor,
+                mock(Implementation.Context.class),
+                mock(TypePool.class),
+                0,
+                0), nullValue(MethodVisitor.class));
+        verify(methodVisitor).visitCode();
+        verify(methodVisitor).visitMaxs(anyInt(), anyInt());
+        verify(methodVisitor, never()).visitLineNumber(anyInt(), Mockito.<Label>any());
     }
 }
