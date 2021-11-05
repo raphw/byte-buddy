@@ -8119,7 +8119,77 @@ public interface AgentBuilder {
         protected abstract boolean isInstrumented(Class<?> type);
 
         /**
-         * A factory for rewriting the JDK's {@code java.lang.invoke.LambdaMetafactory} methods for use with Byte Buddy.
+         * A factory for rewriting the JDK's {@code java.lang.invoke.LambdaMetafactory} methods for use with Byte Buddy. The code that is
+         * created by this factory is roughly equivalent to the following:
+         * <blockquote><pre>
+         * public static CallSite metafactory(MethodHandles.Lookup caller,
+         *                                    String interfaceMethodName,
+         *                                    MethodType factoryType,
+         *                                    MethodType interfaceMethodType,
+         *                                    MethodHandle implementation,
+         *                                    MethodType dynamicMethodType) throws Exception {
+         *   boolean serializable = false;
+         *  {@code List<Class<?>>} markerInterfaces = Collections.emptyList();
+         *  {@code List<MethodType>} additionalBridges = Collections.emptyList();
+         *   byte[] binaryRepresentation = (byte[]) ClassLoader.getSystemClassLoader().loadClass("net.bytebuddy.agent.builder.LambdaFactory").getDeclaredMethod("make",
+         *     Object.class,
+         *     String.class,
+         *     Object.class,
+         *     Object.class,
+         *     Object.class,
+         *     Object.class,
+         *     boolean.class,
+         *     List.class,
+         *     List.class).invoke(null,
+         *       caller,
+         *       interfaceMethodName,
+         *       factoryType,
+         *       interfaceMethodType,
+         *       implementation,
+         *       dynamicMethodType,
+         *       serializable,
+         *       markerInterfaces,
+         *       additionalBridges);
+         *  {@code Class<?>} lambdaClass = ... // loading code
+         *   return factoryType.parameterCount() == 0
+         *     ? new ConstantCallSite(MethodHandles.constant(factoryType.returnType(), lambdaClass.getDeclaredConstructors()[0].newInstance()))
+         *     : new ConstantCallSite(Lookup.IMPL_LOOKUP.findStatic(lambdaClass, "get$Lambda", factoryType));
+         * }
+         * </pre></blockquote>
+         * The code's preamble is adjusted for the alternative metafactory to ressemble the following:
+         * <blockquote><pre>
+         * public static CallSite altMetafactory(MethodHandles.Lookup caller,
+         *                                       String interfaceMethodName,
+         *                                       MethodType factoryType,
+         *                                       Object... argument) throws Exception {
+         *   int flags = (Integer) argument[3];
+         *   int index = 4;
+         *  {@code Class<?>[]} markerInterface;
+         *   if ((flags & 2) != 0) {
+         *     int count = (Integer) argument[index++];
+         *     markerInterface = new{@code Class<?>}[count];
+         *     System.arraycopy(argument, index, markerInterface, 0, count);
+         *     index += count;
+         *   } else {
+         *     markerInterface = new{@code Class<?>}[0];
+         *   }
+         *   MethodType[] additionalBridge;
+         *   if ((flags & 2) != 0) {
+         *     int count = (Integer) argument[index++];
+         *     additionalBridge = new MethodType[count];
+         *     System.arraycopy(argument, index, additionalBridge, 0, count);
+         *   } else {
+         *     additionalBridge = new MethodType[0];
+         *   }
+         *   MethodType interfaceMethodType = (MethodType) argument[0];
+         *   MethodHandle implementation = (MethodHandle) argument[1];
+         *   MethodType dynamicMethodType = (MethodType) argument[2];
+         *   boolean serializable = (flags & 1) != 0;
+         *  {@code List<Class<?>>} markerInterfaces = Arrays.asList(markerInterface);
+         *   List<MethodType> additionalBridges = Arrays.asList(additionalBridge);
+         *   // ... reminder of method as before
+         * }
+         * </pre></blockquote>
          */
         protected enum LambdaMetafactoryFactory implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
 
@@ -8532,7 +8602,27 @@ public interface AgentBuilder {
                 }
 
                 /**
-                 * A loader that uses a method handle lookup object to load a class.
+                 * A loader that uses a method handle lookup object to load a class, similar to the following:
+                 * <blockquote><pre>
+                 * MethodHandleInfo info = caller.revealDirect(implementation);
+                 * boolean classData = (Modifier.isProtected(info.getModifiers())
+                 *   && !VerifyAccess.isSamePackage(caller.lookupClass(), info.getDeclaringClass()))
+                 *   || info.getReferenceKind() == Opcodes.H_INVOKESPECIAL;
+                 * MethodHandles.Lookup lookup;
+                 * if (classData) {
+                 *   lookup = caller.defineHiddenClassWithClassData(binaryRepresentation,
+                 *     info,
+                 *     true,
+                 *     MethodHandles.Lookup.ClassOption.NESTMATE,
+                 *     MethodHandles.Lookup.ClassOption.STRONG);
+                 * } else {
+                 *   lookup = caller.defineHiddenClass(binaryRepresentation,
+                 *     true,
+                 *     MethodHandles.Lookup.ClassOption.NESTMATE,
+                 *     MethodHandles.Lookup.ClassOption.STRONG);
+                 * }
+                 *{@code Class<?>} lambdaClass = lookup.lookupClass();
+                 * </pre></blockquote>
                  */
                 enum UsingMethodHandleLookup implements Loader {
 
@@ -8652,7 +8742,15 @@ public interface AgentBuilder {
                 }
 
                 /**
-                 * A loader that is using unsafe API to load a lambda implementation.
+                 * A loader that is using unsafe API to load a lambda implementation. The code for loading
+                 * the class looks similar to the following:
+                 * <blockquote><pre>
+                 * Unsafe unsafe = Unsafe.getUnsafe();
+                 *{@code Class<?>} lambdaClass = unsafe.defineAnonymousClass(caller.lookupClass(),
+                 *   binaryRepresentation,
+                 *   null);
+                 * unsafe.ensureClassInitialized(lambdaClass);
+                 * </pre></blockquote>
                  */
                 enum UsingUnsafe implements Loader {
 
