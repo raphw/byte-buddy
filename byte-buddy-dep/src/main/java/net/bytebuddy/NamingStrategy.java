@@ -272,6 +272,48 @@ public interface NamingStrategy {
                     return name;
                 }
             }
+
+            /**
+             * A base name resolver that adds the name of the class that is invoking {@link ByteBuddy}. This
+             * base name resolver can therefore not be invoked directly.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class WithCallerSuffix implements BaseNameResolver {
+
+                /**
+                 * The base name resolver that is resolving the base name.
+                 */
+                private final BaseNameResolver delegate;
+
+                /**
+                 * Creates a new base name resolver that appends a caller suffix.
+                 *
+                 * @param delegate The base name resolver that is resolving the base name.
+                 */
+                public WithCallerSuffix(BaseNameResolver delegate) {
+                    this.delegate = delegate;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public String resolve(TypeDescription typeDescription) {
+                    boolean matched = false;
+                    String caller = null;
+                    for (StackTraceElement stackTraceElement : new Throwable().getStackTrace()) {
+                        if (stackTraceElement.getClassName().equals(ByteBuddy.class.getName())) {
+                            matched = true;
+                        } else if (matched) {
+                            caller = stackTraceElement.getClassName() + "." + stackTraceElement.getMethodName();
+                            break;
+                        }
+                    }
+                    if (caller == null) {
+                        throw new IllegalStateException("Base name resolver not invoked via " + ByteBuddy.class);
+                    }
+                    return delegate.resolve(typeDescription) + "$" + caller.replace('.', '$');
+                }
+            }
         }
     }
 

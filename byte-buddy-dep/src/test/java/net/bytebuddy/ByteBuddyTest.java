@@ -188,6 +188,20 @@ public class ByteBuddyTest {
                 .newInstance(), notNullValue());
     }
 
+    @Test
+    public void testCallerSuffixNamingStrategy() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .with(new NamingStrategy.Suffixing("SuffixedName", new NamingStrategy.Suffixing.BaseNameResolver.WithCallerSuffix(
+                        new NamingStrategy.Suffixing.BaseNameResolver.ForFixedValue("foo.Bar"))))
+                .subclass(Object.class)
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getName(), is("foo.Bar$"
+                + ByteBuddyTest.class.getName().replace('.', '$')
+                + "$testCallerSuffixNamingStrategy$SuffixedName"));
+    }
+
     public static class Recorder {
 
         public int counter;

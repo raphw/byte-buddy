@@ -141,11 +141,6 @@ public class NamingStrategyTest {
         verifyNoMoreInteractions(rawTypeDescription);
     }
 
-
-
-
-
-
     @Test
     public void testBaseNameResolvers() throws Exception {
         assertThat(new NamingStrategy.SuffixingRandom.BaseNameResolver.ForFixedValue(FOO).resolve(rawTypeDescription), is(FOO));
@@ -181,5 +176,11 @@ public class NamingStrategyTest {
         assertThat(namingStrategy.redefine(rawTypeDescription), is(FOO));
         verify(rawTypeDescription).getName();
         verifyNoMoreInteractions(rawTypeDescription);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testCallerSen() {
+        new NamingStrategy.Suffixing.BaseNameResolver.WithCallerSuffix(mock(NamingStrategy.Suffixing.BaseNameResolver.class))
+                .resolve(mock(TypeDescription.class));
     }
 }

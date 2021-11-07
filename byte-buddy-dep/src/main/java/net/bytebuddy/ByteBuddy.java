@@ -105,9 +105,10 @@ public class ByteBuddy {
 
     /**
      * A property that controls the default naming strategy. If not set, Byte Buddy is generating
-     * random names for types that are not named explicitly. If set to {@code fixed}, Byte Buddy is setting
-     * names deterministically without any random element. If set to a numeric value, Byte Buddy
-     * is generating random names using the number as a seed.
+     * random names for types that are not named explicitly. If set to {@code fixed}, Byte Buddy is
+     * setting names deterministically without any random element, or to {@code caller}, if a name
+     * should be fixed but contain the name of the caller class and method. If set to a numeric
+     * value, Byte Buddy is generating random names, using the number as a seed.
      */
     public static final String DEFAULT_NAMING_PROPERTY = "net.bytebuddy.naming";
 
@@ -141,7 +142,7 @@ public class ByteBuddy {
         if (value == null) {
             if (GraalImageCode.getCurrent().isDefined()) {
                 namingStrategy = new NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_PREFIX,
-                        NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE,
+                        new NamingStrategy.Suffixing.BaseNameResolver.WithCallerSuffix(NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE),
                         NamingStrategy.BYTE_BUDDY_RENAME_PACKAGE);
                 auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Enumerating(BYTE_BUDDY_DEFAULT_SUFFIX);
             } else {
@@ -151,6 +152,11 @@ public class ByteBuddy {
         } else if (value.equalsIgnoreCase("fixed")) {
             namingStrategy = new NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_PREFIX,
                     NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE,
+                    NamingStrategy.BYTE_BUDDY_RENAME_PACKAGE);
+            auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Enumerating(BYTE_BUDDY_DEFAULT_SUFFIX);
+        } else if (value.equalsIgnoreCase("caller")) {
+            namingStrategy = new NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_PREFIX,
+                    new NamingStrategy.Suffixing.BaseNameResolver.WithCallerSuffix(NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE),
                     NamingStrategy.BYTE_BUDDY_RENAME_PACKAGE);
             auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Enumerating(BYTE_BUDDY_DEFAULT_SUFFIX);
         } else {
