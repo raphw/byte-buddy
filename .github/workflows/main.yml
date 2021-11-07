@@ -119,7 +119,7 @@ jobs:
   coverage:
     name: Coverage
     runs-on: ubuntu-18.04
-    needs: [hotspot-ea, any-supported, hotspot-unsupported, hotspot-legacy]
+    needs: [hotspot-ea, hotspot-supported, j9-supported, hotspot-unsupported, hotspot-32, hotspot-legacy]
     if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v2
