@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: 17-ea
-          distribution: temurin
+          distribution: zulu
           cache: maven
       - name: Install JDK and build project
         run: ./mvnw verify -Pjava18
