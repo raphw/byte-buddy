@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v2
         with:
-          java-version: 18-ea
+          java-version: 17-ea
           distribution: temurin
           cache: maven
       - name: Install JDK and build project
