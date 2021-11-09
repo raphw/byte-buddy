@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 9. November 2021: version 1.12.1
+
+- Fix binary incompatibility in `BaseNameResolver` for suffixing naming strategy.
+- Introduce caller sensitive base name resolver for suffixing naming strategies and use it as default if Graal native image property is discovered.
+
 ### 5. November 2021: version 1.12.0
 
 - Introduce detection for Graal native image execution.
