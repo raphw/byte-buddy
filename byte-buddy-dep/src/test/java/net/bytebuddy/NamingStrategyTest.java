@@ -22,7 +22,7 @@ public class NamingStrategyTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private NamingStrategy.SuffixingRandom.BaseNameResolver baseNameResolver;
+    private NamingStrategy.Suffixing.BaseNameResolver baseNameResolver;
 
     @Mock
     private TypeDescription.Generic typeDescription;
@@ -143,10 +143,10 @@ public class NamingStrategyTest {
 
     @Test
     public void testBaseNameResolvers() throws Exception {
-        assertThat(new NamingStrategy.SuffixingRandom.BaseNameResolver.ForFixedValue(FOO).resolve(rawTypeDescription), is(FOO));
+        assertThat(new NamingStrategy.Suffixing.BaseNameResolver.ForFixedValue(FOO).resolve(rawTypeDescription), is(FOO));
         when(rawTypeDescription.getName()).thenReturn(FOO);
-        assertThat(new NamingStrategy.SuffixingRandom.BaseNameResolver.ForGivenType(rawTypeDescription).resolve(rawTypeDescription), is(FOO));
-        assertThat(NamingStrategy.SuffixingRandom.BaseNameResolver.ForUnnamedType.INSTANCE.resolve(rawTypeDescription), is(FOO));
+        assertThat(new NamingStrategy.Suffixing.BaseNameResolver.ForGivenType(rawTypeDescription).resolve(rawTypeDescription), is(FOO));
+        assertThat(NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE.resolve(rawTypeDescription), is(FOO));
     }
 
     @Test

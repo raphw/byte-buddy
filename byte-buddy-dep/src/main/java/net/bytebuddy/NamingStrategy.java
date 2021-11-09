@@ -346,7 +346,7 @@ public interface NamingStrategy {
          * @param suffix The suffix for the generated class.
          */
         public SuffixingRandom(String suffix) {
-            this(suffix, BaseNameResolver.ForUnnamedType.INSTANCE);
+            this(suffix, Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE);
         }
 
         /**
@@ -359,7 +359,20 @@ public interface NamingStrategy {
          *                              no prefix is added.
          */
         public SuffixingRandom(String suffix, String javaLangPackagePrefix) {
-            this(suffix, BaseNameResolver.ForUnnamedType.INSTANCE, javaLangPackagePrefix);
+            this(suffix, Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE, javaLangPackagePrefix);
+        }
+
+        /**
+         * Creates an immutable naming strategy with a given suffix but moves types that subclass types within
+         * the {@code java.lang} package into Byte Buddy's package namespace.
+         *
+         * @param suffix           The suffix for the generated class.
+         * @param baseNameResolver The base name resolver that is queried for locating the base name.
+         * @deprecated Use {@link SuffixingRandom#SuffixingRandom(String, Suffixing.BaseNameResolver)}.
+         */
+        @Deprecated
+        public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver) {
+            this(suffix, (Suffixing.BaseNameResolver) baseNameResolver);
         }
 
         /**
@@ -369,7 +382,7 @@ public interface NamingStrategy {
          * @param suffix           The suffix for the generated class.
          * @param baseNameResolver The base name resolver that is queried for locating the base name.
          */
-        public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver) {
+        public SuffixingRandom(String suffix, Suffixing.BaseNameResolver baseNameResolver) {
             this(suffix, baseNameResolver, BYTE_BUDDY_RENAME_PACKAGE);
         }
 
@@ -382,8 +395,24 @@ public interface NamingStrategy {
          * @param javaLangPackagePrefix The fallback namespace for type's that subclass types within the
          *                              {@code java.*} namespace. If The prefix is set to the empty string,
          *                              no prefix is added.
+         * @deprecated Use {@link SuffixingRandom#SuffixingRandom(String, Suffixing.BaseNameResolver, String)}.
          */
+        @Deprecated
         public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver, String javaLangPackagePrefix) {
+            this(suffix, (Suffixing.BaseNameResolver) baseNameResolver, javaLangPackagePrefix);
+        }
+
+        /**
+         * Creates an immutable naming strategy with a given suffix but moves types that subclass types within
+         * the {@code java.lang} package into a given namespace.
+         *
+         * @param suffix                The suffix for the generated class.
+         * @param baseNameResolver      The base name resolver that is queried for locating the base name.
+         * @param javaLangPackagePrefix The fallback namespace for type's that subclass types within the
+         *                              {@code java.*} namespace. If The prefix is set to the empty string,
+         *                              no prefix is added.
+         */
+        public SuffixingRandom(String suffix, Suffixing.BaseNameResolver baseNameResolver, String javaLangPackagePrefix) {
             this(suffix, baseNameResolver, javaLangPackagePrefix, new RandomString());
         }
 
@@ -397,8 +426,25 @@ public interface NamingStrategy {
          *                              {@code java.*} namespace. If The prefix is set to the empty string,
          *                              no prefix is added.
          * @param randomString          The random string instance to use.
+         * @deprecated Use {@link SuffixingRandom#SuffixingRandom(String, Suffixing.BaseNameResolver, String, RandomString)}.
          */
+        @Deprecated
         public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver, String javaLangPackagePrefix, RandomString randomString) {
+            this(suffix, (Suffixing.BaseNameResolver) baseNameResolver, javaLangPackagePrefix, randomString);
+        }
+
+        /**
+         * Creates an immutable naming strategy with a given suffix but moves types that subclass types within
+         * the {@code java.lang} package into a given namespace.
+         *
+         * @param suffix                The suffix for the generated class.
+         * @param baseNameResolver      The base name resolver that is queried for locating the base name.
+         * @param javaLangPackagePrefix The fallback namespace for type's that subclass types within the
+         *                              {@code java.*} namespace. If The prefix is set to the empty string,
+         *                              no prefix is added.
+         * @param randomString          The random string instance to use.
+         */
+        public SuffixingRandom(String suffix, Suffixing.BaseNameResolver baseNameResolver, String javaLangPackagePrefix, RandomString randomString) {
             super(suffix, baseNameResolver, javaLangPackagePrefix);
             this.randomString = randomString;
         }
@@ -406,6 +452,74 @@ public interface NamingStrategy {
         @Override
         protected String name(TypeDescription superClass) {
             return super.name(superClass) + "$" + randomString.nextString();
+        }
+
+        /**
+         * A base name resolver is responsible for resolving a name onto which the suffix is appended.
+         *
+         * @deprecated Use {@link Suffixing.BaseNameResolver}.
+         */
+        @Deprecated
+        public interface BaseNameResolver extends Suffixing.BaseNameResolver {
+
+            /**
+             * Uses the unnamed type's super type's name as the resolved name.
+             *
+             * @deprecated Use {@link Suffixing.BaseNameResolver.ForUnnamedType}.
+             */
+            @Deprecated
+            enum ForUnnamedType implements BaseNameResolver {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public String resolve(TypeDescription typeDescription) {
+                    return typeDescription.getName();
+                }
+            }
+
+            /**
+             * Uses a specific type's name as the resolved name.
+             *
+             * @deprecated Use {@link Suffixing.BaseNameResolver.ForGivenType}.
+             */
+            @Deprecated
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForGivenType extends Suffixing.BaseNameResolver.ForGivenType implements BaseNameResolver {
+
+                /**
+                 * Creates a new base name resolver that resolves a using the name of a given type.
+                 *
+                 * @param typeDescription The type description which represents the resolved name.
+                 */
+                public ForGivenType(TypeDescription typeDescription) {
+                    super(typeDescription);
+                }
+            }
+
+            /**
+             * A base name resolver that simply returns a fixed value.
+             *
+             * @deprecated Use {@link Suffixing.BaseNameResolver.ForFixedValue}.
+             */
+            @Deprecated
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForFixedValue extends Suffixing.BaseNameResolver.ForFixedValue implements BaseNameResolver {
+
+                /**
+                 * Creates a new base name resolver for a fixed name.
+                 *
+                 * @param name The fixed name
+                 */
+                public ForFixedValue(String name) {
+                    super(name);
+                }
+            }
         }
     }
 
