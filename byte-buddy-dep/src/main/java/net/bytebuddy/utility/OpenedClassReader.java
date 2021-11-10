@@ -83,9 +83,9 @@ public class OpenedClassReader {
      * @return An appropriate class reader.
      */
     public static ClassReader of(byte[] binaryRepresentation) {
-        if (EXPERIMENTAL) {
-            ClassFileVersion classFileVersion = ClassFileVersion.ofClassFile(binaryRepresentation), latest = ClassFileVersion.latest();
-            if (classFileVersion.isGreaterThan(latest)) {
+        ClassFileVersion classFileVersion = ClassFileVersion.ofClassFile(binaryRepresentation), latest = ClassFileVersion.latest();
+        if (classFileVersion.isGreaterThan(latest)) {
+            if (EXPERIMENTAL) {
                 binaryRepresentation[6] = (byte) (latest.getMajorVersion() >>> 8);
                 binaryRepresentation[7] = (byte) latest.getMajorVersion();
                 ClassReader classReader = new ClassReader(binaryRepresentation);
@@ -93,7 +93,9 @@ public class OpenedClassReader {
                 binaryRepresentation[7] = (byte) classFileVersion.getMajorVersion();
                 return classReader;
             } else {
-                return new ClassReader(binaryRepresentation);
+                throw new IllegalArgumentException(classFileVersion
+                        + " is not supported by the current version of Byte Buddy which officially supports " + latest
+                        + " - update Byte Buddy or set " + EXPERIMENTAL_PROPERTY + " as a VM property");
             }
         } else {
             return new ClassReader(binaryRepresentation);
