@@ -1503,7 +1503,7 @@ public class MethodCall implements Implementation.Composable {
                  */
                 public Factory(Object value) {
                     this.value = value;
-                    name = FIELD_PREFIX + "$" + RandomString.make();
+                    name = FIELD_PREFIX + "$" + RandomString.hashOf(value);
                 }
 
                 /**
@@ -2268,7 +2268,7 @@ public class MethodCall implements Implementation.Composable {
                 protected Factory(Object target, TypeDescription.Generic fieldType) {
                     this.target = target;
                     this.fieldType = fieldType;
-                    name = FIELD_PREFIX + "$" + RandomString.make();
+                    name = FIELD_PREFIX + "$" + RandomString.hashOf(target);
                 }
 
                 /**

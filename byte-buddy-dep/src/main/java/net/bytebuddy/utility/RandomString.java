@@ -117,6 +117,19 @@ public class RandomString {
     }
 
     /**
+     * Represents a object value as a string hash. This string is not technically random but generates a fixed character
+     * sequence based on the hash provided.
+     *
+     * @param value The value to represent as a string.
+     * @return A string representing the supplied value as a string.
+     */
+    public static String hashOf(Object value) {
+        return hashOf(value == null
+                ? 0
+                : value.getClass().hashCode() ^ value.hashCode());
+    }
+
+    /**
      * Represents an integer value as a string hash. This string is not technically random but generates a fixed character
      * sequence based on the hash provided.
      *

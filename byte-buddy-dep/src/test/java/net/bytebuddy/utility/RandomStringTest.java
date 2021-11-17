@@ -2,8 +2,7 @@ package net.bytebuddy.utility;
 
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class RandomStringTest {
@@ -25,6 +24,17 @@ public class RandomStringTest {
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeLengthThrowsException() throws Exception {
         new RandomString(-1);
+    }
+
+    @Test
+    public void testHashValueOfObject() throws Exception {
+        Object value = new Object();
+        assertThat(RandomString.hashOf(value), equalTo(RandomString.hashOf(value.getClass().hashCode() ^ value.hashCode())));
+    }
+
+    @Test
+    public void testHashValueOfObjectNullValue() throws Exception {
+        assertThat(RandomString.hashOf(null), equalTo(RandomString.hashOf(0)));
     }
 
     @Test

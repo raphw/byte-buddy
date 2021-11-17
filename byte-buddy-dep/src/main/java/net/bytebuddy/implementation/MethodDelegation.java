@@ -1603,7 +1603,7 @@ public class MethodDelegation implements Implementation.Composable {
         public MethodDelegation to(Object target, Type type, MethodGraph.Compiler methodGraphCompiler) {
             return to(target,
                     type,
-                    ImplementationDelegate.FIELD_NAME_PREFIX + "$" + RandomString.hashOf(target.getClass().hashCode() ^ target.hashCode()),
+                    ImplementationDelegate.FIELD_NAME_PREFIX + "$" + RandomString.hashOf(target),
                     methodGraphCompiler);
         }
 
@@ -1670,7 +1670,7 @@ public class MethodDelegation implements Implementation.Composable {
         public MethodDelegation to(Object target, TypeDefinition typeDefinition, MethodGraph.Compiler methodGraphCompiler) {
             return to(target,
                     typeDefinition,
-                    ImplementationDelegate.FIELD_NAME_PREFIX + "$" + RandomString.hashOf(target.getClass().hashCode() ^ target.hashCode()),
+                    ImplementationDelegate.FIELD_NAME_PREFIX + "$" + RandomString.hashOf(target),
                     methodGraphCompiler);
         }
 

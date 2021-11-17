@@ -752,7 +752,7 @@ public abstract class FieldAccessor implements Implementation {
          * {@inheritDoc}
          */
         public Composable setsReference(Object value) {
-            return setsReference(value, ForSetter.OfReferenceValue.PREFIX + "$" + RandomString.hashOf(value.getClass().hashCode() ^ value.hashCode()));
+            return setsReference(value, ForSetter.OfReferenceValue.PREFIX + "$" + RandomString.hashOf(value));
         }
 
         /**

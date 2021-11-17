@@ -646,7 +646,7 @@ public abstract class FixedValue implements Implementation {
          * @param value The fixed value to be returned.
          */
         protected ForValue(Object value) {
-            this(PREFIX + "$" + RandomString.hashOf(value.getClass().hashCode() ^ value.hashCode()), value);
+            this(PREFIX + "$" + RandomString.hashOf(value), value);
         }
 
         /**
