@@ -233,7 +233,7 @@ Byte Buddy is [listed on Tidelift](https://tidelift.com/subscription/pkg/maven-n
 
 #### GitHub sponsors ####
 
-You can support my work via GitHub sponsors. Note that this option is only meant for commercial actors who are looking for a simple payment channel and that do not expect support in return. Support via GitHub Sponsors is not possible to maintain VAT compliance. Please reach out for a direct support agreement instead. 
+You can support my work via [GitHub sponsors](https://github.com/sponsors/raphw). Note that this option is only meant for commercial actors who are looking for a simple payment channel and that do not expect support in return. Support via GitHub Sponsors is not possible to maintain VAT compliance. Please reach out for a direct support agreement instead. 
 
 #### Free ####
 
