@@ -161,4 +161,11 @@ public class DynamicConstantBootstrap {
         }
         return new DynamicConstantBootstrap();
     }
+
+    public static class Other {
+
+        public static DynamicConstantBootstrap bootstrap(MethodHandles.Lookup lookup, Object... args) {
+            return new DynamicConstantBootstrap();
+        }
+    }
 }

@@ -43,6 +43,26 @@ public class JavaConstantDynamicTest {
 
     @Test
     @JavaVersionRule.Enforce(11)
+    public void testDynamicConstantFactoryLookupOnlyOtherHost() throws Exception {
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap$Other");
+        Class<? extends Foo> baz = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(FixedValue.value(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getMethod("bootstrap",
+                        Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                        Object[].class))))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(baz.getDeclaredFields().length, is(0));
+        assertThat(baz.getDeclaredMethods().length, is(1));
+        Foo foo = baz.getDeclaredConstructor().newInstance();
+        assertThat(baz.getDeclaredMethod(FOO).invoke(foo), instanceOf(bootstrap.getDeclaringClass()));
+        assertThat(baz.getDeclaredMethod(FOO).invoke(foo), sameInstance(baz.getDeclaredMethod(FOO).invoke(foo)));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(11)
     public void testDynamicConstantFactoryLookupAndStringOnly() throws Exception {
         Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap");
         Class<? extends Foo> baz = new ByteBuddy()
