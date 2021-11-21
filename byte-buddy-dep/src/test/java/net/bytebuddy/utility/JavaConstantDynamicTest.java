@@ -48,7 +48,7 @@ public class JavaConstantDynamicTest {
         Class<? extends Foo> baz = new ByteBuddy()
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-                .intercept(FixedValue.value(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getMethod("bootstrap",
+                .intercept(FixedValue.value(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getMethod("other",
                         Class.forName("java.lang.invoke.MethodHandles$Lookup"),
                         Object[].class))))
                 .make()

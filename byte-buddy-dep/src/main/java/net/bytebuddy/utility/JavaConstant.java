@@ -2141,9 +2141,7 @@ public interface JavaConstant {
                             ? bootstrap.getDeclaringType()
                             : bootstrap.getReturnType().asErasure(),
                     new MethodHandle(bootstrap.isConstructor() ? MethodHandle.HandleType.INVOKE_SPECIAL_CONSTRUCTOR : MethodHandle.HandleType.INVOKE_STATIC,
-                            bootstrap.isConstructor()
-                                    ? bootstrap.getDeclaringType()
-                                    : bootstrap.getReturnType().asErasure(),
+                            bootstrap.getDeclaringType(),
                             bootstrap.getInternalName(),
                             bootstrap.getReturnType().asErasure(),
                             bootstrap.getParameters().asTypeList().asErasures()),
