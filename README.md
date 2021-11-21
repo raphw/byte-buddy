@@ -231,6 +231,10 @@ The use of Byte Buddy is free and does not require the purchase of a license. To
 
 Byte Buddy is [listed on Tidelift](https://tidelift.com/subscription/pkg/maven-net-bytebuddy-byte-buddy?utm_source=byte-buddy&utm_medium=referral). If you are not using Byte Buddy to an extent where you want to purchase explicit support and want to support the open source community in general, please consider a subscription.
 
+#### GitHub sponsors ####
+
+You can support my work via GitHub sponsors. Note that this option is only meant for commercial actors who are looking for a simple payment channel and that do not expect support in return. Support via GitHub Sponsors is not possible to maintain VAT compliance. Please reach out for a direct support agreement instead. 
+
 #### Free ####
 
 General questions can be asked on [Stack Overflow](https://stackoverflow.com/questions/tagged/byte-buddy) or on the [Byte Buddy mailing list](https://groups.google.com/forum/#!forum/byte-buddy) which also serve as an archive for questions. Of course, bug reports will be considered also outside of a commercial plan. For open source projects, it is sometimes possible to receive extended help for taking Byte Buddy into use.
