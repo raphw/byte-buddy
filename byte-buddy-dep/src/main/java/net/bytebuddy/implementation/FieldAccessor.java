@@ -1266,7 +1266,9 @@ public abstract class FieldAccessor implements Implementation {
              */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 if (!instrumentedType.getDeclaredFields().filter(named(name).and(fieldType(value.getClass()))).isEmpty()) {
-                    throw new IllegalStateException("Field with name " + name + " and type " + value.getClass() + " already declared by " + instrumentedType);
+                    throw new IllegalStateException("Field with name " + name
+                            + " and type " + value.getClass()
+                            + " already declared by " + instrumentedType);
                 }
                 return instrumentedType
                         .withField(new FieldDescription.Token(name,

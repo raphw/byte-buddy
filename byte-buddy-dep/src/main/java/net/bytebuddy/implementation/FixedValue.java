@@ -86,7 +86,6 @@ public abstract class FixedValue implements Implementation {
      *
      * @param fixedValue The fixed value to return from the method.
      * @return An implementation for the given {@code value}.
-     *
      * @see #value(JavaConstant)
      * @see #value(TypeDescription)
      * @see #nullValue()
@@ -135,11 +134,11 @@ public abstract class FixedValue implements Implementation {
      * instrumented methods. The field name can be explicitly determined. The field name is generated from the fixed value's
      * hash code.
      *
-     * @param fixedValue The fixed value to be returned by methods that are instrumented by this implementation.
+     * @param value The fixed value to be returned by methods that are instrumented by this implementation.
      * @return An implementation for the given {@code value}.
      */
-    public static AssignerConfigurable reference(Object fixedValue) {
-        return new ForValue(fixedValue);
+    public static AssignerConfigurable reference(Object value) {
+        return reference(value, ForValue.PREFIX + "$" + RandomString.hashOf(value));
     }
 
     /**
@@ -148,12 +147,12 @@ public abstract class FixedValue implements Implementation {
      * object identity will be preserved between the given {@code value} and the value that is returned by
      * instrumented methods. The field name can be explicitly determined.
      *
-     * @param fixedValue The fixed value to be returned by methods that are instrumented by this implementation.
-     * @param fieldName  The name of the field for storing the fixed value.
+     * @param value The fixed value to be returned by methods that are instrumented by this implementation.
+     * @param name  The name of the field for storing the fixed value.
      * @return An implementation for the given {@code value}.
      */
-    public static AssignerConfigurable reference(Object fixedValue, String fieldName) {
-        return new ForValue(fieldName, fixedValue);
+    public static AssignerConfigurable reference(Object value, String name) {
+        return new ForValue(value, name);
     }
 
     /**
@@ -626,7 +625,7 @@ public abstract class FixedValue implements Implementation {
         /**
          * The name of the field in which the fixed value is stored.
          */
-        private final String fieldName;
+        private final String name;
 
         /**
          * The value that is to be stored in the static field.
@@ -634,66 +633,51 @@ public abstract class FixedValue implements Implementation {
         private final Object value;
 
         /**
-         * The type if the field for storing the fixed value.
-         */
-        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
-        private final TypeDescription.Generic fieldType;
-
-        /**
-         * Creates a new static field fixed value implementation with a random name for the field containing the fixed
-         * value.
+         * Creates a new static field fixed value implementation.
          *
-         * @param value The fixed value to be returned.
+         * @param value     The fixed value to be returned.
+         * @param name The name of the field for storing the fixed value.
          */
-        protected ForValue(Object value) {
-            this(PREFIX + "$" + RandomString.hashOf(value), value);
+        protected ForValue(Object value, String name) {
+            this(Assigner.DEFAULT, Assigner.Typing.STATIC, value, name);
         }
 
         /**
          * Creates a new static field fixed value implementation.
          *
-         * @param fieldName The name of the field for storing the fixed value.
          * @param value     The fixed value to be returned.
-         */
-        protected ForValue(String fieldName, Object value) {
-            this(Assigner.DEFAULT, Assigner.Typing.STATIC, fieldName, value);
-        }
-
-        /**
-         * Creates a new static field fixed value implementation.
-         *
-         * @param fieldName The name of the field for storing the fixed value.
-         * @param value     The fixed value to be returned.
+         * @param name The name of the field for storing the fixed value.
          * @param assigner  The assigner to use for assigning the fixed value to the return type of the
          *                  instrumented value.
          * @param typing    Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
-        private ForValue(Assigner assigner, Assigner.Typing typing, String fieldName, Object value) {
+        private ForValue(Assigner assigner, Assigner.Typing typing, Object value, String name) {
             super(assigner, typing);
-            this.fieldName = fieldName;
+            this.name = name;
             this.value = value;
-            fieldType = TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(value.getClass());
         }
 
         /**
          * {@inheritDoc}
          */
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return new ForValue(assigner, typing, fieldName, value);
+            return new ForValue(assigner, typing, value, name);
         }
 
         /**
          * {@inheritDoc}
          */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            if (!instrumentedType.getDeclaredFields().filter(named(fieldName).and(fieldType(fieldType.asErasure()))).isEmpty()) {
-                throw new IllegalStateException("Field with name " + fieldName + " and type " + fieldType.asErasure() + " already declared by " + instrumentedType);
+            if (!instrumentedType.getDeclaredFields().filter(named(name).and(fieldType(value.getClass()))).isEmpty()) {
+                throw new IllegalStateException("Field with name " + name
+                        + " and type " + value.getClass()
+                        + " already declared by " + instrumentedType);
             }
             return instrumentedType
-                    .withField(new FieldDescription.Token(fieldName,
+                    .withField(new FieldDescription.Token(name,
                             Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_VOLATILE | Opcodes.ACC_SYNTHETIC,
-                            fieldType))
-                    .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, value));
+                            TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(value.getClass())))
+                    .withInitializer(new LoadedTypeInitializer.ForStaticField(name, value));
         }
 
         /**
@@ -720,14 +704,18 @@ public abstract class FixedValue implements Implementation {
              * @param instrumentedType The instrumented type that is subject of the instrumentation.
              */
             private StaticFieldByteCodeAppender(TypeDescription instrumentedType) {
-                fieldGetAccess = FieldAccess.forField(instrumentedType.getDeclaredFields().filter((named(fieldName))).getOnly()).read();
+                fieldGetAccess = FieldAccess.forField(instrumentedType.getDeclaredFields().filter((named(name))).getOnly()).read();
             }
 
             /**
              * {@inheritDoc}
              */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                return ForValue.this.apply(methodVisitor, implementationContext, instrumentedMethod, fieldType, fieldGetAccess);
+                return ForValue.this.apply(methodVisitor,
+                        implementationContext,
+                        instrumentedMethod,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(value.getClass()),
+                        fieldGetAccess);
             }
         }
     }
