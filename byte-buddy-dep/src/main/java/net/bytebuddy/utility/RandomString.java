@@ -126,7 +126,7 @@ public class RandomString {
     public static String hashOf(Object value) {
         return hashOf(value == null
                 ? 0
-                : value.getClass().hashCode() ^ value.hashCode());
+                : value.getClass().hashCode() ^ System.identityHashCode(value));
     }
 
     /**

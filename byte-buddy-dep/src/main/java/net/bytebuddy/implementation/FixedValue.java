@@ -34,7 +34,6 @@ import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import static net.bytebuddy.matcher.ElementMatchers.fieldType;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -635,8 +634,8 @@ public abstract class FixedValue implements Implementation {
         /**
          * Creates a new static field fixed value implementation.
          *
-         * @param value     The fixed value to be returned.
-         * @param name The name of the field for storing the fixed value.
+         * @param value The fixed value to be returned.
+         * @param name  The name of the field for storing the fixed value.
          */
         protected ForValue(Object value, String name) {
             this(Assigner.DEFAULT, Assigner.Typing.STATIC, value, name);
@@ -645,11 +644,11 @@ public abstract class FixedValue implements Implementation {
         /**
          * Creates a new static field fixed value implementation.
          *
-         * @param value     The fixed value to be returned.
-         * @param name The name of the field for storing the fixed value.
-         * @param assigner  The assigner to use for assigning the fixed value to the return type of the
-         *                  instrumented value.
-         * @param typing    Indicates if dynamic type castings should be attempted for incompatible assignments.
+         * @param value    The fixed value to be returned.
+         * @param name     The name of the field for storing the fixed value.
+         * @param assigner The assigner to use for assigning the fixed value to the return type of the
+         *                 instrumented value.
+         * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
         private ForValue(Assigner assigner, Assigner.Typing typing, Object value, String name) {
             super(assigner, typing);
@@ -668,16 +667,9 @@ public abstract class FixedValue implements Implementation {
          * {@inheritDoc}
          */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            if (!instrumentedType.getDeclaredFields().filter(named(name).and(fieldType(value.getClass()))).isEmpty()) {
-                throw new IllegalStateException("Field with name " + name
-                        + " and type " + value.getClass()
-                        + " already declared by " + instrumentedType);
-            }
-            return instrumentedType
-                    .withField(new FieldDescription.Token(name,
-                            Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_VOLATILE | Opcodes.ACC_SYNTHETIC,
-                            TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(value.getClass())))
-                    .withInitializer(new LoadedTypeInitializer.ForStaticField(name, value));
+            return instrumentedType.withAuxiliaryField(new FieldDescription.Token(name,
+                    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_VOLATILE | Opcodes.ACC_SYNTHETIC,
+                    TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(value.getClass())), value);
         }
 
         /**

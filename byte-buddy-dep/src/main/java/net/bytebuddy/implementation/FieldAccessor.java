@@ -37,7 +37,6 @@ import org.objectweb.asm.Opcodes;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 
-import static net.bytebuddy.matcher.ElementMatchers.fieldType;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -1265,16 +1264,9 @@ public abstract class FieldAccessor implements Implementation {
              * {@inheritDoc}
              */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                if (!instrumentedType.getDeclaredFields().filter(named(name).and(fieldType(value.getClass()))).isEmpty()) {
-                    throw new IllegalStateException("Field with name " + name
-                            + " and type " + value.getClass()
-                            + " already declared by " + instrumentedType);
-                }
-                return instrumentedType
-                        .withField(new FieldDescription.Token(name,
-                                Opcodes.ACC_SYNTHETIC | Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
-                                TypeDescription.ForLoadedType.of(value.getClass()).asGenericType()))
-                        .withInitializer(new LoadedTypeInitializer.ForStaticField(name, value));
+                return instrumentedType.withAuxiliaryField(new FieldDescription.Token(name,
+                        Opcodes.ACC_SYNTHETIC | Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
+                        TypeDescription.ForLoadedType.of(value.getClass()).asGenericType()), value);
             }
 
             /**

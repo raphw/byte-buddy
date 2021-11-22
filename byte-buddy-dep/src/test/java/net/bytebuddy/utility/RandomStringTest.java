@@ -29,7 +29,8 @@ public class RandomStringTest {
     @Test
     public void testHashValueOfObject() throws Exception {
         Object value = new Object();
-        assertThat(RandomString.hashOf(value), equalTo(RandomString.hashOf(value.getClass().hashCode() ^ value.hashCode())));
+        assertThat(RandomString.hashOf(value),
+                equalTo(RandomString.hashOf(value.getClass().hashCode() ^ System.identityHashCode(value))));
     }
 
     @Test
