@@ -1079,16 +1079,9 @@ public class MethodDelegation implements Implementation.Composable {
                  * {@inheritDoc}
                  */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    if (!instrumentedType.getDeclaredFields().filter(named(fieldName).and(fieldType(fieldType.asErasure()))).isEmpty()) {
-                        throw new IllegalStateException("Field with name " + fieldName
-                                + " and type " + fieldType.asErasure()
-                                + " already declared by " + instrumentedType);
-                    }
-                    return instrumentedType
-                            .withField(new FieldDescription.Token(fieldName,
-                                    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_VOLATILE | Opcodes.ACC_SYNTHETIC,
-                                    fieldType))
-                            .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, target));
+                    return instrumentedType.withAuxiliaryField(new FieldDescription.Token(fieldName,
+                            Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_VOLATILE | Opcodes.ACC_SYNTHETIC,
+                            fieldType), target);
                 }
 
                 @Override

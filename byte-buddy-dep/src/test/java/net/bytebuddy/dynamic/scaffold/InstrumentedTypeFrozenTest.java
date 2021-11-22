@@ -43,6 +43,11 @@ public class InstrumentedTypeFrozenTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testAuxiliaryFieldToken() throws Exception {
+        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withAuxiliaryField(mock(FieldDescription.Token.class), mock(Object.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testMethodToken() throws Exception {
         new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withMethod(mock(MethodDescription.Token.class));
     }

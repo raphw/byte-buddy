@@ -1516,11 +1516,9 @@ public class InvokeDynamic implements Implementation.Composable {
                  * {@inheritDoc}
                  */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType
-                            .withField(new FieldDescription.Token(name,
-                                    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_VOLATILE | Opcodes.ACC_SYNTHETIC,
-                                    fieldType.asGenericType()))
-                            .withInitializer(new LoadedTypeInitializer.ForStaticField(name, value));
+                    return instrumentedType.withAuxiliaryField(new FieldDescription.Token(name,
+                            Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_VOLATILE | Opcodes.ACC_SYNTHETIC,
+                            fieldType.asGenericType()), value);
                 }
             }
 

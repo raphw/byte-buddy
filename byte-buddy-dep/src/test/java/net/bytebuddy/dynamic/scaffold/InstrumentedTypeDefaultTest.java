@@ -64,6 +64,7 @@ public class InstrumentedTypeDefaultTest {
                 Collections.<TypeVariableToken>emptyList(),
                 Collections.<TypeDescription.Generic>emptyList(),
                 Collections.<FieldDescription.Token>emptyList(),
+                Collections.<String, Object>emptyMap(),
                 Collections.<MethodDescription.Token>emptyList(),
                 Collections.<RecordComponentDescription.Token>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
@@ -188,6 +189,42 @@ public class InstrumentedTypeDefaultTest {
         assertThat(fieldDescription.getType().getDeclaredAnnotations().size(), is(1));
         assertThat(fieldDescription.getType().getDeclaredAnnotations().getOnly(), is(annotationDescription));
         assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testWithAuxiliaryField() throws Exception {
+        TypeDescription.Generic fieldType = mock(TypeDescription.Generic.class);
+        when(fieldType.accept(Mockito.any(TypeDescription.Generic.Visitor.class))).thenReturn(fieldType);
+        TypeDescription rawFieldType = mock(TypeDescription.class);
+        when(fieldType.asErasure()).thenReturn(rawFieldType);
+        when(rawFieldType.getName()).thenReturn(FOO);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaredFields().size(), is(0));
+        Object value = mock(Object.class);
+        instrumentedType = instrumentedType.withAuxiliaryField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, fieldType), value);
+        assertThat(instrumentedType.withAuxiliaryField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, fieldType), value), sameInstance(instrumentedType));
+        assertThat(instrumentedType.getDeclaredFields().size(), is(1));
+        FieldDescription.InDefinedShape fieldDescription = instrumentedType.getDeclaredFields().get(0);
+        assertThat(fieldDescription.getType(), is(fieldType));
+        assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
+        assertThat(fieldDescription.getName(), is(BAR));
+        assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(instrumentedType.getLoadedTypeInitializer().isAlive(), is(true));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testWithAuxiliaryFieldConflict() throws Exception {
+        TypeDescription.Generic fieldType = mock(TypeDescription.Generic.class);
+        when(fieldType.accept(Mockito.any(TypeDescription.Generic.Visitor.class))).thenReturn(fieldType);
+        TypeDescription rawFieldType = mock(TypeDescription.class);
+        when(fieldType.asErasure()).thenReturn(rawFieldType);
+        when(rawFieldType.getName()).thenReturn(FOO);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaredFields().size(), is(0));
+        instrumentedType
+                .withAuxiliaryField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, fieldType), mock(Object.class))
+                .withAuxiliaryField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, fieldType), mock(Object.class));
     }
 
     @Test
@@ -1525,6 +1562,7 @@ public class InstrumentedTypeDefaultTest {
                 Collections.<TypeVariableToken>emptyList(),
                 Collections.<TypeDescription.Generic>emptyList(),
                 Collections.<FieldDescription.Token>emptyList(),
+                Collections.<String, Object>emptyMap(),
                 Collections.singletonList(new MethodDescription.Token("foo",
                         Opcodes.ACC_BRIDGE,
                         TypeDescription.Generic.VOID,
