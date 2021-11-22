@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 22. November 2021: version 1.12.2
+
+- Improve error message when class file version is not supported.
+- Avoid duplication of fields to store auxiliary objects.
+- Fix Gradle plugin to be skipped when input files are empty.
+- Resolve dynamic bootstrap constant type correctly.
+
 ### 9. November 2021: version 1.12.1
 
 - Fix binary incompatibility in `BaseNameResolver` for suffixing naming strategy.
