@@ -103,10 +103,10 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     private boolean lazy;
 
     /**
-     * The class file version to use for creating auxiliary types or {@code null} if the
+     * The class file version to use for creating auxiliary types or {@code 0} if the
      * version is determined implicitly.
      */
-    private ClassFileVersion classFileVersion;
+    private int classFileVersion;
 
     /**
      * Creates a new abstract Byte Buddy task extension.
@@ -364,7 +364,9 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      * @return The class file version to use for creating auxiliary types.
      */
     public ClassFileVersion getClassFileVersion() {
-        return classFileVersion;
+        return classFileVersion == 0
+                ? null
+                : ClassFileVersion.ofMinorMajor(classFileVersion);
     }
 
     /**
@@ -374,7 +376,9 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      * @param classFileVersion The class file version to use for creating auxiliary types.
      */
     public void setClassFileVersion(ClassFileVersion classFileVersion) {
-        this.classFileVersion = classFileVersion;
+        this.classFileVersion = classFileVersion == null
+                ? 0
+                : classFileVersion.getMinorMajorVersion();
     }
 
     /**

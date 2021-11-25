@@ -89,10 +89,10 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     private int threads;
 
     /**
-     * Returns the class file version to use for creating auxiliary types or {@code null} if the
+     * Returns the class file version to use for creating auxiliary types or {@code 0} if the
      * version is determined implicitly.
      */
-    private ClassFileVersion classFileVersion;
+    private int classFileVersion;
 
     /**
      * Creates a new abstract Byte Buddy task.
@@ -274,13 +274,13 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     }
 
     /**
-     * Returns the class file version to use for creating auxiliary types or {@code null} if the
+     * Returns the class file version to use for creating auxiliary types or {@code 0} if the
      * version is determined implicitly.
      *
      * @return The class file version to use for creating auxiliary types.
      */
     @Input
-    public ClassFileVersion getClassFileVersion() {
+    public int getClassFileVersion() {
         return classFileVersion;
     }
 
@@ -291,7 +291,9 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      * @param classFileVersion The class file version to use for creating auxiliary types.
      */
     public void setClassFileVersion(ClassFileVersion classFileVersion) {
-        this.classFileVersion = classFileVersion;
+        this.classFileVersion = classFileVersion == null
+                ? 0
+                : classFileVersion.getMinorMajorVersion();
     }
 
     /**
@@ -390,7 +392,9 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
             getLogger().info("Processing class files located in in: {}", source());
             Plugin.Engine pluginEngine;
             try {
-                ClassFileVersion classFileVersion = this.classFileVersion;
+                ClassFileVersion classFileVersion = this.classFileVersion == 0
+                        ? null
+                        : ClassFileVersion.ofMinorMajor(this.classFileVersion);
                 if (classFileVersion == null) {
                     JavaPluginConvention convention = (JavaPluginConvention) getProject().getConvention().getPlugins().get("java");
                     if (convention == null) {
