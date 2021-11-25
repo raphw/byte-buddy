@@ -16,6 +16,7 @@
 package net.bytebuddy.build.gradle;
 
 import groovy.lang.Closure;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.EntryPoint;
 import org.gradle.api.Action;
 import org.gradle.api.Task;
@@ -100,6 +101,12 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      * If {@code true}, task dependencies are only adjusted when the task graph is fully resolved.
      */
     private boolean lazy;
+
+    /**
+     * The class file version to use for creating auxiliary types or {@code null} if the
+     * version is determined implicitly.
+     */
+    private ClassFileVersion classFileVersion;
 
     /**
      * Creates a new abstract Byte Buddy task extension.
@@ -351,6 +358,26 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     }
 
     /**
+     * Returns the class file version to use for creating auxiliary types or {@code null} if the
+     * version is determined implicitly.
+     *
+     * @return The class file version to use for creating auxiliary types.
+     */
+    public ClassFileVersion getClassFileVersion() {
+        return classFileVersion;
+    }
+
+    /**
+     * Sets the class file version to use for creating auxiliary types or {@code null} if the
+     * version is determined implicitly.
+     *
+     * @param classFileVersion The class file version to use for creating auxiliary types.
+     */
+    public void setClassFileVersion(ClassFileVersion classFileVersion) {
+        this.classFileVersion = classFileVersion;
+    }
+
+    /**
      * Applies any extension-specific properties.
      *
      * @param task The task to configure.
@@ -372,6 +399,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         task.setExtendedParsing(isExtendedParsing());
         task.setDiscovery(getDiscovery());
         task.setThreads(getThreads());
+        task.setClassFileVersion(getClassFileVersion());
         doConfigure(task);
     }
 

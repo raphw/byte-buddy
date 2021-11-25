@@ -89,6 +89,12 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     private int threads;
 
     /**
+     * Returns the class file version to use for creating auxiliary types or {@code null} if the
+     * version is determined implicitly.
+     */
+    private ClassFileVersion classFileVersion;
+
+    /**
      * Creates a new abstract Byte Buddy task.
      */
     protected AbstractByteBuddyTask() {
@@ -268,6 +274,26 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     }
 
     /**
+     * Returns the class file version to use for creating auxiliary types or {@code null} if the
+     * version is determined implicitly.
+     *
+     * @return The class file version to use for creating auxiliary types.
+     */
+    public ClassFileVersion getClassFileVersion() {
+        return classFileVersion;
+    }
+
+    /**
+     * Sets the class file version to use for creating auxiliary types or {@code null} if the
+     * version is determined implicitly.
+     *
+     * @param classFileVersion The class file version to use for creating auxiliary types.
+     */
+    public void setClassFileVersion(ClassFileVersion classFileVersion) {
+        this.classFileVersion = classFileVersion;
+    }
+
+    /**
      * Returns the source file or folder.
      *
      * @return The source file or folder.
@@ -363,14 +389,18 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
             getLogger().info("Processing class files located in in: {}", source());
             Plugin.Engine pluginEngine;
             try {
-                ClassFileVersion classFileVersion;
-                JavaPluginConvention convention = (JavaPluginConvention) getProject().getConvention().getPlugins().get("java");
-                if (convention == null) {
-                    classFileVersion = ClassFileVersion.ofThisVm();
-                    getLogger().warn("Could not locate Java target version, build is JDK dependant: {}", classFileVersion.getJavaVersion());
+                ClassFileVersion classFileVersion = this.classFileVersion;
+                if (classFileVersion == null) {
+                    JavaPluginConvention convention = (JavaPluginConvention) getProject().getConvention().getPlugins().get("java");
+                    if (convention == null) {
+                        classFileVersion = ClassFileVersion.ofThisVm();
+                        getLogger().warn("Could not locate Java target version, build is JDK dependant: {}", classFileVersion.getJavaVersion());
+                    } else {
+                        classFileVersion = ClassFileVersion.ofJavaVersion(Integer.parseInt(convention.getTargetCompatibility().getMajorVersion()));
+                        getLogger().debug("Java version detected: {}", classFileVersion.getJavaVersion());
+                    }
                 } else {
-                    classFileVersion = ClassFileVersion.ofJavaVersion(Integer.parseInt(convention.getTargetCompatibility().getMajorVersion()));
-                    getLogger().debug("Java version detected: {}", classFileVersion.getJavaVersion());
+                    getLogger().debug("Java version configured: {}", classFileVersion.getJavaVersion());
                 }
                 pluginEngine = Plugin.Engine.Default.of(getEntryPoint(), classFileVersion, getSuffix().length() == 0
                         ? MethodNameTransformer.Suffixing.withRandomSuffix()
