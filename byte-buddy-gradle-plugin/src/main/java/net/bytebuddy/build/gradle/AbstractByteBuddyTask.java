@@ -145,6 +145,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      * @return The suffix to use for rebased methods or the empty string if a random suffix should be used.
      */
     @Input
+    @Input
     public String getSuffix() {
         return suffix;
     }
@@ -279,6 +280,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      *
      * @return The class file version to use for creating auxiliary types.
      */
+    @Input
     public ClassFileVersion getClassFileVersion() {
         return classFileVersion;
     }
