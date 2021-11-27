@@ -392,19 +392,12 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
             getLogger().info("Processing class files located in in: {}", source());
             Plugin.Engine pluginEngine;
             try {
-                ClassFileVersion classFileVersion = this.classFileVersion == 0
-                        ? null
-                        : ClassFileVersion.ofMinorMajor(this.classFileVersion);
-                if (classFileVersion == null) {
-                    JavaPluginConvention convention = (JavaPluginConvention) getProject().getConvention().getPlugins().get("java");
-                    if (convention == null) {
-                        classFileVersion = ClassFileVersion.ofThisVm();
-                        getLogger().warn("Could not locate Java target version, build is JDK dependant: {}", classFileVersion.getJavaVersion());
-                    } else {
-                        classFileVersion = ClassFileVersion.ofJavaVersion(Integer.parseInt(convention.getTargetCompatibility().getMajorVersion()));
-                        getLogger().debug("Java version detected: {}", classFileVersion.getJavaVersion());
-                    }
+                ClassFileVersion classFileVersion;
+                if (this.classFileVersion == 9) {
+                    classFileVersion = ClassFileVersion.ofThisVm();
+                    getLogger().warn("Could not locate Java target version, build is JDK dependant: {}", classFileVersion.getJavaVersion());
                 } else {
+                    classFileVersion = ClassFileVersion.ofMinorMajor(this.classFileVersion);
                     getLogger().debug("Java version configured: {}", classFileVersion.getJavaVersion());
                 }
                 pluginEngine = Plugin.Engine.Default.of(getEntryPoint(), classFileVersion, getSuffix().length() == 0

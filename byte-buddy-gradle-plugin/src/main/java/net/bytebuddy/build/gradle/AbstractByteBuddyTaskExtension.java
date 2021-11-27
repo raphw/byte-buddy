@@ -20,6 +20,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.EntryPoint;
 import org.gradle.api.Action;
 import org.gradle.api.Task;
+import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.util.ConfigureUtil;
 
 import java.util.ArrayList;
@@ -379,6 +380,19 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         this.classFileVersion = classFileVersion == null
                 ? 0
                 : classFileVersion.getMinorMajorVersion();
+    }
+
+    /**
+     * Resolves default properties from the Java plugin convention.
+     *
+     * @param convention The convention to resolve.
+     */
+    protected void resolve(JavaPluginConvention convention) {
+        if (classFileVersion == 0) {
+            classFileVersion = ClassFileVersion.ofJavaVersion(Integer.parseInt(convention
+                    .getTargetCompatibility()
+                    .getMajorVersion())).getMinorMajorVersion();
+        }
     }
 
     /**
