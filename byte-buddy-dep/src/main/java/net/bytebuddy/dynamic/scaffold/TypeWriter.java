@@ -4745,14 +4745,14 @@ public interface TypeWriter<T> {
                     private final int readerFlags;
 
                     /**
-                     * A mapping of fields to write by their names.
+                     * A mapping of fields to write by their unique signature.
                      */
-                    private final LinkedHashMap<String, FieldDescription> declarableFields;
+                    private final LinkedHashMap<SignatureKey, FieldDescription> declarableFields;
 
                     /**
-                     * A mapping of methods to write by a concatenation of internal name and descriptor.
+                     * A mapping of methods to write by their unique signature.
                      */
-                    private final LinkedHashMap<String, MethodDescription> declarableMethods;
+                    private final LinkedHashMap<SignatureKey, MethodDescription> declarableMethods;
 
                     /**
                      * A mapping of record components to write by their names.
@@ -4813,32 +4813,32 @@ public interface TypeWriter<T> {
                         this.contextRegistry = contextRegistry;
                         this.writerFlags = writerFlags;
                         this.readerFlags = readerFlags;
-                        declarableFields = new LinkedHashMap<String, FieldDescription>();
+                        declarableFields = new LinkedHashMap<SignatureKey, FieldDescription>((int) Math.ceil(fields.size() / 0.75));
                         for (FieldDescription fieldDescription : fields) {
-                            declarableFields.put(fieldDescription.getInternalName() + fieldDescription.getDescriptor(), fieldDescription);
+                            declarableFields.put(new SignatureKey(fieldDescription.getInternalName(), fieldDescription.getDescriptor()), fieldDescription);
                         }
-                        declarableMethods = new LinkedHashMap<String, MethodDescription>();
+                        declarableMethods = new LinkedHashMap<SignatureKey, MethodDescription>((int) Math.ceil(instrumentedMethods.size() / 0.75));
                         for (MethodDescription methodDescription : instrumentedMethods) {
-                            declarableMethods.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
+                            declarableMethods.put(new SignatureKey(methodDescription.getInternalName(), methodDescription.getDescriptor()), methodDescription);
                         }
-                        declarableRecordComponents = new LinkedHashMap<String, RecordComponentDescription>();
+                        declarableRecordComponents = new LinkedHashMap<String, RecordComponentDescription>((int) Math.ceil(recordComponents.size() / 0.75));
                         for (RecordComponentDescription recordComponentDescription : recordComponents) {
                             declarableRecordComponents.put(recordComponentDescription.getActualName(), recordComponentDescription);
                         }
                         if (instrumentedType.isNestHost()) {
-                            nestMembers = new LinkedHashSet<String>();
+                            nestMembers = new LinkedHashSet<String>((int) Math.ceil(instrumentedType.getNestMembers().size() / 0.75));
                             for (TypeDescription typeDescription : instrumentedType.getNestMembers().filter(not(is(instrumentedType)))) {
                                 nestMembers.add(typeDescription.getInternalName());
                             }
                         } else {
                             nestMembers = Collections.emptySet();
                         }
-                        declaredTypes = new LinkedHashMap<String, TypeDescription>();
+                        declaredTypes = new LinkedHashMap<String, TypeDescription>((int) Math.ceil(instrumentedType.getDeclaredTypes().size() / 0.75));
                         for (TypeDescription typeDescription : instrumentedType.getDeclaredTypes()) {
                             declaredTypes.put(typeDescription.getInternalName(), typeDescription);
                         }
                         if (instrumentedType.isSealed()) {
-                            permittedSubclasses = new LinkedHashSet<String>();
+                            permittedSubclasses = new LinkedHashSet<String>((int) Math.ceil(instrumentedType.getPermittedSubtypes().size() / 0.75));
                             for (TypeDescription typeDescription : instrumentedType.getPermittedSubtypes()) {
                                 permittedSubclasses.add(typeDescription.getInternalName());
                             }
@@ -4983,7 +4983,7 @@ public interface TypeWriter<T> {
                                                         String descriptor,
                                                         String genericSignature,
                                                         Object defaultValue) {
-                        FieldDescription fieldDescription = declarableFields.remove(internalName + descriptor);
+                        FieldDescription fieldDescription = declarableFields.remove(new SignatureKey(internalName, descriptor));
                         if (fieldDescription != null) {
                             FieldPool.Record record = fieldPool.target(fieldDescription);
                             if (!record.isImplicit()) {
@@ -5034,7 +5034,7 @@ public interface TypeWriter<T> {
                                     (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6),
                                     (readerFlags & ClassReader.EXPAND_FRAMES) != 0));
                         } else {
-                            MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
+                            MethodDescription methodDescription = declarableMethods.remove(new SignatureKey(internalName, descriptor));
                             return methodDescription == null
                                     ? cv.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName)
                                     : redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0, modifiers, genericSignature);
@@ -5477,6 +5477,45 @@ public interface TypeWriter<T> {
                             record.applyBody(actualMethodVisitor, implementationContext, annotationValueFilterFactory);
                             actualMethodVisitor.visitEnd();
                         }
+                    }
+                }
+
+                /**
+                 * A key to represent a unique signature.
+                 */
+                protected static class SignatureKey {
+
+                    /**
+                     * The represented internal name.
+                     */
+                    private final String internalName;
+
+                    /**
+                     * The represented descriptor.
+                     */
+                    private final String descriptor;
+
+                    /**
+                     * Creates a new signature key.
+                     * @param internalName The represented internal name.
+                     * @param descriptor The represented descriptor.
+                     */
+                    public SignatureKey(String internalName, String descriptor) {
+                        this.internalName = internalName;
+                        this.descriptor = descriptor;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        SignatureKey that = (SignatureKey) other;
+                        return internalName.equals(that.internalName) && descriptor.equals(that.descriptor);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return 17 + internalName.hashCode() + 31 * descriptor.hashCode();
                     }
                 }
             }
