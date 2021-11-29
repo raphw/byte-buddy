@@ -24,6 +24,7 @@ import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.security.PrivilegedAction;
 
 /**
@@ -31,7 +32,12 @@ import java.security.PrivilegedAction;
  * <a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html">JVMS</a>.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class ClassFileVersion implements Comparable<ClassFileVersion> {
+public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializable {
+
+    /**
+     * The class's serial version UID.
+     */
+    private static final long serialVersionUID = 1L;
 
     /**
      * Returns the minimal version number that is legal.
