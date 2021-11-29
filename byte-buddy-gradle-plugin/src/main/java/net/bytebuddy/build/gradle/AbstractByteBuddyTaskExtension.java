@@ -104,10 +104,10 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     private boolean lazy;
 
     /**
-     * The class file version to use for creating auxiliary types or {@code 0} if the
+     * The class file version to use for creating auxiliary types or {@code null} if the
      * version is determined implicitly.
      */
-    private int classFileVersion;
+    private ClassFileVersion classFileVersion;
 
     /**
      * Creates a new abstract Byte Buddy task extension.
@@ -365,9 +365,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      * @return The class file version to use for creating auxiliary types.
      */
     public ClassFileVersion getClassFileVersion() {
-        return classFileVersion == 0
-                ? null
-                : ClassFileVersion.ofMinorMajor(classFileVersion);
+        return classFileVersion;
     }
 
     /**
@@ -377,9 +375,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      * @param classFileVersion The class file version to use for creating auxiliary types.
      */
     public void setClassFileVersion(ClassFileVersion classFileVersion) {
-        this.classFileVersion = classFileVersion == null
-                ? 0
-                : classFileVersion.getMinorMajorVersion();
+        this.classFileVersion = classFileVersion;
     }
 
     /**
@@ -388,10 +384,10 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      * @param convention The convention to resolve.
      */
     protected void resolve(JavaPluginConvention convention) {
-        if (classFileVersion == 0) {
+        if (classFileVersion == null) {
             classFileVersion = ClassFileVersion.ofJavaVersion(Integer.parseInt(convention
                     .getTargetCompatibility()
-                    .getMajorVersion())).getMinorMajorVersion();
+                    .getMajorVersion()));
         }
     }
 

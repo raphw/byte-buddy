@@ -29,6 +29,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
+import org.gradle.api.tasks.Optional;
 import org.gradle.util.ConfigureUtil;
 
 import java.io.*;
@@ -89,10 +90,10 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     private int threads;
 
     /**
-     * Returns the class file version to use for creating auxiliary types or {@code 0} if the
+     * Returns the class file version to use for creating auxiliary types or {@code null} if the
      * version is determined implicitly.
      */
-    private int classFileVersion;
+    private ClassFileVersion classFileVersion;
 
     /**
      * Creates a new abstract Byte Buddy task.
@@ -274,13 +275,14 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     }
 
     /**
-     * Returns the class file version to use for creating auxiliary types or {@code 0} if the
+     * Returns the class file version to use for creating auxiliary types or {@code null} if the
      * version is determined implicitly.
      *
      * @return The class file version to use for creating auxiliary types.
      */
     @Input
-    public int getClassFileVersion() {
+    @Optional
+    public ClassFileVersion getClassFileVersion() {
         return classFileVersion;
     }
 
@@ -291,9 +293,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      * @param classFileVersion The class file version to use for creating auxiliary types.
      */
     public void setClassFileVersion(ClassFileVersion classFileVersion) {
-        this.classFileVersion = classFileVersion == null
-                ? 0
-                : classFileVersion.getMinorMajorVersion();
+        this.classFileVersion = classFileVersion;
     }
 
     /**
@@ -393,12 +393,12 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
             Plugin.Engine pluginEngine;
             try {
                 ClassFileVersion classFileVersion;
-                if (this.classFileVersion == 9) {
+                if (this.classFileVersion == null) {
                     classFileVersion = ClassFileVersion.ofThisVm();
                     getLogger().warn("Could not locate Java target version, build is JDK dependant: {}", classFileVersion.getJavaVersion());
                 } else {
-                    classFileVersion = ClassFileVersion.ofMinorMajor(this.classFileVersion);
-                    getLogger().debug("Java version configured: {}", classFileVersion.getJavaVersion());
+                    classFileVersion = this.classFileVersion;
+                    getLogger().debug("Java version was configured: {}", classFileVersion.getJavaVersion());
                 }
                 pluginEngine = Plugin.Engine.Default.of(getEntryPoint(), classFileVersion, getSuffix().length() == 0
                         ? MethodNameTransformer.Suffixing.withRandomSuffix()
