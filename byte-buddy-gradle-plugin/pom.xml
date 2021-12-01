@@ -106,8 +106,6 @@
                                 <argument>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</argument>
                                 <argument>-Dnet.bytebuddy.gradle.source=${sourcecode.main.version}</argument>
                                 <argument>-Dnet.bytebuddy.gradle.target=${bytecode.main.version}</argument>
-                                <argument>-Dorg.gradle.unsafe.configuration-cache=true</argument>
-                                <argument>-Dorg.gradle.unsafe.configuration-cache-problems=warn</argument>
                             </arguments>
                         </configuration>
                     </execution>
