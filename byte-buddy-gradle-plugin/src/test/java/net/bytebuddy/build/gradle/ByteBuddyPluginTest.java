@@ -99,8 +99,7 @@ public class ByteBuddyPluginTest {
                 .withProjectDir(folder)
                 .withArguments("build",
                         "-D" + ByteBuddyPlugin.LEGACY + "=true",
-                        "-Dorg.gradle.unsafe.configuration-cache=true",
-                        "-Dorg.gradle.unsafe.configuration-cache-problems=warn")
+                        "-Dorg.gradle.unsafe.configuration-cache=true")
                 .withPluginClasspath()
                 .build();
         BuildTask task = result.task(":byteBuddy");
@@ -151,8 +150,7 @@ public class ByteBuddyPluginTest {
                 .withProjectDir(folder)
                 .withArguments("build",
                         "-D" + ByteBuddyPlugin.LEGACY + "=true",
-                        "-Dorg.gradle.unsafe.configuration-cache=true",
-                        "-Dorg.gradle.unsafe.configuration-cache-problems=warn")
+                        "-Dorg.gradle.unsafe.configuration-cache=true")
                 .withPluginClasspath()
                 .build();
         BuildTask task = result.task(":byteBuddy");
