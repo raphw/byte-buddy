@@ -2,11 +2,13 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.MemberSubstitutionTestHelper;
@@ -596,6 +598,53 @@ public class MemberSubstitutionTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(instance), nullValue(Object.class));
         assertThat(type.getDeclaredField(FOO).getInt(instance), is(0));
         assertThat(type.getDeclaredField(BAR).getInt(instance), is(1));
+    }
+
+    @Test
+    public void testDefinedFieldMatched() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(MatcherSample.class)
+                .defineField(BAZ, int.class, Visibility.PUBLIC)
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithField(named(BAZ)).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(FOO).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).getInt(instance), is(0));
+        assertThat(type.getDeclaredField(BAZ).getInt(instance), is(1));
+    }
+
+    @Test
+    public void testDefinedPublicMethodMatched() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(MatcherSample.class)
+                .defineField(BAZ, int.class, Visibility.PUBLIC)
+                .defineMethod(BAZ, void.class, Visibility.PUBLIC).withParameters(int.class).intercept(FieldAccessor.ofField(BAZ))
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithMethod(named(BAZ)).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(FOO).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).getInt(instance), is(0));
+        assertThat(type.getDeclaredField(BAZ).getInt(instance), is(1));
+    }
+
+    @Test
+    public void testDefinedPrivateMethodMatched() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(MatcherSample.class)
+                .defineField(BAZ, int.class, Visibility.PUBLIC)
+                .defineMethod(BAZ, void.class, Visibility.PRIVATE).withParameters(int.class).intercept(FieldAccessor.ofField(BAZ))
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithMethod(named(BAZ)).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(FOO).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).getInt(instance), is(0));
+        assertThat(type.getDeclaredField(BAZ).getInt(instance), is(1));
     }
 
     @Test
