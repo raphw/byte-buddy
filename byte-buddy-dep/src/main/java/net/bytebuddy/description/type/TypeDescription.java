@@ -2225,6 +2225,39 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return new OfTypeVariable.Symbolic(typeVariable.getSymbol(), typeVariable);
                     }
                 }
+
+                /**
+                 * A substitutor that replaces a type description with an equal type description.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                public static class ForReplacement extends Substitutor {
+
+                    /**
+                     * The type description to substitute.
+                     */
+                    private final TypeDescription typeDescription;
+
+                    /**
+                     * Creates a new substitutor for a type description replacement.
+                     *
+                     * @param typeDescription The type description to substitute.
+                     */
+                    public ForReplacement(TypeDescription typeDescription) {
+                        this.typeDescription = typeDescription;
+                    }
+
+                    @Override
+                    public Generic onTypeVariable(Generic typeVariable) {
+                        return typeVariable;
+                    }
+
+                    @Override
+                    protected Generic onSimpleType(Generic typeDescription) {
+                        return typeDescription.asErasure().equals(this.typeDescription)
+                                ? new OfNonGenericType.Latent(this.typeDescription, typeDescription)
+                                : typeDescription;
+                    }
+                }
             }
 
             /**

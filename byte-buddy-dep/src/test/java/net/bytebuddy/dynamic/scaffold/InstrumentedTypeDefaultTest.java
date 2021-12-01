@@ -213,6 +213,7 @@ public class InstrumentedTypeDefaultTest {
         assertThat(instrumentedType.getLoadedTypeInitializer().isAlive(), is(true));
     }
 
+    @SuppressWarnings("unchecked")
     @Test(expected = IllegalStateException.class)
     public void testWithAuxiliaryFieldConflict() throws Exception {
         TypeDescription.Generic fieldType = mock(TypeDescription.Generic.class);

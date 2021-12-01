@@ -1005,7 +1005,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         } else if (parameters.get(0).isPrimitive() || parameters.get(0).isArray()) {
                             throw new IllegalStateException("Cannot access field on primitive or array type for " + target);
                         }
-                        TypeDefinition current = instrumentedType;
+                        TypeDefinition current = parameters.get(0).accept(new TypeDescription.Generic.Visitor.Substitutor.ForReplacement(instrumentedType));
                         do {
                             FieldList<?> fields = current.getDeclaredFields().filter(not(isStatic()).<FieldDescription>and(isVisibleTo(instrumentedType)).and(matcher));
                             if (fields.size() == 1) {
@@ -1226,7 +1226,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         } else if (parameters.get(0).isPrimitive() || parameters.get(0).isArray()) {
                             throw new IllegalStateException("Cannot invoke method on primitive or array type for " + target);
                         }
-                        TypeDefinition typeDefinition = instrumentedType;
+                        TypeDefinition typeDefinition = parameters.get(0).accept(new TypeDescription.Generic.Visitor.Substitutor.ForReplacement(instrumentedType));
                         List<MethodDescription> candidates = CompoundList.<MethodDescription>of(methodGraphCompiler.compile(typeDefinition, instrumentedType)
                                 .listNodes()
                                 .asMethodList()
