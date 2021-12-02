@@ -118,6 +118,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         suffix = "";
         failOnLiveInitializer = true;
         warnOnEmptyTypeSet = true;
+        failFast = true;
         discovery = Discovery.EMPTY;
         adjustment = Adjustment.FULL;
         adjustmentErrorHandler = Adjustment.ErrorHandler.WARN;

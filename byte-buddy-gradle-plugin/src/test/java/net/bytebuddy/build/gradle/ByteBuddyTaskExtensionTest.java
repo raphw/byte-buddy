@@ -39,13 +39,12 @@ public class ByteBuddyTaskExtensionTest {
         assertThat(extension.getSuffix(), is(""));
         assertThat(extension.getThreads(), is(0));
         assertThat(extension.isExtendedParsing(), is(false));
-        assertThat(extension.isFailFast(), is(false));
+        assertThat(extension.isFailFast(), is(true));
         assertThat(extension.isFailOnLiveInitializer(), is(true));
         assertThat(extension.getAdjustment(), is(Adjustment.FULL));
         assertThat(extension.getAdjustmentErrorHandler(), is(Adjustment.ErrorHandler.WARN));
         assertThat(extension.getAdjustmentPostProcessor(), is((Action<Task>) Adjustment.NoOpPostProcessor.INSTANCE));
         assertThat(extension.isWarnOnEmptyTypeSet(), is(true));
-        assertThat(extension.isFailFast(), is(false));
         assertThat(extension.isLazy(), is(false));
         assertThat(extension.getDiscovery(), is(Discovery.EMPTY));
         assertThat(extension.getClassFileVersion(), nullValue(ClassFileVersion.class));

@@ -417,7 +417,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                                 ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS
                                 : Plugin.Engine.Listener.NoOp.INSTANCE, isFailFast()
                                 ? Plugin.Engine.ErrorHandler.Failing.FAIL_FAST
-                                : Plugin.Engine.Listener.NoOp.INSTANCE)
+                                : Plugin.Engine.ErrorHandler.Failing.FAIL_LAST)
                         .with(getThreads() == 0
                                 ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE
                                 : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(getThreads()))

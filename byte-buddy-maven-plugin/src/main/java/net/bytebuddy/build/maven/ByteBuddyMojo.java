@@ -397,7 +397,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                                     ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS
                                     : Plugin.Engine.Listener.NoOp.INSTANCE, failFast
                                     ? Plugin.Engine.ErrorHandler.Failing.FAIL_FAST
-                                    : Plugin.Engine.Listener.NoOp.INSTANCE)
+                                    : Plugin.Engine.ErrorHandler.Failing.FAIL_LAST)
                             .with(threads == 0
                                     ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE
                                     : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(threads))
