@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -43,6 +44,7 @@ public class LoadedTypeInitializerForStaticFieldTest {
         assertThat(Qux.foo, is(object));
     }
 
+    @Ignore
     @Test(expected = IllegalArgumentException.class)
     public void testNonAssignableField() throws Exception {
         new LoadedTypeInitializer.ForStaticField(FOO, new Object()).onLoad(FooBar.class);
