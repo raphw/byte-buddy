@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 2. December 2021: version 1.12.3
+
+- Move configuration for Java version to extension and avoid implicit configuration during task execution to allow for using a configuration cache.
+- Make fail last the alternative to fail fast instead of not failing the build. Enable fail fast by default in the Gradle plugin.
+- Use instrumented type in `MemberSubstitution` to include newly added properties in its description.
+
 ### 22. November 2021: version 1.12.2
 
 - Improve error message when class file version is not supported.
