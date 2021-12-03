@@ -31,6 +31,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.RandomString;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -124,7 +125,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
     /**
      * {@inheritDoc}
      */
-    public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+    public Map<TypeDescription, Class<?>> load(@Nullable ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
         DexProcessor.Conversion conversion = dexProcessor.create();
         for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
             conversion.register(entry.getKey().getName(), entry.getValue());
@@ -161,7 +162,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
      * @return A mapping of all type descriptions to their loaded types.
      * @throws IOException If an I/O exception occurs.
      */
-    protected abstract Map<TypeDescription, Class<?>> doLoad(ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) throws IOException;
+    protected abstract Map<TypeDescription, Class<?>> doLoad(@Nullable ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) throws IOException;
 
     /**
      * A dex processor is responsible for converting a collection of Java class files into a Android dex file.
@@ -572,7 +573,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
          * {@inheritDoc}
          */
         @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Android discourages the use of access controllers")
-        protected Map<TypeDescription, Class<?>> doLoad(ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) {
+        protected Map<TypeDescription, Class<?>> doLoad(@Nullable ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) {
             ClassLoader dexClassLoader = new DexClassLoader(jar.getAbsolutePath(), privateDirectory.getAbsolutePath(), EMPTY_LIBRARY_PATH, classLoader);
             Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
             for (TypeDescription typeDescription : typeDescriptions) {
@@ -634,7 +635,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
         /**
          * {@inheritDoc}
          */
-        public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+        public Map<TypeDescription, Class<?>> load(@Nullable ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             if (classLoader == null) {
                 throw new IllegalArgumentException("Cannot inject classes into the bootstrap class loader on Android");
             }
@@ -644,7 +645,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
         /**
          * {@inheritDoc}
          */
-        protected Map<TypeDescription, Class<?>> doLoad(ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) throws IOException {
+        protected Map<TypeDescription, Class<?>> doLoad(@Nullable ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) throws IOException {
             dalvik.system.DexFile dexFile = DISPATCHER.loadDex(privateDirectory, jar, classLoader, randomString);
             try {
                 Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
@@ -680,7 +681,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
              * @return The created {@link dalvik.system.DexFile} or {@code null} if no such file is created.
              * @throws IOException If an I/O exception is thrown.
              */
-            dalvik.system.DexFile loadDex(File privateDirectory, File jar, ClassLoader classLoader, RandomString randomString) throws IOException;
+            dalvik.system.DexFile loadDex(File privateDirectory, File jar, @Nullable ClassLoader classLoader, RandomString randomString) throws IOException;
 
             /**
              * Loads a class.
@@ -690,7 +691,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
              * @param typeDescription The type to load.
              * @return The loaded class.
              */
-            Class<?> loadClass(dalvik.system.DexFile dexFile, ClassLoader classLoader, TypeDescription typeDescription);
+            Class<?> loadClass(dalvik.system.DexFile dexFile, @Nullable ClassLoader classLoader, TypeDescription typeDescription);
 
             /**
              * A dispatcher for legacy VMs that allow {@link dalvik.system.DexFile#loadDex(String, String, int)}.
@@ -717,7 +718,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                  */
                 public dalvik.system.DexFile loadDex(File privateDirectory,
                                                      File jar,
-                                                     ClassLoader classLoader,
+                                                     @Nullable ClassLoader classLoader,
                                                      RandomString randomString) throws IOException {
                     return dalvik.system.DexFile.loadDex(jar.getAbsolutePath(),
                             new File(privateDirectory.getAbsolutePath(), randomString.nextString() + EXTENSION).getAbsolutePath(),
@@ -727,7 +728,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> loadClass(dalvik.system.DexFile dexFile, ClassLoader classLoader, TypeDescription typeDescription) {
+                public Class<?> loadClass(dalvik.system.DexFile dexFile, @Nullable ClassLoader classLoader, TypeDescription typeDescription) {
                     return dexFile.loadClass(typeDescription.getName(), classLoader);
                 }
             }
@@ -761,7 +762,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                  */
                 public dalvik.system.DexFile loadDex(File privateDirectory,
                                                      File jar,
-                                                     ClassLoader classLoader,
+                                                     @Nullable ClassLoader classLoader,
                                                      RandomString randomString) throws IOException {
                     if (!(classLoader instanceof BaseDexClassLoader)) {
                         throw new IllegalArgumentException("On Android P, a class injection can only be applied to BaseDexClassLoader: " + classLoader);
@@ -784,7 +785,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> loadClass(dalvik.system.DexFile dexFile, ClassLoader classLoader, TypeDescription typeDescription) {
+                public Class<?> loadClass(dalvik.system.DexFile dexFile, @Nullable ClassLoader classLoader, TypeDescription typeDescription) {
                     try {
                         return Class.forName(typeDescription.getName(), false, classLoader);
                     } catch (ClassNotFoundException exception) {

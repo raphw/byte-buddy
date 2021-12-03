@@ -17,6 +17,8 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
+import javax.annotation.Nullable;
+
 /**
  * An element matcher that matches a class loader for being a parent of the given class loader.
  *
@@ -35,14 +37,14 @@ public class ClassLoaderParentMatcher<T extends ClassLoader> extends ElementMatc
      *
      * @param classLoader The class loader that is matched for being a child of the matched class loader.
      */
-    public ClassLoaderParentMatcher(ClassLoader classLoader) {
+    public ClassLoaderParentMatcher(@Nullable ClassLoader classLoader) {
         this.classLoader = classLoader;
     }
 
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    public boolean matches(@Nullable T target) {
         ClassLoader current = classLoader;
         while (current != null) {
             if (current == target) {

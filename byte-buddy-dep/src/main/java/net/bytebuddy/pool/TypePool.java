@@ -40,6 +40,7 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.ref.SoftReference;
@@ -804,7 +805,7 @@ public interface TypePool {
          * @param classLoader The class loader for which this class pool is representing types.
          * @return An appropriate type pool.
          */
-        public static TypePool of(ClassLoader classLoader) {
+        public static TypePool of(@Nullable ClassLoader classLoader) {
             return of(ClassFileLocator.ForClassLoader.of(classLoader));
         }
 
@@ -966,7 +967,7 @@ public interface TypePool {
              * @param classLoader The class loader for which this class pool is representing types.
              * @return An appropriate type pool.
              */
-            public static TypePool of(ClassLoader classLoader) {
+            public static TypePool of(@Nullable ClassLoader classLoader) {
                 return of(ClassFileLocator.ForClassLoader.of(classLoader));
             }
 
@@ -6204,7 +6205,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                public Loaded<V> load(ClassLoader classLoader) {
+                public Loaded<V> load(@Nullable ClassLoader classLoader) {
                     return doResolve().load(classLoader);
                 }
 
@@ -6287,7 +6288,7 @@ public interface TypePool {
                     /**
                      * {@inheritDoc}
                      */
-                    public Loaded<X> load(ClassLoader classLoader) {
+                    public Loaded<X> load(@Nullable ClassLoader classLoader) {
                         throw new IllegalStateException("Expected filtering of this unresolved property");
                     }
                 }
@@ -8912,7 +8913,7 @@ public interface TypePool {
          * @param parent        The parent type pool.
          * @param classLoader   The class loader to use for locating files.
          */
-        public ClassLoading(CacheProvider cacheProvider, TypePool parent, ClassLoader classLoader) {
+        public ClassLoading(CacheProvider cacheProvider, TypePool parent, @Nullable ClassLoader classLoader) {
             super(cacheProvider, parent);
             this.classLoader = classLoader;
         }
@@ -8923,7 +8924,7 @@ public interface TypePool {
          * @param classLoader The class loader to use.
          * @return An class loading type pool.
          */
-        public static TypePool of(ClassLoader classLoader) {
+        public static TypePool of(@Nullable ClassLoader classLoader) {
             return of(classLoader, Empty.INSTANCE);
         }
 
@@ -8934,7 +8935,7 @@ public interface TypePool {
          * @param parent      The parent type pool to use.
          * @return An class loading type pool.
          */
-        public static TypePool of(ClassLoader classLoader, TypePool parent) {
+        public static TypePool of(@Nullable ClassLoader classLoader, TypePool parent) {
             return new ClassLoading(new CacheProvider.Simple(), parent, classLoader);
         }
 

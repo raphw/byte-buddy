@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.dynamic;
 
+import javax.annotation.Nullable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -93,7 +94,7 @@ public class Nexus extends WeakReference<ClassLoader> {
      * @param referenceQueue The reference queue to notify upon the class loader's collection or {@code null} if no queue should be notified.
      * @param identification An identification for the initializer to run.
      */
-    private Nexus(String name, ClassLoader classLoader, ReferenceQueue<? super ClassLoader> referenceQueue, int identification) {
+    private Nexus(String name, @Nullable ClassLoader classLoader, @Nullable ReferenceQueue<? super ClassLoader> referenceQueue, int identification) {
         super(classLoader, classLoader == null
                 ? null
                 : referenceQueue);
@@ -160,7 +161,7 @@ public class Nexus extends WeakReference<ClassLoader> {
      *                        of {@link net.bytebuddy.implementation.LoadedTypeInitializer} where
      *                        it does however not matter which class loader loaded this latter type.
      */
-    public static void register(String name, ClassLoader classLoader, ReferenceQueue<? super ClassLoader> referenceQueue, int identification, Object typeInitializer) {
+    public static void register(String name, @Nullable ClassLoader classLoader, @Nullable ReferenceQueue<? super ClassLoader> referenceQueue, int identification, Object typeInitializer) {
         TYPE_INITIALIZERS.put(new Nexus(name, classLoader, referenceQueue, identification), typeInitializer);
     }
 

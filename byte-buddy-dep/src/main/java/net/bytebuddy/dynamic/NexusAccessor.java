@@ -35,6 +35,7 @@ import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import org.objectweb.asm.MethodVisitor;
 
+import javax.annotation.Nullable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.InvocationTargetException;
@@ -125,7 +126,7 @@ public class NexusAccessor {
      * @param identification        The id used for identifying the loaded type initializer that was added to the {@link Nexus}.
      * @param loadedTypeInitializer The loaded type initializer to make available via the {@link Nexus}.
      */
-    public void register(String name, ClassLoader classLoader, int identification, LoadedTypeInitializer loadedTypeInitializer) {
+    public void register(String name, @Nullable ClassLoader classLoader, int identification, LoadedTypeInitializer loadedTypeInitializer) {
         if (loadedTypeInitializer.isAlive()) {
             DISPATCHER.register(name, classLoader, referenceQueue, identification, loadedTypeInitializer);
         }
@@ -211,8 +212,8 @@ public class NexusAccessor {
          * @param loadedTypeInitializer The loaded type initializer to be registered.
          */
         void register(String name,
-                      ClassLoader classLoader,
-                      ReferenceQueue<? super ClassLoader> referenceQueue,
+                      @Nullable ClassLoader classLoader,
+                      @Nullable ReferenceQueue<? super ClassLoader> referenceQueue,
                       int identification,
                       LoadedTypeInitializer loadedTypeInitializer);
 
@@ -309,8 +310,8 @@ public class NexusAccessor {
              * {@inheritDoc}
              */
             public void register(String name,
-                                 ClassLoader classLoader,
-                                 ReferenceQueue<? super ClassLoader> referenceQueue,
+                                 @Nullable ClassLoader classLoader,
+                                 @Nullable ReferenceQueue<? super ClassLoader> referenceQueue,
                                  int identification,
                                  LoadedTypeInitializer loadedTypeInitializer) {
                 try {
@@ -361,8 +362,8 @@ public class NexusAccessor {
              * {@inheritDoc}
              */
             public void register(String name,
-                                 ClassLoader classLoader,
-                                 ReferenceQueue<? super ClassLoader> referenceQueue,
+                                 @Nullable ClassLoader classLoader,
+                                 @Nullable ReferenceQueue<? super ClassLoader> referenceQueue,
                                  int identification,
                                  LoadedTypeInitializer loadedTypeInitializer) {
                 throw new UnsupportedOperationException("Could not initialize Nexus accessor: " + message);

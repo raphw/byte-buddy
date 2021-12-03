@@ -32,6 +32,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.utility.JavaModule;
 
+import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Constructor;
@@ -2259,7 +2260,7 @@ public final class ElementMatchers {
      * @return A matcher that matches the given class loader and any class loader that is a child of the given
      * class loader.
      */
-    public static <T extends ClassLoader> ElementMatcher.Junction<T> isChildOf(ClassLoader classLoader) {
+    public static <T extends ClassLoader> ElementMatcher.Junction<T> isChildOf(@Nullable ClassLoader classLoader) {
         return classLoader == BOOTSTRAP_CLASSLOADER
                 ? BooleanMatcher.<T>of(true)
                 : ElementMatchers.<T>hasChild(is(classLoader));
@@ -2284,7 +2285,7 @@ public final class ElementMatchers {
      * @return A matcher that matches the given class loader and any class loader that is a parent of the given
      * class loader.
      */
-    public static <T extends ClassLoader> ElementMatcher.Junction<T> isParentOf(ClassLoader classLoader) {
+    public static <T extends ClassLoader> ElementMatcher.Junction<T> isParentOf(@Nullable ClassLoader classLoader) {
         return classLoader == BOOTSTRAP_CLASSLOADER
                 ? ElementMatchers.<T>isBootstrapClassLoader()
                 : new ClassLoaderParentMatcher<T>(classLoader);

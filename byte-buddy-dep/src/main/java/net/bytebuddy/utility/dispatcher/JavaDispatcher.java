@@ -27,6 +27,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import javax.annotation.Nullable;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.security.Permission;
@@ -101,7 +102,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
      * @param classLoader The class loader to resolve the proxied type from or {@code null} if the bootstrap loader should be used.
      * @param generate    {@code true} if a proxy class should be manually generated.
      */
-    protected JavaDispatcher(Class<T> proxy, ClassLoader classLoader, boolean generate) {
+    protected JavaDispatcher(Class<T> proxy, @Nullable ClassLoader classLoader, boolean generate) {
         this.proxy = proxy;
         this.classLoader = classLoader;
         this.generate = generate;
@@ -138,7 +139,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
      * @param <T>         The resolved type.
      * @return An action for creating an appropriate dispatcher.
      */
-    protected static <T> PrivilegedAction<T> of(Class<T> type, ClassLoader classLoader) {
+    protected static <T> PrivilegedAction<T> of(Class<T> type, @Nullable ClassLoader classLoader) {
         return of(type, classLoader, GENERATE);
     }
 
@@ -151,7 +152,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
      * @param <T>         The resolved type.
      * @return An action for creating an appropriate dispatcher.
      */
-    protected static <T> PrivilegedAction<T> of(Class<T> type, ClassLoader classLoader, boolean generate) {
+    protected static <T> PrivilegedAction<T> of(Class<T> type, @Nullable ClassLoader classLoader, boolean generate) {
         if (!type.isInterface()) {
             throw new IllegalArgumentException("Expected an interface instead of " + type);
         } else if (!type.isAnnotationPresent(Proxied.class)) {
@@ -1339,7 +1340,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
              * @param classLoader The class loader to adjust.
              * @param target      The targeted class for which a proxy is created.
              */
-            void accept(ClassLoader classLoader, Class<?> target);
+            void accept(@Nullable ClassLoader classLoader, Class<?> target);
 
             /**
              * An action to create a resolver.
@@ -1381,7 +1382,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 /**
                  * {@inheritDoc}
                  */
-                public void accept(ClassLoader classLoader, Class<?> target) {
+                public void accept(@Nullable ClassLoader classLoader, Class<?> target) {
                     /* do nothing */
                 }
             }
@@ -1434,7 +1435,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                  * {@inheritDoc}
                  */
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
-                public void accept(ClassLoader classLoader, Class<?> target) {
+                public void accept(@Nullable ClassLoader classLoader, Class<?> target) {
                     Package location = target.getPackage();
                     if (location != null) {
                         try {

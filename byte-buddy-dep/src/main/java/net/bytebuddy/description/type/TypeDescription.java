@@ -44,6 +44,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
@@ -9628,9 +9629,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * Creates a super type loading type description.
          *
          * @param delegate    The delegate type description.
-         * @param classLoader The class loader to use for loading a super type.
+         * @param classLoader The class loader to use for loading a super type or {@code null} for using the boot loader.
          */
-        public SuperTypeLoading(TypeDescription delegate, ClassLoader classLoader) {
+        public SuperTypeLoading(TypeDescription delegate, @Nullable ClassLoader classLoader) {
             this(delegate, classLoader, ClassLoadingDelegate.Simple.INSTANCE);
         }
 
@@ -9638,10 +9639,10 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * Creates a super type loading type description.
          *
          * @param delegate             The delegate type description.
-         * @param classLoader          The class loader to use for loading a super type.
+         * @param classLoader          The class loader to use for loading a super type or {@code null} for using the boot loader.
          * @param classLoadingDelegate A delegate for loading a type.
          */
-        public SuperTypeLoading(TypeDescription delegate, ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
+        public SuperTypeLoading(TypeDescription delegate, @Nullable ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
             this.delegate = delegate;
             this.classLoader = classLoader;
             this.classLoadingDelegate = classLoadingDelegate;
@@ -9862,7 +9863,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @return The loaded type.
              * @throws ClassNotFoundException If the type could not be found.
              */
-            Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException;
+            Class<?> load(String name, @Nullable ClassLoader classLoader) throws ClassNotFoundException;
 
             /**
              * A simple class loading delegate that simply loads a type.
@@ -9877,7 +9878,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException {
+                public Class<?> load(String name, @Nullable ClassLoader classLoader) throws ClassNotFoundException {
                     return Class.forName(name, false, classLoader);
                 }
             }
@@ -9910,7 +9911,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param classLoader          The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
              * @param classLoadingDelegate A delegate for loading a type.
              */
-            protected ClassLoadingTypeProjection(Generic delegate, ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
+            protected ClassLoadingTypeProjection(Generic delegate, @Nullable ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
                 this.delegate = delegate;
                 this.classLoader = classLoader;
                 this.classLoadingDelegate = classLoadingDelegate;
@@ -10009,7 +10010,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param classLoader          The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
              * @param classLoadingDelegate A delegate for loading a type.
              */
-            protected ClassLoadingTypeList(TypeList.Generic delegate, ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
+            protected ClassLoadingTypeList(TypeList.Generic delegate, @Nullable ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
                 this.delegate = delegate;
                 this.classLoader = classLoader;
                 this.classLoadingDelegate = classLoadingDelegate;

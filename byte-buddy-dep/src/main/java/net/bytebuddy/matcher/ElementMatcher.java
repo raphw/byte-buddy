@@ -17,6 +17,7 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,7 +38,7 @@ public interface ElementMatcher<T> {
      * @param target The instance to be matched.
      * @return {@code true} if the given element is matched by this matcher or {@code false} otherwise.
      */
-    boolean matches(T target);
+    boolean matches(@Nullable T target);
 
     /**
      * A junctions allows to chain different {@link net.bytebuddy.matcher.ElementMatcher}s in a readable manner.
@@ -139,7 +140,7 @@ public interface ElementMatcher<T> {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(W target) {
+            public boolean matches(@Nullable W target) {
                 for (ElementMatcher<? super W> matcher : matchers) {
                     if (!matcher.matches(target)) {
                         return false;
@@ -207,7 +208,7 @@ public interface ElementMatcher<T> {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(W target) {
+            public boolean matches(@Nullable W target) {
                 for (ElementMatcher<? super W> matcher : matchers) {
                     if (matcher.matches(target)) {
                         return true;

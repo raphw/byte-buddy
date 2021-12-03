@@ -28,6 +28,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
+import javax.annotation.Nullable;
 import java.lang.annotation.*;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -253,7 +254,7 @@ public interface AnnotationDescription {
          * @return A proxy for the annotation type and values.
          */
         @SuppressWarnings("unchecked")
-        public static <S extends Annotation> S of(ClassLoader classLoader,
+        public static <S extends Annotation> S of(@Nullable ClassLoader classLoader,
                                                   Class<S> annotationType,
                                                   Map<String, ? extends AnnotationValue<?, ?>> values) {
             LinkedHashMap<Method, AnnotationValue.Loaded<?>> loadedValues = new LinkedHashMap<Method, AnnotationValue.Loaded<?>>();

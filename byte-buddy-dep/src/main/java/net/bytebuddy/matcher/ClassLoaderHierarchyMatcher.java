@@ -17,6 +17,8 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
+import javax.annotation.Nullable;
+
 /**
  * An element matcher that matches all {@link java.lang.ClassLoader}s in the matched class loaders hierarchy
  * against a given matcher.
@@ -43,7 +45,7 @@ public class ClassLoaderHierarchyMatcher<T extends ClassLoader> extends ElementM
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    public boolean matches(@Nullable T target) {
         ClassLoader current = target;
         while (current != null) {
             if (matcher.matches(current)) {

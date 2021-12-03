@@ -19,6 +19,7 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaModule;
 
+import javax.annotation.Nullable;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
@@ -33,16 +34,16 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
      * Creates an iterator over the transformers that are applied for a given type.
      *
      * @param typeDescription     A description of a type.
-     * @param classLoader         The type's class loader.
-     * @param module              The type's module.
+     * @param classLoader         The type's class loader or {@code null} if the boot loader.
+     * @param module              The type's module or {@code null} if the module system is not supported by the current VM.
      * @param classBeingRedefined The class being redefined or {@code null} if the type is not yet loaded.
      * @param protectionDomain    The type's protection domain.
      * @return An iterator over the transformers that are applied by this class file transformer if the given type is discovered.
      */
     Iterator<AgentBuilder.Transformer> iterator(TypeDescription typeDescription,
-                                                ClassLoader classLoader,
-                                                JavaModule module,
-                                                Class<?> classBeingRedefined,
+                                                @Nullable ClassLoader classLoader,
+                                                @Nullable JavaModule module,
+                                                @Nullable Class<?> classBeingRedefined,
                                                 ProtectionDomain protectionDomain);
 
     /**
@@ -389,9 +390,9 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
          * {@inheritDoc}
          */
         public Iterator<AgentBuilder.Transformer> iterator(TypeDescription typeDescription,
-                                                           ClassLoader classLoader,
-                                                           JavaModule module,
-                                                           Class<?> classBeingRedefined,
+                                                           @Nullable ClassLoader classLoader,
+                                                           @Nullable JavaModule module,
+                                                           @Nullable Class<?> classBeingRedefined,
                                                            ProtectionDomain protectionDomain) {
             return classFileTransformer.iterator(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
         }

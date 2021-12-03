@@ -26,6 +26,7 @@ import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.StreamDrainer;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
@@ -298,7 +299,7 @@ public interface ClassFileLocator extends Closeable {
          *
          * @param classLoader The class loader to query which must not be the bootstrap class loader, i.e. {@code null}.
          */
-        protected ForClassLoader(ClassLoader classLoader) {
+        protected ForClassLoader(@Nullable ClassLoader classLoader) {
             this.classLoader = classLoader;
         }
 
@@ -348,7 +349,7 @@ public interface ClassFileLocator extends Closeable {
          * @param classLoader The class loader to be used which might be {@code null} to represent the bootstrap loader.
          * @return A corresponding source locator.
          */
-        public static ClassFileLocator of(ClassLoader classLoader) {
+        public static ClassFileLocator of(@Nullable ClassLoader classLoader) {
             return new ForClassLoader(classLoader == null
                     ? BOOT_LOADER_PROXY
                     : classLoader);
@@ -441,12 +442,12 @@ public interface ClassFileLocator extends Closeable {
         /**
          * Locates the class file for the supplied type by requesting a resource from the class loader.
          *
-         * @param classLoader The class loader to query for the resource.
+         * @param classLoader The class loader to query for the resource or {@code null} to use the boot loader.
          * @param name        The name of the type for which to locate a class file.
          * @return A resolution for the class file.
          * @throws IOException If reading the class file causes an exception.
          */
-        protected static Resolution locate(ClassLoader classLoader, String name) throws IOException {
+        protected static Resolution locate(@Nullable ClassLoader classLoader, String name) throws IOException {
             InputStream inputStream = classLoader.getResourceAsStream(name.replace('.', '/') + CLASS_FILE_EXTENSION);
             if (inputStream != null) {
                 try {
@@ -514,7 +515,7 @@ public interface ClassFileLocator extends Closeable {
              *                    is used instead.
              * @return A corresponding source locator.
              */
-            public static ClassFileLocator of(ClassLoader classLoader) {
+            public static ClassFileLocator of(@Nullable ClassLoader classLoader) {
                 return classLoader == null || classLoader == ClassLoader.getSystemClassLoader() || classLoader == ClassLoader.getSystemClassLoader().getParent()
                         ? ForClassLoader.of(classLoader)
                         : new WeaklyReferenced(classLoader);
@@ -1224,9 +1225,9 @@ public interface ClassFileLocator extends Closeable {
          * Creates an agent-based class file locator.
          *
          * @param instrumentation The instrumentation to be used.
-         * @param classLoader     The class loader to read a class from.
+         * @param classLoader     The class loader to read a class from or {@code null} to use the boot loader.
          */
-        public ForInstrumentation(Instrumentation instrumentation, ClassLoader classLoader) {
+        public ForInstrumentation(Instrumentation instrumentation, @Nullable ClassLoader classLoader) {
             this(instrumentation, ClassLoadingDelegate.Default.of(classLoader));
         }
 
@@ -1260,10 +1261,10 @@ public interface ClassFileLocator extends Closeable {
          * Returns an agent-based class file locator for the given class loader and an already installed
          * Byte Buddy-agent.
          *
-         * @param classLoader The class loader that is expected to load the looked-up a class.
+         * @param classLoader The class loader that is expected to load the looked-up a class or {@code null} for the boot loader.
          * @return A class file locator for the given class loader based on a Byte Buddy agent.
          */
-        public static ClassFileLocator fromInstalledAgent(ClassLoader classLoader) {
+        public static ClassFileLocator fromInstalledAgent(@Nullable ClassLoader classLoader) {
             try {
                 return new ForInstrumentation((Instrumentation) ClassLoader.getSystemClassLoader()
                         .loadClass(INSTALLER_TYPE)
@@ -1369,6 +1370,7 @@ public interface ClassFileLocator extends Closeable {
              *
              * @return The underlying class loader.
              */
+            @Nullable
             ClassLoader getClassLoader();
 
             /**
@@ -1394,10 +1396,10 @@ public interface ClassFileLocator extends Closeable {
                 /**
                  * Creates a class loading delegate for the given class loader.
                  *
-                 * @param classLoader The class loader for which to create a delegate.
+                 * @param classLoader The class loader for which to create a delegate or {@code null} to use the boot loader.
                  * @return The class loading delegate for the provided class loader.
                  */
-                public static ClassLoadingDelegate of(ClassLoader classLoader) {
+                public static ClassLoadingDelegate of(@Nullable ClassLoader classLoader) {
                     return ForDelegatingClassLoader.isDelegating(classLoader)
                             ? new ForDelegatingClassLoader(classLoader)
                             : new Default(classLoader == null ? ClassLoader.getSystemClassLoader() : classLoader);
@@ -1440,11 +1442,11 @@ public interface ClassFileLocator extends Closeable {
                 private static final Dispatcher.Initializable DISPATCHER = doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
                 /**
-                 * Creates a class loading delegate for a delegating class loader.
+                 * Creates a class loading delegate for a delegating class loader
                  *
-                 * @param classLoader The delegating class loader.
+                 * @param classLoader The delegating class loader or {@code null} to use the boot loader.
                  */
-                protected ForDelegatingClassLoader(ClassLoader classLoader) {
+                protected ForDelegatingClassLoader(@Nullable ClassLoader classLoader) {
                     super(classLoader);
                 }
 
@@ -1463,10 +1465,10 @@ public interface ClassFileLocator extends Closeable {
                 /**
                  * Checks if a class loader is a delegating class loader.
                  *
-                 * @param classLoader The class loader to inspect.
+                 * @param classLoader The class loader to inspect or {@code null} to check the boot loader.
                  * @return {@code true} if the class loader is a delegating class loader.
                  */
-                protected static boolean isDelegating(ClassLoader classLoader) {
+                protected static boolean isDelegating(@Nullable ClassLoader classLoader) {
                     return classLoader != null && classLoader.getClass().getName().equals(DELEGATING_CLASS_LOADER_NAME);
                 }
 
@@ -1652,7 +1654,7 @@ public interface ClassFileLocator extends Closeable {
                  * @param classLoader The class loader to be used for looking up classes.
                  * @param types       A collection of classes that cannot be looked up explicitly.
                  */
-                public Explicit(ClassLoader classLoader, Collection<? extends Class<?>> types) {
+                public Explicit(@Nullable ClassLoader classLoader, Collection<? extends Class<?>> types) {
                     this(Default.of(classLoader), types);
                 }
 
@@ -1695,6 +1697,7 @@ public interface ClassFileLocator extends Closeable {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public ClassLoader getClassLoader() {
                     return fallbackDelegate.getClassLoader();
                 }
@@ -1733,7 +1736,7 @@ public interface ClassFileLocator extends Closeable {
              * @param classLoader The class loader that is expected to have loaded the looked-up a class.
              * @param typeName    The name of the type to look up.
              */
-            protected ExtractionClassFileTransformer(ClassLoader classLoader, String typeName) {
+            protected ExtractionClassFileTransformer(@Nullable ClassLoader classLoader, String typeName) {
                 this.classLoader = classLoader;
                 this.typeName = typeName;
             }
@@ -1742,9 +1745,9 @@ public interface ClassFileLocator extends Closeable {
              * {@inheritDoc}
              */
             @SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "The array is not to be modified by contract")
-            public byte[] transform(ClassLoader classLoader,
-                                    String internalName,
-                                    Class<?> redefinedType,
+            public byte[] transform(@Nullable ClassLoader classLoader,
+                                    @Nullable String internalName,
+                                    @Nullable Class<?> redefinedType,
                                     ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) {
                 if (internalName != null && isChildOf(this.classLoader).matches(classLoader) && typeName.equals(internalName.replace('/', '.'))) {

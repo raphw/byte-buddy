@@ -98,6 +98,7 @@
         <version.plugin.japicmp>0.15.3</version.plugin.japicmp>
         <version.android.sdk>4.1.1.4</version.android.sdk>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
+        <version.utility.jsr305>3.0.2</version.utility.jsr305>
         <spotbugs.skip>false</spotbugs.skip>
         <jacoco.skip>false</jacoco.skip>
         <repository.url>git@github.com:raphw/byte-buddy.git</repository.url>
@@ -143,6 +144,13 @@
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>findbugs-annotations</artifactId>
             <version>${version.utility.findbugs}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Allow for marking nullability of values.-->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>${version.utility.jsr305}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

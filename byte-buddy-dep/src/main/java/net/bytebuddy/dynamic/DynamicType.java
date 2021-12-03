@@ -43,6 +43,7 @@ import net.bytebuddy.utility.FileSystem;
 import net.bytebuddy.utility.GraalImageCode;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -5763,10 +5764,10 @@ public interface DynamicType {
          * created previously. Consider using a {@link net.bytebuddy.TypeCache}.
          * </p>
          *
-         * @param classLoader The class loader to use for this class loading.
+         * @param classLoader The class loader to use for this class loading or {@code null} for using the boot loader.
          * @return This dynamic type in its loaded state.
          */
-        Loaded<T> load(ClassLoader classLoader);
+        Loaded<T> load(@Nullable ClassLoader classLoader);
 
         /**
          * <p>
@@ -6138,7 +6139,7 @@ public interface DynamicType {
             /**
              * {@inheritDoc}
              */
-            public DynamicType.Loaded<T> load(ClassLoader classLoader) {
+            public DynamicType.Loaded<T> load(@Nullable ClassLoader classLoader) {
                 if (GraalImageCode.getCurrent().isNativeImageExecution()) {
                     return load(classLoader, ClassLoadingStrategy.ForPreloadedTypes.INSTANCE);
                 } else if (classLoader instanceof InjectionClassLoader && !((InjectionClassLoader) classLoader).isSealed()) {

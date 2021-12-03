@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.utility.CompoundList;
 
+import javax.annotation.Nullable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
@@ -87,7 +88,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @return The stored type or {@code null} if no type was stored.
      */
     @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended")
-    public Class<?> find(ClassLoader classLoader, T key) {
+    public Class<?> find(@Nullable ClassLoader classLoader, T key) {
         ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(new LookupKey(classLoader));
         if (storage == null) {
             return NOT_FOUND;
@@ -110,7 +111,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @return The supplied type or a previously submitted type for the same class loader and key combination.
      */
     @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended")
-    public Class<?> insert(ClassLoader classLoader, T key, Class<?> type) {
+    public Class<?> insert(@Nullable ClassLoader classLoader, T key, Class<?> type) {
         ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(new LookupKey(classLoader));
         if (storage == null) {
             storage = new ConcurrentHashMap<T, Reference<Class<?>>>();
@@ -144,7 +145,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @param lazy        A lazy creator for the type to insert of no previous type was stored in the cache.
      * @return The lazily created type or a previously submitted type for the same class loader and key combination.
      */
-    public Class<?> findOrInsert(ClassLoader classLoader, T key, Callable<Class<?>> lazy) {
+    public Class<?> findOrInsert(@Nullable ClassLoader classLoader, T key, Callable<Class<?>> lazy) {
         Class<?> type = find(classLoader, key);
         if (type != null) {
             return type;
@@ -166,7 +167,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @param monitor     A monitor to lock before creating the lazy type.
      * @return The lazily created type or a previously submitted type for the same class loader and key combination.
      */
-    public Class<?> findOrInsert(ClassLoader classLoader, T key, Callable<Class<?>> lazy, Object monitor) {
+    public Class<?> findOrInsert(@Nullable ClassLoader classLoader, T key, Callable<Class<?>> lazy, Object monitor) {
         Class<?> type = find(classLoader, key);
         if (type != null) {
             return type;
@@ -248,7 +249,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
          *
          * @param classLoader The represented class loader.
          */
-        protected LookupKey(ClassLoader classLoader) {
+        protected LookupKey(@Nullable ClassLoader classLoader) {
             this.classLoader = classLoader;
             hashCode = System.identityHashCode(classLoader);
         }
@@ -290,7 +291,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
          * @param classLoader    The represented class loader.
          * @param referenceQueue The reference queue to notify upon a garbage collection.
          */
-        protected StorageKey(ClassLoader classLoader, ReferenceQueue<? super ClassLoader> referenceQueue) {
+        protected StorageKey(@Nullable ClassLoader classLoader, ReferenceQueue<? super ClassLoader> referenceQueue) {
             super(classLoader, referenceQueue);
             hashCode = System.identityHashCode(classLoader);
         }

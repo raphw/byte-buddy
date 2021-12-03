@@ -17,6 +17,7 @@ package net.bytebuddy.agent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
@@ -955,10 +956,11 @@ public class ByteBuddyAgent {
                  * @param classPath   The class path required to load the virtual machine class.
                  * @return An appropriate accessor.
                  */
-                public static Accessor of(ClassLoader classLoader, File... classPath) {
+                public static Accessor of(@Nullable ClassLoader classLoader, File... classPath) {
                     try {
-                        return new Simple.WithExternalAttachment(classLoader.loadClass(VIRTUAL_MACHINE_TYPE_NAME),
-                                Arrays.asList(classPath));
+                        return new Simple.WithExternalAttachment(Class.forName(VIRTUAL_MACHINE_TYPE_NAME,
+                                false,
+                                classLoader), Arrays.asList(classPath));
                     } catch (ClassNotFoundException ignored) {
                         return Unavailable.INSTANCE;
                     }

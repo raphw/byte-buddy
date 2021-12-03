@@ -47,6 +47,7 @@ import net.bytebuddy.utility.visitor.LocalVariableAwareMethodVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -783,7 +784,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param classLoader The class loader to use as a supplement which can be {@code null} to represent the bootstrap loader.
              * @return An appropriate type pool resolver.
              */
-            public static TypePoolResolver of(ClassLoader classLoader) {
+            public static TypePoolResolver of(@Nullable ClassLoader classLoader) {
                 return new ForClassFileLocator(ClassFileLocator.ForClassLoader.of(classLoader));
             }
 

@@ -28,6 +28,7 @@ import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -269,7 +270,7 @@ public interface JavaConstant {
          * @param classLoader The class loader to use for resolving type information from the supplied value.
          * @return An appropriate Java constant representation.
          */
-        public static JavaConstant ofDescription(Object value, ClassLoader classLoader) {
+        public static JavaConstant ofDescription(Object value, @Nullable ClassLoader classLoader) {
             return ofDescription(value, ClassFileLocator.ForClassLoader.of(classLoader));
         }
 

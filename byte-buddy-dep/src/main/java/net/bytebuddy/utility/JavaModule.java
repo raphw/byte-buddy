@@ -23,6 +23,7 @@ import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.AnnotatedElement;
@@ -80,6 +81,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @param type The type for which to describe the module.
      * @return A representation of the type's module or {@code null} if the current VM does not support modules.
      */
+    @Nullable
     public static JavaModule ofType(Class<?> type) {
         Object module = RESOLVER.getModule(type);
         return module == null
@@ -131,6 +133,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @return An input stream for the resource or {@code null} if it does not exist.
      * @throws IOException If an I/O exception occurs.
      */
+    @Nullable
     public InputStream getResourceAsStream(String name) throws IOException {
         return MODULE.getResourceAsStream(module, name);
     }
@@ -140,6 +143,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      *
      * @return The class loader of the represented module.
      */
+    @Nullable
     public ClassLoader getClassLoader() {
         return MODULE.getClassLoader(module);
     }
@@ -266,6 +270,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @param value The {@code java.lang.Module} for which to return a class loader.
          * @return The module's class loader.
          */
+        @Nullable
         ClassLoader getClassLoader(Object value);
 
         /**
@@ -276,6 +281,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @return An input stream for the resource or {@code null} if it does not exist.
          * @throws IOException If an I/O exception occurs.
          */
+        @Nullable
         InputStream getResourceAsStream(Object value, String name) throws IOException;
 
         /**
