@@ -30,6 +30,11 @@ import java.util.concurrent.ConcurrentMap;
 public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
+     * A substitute value to store in a map instead of a {@code null} value.
+     */
+    private static final Object NULL_VALUE = new Object();
+
+    /**
      * The underlying matcher to apply for non-cached targets.
      */
     private final ElementMatcher<? super T> matcher;
@@ -56,7 +61,9 @@ public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
      * {@inheritDoc}
      */
     public boolean matches(T target) {
-        Boolean cached = map.get(target);
+        Boolean cached = map.get(target == null
+                ? NULL_VALUE
+                : target);
         if (cached == null) {
             cached = onCacheMiss(target);
         }
@@ -69,9 +76,12 @@ public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
      * @param target The element to be matched.
      * @return {@code true} if the element is matched.
      */
+    @SuppressWarnings("unchecked")
     protected boolean onCacheMiss(T target) {
         boolean cached = matcher.matches(target);
-        map.put(target, cached);
+        map.put(target == null
+                ? (T) NULL_VALUE
+                : target, cached);
         return cached;
     }
 
