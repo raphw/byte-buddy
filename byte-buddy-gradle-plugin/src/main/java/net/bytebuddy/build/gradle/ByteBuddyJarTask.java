@@ -17,6 +17,8 @@ package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.build.gradle.api.CompileClasspath;
+import net.bytebuddy.build.gradle.api.PathSensitive;
+import net.bytebuddy.build.gradle.api.PathSensitivity;
 import org.gradle.api.tasks.*;
 
 import javax.inject.Inject;
@@ -57,6 +59,7 @@ public class ByteBuddyJarTask extends AbstractByteBuddyTask {
      * @return The task's source jar.
      */
     @InputFile
+    @PathSensitive(PathSensitivity.RELATIVE)
     public File getSource() {
         return source;
     }
@@ -76,6 +79,7 @@ public class ByteBuddyJarTask extends AbstractByteBuddyTask {
      * @return The task's target jar.
      */
     @OutputFile
+    @PathSensitive(PathSensitivity.RELATIVE)
     public File getTarget() {
         return target;
     }

@@ -53,6 +53,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
      */
     @Incremental
     @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public abstract DirectoryProperty getSource();
 
     /**
