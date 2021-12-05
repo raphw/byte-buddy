@@ -21,6 +21,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.TypeDescription;
 
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
@@ -162,8 +163,8 @@ public interface LatentMatcher<T> {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(FieldDescription target) {
-                return target.asSignatureToken().equals(signatureToken);
+            public boolean matches(@Nullable FieldDescription target) {
+                return target != null && target.asSignatureToken().equals(signatureToken);
             }
         }
     }
@@ -218,8 +219,8 @@ public interface LatentMatcher<T> {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(MethodDescription target) {
-                return target.asSignatureToken().equals(signatureToken);
+            public boolean matches(@Nullable MethodDescription target) {
+                return target != null && target.asSignatureToken().equals(signatureToken);
             }
         }
     }

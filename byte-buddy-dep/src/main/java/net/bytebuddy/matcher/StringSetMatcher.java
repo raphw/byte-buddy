@@ -23,7 +23,7 @@ import java.util.Set;
  * An element matcher which checks if a string is in a set of strings.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class StringSetMatcher extends ElementMatcher.Junction.AbstractBase<String> {
+public class StringSetMatcher extends ElementMatcher.Junction.ForNonNullValues<String> {
 
     /**
      * The values to check against.
@@ -39,8 +39,10 @@ public class StringSetMatcher extends ElementMatcher.Junction.AbstractBase<Strin
         this.values = values;
     }
 
-    @Override
-    public boolean matches(String target) {
+    /**
+     * {@inheritDoc}
+     */
+    protected boolean doMatch(String target) {
         return values.contains(target);
     }
 

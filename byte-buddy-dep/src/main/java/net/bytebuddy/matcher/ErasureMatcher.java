@@ -27,7 +27,7 @@ import net.bytebuddy.description.type.TypeDescription;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class ErasureMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.AbstractBase<T> {
+public class ErasureMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The matcher to apply to the raw type of the matched element.
@@ -46,7 +46,7 @@ public class ErasureMatcher<T extends TypeDefinition> extends ElementMatcher.Jun
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return matcher.matches(target.asErasure());
     }
 

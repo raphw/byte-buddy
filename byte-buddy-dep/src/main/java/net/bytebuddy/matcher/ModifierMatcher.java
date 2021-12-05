@@ -25,7 +25,7 @@ import org.objectweb.asm.Opcodes;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatcher.Junction.AbstractBase<T> {
+public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * Returns a new element matcher that matches an element by its modifier.
@@ -56,7 +56,7 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return (mode.getModifiers() & target.getModifiers()) != 0;
     }
 

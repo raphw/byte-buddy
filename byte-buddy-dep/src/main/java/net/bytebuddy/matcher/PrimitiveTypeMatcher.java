@@ -24,12 +24,12 @@ import net.bytebuddy.description.type.TypeDefinition;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class PrimitiveTypeMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.AbstractBase<T> {
+public class PrimitiveTypeMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return target.isPrimitive();
     }
 

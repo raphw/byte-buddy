@@ -25,7 +25,7 @@ import net.bytebuddy.description.type.TypeDescription;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class FieldTypeMatcher<T extends FieldDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class FieldTypeMatcher<T extends FieldDescription> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The type matcher to apply to the field's type.
@@ -44,7 +44,7 @@ public class FieldTypeMatcher<T extends FieldDescription> extends ElementMatcher
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return matcher.matches(target.getType());
     }
 

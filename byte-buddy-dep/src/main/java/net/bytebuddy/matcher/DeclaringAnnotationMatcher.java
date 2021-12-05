@@ -25,7 +25,7 @@ import net.bytebuddy.description.annotation.AnnotationSource;
  * @param <T> The actual matched type of this matcher.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class DeclaringAnnotationMatcher<T extends AnnotationSource> extends ElementMatcher.Junction.AbstractBase<T> {
+public class DeclaringAnnotationMatcher<T extends AnnotationSource> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The matcher to be applied to the provided annotation list.
@@ -44,7 +44,7 @@ public class DeclaringAnnotationMatcher<T extends AnnotationSource> extends Elem
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return matcher.matches(target.getDeclaredAnnotations());
     }
 

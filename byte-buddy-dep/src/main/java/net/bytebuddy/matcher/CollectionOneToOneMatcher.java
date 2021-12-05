@@ -30,7 +30,7 @@ import java.util.List;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class CollectionOneToOneMatcher<T> extends ElementMatcher.Junction.AbstractBase<Iterable<? extends T>> {
+public class CollectionOneToOneMatcher<T> extends ElementMatcher.Junction.ForNonNullValues<Iterable<? extends T>> {
 
     /**
      * The list of element matchers to match any elements of the matched iterable collection against.
@@ -50,7 +50,7 @@ public class CollectionOneToOneMatcher<T> extends ElementMatcher.Junction.Abstra
     /**
      * {@inheritDoc}
      */
-    public boolean matches(Iterable<? extends T> target) {
+    protected boolean doMatch(Iterable<? extends T> target) {
         if ((target instanceof Collection) && ((Collection<?>) target).size() != matchers.size()) {
             return false;
         }

@@ -31,7 +31,7 @@ import net.bytebuddy.description.NamedElement;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class NameMatcher<T extends NamedElement> extends ElementMatcher.Junction.AbstractBase<T> {
+public class NameMatcher<T extends NamedElement> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The matcher that is applied to a byte code element's source code name.
@@ -50,7 +50,7 @@ public class NameMatcher<T extends NamedElement> extends ElementMatcher.Junction
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return matcher.matches(target.getActualName());
     }
 

@@ -23,6 +23,7 @@ import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -316,7 +317,7 @@ public interface FieldRegistry {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean matches(FieldDescription target) {
+                public boolean matches(@Nullable FieldDescription target) {
                     return matcher.matches(target);
                 }
             }

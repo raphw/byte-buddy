@@ -29,6 +29,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.FileSystem;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.lang.annotation.*;
 import java.lang.reflect.Constructor;
@@ -4765,7 +4766,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(TypeDescription target) {
+        public boolean matches(@Nullable TypeDescription target) {
             return matcher.matches(target);
         }
     }

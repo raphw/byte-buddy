@@ -29,7 +29,7 @@ import java.util.Set;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class HasSuperTypeMatcher<T extends TypeDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class HasSuperTypeMatcher<T extends TypeDescription> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The matcher to apply to any super type of the matched type.
@@ -48,7 +48,7 @@ public class HasSuperTypeMatcher<T extends TypeDescription> extends ElementMatch
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         Set<TypeDescription> previous = new HashSet<TypeDescription>();
         for (TypeDefinition typeDefinition : target) {
             if (!previous.add(typeDefinition.asErasure())) { // Main type can be an interface.

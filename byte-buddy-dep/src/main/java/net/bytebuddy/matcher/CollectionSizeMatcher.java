@@ -26,7 +26,7 @@ import java.util.Collection;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class CollectionSizeMatcher<T extends Iterable<?>> extends ElementMatcher.Junction.AbstractBase<T> {
+public class CollectionSizeMatcher<T extends Iterable<?>> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The expected size of the matched collection.
@@ -46,7 +46,7 @@ public class CollectionSizeMatcher<T extends Iterable<?>> extends ElementMatcher
      * {@inheritDoc}
      */
     @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE", justification = "Iteration required to count size of an iterable")
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         if (target instanceof Collection) {
             return ((Collection<?>) target).size() == size;
         } else {

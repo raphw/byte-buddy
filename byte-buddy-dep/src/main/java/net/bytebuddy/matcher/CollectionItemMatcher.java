@@ -24,7 +24,7 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class CollectionItemMatcher<T> extends ElementMatcher.Junction.AbstractBase<Iterable<? extends T>> {
+public class CollectionItemMatcher<T> extends ElementMatcher.Junction.ForNonNullValues<Iterable<? extends T>> {
 
     /**
      * The element matcher to apply to each element of a collection.
@@ -43,7 +43,7 @@ public class CollectionItemMatcher<T> extends ElementMatcher.Junction.AbstractBa
     /**
      * {@inheritDoc}
      */
-    public boolean matches(Iterable<? extends T> target) {
+    protected boolean doMatch(Iterable<? extends T> target) {
         for (T value : target) {
             if (matcher.matches(value)) {
                 return true;

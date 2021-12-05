@@ -17,6 +17,8 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
+import javax.annotation.Nullable;
+
 /**
  * An element matcher that reverses the matching result of another matcher.
  *
@@ -42,7 +44,7 @@ public class NegatingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    public boolean matches(@Nullable T target) {
         return !matcher.matches(target);
     }
 

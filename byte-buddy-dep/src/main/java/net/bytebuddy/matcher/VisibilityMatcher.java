@@ -25,7 +25,7 @@ import net.bytebuddy.description.type.TypeDescription;
  * @param <T>The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class VisibilityMatcher<T extends ByteCodeElement> extends ElementMatcher.Junction.AbstractBase<T> {
+public class VisibilityMatcher<T extends ByteCodeElement> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The type that is to be checked for its viewing rights.
@@ -44,7 +44,7 @@ public class VisibilityMatcher<T extends ByteCodeElement> extends ElementMatcher
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return target.isVisibleTo(typeDescription);
     }
 

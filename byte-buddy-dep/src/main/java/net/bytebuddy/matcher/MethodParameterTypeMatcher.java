@@ -25,7 +25,7 @@ import net.bytebuddy.description.type.TypeDescription;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class MethodParameterTypeMatcher<T extends ParameterDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class MethodParameterTypeMatcher<T extends ParameterDescription> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The matcher to apply to the type of the parameter.
@@ -44,7 +44,7 @@ public class MethodParameterTypeMatcher<T extends ParameterDescription> extends 
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return matcher.matches(target.getType());
     }
 

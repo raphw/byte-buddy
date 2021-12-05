@@ -28,7 +28,7 @@ import java.util.List;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class CollectionErasureMatcher<T extends Iterable<? extends TypeDefinition>> extends ElementMatcher.Junction.AbstractBase<T> {
+public class CollectionErasureMatcher<T extends Iterable<? extends TypeDefinition>> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The matcher to be applied to the raw types.
@@ -47,7 +47,7 @@ public class CollectionErasureMatcher<T extends Iterable<? extends TypeDefinitio
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>();
         for (TypeDefinition typeDefinition : target) {
             typeDescriptions.add(typeDefinition.asErasure());

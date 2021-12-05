@@ -27,7 +27,7 @@ import net.bytebuddy.description.type.TypeDescription;
  * @param <T> The exact type of the element being matched.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class DeclaringTypeMatcher<T extends DeclaredByType> extends ElementMatcher.Junction.AbstractBase<T> {
+public class DeclaringTypeMatcher<T extends DeclaredByType> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The type matcher to be applied if the target element is declared in a type.
@@ -46,7 +46,7 @@ public class DeclaringTypeMatcher<T extends DeclaredByType> extends ElementMatch
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         TypeDefinition declaringType = target.getDeclaringType();
         return declaringType != null && matcher.matches(declaringType.asGenericType());
     }

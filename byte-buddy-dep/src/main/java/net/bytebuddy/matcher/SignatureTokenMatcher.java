@@ -24,7 +24,7 @@ import net.bytebuddy.description.method.MethodDescription;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class SignatureTokenMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class SignatureTokenMatcher<T extends MethodDescription> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The matcher to match the signature token against.
@@ -43,7 +43,7 @@ public class SignatureTokenMatcher<T extends MethodDescription> extends ElementM
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return matcher.matches(target.asSignatureToken());
     }
 

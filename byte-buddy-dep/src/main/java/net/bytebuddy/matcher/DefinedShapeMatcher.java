@@ -26,7 +26,7 @@ import net.bytebuddy.description.ByteCodeElement;
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class DefinedShapeMatcher<T extends ByteCodeElement.TypeDependant<S, ?>, S extends ByteCodeElement.TypeDependant<?, ?>>
-        extends ElementMatcher.Junction.AbstractBase<T> {
+        extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The matcher to apply onto the defined shape of the matched entity.
@@ -45,7 +45,7 @@ public class DefinedShapeMatcher<T extends ByteCodeElement.TypeDependant<S, ?>, 
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return matcher.matches(target.asDefined());
     }
 

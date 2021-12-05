@@ -25,7 +25,7 @@ import net.bytebuddy.description.type.TypeDescription;
  * @param <T>The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class AccessibilityMatcher<T extends ByteCodeElement> extends ElementMatcher.Junction.AbstractBase<T> {
+public class AccessibilityMatcher<T extends ByteCodeElement> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The type that is to be checked for its viewing rights.
@@ -44,7 +44,7 @@ public class AccessibilityMatcher<T extends ByteCodeElement> extends ElementMatc
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return target.isAccessibleTo(typeDescription);
     }
 

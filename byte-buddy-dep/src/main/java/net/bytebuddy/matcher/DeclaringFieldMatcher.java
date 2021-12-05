@@ -26,7 +26,7 @@ import net.bytebuddy.description.type.TypeDefinition;
  * @param <T> The exact type of the annotated element that is matched.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class DeclaringFieldMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.AbstractBase<T> {
+public class DeclaringFieldMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The field matcher to apply to the declared fields of the matched type description.
@@ -45,7 +45,7 @@ public class DeclaringFieldMatcher<T extends TypeDefinition> extends ElementMatc
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return matcher.matches(target.getDeclaredFields());
     }
 

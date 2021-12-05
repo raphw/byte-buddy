@@ -30,6 +30,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
@@ -264,8 +265,8 @@ public interface AsmVisitorWrapper {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(FieldDescription.InDefinedShape target) {
-                return target != null && matcher.matches(target);
+            public boolean matches(@Nullable FieldDescription.InDefinedShape target) {
+                return matcher.matches(target);
             }
 
             /**
@@ -555,8 +556,8 @@ public interface AsmVisitorWrapper {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(MethodDescription target) {
-                return target != null && matcher.matches(target);
+            public boolean matches(@Nullable MethodDescription target) {
+                return matcher.matches(target);
             }
 
             /**

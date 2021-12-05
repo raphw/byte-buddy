@@ -23,7 +23,7 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
  * {@link net.bytebuddy.matcher.StringMatcher.Mode}.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> {
+public class StringMatcher extends ElementMatcher.Junction.ForNonNullValues<String> {
 
     /**
      * The text value to match against.
@@ -49,7 +49,7 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
     /**
      * {@inheritDoc}
      */
-    public boolean matches(String target) {
+    protected boolean doMatch(String target) {
         return mode.matches(value, target);
     }
 

@@ -17,6 +17,8 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
+import javax.annotation.Nullable;
+
 /**
  * An element matcher that returns a fixed result.
  *
@@ -64,7 +66,7 @@ public class BooleanMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    public boolean matches(@Nullable T target) {
         return matches;
     }
 

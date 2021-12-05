@@ -232,5 +232,29 @@ public interface ElementMatcher<T> {
                 return stringBuilder.append(")").toString();
             }
         }
+
+        /**
+         * An abstract base implementation that rejects null values.
+         *
+         * @param <W> The type of the object that is being matched.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        abstract class ForNonNullValues<W> extends AbstractBase<W> {
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean matches(@Nullable W target) {
+                return target != null && doMatch(target);
+            }
+
+            /**
+             * Matches the supplied value if it was found not to be {@code null}.
+             *
+             * @param target The instance to be matched.
+             * @return {@code true} if the given element is matched by this matcher or {@code false} otherwise.
+             */
+            protected abstract boolean doMatch(W target);
+        }
     }
 }

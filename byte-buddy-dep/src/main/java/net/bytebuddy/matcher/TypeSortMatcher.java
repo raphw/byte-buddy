@@ -24,7 +24,7 @@ import net.bytebuddy.description.type.TypeDefinition;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class TypeSortMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.AbstractBase<T> {
+public class TypeSortMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * An element matcher to be applied to the type's sort.
@@ -43,7 +43,7 @@ public class TypeSortMatcher<T extends TypeDefinition> extends ElementMatcher.Ju
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return matcher.matches(target.getSort());
     }
 

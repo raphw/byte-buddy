@@ -38,6 +38,7 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
+import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -470,7 +471,10 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(Plugin.Engine.Source.Element target) {
+        public boolean matches(@Nullable Plugin.Engine.Source.Element target) {
+            if (target == null) {
+                return false;
+            }
             for (String name : names) {
                 if (target.getName().equals(name + JAVA_CLASS_EXTENSION)
                         || target.getName().startsWith(name + "$")

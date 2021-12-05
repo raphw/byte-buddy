@@ -18,6 +18,7 @@ package net.bytebuddy.matcher;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
+import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentMap;
 
@@ -55,7 +56,7 @@ public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    public boolean matches(@Nullable T target) {
         Boolean cached = map.get(target);
         if (cached == null) {
             cached = onCacheMiss(target);

@@ -25,7 +25,7 @@ import net.bytebuddy.description.type.TypeDescription;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class MethodReturnTypeMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class MethodReturnTypeMatcher<T extends MethodDescription> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The type matcher to apply to the matched element's return type.
@@ -44,7 +44,7 @@ public class MethodReturnTypeMatcher<T extends MethodDescription> extends Elemen
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return matcher.matches(target.getReturnType());
     }
 

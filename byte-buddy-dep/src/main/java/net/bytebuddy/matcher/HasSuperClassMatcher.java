@@ -25,7 +25,7 @@ import net.bytebuddy.description.type.TypeDescription;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class HasSuperClassMatcher<T extends TypeDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class HasSuperClassMatcher<T extends TypeDescription> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The matcher to apply to any super class of the matched type.
@@ -44,7 +44,7 @@ public class HasSuperClassMatcher<T extends TypeDescription> extends ElementMatc
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         if (target.isInterface()) {
             return matcher.matches(TypeDescription.Generic.OBJECT);
         }

@@ -27,7 +27,7 @@ import java.util.List;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class MethodParameterTypesMatcher<T extends ParameterList<?>> extends ElementMatcher.Junction.AbstractBase<T> {
+public class MethodParameterTypesMatcher<T extends ParameterList<?>> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The matcher to apply to the type of the parameter.
@@ -46,7 +46,7 @@ public class MethodParameterTypesMatcher<T extends ParameterList<?>> extends Ele
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return matcher.matches(target.asTypeList());
     }
 

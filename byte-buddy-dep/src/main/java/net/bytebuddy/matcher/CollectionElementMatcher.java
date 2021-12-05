@@ -26,7 +26,7 @@ import java.util.Iterator;
  * @param <T> The type of the elements contained by the collection.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class CollectionElementMatcher<T> extends ElementMatcher.Junction.AbstractBase<Iterable<? extends T>> {
+public class CollectionElementMatcher<T> extends ElementMatcher.Junction.ForNonNullValues<Iterable<? extends T>> {
 
     /**
      * The index of the matched element.
@@ -52,7 +52,7 @@ public class CollectionElementMatcher<T> extends ElementMatcher.Junction.Abstrac
     /**
      * {@inheritDoc}
      */
-    public boolean matches(Iterable<? extends T> target) {
+    protected boolean doMatch(Iterable<? extends T> target) {
         Iterator<? extends T> iterator = target.iterator();
         for (int index = 0; index < this.index; index++) {
             if (iterator.hasNext()) {

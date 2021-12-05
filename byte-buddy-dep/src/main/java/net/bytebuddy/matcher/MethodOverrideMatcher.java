@@ -32,7 +32,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isVirtual;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class MethodOverrideMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class MethodOverrideMatcher<T extends MethodDescription> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The matcher that is to be applied to the type that declares a method of the same shape.
@@ -51,7 +51,7 @@ public class MethodOverrideMatcher<T extends MethodDescription> extends ElementM
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         Set<TypeDescription> duplicates = new HashSet<TypeDescription>();
         for (TypeDefinition typeDefinition : target.getDeclaringType()) {
             if (matches(target, typeDefinition) || matches(target, typeDefinition.getInterfaces(), duplicates)) {

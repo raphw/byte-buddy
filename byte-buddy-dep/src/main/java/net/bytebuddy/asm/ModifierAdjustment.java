@@ -31,6 +31,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -372,7 +373,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(T target) {
+        public boolean matches(@Nullable T target) {
             return matcher.matches(target);
         }
 

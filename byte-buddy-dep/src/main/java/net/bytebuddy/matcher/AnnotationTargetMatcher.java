@@ -26,7 +26,7 @@ import java.lang.annotation.ElementType;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class AnnotationTargetMatcher<T extends AnnotationDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class AnnotationTargetMatcher<T extends AnnotationDescription> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The targeted element type.
@@ -45,7 +45,7 @@ public class AnnotationTargetMatcher<T extends AnnotationDescription> extends El
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return target.getElementTypes().contains(elementType);
     }
 

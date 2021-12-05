@@ -24,7 +24,7 @@ import net.bytebuddy.description.NamedElement;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class DescriptorMatcher<T extends NamedElement.WithDescriptor> extends ElementMatcher.Junction.AbstractBase<T> {
+public class DescriptorMatcher<T extends NamedElement.WithDescriptor> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * A matcher to apply to the descriptor.
@@ -43,7 +43,7 @@ public class DescriptorMatcher<T extends NamedElement.WithDescriptor> extends El
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return matcher.matches(target.getDescriptor());
     }
 

@@ -24,7 +24,7 @@ import net.bytebuddy.description.type.TypeDescription;
  * @param <T> The exact type of the object that is matched.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class InstanceTypeMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
+public class InstanceTypeMatcher<T> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The matcher to apply to the object's type.
@@ -43,8 +43,8 @@ public class InstanceTypeMatcher<T> extends ElementMatcher.Junction.AbstractBase
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
-        return target != null && matcher.matches(TypeDescription.ForLoadedType.of(target.getClass()));
+    protected boolean doMatch(T target) {
+        return matcher.matches(TypeDescription.ForLoadedType.of(target.getClass()));
     }
 
     @Override

@@ -28,6 +28,7 @@ import net.bytebuddy.implementation.HashCodeMethod;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 
+import javax.annotation.Nullable;
 import java.lang.annotation.*;
 import java.util.Comparator;
 
@@ -99,8 +100,8 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
     /**
      * {@inheritDoc}
      */
-    public boolean matches(TypeDescription target) {
-        return target.getDeclaredAnnotations().isAnnotationPresent(Enhance.class);
+    public boolean matches(@Nullable TypeDescription target) {
+        return target != null && target.getDeclaredAnnotations().isAnnotationPresent(Enhance.class);
     }
 
     /**
@@ -444,7 +445,10 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(FieldDescription target) {
+        public boolean matches(@Nullable FieldDescription target) {
+            if (target == null) {
+                return false;
+            }
             AnnotationDescription.Loadable<ValueHandling> annotation = target.getDeclaredAnnotations().ofType(ValueHandling.class);
             return annotation != null && annotation.getValue(VALUE_HANDLING_VALUE).load(ValueHandling.class.getClassLoader()).resolve(ValueHandling.Sort.class) == sort;
         }

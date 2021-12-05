@@ -25,7 +25,7 @@ import net.bytebuddy.description.type.TypeDescription;
  * @param <T> The actual matched type of this matcher.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class InheritedAnnotationMatcher<T extends TypeDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class InheritedAnnotationMatcher<T extends TypeDescription> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The matcher to be applied to the provided annotation list.
@@ -44,7 +44,7 @@ public class InheritedAnnotationMatcher<T extends TypeDescription> extends Eleme
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return matcher.matches(target.getInheritedAnnotations());
     }
 

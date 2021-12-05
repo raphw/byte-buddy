@@ -25,7 +25,7 @@ import net.bytebuddy.description.method.MethodDescription;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class MethodSortMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class MethodSortMatcher<T extends MethodDescription> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * Returns an element matcher that matches a specific sort of method description.
@@ -56,7 +56,7 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
     /**
      * {@inheritDoc}
      */
-    public boolean matches(T target) {
+    protected boolean doMatch(T target) {
         return sort.isSort(target);
     }
 

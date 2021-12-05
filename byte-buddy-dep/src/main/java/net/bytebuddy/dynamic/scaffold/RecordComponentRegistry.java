@@ -23,6 +23,7 @@ import net.bytebuddy.implementation.attribute.RecordComponentAttributeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -288,7 +289,7 @@ public interface RecordComponentRegistry {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean matches(RecordComponentDescription target) {
+                public boolean matches(@Nullable RecordComponentDescription target) {
                     return matcher.matches(target);
                 }
             }
