@@ -23,6 +23,7 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.*;
 import java.security.PrivilegedAction;
 import java.util.Iterator;
@@ -74,6 +75,7 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
      *
      * @return The super class of this type or {@code null} if no super class exists for this type.
      */
+    @Nullable
     TypeDescription.Generic getSuperClass();
 
     /**
@@ -114,6 +116,7 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
      *
      * @return The component type of this type or {@code null} if this type does not represent an array type.
      */
+    @Nullable
     TypeDefinition getComponentType();
 
     /**

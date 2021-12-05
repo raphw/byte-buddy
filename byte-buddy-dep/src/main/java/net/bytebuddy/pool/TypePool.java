@@ -2736,6 +2736,7 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Generic getSuperClass() {
                 return superClassDescriptor == null || isInterface()
                         ? Generic.UNDEFINED

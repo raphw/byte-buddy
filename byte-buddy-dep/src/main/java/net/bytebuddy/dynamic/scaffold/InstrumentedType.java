@@ -34,6 +34,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaType;
 
+import javax.annotation.Nullable;
 import java.lang.annotation.ElementType;
 import java.util.*;
 
@@ -1377,6 +1378,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return enclosingMethod;
         }
@@ -1384,6 +1386,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription getEnclosingType() {
             return enclosingType;
         }
@@ -1412,11 +1415,12 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public PackageDescription getPackage() {
             int packageIndex = name.lastIndexOf('.');
-            return new PackageDescription.Simple(packageIndex == -1
-                    ? EMPTY_NAME
-                    : name.substring(0, packageIndex));
+            return packageIndex == -1
+                    ? PackageDescription.UNDEFINED
+                    : new PackageDescription.Simple(name.substring(0, packageIndex));
         }
 
         /**
@@ -1429,6 +1433,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription getDeclaringType() {
             return declaringType;
         }
@@ -1436,6 +1441,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public Generic getSuperClass() {
             return superClass == null
                     ? Generic.UNDEFINED
@@ -1898,6 +1904,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public Generic getSuperClass() {
             return typeDescription.getSuperClass();
         }
@@ -1940,6 +1947,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public PackageDescription getPackage() {
             return typeDescription.getPackage();
         }
@@ -1947,6 +1955,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription getEnclosingType() {
             return typeDescription.getEnclosingType();
         }
@@ -1954,6 +1963,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription getDeclaringType() {
             return typeDescription.getDeclaringType();
         }
@@ -1975,6 +1985,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public String getGenericSignature() {
             // Embrace use of native generic signature by direct delegation.
             return typeDescription.getGenericSignature();
@@ -2197,6 +2208,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
+        @Nullable
         public ClassFileVersion getClassFileVersion() {
             return typeDescription.getClassFileVersion();
         }

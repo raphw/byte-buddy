@@ -186,11 +186,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     /**
      * {@inheritDoc}
      */
+    @Nullable
     TypeDescription getComponentType();
 
     /**
      * {@inheritDoc}
      */
+    @Nullable
     TypeDescription getDeclaringType();
 
     /**
@@ -207,6 +209,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return A description of the enclosing method of this type or {@code null} if there is no such method.
      */
+    @Nullable
     MethodDescription.InDefinedShape getEnclosingMethod();
 
     /**
@@ -214,6 +217,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return A description of the enclosing type of this type or {@code null} if there is no such type.
      */
+    @Nullable
     TypeDescription getEnclosingType();
 
     /**
@@ -240,6 +244,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return The canonical name of this type. Might be {@code null}.
      */
+    @Nullable
     String getCanonicalName();
 
     /**
@@ -268,6 +273,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return The package of the type described by this instance or {@code null} if the described type does not imply a package.
      */
+    @Nullable
     PackageDescription getPackage();
 
     /**
@@ -363,6 +369,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return This types default value.
      */
+    @Nullable
     Object getDefaultValue();
 
     /**
@@ -436,6 +443,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return This type's class file version or {@code null} if it cannot be resolved.
      */
+    @Nullable
     ClassFileVersion getClassFileVersion();
 
     /**
@@ -3572,6 +3580,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Generic getSuperClass() {
                 TypeDescription erasure = asErasure();
                 Generic superClass = erasure.getSuperClass();
@@ -3849,6 +3858,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getComponentType() {
                     Class<?> componentType = type.getComponentType();
                     return componentType == null
@@ -3912,6 +3922,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getComponentType() {
                     TypeDescription componentType = typeDescription.getComponentType();
                     return componentType == null
@@ -4052,6 +4063,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getSuperClass() {
                     Generic superClass = typeDescription.getSuperClass();
                     return superClass == null
@@ -4141,6 +4153,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Generic getSuperClass() {
                 return TypeDescription.Generic.OBJECT;
             }
@@ -4352,6 +4365,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getComponentType() {
                     return Sort.describe(genericArrayType.getGenericComponentType(), annotationReader.ofComponentType());
                 }
@@ -4440,6 +4454,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Generic getSuperClass() {
                 throw new IllegalStateException("A wildcard does not imply a super type definition: " + this);
             }
@@ -4868,6 +4883,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Generic getSuperClass() {
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
@@ -5338,6 +5354,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getSuperClass() {
                     Generic superClass = super.getSuperClass();
                     return superClass == null
@@ -5487,6 +5504,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Generic getSuperClass() {
                 throw new IllegalStateException("A type variable does not imply a super type definition: " + this);
             }
@@ -5712,6 +5730,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getSuperClass() {
                     throw new IllegalStateException("A symbolic type variable does not imply a super type definition: " + this);
                 }
@@ -6225,6 +6244,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getSuperClass() {
                     return LazySuperClass.of(this);
                 }
@@ -6429,6 +6449,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getSuperClass() {
                     return resolve().getSuperClass();
                 }
@@ -8539,6 +8560,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription getComponentType() {
             Class<?> componentType = type.getComponentType();
             return componentType == null
@@ -8568,6 +8590,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public Generic getSuperClass() {
             if (RAW_TYPES) {
                 return type.getSuperclass() == null
@@ -9023,6 +9046,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription getComponentType() {
             return arity == 1
                     ? componentType
@@ -9039,6 +9063,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public Generic getSuperClass() {
             return TypeDescription.Generic.OBJECT;
         }
@@ -9303,6 +9328,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public Generic getSuperClass() {
             return superClass;
         }
@@ -9467,6 +9493,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public Generic getSuperClass() {
             return TypeDescription.Generic.OBJECT;
         }
@@ -9686,6 +9713,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public Generic getSuperClass() {
             Generic superClass = delegate.getSuperClass();
             return superClass == null
@@ -9944,6 +9972,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @Nullable
             @CachedReturnPlugin.Enhance("superClass")
             public Generic getSuperClass() {
                 Generic superClass = delegate.getSuperClass();
