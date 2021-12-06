@@ -15,8 +15,6 @@
  */
 package net.bytebuddy.build.gradle.api;
 
-import org.gradle.api.Transformer;
-
 /**
  * A placeholder representation of Gradle's {@code org.gradle.api.tasks.PathSensitivity} type.
  */

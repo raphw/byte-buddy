@@ -15,11 +15,14 @@
  */
 package net.bytebuddy.build.gradle.api;
 
-import org.gradle.api.Transformer;
+import java.lang.annotation.*;
 
 /**
  * A placeholder representation of Gradle's {@code org.gradle.api.tasks.PathSensitive} type.
  */
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.FIELD})
 @GradleType("org.gradle.api.tasks.PathSensitive")
 public @interface PathSensitive {
 
