@@ -128,9 +128,11 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
             if (getProject().delete(getTarget().getAsFileTree())) {
                 getLogger().debug("Deleted all target files in {}", getTarget());
             }
-            source = new Plugin.Engine.Source.ForFolder(getSource().getAsFile().get());
+            source = source().exists()
+                    ? new Plugin.Engine.Source.ForFolder(source())
+                    : Plugin.Engine.Source.Empty.INSTANCE;
         }
-        doApply(source, new Plugin.Engine.Target.ForFolder(getTarget().getAsFile().get()));
+        doApply(source, new Plugin.Engine.Target.ForFolder(target()));
     }
 
     /**
@@ -228,6 +230,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
          * Creates a new Byte Buddy task with an incremental class path.
          */
         @Inject
-        public WithIncrementalClassPath() { }
+        public WithIncrementalClassPath() {
+        }
     }
 }
