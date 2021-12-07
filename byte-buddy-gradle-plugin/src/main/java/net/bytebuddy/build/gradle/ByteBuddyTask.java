@@ -118,11 +118,14 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
         Plugin.Engine.Source source;
         if (inputChanges.isIncremental() && getIncrementalResolver() != null) {
             getLogger().debug("Applying incremental build");
-            source = new IncrementalSource(source(), getIncrementalResolver().apply(getProject(),
+            List<File> files = getIncrementalResolver().apply(getProject(),
                     inputChanges.getFileChanges(getSource()),
                     source(),
                     target(),
-                    classPath()));
+                    classPath());
+            source = files.isEmpty() || !source().exists()
+                    ? Plugin.Engine.Source.Empty.INSTANCE
+                    : new IncrementalSource(source(), files);
         } else {
             getLogger().debug("Applying non-incremental build");
             if (getProject().delete(getTarget().getAsFileTree())) {
