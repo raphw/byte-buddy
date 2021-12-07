@@ -4267,7 +4267,7 @@ public interface TypePool {
                                                              TypePool typePool,
                                                              Map<String, List<AnnotationToken>> annotationTokens,
                                                              RecordComponentDescription definingRecordComponent) {
-                                return TokenizedGenericType.of(typePool, recordComponentTypeToken, recordTypeDescriptor, annotationTokens, TypeVariableSource.UNDEFINED);
+                                return TokenizedGenericType.of(typePool, recordComponentTypeToken, recordTypeDescriptor, annotationTokens, definingRecordComponent.getDeclaringType().asErasure());
                             }
                         }
                     }
