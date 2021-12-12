@@ -9592,9 +9592,9 @@ public interface AgentBuilder {
         private static final String INSTALLER_TYPE = "net.bytebuddy.agent.Installer";
 
         /**
-         * The name of the {@code net.bytebuddy.agent.Installer} getter for reading an installed {@link Instrumentation}.
+         * The name of the getter for {@code net.bytebuddy.agent.Installer} to read the {@link Instrumentation}.
          */
-        private static final String INSTRUMENTATION_GETTER = "getInstrumentation";
+        private static final String INSTALLER_GETTER = "getInstrumentation";
 
         /**
          * Indicator for access to a static member via reflection to make the code more readable.
@@ -10677,6 +10677,27 @@ public interface AgentBuilder {
         }
 
         /**
+         * Resolves the instrumentation provided by {@code net.bytebuddy.agent.Installer}.
+         *
+         * @return The installed instrumentation instance.
+         */
+        private static Instrumentation resolveByteBuddyAgentInstrumentation() {
+            try {
+                Class<?> installer = ClassLoader.getSystemClassLoader().loadClass(INSTALLER_TYPE);
+                JavaModule source = JavaModule.ofType(AgentBuilder.class), target = JavaModule.ofType(installer);
+                if (source != null && !source.canRead(target)) {
+                    Class<?> module = Class.forName("java.lang.Module");
+                    module.getMethod("addReads", module).invoke(source.unwrap(), target.unwrap());
+                }
+                return (Instrumentation) installer.getMethod(INSTALLER_GETTER).invoke(STATIC_MEMBER);
+            } catch (RuntimeException exception) {
+                throw exception;
+            } catch (Exception exception) {
+                throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
+            }
+        }
+
+        /**
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer installOn(Instrumentation instrumentation) {
@@ -10694,16 +10715,7 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer installOnByteBuddyAgent() {
-            try {
-                return installOn((Instrumentation) ClassLoader.getSystemClassLoader()
-                        .loadClass(INSTALLER_TYPE)
-                        .getMethod(INSTRUMENTATION_GETTER)
-                        .invoke(STATIC_MEMBER));
-            } catch (RuntimeException exception) {
-                throw exception;
-            } catch (Exception exception) {
-                throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
-            }
+            return installOn(resolveByteBuddyAgentInstrumentation());
         }
 
         /**
@@ -10727,16 +10739,7 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer) {
-            try {
-                return patchOn((Instrumentation) ClassLoader.getSystemClassLoader()
-                        .loadClass(INSTALLER_TYPE)
-                        .getMethod(INSTRUMENTATION_GETTER)
-                        .invoke(STATIC_MEMBER), classFileTransformer);
-            } catch (RuntimeException exception) {
-                throw exception;
-            } catch (Exception exception) {
-                throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
-            }
+            return patchOn(resolveByteBuddyAgentInstrumentation(), classFileTransformer);
         }
 
         /**

@@ -759,9 +759,18 @@ public class ByteBuddyAgent {
     private static Instrumentation doGetInstrumentation(boolean required) {
         Instrumentation instrumentation;
         try {
-            instrumentation = (Instrumentation) Class.forName(Installer.class.getName(), true, ClassLoader.getSystemClassLoader())
-                    .getMethod(INSTRUMENTATION_METHOD)
-                    .invoke(STATIC_MEMBER);
+            Class<?> installer = Class.forName(Installer.class.getName(), true, ClassLoader.getSystemClassLoader());
+            try {
+                Class<?> module = Class.forName("java.lang.Module");
+                Method getModule = Class.class.getMethod("getModule");
+                Object source = getModule.invoke(ByteBuddyAgent.class), target = getModule.invoke(installer);
+                if (!((Boolean) module.getMethod("canRead", module).invoke(source, target))) {
+                    module.getMethod("addReads", module).invoke(source, target);
+                }
+            } catch (ClassNotFoundException ignored) {
+                /* empty */
+            }
+            instrumentation = (Instrumentation) installer.getMethod(INSTRUMENTATION_METHOD).invoke(STATIC_MEMBER);
         } catch (Exception ignored) {
             instrumentation = UNAVAILABLE;
         }
