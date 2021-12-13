@@ -548,6 +548,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          *
          * @return This type's owner type or {@code null} if no owner type exists.
          */
+        @Nullable
         Generic getOwnerType();
 
         /**
@@ -586,6 +587,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         Generic getComponentType();
 
         /**
@@ -3850,6 +3852,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getOwnerType() {
                     Class<?> declaringClass = this.type.getDeclaringClass();
                     return declaringClass == null
@@ -3914,6 +3917,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getOwnerType() {
                     TypeDescription declaringType = typeDescription.getDeclaringType();
                     return declaringType == null
@@ -3953,6 +3957,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The non-generic type's declaring type.
                  */
+                @Nullable
                 private final TypeDescription.Generic declaringType;
 
                 /**
@@ -3977,7 +3982,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param declaringType    The non-generic type's declaring type.
                  * @param annotationSource The annotation source to query for the declared annotations.
                  */
-                private Latent(TypeDescription typeDescription, TypeDescription declaringType, AnnotationSource annotationSource) {
+                private Latent(TypeDescription typeDescription, @Nullable TypeDescription declaringType, AnnotationSource annotationSource) {
                     this(typeDescription,
                             declaringType == null
                                     ? Generic.UNDEFINED
@@ -3992,7 +3997,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param declaringType    The non-generic type's declaring type.
                  * @param annotationSource The annotation source to query for the declared annotations.
                  */
-                protected Latent(TypeDescription typeDescription, Generic declaringType, AnnotationSource annotationSource) {
+                protected Latent(TypeDescription typeDescription, @Nullable Generic declaringType, AnnotationSource annotationSource) {
                     this.typeDescription = typeDescription;
                     this.declaringType = declaringType;
                     this.annotationSource = annotationSource;
@@ -4001,6 +4006,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getOwnerType() {
                     return declaringType;
                 }
@@ -4008,6 +4014,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getComponentType() {
                     TypeDescription componentType = typeDescription.getComponentType();
                     return componentType == null
@@ -4104,6 +4111,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getOwnerType() {
                     TypeDescription declaringType = typeDescription.getDeclaringType();
                     return declaringType == null
@@ -5189,6 +5197,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getOwnerType() {
                     java.lang.reflect.Type ownerType = parameterizedType.getOwnerType();
                     return ownerType == null
@@ -5273,6 +5282,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * This parameterized type's owner type or {@code null} if no owner type exists.
                  */
+                @Nullable
                 private final Generic ownerType;
 
                 /**
@@ -5294,7 +5304,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param annotationSource The annotation source to query for the declared annotations.
                  */
                 public Latent(TypeDescription rawType,
-                              Generic ownerType,
+                              @Nullable Generic ownerType,
                               List<? extends Generic> parameters,
                               AnnotationSource annotationSource) {
                     this.rawType = rawType;
@@ -5313,6 +5323,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getOwnerType() {
                     return ownerType;
                 }
@@ -5465,6 +5476,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getOwnerType() {
                     TypeDescription declaringType = typeDescription.getDeclaringType();
                     return declaringType == null
@@ -7946,6 +7958,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeVariableSource getEnclosingSource() {
             MethodDescription enclosingMethod = getEnclosingMethod();
             return enclosingMethod == null
@@ -8635,6 +8648,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             Method enclosingMethod = type.getEnclosingMethod();
             Constructor<?> enclosingConstructor = type.getEnclosingConstructor();
@@ -9084,6 +9098,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return MethodDescription.UNDEFINED;
         }
@@ -9514,6 +9529,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return MethodDescription.UNDEFINED;
         }

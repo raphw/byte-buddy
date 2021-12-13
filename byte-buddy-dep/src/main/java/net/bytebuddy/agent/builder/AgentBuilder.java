@@ -11136,6 +11136,7 @@ public interface AgentBuilder {
             /**
              * Indicates that a type should not be ignored.
              */
+            @Nullable
             private static final byte[] NONE = null;
 
             /**

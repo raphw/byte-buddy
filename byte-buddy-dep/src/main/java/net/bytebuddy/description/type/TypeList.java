@@ -52,6 +52,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     /**
      * Represents that a type list does not contain any values for ASM interoperability which is represented by {@code null}.
      */
+    @Nullable
     @SuppressFBWarnings(value = {"MS_MUTABLE_ARRAY", "MS_OOI_PKGPROTECT"}, justification = "Value is null")
     String[] NO_INTERFACES = null;
 
@@ -60,6 +61,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
      *
      * @return An array of all internal names or {@code null} if the list is empty.
      */
+    @Nullable
     String[] toInternalNames();
 
     /**
@@ -89,6 +91,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public String[] toInternalNames() {
             String[] internalNames = new String[size()];
             int i = 0;
@@ -146,6 +149,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public String[] toInternalNames() {
             String[] internalNames = new String[types.size()];
             int i = 0;

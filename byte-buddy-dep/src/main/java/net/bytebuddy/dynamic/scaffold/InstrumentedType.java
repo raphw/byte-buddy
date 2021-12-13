@@ -1978,6 +1978,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return typeDescription.getEnclosingMethod();
         }

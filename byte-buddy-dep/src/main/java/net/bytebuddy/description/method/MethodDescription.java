@@ -842,6 +842,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeVariableSource getEnclosingSource() {
             return isStatic()
                     ? TypeVariableSource.UNDEFINED

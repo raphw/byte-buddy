@@ -1739,6 +1739,7 @@ public interface ClassFileLocator extends Closeable {
             /**
              * An indicator that an attempted class file transformation did not alter the handed class file.
              */
+            @Nullable
             private static final byte[] DO_NOT_TRANSFORM = null;
 
             /**

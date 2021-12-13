@@ -46,6 +46,7 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
      *
      * @return The enclosing source or {@code null} if no such source exists.
      */
+    @Nullable
     TypeVariableSource getEnclosingSource();
 
     /**
@@ -59,8 +60,9 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
      * Finds a particular variable with the given name in the closes type variable source that is visible from this instance.
      *
      * @param symbol The symbolic name of the type variable.
-     * @return The type variable.
+     * @return The type variable or {@code null} if it was not found.
      */
+    @Nullable
     TypeDescription.Generic findVariable(String symbol);
 
     /**
@@ -140,6 +142,7 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription.Generic findVariable(String symbol) {
             TypeList.Generic typeVariables = getTypeVariables().filter(named(symbol));
             if (typeVariables.isEmpty()) {
