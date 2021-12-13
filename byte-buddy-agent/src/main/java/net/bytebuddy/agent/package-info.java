@@ -16,4 +16,5 @@
 /**
  * The Byte Buddy agent allows the redefinition of classes at runtime.
  */
+@NonnullByDefault
 package net.bytebuddy.agent;

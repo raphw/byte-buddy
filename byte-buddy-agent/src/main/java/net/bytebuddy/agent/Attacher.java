@@ -17,6 +17,7 @@ package net.bytebuddy.agent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -100,7 +101,7 @@ public class Attacher {
                                   String processId,
                                   String agent,
                                   boolean isNative,
-                                  String argument) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+                                  @Nullable String argument) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Object virtualMachineInstance = virtualMachineType
                 .getMethod(ATTACH_METHOD_NAME, String.class)
                 .invoke(STATIC_MEMBER, processId);

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.utility;
+package net.bytebuddy.agent;
 
 import javax.annotation.Nonnull;
 import javax.annotation.meta.TypeQualifierDefault;
