@@ -30,6 +30,8 @@ public class ClassLoaderParentMatcher<T extends ClassLoader> extends ElementMatc
     /**
      * The class loader that is matched for being a child of the matched class loader.
      */
+    @Nullable
+    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
     private final ClassLoader classLoader;
 
     /**

@@ -2018,7 +2018,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(@Nullable ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
                     try {
                         return (Class<?>) defineClass.invoke(unsafe,
                                 name,
@@ -2072,7 +2072,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(@Nullable ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
                     throw new UnsupportedOperationException("Could not access Unsafe class: " + message);
                 }
             }
@@ -2223,7 +2223,7 @@ public interface ClassInjector {
              * @param classLoader The class loader to inject into or {@code null} to inject into the bootstrap loader.
              * @return An appropriate class injector.
              */
-            public ClassInjector make(ClassLoader classLoader) {
+            public ClassInjector make(@Nullable ClassLoader classLoader) {
                 return make(classLoader, ClassLoadingStrategy.NO_PROTECTION_DOMAIN);
             }
 
@@ -2234,7 +2234,7 @@ public interface ClassInjector {
              * @param protectionDomain The protection domain to apply or {@code null} if no protection domain should be used.
              * @return An appropriate class injector.
              */
-            public ClassInjector make(ClassLoader classLoader, ProtectionDomain protectionDomain) {
+            public ClassInjector make(@Nullable ClassLoader classLoader, @Nullable ProtectionDomain protectionDomain) {
                 return new UsingUnsafe(classLoader, protectionDomain, dispatcher);
             }
 
@@ -2552,6 +2552,7 @@ public interface ClassInjector {
             /**
              * The class loader to load classes from.
              */
+            @Nullable
             private final ClassLoader classLoader;
 
             /**
@@ -2559,7 +2560,7 @@ public interface ClassInjector {
              *
              * @param classLoader The class loader to load classes from.
              */
-            Target(ClassLoader classLoader) {
+            Target(@Nullable ClassLoader classLoader) {
                 this.classLoader = classLoader;
             }
 
@@ -2568,6 +2569,7 @@ public interface ClassInjector {
              *
              * @return The class loader to load classes from.
              */
+            @Nullable
             protected ClassLoader getClassLoader() {
                 return classLoader;
             }
@@ -2817,7 +2819,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(@Nullable ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
                     return jvm.JVM_DefineClass(JNIEnv.CURRENT,
                             name.replace('.', '/'),
                             classLoader,
@@ -2857,7 +2859,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(@Nullable ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
                     throw new UnsupportedOperationException("JNA is not available and JNA-based injection cannot be used: " + error);
                 }
             }
@@ -2882,10 +2884,10 @@ public interface ClassInjector {
                 @SuppressWarnings("checkstyle:methodname")
                 Class<?> JVM_DefineClass(JNIEnv env,
                                          String name,
-                                         ClassLoader classLoader,
+                                         @Nullable ClassLoader classLoader,
                                          byte[] binaryRepresentation,
                                          int length,
-                                         ProtectionDomain protectionDomain) throws LastErrorException;
+                                         @Nullable ProtectionDomain protectionDomain) throws LastErrorException;
             }
         }
     }

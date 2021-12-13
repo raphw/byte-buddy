@@ -150,7 +150,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param parent          The {@link java.lang.ClassLoader} that is the parent of this class loader.
      * @param typeDefinitions A map of fully qualified class names pointing to their binary representations.
      */
-    public ByteArrayClassLoader(ClassLoader parent, Map<String, byte[]> typeDefinitions) {
+    public ByteArrayClassLoader(@Nullable ClassLoader parent, Map<String, byte[]> typeDefinitions) {
         this(parent, true, typeDefinitions);
     }
 
@@ -161,7 +161,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param sealed          {@code true} if this class loader is sealed.
      * @param typeDefinitions A map of fully qualified class names pointing to their binary representations.
      */
-    public ByteArrayClassLoader(ClassLoader parent, boolean sealed, Map<String, byte[]> typeDefinitions) {
+    public ByteArrayClassLoader(@Nullable ClassLoader parent, boolean sealed, Map<String, byte[]> typeDefinitions) {
         this(parent, sealed, typeDefinitions, PersistenceHandler.LATENT);
     }
 
@@ -172,7 +172,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param typeDefinitions    A map of fully qualified class names pointing to their binary representations.
      * @param persistenceHandler The persistence handler of this class loader.
      */
-    public ByteArrayClassLoader(ClassLoader parent, Map<String, byte[]> typeDefinitions, PersistenceHandler persistenceHandler) {
+    public ByteArrayClassLoader(@Nullable ClassLoader parent, Map<String, byte[]> typeDefinitions, PersistenceHandler persistenceHandler) {
         this(parent, true, typeDefinitions, persistenceHandler);
     }
 
@@ -184,7 +184,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param typeDefinitions    A map of fully qualified class names pointing to their binary representations.
      * @param persistenceHandler The persistence handler of this class loader.
      */
-    public ByteArrayClassLoader(ClassLoader parent, boolean sealed, Map<String, byte[]> typeDefinitions, PersistenceHandler persistenceHandler) {
+    public ByteArrayClassLoader(@Nullable ClassLoader parent, boolean sealed, Map<String, byte[]> typeDefinitions, PersistenceHandler persistenceHandler) {
         this(parent, sealed, typeDefinitions, ClassLoadingStrategy.NO_PROTECTION_DOMAIN, persistenceHandler, PackageDefinitionStrategy.Trivial.INSTANCE);
     }
 
@@ -197,9 +197,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param packageDefinitionStrategy The package definer to be queried for package definitions.
      * @param persistenceHandler        The persistence handler of this class loader.
      */
-    public ByteArrayClassLoader(ClassLoader parent,
+    public ByteArrayClassLoader(@Nullable ClassLoader parent,
                                 Map<String, byte[]> typeDefinitions,
-                                ProtectionDomain protectionDomain,
+                                @Nullable ProtectionDomain protectionDomain,
                                 PersistenceHandler persistenceHandler,
                                 PackageDefinitionStrategy packageDefinitionStrategy) {
         this(parent, true, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy);
@@ -311,7 +311,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param types       The unloaded types to be loaded.
      * @return A map of the given type descriptions pointing to their loaded representations.
      */
-    public static Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+    public static Map<TypeDescription, Class<?>> load(@Nullable ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
         return load(classLoader,
                 types,
                 ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
@@ -1084,7 +1084,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param typeDefinitions    A map of fully qualified class names pointing to their binary representations.
          * @param persistenceHandler The persistence handler of this class loader.
          */
-        public ChildFirst(ClassLoader parent, Map<String, byte[]> typeDefinitions, PersistenceHandler persistenceHandler) {
+        public ChildFirst(@Nullable ClassLoader parent, Map<String, byte[]> typeDefinitions, PersistenceHandler persistenceHandler) {
             super(parent, typeDefinitions, persistenceHandler);
         }
 
@@ -1109,9 +1109,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param persistenceHandler        The persistence handler of this class loader.
          * @param packageDefinitionStrategy The package definer to be queried for package definitions.
          */
-        public ChildFirst(ClassLoader parent,
+        public ChildFirst(@Nullable ClassLoader parent,
                           Map<String, byte[]> typeDefinitions,
-                          ProtectionDomain protectionDomain,
+                          @Nullable ProtectionDomain protectionDomain,
                           PersistenceHandler persistenceHandler,
                           PackageDefinitionStrategy packageDefinitionStrategy) {
             super(parent, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy);
@@ -1183,7 +1183,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param types       The unloaded types to be loaded.
          * @return A map of the given type descriptions pointing to their loaded representations.
          */
-        public static Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+        public static Map<TypeDescription, Class<?>> load(@Nullable ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             return load(classLoader,
                     types,
                     ClassLoadingStrategy.NO_PROTECTION_DOMAIN,

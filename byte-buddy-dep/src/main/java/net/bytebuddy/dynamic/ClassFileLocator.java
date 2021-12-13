@@ -1380,6 +1380,11 @@ public interface ClassFileLocator extends Closeable {
             class Default implements ClassLoadingDelegate {
 
                 /**
+                 * A class loader that does not define resources of its own but allows querying for resources supplied by the boot loader.
+                 */
+                private static final ClassLoader BOOT_LOADER_PROXY = doPrivileged(BootLoaderProxyCreationAction.INSTANCE);
+
+                /**
                  * The underlying class loader.
                  */
                 protected final ClassLoader classLoader;
@@ -1402,7 +1407,7 @@ public interface ClassFileLocator extends Closeable {
                 public static ClassLoadingDelegate of(@Nullable ClassLoader classLoader) {
                     return ForDelegatingClassLoader.isDelegating(classLoader)
                             ? new ForDelegatingClassLoader(classLoader)
-                            : new Default(classLoader == null ? ClassLoader.getSystemClassLoader() : classLoader);
+                            : new Default(classLoader == null ? BOOT_LOADER_PROXY : classLoader);
                 }
 
                 /**
@@ -1415,8 +1420,29 @@ public interface ClassFileLocator extends Closeable {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public ClassLoader getClassLoader() {
-                    return classLoader;
+                    return classLoader == BOOT_LOADER_PROXY
+                            ? ClassLoadingStrategy.BOOTSTRAP_LOADER
+                            : classLoader;
+                }
+
+                /**
+                 * A privileged action for creating a proxy class loader for the boot class loader.
+                 */
+                protected enum BootLoaderProxyCreationAction implements PrivilegedAction<ClassLoader> {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ClassLoader run() {
+                        return new URLClassLoader(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER);
+                    }
                 }
             }
 
@@ -1444,9 +1470,9 @@ public interface ClassFileLocator extends Closeable {
                 /**
                  * Creates a class loading delegate for a delegating class loader
                  *
-                 * @param classLoader The delegating class loader or {@code null} to use the boot loader.
+                 * @param classLoader The delegating class loader.
                  */
-                protected ForDelegatingClassLoader(@Nullable ClassLoader classLoader) {
+                protected ForDelegatingClassLoader(ClassLoader classLoader) {
                     super(classLoader);
                 }
 

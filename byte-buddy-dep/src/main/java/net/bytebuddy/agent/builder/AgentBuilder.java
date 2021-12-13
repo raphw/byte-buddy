@@ -4768,6 +4768,7 @@ public interface AgentBuilder {
         /**
          * Indicates that an exception is handled.
          */
+        @Nullable
         Throwable SUPPRESS_ERROR = null;
 
         /**
@@ -4796,6 +4797,7 @@ public interface AgentBuilder {
          * @param throwable            The throwable that causes the error.
          * @return The error to propagate or {@code null} if the error is handled. Any subsequent listeners are not called if the exception is handled.
          */
+        @Nullable
         Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable);
 
         /**
@@ -4919,6 +4921,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
                 return SUPPRESS_ERROR;
             }
@@ -5164,6 +5167,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
                 for (InstallationListener installationListener : installationListeners) {
                     if (throwable == SUPPRESS_ERROR) {
@@ -9603,17 +9607,20 @@ public interface AgentBuilder {
         /**
          * Indicator for access to a static member via reflection to make the code more readable.
          */
+        @Nullable
         private static final Object STATIC_MEMBER = null;
 
         /**
          * The value that is to be returned from a {@link java.lang.instrument.ClassFileTransformer} to indicate
          * that no class file transformation is to be applied.
          */
+        @Nullable
         private static final byte[] NO_TRANSFORMATION = null;
 
         /**
          * Indicates that a loaded type should be considered as non-available.
          */
+        @Nullable
         private static final Class<?> NO_LOADED_TYPE = null;
 
         /**
@@ -11578,6 +11585,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public byte[] transform(@Nullable ClassLoader classLoader,
                                     @Nullable String internalTypeName,
                                     @Nullable Class<?> classBeingRedefined,
@@ -11612,6 +11620,7 @@ public interface AgentBuilder {
              * @param binaryRepresentation The class file of the instrumented class in its current state.
              * @return The transformed class file or an empty byte array if this transformer does not apply an instrumentation.
              */
+            @Nullable
             protected byte[] transform(@Nullable Object rawModule,
                                        @Nullable ClassLoader classLoader,
                                        @Nullable String internalTypeName,

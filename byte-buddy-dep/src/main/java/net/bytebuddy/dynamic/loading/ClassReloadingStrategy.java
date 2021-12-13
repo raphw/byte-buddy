@@ -441,6 +441,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
         /**
          * Indicates that a class is not redefined.
          */
+        @Nullable
         private static final byte[] NO_REDEFINITION = null;
 
         /**
@@ -526,9 +527,10 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
              * {@inheritDoc}
              */
             @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Value is always null")
-            public byte[] transform(ClassLoader classLoader,
-                                    String internalTypeName,
-                                    Class<?> classBeingRedefined,
+            @Nullable
+            public byte[] transform(@Nullable ClassLoader classLoader,
+                                    @Nullable String internalTypeName,
+                                    @Nullable Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain,
                                     byte[] classfileBuffer) {
                 if (internalTypeName == null) {
@@ -563,9 +565,10 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
             /**
              * {@inheritDoc}
              */
-            public byte[] transform(ClassLoader classLoader,
-                                    String internalTypeName,
-                                    Class<?> classBeingRedefined,
+            @Nullable
+            public byte[] transform(@Nullable ClassLoader classLoader,
+                                    @Nullable String internalTypeName,
+                                    @Nullable Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain,
                                     byte[] classfileBuffer) {
                 return NO_REDEFINITION;
