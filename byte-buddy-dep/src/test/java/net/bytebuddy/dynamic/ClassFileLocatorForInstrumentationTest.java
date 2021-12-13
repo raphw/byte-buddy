@@ -69,9 +69,15 @@ public class ClassFileLocatorForInstrumentationTest {
     @Test
     public void testExplicitLookupBootstrapClassLoader() throws Exception {
         ClassFileLocator.ForInstrumentation.ClassLoadingDelegate classLoadingDelegate = ClassFileLocator.ForInstrumentation.ClassLoadingDelegate.Explicit.of(Object.class);
-        assertThat(classLoadingDelegate.getClassLoader(), is(ClassLoader.getSystemClassLoader()));
+        assertThat(classLoadingDelegate.getClassLoader(), nullValue(ClassLoader.class));
         assertThat(classLoadingDelegate.locate(Object.class.getName()), CoreMatchers.<Class<?>>is(Object.class));
         assertThat(classLoadingDelegate.locate(String.class.getName()), CoreMatchers.<Class<?>>is(String.class));
+    }
+
+    @Test(expected = ClassNotFoundException.class)
+    public void testExplicitLookupBootstrapClassLoaderDoesNotFindSystemClass() throws Exception {
+        ClassFileLocator.ForInstrumentation.ClassLoadingDelegate classLoadingDelegate = ClassFileLocator.ForInstrumentation.ClassLoadingDelegate.Explicit.of(Object.class);
+        classLoadingDelegate.locate(Foo.class.getName());
     }
 
     @Test
