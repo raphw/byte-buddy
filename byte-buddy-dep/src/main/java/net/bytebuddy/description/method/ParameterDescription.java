@@ -32,6 +32,7 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
+import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
@@ -981,11 +982,13 @@ public interface ParameterDescription extends AnnotationSource,
         /**
          * Indicator for a method parameter without an explicit name.
          */
+        @Nullable
         public static final String NO_NAME = null;
 
         /**
          * Indicator for a method parameter without explicit modifiers.
          */
+        @Nullable
         public static final Integer NO_MODIFIERS = null;
 
         /**

@@ -22,6 +22,7 @@ import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -1438,6 +1439,7 @@ public interface VirtualMachine {
                         /**
                          * A pointer to the operation argument.
                          */
+                        @Nullable
                         public Pointer dataPointer;
 
                         /**
@@ -1448,6 +1450,7 @@ public interface VirtualMachine {
                         /**
                          * A pointer to the operation descriptor.
                          */
+                        @Nullable
                         public Pointer descriptorPointer;
 
                         /**
@@ -1458,6 +1461,7 @@ public interface VirtualMachine {
                         /**
                          * A pointer to the operation result.
                          */
+                        @Nullable
                         public Pointer resultPointer;
 
                         /**
@@ -2549,11 +2553,13 @@ public interface VirtualMachine {
                         /**
                          * The descriptor's length.
                          */
+                        @Nullable
                         public WinDef.DWORD length;
 
                         /**
                          * A pointer to the descriptor.
                          */
+                        @Nullable
                         public Pointer securityDescriptor;
 
                         /**

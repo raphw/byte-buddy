@@ -48,6 +48,7 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -1184,6 +1185,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }
@@ -1281,6 +1283,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }
@@ -1378,6 +1381,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }

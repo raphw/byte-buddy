@@ -468,6 +468,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      *
                      * @return The resolved argument if the resolution was successful.
                      */
+                    @Nullable
                     Object getArgument();
 
                     /**
@@ -2399,6 +2400,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         /**
                          * The current element or {@code null} if no further elements are available.
                          */
+                        @Nullable
                         private Element current;
 
                         /**
@@ -4726,7 +4728,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(TypeDescription target) {
+        public boolean matches(@Nullable TypeDescription target) {
             return false;
         }
 

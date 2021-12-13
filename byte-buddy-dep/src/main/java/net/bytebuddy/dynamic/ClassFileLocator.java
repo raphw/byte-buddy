@@ -1204,6 +1204,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * Indicator for access to a static member via reflection to make the code more readable.
          */
+        @Nullable
         private static final Object STATIC_MEMBER = null;
 
         /**
@@ -1753,6 +1754,7 @@ public interface ClassFileLocator extends Closeable {
             /**
              * The binary representation of the looked-up class.
              */
+            @Nullable
             @SuppressFBWarnings(value = "VO_VOLATILE_REFERENCE_TO_ARRAY", justification = "The array is not to be modified by contract")
             private volatile byte[] binaryRepresentation;
 
@@ -1788,6 +1790,7 @@ public interface ClassFileLocator extends Closeable {
              * @return The binary representation of the class file or {@code null} if no such class file could
              * be located.
              */
+            @Nullable
             @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The array is not to be modified by contract")
             protected byte[] getBinaryRepresentation() {
                 return binaryRepresentation;

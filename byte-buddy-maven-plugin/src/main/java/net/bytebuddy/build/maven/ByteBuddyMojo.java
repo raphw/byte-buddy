@@ -260,7 +260,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                         }
                     }
                     source = new Plugin.Engine.Source.Filtering(new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory())), new FilePrefixMatcher(names));
-                    getLog().debug("Incrementally processing: " + names.toString());
+                    getLog().debug("Incrementally processing: " + names);
                 } else {
                     source = new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory()));
                     getLog().debug("Cannot build incrementally - all class files are processed");

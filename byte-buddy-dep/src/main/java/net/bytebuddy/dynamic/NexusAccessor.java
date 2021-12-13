@@ -263,6 +263,7 @@ public class NexusAccessor {
             /**
              * Indicates that a static method is invoked by reflection.
              */
+            @Nullable
             private static final Object STATIC_METHOD = null;
 
             /**

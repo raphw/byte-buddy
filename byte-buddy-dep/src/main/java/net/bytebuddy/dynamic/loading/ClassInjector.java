@@ -464,7 +464,7 @@ public interface ClassInjector {
                     /**
                      * {@inheritDoc}
                      */
-                    public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                    public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
                         throw new UnsupportedOperationException("Cannot define class using reflection: " + message);
                     }
 
@@ -675,7 +675,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
                     try {
                         return (Class<?>) defineClass.invoke(classLoader, name, binaryRepresentation, 0, binaryRepresentation.length, protectionDomain);
                     } catch (IllegalAccessException exception) {
@@ -1027,7 +1027,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
                     try {
                         return (Class<?>) defineClass.invoke(accessor, classLoader, name, binaryRepresentation, 0, binaryRepresentation.length, protectionDomain);
                     } catch (IllegalAccessException exception) {
@@ -1271,7 +1271,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
                     try {
                         return (Class<?>) defineClass.invoke(classLoader, name, binaryRepresentation, 0, binaryRepresentation.length, protectionDomain);
                     } catch (IllegalAccessException exception) {
@@ -1454,7 +1454,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
                     throw new UnsupportedOperationException("Cannot define class using reflection: " + message);
                 }
 

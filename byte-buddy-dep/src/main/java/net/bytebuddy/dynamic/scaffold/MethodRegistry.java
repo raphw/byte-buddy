@@ -790,7 +790,7 @@ public interface MethodRegistry {
                 /**
                  * The minimum required visibility of this method.
                  */
-                private Visibility visibility;
+                private final Visibility visibility;
 
                 /**
                  * Is {@code true} if this entry represents a bridge method.

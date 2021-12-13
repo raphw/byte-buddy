@@ -31,6 +31,7 @@ import net.bytebuddy.implementation.auxiliary.TrivialType;
 import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -279,6 +280,7 @@ public interface MethodRebaseResolver {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }
@@ -432,6 +434,7 @@ public interface MethodRebaseResolver {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }

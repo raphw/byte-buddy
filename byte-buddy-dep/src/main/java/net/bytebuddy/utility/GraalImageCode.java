@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 
+import javax.annotation.Nullable;
 import java.security.PrivilegedAction;
 
 /**
@@ -52,8 +53,10 @@ public enum GraalImageCode {
     NONE(false, false);
 
     /**
-     * The current image code.
+     * The current image code or {@code null} if the image code was not yet resolved. The image code must be
+     * initialized lazily to avoid that it's bound to a value during native compilation.
      */
+    @Nullable
     private static GraalImageCode current;
 
     /**

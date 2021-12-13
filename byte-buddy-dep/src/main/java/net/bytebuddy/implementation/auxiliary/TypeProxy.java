@@ -370,7 +370,7 @@ public class TypeProxy implements AuxiliaryType {
                                                                      MethodDescription instrumentedMethod) {
                     return implementationTarget.invokeDefault(instrumentedMethod.asSignatureToken(), proxiedType);
                 }
-            };
+            }
         }
     }
 

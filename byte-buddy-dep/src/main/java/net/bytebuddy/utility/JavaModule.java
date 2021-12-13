@@ -37,6 +37,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
     /**
      * Canonical representation of a Java module on a JVM that does not support the module API.
      */
+    @Nullable
     public static final JavaModule UNSUPPORTED = null;
 
     /**

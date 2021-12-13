@@ -41,7 +41,7 @@ public class MavenCoordinate {
     /**
      * The projects packaging.
      */
-    private String packaging;
+    private final String packaging;
 
     /**
      * Creates a new Maven coordinate.

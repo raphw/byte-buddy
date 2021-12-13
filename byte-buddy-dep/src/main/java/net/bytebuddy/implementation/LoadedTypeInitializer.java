@@ -22,6 +22,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -92,6 +93,7 @@ public interface LoadedTypeInitializer {
         /**
          * A value for accessing a static field.
          */
+        @Nullable
         private static final Object STATIC_FIELD = null;
 
         /**

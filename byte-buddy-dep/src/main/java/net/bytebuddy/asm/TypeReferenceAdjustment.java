@@ -26,6 +26,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
 
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -114,16 +115,19 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
         /**
          * Indicates that an annotation is not of interest.
          */
+        @Nullable
         private static final AnnotationVisitor IGNORE_ANNOTATION = null;
 
         /**
          * Indicates that a field is not of interest.
          */
+        @Nullable
         private static final FieldVisitor IGNORE_FIELD = null;
 
         /**
          * Indicates that a method is not of interest.
          */
+        @Nullable
         private static final MethodVisitor IGNORE_METHOD = null;
 
         /**

@@ -58,6 +58,7 @@ import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.commons.SimpleRemapper;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -1115,6 +1116,7 @@ public interface TypeWriter<T> {
                         /**
                          * {@inheritDoc}
                          */
+                        @Nullable
                         public AnnotationValue<?, ?> getDefaultValue() {
                             return AnnotationValue.UNDEFINED;
                         }
@@ -1384,6 +1386,7 @@ public interface TypeWriter<T> {
                     /**
                      * {@inheritDoc}
                      */
+                    @Nullable
                     public AnnotationValue<?, ?> getDefaultValue() {
                         return AnnotationValue.UNDEFINED;
                     }
@@ -1474,6 +1477,7 @@ public interface TypeWriter<T> {
                     /**
                      * {@inheritDoc}
                      */
+                    @Nullable
                     public AnnotationValue<?, ?> getDefaultValue() {
                         return bridgeTarget.getDefaultValue();
                     }
@@ -1731,6 +1735,7 @@ public interface TypeWriter<T> {
         /**
          * Indicates an empty reference in a class file which is expressed by {@code null}.
          */
+        @Nullable
         private static final String NO_REFERENCE = null;
 
         /**
@@ -2277,16 +2282,19 @@ public interface TypeWriter<T> {
             /**
              * Indicates that a field is ignored.
              */
+            @Nullable
             private static final FieldVisitor IGNORE_FIELD = null;
 
             /**
              * Indicates that a method is ignored.
              */
+            @Nullable
             private static final MethodVisitor IGNORE_METHOD = null;
 
             /**
              * The constraint to assert the members against. The constraint is first defined when the general class information is visited.
              */
+            @Nullable
             private Constraint constraint;
 
             /**
@@ -3806,21 +3814,25 @@ public interface TypeWriter<T> {
             /**
              * Indicates that a field should be ignored.
              */
+            @Nullable
             private static final FieldVisitor IGNORE_FIELD = null;
 
             /**
              * Indicates that a method should be ignored.
              */
+            @Nullable
             private static final MethodVisitor IGNORE_METHOD = null;
 
             /**
              * Indicates that a record component should be ignored.
              */
+            @Nullable
             private static final RecordComponentVisitor IGNORE_RECORD_COMPONENT = null;
 
             /**
              * Indicates that an annotation should be ignored.
              */
+            @Nullable
             private static final AnnotationVisitor IGNORE_ANNOTATION = null;
 
             /**
@@ -3950,6 +3962,7 @@ public interface TypeWriter<T> {
                 /**
                  * The implementation context that is used for creating a class or {@code null} if it was not registered.
                  */
+                @Nullable
                 private Implementation.Context.ExtractableView implementationContext;
 
                 /**
@@ -4777,16 +4790,19 @@ public interface TypeWriter<T> {
                     /**
                      * The method pool to use or {@code null} if the pool was not yet initialized.
                      */
+                    @Nullable
                     private MethodPool methodPool;
 
                     /**
                      * The initialization handler to use or {@code null} if the handler was not yet initialized.
                      */
+                    @Nullable
                     private InitializationHandler initializationHandler;
 
                     /**
                      * The implementation context for this class creation or {@code null} if it was not yet created.
                      */
+                    @Nullable
                     private Implementation.Context.ExtractableView implementationContext;
 
                     /**
@@ -5655,6 +5671,7 @@ public interface TypeWriter<T> {
                     /**
                      * The implementation context to use or {@code null} if the context is not yet initialized.
                      */
+                    @Nullable
                     private Implementation.Context.ExtractableView implementationContext;
 
                     /**
@@ -5912,6 +5929,7 @@ public interface TypeWriter<T> {
             /**
              * Indicates that nothing is returned from this action.
              */
+            @Nullable
             private static final Void NOTHING = null;
 
             /**

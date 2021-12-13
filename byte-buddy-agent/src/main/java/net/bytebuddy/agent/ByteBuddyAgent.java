@@ -1541,7 +1541,7 @@ public class ByteBuddyAgent {
             /**
              * The supplied agent.
              */
-            private File agent;
+            private final File agent;
 
             /**
              * Creates an agent provider for an existing agent.

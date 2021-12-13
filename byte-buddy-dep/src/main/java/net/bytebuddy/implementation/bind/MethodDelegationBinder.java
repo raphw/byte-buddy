@@ -1031,7 +1031,7 @@ public interface MethodDelegationBinder {
                             ? target.getDeclaringType()
                             : target.getReturnType());
                 }
-            };
+            }
         }
     }
 

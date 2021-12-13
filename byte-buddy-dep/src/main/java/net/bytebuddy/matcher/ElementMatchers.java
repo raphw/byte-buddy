@@ -51,6 +51,7 @@ public final class ElementMatchers {
     /**
      * A readable reference to the bootstrap class loader which is represented by {@code null}.
      */
+    @Nullable
     private static final ClassLoader BOOTSTRAP_CLASSLOADER = null;
 
     /**

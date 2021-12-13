@@ -2431,6 +2431,7 @@ public interface AgentBuilder {
             /**
              * Indicates that the circularity lock is not currently acquired.
              */
+            @Nullable
             private static final Boolean NOT_ACQUIRED = null;
 
             /**
@@ -2607,9 +2608,9 @@ public interface AgentBuilder {
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
                                                       MethodNameTransformer methodNameTransformer,
-                                                      ClassLoader classLoader,
-                                                      JavaModule module,
-                                                      ProtectionDomain protectionDomain) {
+                                                      @Nullable ClassLoader classLoader,
+                                                      @Nullable JavaModule module,
+                                                      @Nullable ProtectionDomain protectionDomain) {
                     return byteBuddy.with(InstrumentedType.Factory.Default.FROZEN)
                             .with(VisibilityBridgeStrategy.Default.NEVER)
                             .redefine(typeDescription, classFileLocator)
@@ -2640,9 +2641,9 @@ public interface AgentBuilder {
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
                                                       MethodNameTransformer methodNameTransformer,
-                                                      ClassLoader classLoader,
-                                                      JavaModule module,
-                                                      ProtectionDomain protectionDomain) {
+                                                      @Nullable ClassLoader classLoader,
+                                                      @Nullable JavaModule module,
+                                                      @Nullable ProtectionDomain protectionDomain) {
                     return byteBuddy.decorate(typeDescription, classFileLocator);
                 }
             }
@@ -5257,7 +5258,7 @@ public interface AgentBuilder {
                 public ClassFileLocator resolve(String name,
                                                 byte[] binaryRepresentation,
                                                 @Nullable ClassLoader classLoader,
-                                                JavaModule module,
+                                                @Nullable JavaModule module,
                                                 ProtectionDomain protectionDomain) {
                     return ClassFileLocator.Simple.of(name, binaryRepresentation);
                 }
@@ -5284,7 +5285,7 @@ public interface AgentBuilder {
                 public ClassFileLocator resolve(String name,
                                                 byte[] binaryRepresentation,
                                                 @Nullable ClassLoader classLoader,
-                                                JavaModule module,
+                                                @Nullable JavaModule module,
                                                 ProtectionDomain protectionDomain) {
                     return ClassFileLocator.NoOp.INSTANCE;
                 }
@@ -6503,6 +6504,7 @@ public interface AgentBuilder {
                         /**
                          * The current iterator or {@code null} if no such iterator is defined.
                          */
+                        @Nullable
                         private Iterator<? extends List<Class<?>>> current;
 
                         /**
@@ -6659,6 +6661,7 @@ public interface AgentBuilder {
                     /**
                      * The current list of types or {@code null} if the current list of types is not prepared.
                      */
+                    @Nullable
                     private List<Class<?>> types;
 
                     /**
@@ -7279,6 +7282,7 @@ public interface AgentBuilder {
                     /**
                      * This scheduler's cancelable or {@code null} if no cancelable was registered.
                      */
+                    @Nullable
                     private volatile ResubmissionScheduler.Cancelable cancelable;
 
                     /**
@@ -8065,6 +8069,7 @@ public interface AgentBuilder {
         /**
          * Indicates that an original implementation can be ignored when redefining a method.
          */
+        @Nullable
         protected static final MethodVisitor IGNORE_ORIGINAL = null;
 
         /**

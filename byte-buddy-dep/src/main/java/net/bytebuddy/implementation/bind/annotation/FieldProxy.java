@@ -944,7 +944,7 @@ public @interface FieldProxy {
          * A proxy type for accessing a field either by a getter or a setter.
          */
         @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-        protected class AccessorProxy extends StackManipulation.AbstractBase implements AuxiliaryType {
+        protected static class AccessorProxy extends StackManipulation.AbstractBase implements AuxiliaryType {
 
             /**
              * The name of the field that stores the accessed instance if any.

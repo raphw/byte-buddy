@@ -64,6 +64,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
     /**
      * Indicator for access to a static member via reflection to make the code more readable.
      */
+    @Nullable
     private static final Object STATIC_MEMBER = null;
 
     /**

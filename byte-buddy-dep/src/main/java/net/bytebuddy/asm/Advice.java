@@ -58,6 +58,7 @@ import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
 import net.bytebuddy.utility.visitor.StackAwareMethodVisitor;
 import org.objectweb.asm.*;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.annotation.*;
@@ -162,6 +163,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * Indicates that no class reader is available to an advice method.
      */
+    @Nullable
     private static final ClassReader UNDEFINED = null;
 
     /**

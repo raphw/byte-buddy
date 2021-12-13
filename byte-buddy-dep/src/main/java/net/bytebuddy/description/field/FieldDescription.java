@@ -21,11 +21,14 @@ import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.signature.SignatureWriter;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Modifier;
@@ -44,6 +47,7 @@ public interface FieldDescription extends ByteCodeElement,
     /**
      * A representative of a field's non-set default value.
      */
+    @Nullable
     Object NO_DEFAULT_VALUE = null;
 
     /**
@@ -132,6 +136,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public String getGenericSignature() {
             TypeDescription.Generic fieldType = getType();
             try {

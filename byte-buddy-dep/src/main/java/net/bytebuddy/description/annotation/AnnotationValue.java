@@ -1951,7 +1951,7 @@ public interface AnnotationValue<T, S> {
                  * {@inheritDoc}
                  */
                 public Enum<?> resolve() {
-                    throw new IncompatibleClassChangeError("Not an enumeration type: " + type.toString());
+                    throw new IncompatibleClassChangeError("Not an enumeration type: " + type.getName());
                 }
 
                 /**

@@ -39,6 +39,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureWriter;
 
+import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.security.PrivilegedAction;
@@ -76,6 +77,7 @@ public interface MethodDescription extends TypeVariableSource,
      * Represents any undefined property of a type description that is instead represented as {@code null} in order
      * to resemble the Java reflection API which returns {@code null} and is intuitive to many Java developers.
      */
+    @Nullable
     InDefinedShape UNDEFINED = null;
 
     /**
@@ -201,6 +203,7 @@ public interface MethodDescription extends TypeVariableSource,
      *
      * @return The method's default annotation value or {@code null} if no default value is defined for this method.
      */
+    @Nullable
     AnnotationValue<?, ?> getDefaultValue();
 
     /**
@@ -211,6 +214,7 @@ public interface MethodDescription extends TypeVariableSource,
      * @param <T>  The type to cast the default value to.
      * @return The casted default value.
      */
+    @Nullable
     <T> T getDefaultValue(Class<T> type);
 
     /**
@@ -275,6 +279,7 @@ public interface MethodDescription extends TypeVariableSource,
      *
      * @return This method's (annotated) receiver type.
      */
+    @Nullable
     TypeDescription.Generic getReceiverType();
 
     /**
@@ -345,6 +350,7 @@ public interface MethodDescription extends TypeVariableSource,
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public TypeDescription.Generic getReceiverType() {
                 if (isStatic()) {
                     return TypeDescription.Generic.UNDEFINED;
@@ -635,6 +641,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public <T> T getDefaultValue(Class<T> type) {
             return type.cast(getDefaultValue());
         }
@@ -1122,6 +1129,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public AnnotationValue<?, ?> getDefaultValue() {
             return AnnotationValue.UNDEFINED;
         }
@@ -1289,6 +1297,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public AnnotationValue<?, ?> getDefaultValue() {
             Object value = executable.getDefaultValue();
             return value == null
@@ -1364,11 +1373,13 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * The default value of this method or {@code null} if no default annotation value is defined.
          */
+        @Nullable
         private final AnnotationValue<?, ?> defaultValue;
 
         /**
          * The receiver type of this method or {@code null} if the receiver type is defined implicitly.
          */
+        @Nullable
         private final TypeDescription.Generic receiverType;
 
         /**
@@ -1412,8 +1423,8 @@ public interface MethodDescription extends TypeVariableSource,
                       List<? extends ParameterDescription.Token> parameterTokens,
                       List<? extends TypeDescription.Generic> exceptionTypes,
                       List<? extends AnnotationDescription> declaredAnnotations,
-                      AnnotationValue<?, ?> defaultValue,
-                      TypeDescription.Generic receiverType) {
+                      @Nullable AnnotationValue<?, ?> defaultValue,
+                      @Nullable TypeDescription.Generic receiverType) {
             this.declaringType = declaringType;
             this.internalName = internalName;
             this.modifiers = modifiers;
@@ -1485,6 +1496,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public AnnotationValue<?, ?> getDefaultValue() {
             return defaultValue;
         }
@@ -1492,6 +1504,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription.Generic getReceiverType() {
             return receiverType == null
                     ? super.getReceiverType()
@@ -1541,6 +1554,7 @@ public interface MethodDescription extends TypeVariableSource,
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public AnnotationValue<?, ?> getDefaultValue() {
                 return AnnotationValue.UNDEFINED;
             }
@@ -1648,6 +1662,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public AnnotationValue<?, ?> getDefaultValue() {
             return methodDescription.getDefaultValue();
         }
@@ -1762,11 +1777,13 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * The default value of the represented method or {@code null} if no such value exists.
          */
+        @Nullable
         private final AnnotationValue<?, ?> defaultValue;
 
         /**
          * The receiver type of the represented method or {@code null} if the receiver type is implicit.
          */
+        @Nullable
         private final TypeDescription.Generic receiverType;
 
         /**
@@ -1831,8 +1848,8 @@ public interface MethodDescription extends TypeVariableSource,
                      List<? extends ParameterDescription.Token> parameterTokens,
                      List<? extends TypeDescription.Generic> exceptionTypes,
                      List<? extends AnnotationDescription> annotations,
-                     AnnotationValue<?, ?> defaultValue,
-                     TypeDescription.Generic receiverType) {
+                     @Nullable AnnotationValue<?, ?> defaultValue,
+                     @Nullable TypeDescription.Generic receiverType) {
             this.name = name;
             this.modifiers = modifiers;
             this.typeVariableTokens = typeVariableTokens;
@@ -1912,6 +1929,7 @@ public interface MethodDescription extends TypeVariableSource,
          *
          * @return The default value of the represented method or {@code null} if no such value exists.
          */
+        @Nullable
         public AnnotationValue<?, ?> getDefaultValue() {
             return defaultValue;
         }
@@ -1921,6 +1939,7 @@ public interface MethodDescription extends TypeVariableSource,
          *
          * @return The receiver type of this token or {@code null} if the receiver type is implicit.
          */
+        @Nullable
         public TypeDescription.Generic getReceiverType() {
             return receiverType;
         }

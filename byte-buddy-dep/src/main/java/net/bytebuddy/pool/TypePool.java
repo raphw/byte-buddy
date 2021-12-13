@@ -731,6 +731,7 @@ public interface TypePool {
         /**
          * Indicates that a visited method should be ignored.
          */
+        @Nullable
         private static final MethodVisitor IGNORE_METHOD = null;
 
         /**
@@ -1786,6 +1787,7 @@ public interface TypePool {
             /**
              * The current token that is in the process of creation.
              */
+            @Nullable
             private IncompleteToken incompleteToken;
 
             /**
@@ -2124,11 +2126,13 @@ public interface TypePool {
                 /**
                  * The name of the currently constructed type.
                  */
+                @Nullable
                 protected String currentTypeParameter;
 
                 /**
                  * The bounds of the currently constructed type.
                  */
+                @Nullable
                 protected List<LazyTypeDescription.GenericTypeToken> currentBounds;
 
                 /**
@@ -2214,6 +2218,7 @@ public interface TypePool {
                     /**
                      * The super type's generic signature.
                      */
+                    @Nullable
                     private LazyTypeDescription.GenericTypeToken superClassToken;
 
                     /**
@@ -2298,6 +2303,7 @@ public interface TypePool {
                     /**
                      * The generic field type.
                      */
+                    @Nullable
                     private LazyTypeDescription.GenericTypeToken fieldTypeToken;
 
                     /**
@@ -2356,6 +2362,7 @@ public interface TypePool {
                     /**
                      * The generic return type.
                      */
+                    @Nullable
                     private LazyTypeDescription.GenericTypeToken returnTypeToken;
 
                     /**
@@ -2465,6 +2472,7 @@ public interface TypePool {
                     /**
                      * The generic field type.
                      */
+                    @Nullable
                     private LazyTypeDescription.GenericTypeToken recordComponentType;
 
                     /**
@@ -2521,6 +2529,7 @@ public interface TypePool {
             /**
              * Indicates that a type does not exist and does therefore not have a name.
              */
+            @Nullable
             private static final String NO_TYPE = null;
 
             /**
@@ -5890,11 +5899,13 @@ public interface TypePool {
                     /**
                      * Donates an unknown name of a parameter.
                      */
+                    @Nullable
                     protected static final String NO_NAME = null;
 
                     /**
                      * Donates an unknown modifier of a parameter.
                      */
+                    @Nullable
                     protected static final Integer NO_MODIFIERS = null;
 
                     /**
@@ -7405,6 +7416,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return defaultValue;
                 }
@@ -7412,6 +7424,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getReceiverType() {
                     if (isStatic()) {
                         return Generic.UNDEFINED;
@@ -7940,22 +7953,26 @@ public interface TypePool {
             /**
              * The internal name found for this type.
              */
+            @Nullable
             private String internalName;
 
             /**
              * The internal name of the super type found for this type or {@code null} if no such type exists.
              */
+            @Nullable
             private String superClassName;
 
             /**
              * The generic signature of the type or {@code null} if it is not generic.
              */
+            @Nullable
             private String genericSignature;
 
             /**
              * A list of internal names of interfaces implemented by this type or {@code null} if no interfaces
              * are implemented.
              */
+            @Nullable
             private String[] interfaceName;
 
             /**
@@ -7966,6 +7983,7 @@ public interface TypePool {
             /**
              * The nest host that was found in the class file or {@code null} if no nest host was specified.
              */
+            @Nullable
             private String nestHost;
 
             /**
@@ -7981,6 +7999,7 @@ public interface TypePool {
             /**
              * The binary name of this type's declaring type or {@code null} if no such type exists.
              */
+            @Nullable
             private String declaringTypeName;
 
             /**
@@ -7994,8 +8013,9 @@ public interface TypePool {
             private final List<String> permittedSubclasses;
 
             /**
-             * The discovered class file version.
+             * The discovered class file version or {@code null} if no version was yet discovered.
              */
+            @Nullable
             private ClassFileVersion classFileVersion;
 
             /**
@@ -8520,6 +8540,7 @@ public interface TypePool {
                  * The first label that is found in the method's body, if any, denoting the start of the method.
                  * This label can be used to identify names of local variables that describe the method's parameters.
                  */
+                @Nullable
                 private Label firstLabel;
 
                 /**
@@ -8535,6 +8556,7 @@ public interface TypePool {
                 /**
                  * The default value of the found method or {@code null} if no such value exists.
                  */
+                @Nullable
                 private AnnotationValue<?, ?> defaultValue;
 
                 /**
@@ -8902,6 +8924,7 @@ public interface TypePool {
         /**
          * Type-safe representation of the bootstrap class loader which is {@code null}.
          */
+        @Nullable
         private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
 
         /**

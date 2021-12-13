@@ -132,7 +132,7 @@ public interface Assigner {
                         ? StackManipulation.Trivial.INSTANCE
                         : StackManipulation.Illegal.INSTANCE;
             }
-        };
+        }
     }
 
     /**

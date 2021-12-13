@@ -58,6 +58,7 @@ public interface AnnotationDescription {
     /**
      * Indicates a nonexistent annotation in a type-safe manner.
      */
+    @Nullable
     AnnotationDescription.Loadable<?> UNDEFINED = null;
 
     /**
