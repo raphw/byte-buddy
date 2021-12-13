@@ -16,4 +16,7 @@
 /**
  * Contains an API for matching Java byte code entities.
  */
+@NonnullByDefault
 package net.bytebuddy.matcher;
+
+import net.bytebuddy.utility.NonnullByDefault;

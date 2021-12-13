@@ -16,4 +16,7 @@
 /**
  * Contains descriptions of Java types and packages.
  */
+@NonnullByDefault
 package net.bytebuddy.description.type;
+
+import net.bytebuddy.utility.NonnullByDefault;

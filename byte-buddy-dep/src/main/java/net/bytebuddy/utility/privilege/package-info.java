@@ -16,4 +16,7 @@
 /**
  * A package containing {@link java.security.PrivilegedAction}s that are used for invoking sensitive methods.
  */
+@NonnullByDefault
 package net.bytebuddy.utility.privilege;
+
+import net.bytebuddy.utility.NonnullByDefault;

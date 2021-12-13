@@ -23,6 +23,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.GraalImageCode;
 import net.bytebuddy.utility.JavaModule;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,6 +67,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     /**
      * Indicates that a URL does not exist to improve code readability.
      */
+    @Nullable
     private static final URL NO_URL = null;
 
     /**
@@ -124,6 +126,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     /**
      * The protection domain to apply. Might be {@code null} when referencing the default protection domain.
      */
+    @Nullable
     protected final ProtectionDomain protectionDomain;
 
     /**
@@ -212,10 +215,10 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param packageDefinitionStrategy The package definer to be queried for package definitions.
      * @param persistenceHandler        The persistence handler of this class loader.
      */
-    public ByteArrayClassLoader(ClassLoader parent,
+    public ByteArrayClassLoader(@Nullable ClassLoader parent,
                                 boolean sealed,
                                 Map<String, byte[]> typeDefinitions,
-                                ProtectionDomain protectionDomain,
+                                @Nullable ProtectionDomain protectionDomain,
                                 PersistenceHandler persistenceHandler,
                                 PackageDefinitionStrategy packageDefinitionStrategy) {
         this(parent, sealed, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, ClassFilePostProcessor.NoOp.INSTANCE);
@@ -251,10 +254,10 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param persistenceHandler        The persistence handler of this class loader.
      * @param classFilePostProcessor    A post processor for class files to apply p
      */
-    public ByteArrayClassLoader(ClassLoader parent,
+    public ByteArrayClassLoader(@Nullable ClassLoader parent,
                                 boolean sealed,
                                 Map<String, byte[]> typeDefinitions,
-                                ProtectionDomain protectionDomain,
+                                @Nullable ProtectionDomain protectionDomain,
                                 PersistenceHandler persistenceHandler,
                                 PackageDefinitionStrategy packageDefinitionStrategy,
                                 ClassFilePostProcessor classFilePostProcessor) {
@@ -272,6 +275,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      *
      * @return The current access control context or {@code null} if the current VM does not support it.
      */
+    @Nullable
     @AccessControllerPlugin.Enhance
     private static Object getContext() {
         return null;
@@ -330,9 +334,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @return A map of the given type descriptions pointing to their loaded representations.
      */
     @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
-    public static Map<TypeDescription, Class<?>> load(ClassLoader classLoader,
+    public static Map<TypeDescription, Class<?>> load(@Nullable ClassLoader classLoader,
                                                       Map<TypeDescription, byte[]> types,
-                                                      ProtectionDomain protectionDomain,
+                                                      @Nullable ProtectionDomain protectionDomain,
                                                       PersistenceHandler persistenceHandler,
                                                       PackageDefinitionStrategy packageDefinitionStrategy,
                                                       boolean forbidExisting,
@@ -691,6 +695,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param name        The name of the package.
          * @return A suitable package or {@code null} if no such package exists.
          */
+        @Nullable
         Package apply(ByteArrayClassLoader classLoader, String name);
 
         /**
@@ -733,6 +738,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Package apply(ByteArrayClassLoader classLoader, String name) {
                 return classLoader.doGetPackage(name);
             }
@@ -761,6 +767,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Package apply(ByteArrayClassLoader classLoader, String name) {
                 try {
                     return (Package) getDefinedPackage.invoke(classLoader, name);
@@ -864,6 +871,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param typeDefinitions A map of fully qualified class names pointing to their binary representations.
          * @return The byte array representing the requested class or {@code null} if no such class is known.
          */
+        @Nullable
         protected abstract byte[] lookup(String name, ConcurrentMap<String, byte[]> typeDefinitions);
 
         /**
@@ -873,6 +881,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param typeDefinitions A mapping of byte arrays by their type names.
          * @return A URL representing the type definition or {@code null} if the requested resource does not represent a class file.
          */
+        @Nullable
         protected abstract URL url(String resourceName, ConcurrentMap<String, byte[]> typeDefinitions);
 
         /**
@@ -1053,7 +1062,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param parent          The {@link java.lang.ClassLoader} that is the parent of this class loader.
          * @param typeDefinitions A map of fully qualified class names pointing to their binary representations.
          */
-        public ChildFirst(ClassLoader parent, Map<String, byte[]> typeDefinitions) {
+        public ChildFirst(@Nullable ClassLoader parent, Map<String, byte[]> typeDefinitions) {
             super(parent, typeDefinitions);
         }
 
@@ -1064,7 +1073,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param sealed          {@code true} if this class loader is sealed.
          * @param typeDefinitions A map of fully qualified class names pointing to their binary representations.
          */
-        public ChildFirst(ClassLoader parent, boolean sealed, Map<String, byte[]> typeDefinitions) {
+        public ChildFirst(@Nullable ClassLoader parent, boolean sealed, Map<String, byte[]> typeDefinitions) {
             super(parent, sealed, typeDefinitions);
         }
 
@@ -1087,7 +1096,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param typeDefinitions    A map of fully qualified class names pointing to their binary representations.
          * @param persistenceHandler The persistence handler of this class loader.
          */
-        public ChildFirst(ClassLoader parent, boolean sealed, Map<String, byte[]> typeDefinitions, PersistenceHandler persistenceHandler) {
+        public ChildFirst(@Nullable ClassLoader parent, boolean sealed, Map<String, byte[]> typeDefinitions, PersistenceHandler persistenceHandler) {
             super(parent, sealed, typeDefinitions, persistenceHandler);
         }
 
@@ -1118,10 +1127,10 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param persistenceHandler        The persistence handler of this class loader.
          * @param packageDefinitionStrategy The package definer to be queried for package definitions.
          */
-        public ChildFirst(ClassLoader parent,
+        public ChildFirst(@Nullable ClassLoader parent,
                           boolean sealed,
                           Map<String, byte[]> typeDefinitions,
-                          ProtectionDomain protectionDomain,
+                          @Nullable ProtectionDomain protectionDomain,
                           PersistenceHandler persistenceHandler,
                           PackageDefinitionStrategy packageDefinitionStrategy) {
             super(parent, sealed, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy);
@@ -1137,9 +1146,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param packageDefinitionStrategy The package definer to be queried for package definitions.
          * @param classFilePostProcessor    A post processor for class files to apply p
          */
-        public ChildFirst(ClassLoader parent,
+        public ChildFirst(@Nullable ClassLoader parent,
                           Map<String, byte[]> typeDefinitions,
-                          ProtectionDomain protectionDomain,
+                          @Nullable ProtectionDomain protectionDomain,
                           PersistenceHandler persistenceHandler,
                           PackageDefinitionStrategy packageDefinitionStrategy,
                           ClassFilePostProcessor classFilePostProcessor) {
@@ -1157,10 +1166,10 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param packageDefinitionStrategy The package definer to be queried for package definitions.
          * @param classFilePostProcessor    A post processor for class files to apply p
          */
-        public ChildFirst(ClassLoader parent,
+        public ChildFirst(@Nullable ClassLoader parent,
                           boolean sealed,
                           Map<String, byte[]> typeDefinitions,
-                          ProtectionDomain protectionDomain,
+                          @Nullable ProtectionDomain protectionDomain,
                           PersistenceHandler persistenceHandler,
                           PackageDefinitionStrategy packageDefinitionStrategy,
                           ClassFilePostProcessor classFilePostProcessor) {
@@ -1197,9 +1206,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @return A map of the given type descriptions pointing to their loaded representations.
          */
         @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
-        public static Map<TypeDescription, Class<?>> load(ClassLoader classLoader,
+        public static Map<TypeDescription, Class<?>> load(@Nullable ClassLoader classLoader,
                                                           Map<TypeDescription, byte[]> types,
-                                                          ProtectionDomain protectionDomain,
+                                                          @Nullable ProtectionDomain protectionDomain,
                                                           PersistenceHandler persistenceHandler,
                                                           PackageDefinitionStrategy packageDefinitionStrategy,
                                                           boolean forbidExisting,
@@ -1306,6 +1315,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             /**
              * The next element to return from this enumeration or {@code null} if such an element does not exist.
              */
+            @Nullable
             private URL nextElement;
 
             /**
@@ -1381,6 +1391,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         /**
          * The current element or {@code null} if this enumeration does not contain further elements.
          */
+        @Nullable
         private URL element;
 
         /**

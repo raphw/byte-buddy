@@ -16,4 +16,7 @@
 /**
  * A package that contains classes for describing enumeration values.
  */
+@NonnullByDefault
 package net.bytebuddy.description.enumeration;
+
+import net.bytebuddy.utility.NonnullByDefault;

@@ -16,4 +16,7 @@
 /**
  * The implementation package contains any logic for intercepting method calls.
  */
+@NonnullByDefault
 package net.bytebuddy.implementation;
+
+import net.bytebuddy.utility.NonnullByDefault;

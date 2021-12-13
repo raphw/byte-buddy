@@ -36,6 +36,7 @@ import net.bytebuddy.utility.RandomString;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.privilege.GetMethodAction;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -151,6 +152,7 @@ public interface ClassInjector {
         /**
          * The protection domain that is used when loading classes.
          */
+        @Nullable
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ProtectionDomain protectionDomain;
 
@@ -181,7 +183,7 @@ public interface ClassInjector {
          * @param classLoader      The {@link java.lang.ClassLoader} into which new class definitions are to be injected. Must not be the bootstrap loader.
          * @param protectionDomain The protection domain to apply during class definition.
          */
-        public UsingReflection(ClassLoader classLoader, ProtectionDomain protectionDomain) {
+        public UsingReflection(ClassLoader classLoader, @Nullable ProtectionDomain protectionDomain) {
             this(classLoader,
                     protectionDomain,
                     PackageDefinitionStrategy.Trivial.INSTANCE,
@@ -196,8 +198,8 @@ public interface ClassInjector {
          * @param packageDefinitionStrategy The package definer to be queried for package definitions.
          * @param forbidExisting            Determines if an exception should be thrown when attempting to load a type that already exists.
          */
-        public UsingReflection(ClassLoader classLoader,
-                               ProtectionDomain protectionDomain,
+        public UsingReflection(@Nullable ClassLoader classLoader,
+                               @Nullable ProtectionDomain protectionDomain,
                                PackageDefinitionStrategy packageDefinitionStrategy,
                                boolean forbidExisting) {
             if (classLoader == null) {
@@ -330,6 +332,7 @@ public interface ClassInjector {
              * @param name        The binary name of the class that should be located.
              * @return The class for the binary name or {@code null} if no such class is defined for the provided class loader.
              */
+            @Nullable
             Class<?> findClass(ClassLoader classLoader, String name);
 
             /**
@@ -341,7 +344,7 @@ public interface ClassInjector {
              * @param protectionDomain     The protection domain for the defined class.
              * @return The defined, loaded class.
              */
-            Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain);
+            Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain);
 
             /**
              * Looks up a package from a class loader. If the operation is not supported, falls back to {@link #getPackage(ClassLoader, String)}
@@ -350,6 +353,7 @@ public interface ClassInjector {
              * @param name        The binary name of the package.
              * @return The package for the given name as defined by the provided class loader or {@code null} if no such package exists.
              */
+            @Nullable
             Package getDefinedPackage(ClassLoader classLoader, String name);
 
             /**
@@ -359,6 +363,7 @@ public interface ClassInjector {
              * @param name        The binary name of the package.
              * @return The package for the given name as defined by the provided class loader or its ancestor, or {@code null} if no such package exists.
              */
+            @Nullable
             Package getPackage(ClassLoader classLoader, String name);
 
             /**
@@ -1717,12 +1722,14 @@ public interface ClassInjector {
         /**
          * The class loader to inject classes into or {@code null} for the bootstrap loader.
          */
+        @Nullable
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ClassLoader classLoader;
 
         /**
          * The protection domain to use or {@code null} for no protection domain.
          */
+        @Nullable
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ProtectionDomain protectionDomain;
 
@@ -1736,7 +1743,7 @@ public interface ClassInjector {
          *
          * @param classLoader The class loader to inject classes into or {@code null} for the bootstrap loader.
          */
-        public UsingUnsafe(ClassLoader classLoader) {
+        public UsingUnsafe(@Nullable ClassLoader classLoader) {
             this(classLoader, ClassLoadingStrategy.NO_PROTECTION_DOMAIN);
         }
 
@@ -1746,7 +1753,7 @@ public interface ClassInjector {
          * @param classLoader      The class loader to inject classes into or {@code null} for the bootstrap loader.
          * @param protectionDomain The protection domain to use or {@code null} for no protection domain.
          */
-        public UsingUnsafe(ClassLoader classLoader, ProtectionDomain protectionDomain) {
+        public UsingUnsafe(@Nullable ClassLoader classLoader, @Nullable ProtectionDomain protectionDomain) {
             this(classLoader, protectionDomain, DISPATCHER);
         }
 
@@ -1757,7 +1764,7 @@ public interface ClassInjector {
          * @param protectionDomain The protection domain to use or {@code null} for no protection domain.
          * @param dispatcher       The dispatcher to use.
          */
-        protected UsingUnsafe(ClassLoader classLoader, ProtectionDomain protectionDomain, Dispatcher.Initializable dispatcher) {
+        protected UsingUnsafe(@Nullable ClassLoader classLoader, @Nullable ProtectionDomain protectionDomain, Dispatcher.Initializable dispatcher) {
             this.classLoader = classLoader;
             this.protectionDomain = protectionDomain;
             this.dispatcher = dispatcher;
@@ -1853,7 +1860,10 @@ public interface ClassInjector {
              * @param protectionDomain     The type's protection domain.
              * @return The defined class.
              */
-            Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain);
+            Class<?> defineClass(@Nullable ClassLoader classLoader,
+                                 String name,
+                                 byte[] binaryRepresentation,
+                                 @Nullable ProtectionDomain protectionDomain);
 
             /**
              * A class injection dispatcher that is not yet initialized.
@@ -2593,12 +2603,14 @@ public interface ClassInjector {
         /**
          * The class loader to inject classes into or {@code null} for the bootstrap loader.
          */
+        @Nullable
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ClassLoader classLoader;
 
         /**
          * The protection domain to use or {@code null} for no protection domain.
          */
+        @Nullable
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ProtectionDomain protectionDomain;
 
@@ -2607,7 +2619,7 @@ public interface ClassInjector {
          *
          * @param classLoader The class loader to inject classes into or {@code null} for the bootstrap loader.
          */
-        public UsingJna(ClassLoader classLoader) {
+        public UsingJna(@Nullable ClassLoader classLoader) {
             this(classLoader, ClassLoadingStrategy.NO_PROTECTION_DOMAIN);
         }
 
@@ -2617,7 +2629,7 @@ public interface ClassInjector {
          * @param classLoader      The class loader to inject classes into or {@code null} for the bootstrap loader.
          * @param protectionDomain The protection domain to use or {@code null} for no protection domain.
          */
-        public UsingJna(ClassLoader classLoader, ProtectionDomain protectionDomain) {
+        public UsingJna(@Nullable ClassLoader classLoader, @Nullable ProtectionDomain protectionDomain) {
             this.classLoader = classLoader;
             this.protectionDomain = protectionDomain;
         }
@@ -2718,7 +2730,10 @@ public interface ClassInjector {
              * @param protectionDomain     The protection domain to use or {@code null} if no protection domain should be used.
              * @return The class that was defined.
              */
-            Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain);
+            Class<?> defineClass(@Nullable ClassLoader classLoader,
+                                 String name,
+                                 byte[] binaryRepresentation,
+                                 @Nullable ProtectionDomain protectionDomain);
 
             /**
              * An action for creating a JNA dispatcher.

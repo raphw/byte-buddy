@@ -87,6 +87,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     /**
      * The class loader to resolve the proxied type from or {@code null} if the bootstrap loader should be used.
      */
+    @Nullable
     @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
     private final ClassLoader classLoader;
 
@@ -463,7 +464,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         /**
          * {@inheritDoc}
          */
-        public Object invoke(Method method, Object instance, Object[] argument) throws IllegalAccessException, InvocationTargetException {
+        public Object invoke(Method method, @Nullable Object instance, Object[] argument) throws IllegalAccessException, InvocationTargetException {
             return method.invoke(instance, argument);
         }
     }
@@ -480,6 +481,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
          * @return The return value.
          * @throws Throwable If any error occurs.
          */
+        @Nullable
         Object invoke(Object[] argument) throws Throwable;
 
         /**
@@ -630,6 +632,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             /**
              * The default value.
              */
+            @Nullable
             private final Object value;
 
             /**
@@ -655,7 +658,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
              * @param returned The opcode to return the default value.
              * @param size     The operand stack size of default value.
              */
-            ForDefaultValue(Object value, int load, int returned, int size) {
+            ForDefaultValue(@Nullable Object value, int load, int returned, int size) {
                 this.value = value;
                 this.load = load;
                 this.returned = returned;
@@ -715,6 +718,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Object invoke(Object[] argument) {
                 return value;
             }
@@ -947,6 +951,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Object invoke(Object[] argument) throws Throwable {
                 return INVOKER.invoke(method, null, argument);
             }
@@ -1120,7 +1125,8 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         /**
          * {@inheritDoc}
          */
-        public Object invoke(Object proxy, Method method, Object[] argument) throws Throwable {
+        @Nullable
+        public Object invoke(Object proxy, Method method, @Nullable Object[] argument) throws Throwable {
             if (method.getDeclaringClass() == Object.class) {
                 if (method.getName().equals("hashCode")) {
                     return hashCode();

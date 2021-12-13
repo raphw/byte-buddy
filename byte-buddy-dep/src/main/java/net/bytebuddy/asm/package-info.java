@@ -16,4 +16,7 @@
 /**
  * The ASM package contains classes that are meant for direct interaction with the ASM API.
  */
+@NonnullByDefault
 package net.bytebuddy.asm;
+
+import net.bytebuddy.utility.NonnullByDefault;

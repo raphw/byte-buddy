@@ -16,4 +16,7 @@
 /**
  * Contains descriptions of Java methods and constructors as well as their parameters.
  */
+@NonnullByDefault
 package net.bytebuddy.description.method;
+
+import net.bytebuddy.utility.NonnullByDefault;

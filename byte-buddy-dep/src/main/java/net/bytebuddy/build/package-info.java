@@ -16,4 +16,7 @@
 /**
  * A package for types that allow for applying Byte Buddy transformation during a build process.
  */
+@NonnullByDefault
 package net.bytebuddy.build;
+
+import net.bytebuddy.utility.NonnullByDefault;

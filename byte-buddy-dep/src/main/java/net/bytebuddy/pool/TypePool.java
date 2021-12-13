@@ -5900,6 +5900,7 @@ public interface TypePool {
                     /**
                      * The name of the parameter or {@code null} if no explicit name for this parameter is known.
                      */
+                    @Nullable
                     @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                     private final String name;
 
@@ -5921,7 +5922,7 @@ public interface TypePool {
                      *
                      * @param name The name of the parameter.
                      */
-                    protected ParameterToken(String name) {
+                    protected ParameterToken(@Nullable String name) {
                         this(name, NO_MODIFIERS);
                     }
 
@@ -5931,7 +5932,7 @@ public interface TypePool {
                      * @param name      The name of the parameter.
                      * @param modifiers The modifiers of the parameter.
                      */
-                    protected ParameterToken(String name, Integer modifiers) {
+                    protected ParameterToken(@Nullable String name, Integer modifiers) {
                         this.name = name;
                         this.modifiers = modifiers;
                     }
@@ -5941,6 +5942,7 @@ public interface TypePool {
                      *
                      * @return The name of the parameter or {@code null} if there is no such name.
                      */
+                    @Nullable
                     protected String getName() {
                         return name;
                     }

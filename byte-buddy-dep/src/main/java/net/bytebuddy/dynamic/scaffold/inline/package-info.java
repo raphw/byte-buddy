@@ -17,4 +17,7 @@
  * All classes and types in this package are related to creating a {@link net.bytebuddy.dynamic.DynamicType} by
  * enhancing a given type.
  */
+@NonnullByDefault
 package net.bytebuddy.dynamic.scaffold.inline;
+
+import net.bytebuddy.utility.NonnullByDefault;

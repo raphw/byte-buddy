@@ -18,4 +18,7 @@
  * a given {@link net.bytebuddy.description.type.TypeDescription} into another one. In doing so, an assigner is also
  * able to determine that some assignment is illegal.
  */
+@NonnullByDefault
 package net.bytebuddy.implementation.bytecode.assign;
+
+import net.bytebuddy.utility.NonnullByDefault;

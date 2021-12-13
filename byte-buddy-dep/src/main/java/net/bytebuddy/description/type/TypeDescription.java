@@ -7358,6 +7358,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The raw type's (annotated) declaring type or {@code null} if no such type is defined.
                  */
+                @Nullable
                 @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final Generic ownerType;
 
@@ -7376,7 +7377,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param typeDescription The type's erasure.
                  * @param ownerType       The raw type's raw declaring type or {@code null} if no such type is defined.
                  */
-                protected OfNonGenericType(TypeDescription typeDescription, TypeDescription ownerType) {
+                protected OfNonGenericType(TypeDescription typeDescription, @Nullable TypeDescription ownerType) {
                     this(typeDescription, ownerType == null
                             ? Generic.UNDEFINED
                             : ownerType.asGenericType());
@@ -7388,7 +7389,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param typeDescription The type's erasure.
                  * @param ownerType       The raw type's (annotated) declaring type.
                  */
-                protected OfNonGenericType(TypeDescription typeDescription, Generic ownerType) {
+                protected OfNonGenericType(TypeDescription typeDescription, @Nullable Generic ownerType) {
                     this(typeDescription, ownerType, Collections.<AnnotationDescription>emptyList());
                 }
 
@@ -7399,7 +7400,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param ownerType       The raw type's (annotated) declaring type.
                  * @param annotations     The type's type annotations.
                  */
-                protected OfNonGenericType(TypeDescription typeDescription, Generic ownerType, List<? extends AnnotationDescription> annotations) {
+                protected OfNonGenericType(TypeDescription typeDescription,
+                                           @Nullable Generic ownerType,
+                                           List<? extends AnnotationDescription> annotations) {
                     super(annotations);
                     this.ownerType = ownerType;
                     this.typeDescription = typeDescription;

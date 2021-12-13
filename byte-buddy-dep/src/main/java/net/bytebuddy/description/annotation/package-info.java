@@ -16,4 +16,7 @@
 /**
  * Contains descriptions of annotations and annotation values.
  */
+@NonnullByDefault
 package net.bytebuddy.description.annotation;
+
+import net.bytebuddy.utility.NonnullByDefault;

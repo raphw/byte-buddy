@@ -18,6 +18,7 @@ package net.bytebuddy.dynamic.loading;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.type.TypeDescription;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,7 +68,7 @@ public abstract class InjectionClassLoader extends ClassLoader {
      * @param parent The class loader's parent.
      * @param sealed Indicates if this class loader is sealed, i.e. forbids runtime injection.
      */
-    protected InjectionClassLoader(ClassLoader parent, boolean sealed) {
+    protected InjectionClassLoader(@Nullable ClassLoader parent, boolean sealed) {
         super(parent);
         this.sealed = new AtomicBoolean(sealed);
     }
@@ -138,7 +139,7 @@ public abstract class InjectionClassLoader extends ClassLoader {
         /**
          * {@inheritDoc}
          */
-        public Map<TypeDescription, Class<?>> load(InjectionClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+        public Map<TypeDescription, Class<?>> load(@Nullable InjectionClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             if (classLoader == null) {
                 throw new IllegalArgumentException("Cannot add types to bootstrap class loader: " + types);
             }

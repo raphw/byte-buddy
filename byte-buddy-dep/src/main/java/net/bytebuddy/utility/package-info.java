@@ -16,4 +16,5 @@
 /**
  * This package contains utility classes for common use within any Byte Buddy logic.
  */
+@NonnullByDefault
 package net.bytebuddy.utility;

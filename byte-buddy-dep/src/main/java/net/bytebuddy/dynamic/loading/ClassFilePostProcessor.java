@@ -17,6 +17,7 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
+import javax.annotation.Nullable;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
@@ -35,7 +36,7 @@ public interface ClassFilePostProcessor {
      * @param binaryRepresentation The binary representation of the class file.
      * @return The class file to use.
      */
-    byte[] transform(ClassLoader classLoader, String name, ProtectionDomain protectionDomain, byte[] binaryRepresentation);
+    byte[] transform(@Nullable ClassLoader classLoader, String name, @Nullable ProtectionDomain protectionDomain, byte[] binaryRepresentation);
 
     /**
      * A non-operation class file post processor.
@@ -43,14 +44,14 @@ public interface ClassFilePostProcessor {
     enum NoOp implements ClassFilePostProcessor {
 
         /**
-         * The singelton instance.
+         * The singleton instance.
          */
         INSTANCE;
 
         /**
          * {@inheritDoc}
          */
-        public byte[] transform(ClassLoader classLoader, String name, ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
+        public byte[] transform(@Nullable ClassLoader classLoader, String name, @Nullable ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
             return binaryRepresentation;
         }
     }
@@ -64,6 +65,7 @@ public interface ClassFilePostProcessor {
         /**
          * Indicates that a class is not currently loaded.
          */
+        @Nullable
         private static final Class<?> UNLOADED_TYPE = null;
 
         /**
@@ -83,7 +85,7 @@ public interface ClassFilePostProcessor {
         /**
          * {@inheritDoc}
          */
-        public byte[] transform(ClassLoader classLoader, String name, ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
+        public byte[] transform(@Nullable ClassLoader classLoader, String name, @Nullable ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
             try {
                 byte[] transformed = classFileTransformer.transform(classLoader, name.replace('.', '/'), UNLOADED_TYPE, protectionDomain, binaryRepresentation);
                 return transformed == null ? binaryRepresentation : transformed;

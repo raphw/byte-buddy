@@ -504,6 +504,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         /**
                          * The resolved argument which might be {@code null}.
                          */
+                        @Nullable
                         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                         private final Object argument;
 
@@ -512,7 +513,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                          *
                          * @param argument The resolved argument which might be {@code null}.
                          */
-                        public Resolved(Object argument) {
+                        public Resolved(@Nullable Object argument) {
                             this.argument = argument;
                         }
 
@@ -526,6 +527,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         /**
                          * {@inheritDoc}
                          */
+                        @Nullable
                         public Object getArgument() {
                             return argument;
                         }

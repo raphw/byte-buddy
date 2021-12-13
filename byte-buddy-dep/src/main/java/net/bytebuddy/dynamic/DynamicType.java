@@ -1830,6 +1830,7 @@ public interface DynamicType {
                             /**
                              * The field's default value or {@code null} if no value is to be defined.
                              */
+                            @Nullable
                             @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                             protected final Object defaultValue;
 
@@ -1842,7 +1843,7 @@ public interface DynamicType {
                              */
                             protected Adapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                               Transformer<FieldDescription> transformer,
-                                              Object defaultValue) {
+                                              @Nullable Object defaultValue) {
                                 this.fieldAttributeAppenderFactory = fieldAttributeAppenderFactory;
                                 this.transformer = transformer;
                                 this.defaultValue = defaultValue;

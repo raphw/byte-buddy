@@ -17,4 +17,7 @@
  * Classes of this package allow for the creating {@link net.bytebuddy.description.type.TypeDescription}s without
  * loading any classes.
  */
+@NonnullByDefault
 package net.bytebuddy.pool;
+
+import net.bytebuddy.utility.NonnullByDefault;
