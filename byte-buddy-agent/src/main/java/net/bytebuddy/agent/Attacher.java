@@ -28,6 +28,7 @@ public class Attacher {
     /**
      * Base for access to a reflective member to make the code more readable.
      */
+    @Nullable
     private static final Object STATIC_MEMBER = null;
 
     /**

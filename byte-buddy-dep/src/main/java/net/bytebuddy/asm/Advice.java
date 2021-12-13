@@ -6957,11 +6957,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Indicates that a method does not represent advice and does not need to be visited.
          */
+        @Nullable
         MethodVisitor IGNORE_METHOD = null;
 
         /**
          * Expresses that an annotation should not be visited.
          */
+        @Nullable
         AnnotationVisitor IGNORE_ANNOTATION = null;
 
         /**

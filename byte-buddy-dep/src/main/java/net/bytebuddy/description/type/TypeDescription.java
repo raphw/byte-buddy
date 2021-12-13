@@ -483,6 +483,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * Represents any undefined property representing a generic type description that is instead represented as {@code null} in order
          * to resemble the Java reflection API which returns {@code null} and is intuitive to many Java developers.
          */
+        @Nullable
         Generic UNDEFINED = null;
 
         /**

@@ -19,6 +19,8 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 
+import javax.annotation.Nullable;
+
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -29,6 +31,7 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
     /**
      * Indicates that a type variable source is undefined.
      */
+    @Nullable
     TypeVariableSource UNDEFINED = null;
 
     /**

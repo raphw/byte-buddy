@@ -234,9 +234,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param persistenceHandler        The persistence handler of this class loader.
      * @param classFilePostProcessor    A post processor for class files to apply p
      */
-    public ByteArrayClassLoader(ClassLoader parent,
+    public ByteArrayClassLoader(@Nullable ClassLoader parent,
                                 Map<String, byte[]> typeDefinitions,
-                                ProtectionDomain protectionDomain,
+                                @Nullable ProtectionDomain protectionDomain,
                                 PersistenceHandler persistenceHandler,
                                 PackageDefinitionStrategy packageDefinitionStrategy,
                                 ClassFilePostProcessor classFilePostProcessor) {

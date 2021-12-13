@@ -31,6 +31,7 @@ import net.sf.cglib.proxy.FixedValue;
 import net.sf.cglib.proxy.NoOp;
 import org.openjdk.jmh.annotations.*;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -66,6 +67,7 @@ public class ClassByImplementationBenchmark {
      * The default reference value. By defining the default reference value as a string type instead of as an object
      * type, the field is inlined by the compiler, similar to the primitive values.
      */
+    @Nullable
     public static final String DEFAULT_REFERENCE_VALUE = null;
 
     /**

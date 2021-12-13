@@ -23,6 +23,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import org.objectweb.asm.*;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Array;
 import java.util.List;
 
@@ -34,6 +35,7 @@ public interface AnnotationAppender {
     /**
      * A constant for informing ASM over ignoring a given name.
      */
+    @Nullable
     String NO_NAME = null;
 
     /**

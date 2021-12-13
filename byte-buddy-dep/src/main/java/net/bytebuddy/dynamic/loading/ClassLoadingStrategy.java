@@ -37,11 +37,13 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
     /**
      * A type-safe constant representing the bootstrap class loader which is represented by {@code null} within Java.
      */
+    @Nullable
     ClassLoader BOOTSTRAP_LOADER = null;
 
     /**
      * An undefined protection domain.
      */
+    @Nullable
     ProtectionDomain NO_PROTECTION_DOMAIN = null;
 
     /**
@@ -548,6 +550,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         /**
          * The protection domain to use or {@code null} if no protection domain is set.
          */
+        @Nullable
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ProtectionDomain protectionDomain;
 
@@ -563,7 +566,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          *
          * @param protectionDomain The protection domain to use or {@code null} if no protection domain is set.
          */
-        public ForUnsafeInjection(ProtectionDomain protectionDomain) {
+        public ForUnsafeInjection(@Nullable ProtectionDomain protectionDomain) {
             this.protectionDomain = protectionDomain;
         }
 
@@ -585,6 +588,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         /**
          * The protection domain to use or {@code null} if no protection domain is set.
          */
+        @Nullable
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ProtectionDomain protectionDomain;
 
@@ -600,7 +604,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          *
          * @param protectionDomain The protection domain to use or {@code null} if no protection domain is set.
          */
-        public ForJnaInjection(ProtectionDomain protectionDomain) {
+        public ForJnaInjection(@Nullable ProtectionDomain protectionDomain) {
             this.protectionDomain = protectionDomain;
         }
 

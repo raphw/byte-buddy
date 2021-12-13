@@ -20,6 +20,8 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.Nullable;
+
 /**
  * A package description represents a Java package.
  */
@@ -38,6 +40,7 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
     /**
      * A named constant for an undefined package what applies for primitive and array types.
      */
+    @Nullable
     PackageDescription UNDEFINED = null;
 
     /**

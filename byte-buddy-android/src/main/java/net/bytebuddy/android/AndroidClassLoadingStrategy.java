@@ -87,6 +87,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
     /**
      * A value for a {@link dalvik.system.DexClassLoader} to indicate that the library path is empty.
      */
+    @Nullable
     private static final String EMPTY_LIBRARY_PATH = null;
 
     /**
@@ -272,6 +273,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
             /**
              * Indicates that a dex file should be written without providing a human readable output.
              */
+            @Nullable
             private static final Writer NO_PRINT_OUTPUT = null;
 
             /**
@@ -681,6 +683,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
              * @return The created {@link dalvik.system.DexFile} or {@code null} if no such file is created.
              * @throws IOException If an I/O exception is thrown.
              */
+            @Nullable
             dalvik.system.DexFile loadDex(File privateDirectory, File jar, @Nullable ClassLoader classLoader, RandomString randomString) throws IOException;
 
             /**
@@ -691,7 +694,8 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
              * @param typeDescription The type to load.
              * @return The loaded class.
              */
-            Class<?> loadClass(dalvik.system.DexFile dexFile, @Nullable ClassLoader classLoader, TypeDescription typeDescription);
+            @Nullable
+            Class<?> loadClass(@Nullable dalvik.system.DexFile dexFile, @Nullable ClassLoader classLoader, TypeDescription typeDescription);
 
             /**
              * A dispatcher for legacy VMs that allow {@link dalvik.system.DexFile#loadDex(String, String, int)}.
@@ -716,6 +720,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public dalvik.system.DexFile loadDex(File privateDirectory,
                                                      File jar,
                                                      @Nullable ClassLoader classLoader,
@@ -728,6 +733,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Class<?> loadClass(dalvik.system.DexFile dexFile, @Nullable ClassLoader classLoader, TypeDescription typeDescription) {
                     return dexFile.loadClass(typeDescription.getName(), classLoader);
                 }
@@ -741,6 +747,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 /**
                  * Indicates that this dispatcher does not return a {@link dalvik.system.DexFile} instance.
                  */
+                @Nullable
                 private static final dalvik.system.DexFile NO_RETURN_VALUE = null;
 
                 /**
@@ -760,6 +767,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public dalvik.system.DexFile loadDex(File privateDirectory,
                                                      File jar,
                                                      @Nullable ClassLoader classLoader,
@@ -785,7 +793,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> loadClass(dalvik.system.DexFile dexFile, @Nullable ClassLoader classLoader, TypeDescription typeDescription) {
+                public Class<?> loadClass(@Nullable dalvik.system.DexFile dexFile, @Nullable ClassLoader classLoader, TypeDescription typeDescription) {
                     try {
                         return Class.forName(typeDescription.getName(), false, classLoader);
                     } catch (ClassNotFoundException exception) {

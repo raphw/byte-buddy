@@ -16,4 +16,7 @@
 /**
  * A package containing benchmarks for Byte Buddy and other code generation libraries.
  */
+@NonnullByDefault
 package net.bytebuddy.benchmark;
+
+import net.bytebuddy.utility.NonnullByDefault;

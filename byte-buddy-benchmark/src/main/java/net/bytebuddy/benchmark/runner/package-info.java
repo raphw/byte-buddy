@@ -16,4 +16,7 @@
 /**
  * A package dedicated to running benchmarks.
  */
+@NonnullByDefault
 package net.bytebuddy.benchmark.runner;
+
+import net.bytebuddy.utility.NonnullByDefault;

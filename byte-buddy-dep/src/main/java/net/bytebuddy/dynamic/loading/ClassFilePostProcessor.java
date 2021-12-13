@@ -20,7 +20,12 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import javax.annotation.Nullable;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
+import java.security.AllPermission;
+import java.security.Permission;
+import java.security.PermissionCollection;
 import java.security.ProtectionDomain;
+import java.util.Collections;
+import java.util.Enumeration;
 
 /**
  * A post processor for class files.
@@ -63,6 +68,11 @@ public interface ClassFilePostProcessor {
     class ForClassFileTransformer implements ClassFilePostProcessor {
 
         /**
+         * A protection domain that represents all permissions.
+         */
+        private static final ProtectionDomain ALL_PRIVILEGES = new ProtectionDomain(null, new AllPermissionsCollection());
+
+        /**
          * Indicates that a class is not currently loaded.
          */
         @Nullable
@@ -87,10 +97,37 @@ public interface ClassFilePostProcessor {
          */
         public byte[] transform(@Nullable ClassLoader classLoader, String name, @Nullable ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
             try {
-                byte[] transformed = classFileTransformer.transform(classLoader, name.replace('.', '/'), UNLOADED_TYPE, protectionDomain, binaryRepresentation);
+                byte[] transformed = classFileTransformer.transform(classLoader, name.replace('.', '/'),
+                        UNLOADED_TYPE,
+                        protectionDomain == null
+                                ? ALL_PRIVILEGES
+                                : protectionDomain,
+                        binaryRepresentation);
                 return transformed == null ? binaryRepresentation : transformed;
             } catch (IllegalClassFormatException exception) {
                 throw new IllegalStateException("Failed to transform " + name, exception);
+            }
+        }
+
+        /**
+         * A permission collection that implies all permissions.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        protected static class AllPermissionsCollection extends PermissionCollection {
+
+            @Override
+            public void add(Permission permission) {
+                throw new UnsupportedOperationException("add");
+            }
+
+            @Override
+            public boolean implies(Permission permission) {
+                return true;
+            }
+
+            @Override
+            public Enumeration<Permission> elements() {
+                return Collections.enumeration(Collections.<Permission>singleton(new AllPermission()));
             }
         }
     }

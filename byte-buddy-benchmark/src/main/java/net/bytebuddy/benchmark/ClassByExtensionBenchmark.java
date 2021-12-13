@@ -31,6 +31,7 @@ import net.bytebuddy.pool.TypePool;
 import net.sf.cglib.proxy.*;
 import org.openjdk.jmh.annotations.*;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -86,51 +87,61 @@ public class ClassByExtensionBenchmark {
     /**
      * An implementation to be used by {@link ClassByExtensionBenchmark#benchmarkByteBuddyWithProxyAndReusedDelegator()}.
      */
+    @Nullable
     private Implementation proxyInterceptor;
 
     /**
      * An implementation to be used by {@link ClassByExtensionBenchmark#benchmarkByteBuddyWithAccessorAndReusedDelegator()}.
      */
+    @Nullable
     private Implementation accessInterceptor;
 
     /**
      * An implementation to be used by {@link ClassByExtensionBenchmark#benchmarkByteBuddyWithPrefixAndReusedDelegator()}.
      */
+    @Nullable
     private Implementation.Composable prefixInterceptor;
 
     /**
      * A description of {@link ClassByExtensionBenchmark#baseClass}.
      */
+    @Nullable
     private TypeDescription baseClassDescription;
 
     /**
      * A description of {@link ByteBuddyProxyInterceptor}.
      */
+    @Nullable
     private TypeDescription proxyClassDescription;
 
     /**
      * A description of {@link ByteBuddyAccessInterceptor}.
      */
+    @Nullable
     private TypeDescription accessClassDescription;
 
     /**
      * A description of {@link ByteBuddyPrefixInterceptor}.
      */
+    @Nullable
     private TypeDescription prefixClassDescription;
 
     /**
      * A method delegation to {@link ByteBuddyProxyInterceptor}.
      */
+    @Nullable
     private Implementation proxyInterceptorDescription;
 
     /**
      * A method delegation to {@link ByteBuddyAccessInterceptor}.
      */
+    @Nullable
     private Implementation accessInterceptorDescription;
 
     /**
      * A method delegation to {@link ByteBuddyPrefixInterceptor}.
      */
+    @Nullable
     private Implementation.Composable prefixInterceptorDescription;
 
     /**

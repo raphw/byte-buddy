@@ -208,6 +208,7 @@ public interface TypePool {
         /**
          * The value that is returned on a cache-miss.
          */
+        @Nullable
         Resolution UNRESOLVED = null;
 
         /**
@@ -601,6 +602,7 @@ public interface TypePool {
             /**
              * Indicates that no component type is defined for the property.
              */
+            @Nullable
             String NO_ARRAY = null;
 
             /**

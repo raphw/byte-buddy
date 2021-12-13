@@ -29,6 +29,7 @@ import net.bytebuddy.matcher.FilterableList;
 import net.bytebuddy.utility.JavaConstant;
 import org.objectweb.asm.Type;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Method;
@@ -45,6 +46,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     /**
      * An {@code null} type list.
      */
+    @Nullable
     TypeList UNDEFINED = null;
 
     /**

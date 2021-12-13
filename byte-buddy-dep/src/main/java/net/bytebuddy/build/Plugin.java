@@ -2203,6 +2203,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * Indicates that no manifest exists.
                  */
+                @Nullable
                 Manifest NO_MANIFEST = null;
 
                 /**
@@ -2211,6 +2212,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * @return This source's manifest or {@code null}.
                  * @throws IOException If an I/O error occurs.
                  */
+                @Nullable
                 Manifest getManifest() throws IOException;
 
                 /**
@@ -2243,6 +2245,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
+                    @Nullable
                     public Manifest getManifest() throws IOException {
                         return file.getManifest();
                     }
@@ -2357,6 +2360,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
+                    @Nullable
                     public Manifest getManifest() throws IOException {
                         return manifest ? delegate.getManifest() : NO_MANIFEST;
                     }
@@ -2673,6 +2677,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Manifest getManifest() {
                     return NO_MANIFEST;
                 }
@@ -2767,6 +2772,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Manifest getManifest() throws IOException {
                     byte[] binaryRepresentation = storage.get(JarFile.MANIFEST_NAME);
                     if (binaryRepresentation == null) {
@@ -2872,6 +2878,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Manifest getManifest() throws IOException {
                     File file = new File(folder, JarFile.MANIFEST_NAME);
                     if (file.exists()) {

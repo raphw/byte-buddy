@@ -108,16 +108,19 @@ public class ByteBuddyAgent {
     /**
      * Base for access to a reflective member to make the code more readable.
      */
+    @Nullable
     private static final Object STATIC_MEMBER = null;
 
     /**
      * Representation of the bootstrap {@link java.lang.ClassLoader}.
      */
+    @Nullable
     private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
 
     /**
      * Represents a no-op argument for a dynamic agent attachment.
      */
+    @Nullable
     private static final String WITHOUT_ARGUMENT = null;
 
     /**
@@ -163,11 +166,13 @@ public class ByteBuddyAgent {
     /**
      * An indicator variable to express that no instrumentation is available.
      */
+    @Nullable
     private static final Instrumentation UNAVAILABLE = null;
 
     /**
      * Represents a failed attempt to self-resolve a jar file location.
      */
+    @Nullable
     private static final File CANNOT_SELF_RESOLVE = null;
 
     /**
@@ -709,6 +714,7 @@ public class ByteBuddyAgent {
      *
      * @return The self-resolved jar file or {@code null} if the jar file cannot be located.
      */
+    @Nullable
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
     private static File trySelfResolve() {
         try {
@@ -756,6 +762,7 @@ public class ByteBuddyAgent {
      * @param required {@code true} if a {@code null} return value is prohibited.
      * @return The Byte Buddy agent's {@link java.lang.instrument.Instrumentation} instance.
      */
+    @Nullable
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Legal outcome where reflection communicates errors by throwing an exception")
     private static Instrumentation doGetInstrumentation(boolean required) {
         Instrumentation instrumentation;
@@ -1431,6 +1438,7 @@ public class ByteBuddyAgent {
              * @return This jar file's location or {@code null} if this jar file's location is inaccessible.
              * @throws IOException If an I/O exception occurs.
              */
+            @Nullable
             private static File trySelfResolve() throws IOException {
                 ProtectionDomain protectionDomain = Installer.class.getProtectionDomain();
                 if (Boolean.getBoolean(LATENT_RESOLVE)) {
