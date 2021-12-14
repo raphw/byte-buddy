@@ -4122,6 +4122,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getComponentType() {
                     TypeDescription componentType = typeDescription.getComponentType();
                     return componentType == null
@@ -4234,6 +4235,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Generic getOwnerType() {
                 return Generic.UNDEFINED;
             }
@@ -5406,6 +5408,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Generic getOwnerType() {
                     Generic ownerType = parameterizedType.getOwnerType();
                     return ownerType == null
@@ -6136,6 +6139,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Generic getComponentType() {
                 return resolve().getComponentType();
             }
@@ -6164,6 +6168,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Generic getOwnerType() {
                 return resolve().getOwnerType();
             }
@@ -8080,6 +8085,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public Object getDefaultValue() {
             if (represents(boolean.class)) {
                 return false;
@@ -8154,6 +8160,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public ClassFileVersion getClassFileVersion() {
             return null;
         }
@@ -8210,6 +8217,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public TypeDescription getComponentType() {
                 return TypeDescription.UNDEFINED;
             }
@@ -8224,6 +8232,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public String getCanonicalName() {
                 if (isAnonymousType() || isLocalType()) {
                     return NO_NAME;
@@ -8308,6 +8317,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public TypeDescription getDeclaringType() {
                     return delegate().getDeclaringType();
                 }
@@ -8315,6 +8325,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public MethodDescription.InDefinedShape getEnclosingMethod() {
                     return delegate().getEnclosingMethod();
                 }
@@ -8322,6 +8333,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public TypeDescription getEnclosingType() {
                     return delegate().getEnclosingType();
                 }
@@ -8350,6 +8362,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public PackageDescription getPackage() {
                     return delegate().getPackage();
                 }
@@ -8376,6 +8389,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
+                @Nullable
                 public String getGenericSignature() {
                     // Embrace use of native generic signature by direct delegation.
                     return delegate().getGenericSignature();
@@ -8428,6 +8442,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
+                @Nullable
                 public ClassFileVersion getClassFileVersion() {
                     return delegate().getClassFileVersion();
                 }
@@ -8638,6 +8653,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription getDeclaringType() {
             Class<?> declaringType = type.getDeclaringClass();
             return declaringType == null
@@ -8735,6 +8751,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public PackageDescription getPackage() {
             if (type.isArray() || type.isPrimitive()) {
                 return PackageDescription.UNDEFINED;
@@ -8769,6 +8786,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public String getCanonicalName() {
             String canonicalName = type.getCanonicalName();
             if (canonicalName == null) {
@@ -8898,6 +8916,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
+        @Nullable
         @CachedReturnPlugin.Enhance("classFileVersion")
         public ClassFileVersion getClassFileVersion() {
             try {
@@ -9106,6 +9125,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription getEnclosingType() {
             return TypeDescription.UNDEFINED;
         }
@@ -9131,6 +9151,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public String getCanonicalName() {
             String canonicalName = componentType.getCanonicalName();
             if (canonicalName == null) {
@@ -9200,6 +9221,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public PackageDescription getPackage() {
             return PackageDescription.UNDEFINED;
         }
@@ -9234,6 +9256,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription getDeclaringType() {
             return TypeDescription.UNDEFINED;
         }
@@ -9413,12 +9436,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public PackageDescription getPackage() {
             String name = getName();
             int index = name.lastIndexOf('.');
-            return new PackageDescription.Simple(index == -1
-                    ? EMPTY_NAME
-                    : name.substring(0, index));
+            return index == -1
+                    ? PackageDescription.UNDEFINED
+                    : new PackageDescription.Simple(name.substring(0, index));
         }
 
         /**
@@ -9537,6 +9561,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription getEnclosingType() {
             return TypeDescription.UNDEFINED;
         }
@@ -9593,6 +9618,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription getDeclaringType() {
             return TypeDescription.UNDEFINED;
         }
@@ -9788,6 +9814,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription getComponentType() {
             return delegate.getComponentType();
         }
@@ -9795,6 +9822,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription getDeclaringType() {
             return delegate.getDeclaringType();
         }
@@ -9809,6 +9837,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return delegate.getEnclosingMethod();
         }
@@ -9816,6 +9845,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public TypeDescription getEnclosingType() {
             return delegate.getEnclosingType();
         }
@@ -9830,6 +9860,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public String getCanonicalName() {
             return delegate.getCanonicalName();
         }
@@ -9851,6 +9882,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public PackageDescription getPackage() {
             return delegate.getPackage();
         }
@@ -9896,6 +9928,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
+        @Nullable
         public ClassFileVersion getClassFileVersion() {
             return delegate.getClassFileVersion();
         }

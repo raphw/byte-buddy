@@ -31,4 +31,15 @@ public interface DeclaredByType {
      */
     @Nullable
     TypeDefinition getDeclaringType();
+
+    /**
+     * Indicates that this element must always be declared by a type.
+     */
+    interface WithMandatoryDeclaration extends DeclaredByType {
+
+        /**
+         * {@inheritDoc}
+         */
+        TypeDefinition getDeclaringType();
+    }
 }

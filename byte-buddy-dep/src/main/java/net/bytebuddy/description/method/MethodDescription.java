@@ -17,10 +17,7 @@ package net.bytebuddy.description.method;
 
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.CachedReturnPlugin;
-import net.bytebuddy.description.ByteCodeElement;
-import net.bytebuddy.description.ModifierReviewable;
-import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.TypeVariableSource;
+import net.bytebuddy.description.*;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -53,6 +50,7 @@ import static net.bytebuddy.matcher.ElementMatchers.ofSort;
  * interface must provide meaningful {@code equal(Object)} and {@code hashCode()} implementations.
  */
 public interface MethodDescription extends TypeVariableSource,
+        DeclaredByType.WithMandatoryDeclaration,
         ModifierReviewable.ForMethodDescription,
         NamedElement.WithGenericName,
         ByteCodeElement,
@@ -526,6 +524,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public String getGenericSignature() {
             try {
                 SignatureWriter signatureWriter = new SignatureWriter();

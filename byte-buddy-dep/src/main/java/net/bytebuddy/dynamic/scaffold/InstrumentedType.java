@@ -1987,6 +1987,7 @@ public interface InstrumentedType extends TypeDescription {
          * {@inheritDoc}
          */
         @Nullable
+        @Nullable
         public String getGenericSignature() {
             // Embrace use of native generic signature by direct delegation.
             return typeDescription.getGenericSignature();

@@ -28,6 +28,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import org.objectweb.asm.signature.SignatureWriter;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Method;
@@ -41,7 +42,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 /**
  * Represents a component of a Java record.
  */
-public interface RecordComponentDescription extends DeclaredByType,
+public interface RecordComponentDescription extends DeclaredByType.WithMandatoryDeclaration,
         NamedElement.WithDescriptor,
         AnnotationSource,
         ByteCodeElement.TypeDependant<RecordComponentDescription.InDefinedShape, RecordComponentDescription.Token> {
@@ -139,6 +140,7 @@ public interface RecordComponentDescription extends DeclaredByType,
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public String getGenericSignature() {
             TypeDescription.Generic recordComponentType = getType();
             try {
@@ -248,6 +250,7 @@ public interface RecordComponentDescription extends DeclaredByType,
         }
 
         @Override
+        @Nullable
         public String getGenericSignature() {
             return RECORD_COMPONENT.getGenericSignature(recordComponent);
         }
@@ -320,6 +323,7 @@ public interface RecordComponentDescription extends DeclaredByType,
              * @param value The record component to resolve the generic signature for.
              * @return The record component type's generic signature or {@code null} if no signature is defined.
              */
+            @Nullable
             String getGenericSignature(Object value);
 
             /**

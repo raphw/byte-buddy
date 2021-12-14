@@ -2783,6 +2783,7 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public TypeDescription getEnclosingType() {
                 return typeContainment.getEnclosingType(typePool);
             }
@@ -2825,6 +2826,7 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public PackageDescription getPackage() {
                 String name = getName();
                 int index = name.lastIndexOf('.');
@@ -2843,6 +2845,7 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public TypeDescription getDeclaringType() {
                 return declaringTypeName == null
                         ? TypeDescription.UNDEFINED
@@ -2895,8 +2898,8 @@ public interface TypePool {
                 return signatureResolution.resolveTypeVariables(typePool, this, typeVariableAnnotationTokens, typeVariableBoundsAnnotationTokens);
             }
 
-            @Nullable
             @Override
+            @Nullable
             public String getGenericSignature() {
                 return genericSignature;
             }
@@ -3462,6 +3465,7 @@ public interface TypePool {
                         /**
                          * {@inheritDoc}
                          */
+                        @Nullable
                         public Generic getComponentType() {
                             return Generic.UNDEFINED;
                         }
@@ -3751,6 +3755,7 @@ public interface TypePool {
                             /**
                              * {@inheritDoc}
                              */
+                            @Nullable
                             public Generic getOwnerType() {
                                 TypeDescription declaringType = typeDescription.getDeclaringType();
                                 return declaringType == null
@@ -3761,6 +3766,7 @@ public interface TypePool {
                             /**
                              * {@inheritDoc}
                              */
+                            @Nullable
                             public Generic getComponentType() {
                                 TypeDescription componentType = typeDescription.getComponentType();
                                 return componentType == null
@@ -7208,6 +7214,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public String getGenericSignature() {
                     return genericSignature;
                 }
@@ -7484,6 +7491,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public String getGenericSignature() {
                     return genericSignature;
                 }
@@ -7814,6 +7822,7 @@ public interface TypePool {
                     /**
                      * {@inheritDoc}
                      */
+                    @Nullable
                     public Generic getComponentType() {
                         return Generic.UNDEFINED;
                     }
@@ -7926,6 +7935,7 @@ public interface TypePool {
                 }
 
                 @Override
+                @Nullable
                 public String getGenericSignature() {
                     return genericSignature;
                 }
