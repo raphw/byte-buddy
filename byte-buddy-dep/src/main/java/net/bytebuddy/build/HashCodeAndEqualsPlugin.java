@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.build;
 
+import jdk.internal.org.objectweb.asm.Opcodes;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -25,12 +26,17 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.EqualsMethod;
 import net.bytebuddy.implementation.HashCodeMethod;
+import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
+import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.MethodVisitor;
 
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.lang.annotation.*;
+import java.util.Collections;
 import java.util.Comparator;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -40,7 +46,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * {@link Enhance} annotation is present and no explicit method declaration was added. This plugin does not need to be closed.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
+public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAttributeAppender.Factory, MethodAttributeAppender {
 
     /**
      * A description of the {@link Enhance#invokeSuper()} method.
@@ -92,6 +98,27 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
     }
 
     /**
+     * If {@code true}, a JSR305 annotation is added to the {@link Object#equals(Object)} method's parameter.
+     */
+    private final boolean jsr305;
+
+    /**
+     * Creates a new hash code equals plugin without JSR305 annotations.
+     */
+    public HashCodeAndEqualsPlugin() {
+        this(false);
+    }
+
+    /**
+     * Creates a new hash code equals plugin.
+     *
+     * @param jsr305  If {@code true}, a JSR305 annotation is added to the {@link Object#equals(Object)} method's parameter.
+     */
+    public HashCodeAndEqualsPlugin(boolean jsr305) {
+        this.jsr305 = jsr305;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public Plugin make() {
@@ -139,7 +166,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
             }
             builder = builder.method(isEquals()).intercept(enhance.getValue(ENHANCE_PERMIT_SUBCLASS_EQUALITY).resolve(Boolean.class)
                     ? equalsMethod.withSubclassEquality()
-                    : equalsMethod);
+                    : equalsMethod).attribute(this);
         }
         return builder;
     }
@@ -159,6 +186,26 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
      */
     public void close() {
         /* do nothing */
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public MethodAttributeAppender make(TypeDescription typeDescription) {
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
+        if (jsr305) {
+            AnnotationVisitor annotationVisitor = methodVisitor.visitParameterAnnotation(0, "Ljavax/annotation/Nonnull;", true);
+            if (annotationVisitor != null) {
+                annotationVisitor.visitEnum("when", "Ljavax/annotation/meta/When;", "MAYBE");
+                annotationVisitor.visitEnd();
+            }
+        }
     }
 
     /**

@@ -9387,7 +9387,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * @param superClass  The super type or {@code null} if no such type exists.
          * @param anInterface The interfaces that this type implements.
          */
-        public Latent(String name, int modifiers, Generic superClass, Generic... anInterface) {
+        public Latent(String name, int modifiers, @Nonnull(when = When.MAYBE) Generic superClass, Generic... anInterface) {
             this(name, modifiers, superClass, Arrays.asList(anInterface));
         }
 

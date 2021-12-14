@@ -8,8 +8,13 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.EqualsMethod;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.Comparator;
 
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
@@ -202,6 +207,21 @@ public class HashCodeAndEqualsPluginTest {
                 .define("value", 42)
                 .build()));
         assertThat(comparator.compare(left, right), is(1));
+    }
+
+    @Test
+    public void testPluginEnhanceJsr305() throws Exception {
+        Class<?> type = new HashCodeAndEqualsPlugin(true)
+                .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class), ClassFileLocator.ForClassLoader.of(SimpleSample.class.getClassLoader()))
+                .make()
+                .load(Nonnull.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        Method method = type.getMethod("equals", Object.class);
+        assertThat(method.getParameterAnnotations()[0].length, is(1));
+        assertThat(method.getParameterAnnotations()[0][0], CoreMatchers.<Annotation>instanceOf(Nonnull.class));
+        assertThat(((Nonnull) method.getParameterAnnotations()[0][0]).when(), is(When.MAYBE));
+        assertThat(type.getDeclaredConstructor().newInstance().hashCode(), is(type.getDeclaredConstructor().newInstance().hashCode()));
+        assertThat(type.getDeclaredConstructor().newInstance(), is(type.getDeclaredConstructor().newInstance()));
     }
 
     @HashCodeAndEqualsPlugin.Enhance
