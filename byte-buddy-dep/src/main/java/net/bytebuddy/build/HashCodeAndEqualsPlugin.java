@@ -15,7 +15,6 @@
  */
 package net.bytebuddy.build;
 
-import jdk.internal.org.objectweb.asm.Opcodes;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -36,7 +35,6 @@ import org.objectweb.asm.MethodVisitor;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.lang.annotation.*;
-import java.util.Collections;
 import java.util.Comparator;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
