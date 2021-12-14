@@ -6763,7 +6763,6 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
                 public String[] toInternalNames() {
                     String[] internalName = new String[nestMembers.size() + 1];
                     internalName[0] = typeDescription.getInternalName();
