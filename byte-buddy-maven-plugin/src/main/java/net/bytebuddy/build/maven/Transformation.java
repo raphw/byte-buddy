@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,11 +33,13 @@ public class Transformation extends CoordinateConfiguration {
     /**
      * The fully-qualified name of the plugin type.
      */
+    @Nullable
     public String plugin;
 
     /**
      * A list of arguments that are provided to the plugin for construction.
      */
+    @Nullable
     public List<PluginArgument> arguments;
 
     /**

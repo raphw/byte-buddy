@@ -245,6 +245,8 @@ public interface TypeWriter<T> {
                 /**
                  * The field's default value.
                  */
+                @Nullable
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final Object defaultValue;
 
                 /**
@@ -259,7 +261,9 @@ public interface TypeWriter<T> {
                  * @param defaultValue      The field's default value.
                  * @param fieldDescription  The implemented field.
                  */
-                public ForExplicitField(FieldAttributeAppender attributeAppender, Object defaultValue, FieldDescription fieldDescription) {
+                public ForExplicitField(FieldAttributeAppender attributeAppender,
+                                        @Nullable Object defaultValue,
+                                        FieldDescription fieldDescription) {
                     this.attributeAppender = attributeAppender;
                     this.defaultValue = defaultValue;
                     this.fieldDescription = fieldDescription;
@@ -5498,7 +5502,6 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
-                        @Nullable
                         public void visitAnnotableParameterCount(int count, boolean visible) {
                             if (annotationRetention.isEnabled()) {
                                 super.visitAnnotableParameterCount(count, visible);

@@ -18,8 +18,10 @@ package net.bytebuddy.build.maven;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.Plugin;
 
+import javax.annotation.Nullable;
+
 /**
- * Describes an argument to a {@link Plugin} constuctor.
+ * Describes an argument to a {@link Plugin} constructor.
  */
 @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "Written to by Maven.")
 public class PluginArgument {
@@ -32,6 +34,7 @@ public class PluginArgument {
     /**
      * The argument value.
      */
+    @Nullable
     public String value;
 
     /**

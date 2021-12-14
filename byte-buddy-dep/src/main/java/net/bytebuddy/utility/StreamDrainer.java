@@ -83,7 +83,7 @@ public class StreamDrainer {
         int currentRead;
         do {
             currentRead = inputStream.read(currentArray, currentIndex, bufferSize - currentIndex);
-            currentIndex += currentRead > 0 ? currentRead : 0;
+            currentIndex += Math.max(currentRead, 0);
             if (currentIndex == bufferSize) {
                 previousBytes.add(currentArray);
                 currentArray = new byte[bufferSize];

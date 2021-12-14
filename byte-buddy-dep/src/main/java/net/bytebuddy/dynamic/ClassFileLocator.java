@@ -299,7 +299,7 @@ public interface ClassFileLocator extends Closeable {
          *
          * @param classLoader The class loader to query which must not be the bootstrap class loader, i.e. {@code null}.
          */
-        protected ForClassLoader(@Nullable ClassLoader classLoader) {
+        protected ForClassLoader(ClassLoader classLoader) {
             this.classLoader = classLoader;
         }
 
@@ -442,12 +442,12 @@ public interface ClassFileLocator extends Closeable {
         /**
          * Locates the class file for the supplied type by requesting a resource from the class loader.
          *
-         * @param classLoader The class loader to query for the resource or {@code null} to use the boot loader.
+         * @param classLoader The class loader to query.
          * @param name        The name of the type for which to locate a class file.
          * @return A resolution for the class file.
          * @throws IOException If reading the class file causes an exception.
          */
-        protected static Resolution locate(@Nullable ClassLoader classLoader, String name) throws IOException {
+        protected static Resolution locate(ClassLoader classLoader, String name) throws IOException {
             InputStream inputStream = classLoader.getResourceAsStream(name.replace('.', '/') + CLASS_FILE_EXTENSION);
             if (inputStream != null) {
                 try {
@@ -1745,6 +1745,7 @@ public interface ClassFileLocator extends Closeable {
             /**
              * The class loader that is expected to have loaded the looked-up a class.
              */
+            @Nullable
             private final ClassLoader classLoader;
 
             /**
@@ -1773,6 +1774,7 @@ public interface ClassFileLocator extends Closeable {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             @SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "The array is not to be modified by contract")
             public byte[] transform(@Nullable ClassLoader classLoader,
                                     @Nullable String internalName,

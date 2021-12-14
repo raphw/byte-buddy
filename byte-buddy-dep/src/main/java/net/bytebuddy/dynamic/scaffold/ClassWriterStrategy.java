@@ -125,7 +125,11 @@ public interface ClassWriterStrategy {
                 return TypeDescription.OBJECT.getInternalName();
             } else {
                 do {
-                    leftType = leftType.getSuperClass().asErasure();
+                    TypeDescription.Generic superClass = leftType.getSuperClass();
+                    if (superClass == null) {
+                        return TypeDescription.OBJECT.getInternalName();
+                    }
+                    leftType = superClass.asErasure();
                 } while (!leftType.isAssignableFrom(rightType));
                 return leftType.getInternalName();
             }

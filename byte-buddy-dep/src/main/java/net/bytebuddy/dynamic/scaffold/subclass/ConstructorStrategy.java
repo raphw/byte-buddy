@@ -361,7 +361,9 @@ public interface ConstructorStrategy {
          * {@inheritDoc}
          */
         public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
-            if (instrumentedType.getSuperClass().getDeclaredMethods().filter(isConstructor()).isEmpty()) {
+            if (instrumentedType.getSuperClass() == null) {
+                throw new IllegalArgumentException("Cannot extract constructors for " + instrumentedType);
+            } else if (instrumentedType.getSuperClass().getDeclaredMethods().filter(isConstructor()).isEmpty()) {
                 throw new IllegalStateException("Cannot define default constructor for class without super class constructor");
             }
             return Collections.singletonList(new MethodDescription.Token(Opcodes.ACC_PUBLIC));
@@ -371,6 +373,9 @@ public interface ConstructorStrategy {
          * {@inheritDoc}
          */
         public MethodRegistry inject(TypeDescription instrumentedType, MethodRegistry methodRegistry) {
+            if (instrumentedType.getSuperClass() == null) {
+                throw new IllegalArgumentException("Cannot inject constructors for " + instrumentedType);
+            }
             MethodList<?> candidates = instrumentedType.getSuperClass().getDeclaredMethods().filter(isConstructor().and(elementMatcher));
             if (candidates.isEmpty()) {
                 throw new IllegalStateException("No possible candidate for super constructor invocation in " + instrumentedType.getSuperClass());

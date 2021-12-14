@@ -58,6 +58,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     /**
      * Indicates that a type was not found.
      */
+    @Nullable
     private static final Class<?> NOT_FOUND = null;
 
     /**
@@ -87,6 +88,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @param key         The key for the type in question.
      * @return The stored type or {@code null} if no type was stored.
      */
+    @Nullable
     @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended")
     public Class<?> find(@Nullable ClassLoader classLoader, T key) {
         ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(new LookupKey(classLoader));
@@ -145,7 +147,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @param lazy        A lazy creator for the type to insert of no previous type was stored in the cache.
      * @return The lazily created type or a previously submitted type for the same class loader and key combination.
      */
-    public Class<?> findOrInsert(@Nullable ClassLoader classLoader, T key, Callable<Class<?>> lazy) {
+    public Class<?> findOrInsert(ClassLoader classLoader, T key, Callable<Class<?>> lazy) {
         Class<?> type = find(classLoader, key);
         if (type != null) {
             return type;
@@ -237,6 +239,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         /**
          * The referenced class loader.
          */
+        @Nullable
         private final ClassLoader classLoader;
 
         /**
@@ -340,7 +343,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         /**
          * {@inheritDoc}
          */
-        public Class<?> find(ClassLoader classLoader, S key) {
+        public Class<?> find(@Nullable ClassLoader classLoader, S key) {
             try {
                 return super.find(classLoader, key);
             } finally {
@@ -351,7 +354,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         /**
          * {@inheritDoc}
          */
-        public Class<?> insert(ClassLoader classLoader, S key, Class<?> type) {
+        public Class<?> insert(@Nullable ClassLoader classLoader, S key, Class<?> type) {
             try {
                 return super.insert(classLoader, key, type);
             } finally {
@@ -373,7 +376,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         /**
          * {@inheritDoc}
          */
-        public Class<?> findOrInsert(ClassLoader classLoader, S key, Callable<Class<?>> builder, Object monitor) {
+        public Class<?> findOrInsert(@Nullable ClassLoader classLoader, S key, Callable<Class<?>> builder, Object monitor) {
             try {
                 return super.findOrInsert(classLoader, key, builder, monitor);
             } finally {

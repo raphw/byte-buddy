@@ -142,6 +142,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     /**
      * The access control context to use for loading classes or {@code null} if this is not supported on the current VM.
      */
+    @Nullable
     protected final Object accessControlContext;
 
     /**
@@ -410,6 +411,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     /**
      * {@inheritDoc}
      */
+    @Nullable
     protected URL findResource(String name) {
         return persistenceHandler.url(name, typeDefinitions);
     }
@@ -430,6 +432,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param name The name of the package.
      * @return A suitable package or {@code null} if no such package exists.
      */
+    @Nullable
     @SuppressWarnings("deprecation")
     private Package doGetPackage(String name) {
         return getPackage(name);

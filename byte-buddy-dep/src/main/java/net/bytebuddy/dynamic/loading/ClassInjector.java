@@ -314,6 +314,7 @@ public interface ClassInjector {
             /**
              * Indicates a class that is currently not defined.
              */
+            @Nullable
             Class<?> UNDEFINED = null;
 
             /**
@@ -685,7 +686,10 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
+                @Nullable
                 public Package getDefinedPackage(ClassLoader classLoader, String name) {
                     if (getDefinedPackage == null) {
                         return getPackage(classLoader, name);
@@ -841,6 +845,7 @@ public interface ClassInjector {
                 /**
                  * The accessor method for using {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                  */
+                @Nullable
                 private final Method getDefinedPackage;
 
                 /**
@@ -874,7 +879,7 @@ public interface ClassInjector {
                 protected UsingUnsafeInjection(Object accessor,
                                                Method findLoadedClass,
                                                Method defineClass,
-                                               Method getDefinedPackage,
+                                               @Nullable Method getDefinedPackage,
                                                Method getPackage,
                                                Method definePackage,
                                                Method getClassLoadingLock) {
@@ -1040,6 +1045,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public Package getDefinedPackage(ClassLoader classLoader, String name) {
                     if (getDefinedPackage == null) {
                         return getPackage(classLoader, name);
@@ -1116,6 +1122,7 @@ public interface ClassInjector {
                 /**
                  * An instance of {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                  */
+                @Nullable
                 protected final Method getDefinedPackage;
 
                 /**
@@ -1139,7 +1146,7 @@ public interface ClassInjector {
                  */
                 protected UsingUnsafeOverride(Method findLoadedClass,
                                               Method defineClass,
-                                              Method getDefinedPackage,
+                                              @Nullable Method getDefinedPackage,
                                               Method getPackage,
                                               Method definePackage) {
                     this.findLoadedClass = findLoadedClass;
@@ -1281,7 +1288,10 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
+                @Nullable
                 public Package getDefinedPackage(ClassLoader classLoader, String name) {
                     if (getDefinedPackage == null) {
                         return getPackage(classLoader, name);
@@ -1500,6 +1510,7 @@ public interface ClassInjector {
              *
              * @return The current security manager or {@code null} if not available.
              */
+            @Nullable
             @JavaDispatcher.IsStatic
             @JavaDispatcher.Defaults
             Object getSecurityManager();
@@ -1609,11 +1620,14 @@ public interface ClassInjector {
          * {@inheritDoc}
          */
         public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
-            String expectedPackage = TypeDescription.ForLoadedType.of(lookupType()).getPackage().getName();
+            PackageDescription target = TypeDescription.ForLoadedType.of(lookupType()).getPackage();
+            if (target == null) {
+                throw new IllegalStateException("Cannot inject into default package");
+            }
             Map<String, Class<?>> result = new HashMap<String, Class<?>>();
             for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
                 int index = entry.getKey().lastIndexOf('.');
-                if (!expectedPackage.equals(index == -1 ? "" : entry.getKey().substring(0, index))) {
+                if (!target.getName().equals(index == -1 ? "" : entry.getKey().substring(0, index))) {
                     throw new IllegalArgumentException(entry.getKey() + " must be defined in the same package as " + lookup);
                 }
                 try {
@@ -2281,6 +2295,7 @@ public interface ClassInjector {
              *
              * @return The current security manager or {@code null} if not available.
              */
+            @Nullable
             @JavaDispatcher.IsStatic
             @JavaDispatcher.Defaults
             Object getSecurityManager();

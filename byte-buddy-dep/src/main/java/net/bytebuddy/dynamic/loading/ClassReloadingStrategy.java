@@ -527,8 +527,8 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Value is always null")
             @Nullable
+            @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Value is always null")
             public byte[] transform(@Nullable ClassLoader classLoader,
                                     @Nullable String internalTypeName,
                                     @Nullable Class<?> classBeingRedefined,

@@ -1794,9 +1794,6 @@ public interface DynamicType {
                          * {@inheritDoc}
                          */
                         public FieldDefinition.Optional<U> value(String value) {
-                            if (value == null) {
-                                throw new IllegalArgumentException("Cannot set null as a default value");
-                            }
                             return defaultValue(value);
                         }
 
@@ -5785,7 +5782,7 @@ public interface DynamicType {
          * @return This dynamic type in its loaded state.
          * @see net.bytebuddy.dynamic.loading.ClassLoadingStrategy.Default
          */
-        <S extends ClassLoader> Loaded<T> load(S classLoader, ClassLoadingStrategy<? super S> classLoadingStrategy);
+        <S extends ClassLoader> Loaded<T> load(@Nullable S classLoader, ClassLoadingStrategy<? super S> classLoadingStrategy);
 
         /**
          * Includes the provided dynamic types as auxiliary types of this instance.
@@ -6153,7 +6150,7 @@ public interface DynamicType {
             /**
              * {@inheritDoc}
              */
-            public <S extends ClassLoader> DynamicType.Loaded<T> load(S classLoader, ClassLoadingStrategy<? super S> classLoadingStrategy) {
+            public <S extends ClassLoader> DynamicType.Loaded<T> load(@Nullable S classLoader, ClassLoadingStrategy<? super S> classLoadingStrategy) {
                 return new Default.Loaded<T>(typeDescription,
                         binaryRepresentation,
                         loadedTypeInitializer,

@@ -64,6 +64,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * The build context to support incremental builds.
      */
+    @Nullable
     @Component
     public BuildContext context;
 
@@ -82,6 +83,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * The currently used system session for the repository system.
      */
+    @Nullable
     @Parameter(defaultValue = "${repositorySystemSession}", readonly = true)
     public RepositorySystemSession repositorySystemSession;
 
@@ -107,6 +109,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * If the list of {@code transformations} is empty or is not supplied at all, this plugin does not apply but prints a warning.
      * </p>
      */
+    @Nullable
     @Parameter
     public List<Transformation> transformations;
 
@@ -128,6 +131,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * < /initialization>
      * }</pre></blockquote>
      */
+    @Nullable
     @Parameter
     public Initialization initialization;
 
@@ -136,6 +140,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * set or is empty, a random suffix will be appended to any rebased method. If this property is set, the supplied
      * value is appended to the original method name.
      */
+    @Nullable
     @Parameter
     public String suffix;
 
@@ -290,6 +295,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      *
      * @return The source directory that serves as an input for the transformation.
      */
+    @Nullable
     protected abstract String getSourceDirectory();
 
     /**
@@ -428,6 +434,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param project The relevant Maven project.
      * @return The Java version string of the configured build target version or {@code null} if no explicit configuration was detected.
      */
+    @Nullable
     private static String findJavaVersionString(MavenProject project) {
         while (project != null) {
             String target = project.getProperties().getProperty("maven.compiler.target");
@@ -496,6 +503,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             return project.getBuild().getOutputDirectory();
         }
 
+        @Nullable
         @Override
         protected String getSourceDirectory() {
             return project.getBuild().getSourceDirectory();
@@ -557,6 +565,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             return project.getBuild().getTestOutputDirectory();
         }
 
+        @Nullable
         @Override
         protected String getSourceDirectory() {
             return project.getBuild().getTestSourceDirectory();

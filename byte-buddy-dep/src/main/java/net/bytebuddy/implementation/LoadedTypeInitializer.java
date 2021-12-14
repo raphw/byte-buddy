@@ -130,6 +130,7 @@ public interface LoadedTypeInitializer {
          *
          * @return The current access control context or {@code null} if the current VM does not support it.
          */
+        @Nullable
         @AccessControllerPlugin.Enhance
         private static Object getContext() {
             return null;

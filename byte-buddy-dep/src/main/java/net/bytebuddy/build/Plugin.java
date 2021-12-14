@@ -684,6 +684,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         /**
                          * A string representation of the supplied value.
                          */
+                        @Nullable
+                        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                         private final String value;
 
                         /**
@@ -692,7 +694,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                          * @param index The index of the parameter to resolve.
                          * @param value A string representation of the supplied value.
                          */
-                        public WithDynamicType(int index, String value) {
+                        public WithDynamicType(int index, @Nullable String value) {
                             this.index = index;
                             this.value = value;
                         }
@@ -703,7 +705,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         public Resolution resolve(int index, Class<?> type) {
                             if (this.index != index) {
                                 return Resolution.Unresolved.INSTANCE;
-                            } else if (type == char.class || type == Character.class) {
+                            } else if (type == char.class || type == Character.class && value != null) {
                                 return value.length() == 1
                                         ? new Resolution.Resolved(value.charAt(0))
                                         : Resolution.Unresolved.INSTANCE;

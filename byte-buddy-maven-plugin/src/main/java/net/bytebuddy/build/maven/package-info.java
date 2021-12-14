@@ -16,4 +16,7 @@
 /**
  * A package containing classes for applying Byte Buddy transformers within a Maven build.
  */
+@NonnullByDefault
 package net.bytebuddy.build.maven;
+
+import net.bytebuddy.utility.NonnullByDefault;
