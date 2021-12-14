@@ -4745,7 +4745,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@Nonnull(when = When.MAYBE) TypeDescription target) {
+        public boolean matches(@CheckForNull TypeDescription target) {
             return false;
         }
 
@@ -4787,7 +4787,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@Nonnull(when = When.MAYBE) TypeDescription target) {
+        public boolean matches(@CheckForNull TypeDescription target) {
             return matcher.matches(target);
         }
     }

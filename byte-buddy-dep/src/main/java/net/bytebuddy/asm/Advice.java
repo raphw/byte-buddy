@@ -466,11 +466,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param delegator         The delegator to use.
      * @return A resolved dispatcher or {@code null} if no dispatcher was resolved.
      */
-    private static Dispatcher.Unresolved locate(Class<? extends Annotation> type,
-                                                MethodDescription.InDefinedShape property,
-                                                Dispatcher.Unresolved dispatcher,
-                                                MethodDescription.InDefinedShape methodDescription,
-                                                Delegator delegator) {
+    private static <T extends Annotation> Dispatcher.Unresolved locate(Class<T> type,
+                                                                       MethodDescription.InDefinedShape property,
+                                                                       Dispatcher.Unresolved dispatcher,
+                                                                       MethodDescription.InDefinedShape methodDescription,
+                                                                       Delegator delegator) {
         AnnotationDescription annotation = methodDescription.getDeclaredAnnotations().ofType(type);
         if (annotation == null) {
             return dispatcher;
@@ -3720,6 +3720,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @return An appropriate offset mapping factory.
                  */
                 @SuppressWarnings("unchecked") // In absence of @SafeVarargs
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
                 protected static OffsetMapping.Factory<?> of(MethodDescription.InDefinedShape adviceMethod) {
                     return adviceMethod.getDeclaredAnnotations()
                             .ofType(OnMethodExit.class)
@@ -6989,7 +6990,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * A dispatcher that is not yet resolved.
          */
-        interface Unresolved extends Dispatcher {
+        interface Unresolved<T extends Annotation> extends Dispatcher {
 
             /**
              * Indicates that this dispatcher requires access to the class file declaring the advice method.
@@ -9407,7 +9408,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * A dispatcher for an advice method that is being invoked from the instrumented method.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class Delegating implements Unresolved {
+        class Delegating implements Unresolved<T> {
 
             /**
              * The advice method.

@@ -23,6 +23,7 @@ import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.util.*;
@@ -322,7 +323,7 @@ public interface FieldRegistry {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean matches(@Nonnull(when = When.MAYBE) FieldDescription target) {
+                public boolean matches(@CheckForNull FieldDescription target) {
                     return matcher.matches(target);
                 }
             }

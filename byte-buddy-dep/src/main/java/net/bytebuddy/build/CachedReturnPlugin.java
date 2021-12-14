@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.build;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.FieldPersistence;
@@ -120,6 +121,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
     /**
      * {@inheritDoc}
      */
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Annotation presence is required by matcher")
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         for (MethodDescription.InDefinedShape methodDescription : typeDescription.getDeclaredMethods()
                 .filter(not(isBridge()).<MethodDescription>and(isAnnotatedWith(Enhance.class)))) {

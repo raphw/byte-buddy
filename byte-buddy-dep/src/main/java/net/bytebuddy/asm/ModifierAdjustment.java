@@ -31,6 +31,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.util.*;
@@ -374,7 +375,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@Nonnull(when = When.MAYBE) T target) {
+        public boolean matches(@CheckForNull T target) {
             return matcher.matches(target);
         }
 

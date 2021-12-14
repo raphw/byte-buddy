@@ -30,6 +30,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.util.*;
@@ -266,7 +267,7 @@ public interface AsmVisitorWrapper {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(@Nonnull(when = When.MAYBE) FieldDescription.InDefinedShape target) {
+            public boolean matches(@CheckForNull FieldDescription.InDefinedShape target) {
                 return matcher.matches(target);
             }
 
@@ -558,7 +559,7 @@ public interface AsmVisitorWrapper {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(@Nonnull(when = When.MAYBE) MethodDescription target) {
+            public boolean matches(@CheckForNull MethodDescription target) {
                 return matcher.matches(target);
             }
 

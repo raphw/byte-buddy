@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.asm;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
@@ -272,6 +273,7 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for member types")
         public void visitEnd() {
             for (String observedType : observedTypes) {
                 if (visitedInnerTypes.add(observedType)) {

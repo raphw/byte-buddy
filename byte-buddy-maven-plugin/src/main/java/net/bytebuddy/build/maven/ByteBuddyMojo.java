@@ -38,6 +38,7 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.io.BufferedReader;
@@ -484,7 +485,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@Nonnull(when = When.MAYBE) Plugin.Engine.Source.Element target) {
+        public boolean matches(@CheckForNull Plugin.Engine.Source.Element target) {
             if (target == null) {
                 return false;
             }

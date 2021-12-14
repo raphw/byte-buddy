@@ -25,6 +25,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.ToStringMethod;
 import net.bytebuddy.matcher.ElementMatchers;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.lang.annotation.*;
@@ -67,7 +68,7 @@ public class ToStringPlugin implements Plugin, Plugin.Factory {
     /**
      * {@inheritDoc}
      */
-    public boolean matches(@Nonnull(when = When.MAYBE) TypeDescription target) {
+    public boolean matches(@CheckForNull TypeDescription target) {
         return target != null && target.getDeclaredAnnotations().isAnnotationPresent(Enhance.class);
     }
 

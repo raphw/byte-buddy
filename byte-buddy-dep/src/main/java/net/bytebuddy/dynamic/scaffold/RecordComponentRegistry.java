@@ -23,6 +23,7 @@ import net.bytebuddy.implementation.attribute.RecordComponentAttributeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.util.*;
@@ -290,7 +291,7 @@ public interface RecordComponentRegistry {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean matches(@Nonnull(when = When.MAYBE) RecordComponentDescription target) {
+                public boolean matches(@CheckForNull RecordComponentDescription target) {
                     return matcher.matches(target);
                 }
             }

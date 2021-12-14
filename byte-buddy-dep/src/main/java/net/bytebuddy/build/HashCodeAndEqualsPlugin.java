@@ -32,6 +32,7 @@ import net.bytebuddy.matcher.ElementMatchers;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.lang.annotation.*;
@@ -126,7 +127,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
     /**
      * {@inheritDoc}
      */
-    public boolean matches(@Nonnull(when = When.MAYBE) TypeDescription target) {
+    public boolean matches(@CheckForNull TypeDescription target) {
         return target != null && target.getDeclaredAnnotations().isAnnotationPresent(Enhance.class);
     }
 
@@ -490,7 +491,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@Nonnull(when = When.MAYBE) FieldDescription target) {
+        public boolean matches(@CheckForNull FieldDescription target) {
             if (target == null) {
                 return false;
             }

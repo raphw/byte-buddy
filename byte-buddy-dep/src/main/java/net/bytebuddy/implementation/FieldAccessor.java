@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.implementation;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -948,7 +949,7 @@ public abstract class FieldAccessor implements Implementation {
          * @param instrumentedMethod The instrumented method.
          * @return The stack manipulation to apply.
          */
-        protected abstract StackManipulation resolve(T initialized,
+        protected abstract StackManipulation resolve(@Nonnull(when = When.MAYBE) T initialized,
                                                      FieldDescription fieldDescription,
                                                      TypeDescription instrumentedType,
                                                      MethodDescription instrumentedMethod);
@@ -1037,7 +1038,7 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * {@inheritDoc}
              */
-            protected StackManipulation resolve(Void unused,
+            protected StackManipulation resolve(@Nonnull(when = When.MAYBE) Void unused,
                                                 FieldDescription fieldDescription,
                                                 TypeDescription instrumentedType,
                                                 MethodDescription instrumentedMethod) {
@@ -1109,7 +1110,7 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * {@inheritDoc}
              */
-            protected StackManipulation resolve(Void initialized,
+            protected StackManipulation resolve(@Nonnull(when = When.MAYBE) Void initialized,
                                                 FieldDescription fieldDescription,
                                                 TypeDescription instrumentedType,
                                                 MethodDescription instrumentedMethod) {
@@ -1192,7 +1193,7 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * {@inheritDoc}
              */
-            protected StackManipulation resolve(Void unused,
+            protected StackManipulation resolve(@Nonnull(when = When.MAYBE) Void unused,
                                                 FieldDescription fieldDescription,
                                                 TypeDescription instrumentedType,
                                                 MethodDescription instrumentedMethod) {
@@ -1285,7 +1286,8 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * {@inheritDoc}
              */
-            protected StackManipulation resolve(FieldDescription.InDefinedShape target,
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Expects its own initialized value as argument")
+            protected StackManipulation resolve(@Nonnull(when = When.MAYBE) FieldDescription.InDefinedShape target,
                                                 FieldDescription fieldDescription,
                                                 TypeDescription instrumentedType,
                                                 MethodDescription instrumentedMethod) {
@@ -1369,7 +1371,8 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * {@inheritDoc}
              */
-            protected StackManipulation resolve(FieldLocation.Prepared target,
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Expects its own initialized value as argument")
+            protected StackManipulation resolve(@Nonnull(when = When.MAYBE) FieldLocation.Prepared target,
                                                 FieldDescription fieldDescription,
                                                 TypeDescription instrumentedType,
                                                 MethodDescription instrumentedMethod) {
@@ -1421,8 +1424,10 @@ public abstract class FieldAccessor implements Implementation {
             private final TypeDescription instrumentedType;
 
             /**
-             * The initialized value.
+             * The initialized value which might be {@code null}.
              */
+            @Nonnull(when = When.MAYBE)
+            @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
             private final T initialized;
 
             /**
@@ -1434,10 +1439,10 @@ public abstract class FieldAccessor implements Implementation {
              * Creates a new appender for a field setter.
              *
              * @param instrumentedType The instrumented type.
-             * @param initialized      The initialized value.
+             * @param initialized      The initialized value which might be {@code null}.
              * @param fieldLocation    The set field's prepared location.
              */
-            protected Appender(TypeDescription instrumentedType, T initialized, FieldLocation.Prepared fieldLocation) {
+            protected Appender(TypeDescription instrumentedType, @Nonnull(when = When.MAYBE) T initialized, FieldLocation.Prepared fieldLocation) {
                 this.instrumentedType = instrumentedType;
                 this.initialized = initialized;
                 this.fieldLocation = fieldLocation;

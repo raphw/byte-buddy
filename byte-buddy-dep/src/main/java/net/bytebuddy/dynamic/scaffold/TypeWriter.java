@@ -987,6 +987,9 @@ public interface TypeWriter<T> {
                         // Non-default method or default method that is inherited by a super class.
                         if (bridgeType == null) {
                             bridgeType = instrumentedType.getSuperClass();
+                            if (bridgeType == null) {
+                                bridgeType = TypeDescription.OBJECT;
+                            }
                         }
                         return new OfVisibilityBridge(new VisibilityBridge(instrumentedType, bridgeTarget),
                                 bridgeTarget,
@@ -2306,7 +2309,7 @@ public interface TypeWriter<T> {
             /**
              * The constraint to assert the members against. The constraint is first defined when the general class information is visited.
              */
-            @Nonnull(when = When.MAYBE)
+            @Nonnull(when = When.UNKNOWN)
             private Constraint constraint;
 
             /**
@@ -3979,7 +3982,7 @@ public interface TypeWriter<T> {
                 /**
                  * The implementation context that is used for creating a class or {@code null} if it was not registered.
                  */
-                @Nonnull(when = When.MAYBE)
+                @Nonnull(when = When.UNKNOWN)
                 private Implementation.Context.ExtractableView implementationContext;
 
                 /**
@@ -4808,19 +4811,19 @@ public interface TypeWriter<T> {
                     /**
                      * The method pool to use or {@code null} if the pool was not yet initialized.
                      */
-                    @Nonnull(when = When.MAYBE)
+                    @Nonnull(when = When.UNKNOWN)
                     private MethodPool methodPool;
 
                     /**
                      * The initialization handler to use or {@code null} if the handler was not yet initialized.
                      */
-                    @Nonnull(when = When.MAYBE)
+                    @Nonnull(when = When.UNKNOWN)
                     private InitializationHandler initializationHandler;
 
                     /**
                      * The implementation context for this class creation or {@code null} if it was not yet created.
                      */
-                    @Nonnull(when = When.MAYBE)
+                    @Nonnull(when = When.UNKNOWN)
                     private Implementation.Context.ExtractableView implementationContext;
 
                     /**
@@ -4882,6 +4885,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Relying on correlated type properties")
                     public void visit(int classFileVersionNumber,
                                       int modifiers,
                                       String internalName,
@@ -4950,6 +4954,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "Assuming enclosing type for local or anonymous type")
                     protected void onOuterType() {
                         MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
                         if (enclosingMethod != null) {
@@ -5708,7 +5713,7 @@ public interface TypeWriter<T> {
                     /**
                      * The implementation context to use or {@code null} if the context is not yet initialized.
                      */
-                    @Nonnull(when = When.MAYBE)
+                    @Nonnull(when = When.UNKNOWN)
                     private Implementation.Context.ExtractableView implementationContext;
 
                     /**
@@ -5871,6 +5876,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Relying on correlated type properties")
             protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Dispatcher dispatcher) {
                 int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                 ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool);

@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.dynamic.scaffold.subclass;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
@@ -23,6 +24,9 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
+
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 
 import static net.bytebuddy.matcher.ElementMatchers.hasSignature;
 import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
@@ -75,7 +79,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
                 ? new MethodList.Empty<MethodDescription.InGenericShape>()
                 : superClass.getDeclaredMethods().filter(hasSignature(token).and(isVisibleTo(instrumentedType)));
         return candidates.size() == 1
-                ? Implementation.SpecialMethodInvocation.Simple.of(candidates.getOnly(), instrumentedType.getSuperClass().asErasure())
+                ? Implementation.SpecialMethodInvocation.Simple.of(candidates.getOnly(), superClass.asErasure())
                 : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
     }
 
@@ -110,6 +114,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
          */
         SUPER_CLASS {
             @Override
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Never applied on types without super type")
             protected TypeDefinition identify(TypeDescription typeDescription) {
                 return typeDescription.getSuperClass();
             }
