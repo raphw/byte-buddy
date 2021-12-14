@@ -24,6 +24,8 @@ import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.JavaCompile;
 
+import javax.annotation.Nullable;
+
 /**
  * An abstract configuration for a Byte Buddy task and extension.
  *
@@ -228,6 +230,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public Void call(Object... argument) {
             action.execute(taskExecutionGraph);
             return null;

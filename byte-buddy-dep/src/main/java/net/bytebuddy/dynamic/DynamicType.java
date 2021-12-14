@@ -1794,6 +1794,9 @@ public interface DynamicType {
                          * {@inheritDoc}
                          */
                         public FieldDefinition.Optional<U> value(String value) {
+                            if (value == null) {
+                                throw new IllegalArgumentException("Cannot define 'null' as constant value");
+                            }
                             return defaultValue(value);
                         }
 

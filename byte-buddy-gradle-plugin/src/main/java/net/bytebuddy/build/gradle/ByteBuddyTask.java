@@ -22,6 +22,7 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +37,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
     /**
      * The incremental builder to apply or {@code null} if no incremental build should be applied.
      */
+    @Nullable
     private IncrementalResolver incrementalResolver;
 
     /**
@@ -78,6 +80,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
      * @return The incremental builder to apply or {@code null} if no incremental build should be applied.
      */
     @Internal
+    @Nullable
     public IncrementalResolver getIncrementalResolver() {
         return incrementalResolver;
     }
@@ -87,7 +90,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
      *
      * @param incrementalResolver The incremental builder to apply or {@code null} if no incremental build should be applied.
      */
-    public void setIncrementalResolver(IncrementalResolver incrementalResolver) {
+    public void setIncrementalResolver(@Nullable IncrementalResolver incrementalResolver) {
         this.incrementalResolver = incrementalResolver;
     }
 

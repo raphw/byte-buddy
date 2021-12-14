@@ -20,6 +20,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.execution.TaskExecutionGraph;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -173,6 +174,7 @@ public enum Adjustment {
             /**
              * The current iterator or {@code null} if no such iterator is defined.
              */
+            @Nullable
             private Iterator<? extends Task> current;
 
             /**

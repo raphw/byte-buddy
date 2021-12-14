@@ -198,7 +198,7 @@ public interface ClassInjector {
          * @param packageDefinitionStrategy The package definer to be queried for package definitions.
          * @param forbidExisting            Determines if an exception should be thrown when attempting to load a type that already exists.
          */
-        public UsingReflection(@Nullable ClassLoader classLoader,
+        public UsingReflection(ClassLoader classLoader,
                                @Nullable ProtectionDomain protectionDomain,
                                PackageDefinitionStrategy packageDefinitionStrategy,
                                boolean forbidExisting) {

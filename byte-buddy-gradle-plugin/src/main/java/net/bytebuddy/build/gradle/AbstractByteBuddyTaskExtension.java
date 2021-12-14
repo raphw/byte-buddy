@@ -23,6 +23,7 @@ import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.util.ConfigureUtil;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -107,6 +108,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      * The class file version to use for creating auxiliary types or {@code null} if the
      * version is determined implicitly.
      */
+    @Nullable
     private ClassFileVersion classFileVersion;
 
     /**
@@ -365,6 +367,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      *
      * @return The class file version to use for creating auxiliary types.
      */
+    @Nullable
     public ClassFileVersion getClassFileVersion() {
         return classFileVersion;
     }
@@ -375,7 +378,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      *
      * @param classFileVersion The class file version to use for creating auxiliary types.
      */
-    public void setClassFileVersion(ClassFileVersion classFileVersion) {
+    public void setClassFileVersion(@Nullable ClassFileVersion classFileVersion) {
         this.classFileVersion = classFileVersion;
     }
 
