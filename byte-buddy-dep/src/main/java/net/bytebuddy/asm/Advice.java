@@ -6990,7 +6990,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * A dispatcher that is not yet resolved.
          */
-        interface Unresolved<T extends Annotation> extends Dispatcher {
+        interface Unresolved extends Dispatcher {
 
             /**
              * Indicates that this dispatcher requires access to the class file declaring the advice method.
