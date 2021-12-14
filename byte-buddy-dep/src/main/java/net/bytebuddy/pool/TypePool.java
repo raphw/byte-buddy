@@ -3244,7 +3244,7 @@ public interface TypePool {
                 Generic toGenericType(TypePool typePool,
                                       TypeVariableSource typeVariableSource,
                                       String typePath,
-                                      @Nullable Map<String, List<AnnotationToken>> annotationTokens);
+                                      Map<String, List<AnnotationToken>> annotationTokens);
 
                 /**
                  * Determines if a generic type tokens represents a primary bound of a type variable. This method must only be invoked on types
@@ -3385,12 +3385,10 @@ public interface TypePool {
                     public Generic toGenericType(TypePool typePool,
                                                  TypeVariableSource typeVariableSource,
                                                  String typePath,
-                                                 @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
+                                                 Map<String, List<AnnotationToken>> annotationTokens) {
                         return new LazyPrimitiveType(typePool,
                                 typePath,
-                                annotationTokens == null
-                                        ? Collections.<String, List<AnnotationToken>>emptyMap()
-                                        : annotationTokens,
+                                annotationTokens,
                                 typeDescription);
                     }
 
@@ -3683,7 +3681,7 @@ public interface TypePool {
                         public Generic resolveRecordType(String recordTypeDescriptor,
                                                          TypePool typePool,
                                                          Map<String, List<AnnotationToken>> annotationTokens,
-                                                         RecordComponentDescription definingRecordComponent) {
+                                                         RecordComponentDescription.InDefinedShape definingRecordComponent) {
                             return RawAnnotatedType.of(typePool, annotationTokens, recordTypeDescriptor);
                         }
 
@@ -3972,7 +3970,7 @@ public interface TypePool {
                         public Generic resolveRecordType(String recordTypeDescriptor,
                                                          TypePool typePool,
                                                          Map<String, List<AnnotationToken>> annotationTokens,
-                                                         RecordComponentDescription definingRecordComponent) {
+                                                         RecordComponentDescription.InDefinedShape definingRecordComponent) {
                             return new TokenizedGenericType.Malformed(typePool, recordTypeDescriptor);
                         }
                     }
@@ -4019,7 +4017,6 @@ public interface TypePool {
                             /**
                              * The super type's generic type token.
                              */
-                            @Nullable
                             private final GenericTypeToken superClassToken;
 
                             /**
@@ -4039,7 +4036,7 @@ public interface TypePool {
                              * @param interfaceTypeTokens The interface type's generic type tokens.
                              * @param typeVariableTokens  The type variables generic type tokens.
                              */
-                            protected Tokenized(@Nullable GenericTypeToken superClassToken,
+                            protected Tokenized(GenericTypeToken superClassToken,
                                                 List<GenericTypeToken> interfaceTypeTokens,
                                                 List<OfFormalTypeVariable> typeVariableTokens) {
                                 this.superClassToken = superClassToken;
@@ -4054,7 +4051,11 @@ public interface TypePool {
                                                              TypePool typePool,
                                                              Map<String, List<AnnotationToken>> annotationTokens,
                                                              TypeDescription definingType) {
-                                return TokenizedGenericType.of(typePool, superClassToken, superClassDescriptor, annotationTokens, definingType);
+                                return TokenizedGenericType.of(typePool,
+                                        superClassToken,
+                                        superClassDescriptor,
+                                        annotationTokens,
+                                        definingType);
                             }
 
                             /**
@@ -4125,7 +4126,11 @@ public interface TypePool {
                                                             TypePool typePool,
                                                             Map<String, List<AnnotationToken>> annotationTokens,
                                                             FieldDescription.InDefinedShape definingField) {
-                                return TokenizedGenericType.of(typePool, fieldTypeToken, fieldTypeDescriptor, annotationTokens, definingField.getDeclaringType());
+                                return TokenizedGenericType.of(typePool,
+                                        fieldTypeToken,
+                                        fieldTypeDescriptor,
+                                        annotationTokens,
+                                        definingField.getDeclaringType());
                             }
                         }
                     }
@@ -4228,7 +4233,11 @@ public interface TypePool {
                                                              TypePool typePool,
                                                              Map<String, List<AnnotationToken>> annotationTokens,
                                                              MethodDescription.InDefinedShape definingMethod) {
-                                return TokenizedGenericType.of(typePool, returnTypeToken, returnTypeDescriptor, annotationTokens, definingMethod);
+                                return TokenizedGenericType.of(typePool,
+                                        returnTypeToken,
+                                        returnTypeDescriptor,
+                                        annotationTokens,
+                                        definingMethod);
                             }
 
                             /**
@@ -4283,7 +4292,7 @@ public interface TypePool {
                         Generic resolveRecordType(String recordTypeDescriptor,
                                                   TypePool typePool,
                                                   Map<String, List<AnnotationToken>> annotationTokens,
-                                                  RecordComponentDescription definingRecordComponent);
+                                                  RecordComponentDescription.InDefinedShape definingRecordComponent);
 
                         /**
                          * An implementation of a tokenized resolution of the generic type of a {@link RecordComponentDescription}.
@@ -4311,8 +4320,12 @@ public interface TypePool {
                             public Generic resolveRecordType(String recordTypeDescriptor,
                                                              TypePool typePool,
                                                              Map<String, List<AnnotationToken>> annotationTokens,
-                                                             RecordComponentDescription definingRecordComponent) {
-                                return TokenizedGenericType.of(typePool, recordComponentTypeToken, recordTypeDescriptor, annotationTokens, TypeVariableSource.UNDEFINED);
+                                                             RecordComponentDescription.InDefinedShape definingRecordComponent) {
+                                return TokenizedGenericType.of(typePool,
+                                        recordComponentTypeToken,
+                                        recordTypeDescriptor,
+                                        annotationTokens,
+                                        definingRecordComponent.getDeclaringType());
                             }
                         }
                     }
@@ -4344,12 +4357,10 @@ public interface TypePool {
                     public Generic toGenericType(TypePool typePool,
                                                  TypeVariableSource typeVariableSource,
                                                  String typePath,
-                                                 @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
+                                                 Map<String, List<AnnotationToken>> annotationTokens) {
                         return new Resolution.Raw.RawAnnotatedType(typePool,
                                 typePath,
-                                annotationTokens == null
-                                        ? Collections.<String, List<AnnotationToken>>emptyMap()
-                                        : annotationTokens,
+                                annotationTokens,
                                 typePool.describe(name).resolve());
                     }
 
@@ -4394,7 +4405,7 @@ public interface TypePool {
                     public Generic toGenericType(TypePool typePool,
                                                  TypeVariableSource typeVariableSource,
                                                  String typePath,
-                                                 @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
+                                                 Map<String, List<AnnotationToken>> annotationTokens) {
                         Generic typeVariable = typeVariableSource.findVariable(symbol);
                         return typeVariable == null
                                 ? new UnresolvedTypeVariable(typeVariableSource, typePool, symbol, annotationTokens.get(typePath))
@@ -4779,7 +4790,7 @@ public interface TypePool {
                     public Generic toGenericType(TypePool typePool,
                                                  TypeVariableSource typeVariableSource,
                                                  String typePath,
-                                                 @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
+                                                 Map<String, List<AnnotationToken>> annotationTokens) {
                         return new LazyGenericArray(typePool, typeVariableSource, typePath, annotationTokens, componentTypeToken);
                     }
 
@@ -4890,7 +4901,7 @@ public interface TypePool {
                     public Generic toGenericType(TypePool typePool,
                                                  TypeVariableSource typeVariableSource,
                                                  String typePath,
-                                                 @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
+                                                 Map<String, List<AnnotationToken>> annotationTokens) {
                         return new LazyLowerBoundWildcard(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
                     }
 
@@ -5008,7 +5019,7 @@ public interface TypePool {
                     public Generic toGenericType(TypePool typePool,
                                                  TypeVariableSource typeVariableSource,
                                                  String typePath,
-                                                 @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
+                                                 Map<String, List<AnnotationToken>> annotationTokens) {
                         return new LazyUpperBoundWildcard(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
                     }
 
@@ -5133,7 +5144,7 @@ public interface TypePool {
                     public Generic toGenericType(TypePool typePool,
                                                  TypeVariableSource typeVariableSource,
                                                  String typePath,
-                                                 @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
+                                                 Map<String, List<AnnotationToken>> annotationTokens) {
                         return new LazyParameterizedType(typePool, typeVariableSource, typePath, annotationTokens, name, parameterTypeTokens);
                     }
 
@@ -5191,7 +5202,7 @@ public interface TypePool {
                         public Generic toGenericType(TypePool typePool,
                                                      TypeVariableSource typeVariableSource,
                                                      String typePath,
-                                                     @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
+                                                     Map<String, List<AnnotationToken>> annotationTokens) {
                             return new LazyParameterizedType(typePool, typeVariableSource, typePath, annotationTokens, name, parameterTypeTokens, ownerTypeToken);
                         }
 
@@ -6781,7 +6792,6 @@ public interface TypePool {
                 /**
                  * The token that describes the represented generic type.
                  */
-                @Nullable // TODO ?
                 private final GenericTypeToken genericTypeToken;
 
                 /**
@@ -6809,7 +6819,7 @@ public interface TypePool {
                  * @param typeVariableSource The closest type variable source of this generic type's declaration context.
                  */
                 protected TokenizedGenericType(TypePool typePool,
-                                               @Nullable GenericTypeToken genericTypeToken,
+                                               GenericTypeToken genericTypeToken,
                                                String rawTypeDescriptor,
                                                Map<String, List<AnnotationToken>> annotationTokens,
                                                TypeVariableSource typeVariableSource) {
@@ -6831,16 +6841,14 @@ public interface TypePool {
                  * @return A suitable generic type.
                  */
                 protected static Generic of(TypePool typePool,
-                                            @Nullable GenericTypeToken genericTypeToken,
+                                            GenericTypeToken genericTypeToken,
                                             String rawTypeDescriptor,
-                                            @Nullable Map<String, List<AnnotationToken>> annotationTokens,
-                                            @Nullable TypeVariableSource typeVariableSource) {
+                                            Map<String, List<AnnotationToken>> annotationTokens,
+                                            TypeVariableSource typeVariableSource) {
                     return new TokenizedGenericType(typePool,
                             genericTypeToken,
                             rawTypeDescriptor,
-                            annotationTokens == null
-                                    ? Collections.<String, List<AnnotationToken>>emptyMap()
-                                    : annotationTokens,
+                            annotationTokens,
                             typeVariableSource);
                 }
 
@@ -7140,6 +7148,7 @@ public interface TypePool {
                 /**
                  * The field's generic signature as found in the class file or {@code null} if the field is not generic.
                  */
+                @Nullable
                 private final String genericSignature;
 
                 /**
@@ -7171,7 +7180,7 @@ public interface TypePool {
                 private LazyFieldDescription(String name,
                                              int modifiers,
                                              String descriptor,
-                                             String genericSignature,
+                                             @Nullable String genericSignature,
                                              GenericTypeToken.Resolution.ForField signatureResolution,
                                              Map<String, List<AnnotationToken>> typeAnnotationTokens,
                                              List<AnnotationToken> annotationTokens) {
