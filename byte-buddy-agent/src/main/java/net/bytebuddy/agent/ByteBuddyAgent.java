@@ -770,6 +770,17 @@ public class ByteBuddyAgent {
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Legal outcome where reflection communicates errors by throwing an exception")
     private static Instrumentation doGetInstrumentation() {
         try {
+            Class<?> installer = Class.forName(Installer.class.getName(), true, ClassLoader.getSystemClassLoader());
+            try {
+                Class<?> module = Class.forName("java.lang.Module");
+                Method getModule = Class.class.getMethod("getModule");
+                Object source = getModule.invoke(ByteBuddyAgent.class), target = getModule.invoke(installer);
+                if (!((Boolean) module.getMethod("canRead", module).invoke(source, target))) {
+                    module.getMethod("addReads", module).invoke(source, target);
+                }
+            } catch (ClassNotFoundException ignored) {
+                /* empty */
+            }
             return (Instrumentation) Class.forName(Installer.class.getName(), true, ClassLoader.getSystemClassLoader())
                     .getMethod(INSTRUMENTATION_METHOD)
                     .invoke(STATIC_MEMBER);

@@ -16,10 +16,12 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import javax.annotation.Nullable;
@@ -57,9 +59,9 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
     private static final String INSTALLER_TYPE = "net.bytebuddy.agent.Installer";
 
     /**
-     * The name of the {@code net.bytebuddy.agent.Installer} getter for reading an installed {@link Instrumentation}.
+     * The name of the getter for {@code net.bytebuddy.agent.Installer} to read the {@link Instrumentation}.
      */
-    private static final String INSTRUMENTATION_GETTER = "getInstrumentation";
+    private static final String INSTALLER_GETTER = "getInstrumentation";
 
     /**
      * Indicator for access to a static member via reflection to make the code more readable.
@@ -157,6 +159,27 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
     }
 
     /**
+     * Resolves the instrumentation provided by {@code net.bytebuddy.agent.Installer}.
+     *
+     * @return The installed instrumentation instance.
+     */
+    private static Instrumentation resolveByteBuddyAgentInstrumentation() {
+        try {
+            Class<?> installer = ClassLoader.getSystemClassLoader().loadClass(INSTALLER_TYPE);
+            JavaModule source = JavaModule.ofType(AgentBuilder.class), target = JavaModule.ofType(installer);
+            if (source != null && !source.canRead(target)) {
+                Class<?> module = Class.forName("java.lang.Module");
+                module.getMethod("addReads", module).invoke(source.unwrap(), target.unwrap());
+            }
+            return (Instrumentation) installer.getMethod(INSTALLER_GETTER).invoke(STATIC_MEMBER);
+        } catch (RuntimeException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
+        }
+    }
+
+    /**
      * <p>
      * Obtains a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy} from an installed Byte Buddy agent. This
      * agent must be installed either by adding the {@code byte-buddy-agent.jar} when starting up the JVM by
@@ -173,16 +196,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
      * @return A class reloading strategy which uses the Byte Buddy agent's {@link java.lang.instrument.Instrumentation}.
      */
     public static ClassReloadingStrategy fromInstalledAgent() {
-        try {
-            return ClassReloadingStrategy.of((Instrumentation) ClassLoader.getSystemClassLoader()
-                    .loadClass(INSTALLER_TYPE)
-                    .getMethod(INSTRUMENTATION_GETTER)
-                    .invoke(STATIC_MEMBER));
-        } catch (RuntimeException exception) {
-            throw exception;
-        } catch (Exception exception) {
-            throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
-        }
+        return ClassReloadingStrategy.of(resolveByteBuddyAgentInstrumentation());
     }
 
     /**
@@ -202,16 +216,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
      * @return A class reloading strategy which uses the Byte Buddy agent's {@link java.lang.instrument.Instrumentation}.
      */
     public static ClassReloadingStrategy fromInstalledAgent(Strategy strategy) {
-        try {
-            return new ClassReloadingStrategy((Instrumentation) ClassLoader.getSystemClassLoader()
-                    .loadClass(INSTALLER_TYPE)
-                    .getMethod(INSTRUMENTATION_GETTER)
-                    .invoke(STATIC_MEMBER), strategy);
-        } catch (RuntimeException exception) {
-            throw exception;
-        } catch (Exception exception) {
-            throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
-        }
+        return new ClassReloadingStrategy(resolveByteBuddyAgentInstrumentation(), strategy);
     }
 
     /**

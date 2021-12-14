@@ -23,6 +23,8 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
 
     private static final String RECEIVER_TYPE_SAMPLE = "net.bytebuddy.test.precompiled.ReceiverTypeSample", INNER = "Inner", NESTED = "Nested", GENERIC = "Generic";
 
+    private static final String RECORD_SAMPLE = "net.bytebuddy.test.precompiled.GenericRecordSample";
+
     protected abstract TypeDescription describe(Class<?> type);
 
     @Test
@@ -451,5 +453,21 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(receiverType.getDeclaredAnnotations().size(), is(0));
         assertThat(receiverType.getOwnerType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(receiverType.getOwnerType().represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(17)
+    public void testGenericRecordComponent() throws Exception {
+        TypeDescription.Generic recordType = describe(Class.forName(RECORD_SAMPLE))
+                .getDeclaredFields()
+                .filter(named(FOO.toUpperCase()))
+                .getOnly()
+                .getType();
+        assertThat(recordType.isRecord(), is(true));
+        assertThat(recordType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(recordType.asErasure().represents(Class.forName(RECORD_SAMPLE)), is(true));
+        assertThat(recordType.getRecordComponents().size(), is(1));
+        assertThat(recordType.getRecordComponents().get(0).getType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(recordType.getRecordComponents().get(0).getType().asErasure(), is(TypeDescription.STRING));
     }
 }

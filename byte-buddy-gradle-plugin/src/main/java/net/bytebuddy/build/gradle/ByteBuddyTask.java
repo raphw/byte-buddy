@@ -55,6 +55,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
      */
     @Incremental
     @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
     public abstract DirectoryProperty getSource();
 
     /**
@@ -120,19 +121,24 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
         Plugin.Engine.Source source;
         if (inputChanges.isIncremental() && getIncrementalResolver() != null) {
             getLogger().debug("Applying incremental build");
-            source = new IncrementalSource(source(), getIncrementalResolver().apply(getProject(),
+            List<File> files = getIncrementalResolver().apply(getProject(),
                     inputChanges.getFileChanges(getSource()),
                     source(),
                     target(),
-                    classPath()));
+                    classPath());
+            source = files.isEmpty() || !source().exists()
+                    ? Plugin.Engine.Source.Empty.INSTANCE
+                    : new IncrementalSource(source(), files);
         } else {
             getLogger().debug("Applying non-incremental build");
             if (getProject().delete(getTarget().getAsFileTree())) {
                 getLogger().debug("Deleted all target files in {}", getTarget());
             }
-            source = new Plugin.Engine.Source.ForFolder(getSource().getAsFile().get());
+            source = source().exists()
+                    ? new Plugin.Engine.Source.ForFolder(source())
+                    : Plugin.Engine.Source.Empty.INSTANCE;
         }
-        doApply(source, new Plugin.Engine.Target.ForFolder(getTarget().getAsFile().get()));
+        doApply(source, new Plugin.Engine.Target.ForFolder(target()));
     }
 
     /**
@@ -230,6 +236,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
          * Creates a new Byte Buddy task with an incremental class path.
          */
         @Inject
-        public WithIncrementalClassPath() { }
+        public WithIncrementalClassPath() {
+        }
     }
 }

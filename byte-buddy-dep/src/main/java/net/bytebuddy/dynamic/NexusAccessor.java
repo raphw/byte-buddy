@@ -33,6 +33,7 @@ import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
+import net.bytebuddy.utility.JavaModule;
 import org.objectweb.asm.MethodVisitor;
 
 import javax.annotation.Nullable;
@@ -235,20 +236,31 @@ public class NexusAccessor {
                 if (Boolean.getBoolean(Nexus.PROPERTY)) {
                     return new Unavailable("Nexus injection was explicitly disabled");
                 } else {
+                    Class<?> nexusType;
                     try {
-                        Class<?> nexusType = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.NO_PROTECTION_DOMAIN)
+                        nexusType = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.NO_PROTECTION_DOMAIN)
                                 .inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Nexus.class), ClassFileLocator.ForClassLoader.read(Nexus.class)))
                                 .get(TypeDescription.ForLoadedType.of(Nexus.class));
                         return new Dispatcher.Available(nexusType.getMethod("register", String.class, ClassLoader.class, ReferenceQueue.class, int.class, Object.class),
                                 nexusType.getMethod("clean", Reference.class));
                     } catch (Exception exception) {
                         try {
-                            Class<?> nexusType = ClassLoader.getSystemClassLoader().loadClass(Nexus.class.getName());
-                            return new Dispatcher.Available(nexusType.getMethod("register", String.class, ClassLoader.class, ReferenceQueue.class, int.class, Object.class),
-                                    nexusType.getMethod("clean", Reference.class));
+                            nexusType = ClassLoader.getSystemClassLoader().loadClass(Nexus.class.getName());
                         } catch (Exception ignored) {
                             return new Dispatcher.Unavailable(exception.toString());
                         }
+                    }
+                    try {
+                        JavaModule source = JavaModule.ofType(NexusAccessor.class), target = JavaModule.ofType(nexusType);
+                        if (source != null && !source.canRead(target)) {
+                            Class<?> module = Class.forName("java.lang.Module");
+                            module.getMethod("addReads", module).invoke(source.unwrap(), target.unwrap());
+                        }
+                        return new Dispatcher.Available(
+                                nexusType.getMethod("register", String.class, ClassLoader.class, ReferenceQueue.class, int.class, Object.class),
+                                nexusType.getMethod("clean", Reference.class));
+                    } catch (Exception exception) {
+                        return new Dispatcher.Unavailable(exception.toString());
                     }
                 }
             }
