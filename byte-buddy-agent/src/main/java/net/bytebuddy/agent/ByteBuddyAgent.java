@@ -17,7 +17,9 @@ package net.bytebuddy.agent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.*;
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
@@ -106,21 +108,15 @@ public class ByteBuddyAgent {
     private static final int SUCCESSFUL_ATTACH = 0;
 
     /**
-     * Base for access to a reflective member to make the code more readable.
-     */
-    @Nullable
-    private static final Object STATIC_MEMBER = null;
-
-    /**
      * Representation of the bootstrap {@link java.lang.ClassLoader}.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
 
     /**
      * Represents a no-op argument for a dynamic agent attachment.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     private static final String WITHOUT_ARGUMENT = null;
 
     /**
@@ -166,13 +162,13 @@ public class ByteBuddyAgent {
     /**
      * An indicator variable to express that no instrumentation is available.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     private static final Instrumentation UNAVAILABLE = null;
 
     /**
      * Represents a failed attempt to self-resolve a jar file location.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     private static final File CANNOT_SELF_RESOLVE = null;
 
     /**
@@ -783,7 +779,7 @@ public class ByteBuddyAgent {
             }
             return (Instrumentation) Class.forName(Installer.class.getName(), true, ClassLoader.getSystemClassLoader())
                     .getMethod(INSTRUMENTATION_METHOD)
-                    .invoke(STATIC_MEMBER);
+                    .invoke(null);
         } catch (Exception ignored) {
             return UNAVAILABLE;
         }
@@ -1400,7 +1396,7 @@ public class ByteBuddyAgent {
                  */
                 public String resolve() {
                     try {
-                        return pid.invoke(current.invoke(STATIC_MEMBER)).toString();
+                        return pid.invoke(current.invoke(null)).toString();
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access Java 9 process API", exception);
                     } catch (InvocationTargetException exception) {
@@ -1673,7 +1669,7 @@ public class ByteBuddyAgent {
              */
             public boolean requiresExternalAttachment(String processId) {
                 try {
-                    return pid.invoke(current.invoke(STATIC_MEMBER)).toString().equals(processId);
+                    return pid.invoke(current.invoke(null)).toString().equals(processId);
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access Java 9 process API", exception);
                 } catch (InvocationTargetException exception) {

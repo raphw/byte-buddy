@@ -26,12 +26,6 @@ import java.lang.reflect.InvocationTargetException;
 public class Attacher {
 
     /**
-     * Base for access to a reflective member to make the code more readable.
-     */
-    @Nullable
-    private static final Object STATIC_MEMBER = null;
-
-    /**
      * The name of the {@code attach} method of the  {@code VirtualMachine} class.
      */
     private static final String ATTACH_METHOD_NAME = "attach";
@@ -105,7 +99,7 @@ public class Attacher {
                                   @Nullable String argument) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Object virtualMachineInstance = virtualMachineType
                 .getMethod(ATTACH_METHOD_NAME, String.class)
-                .invoke(STATIC_MEMBER, processId);
+                .invoke(null, processId);
         try {
             virtualMachineType
                     .getMethod(isNative ? LOAD_AGENT_PATH_METHOD_NAME : LOAD_AGENT_METHOD_NAME, String.class, String.class)

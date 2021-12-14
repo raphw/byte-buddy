@@ -31,7 +31,9 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.RandomString;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -87,7 +89,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
     /**
      * A value for a {@link dalvik.system.DexClassLoader} to indicate that the library path is empty.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     private static final String EMPTY_LIBRARY_PATH = null;
 
     /**
@@ -273,7 +275,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
             /**
              * Indicates that a dex file should be written without providing a human readable output.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final Writer NO_PRINT_OUTPUT = null;
 
             /**
@@ -747,7 +749,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 /**
                  * Indicates that this dispatcher does not return a {@link dalvik.system.DexFile} instance.
                  */
-                @Nullable
+                @Nonnull(when = When.NEVER)
                 private static final dalvik.system.DexFile NO_RETURN_VALUE = null;
 
                 /**
