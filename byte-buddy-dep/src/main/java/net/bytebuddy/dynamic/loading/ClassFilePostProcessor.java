@@ -115,6 +115,11 @@ public interface ClassFilePostProcessor {
         @HashCodeAndEqualsPlugin.Enhance
         protected static class AllPermissionsCollection extends PermissionCollection {
 
+            /**
+             * The serial version UID.
+             */
+            private static final long serialVersionUID = 1L;
+
             @Override
             public void add(Permission permission) {
                 throw new UnsupportedOperationException("add");

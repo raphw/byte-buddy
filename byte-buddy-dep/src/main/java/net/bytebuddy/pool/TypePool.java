@@ -2532,11 +2532,6 @@ public interface TypePool {
         protected static class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType {
 
             /**
-             * The index of a super class's type annotations.
-             */
-            private static final int SUPER_CLASS_INDEX = -1;
-
-            /**
              * Indicates that a type does not exist and does therefore not have a name.
              */
             @Nullable
@@ -2617,9 +2612,14 @@ public interface TypePool {
             private final List<String> nestMembers;
 
             /**
-             * A mapping of type annotations for this type's super type and interface types by their indices.
+             * A mapping of the super class's annotation tokens.
              */
-            private final Map<Integer, Map<String, List<AnnotationToken>>> superTypeAnnotationTokens;
+            private final Map<String, List<AnnotationToken>> superClassAnnotationTokens;
+
+            /**
+             * A mapping of type annotations for this type's interface types by their indices.
+             */
+            private final Map<Integer, Map<String, List<AnnotationToken>>> interfaceAnnotationTokens;
 
             /**
              * A mapping of type annotations of the type variables' type annotations by their indices.
@@ -2677,7 +2677,8 @@ public interface TypePool {
              * @param anonymousType                      {@code true} if this type is an anonymous type.
              * @param nestHostInternalName               The internal name of the nest host or {@code null} if no nest host was specified.
              * @param nestMemberInternalNames            A list of internal names of the nest members.
-             * @param superTypeAnnotationTokens          A mapping of type annotations for this type's super type and interface types by their indices.
+             * @param superClassAnnotationTokens         A mapping of the super class's annotation tokens.
+             * @param interfaceAnnotationTokens          A mapping of type annotations for this type's interface types by their indices.
              * @param typeVariableAnnotationTokens       A mapping of type annotations of the type variables' type annotations by their indices.
              * @param typeVariableBoundsAnnotationTokens A mapping of type annotations of the type variables' bounds' type annotations by their indices
              *                                           and each variable's index.
@@ -2701,7 +2702,8 @@ public interface TypePool {
                                           boolean anonymousType,
                                           @Nullable String nestHostInternalName,
                                           List<String> nestMemberInternalNames,
-                                          Map<Integer, Map<String, List<AnnotationToken>>> superTypeAnnotationTokens,
+                                          Map<String, List<AnnotationToken>> superClassAnnotationTokens,
+                                          Map<Integer, Map<String, List<AnnotationToken>>> interfaceAnnotationTokens,
                                           Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
                                           Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundsAnnotationTokens,
                                           List<AnnotationToken> annotationTokens,
@@ -2742,7 +2744,8 @@ public interface TypePool {
                 for (String nestMemberInternalName : nestMemberInternalNames) {
                     nestMembers.add(Type.getObjectType(nestMemberInternalName).getClassName());
                 }
-                this.superTypeAnnotationTokens = superTypeAnnotationTokens;
+                this.superClassAnnotationTokens = superClassAnnotationTokens;
+                this.interfaceAnnotationTokens = interfaceAnnotationTokens;
                 this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
                 this.typeVariableBoundsAnnotationTokens = typeVariableBoundsAnnotationTokens;
                 this.annotationTokens = annotationTokens;
@@ -2763,14 +2766,14 @@ public interface TypePool {
             public Generic getSuperClass() {
                 return superClassDescriptor == null || isInterface()
                         ? Generic.UNDEFINED
-                        : signatureResolution.resolveSuperClass(superClassDescriptor, typePool, superTypeAnnotationTokens.get(SUPER_CLASS_INDEX), this);
+                        : signatureResolution.resolveSuperClass(superClassDescriptor, typePool, superClassAnnotationTokens, this);
             }
 
             /**
              * {@inheritDoc}
              */
             public TypeList.Generic getInterfaces() {
-                return signatureResolution.resolveInterfaceTypes(interfaceTypeDescriptors, typePool, superTypeAnnotationTokens, this);
+                return signatureResolution.resolveInterfaceTypes(interfaceTypeDescriptors, typePool, interfaceAnnotationTokens, this);
             }
 
             /**
@@ -6843,12 +6846,14 @@ public interface TypePool {
                 protected static Generic of(TypePool typePool,
                                             GenericTypeToken genericTypeToken,
                                             String rawTypeDescriptor,
-                                            Map<String, List<AnnotationToken>> annotationTokens,
+                                            @Nullable Map<String, List<AnnotationToken>> annotationTokens,
                                             TypeVariableSource typeVariableSource) {
                     return new TokenizedGenericType(typePool,
                             genericTypeToken,
                             rawTypeDescriptor,
-                            annotationTokens,
+                            annotationTokens == null
+                                    ? Collections.<String, List<AnnotationToken>>emptyMap()
+                                    : annotationTokens,
                             typeVariableSource);
                 }
 
@@ -7971,6 +7976,11 @@ public interface TypePool {
         protected class TypeExtractor extends ClassVisitor {
 
             /**
+             * The index of a super class's type annotations.
+             */
+            private static final int SUPER_CLASS_INDEX = -1;
+
+            /**
              * A mask that cuts off pseudo flags beyond the second byte that are inserted by ASM.
              */
             private static final int REAL_MODIFIER_MASK = 0xFFFF;
@@ -8226,6 +8236,7 @@ public interface TypePool {
              * @return A type description reflecting the data that was collected by this instance.
              */
             protected TypeDescription toTypeDescription() {
+                Map<String, List<LazyTypeDescription.AnnotationToken>> superClassAnnotationTokens = superTypeAnnotationTokens.remove(SUPER_CLASS_INDEX);
                 return new LazyTypeDescription(Default.this,
                         actualModifiers,
                         modifiers,
@@ -8239,6 +8250,9 @@ public interface TypePool {
                         anonymousType,
                         nestHost,
                         nestMembers,
+                        superClassAnnotationTokens == null
+                                ? Collections.<String, List<LazyTypeDescription.AnnotationToken>>emptyMap()
+                                : superClassAnnotationTokens,
                         superTypeAnnotationTokens,
                         typeVariableAnnotationTokens,
                         typeVariableBoundsAnnotationTokens,
