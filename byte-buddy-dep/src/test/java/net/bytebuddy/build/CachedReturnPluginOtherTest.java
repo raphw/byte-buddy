@@ -3,7 +3,6 @@ package net.bytebuddy.build;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
-import org.junit.Before;
 import org.junit.Test;
 
 public class CachedReturnPluginOtherTest {

@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.implementation;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
@@ -806,7 +807,9 @@ public class MethodCall implements Implementation.Composable {
              */
             public MethodDescription resolve(TypeDescription targetType, MethodDescription instrumentedMethod) {
                 List<MethodDescription> candidates = CompoundList.<MethodDescription>of(
-                        instrumentedType.getSuperClass().getDeclaredMethods().filter(isConstructor().and(matcher)),
+                        instrumentedType.getSuperClass() == null
+                                ? Collections.<MethodDescription>emptyList()
+                                : instrumentedType.getSuperClass().getDeclaredMethods().filter(isConstructor().and(matcher)),
                         instrumentedType.getDeclaredMethods().filter(not(ElementMatchers.isVirtual()).and(matcher)),
                         methodGraphCompiler.compile((TypeDefinition) targetType, instrumentedType).listNodes().asMethodList().filter(matcher));
                 if (candidates.size() == 1) {
@@ -1225,6 +1228,7 @@ public class MethodCall implements Implementation.Composable {
             /**
              * {@inheritDoc}
              */
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
             public StackManipulation toStackManipulation(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 TypeDescription.Generic componentType;
                 if (target.getType().represents(Object.class)) {
@@ -1312,6 +1316,7 @@ public class MethodCall implements Implementation.Composable {
             /**
              * {@inheritDoc}
              */
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
             public StackManipulation toStackManipulation(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.load(parameterDescription),
@@ -2077,7 +2082,8 @@ public class MethodCall implements Implementation.Composable {
                         throw new IllegalStateException("Cannot invoke " + invokedMethod + " from " + instrumentedMethod);
                     } else if (invokedMethod.isConstructor() && (!instrumentedMethod.isConstructor()
                             || !instrumentedType.equals(invokedMethod.getDeclaringType().asErasure())
-                            && !instrumentedType.getSuperClass().asErasure().equals(invokedMethod.getDeclaringType().asErasure()))) {
+                            && (instrumentedType.getSuperClass() == null
+                            || !instrumentedType.getSuperClass().asErasure().equals(invokedMethod.getDeclaringType().asErasure())))) {
                         throw new IllegalStateException("Cannot invoke " + invokedMethod + " from " + instrumentedMethod + " in " + instrumentedType);
                     }
                     return new StackManipulation.Compound(

@@ -18,7 +18,8 @@ package net.bytebuddy.utility.privilege;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.lang.reflect.Method;
 import java.security.PrivilegedAction;
 
@@ -60,7 +61,7 @@ public class GetMethodAction implements PrivilegedAction<Method> {
     /**
      * {@inheritDoc}
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but be nulled out")
     public Method run() {
         try {

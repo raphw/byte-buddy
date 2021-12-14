@@ -35,7 +35,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
@@ -937,7 +936,7 @@ public abstract class FieldAccessor implements Implementation {
          * @param instrumentedType The instrumented type.
          * @return The initialized value.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         protected abstract T initialize(TypeDescription instrumentedType);
 
         /**

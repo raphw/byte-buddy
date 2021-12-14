@@ -51,9 +51,6 @@ public class TypePoolDefaultComponentPoolStrategyTest {
         TypeDescription rawReturnType = mock(TypeDescription.class);
         when(returnType.asErasure()).thenReturn(rawReturnType);
         when(methodDescription.getReturnType()).thenReturn(returnType);
-        TypeDescription rawComponentType = mock(TypeDescription.class);
-        when(rawReturnType.getComponentType()).thenReturn(rawComponentType);
-        when(rawComponentType.getName()).thenReturn(QUX);
         assertThat(new TypePool.Default.ComponentTypeLocator.ForAnnotationProperty(typePool, BAR_DESCRIPTOR).bind(FOO).resolve(), nullValue(String.class));
     }
 

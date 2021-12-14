@@ -19,7 +19,8 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaModule;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
@@ -41,9 +42,9 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
      * @return An iterator over the transformers that are applied by this class file transformer if the given type is discovered.
      */
     Iterator<AgentBuilder.Transformer> iterator(TypeDescription typeDescription,
-                                                @Nullable ClassLoader classLoader,
-                                                @Nullable JavaModule module,
-                                                @Nullable Class<?> classBeingRedefined,
+                                                @Nonnull(when = When.MAYBE) ClassLoader classLoader,
+                                                @Nonnull(when = When.MAYBE) JavaModule module,
+                                                @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
                                                 ProtectionDomain protectionDomain);
 
     /**
@@ -390,9 +391,9 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
          * {@inheritDoc}
          */
         public Iterator<AgentBuilder.Transformer> iterator(TypeDescription typeDescription,
-                                                           @Nullable ClassLoader classLoader,
-                                                           @Nullable JavaModule module,
-                                                           @Nullable Class<?> classBeingRedefined,
+                                                           @Nonnull(when = When.MAYBE) ClassLoader classLoader,
+                                                           @Nonnull(when = When.MAYBE) JavaModule module,
+                                                           @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
                                                            ProtectionDomain protectionDomain) {
             return classFileTransformer.iterator(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
         }

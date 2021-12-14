@@ -26,6 +26,8 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -780,7 +782,7 @@ public interface MethodGraph {
                         }
 
                         @Override
-                        public boolean equals(Object other) {
+                        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                             return this == other || other instanceof Token && typeToken.getParameterTypes().equals(((Token) other).typeToken.getParameterTypes());
                         }
 
@@ -839,7 +841,7 @@ public interface MethodGraph {
                         }
 
                         @Override
-                        public boolean equals(Object other) {
+                        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                             if (this == other) {
                                 return true;
                             } else if (!(other instanceof Token)) {
@@ -955,7 +957,7 @@ public interface MethodGraph {
                 }
 
                 @Override
-                public boolean equals(Object other) {
+                public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                     if (this == other) {
                         return true;
                     } else if (!(other instanceof Key)) {
@@ -1379,7 +1381,7 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public boolean equals(Object other) {
+                            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                                 if (this == other) {
                                     return true;
                                 } else if (other == null || getClass() != other.getClass()) {

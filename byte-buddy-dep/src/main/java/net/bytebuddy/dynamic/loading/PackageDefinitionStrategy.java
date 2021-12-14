@@ -19,7 +19,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.io.IOException;
 import java.io.InputStream;
@@ -101,7 +100,7 @@ public interface PackageDefinitionStrategy {
          *
          * @return The package specification's title.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         String getSpecificationTitle();
 
         /**
@@ -110,7 +109,7 @@ public interface PackageDefinitionStrategy {
          *
          * @return The package specification's version.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         String getSpecificationVersion();
 
         /**
@@ -119,7 +118,7 @@ public interface PackageDefinitionStrategy {
          *
          * @return The package specification's vendor.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         String getSpecificationVendor();
 
         /**
@@ -128,7 +127,7 @@ public interface PackageDefinitionStrategy {
          *
          * @return The package implementation's title.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         String getImplementationTitle();
 
         /**
@@ -137,7 +136,7 @@ public interface PackageDefinitionStrategy {
          *
          * @return The package implementation's version.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         String getImplementationVersion();
 
         /**
@@ -146,7 +145,7 @@ public interface PackageDefinitionStrategy {
          *
          * @return The package implementation's vendor.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         String getImplementationVendor();
 
         /**
@@ -154,7 +153,7 @@ public interface PackageDefinitionStrategy {
          *
          * @return The seal base of the package.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         URL getSealBase();
 
         /**
@@ -272,7 +271,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public String getSpecificationTitle() {
                 return NO_VALUE;
             }
@@ -280,7 +279,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public String getSpecificationVersion() {
                 return NO_VALUE;
             }
@@ -288,7 +287,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public String getSpecificationVendor() {
                 return NO_VALUE;
             }
@@ -296,7 +295,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public String getImplementationTitle() {
                 return NO_VALUE;
             }
@@ -304,7 +303,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public String getImplementationVersion() {
                 return NO_VALUE;
             }
@@ -319,7 +318,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public URL getSealBase() {
                 return NOT_SEALED;
             }
@@ -340,43 +339,43 @@ public interface PackageDefinitionStrategy {
             /**
              * The seal base or {@code null} if the package is not sealed.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             protected final URL sealBase;
 
             /**
              * The package specification's title or {@code null} if no such title exists.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final String specificationTitle;
 
             /**
              * The package specification's version or {@code null} if no such version exists.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final String specificationVersion;
 
             /**
              * The package specification's vendor or {@code null} if no such vendor exists.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final String specificationVendor;
 
             /**
              * The package implementation's title or {@code null} if no such title exists.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final String implementationTitle;
 
             /**
              * The package implementation's version or {@code null} if no such version exists.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final String implementationVersion;
 
             /**
              * The package implementation's vendor or {@code null} if no such vendor exists.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final String implementationVendor;
 
             /**
@@ -390,13 +389,13 @@ public interface PackageDefinitionStrategy {
              * @param implementationVendor  The package implementation's vendor or {@code null} if no such vendor exists.
              * @param sealBase              The seal base or {@code null} if the package is not sealed.
              */
-            public Simple(@Nullable String specificationTitle,
-                          @Nullable String specificationVersion,
-                          @Nullable String specificationVendor,
-                          @Nullable String implementationTitle,
-                          @Nullable String implementationVersion,
-                          @Nullable String implementationVendor,
-                          @Nullable URL sealBase) {
+            public Simple(@Nonnull(when = When.MAYBE) String specificationTitle,
+                          @Nonnull(when = When.MAYBE) String specificationVersion,
+                          @Nonnull(when = When.MAYBE) String specificationVendor,
+                          @Nonnull(when = When.MAYBE) String implementationTitle,
+                          @Nonnull(when = When.MAYBE) String implementationVersion,
+                          @Nonnull(when = When.MAYBE) String implementationVendor,
+                          @Nonnull(when = When.MAYBE) URL sealBase) {
                 this.specificationTitle = specificationTitle;
                 this.specificationVersion = specificationVersion;
                 this.specificationVendor = specificationVendor;
@@ -416,7 +415,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public String getSpecificationTitle() {
                 return specificationTitle;
             }
@@ -424,7 +423,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public String getSpecificationVersion() {
                 return specificationVersion;
             }
@@ -432,7 +431,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public String getSpecificationVendor() {
                 return specificationVendor;
             }
@@ -440,7 +439,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public String getImplementationTitle() {
                 return implementationTitle;
             }
@@ -448,7 +447,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public String getImplementationVersion() {
                 return implementationVersion;
             }
@@ -456,7 +455,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public String getImplementationVendor() {
                 return implementationVendor;
             }
@@ -464,7 +463,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public URL getSealBase() {
                 return sealBase;
             }
@@ -495,7 +494,7 @@ public interface PackageDefinitionStrategy {
 
             @Override
             @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
-            public boolean equals(Object other) {
+            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                 if (this == other) {
                     return true;
                 } else if (other == null || getClass() != other.getClass()) {
@@ -616,7 +615,7 @@ public interface PackageDefinitionStrategy {
              * @param typeName    The name of the type being loaded that triggered the package definition.
              * @return The URL that is used for sealing a package or {@code null} if the package should not be sealed.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             URL findSealBase(ClassLoader classLoader, String typeName);
 
             /**
@@ -632,7 +631,7 @@ public interface PackageDefinitionStrategy {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public URL findSealBase(ClassLoader classLoader, String typeName) {
                     return NOT_SEALED;
                 }
@@ -647,7 +646,7 @@ public interface PackageDefinitionStrategy {
                 /**
                  * The seal base URL.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final URL sealBase;
 
@@ -656,14 +655,14 @@ public interface PackageDefinitionStrategy {
                  *
                  * @param sealBase The seal base URL.
                  */
-                public ForFixedValue(@Nullable URL sealBase) {
+                public ForFixedValue(@Nonnull(when = When.MAYBE) URL sealBase) {
                     this.sealBase = sealBase;
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public URL findSealBase(ClassLoader classLoader, String typeName) {
                     return sealBase;
                 }
@@ -678,7 +677,7 @@ public interface PackageDefinitionStrategy {
 
                 @Override
                 @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
-                public boolean equals(Object other) {
+                public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                     if (this == other) {
                         return true;
                     } else if (other == null || getClass() != other.getClass()) {
@@ -749,7 +748,7 @@ public interface PackageDefinitionStrategy {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public URL findSealBase(ClassLoader classLoader, String typeName) {
                     URL url = classLoader.getResource(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
                     if (url != null) {

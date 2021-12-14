@@ -19,7 +19,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.EntryPoint;
 import org.apache.maven.plugin.MojoExecutionException;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 
 /**
  * Defines a configuration for a Maven build's type transformation.
@@ -30,7 +31,7 @@ public class Initialization extends CoordinateConfiguration {
     /**
      * The fully-qualified name of the entry point or any constant name of {@link EntryPoint.Default}.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     public String entryPoint;
 
     /**

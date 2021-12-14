@@ -29,7 +29,8 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.MethodVisitor;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.io.PrintStream;
 import java.util.*;
 
@@ -347,7 +348,7 @@ public interface MethodDelegationBinder {
          * @return The target method's parameter index of this binding or {@code null} if no such argument binding
          * was applied for this binding.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         Integer getTargetParameterIndex(Object parameterBindingToken);
 
         /**
@@ -543,7 +544,7 @@ public interface MethodDelegationBinder {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Integer getTargetParameterIndex(Object parameterBindingToken) {
                     return registeredTargetIndices.get(parameterBindingToken);
                 }

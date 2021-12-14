@@ -18,7 +18,6 @@ package net.bytebuddy.agent;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.io.*;
 import java.lang.instrument.Instrumentation;
@@ -261,7 +260,7 @@ public class ByteBuddyAgent {
      * @param processId The target process id.
      * @param argument  The argument to provide to the agent.
      */
-    public static void attach(File agentJar, String processId, @Nullable String argument) {
+    public static void attach(File agentJar, String processId, @Nonnull(when = When.MAYBE) String argument) {
         attach(agentJar, processId, argument, AttachmentProvider.DEFAULT);
     }
 
@@ -296,7 +295,7 @@ public class ByteBuddyAgent {
      * @param argument           The argument to provide to the agent.
      * @param attachmentProvider The attachment provider to use.
      */
-    public static void attach(File agentJar, String processId, @Nullable String argument, AttachmentProvider attachmentProvider) {
+    public static void attach(File agentJar, String processId, @Nonnull(when = When.MAYBE) String argument, AttachmentProvider attachmentProvider) {
         install(attachmentProvider, processId, argument, new AgentProvider.ForExistingAgent(agentJar), false);
     }
 
@@ -331,7 +330,7 @@ public class ByteBuddyAgent {
      * @param processProvider A provider of the target process id.
      * @param argument        The argument to provide to the agent.
      */
-    public static void attach(File agentJar, ProcessProvider processProvider, @Nullable String argument) {
+    public static void attach(File agentJar, ProcessProvider processProvider, @Nonnull(when = When.MAYBE) String argument) {
         attach(agentJar, processProvider, argument, AttachmentProvider.DEFAULT);
     }
 
@@ -366,7 +365,7 @@ public class ByteBuddyAgent {
      * @param argument           The argument to provide to the agent.
      * @param attachmentProvider The attachment provider to use.
      */
-    public static void attach(File agentJar, ProcessProvider processProvider, @Nullable String argument, AttachmentProvider attachmentProvider) {
+    public static void attach(File agentJar, ProcessProvider processProvider, @Nonnull(when = When.MAYBE) String argument, AttachmentProvider attachmentProvider) {
         install(attachmentProvider, processProvider.resolve(), argument, new AgentProvider.ForExistingAgent(agentJar), false);
     }
 
@@ -401,7 +400,7 @@ public class ByteBuddyAgent {
      * @param processId    The target process id.
      * @param argument     The argument to provide to the agent.
      */
-    public static void attachNative(File agentLibrary, String processId, @Nullable String argument) {
+    public static void attachNative(File agentLibrary, String processId, @Nonnull(when = When.MAYBE) String argument) {
         attachNative(agentLibrary, processId, argument, AttachmentProvider.DEFAULT);
     }
 
@@ -436,7 +435,7 @@ public class ByteBuddyAgent {
      * @param argument           The argument to provide to the agent.
      * @param attachmentProvider The attachment provider to use.
      */
-    public static void attachNative(File agentLibrary, String processId, @Nullable String argument, AttachmentProvider attachmentProvider) {
+    public static void attachNative(File agentLibrary, String processId, @Nonnull(when = When.MAYBE) String argument, AttachmentProvider attachmentProvider) {
         install(attachmentProvider, processId, argument, new AgentProvider.ForExistingAgent(agentLibrary), true);
     }
 
@@ -471,7 +470,7 @@ public class ByteBuddyAgent {
      * @param processProvider A provider of the target process id.
      * @param argument        The argument to provide to the agent.
      */
-    public static void attachNative(File agentLibrary, ProcessProvider processProvider, @Nullable String argument) {
+    public static void attachNative(File agentLibrary, ProcessProvider processProvider, @Nonnull(when = When.MAYBE) String argument) {
         attachNative(agentLibrary, processProvider, argument, AttachmentProvider.DEFAULT);
     }
 
@@ -506,7 +505,7 @@ public class ByteBuddyAgent {
      * @param argument           The argument to provide to the agent.
      * @param attachmentProvider The attachment provider to use.
      */
-    public static void attachNative(File agentLibrary, ProcessProvider processProvider, @Nullable String argument, AttachmentProvider attachmentProvider) {
+    public static void attachNative(File agentLibrary, ProcessProvider processProvider, @Nonnull(when = When.MAYBE) String argument, AttachmentProvider attachmentProvider) {
         install(attachmentProvider, processProvider.resolve(), argument, new AgentProvider.ForExistingAgent(agentLibrary), true);
     }
 
@@ -623,7 +622,7 @@ public class ByteBuddyAgent {
      * @param agentProvider      The agent provider for the agent jar or library.
      * @param isNative           {@code true} if the agent is native.
      */
-    private static void install(AttachmentProvider attachmentProvider, String processId, @Nullable String argument, AgentProvider agentProvider, boolean isNative) {
+    private static void install(AttachmentProvider attachmentProvider, String processId, @Nonnull(when = When.MAYBE) String argument, AgentProvider agentProvider, boolean isNative) {
         AttachmentProvider.Accessor attachmentAccessor = attachmentProvider.attempt();
         if (!attachmentAccessor.isAvailable()) {
             throw new IllegalStateException("No compatible attachment provider is available");
@@ -656,7 +655,7 @@ public class ByteBuddyAgent {
                                         String processId,
                                         File agent,
                                         boolean isNative,
-                                        @Nullable String argument) throws Exception {
+                                        @Nonnull(when = When.MAYBE) String argument) throws Exception {
         File selfResolvedJar = trySelfResolve(), attachmentJar = null;
         try {
             if (selfResolvedJar == null) {
@@ -715,7 +714,7 @@ public class ByteBuddyAgent {
      *
      * @return The self-resolved jar file or {@code null} if the jar file cannot be located.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
     private static File trySelfResolve() {
         try {
@@ -762,7 +761,7 @@ public class ByteBuddyAgent {
      *
      * @return The Byte Buddy agent's {@link java.lang.instrument.Instrumentation} instance.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Legal outcome where reflection communicates errors by throwing an exception")
     private static Instrumentation doGetInstrumentation() {
         try {
@@ -968,7 +967,7 @@ public class ByteBuddyAgent {
                  * @param classPath   The class path required to load the virtual machine class.
                  * @return An appropriate accessor.
                  */
-                public static Accessor of(@Nullable ClassLoader classLoader, File... classPath) {
+                public static Accessor of(@Nonnull(when = When.MAYBE) ClassLoader classLoader, File... classPath) {
                     try {
                         return new Simple.WithExternalAttachment(Class.forName(VIRTUAL_MACHINE_TYPE_NAME,
                                 false,
@@ -1443,7 +1442,7 @@ public class ByteBuddyAgent {
              * @return This jar file's location or {@code null} if this jar file's location is inaccessible.
              * @throws IOException If an I/O exception occurs.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private static File trySelfResolve() throws IOException {
                 ProtectionDomain protectionDomain = Installer.class.getProtectionDomain();
                 if (Boolean.getBoolean(LATENT_RESOLVE)) {

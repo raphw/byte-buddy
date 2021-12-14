@@ -9,7 +9,7 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.inOrder;
 
 public class TypeWriterDefaultForInliningWithFullProcessingInitializationHandlerAppendingFrameWriterActiveTest {
 

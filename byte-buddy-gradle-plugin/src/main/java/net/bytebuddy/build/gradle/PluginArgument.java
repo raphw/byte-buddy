@@ -19,7 +19,7 @@ import net.bytebuddy.build.Plugin;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull; import javax.annotation.meta.When;
 import java.io.Serializable;
 
 /**
@@ -40,7 +40,7 @@ public class PluginArgument implements Serializable {
     /**
      * The argument value.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     private Object value;
 
     /**
@@ -66,7 +66,7 @@ public class PluginArgument implements Serializable {
      * @param index The argument index.
      * @param value The argument value.
      */
-    protected PluginArgument(int index, @Nullable Object value) {
+    protected PluginArgument(int index, @Nonnull(when = When.MAYBE) Object value) {
         this.index = index;
         this.value = value;
     }
@@ -95,7 +95,7 @@ public class PluginArgument implements Serializable {
      *
      * @return The argument value.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @Optional
     @Input
     public Object getValue() {
@@ -107,7 +107,7 @@ public class PluginArgument implements Serializable {
      *
      * @param value The argument value.
      */
-    public void setValue(@Nullable Object value) {
+    public void setValue(@Nonnull(when = When.MAYBE) Object value) {
         this.value = value;
     }
 

@@ -33,7 +33,8 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.lang.annotation.Annotation;
 import java.util.*;
 
@@ -307,7 +308,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              * @param target     The parameter for which a value is bound.
              * @return The constant pool value that is bound to this parameter or {@code null} for binding this value.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             protected abstract Object bind(AnnotationDescription.Loadable<S> annotation, MethodDescription source, ParameterDescription target);
 
             /**
@@ -334,7 +335,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 /**
                  * The value that is assigned to any annotated parameter.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final Object value;
 
@@ -344,7 +345,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                  * @param type  The type of the annotation that is bound by this binder.
                  * @param value The value that is assigned to any annotated parameter.
                  */
-                protected OfConstant(Class<U> type, @Nullable Object value) {
+                protected OfConstant(Class<U> type, @Nonnull(when = When.MAYBE) Object value) {
                     this.type = type;
                     this.value = value;
                 }
@@ -357,7 +358,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                  * @param <V>   The bound annotation's type.
                  * @return A parameter binder that binds the given annotation to the supplied value.
                  */
-                public static <V extends Annotation> ParameterBinder<V> of(Class<V> type, @Nullable Object value) {
+                public static <V extends Annotation> ParameterBinder<V> of(Class<V> type, @Nonnull(when = When.MAYBE) Object value) {
                     return new OfConstant<V>(type, value);
                 }
 
@@ -368,7 +369,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     return type;
                 }
 
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 @Override
                 protected Object bind(AnnotationDescription.Loadable<U> annotation, MethodDescription source, ParameterDescription target) {
                     return value;
@@ -659,7 +660,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     }
 
                     @Override
-                    public boolean equals(Object other) {
+                    public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                         return this == other || other instanceof Argument && parameterIndex == ((Argument) other).value();
                     }
 

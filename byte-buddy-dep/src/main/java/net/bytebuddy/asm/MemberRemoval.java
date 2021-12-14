@@ -32,7 +32,6 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.util.HashMap;
 import java.util.Map;
@@ -209,8 +208,8 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        @Nullable
-        public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable Object value) {
+        @Nonnull(when = When.MAYBE)
+        public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) Object value) {
             FieldDescription.InDefinedShape fieldDescription = fields.get(internalName + descriptor);
             return fieldDescription != null && fieldMatcher.matches(fieldDescription)
                     ? REMOVE_FIELD
@@ -218,8 +217,8 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        @Nullable
-        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable String[] exception) {
+        @Nonnull(when = When.MAYBE)
+        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String[] exception) {
             MethodDescription methodDescription = methods.get(internalName + descriptor);
             return methodDescription != null && methodMatcher.matches(methodDescription)
                     ? REMOVE_METHOD

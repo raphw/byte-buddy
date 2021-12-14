@@ -25,7 +25,6 @@ import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.io.File;
 import java.io.IOException;
@@ -208,7 +207,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
     /**
      * {@inheritDoc}
      */
-    public Map<TypeDescription, Class<?>> load(@Nullable ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+    public Map<TypeDescription, Class<?>> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
         Map<String, Class<?>> availableTypes = new HashMap<String, Class<?>>(preregisteredTypes);
         for (Class<?> type : instrumentation.getInitiatedClasses(classLoader)) {
             availableTypes.put(TypeDescription.ForLoadedType.getName(type), type);
@@ -518,11 +517,11 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Value is always null")
-            public byte[] transform(@Nullable ClassLoader classLoader,
-                                    @Nullable String internalTypeName,
-                                    @Nullable Class<?> classBeingRedefined,
+            public byte[] transform(@Nonnull(when = When.MAYBE) ClassLoader classLoader,
+                                    @Nonnull(when = When.MAYBE) String internalTypeName,
+                                    @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain,
                                     byte[] classfileBuffer) {
                 if (internalTypeName == null) {
@@ -557,10 +556,10 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
             /**
              * {@inheritDoc}
              */
-            @Nullable
-            public byte[] transform(@Nullable ClassLoader classLoader,
-                                    @Nullable String internalTypeName,
-                                    @Nullable Class<?> classBeingRedefined,
+            @Nonnull(when = When.MAYBE)
+            public byte[] transform(@Nonnull(when = When.MAYBE) ClassLoader classLoader,
+                                    @Nonnull(when = When.MAYBE) String internalTypeName,
+                                    @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain,
                                     byte[] classfileBuffer) {
                 return NO_REDEFINITION;

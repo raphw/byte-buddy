@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.implementation.bytecode.assign.reference;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -39,7 +40,9 @@ public enum GenericTypeAwareAssigner implements Assigner {
      */
     INSTANCE;
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
         if (source.isPrimitive() || target.isPrimitive()) {
             return source.equals(target)
@@ -238,7 +241,7 @@ public enum GenericTypeAwareAssigner implements Assigner {
                                 }
                             }
                             TypeDescription.Generic ownerType = parameterizedType.getOwnerType();
-                            return ownerType == null || ownerType.accept(new IsAssignableToVisitor(parameterizedType.getOwnerType()));
+                            return ownerType == null || ownerType.accept(new IsAssignableToVisitor(ownerType));
                         }
                     } else if (polymorphic) {
                         TypeDescription.Generic superClass = candidate.getSuperClass();
@@ -283,6 +286,7 @@ public enum GenericTypeAwareAssigner implements Assigner {
             /**
              * {@inheritDoc}
              */
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Array property assumes non-nullability")
             public Boolean onGenericArray(TypeDescription.Generic genericArray) {
                 TypeDescription.Generic source = typeDescription.getComponentType(), target = genericArray.getComponentType();
                 while (source.getSort().isGenericArray() && target.getSort().isGenericArray()) {

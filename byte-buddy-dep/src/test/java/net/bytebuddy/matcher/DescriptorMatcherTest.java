@@ -1,6 +1,5 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.NamedElement;
 import org.junit.Before;
 import org.junit.Test;

@@ -23,7 +23,6 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.AnnotationTypeMismatchException;
@@ -107,7 +106,7 @@ public interface AnnotationValue<T, S> {
      * @param classLoader The class loader for loading this value or {@code null} for using the boot loader.
      * @return The loaded value of this annotation.
      */
-    Loaded<S> load(@Nullable ClassLoader classLoader);
+    Loaded<S> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader);
 
     /**
      * A rendering dispatcher is responsible for resolving annotation values to {@link String} representations.
@@ -1092,7 +1091,7 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
-        public AnnotationValue.Loaded<U> load(@Nullable ClassLoader classLoader) {
+        public AnnotationValue.Loaded<U> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             return new Loaded<U>(value, propertyDelegate);
         }
 
@@ -1103,7 +1102,7 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             return this == other || other instanceof AnnotationValue<?, ?> && propertyDelegate.equals(value, ((AnnotationValue<?, ?>) other).resolve());
         }
 
@@ -1592,7 +1591,7 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
-            public boolean equals(Object other) {
+            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
@@ -1677,7 +1676,7 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        public AnnotationValue.Loaded<U> load(@Nullable ClassLoader classLoader) {
+        public AnnotationValue.Loaded<U> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             try {
                 return new Loaded<U>(annotationDescription
                         .prepare((Class<U>) Class.forName(annotationDescription.getAnnotationType().getName(), false, classLoader))
@@ -1693,7 +1692,7 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             return this == other || other instanceof AnnotationValue<?, ?> && annotationDescription.equals(((AnnotationValue<?, ?>) other).resolve());
         }
 
@@ -1750,7 +1749,7 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
-            public boolean equals(Object other) {
+            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
@@ -1833,7 +1832,7 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        public AnnotationValue.Loaded<U> load(@Nullable ClassLoader classLoader) {
+        public AnnotationValue.Loaded<U> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             try {
                 return new Loaded<U>(enumerationDescription.load((Class<U>) Class.forName(enumerationDescription.getEnumerationType().getName(), false, classLoader)));
             } catch (ClassNotFoundException exception) {
@@ -1847,7 +1846,7 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             return this == other || other instanceof AnnotationValue<?, ?> && enumerationDescription.equals(((AnnotationValue<?, ?>) other).resolve());
         }
 
@@ -1904,7 +1903,7 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
-            public boolean equals(Object other) {
+            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
@@ -2030,7 +2029,7 @@ public interface AnnotationValue<T, S> {
              * {@inheritDoc}
              */
             @SuppressWarnings("unchecked")
-            public AnnotationValue.Loaded<U> load(@Nullable ClassLoader classLoader) {
+            public AnnotationValue.Loaded<U> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
                 try {
                     // Type casting to Object is required for Java 6 compilability.
                     return (AnnotationValue.Loaded<U>) (Object) new Loaded((Class<Enum<?>>) Class.forName(typeDescription.getName(), false, classLoader), value);
@@ -2183,7 +2182,7 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        public AnnotationValue.Loaded<U> load(@Nullable ClassLoader classLoader) {
+        public AnnotationValue.Loaded<U> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             try {
                 return new Loaded<U>((U) (typeDescription.isPrimitive()
                         ? PRIMITIVE_TYPES.get(typeDescription)
@@ -2199,7 +2198,7 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             return this == other || other instanceof AnnotationValue<?, ?> && typeDescription.equals(((AnnotationValue<?, ?>) other).resolve());
         }
 
@@ -2256,7 +2255,7 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
-            public boolean equals(Object other) {
+            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
@@ -2417,7 +2416,7 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        public AnnotationValue.Loaded<V> load(@Nullable ClassLoader classLoader) {
+        public AnnotationValue.Loaded<V> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             List<AnnotationValue.Loaded<?>> values = new ArrayList<AnnotationValue.Loaded<?>>(this.values.size());
             for (AnnotationValue<?, ?> value : this.values) {
                 values.add(value.load(classLoader));
@@ -2440,7 +2439,7 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof AnnotationValue<?, ?>)) {
@@ -2639,7 +2638,7 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
-        public AnnotationValue.Loaded<V> load(@Nullable ClassLoader classLoader) {
+        public AnnotationValue.Loaded<V> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             return new Loaded<V>(typeName, new ClassNotFoundException(typeName));
         }
 
@@ -2752,7 +2751,7 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
-        public AnnotationValue.Loaded<V> load(@Nullable ClassLoader classLoader) {
+        public AnnotationValue.Loaded<V> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             try {
                 Class<?> type = Class.forName(property.getDeclaringType().getName(), false, classLoader);
                 try {
@@ -2868,7 +2867,7 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        public AnnotationValue.Loaded<V> load(@Nullable ClassLoader classLoader) {
+        public AnnotationValue.Loaded<V> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             try {
                 Class<? extends Annotation> type = (Class<? extends Annotation>) Class.forName(typeDescription.getName(), false, classLoader);
                 return type.isAnnotation()
@@ -2994,7 +2993,7 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
-        public AnnotationValue.Loaded<V> load(@Nullable ClassLoader classLoader) {
+        public AnnotationValue.Loaded<V> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             try {
                 return new Loaded<V>(Class.forName(typeDescription.getName(), false, classLoader));
             } catch (ClassNotFoundException exception) {

@@ -16,7 +16,6 @@
 package net.bytebuddy.description;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 
 /**
@@ -115,7 +114,7 @@ public interface NamedElement {
          *
          * @return The generic signature or {@code null} if this element is not generic.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         String getGenericSignature();
     }
 }

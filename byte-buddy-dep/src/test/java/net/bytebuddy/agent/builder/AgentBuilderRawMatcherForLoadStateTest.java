@@ -7,7 +7,7 @@ import org.junit.Test;
 import java.security.ProtectionDomain;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
 public class AgentBuilderRawMatcherForLoadStateTest {

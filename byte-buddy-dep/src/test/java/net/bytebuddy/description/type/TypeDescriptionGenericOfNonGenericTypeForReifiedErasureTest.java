@@ -6,7 +6,7 @@ import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TypeDescriptionGenericOfNonGenericTypeForReifiedErasureTest {
 

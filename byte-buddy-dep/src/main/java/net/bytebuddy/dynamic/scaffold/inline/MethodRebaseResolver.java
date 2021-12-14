@@ -32,7 +32,7 @@ import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.Opcodes;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.util.*;
 
 /**
@@ -281,7 +281,7 @@ public interface MethodRebaseResolver {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }
@@ -436,7 +436,7 @@ public interface MethodRebaseResolver {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }

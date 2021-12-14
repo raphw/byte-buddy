@@ -29,7 +29,6 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.lang.annotation.*;
 import java.lang.reflect.InvocationHandler;
@@ -257,7 +256,7 @@ public interface AnnotationDescription {
          * @return A proxy for the annotation type and values.
          */
         @SuppressWarnings("unchecked")
-        public static <S extends Annotation> S of(@Nullable ClassLoader classLoader,
+        public static <S extends Annotation> S of(@Nonnull(when = When.MAYBE) ClassLoader classLoader,
                                                   Class<S> annotationType,
                                                   Map<String, ? extends AnnotationValue<?, ?>> values) {
             LinkedHashMap<Method, AnnotationValue.Loaded<?>> loadedValues = new LinkedHashMap<Method, AnnotationValue.Loaded<?>>();
@@ -278,7 +277,7 @@ public interface AnnotationDescription {
         /**
          * {@inheritDoc}
          */
-        public Object invoke(Object proxy, Method method, @Nullable Object[] argument) {
+        public Object invoke(Object proxy, Method method, @Nonnull(when = When.MAYBE) Object[] argument) {
             if (method.getDeclaringClass() != annotationType) {
                 if (method.getName().equals(HASH_CODE)) {
                     return hashCodeRepresentation();
@@ -386,7 +385,7 @@ public interface AnnotationDescription {
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof AnnotationInvocationHandler)) {
@@ -506,7 +505,7 @@ public interface AnnotationDescription {
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof AnnotationDescription)) {

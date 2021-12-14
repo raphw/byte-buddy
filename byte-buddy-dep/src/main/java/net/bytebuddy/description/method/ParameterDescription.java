@@ -33,7 +33,6 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
@@ -200,7 +199,7 @@ public interface ParameterDescription extends AnnotationSource,
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof ParameterDescription)) {
@@ -714,13 +713,13 @@ public interface ParameterDescription extends AnnotationSource,
         /**
          * The name of the parameter or {@code null} if no name is explicitly defined.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         private final String name;
 
         /**
          * The modifiers of the parameter or {@code null} if no modifiers are explicitly defined.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         private final Integer modifiers;
 
         /**
@@ -786,8 +785,8 @@ public interface ParameterDescription extends AnnotationSource,
         public Latent(MethodDescription.InDefinedShape declaringMethod,
                       TypeDescription.Generic parameterType,
                       List<? extends AnnotationDescription> declaredAnnotations,
-                      @Nullable String name,
-                      @Nullable Integer modifiers,
+                      @Nonnull(when = When.MAYBE) String name,
+                      @Nonnull(when = When.MAYBE) Integer modifiers,
                       int index,
                       int offset) {
             this.declaringMethod = declaringMethod;
@@ -816,7 +815,7 @@ public interface ParameterDescription extends AnnotationSource,
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public int getIndex() {
             return index;
         }
@@ -824,7 +823,7 @@ public interface ParameterDescription extends AnnotationSource,
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public int getOffset() {
             return offset;
         }
@@ -1010,13 +1009,13 @@ public interface ParameterDescription extends AnnotationSource,
         /**
          * The name of the parameter or {@code null} if no explicit name is defined.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         private final String name;
 
         /**
          * The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         private final Integer modifiers;
 
         /**
@@ -1046,7 +1045,7 @@ public interface ParameterDescription extends AnnotationSource,
          * @param name      The name of the parameter or {@code null} if no explicit name is defined.
          * @param modifiers The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
          */
-        public Token(TypeDescription.Generic type, @Nullable String name, @Nullable Integer modifiers) {
+        public Token(TypeDescription.Generic type, @Nonnull(when = When.MAYBE) String name, @Nonnull(when = When.MAYBE) Integer modifiers) {
             this(type, Collections.<AnnotationDescription>emptyList(), name, modifiers);
         }
 
@@ -1060,8 +1059,8 @@ public interface ParameterDescription extends AnnotationSource,
          */
         public Token(TypeDescription.Generic type,
                      List<? extends AnnotationDescription> annotations,
-                     @Nullable String name,
-                     @Nullable Integer modifiers) {
+                     @Nonnull(when = When.MAYBE) String name,
+                     @Nonnull(when = When.MAYBE) Integer modifiers) {
             this.type = type;
             this.annotations = annotations;
             this.name = name;
@@ -1091,7 +1090,7 @@ public interface ParameterDescription extends AnnotationSource,
          *
          * @return The name of the parameter or {@code null} if no explicit name is defined.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public String getName() {
             return name;
         }
@@ -1101,7 +1100,7 @@ public interface ParameterDescription extends AnnotationSource,
          *
          * @return The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public Integer getModifiers() {
             return modifiers;
         }
@@ -1127,7 +1126,7 @@ public interface ParameterDescription extends AnnotationSource,
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof Token)) {

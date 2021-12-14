@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Modifier;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AuxiliaryTypeSignatureRelevantTest {
 

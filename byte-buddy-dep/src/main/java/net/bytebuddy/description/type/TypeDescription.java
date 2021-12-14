@@ -45,7 +45,6 @@ import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
@@ -189,13 +188,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     /**
      * {@inheritDoc}
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     TypeDescription getComponentType();
 
     /**
      * {@inheritDoc}
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     TypeDescription getDeclaringType();
 
     /**
@@ -212,7 +211,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return A description of the enclosing method of this type or {@code null} if there is no such method.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     MethodDescription.InDefinedShape getEnclosingMethod();
 
     /**
@@ -220,7 +219,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return A description of the enclosing type of this type or {@code null} if there is no such type.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     TypeDescription getEnclosingType();
 
     /**
@@ -247,7 +246,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return The canonical name of this type. Might be {@code null}.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     String getCanonicalName();
 
     /**
@@ -276,7 +275,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return The package of the type described by this instance or {@code null} if the described type does not imply a package.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     PackageDescription getPackage();
 
     /**
@@ -372,7 +371,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return This types default value.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     Object getDefaultValue();
 
     /**
@@ -446,7 +445,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return This type's class file version or {@code null} if it cannot be resolved.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     ClassFileVersion getClassFileVersion();
 
     /**
@@ -550,7 +549,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          *
          * @return This type's owner type or {@code null} if no owner type exists.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         Generic getOwnerType();
 
         /**
@@ -566,7 +565,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * @return The value that is bound to the supplied type variable or {@code null} if the type variable
          * is not bound by this parameterized type.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         Generic findBindingOf(Generic typeVariable);
 
         /**
@@ -590,7 +589,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         Generic getComponentType();
 
         /**
@@ -1541,13 +1540,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * The {@link ElementType}'s {@code TYPE_USE} constant.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     private final ElementType typeUse;
 
                     /**
                      * The {@link ElementType}'s {@code TYPE_PARAMETER} constant.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     private final ElementType typeParameter;
 
                     /**
@@ -2913,7 +2912,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                          * @param field The field for which to resolve the annotated type.
                          * @return The field type annotations or {@code null} if this feature is not supported.
                          */
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         @JavaDispatcher.Defaults
                         AnnotatedElement getAnnotatedType(Field field);
                     }
@@ -2966,7 +2965,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                          * @param method The executable for which to resolve the annotated return type.
                          * @return The return type annotations or {@code null} if this feature is not supported.
                          */
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         @JavaDispatcher.Defaults
                         AnnotatedElement getAnnotatedReturnType(Method method);
                     }
@@ -3537,7 +3536,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * @param value The annotated type to resolve.
                      * @return The annotated owner type for the supplied annotated type or {@code null} if this feature is not supported.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     @JavaDispatcher.Defaults
                     AnnotatedElement getAnnotatedOwnerType(AnnotatedElement value);
                 }
@@ -3600,7 +3599,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Generic getSuperClass() {
                 TypeDescription erasure = asErasure();
                 Generic superClass = erasure.getSuperClass();
@@ -3766,7 +3765,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Type check is performed by erasure implementation")
-            public boolean equals(Object other) {
+            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                 return this == other || asErasure().equals(other);
             }
 
@@ -3868,7 +3867,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getOwnerType() {
                     Class<?> declaringClass = this.type.getDeclaringClass();
                     return declaringClass == null
@@ -3879,7 +3878,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getComponentType() {
                     Class<?> componentType = type.getComponentType();
                     return componentType == null
@@ -3933,7 +3932,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getOwnerType() {
                     TypeDescription declaringType = typeDescription.getDeclaringType();
                     return declaringType == null
@@ -3944,7 +3943,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getComponentType() {
                     TypeDescription componentType = typeDescription.getComponentType();
                     return componentType == null
@@ -3973,7 +3972,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The non-generic type's declaring type.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private final TypeDescription.Generic declaringType;
 
                 /**
@@ -3998,7 +3997,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param declaringType    The non-generic type's declaring type.
                  * @param annotationSource The annotation source to query for the declared annotations.
                  */
-                private Latent(TypeDescription typeDescription, @Nullable TypeDescription declaringType, AnnotationSource annotationSource) {
+                private Latent(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) TypeDescription declaringType, AnnotationSource annotationSource) {
                     this(typeDescription,
                             declaringType == null
                                     ? Generic.UNDEFINED
@@ -4013,7 +4012,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param declaringType    The non-generic type's declaring type.
                  * @param annotationSource The annotation source to query for the declared annotations.
                  */
-                protected Latent(TypeDescription typeDescription, @Nullable Generic declaringType, AnnotationSource annotationSource) {
+                protected Latent(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) Generic declaringType, AnnotationSource annotationSource) {
                     this.typeDescription = typeDescription;
                     this.declaringType = declaringType;
                     this.annotationSource = annotationSource;
@@ -4022,7 +4021,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getOwnerType() {
                     return declaringType;
                 }
@@ -4030,7 +4029,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getComponentType() {
                     TypeDescription componentType = typeDescription.getComponentType();
                     return componentType == null
@@ -4088,7 +4087,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getSuperClass() {
                     Generic superClass = typeDescription.getSuperClass();
                     return superClass == null
@@ -4127,7 +4126,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getOwnerType() {
                     TypeDescription declaringType = typeDescription.getDeclaringType();
                     return declaringType == null
@@ -4138,7 +4137,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getComponentType() {
                     TypeDescription componentType = typeDescription.getComponentType();
                     return componentType == null
@@ -4180,7 +4179,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Generic getSuperClass() {
                 return TypeDescription.Generic.OBJECT;
             }
@@ -4251,7 +4250,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Generic getOwnerType() {
                 return Generic.UNDEFINED;
             }
@@ -4335,7 +4334,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Type check is performed by erasure implementation")
-            public boolean equals(Object other) {
+            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                 if (this == other) {
                     return true;
                 } else if (getSort().isNonGeneric()) {
@@ -4393,7 +4392,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getComponentType() {
                     return Sort.describe(genericArrayType.getGenericComponentType(), annotationReader.ofComponentType());
                 }
@@ -4482,7 +4481,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Generic getSuperClass() {
                 throw new IllegalStateException("A wildcard does not imply a super type definition: " + this);
             }
@@ -4634,7 +4633,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public boolean equals(Object other) {
+            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof Generic)) {
@@ -4911,7 +4910,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Generic getSuperClass() {
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
@@ -4950,7 +4949,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Generic findBindingOf(Generic typeVariable) {
                 Generic typeDescription = this;
                 do {
@@ -5077,7 +5076,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public boolean equals(Object other) {
+            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof Generic)) {
@@ -5216,7 +5215,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getOwnerType() {
                     java.lang.reflect.Type ownerType = parameterizedType.getOwnerType();
                     return ownerType == null
@@ -5301,7 +5300,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * This parameterized type's owner type or {@code null} if no owner type exists.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private final Generic ownerType;
 
                 /**
@@ -5323,7 +5322,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param annotationSource The annotation source to query for the declared annotations.
                  */
                 public Latent(TypeDescription rawType,
-                              @Nullable Generic ownerType,
+                              @Nonnull(when = When.MAYBE) Generic ownerType,
                               List<? extends Generic> parameters,
                               AnnotationSource annotationSource) {
                     this.rawType = rawType;
@@ -5342,7 +5341,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getOwnerType() {
                     return ownerType;
                 }
@@ -5386,7 +5385,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getSuperClass() {
                     Generic superClass = super.getSuperClass();
                     return superClass == null
@@ -5425,7 +5424,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getOwnerType() {
                     Generic ownerType = parameterizedType.getOwnerType();
                     return ownerType == null
@@ -5496,7 +5495,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getOwnerType() {
                     TypeDescription declaringType = typeDescription.getDeclaringType();
                     return declaringType == null
@@ -5538,7 +5537,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Generic getSuperClass() {
                 throw new IllegalStateException("A type variable does not imply a super type definition: " + this);
             }
@@ -5676,7 +5675,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public boolean equals(Object other) {
+            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof Generic)) {
@@ -5764,7 +5763,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getSuperClass() {
                     throw new IllegalStateException("A symbolic type variable does not imply a super type definition: " + this);
                 }
@@ -5904,7 +5903,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
-                public boolean equals(Object other) {
+                public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                     if (this == other) {
                         return true;
                     } else if (!(other instanceof Generic)) {
@@ -6156,7 +6155,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Generic getComponentType() {
                 return resolve().getComponentType();
             }
@@ -6171,7 +6170,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Generic findBindingOf(Generic typeVariable) {
                 return resolve().findBindingOf(typeVariable);
             }
@@ -6186,7 +6185,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Generic getOwnerType() {
                 return resolve().getOwnerType();
             }
@@ -6261,7 +6260,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public boolean equals(Object other) {
+            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                 return this == other || other instanceof TypeDefinition && resolve().equals(other);
             }
 
@@ -6281,7 +6280,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getSuperClass() {
                     return LazySuperClass.of(this);
                 }
@@ -6325,7 +6324,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * @param delegate The lazy projection for which this description is a delegate.
                      * @return A lazy description of the super class or {@code null} if the delegate does not define a super class.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     protected static Generic of(LazyProjection delegate) {
                         return delegate.asErasure().getSuperClass() == null
                                 ? Generic.UNDEFINED
@@ -6487,7 +6486,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getSuperClass() {
                     return resolve().getSuperClass();
                 }
@@ -6552,7 +6551,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param type The type of which the super class is represented.
                  * @return A representation of the supplied type's super class or {@code null} if no such class exists.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public static Generic of(Class<?> type) {
                     return type.getSuperclass() == null
                             ? TypeDescription.Generic.UNDEFINED
@@ -6944,7 +6943,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param ownerType The raw type's (annotated) declaring type or {@code null} if no owner type should be declared.
              * @return A builder for creating a raw type.
              */
-            public static Builder rawType(Class<?> type, @Nullable Generic ownerType) {
+            public static Builder rawType(Class<?> type, @Nonnull(when = When.MAYBE) Generic ownerType) {
                 return rawType(ForLoadedType.of(type), ownerType);
             }
 
@@ -6955,7 +6954,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param ownerType The raw type's (annotated) declaring type or {@code null} if no owner type should be declared.
              * @return A builder for creating a raw type.
              */
-            public static Builder rawType(TypeDescription type, @Nullable Generic ownerType) {
+            public static Builder rawType(TypeDescription type, @Nonnull(when = When.MAYBE) Generic ownerType) {
                 TypeDescription declaringType = type.getDeclaringType();
                 if (declaringType == null && ownerType != null) {
                     throw new IllegalArgumentException(type + " does not have a declaring type: " + ownerType);
@@ -7055,7 +7054,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @return A builder for creating a parameterized type.
              */
             public static Builder parameterizedType(Class<?> rawType,
-                                                    @Nullable java.lang.reflect.Type ownerType,
+                                                    @Nonnull(when = When.MAYBE) java.lang.reflect.Type ownerType,
                                                     List<? extends java.lang.reflect.Type> parameters) {
                 return parameterizedType(ForLoadedType.of(rawType),
                         ownerType == null
@@ -7095,7 +7094,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @return A builder for creating a parameterized type.
              */
             public static Builder parameterizedType(TypeDescription rawType,
-                                                    @Nullable Generic ownerType,
+                                                    @Nonnull(when = When.MAYBE) Generic ownerType,
                                                     Collection<? extends TypeDefinition> parameters) {
                 TypeDescription declaringType = rawType.getDeclaringType();
                 if (ownerType == null && declaringType != null && rawType.isStatic()) {
@@ -7410,7 +7409,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The raw type's (annotated) declaring type or {@code null} if no such type is defined.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final Generic ownerType;
 
@@ -7429,7 +7428,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param typeDescription The type's erasure.
                  * @param ownerType       The raw type's raw declaring type or {@code null} if no such type is defined.
                  */
-                protected OfNonGenericType(TypeDescription typeDescription, @Nullable TypeDescription ownerType) {
+                protected OfNonGenericType(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) TypeDescription ownerType) {
                     this(typeDescription, ownerType == null
                             ? Generic.UNDEFINED
                             : ownerType.asGenericType());
@@ -7441,7 +7440,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param typeDescription The type's erasure.
                  * @param ownerType       The raw type's (annotated) declaring type.
                  */
-                protected OfNonGenericType(TypeDescription typeDescription, @Nullable Generic ownerType) {
+                protected OfNonGenericType(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) Generic ownerType) {
                     this(typeDescription, ownerType, Collections.<AnnotationDescription>emptyList());
                 }
 
@@ -7453,7 +7452,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param annotations     The type's type annotations.
                  */
                 protected OfNonGenericType(TypeDescription typeDescription,
-                                           @Nullable Generic ownerType,
+                                           @Nonnull(when = When.MAYBE) Generic ownerType,
                                            List<? extends AnnotationDescription> annotations) {
                     super(annotations);
                     this.ownerType = ownerType;
@@ -7840,7 +7839,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public String getGenericSignature() {
             try {
                 SignatureWriter signatureWriter = new SignatureWriter();
@@ -7996,7 +7995,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeVariableSource getEnclosingSource() {
             MethodDescription enclosingMethod = getEnclosingMethod();
             return enclosingMethod == null
@@ -8118,7 +8117,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public Object getDefaultValue() {
             if (represents(boolean.class)) {
                 return false;
@@ -8193,7 +8192,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public ClassFileVersion getClassFileVersion() {
             return null;
         }
@@ -8212,7 +8211,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof TypeDefinition)) {
@@ -8250,7 +8249,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public TypeDescription getComponentType() {
                 return TypeDescription.UNDEFINED;
             }
@@ -8265,7 +8264,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public String getCanonicalName() {
                 if (isAnonymousType() || isLocalType()) {
                     return NO_NAME;
@@ -8350,7 +8349,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public TypeDescription getDeclaringType() {
                     return delegate().getDeclaringType();
                 }
@@ -8358,7 +8357,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public MethodDescription.InDefinedShape getEnclosingMethod() {
                     return delegate().getEnclosingMethod();
                 }
@@ -8366,7 +8365,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public TypeDescription getEnclosingType() {
                     return delegate().getEnclosingType();
                 }
@@ -8395,7 +8394,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public PackageDescription getPackage() {
                     return delegate().getPackage();
                 }
@@ -8422,7 +8421,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public String getGenericSignature() {
                     // Embrace use of native generic signature by direct delegation.
                     return delegate().getGenericSignature();
@@ -8475,7 +8474,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public ClassFileVersion getClassFileVersion() {
                     return delegate().getClassFileVersion();
                 }
@@ -8627,7 +8626,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeDescription getComponentType() {
             Class<?> componentType = type.getComponentType();
             return componentType == null
@@ -8657,7 +8656,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public Generic getSuperClass() {
             if (RAW_TYPES) {
                 return type.getSuperclass() == null
@@ -8684,7 +8683,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeDescription getDeclaringType() {
             Class<?> declaringType = type.getDeclaringClass();
             return declaringType == null
@@ -8695,7 +8694,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             Method enclosingMethod = type.getEnclosingMethod();
             Constructor<?> enclosingConstructor = type.getEnclosingConstructor();
@@ -8782,7 +8781,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public PackageDescription getPackage() {
             if (type.isArray() || type.isPrimitive()) {
                 return PackageDescription.UNDEFINED;
@@ -8817,7 +8816,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public String getCanonicalName() {
             String canonicalName = type.getCanonicalName();
             if (canonicalName == null) {
@@ -8949,7 +8948,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         @CachedReturnPlugin.Enhance("classFileVersion")
         public ClassFileVersion getClassFileVersion() {
             try {
@@ -8972,7 +8971,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param type The type to resolve.
              * @return The annotated super class of the supplied type or {@code null} if this feature is not supported.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             AnnotatedElement getAnnotatedSuperclass(Class<?> type);
 
             /**
@@ -8989,7 +8988,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param type The class for which to locate the nest host.
              * @return The nest host of the specified class.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             Class<?> getNestHost(Class<?> type);
 
             /**
@@ -9024,7 +9023,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param type The type for which to check the permitted subclasses.
              * @return The permitted subclasses.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             Class<?>[] getPermittedSubclasses(Class<?> type);
 
             /**
@@ -9041,7 +9040,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param type The type for which to read the record components.
              * @return An array of all declared record components.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             Object[] getRecordComponents(Class<?> type);
         }
     }
@@ -9122,7 +9121,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeDescription getComponentType() {
             return arity == 1
                     ? componentType
@@ -9139,7 +9138,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public Generic getSuperClass() {
             return TypeDescription.Generic.OBJECT;
         }
@@ -9154,7 +9153,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return MethodDescription.UNDEFINED;
         }
@@ -9162,7 +9161,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeDescription getEnclosingType() {
             return TypeDescription.UNDEFINED;
         }
@@ -9188,7 +9187,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public String getCanonicalName() {
             String canonicalName = componentType.getCanonicalName();
             if (canonicalName == null) {
@@ -9258,7 +9257,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public PackageDescription getPackage() {
             return PackageDescription.UNDEFINED;
         }
@@ -9293,7 +9292,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeDescription getDeclaringType() {
             return TypeDescription.UNDEFINED;
         }
@@ -9372,7 +9371,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * The super type or {@code null} if no such type exists.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         private final Generic superClass;
 
         /**
@@ -9400,7 +9399,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * @param superClass The super type or {@code null} if no such type exists.
          * @param interfaces The interfaces that this type implements.
          */
-        public Latent(String name, int modifiers, @Nullable Generic superClass, List<? extends Generic> interfaces) {
+        public Latent(String name, int modifiers, @Nonnull(when = When.MAYBE) Generic superClass, List<? extends Generic> interfaces) {
             this.name = name;
             this.modifiers = modifiers;
             this.superClass = superClass;
@@ -9410,7 +9409,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public Generic getSuperClass() {
             return superClass;
         }
@@ -9474,7 +9473,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public PackageDescription getPackage() {
             String name = getName();
             int index = name.lastIndexOf('.');
@@ -9576,7 +9575,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public Generic getSuperClass() {
             return TypeDescription.Generic.OBJECT;
         }
@@ -9591,7 +9590,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return MethodDescription.UNDEFINED;
         }
@@ -9599,7 +9598,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeDescription getEnclosingType() {
             return TypeDescription.UNDEFINED;
         }
@@ -9656,7 +9655,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeDescription getDeclaringType() {
             return TypeDescription.UNDEFINED;
         }
@@ -9731,7 +9730,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * The class loader to use for loading a super type.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         private final ClassLoader classLoader;
 
         /**
@@ -9745,7 +9744,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * @param delegate    The delegate type description.
          * @param classLoader The class loader to use for loading a super type or {@code null} for using the boot loader.
          */
-        public SuperTypeLoading(TypeDescription delegate, @Nullable ClassLoader classLoader) {
+        public SuperTypeLoading(TypeDescription delegate, @Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             this(delegate, classLoader, ClassLoadingDelegate.Simple.INSTANCE);
         }
 
@@ -9756,7 +9755,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * @param classLoader          The class loader to use for loading a super type or {@code null} for using the boot loader.
          * @param classLoadingDelegate A delegate for loading a type.
          */
-        public SuperTypeLoading(TypeDescription delegate, @Nullable ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
+        public SuperTypeLoading(TypeDescription delegate, @Nonnull(when = When.MAYBE) ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
             this.delegate = delegate;
             this.classLoader = classLoader;
             this.classLoadingDelegate = classLoadingDelegate;
@@ -9800,7 +9799,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public Generic getSuperClass() {
             Generic superClass = delegate.getSuperClass();
             return superClass == null
@@ -9853,7 +9852,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeDescription getComponentType() {
             return delegate.getComponentType();
         }
@@ -9861,7 +9860,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeDescription getDeclaringType() {
             return delegate.getDeclaringType();
         }
@@ -9876,7 +9875,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return delegate.getEnclosingMethod();
         }
@@ -9884,7 +9883,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeDescription getEnclosingType() {
             return delegate.getEnclosingType();
         }
@@ -9899,7 +9898,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public String getCanonicalName() {
             return delegate.getCanonicalName();
         }
@@ -9921,7 +9920,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public PackageDescription getPackage() {
             return delegate.getPackage();
         }
@@ -9966,7 +9965,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return delegate.getPermittedSubtypes();
         }
 
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         @Override
         public ClassFileVersion getClassFileVersion() {
             return delegate.getClassFileVersion();
@@ -9985,7 +9984,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @return The loaded type.
              * @throws ClassNotFoundException If the type could not be found.
              */
-            Class<?> load(String name, @Nullable ClassLoader classLoader) throws ClassNotFoundException;
+            Class<?> load(String name, @Nonnull(when = When.MAYBE) ClassLoader classLoader) throws ClassNotFoundException;
 
             /**
              * A simple class loading delegate that simply loads a type.
@@ -10000,7 +9999,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> load(String name, @Nullable ClassLoader classLoader) throws ClassNotFoundException {
+                public Class<?> load(String name, @Nonnull(when = When.MAYBE) ClassLoader classLoader) throws ClassNotFoundException {
                     return Class.forName(name, false, classLoader);
                 }
             }
@@ -10019,7 +10018,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final ClassLoader classLoader;
 
             /**
@@ -10034,7 +10033,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param classLoader          The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
              * @param classLoadingDelegate A delegate for loading a type.
              */
-            protected ClassLoadingTypeProjection(Generic delegate, @Nullable ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
+            protected ClassLoadingTypeProjection(Generic delegate, @Nonnull(when = When.MAYBE) ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
                 this.delegate = delegate;
                 this.classLoader = classLoader;
                 this.classLoadingDelegate = classLoadingDelegate;
@@ -10067,7 +10066,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             @CachedReturnPlugin.Enhance("superClass")
             public Generic getSuperClass() {
                 Generic superClass = delegate.getSuperClass();
@@ -10120,7 +10119,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final ClassLoader classLoader;
 
             /**
@@ -10135,7 +10134,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param classLoader          The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
              * @param classLoadingDelegate A delegate for loading a type.
              */
-            protected ClassLoadingTypeList(TypeList.Generic delegate, @Nullable ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
+            protected ClassLoadingTypeList(TypeList.Generic delegate, @Nonnull(when = When.MAYBE) ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
                 this.delegate = delegate;
                 this.classLoader = classLoader;
                 this.classLoadingDelegate = classLoadingDelegate;

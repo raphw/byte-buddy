@@ -59,7 +59,6 @@ import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.commons.SimpleRemapper;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -140,8 +139,8 @@ public interface TypeWriter<T> {
              * @param defaultValue The default value that was defined previously or {@code null} if no default value is defined.
              * @return The default value for the represented field or {@code null} if no default value is to be defined.
              */
-            @Nullable
-            Object resolveDefault(@Nullable Object defaultValue);
+            @Nonnull(when = When.MAYBE)
+            Object resolveDefault(@Nonnull(when = When.MAYBE) Object defaultValue);
 
             /**
              * Writes this entry to a given class visitor.
@@ -203,7 +202,7 @@ public interface TypeWriter<T> {
                 /**
                  * {@inheritDoc}
                  */
-                public Object resolveDefault(@Nullable Object defaultValue) {
+                public Object resolveDefault(@Nonnull(when = When.MAYBE) Object defaultValue) {
                     throw new IllegalStateException("An implicit field record does not expose a default value: " + this);
                 }
 
@@ -246,7 +245,7 @@ public interface TypeWriter<T> {
                 /**
                  * The field's default value.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final Object defaultValue;
 
@@ -263,7 +262,7 @@ public interface TypeWriter<T> {
                  * @param fieldDescription  The implemented field.
                  */
                 public ForExplicitField(FieldAttributeAppender attributeAppender,
-                                        @Nullable Object defaultValue,
+                                        @Nonnull(when = When.MAYBE) Object defaultValue,
                                         FieldDescription fieldDescription) {
                     this.attributeAppender = attributeAppender;
                     this.defaultValue = defaultValue;
@@ -294,8 +293,8 @@ public interface TypeWriter<T> {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
-                public Object resolveDefault(@Nullable Object defaultValue) {
+                @Nonnull(when = When.MAYBE)
+                public Object resolveDefault(@Nonnull(when = When.MAYBE) Object defaultValue) {
                     return this.defaultValue == null
                             ? defaultValue
                             : this.defaultValue;
@@ -1125,7 +1124,7 @@ public interface TypeWriter<T> {
                         /**
                          * {@inheritDoc}
                          */
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public AnnotationValue<?, ?> getDefaultValue() {
                             return AnnotationValue.UNDEFINED;
                         }
@@ -1396,7 +1395,7 @@ public interface TypeWriter<T> {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     public AnnotationValue<?, ?> getDefaultValue() {
                         return AnnotationValue.UNDEFINED;
                     }
@@ -1488,7 +1487,7 @@ public interface TypeWriter<T> {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     public AnnotationValue<?, ?> getDefaultValue() {
                         return bridgeTarget.getDefaultValue();
                     }
@@ -1752,7 +1751,7 @@ public interface TypeWriter<T> {
         /**
          * A folder for dumping class files or {@code null} if no dump should be generated.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         protected static final String DUMP_FOLDER;
 
         /*
@@ -2306,7 +2305,7 @@ public interface TypeWriter<T> {
             /**
              * The constraint to assert the members against. The constraint is first defined when the general class information is visited.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private Constraint constraint;
 
             /**
@@ -2332,7 +2331,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public void visit(int version, int modifiers, String name, @Nullable String signature, @Nullable String superName, @Nullable String[] interfaceInternalName) {
+            public void visit(int version, int modifiers, String name, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String superName, @Nonnull(when = When.MAYBE) String[] interfaceInternalName) {
                 ClassFileVersion classFileVersion = ClassFileVersion.ofMinorMajor(version);
                 List<Constraint> constraints = new ArrayList<Constraint>();
                 constraints.add(new Constraint.ForClassFileVersion(classFileVersion));
@@ -2376,15 +2375,15 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                 constraint.assertAnnotation();
                 return super.visitAnnotation(descriptor, visible);
             }
 
             @Override
-            @Nullable
-            public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
+            @Nonnull(when = When.MAYBE)
+            public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nonnull(when = When.MAYBE) TypePath typePath, String descriptor, boolean visible) {
                 constraint.assertTypeAnnotation();
                 return super.visitTypeAnnotation(typeReference, typePath, descriptor, visible);
             }
@@ -2402,8 +2401,8 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            @Nullable
-            public FieldVisitor visitField(int modifiers, String name, String descriptor, @Nullable String signature, @Nullable Object value) {
+            @Nonnull(when = When.MAYBE)
+            public FieldVisitor visitField(int modifiers, String name, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) Object value) {
                 if (value != null) {
                     Class<?> type;
                     switch (descriptor.charAt(0)) {
@@ -2471,8 +2470,8 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            @Nullable
-            public MethodVisitor visitMethod(int modifiers, String name, String descriptor, @Nullable String signature, @Nullable String[] exceptionInternalName) {
+            @Nonnull(when = When.MAYBE)
+            public MethodVisitor visitMethod(int modifiers, String name, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String[] exceptionInternalName) {
                 constraint.assertMethod(name,
                         (modifiers & Opcodes.ACC_ABSTRACT) != 0,
                         (modifiers & Opcodes.ACC_PUBLIC) != 0,
@@ -3756,14 +3755,14 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                     constraint.assertAnnotation();
                     return super.visitAnnotation(descriptor, visible);
                 }
 
                 @Override
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public AnnotationVisitor visitAnnotationDefault() {
                     constraint.assertDefaultValue(name);
                     return super.visitAnnotationDefault();
@@ -3979,7 +3978,7 @@ public interface TypeWriter<T> {
                 /**
                  * The implementation context that is used for creating a class or {@code null} if it was not registered.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private Implementation.Context.ExtractableView implementationContext;
 
                 /**
@@ -4323,7 +4322,7 @@ public interface TypeWriter<T> {
                         protected abstract void onStart();
 
                         @Override
-                        public void visitFrame(int type, int localVariableLength, @Nullable Object[] localVariable, int stackSize, @Nullable Object[] stack) {
+                        public void visitFrame(int type, int localVariableLength, @Nonnull(when = When.MAYBE) Object[] localVariable, int stackSize, @Nonnull(when = When.MAYBE) Object[] stack) {
                             super.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
                             frameWriter.onFrame(type, localVariableLength);
                         }
@@ -4802,25 +4801,25 @@ public interface TypeWriter<T> {
                     /**
                      * A list of internal names of permitted subclasses to include.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     private final Set<String> permittedSubclasses;
 
                     /**
                      * The method pool to use or {@code null} if the pool was not yet initialized.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     private MethodPool methodPool;
 
                     /**
                      * The initialization handler to use or {@code null} if the handler was not yet initialized.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     private InitializationHandler initializationHandler;
 
                     /**
                      * The implementation context for this class creation or {@code null} if it was not yet created.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     private Implementation.Context.ExtractableView implementationContext;
 
                     /**
@@ -4941,7 +4940,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    protected void onVisitOuterClass(String owner, @Nullable String name, @Nullable String descriptor) {
+                    protected void onVisitOuterClass(String owner, @Nonnull(when = When.MAYBE) String name, @Nonnull(when = When.MAYBE) String descriptor) {
                         try { // The Groovy compiler often gets this attribute wrong such that this safety just retains it.
                             onOuterType();
                         } catch (Throwable ignored) {
@@ -4967,7 +4966,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     protected AnnotationVisitor onVisitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
                         return annotationRetention.isEnabled()
                                 ? cv.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
@@ -4975,7 +4974,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     protected AnnotationVisitor onVisitAnnotation(String descriptor, boolean visible) {
                         return annotationRetention.isEnabled()
                                 ? cv.visitAnnotation(descriptor, visible)
@@ -4983,8 +4982,8 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    @Nullable
-                    protected RecordComponentVisitor onVisitRecordComponent(String name, String descriptor, @Nullable String genericSignature) {
+                    @Nonnull(when = When.MAYBE)
+                    protected RecordComponentVisitor onVisitRecordComponent(String name, String descriptor, @Nonnull(when = When.MAYBE) String genericSignature) {
                         RecordComponentDescription recordComponentDescription = declarableRecordComponents.remove(name);
                         if (recordComponentDescription != null) {
                             RecordComponentPool.Record record = recordComponentPool.target(recordComponentDescription);
@@ -5002,8 +5001,8 @@ public interface TypeWriter<T> {
                      * @param genericSignature The record component's original generic signature which can be {@code null}.
                      * @return A record component visitor for visiting the existing record component definition.
                      */
-                    @Nullable
-                    protected RecordComponentVisitor redefine(RecordComponentPool.Record record, @Nullable String genericSignature) {
+                    @Nonnull(when = When.MAYBE)
+                    protected RecordComponentVisitor redefine(RecordComponentPool.Record record, @Nonnull(when = When.MAYBE) String genericSignature) {
                         RecordComponentDescription recordComponentDescription = record.getRecordComponent();
                         RecordComponentVisitor recordComponentVisitor = cv.visitRecordComponent(recordComponentDescription.getActualName(),
                                 recordComponentDescription.getDescriptor(),
@@ -5016,12 +5015,12 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     protected FieldVisitor onVisitField(int modifiers,
                                                         String internalName,
                                                         String descriptor,
-                                                        @Nullable String genericSignature,
-                                                        @Nullable Object value) {
+                                                        @Nonnull(when = When.MAYBE) String genericSignature,
+                                                        @Nonnull(when = When.MAYBE) Object value) {
                         FieldDescription fieldDescription = declarableFields.remove(new SignatureKey(internalName, descriptor));
                         if (fieldDescription != null) {
                             FieldPool.Record record = fieldPool.target(fieldDescription);
@@ -5041,8 +5040,8 @@ public interface TypeWriter<T> {
                      * @param genericSignature The field's original generic signature which can be {@code null}.
                      * @return A field visitor for visiting the existing field definition.
                      */
-                    @Nullable
-                    protected FieldVisitor redefine(FieldPool.Record record, @Nullable Object value, int modifiers, @Nullable String genericSignature) {
+                    @Nonnull(when = When.MAYBE)
+                    protected FieldVisitor redefine(FieldPool.Record record, @Nonnull(when = When.MAYBE) Object value, int modifiers, @Nonnull(when = When.MAYBE) String genericSignature) {
                         FieldDescription instrumentedField = record.getField();
                         FieldVisitor fieldVisitor = cv.visitField(instrumentedField.getActualModifiers() | resolveDeprecationModifiers(modifiers),
                                 instrumentedField.getInternalName(),
@@ -5057,12 +5056,12 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     protected MethodVisitor onVisitMethod(int modifiers,
                                                           String internalName,
                                                           String descriptor,
-                                                          @Nullable String genericSignature,
-                                                          @Nullable String[] exceptionName) {
+                                                          @Nonnull(when = When.MAYBE) String genericSignature,
+                                                          @Nonnull(when = When.MAYBE) String[] exceptionName) {
                         if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
                             MethodVisitor methodVisitor = cv.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName);
                             return methodVisitor == null
@@ -5092,8 +5091,8 @@ public interface TypeWriter<T> {
                      * @param genericSignature  The method's original generic signature which can be {@code null}.
                      * @return A method visitor which is capable of consuming the original method.
                      */
-                    @Nullable
-                    protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin, int modifiers, @Nullable String genericSignature) {
+                    @Nonnull(when = When.MAYBE)
+                    protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin, int modifiers, @Nonnull(when = When.MAYBE) String genericSignature) {
                         MethodPool.Record record = methodPool.target(methodDescription);
                         if (!record.getSort().isDefined()) {
                             return cv.visitMethod(methodDescription.getActualModifiers() | resolveDeprecationModifiers(modifiers),
@@ -5140,7 +5139,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    protected void onVisitInnerClass(String internalName, @Nullable String outerName, @Nullable String innerName, int modifiers) {
+                    protected void onVisitInnerClass(String internalName, @Nonnull(when = When.MAYBE) String outerName, @Nonnull(when = When.MAYBE) String innerName, int modifiers) {
                         if (!internalName.equals(instrumentedType.getInternalName())) {
                             TypeDescription declaredType = declaredTypes.remove(internalName);
                             if (declaredType == null) {
@@ -5253,15 +5252,15 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
-                        @Nullable
-                        public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
+                        @Nonnull(when = When.MAYBE)
+                        public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nonnull(when = When.MAYBE) TypePath typePath, String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
                                     : IGNORE_ANNOTATION;
                         }
 
                         @Override
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitAnnotation(descriptor, visible)
@@ -5357,21 +5356,21 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public AnnotationVisitor visitAnnotationDefault() {
                             return IGNORE_ANNOTATION; // Annotation types can never be rebased.
                         }
 
                         @Override
-                        @Nullable
-                        public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
+                        @Nonnull(when = When.MAYBE)
+                        public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nonnull(when = When.MAYBE) TypePath typePath, String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
                                     : IGNORE_ANNOTATION;
                         }
 
                         @Override
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitAnnotation(descriptor, visible)
@@ -5386,7 +5385,7 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitParameterAnnotation(index, descriptor, visible)
@@ -5483,21 +5482,21 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public AnnotationVisitor visitAnnotationDefault() {
                             return IGNORE_ANNOTATION;
                         }
 
                         @Override
-                        @Nullable
-                        public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
+                        @Nonnull(when = When.MAYBE)
+                        public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nonnull(when = When.MAYBE) TypePath typePath, String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
                                     : IGNORE_ANNOTATION;
                         }
 
                         @Override
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitAnnotation(descriptor, visible)
@@ -5512,7 +5511,7 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitParameterAnnotation(index, descriptor, visible)
@@ -5559,7 +5558,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public boolean equals(Object other) {
+                    public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                         if (this == other) return true;
                         if (other == null || getClass() != other.getClass()) return false;
                         SignatureKey that = (SignatureKey) other;
@@ -5708,7 +5707,7 @@ public interface TypeWriter<T> {
                     /**
                      * The implementation context to use or {@code null} if the context is not yet initialized.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     private Implementation.Context.ExtractableView implementationContext;
 
                     /**
@@ -5752,7 +5751,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     protected AnnotationVisitor onVisitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
                         return annotationRetention.isEnabled()
                                 ? cv.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
@@ -5760,7 +5759,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     protected AnnotationVisitor onVisitAnnotation(String descriptor, boolean visible) {
                         return annotationRetention.isEnabled()
                                 ? cv.visitAnnotation(descriptor, visible)

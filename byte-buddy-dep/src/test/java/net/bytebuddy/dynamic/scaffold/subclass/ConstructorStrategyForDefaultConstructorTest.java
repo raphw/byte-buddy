@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.description.ByteCodeElement;
-import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.method.MethodDescription;

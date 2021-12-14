@@ -3,7 +3,6 @@ package net.bytebuddy.description.annotation;
 import net.bytebuddy.description.type.TypeDescription;
 import org.junit.Test;
 
-import java.lang.annotation.Annotation;
 import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.is;

@@ -3,7 +3,6 @@ package net.bytebuddy.description.method;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.AbstractFilterableListTest;
-import net.bytebuddy.matcher.ElementMatchers;
 import org.junit.Test;
 
 import java.util.Collections;

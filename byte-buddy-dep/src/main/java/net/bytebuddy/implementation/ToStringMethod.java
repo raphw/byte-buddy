@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.implementation;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -34,6 +35,8 @@ import net.bytebuddy.matcher.ElementMatchers;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -336,6 +339,7 @@ public class ToStringMethod implements Implementation {
          * @param instrumentedType The instrumented type.
          * @return The value to be prefixed.
          */
+        @Nonnull(when = When.MAYBE)
         String resolve(TypeDescription instrumentedType);
 
         /**
@@ -358,6 +362,7 @@ public class ToStringMethod implements Implementation {
              */
             CANONICAL_CLASS_NAME {
                 /** {@inheritDoc} */
+                @Nonnull(when = When.MAYBE)
                 public String resolve(TypeDescription instrumentedType) {
                     return instrumentedType.getCanonicalName();
                 }
@@ -634,6 +639,7 @@ public class ToStringMethod implements Implementation {
          * @param typeDescription The type for which to resolve a value resolver.
          * @return An appropriate stack manipulation.
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array")
         protected static StackManipulation of(TypeDescription typeDescription) {
             if (typeDescription.represents(boolean.class)) {
                 return BOOLEAN;

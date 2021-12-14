@@ -28,7 +28,6 @@ import net.bytebuddy.utility.StreamDrainer;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.io.*;
 import java.lang.instrument.ClassFileTransformer;
@@ -352,7 +351,7 @@ public interface ClassFileLocator extends Closeable {
          * @param classLoader The class loader to be used which might be {@code null} to represent the bootstrap loader.
          * @return A corresponding source locator.
          */
-        public static ClassFileLocator of(@Nullable ClassLoader classLoader) {
+        public static ClassFileLocator of(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             return new ForClassLoader(classLoader == null
                     ? BOOT_LOADER_PROXY
                     : classLoader);
@@ -518,7 +517,7 @@ public interface ClassFileLocator extends Closeable {
              *                    is used instead.
              * @return A corresponding source locator.
              */
-            public static ClassFileLocator of(@Nullable ClassLoader classLoader) {
+            public static ClassFileLocator of(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
                 return classLoader == null || classLoader == ClassLoader.getSystemClassLoader() || classLoader == ClassLoader.getSystemClassLoader().getParent()
                         ? ForClassLoader.of(classLoader)
                         : new WeaklyReferenced(classLoader);
@@ -547,7 +546,7 @@ public interface ClassFileLocator extends Closeable {
             }
 
             @Override
-            public boolean equals(Object other) {
+            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                 if (this == other) {
                     return true;
                 } else if (other == null || getClass() != other.getClass()) {
@@ -734,7 +733,7 @@ public interface ClassFileLocator extends Closeable {
             /**
              * {@inheritDoc}
              */
-            public boolean equals(Object other) {
+            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                 if (this == other) {
                     return true;
                 } else if (other == null || getClass() != other.getClass()) {
@@ -1215,7 +1214,7 @@ public interface ClassFileLocator extends Closeable {
          * @param instrumentation The instrumentation to be used.
          * @param classLoader     The class loader to read a class from or {@code null} to use the boot loader.
          */
-        public ForInstrumentation(Instrumentation instrumentation, @Nullable ClassLoader classLoader) {
+        public ForInstrumentation(Instrumentation instrumentation, @Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             this(instrumentation, ClassLoadingDelegate.Default.of(classLoader));
         }
 
@@ -1273,7 +1272,7 @@ public interface ClassFileLocator extends Closeable {
          * @param classLoader The class loader that is expected to load the looked-up a class.
          * @return A class file locator for the given class loader based on a Byte Buddy agent.
          */
-        public static ClassFileLocator fromInstalledAgent(@Nullable ClassLoader classLoader) {
+        public static ClassFileLocator fromInstalledAgent(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             return new ForInstrumentation(resolveByteBuddyAgentInstrumentation(), classLoader);
         }
 
@@ -1370,7 +1369,7 @@ public interface ClassFileLocator extends Closeable {
              *
              * @return The underlying class loader.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             ClassLoader getClassLoader();
 
             /**
@@ -1404,7 +1403,7 @@ public interface ClassFileLocator extends Closeable {
                  * @param classLoader The class loader for which to create a delegate or {@code null} to use the boot loader.
                  * @return The class loading delegate for the provided class loader.
                  */
-                public static ClassLoadingDelegate of(@Nullable ClassLoader classLoader) {
+                public static ClassLoadingDelegate of(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
                     return ForDelegatingClassLoader.isDelegating(classLoader)
                             ? new ForDelegatingClassLoader(classLoader)
                             : new Default(classLoader == null ? BOOT_LOADER_PROXY : classLoader);
@@ -1420,7 +1419,7 @@ public interface ClassFileLocator extends Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public ClassLoader getClassLoader() {
                     return classLoader == BOOT_LOADER_PROXY
                             ? ClassLoadingStrategy.BOOTSTRAP_LOADER
@@ -1494,7 +1493,7 @@ public interface ClassFileLocator extends Closeable {
                  * @param classLoader The class loader to inspect or {@code null} to check the boot loader.
                  * @return {@code true} if the class loader is a delegating class loader.
                  */
-                protected static boolean isDelegating(@Nullable ClassLoader classLoader) {
+                protected static boolean isDelegating(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
                     return classLoader != null && classLoader.getClass().getName().equals(DELEGATING_CLASS_LOADER_NAME);
                 }
 
@@ -1680,7 +1679,7 @@ public interface ClassFileLocator extends Closeable {
                  * @param classLoader The class loader to be used for looking up classes.
                  * @param types       A collection of classes that cannot be looked up explicitly.
                  */
-                public Explicit(@Nullable ClassLoader classLoader, Collection<? extends Class<?>> types) {
+                public Explicit(@Nonnull(when = When.MAYBE) ClassLoader classLoader, Collection<? extends Class<?>> types) {
                     this(Default.of(classLoader), types);
                 }
 
@@ -1723,7 +1722,7 @@ public interface ClassFileLocator extends Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public ClassLoader getClassLoader() {
                     return fallbackDelegate.getClassLoader();
                 }
@@ -1744,7 +1743,7 @@ public interface ClassFileLocator extends Closeable {
             /**
              * The class loader that is expected to have loaded the looked-up a class.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final ClassLoader classLoader;
 
             /**
@@ -1755,7 +1754,7 @@ public interface ClassFileLocator extends Closeable {
             /**
              * The binary representation of the looked-up class.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             @SuppressFBWarnings(value = "VO_VOLATILE_REFERENCE_TO_ARRAY", justification = "The array is not to be modified by contract")
             private volatile byte[] binaryRepresentation;
 
@@ -1765,7 +1764,7 @@ public interface ClassFileLocator extends Closeable {
              * @param classLoader The class loader that is expected to have loaded the looked-up a class.
              * @param typeName    The name of the type to look up.
              */
-            protected ExtractionClassFileTransformer(@Nullable ClassLoader classLoader, String typeName) {
+            protected ExtractionClassFileTransformer(@Nonnull(when = When.MAYBE) ClassLoader classLoader, String typeName) {
                 this.classLoader = classLoader;
                 this.typeName = typeName;
             }
@@ -1773,11 +1772,11 @@ public interface ClassFileLocator extends Closeable {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             @SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "The array is not to be modified by contract")
-            public byte[] transform(@Nullable ClassLoader classLoader,
-                                    @Nullable String internalName,
-                                    @Nullable Class<?> redefinedType,
+            public byte[] transform(@Nonnull(when = When.MAYBE) ClassLoader classLoader,
+                                    @Nonnull(when = When.MAYBE) String internalName,
+                                    @Nonnull(when = When.MAYBE) Class<?> redefinedType,
                                     ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) {
                 if (internalName != null && isChildOf(this.classLoader).matches(classLoader) && typeName.equals(internalName.replace('/', '.'))) {
@@ -1792,7 +1791,7 @@ public interface ClassFileLocator extends Closeable {
              * @return The binary representation of the class file or {@code null} if no such class file could
              * be located.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The array is not to be modified by contract")
             protected byte[] getBinaryRepresentation() {
                 return binaryRepresentation;

@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
-import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Test;

@@ -21,7 +21,6 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.RetentionPolicy;
@@ -58,7 +57,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
      * @param <T>            The annotation type.
      * @return The annotation description or {@code null} if no such annotation was found.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType);
 
     /**
@@ -126,7 +125,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
             for (AnnotationDescription annotation : this) {
                 if (annotation.getAnnotationType().represents(annotationType)) {
@@ -139,7 +138,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public AnnotationDescription ofType(TypeDescription annotationType) {
             for (AnnotationDescription annotation : this) {
                 if (annotation.getAnnotationType().equals(annotationType)) {

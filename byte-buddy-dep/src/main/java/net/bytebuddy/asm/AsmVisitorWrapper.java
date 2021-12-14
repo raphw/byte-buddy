@@ -30,7 +30,8 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
@@ -265,7 +266,7 @@ public interface AsmVisitorWrapper {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(@Nullable FieldDescription.InDefinedShape target) {
+            public boolean matches(@Nonnull(when = When.MAYBE) FieldDescription.InDefinedShape target) {
                 return matcher.matches(target);
             }
 
@@ -309,8 +310,8 @@ public interface AsmVisitorWrapper {
             }
 
             @Override
-            @Nullable
-            public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable Object value) {
+            @Nonnull(when = When.MAYBE)
+            public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) Object value) {
                 FieldVisitor fieldVisitor = super.visitField(modifiers, internalName, descriptor, signature, value);
                 FieldDescription.InDefinedShape fieldDescription = fields.get(internalName + descriptor);
                 if (fieldVisitor != null && fieldDescription != null) {
@@ -557,7 +558,7 @@ public interface AsmVisitorWrapper {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(@Nullable MethodDescription target) {
+            public boolean matches(@Nonnull(when = When.MAYBE) MethodDescription target) {
                 return matcher.matches(target);
             }
 
@@ -647,8 +648,8 @@ public interface AsmVisitorWrapper {
             }
 
             @Override
-            @Nullable
-            public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable String[] exceptions) {
+            @Nonnull(when = When.MAYBE)
+            public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String[] exceptions) {
                 MethodVisitor methodVisitor = super.visitMethod(modifiers, internalName, descriptor, signature, exceptions);
                 MethodDescription methodDescription = methods.get(internalName + descriptor);
                 if (methodVisitor != null && methodDescription != null) {

@@ -49,7 +49,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.util.*;
 
 /**
@@ -192,7 +192,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             @Override
-            public boolean equals(Object other) {
+            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof SpecialMethodInvocation)) {
@@ -1090,7 +1090,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 }
 
                 @Override
-                public boolean equals(Object other) {
+                public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                     if (this == other) {
                         return true;
                     } else if (other == null || getClass() != other.getClass()) {
@@ -1187,7 +1187,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }
@@ -1286,7 +1286,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }
@@ -1385,7 +1385,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }

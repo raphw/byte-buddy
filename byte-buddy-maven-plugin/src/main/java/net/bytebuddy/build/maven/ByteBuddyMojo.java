@@ -38,7 +38,8 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -64,28 +65,28 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * The build context to support incremental builds.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @Component
     public BuildContext context;
 
     /**
      * The Maven project.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @Parameter(defaultValue = "${project}", readonly = true)
     public MavenProject project;
 
     /**
      * The currently used repository system.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @Component
     public RepositorySystem repositorySystem;
 
     /**
      * The currently used system session for the repository system.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @Parameter(defaultValue = "${repositorySystemSession}", readonly = true)
     public RepositorySystemSession repositorySystemSession;
 
@@ -111,7 +112,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * If the list of {@code transformations} is empty or is not supplied at all, this plugin does not apply but prints a warning.
      * </p>
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @Parameter
     public List<Transformation> transformations;
 
@@ -133,7 +134,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * < /initialization>
      * }</pre></blockquote>
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @Parameter
     public Initialization initialization;
 
@@ -142,7 +143,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * set or is empty, a random suffix will be appended to any rebased method. If this property is set, the supplied
      * value is appended to the original method name.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @Parameter
     public String suffix;
 
@@ -191,7 +192,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * where each line contains the fully qualified class name. Discovered plugins are not provided with any
      * explicit constructor arguments.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @Parameter(defaultValue = "EMPTY", required = true)
     public Discovery discovery;
 
@@ -300,7 +301,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      *
      * @return The source directory that serves as an input for the transformation.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     protected abstract String getSourceDirectory();
 
     /**
@@ -439,7 +440,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param project The relevant Maven project.
      * @return The Java version string of the configured build target version or {@code null} if no explicit configuration was detected.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     private static String findJavaVersionString(MavenProject project) {
         while (project != null) {
             String target = project.getProperties().getProperty("maven.compiler.target");
@@ -483,7 +484,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@Nullable Plugin.Engine.Source.Element target) {
+        public boolean matches(@Nonnull(when = When.MAYBE) Plugin.Engine.Source.Element target) {
             if (target == null) {
                 return false;
             }
@@ -508,7 +509,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             return project.getBuild().getOutputDirectory();
         }
 
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         @Override
         protected String getSourceDirectory() {
             return project.getBuild().getSourceDirectory();
@@ -570,7 +571,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             return project.getBuild().getTestOutputDirectory();
         }
 
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         @Override
         protected String getSourceDirectory() {
             return project.getBuild().getTestSourceDirectory();

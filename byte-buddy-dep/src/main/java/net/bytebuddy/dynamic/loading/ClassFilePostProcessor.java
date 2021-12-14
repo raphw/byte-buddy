@@ -18,7 +18,6 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -43,7 +42,7 @@ public interface ClassFilePostProcessor {
      * @param binaryRepresentation The binary representation of the class file.
      * @return The class file to use.
      */
-    byte[] transform(@Nullable ClassLoader classLoader, String name, @Nullable ProtectionDomain protectionDomain, byte[] binaryRepresentation);
+    byte[] transform(@Nonnull(when = When.MAYBE) ClassLoader classLoader, String name, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain, byte[] binaryRepresentation);
 
     /**
      * A non-operation class file post processor.
@@ -58,7 +57,7 @@ public interface ClassFilePostProcessor {
         /**
          * {@inheritDoc}
          */
-        public byte[] transform(@Nullable ClassLoader classLoader, String name, @Nullable ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
+        public byte[] transform(@Nonnull(when = When.MAYBE) ClassLoader classLoader, String name, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
             return binaryRepresentation;
         }
     }
@@ -97,7 +96,7 @@ public interface ClassFilePostProcessor {
         /**
          * {@inheritDoc}
          */
-        public byte[] transform(@Nullable ClassLoader classLoader, String name, @Nullable ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
+        public byte[] transform(@Nonnull(when = When.MAYBE) ClassLoader classLoader, String name, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
             try {
                 byte[] transformed = classFileTransformer.transform(classLoader, name.replace('.', '/'),
                         UNLOADED_TYPE,

@@ -28,7 +28,8 @@ import net.bytebuddy.implementation.HashCodeMethod;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.lang.annotation.*;
 import java.util.Comparator;
 
@@ -100,7 +101,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
     /**
      * {@inheritDoc}
      */
-    public boolean matches(@Nullable TypeDescription target) {
+    public boolean matches(@Nonnull(when = When.MAYBE) TypeDescription target) {
         return target != null && target.getDeclaredAnnotations().isAnnotationPresent(Enhance.class);
     }
 
@@ -445,7 +446,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@Nullable FieldDescription target) {
+        public boolean matches(@Nonnull(when = When.MAYBE) FieldDescription target) {
             if (target == null) {
                 return false;
             }

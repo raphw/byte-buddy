@@ -2,8 +2,6 @@ package net.bytebuddy.pool;
 
 import net.bytebuddy.description.annotation.AbstractAnnotationDescriptionTest;
 import net.bytebuddy.description.annotation.AnnotationDescription;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.lang.annotation.Annotation;
 

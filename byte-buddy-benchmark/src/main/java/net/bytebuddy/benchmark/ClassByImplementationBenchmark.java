@@ -32,7 +32,6 @@ import net.sf.cglib.proxy.NoOp;
 import org.openjdk.jmh.annotations.*;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -182,7 +181,7 @@ public class ClassByImplementationBenchmark {
     /**
      * A description of {@link ClassByExtensionBenchmark#baseClass}.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     private TypeDescription baseClassDescription;
 
     /**
@@ -260,7 +259,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Object method(Object arg) {
                 return null;
             }
@@ -268,7 +267,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public boolean[] method(boolean arg1, boolean arg2, boolean arg3) {
                 return null;
             }
@@ -276,7 +275,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public byte[] method(byte arg1, byte arg2, byte arg3) {
                 return null;
             }
@@ -284,7 +283,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public short[] method(short arg1, short arg2, short arg3) {
                 return null;
             }
@@ -292,7 +291,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public int[] method(int arg1, int arg2, int arg3) {
                 return null;
             }
@@ -300,7 +299,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public char[] method(char arg1, char arg2, char arg3) {
                 return null;
             }
@@ -308,7 +307,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public long[] method(long arg1, long arg2, long arg3) {
                 return null;
             }
@@ -316,7 +315,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public float[] method(float arg1, float arg2, float arg3) {
                 return null;
             }
@@ -324,7 +323,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public double[] method(double arg1, double arg2, double arg3) {
                 return null;
             }
@@ -332,7 +331,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Object[] method(Object arg1, Object arg2, Object arg3) {
                 return null;
             }
@@ -476,8 +475,8 @@ public class ClassByImplementationBenchmark {
         return (ExampleInterface) Proxy.newProxyInstance(newClassLoader(),
                 new Class<?>[]{baseClass},
                 new InvocationHandler() {
-                    @Nullable
-                    public Object invoke(Object proxy, Method method, @Nullable Object[] argument) {
+                    @Nonnull(when = When.MAYBE)
+                    public Object invoke(Object proxy, Method method, @Nonnull(when = When.MAYBE) Object[] argument) {
                         Class<?> returnType = method.getReturnType();
                         if (returnType.isPrimitive()) {
                             if (returnType == boolean.class) {

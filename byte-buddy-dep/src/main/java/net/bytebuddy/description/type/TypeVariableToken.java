@@ -21,6 +21,8 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.matcher.ElementMatcher;
 
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.util.Collections;
 import java.util.List;
 
@@ -124,7 +126,7 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
     }
 
     @Override
-    public boolean equals(Object other) {
+    public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
         if (this == other) {
             return true;
         } else if (!(other instanceof TypeVariableToken)) {

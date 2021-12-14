@@ -5,8 +5,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 
-import java.io.IOException;
-
 public class IllegalTransformPlugin implements Plugin {
 
     public IllegalTransformPlugin() {

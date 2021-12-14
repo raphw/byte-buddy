@@ -31,7 +31,8 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -373,7 +374,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@Nullable T target) {
+        public boolean matches(@Nonnull(when = When.MAYBE) T target) {
             return matcher.matches(target);
         }
 
@@ -451,7 +452,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        public void visit(int version, int modifiers, String internalName, @Nullable String signature, @Nullable String superClassName, @Nullable String[] interfaceName) {
+        public void visit(int version, int modifiers, String internalName, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String superClassName, @Nonnull(when = When.MAYBE) String[] interfaceName) {
             for (Adjustment<TypeDescription> adjustment : typeAdjustments) {
                 if (adjustment.matches(instrumentedType)) {
                     modifiers = adjustment.resolve(modifiers);
@@ -462,7 +463,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        public void visitInnerClass(String internalName, @Nullable String outerName, @Nullable String innerName, int modifiers) {
+        public void visitInnerClass(String internalName, @Nonnull(when = When.MAYBE) String outerName, @Nonnull(when = When.MAYBE) String innerName, int modifiers) {
             if (instrumentedType.getInternalName().equals(internalName)) {
                 for (Adjustment<TypeDescription> adjustment : typeAdjustments) {
                     if (adjustment.matches(instrumentedType)) {
@@ -475,8 +476,8 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        @Nullable
-        public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable Object value) {
+        @Nonnull(when = When.MAYBE)
+        public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) Object value) {
             FieldDescription.InDefinedShape fieldDescription = fields.get(internalName + descriptor);
             if (fieldDescription != null) {
                 for (Adjustment<FieldDescription.InDefinedShape> adjustment : fieldAdjustments) {
@@ -490,8 +491,8 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        @Nullable
-        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable String[] exception) {
+        @Nonnull(when = When.MAYBE)
+        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String[] exception) {
             MethodDescription methodDescription = methods.get(internalName + descriptor);
             if (methodDescription != null) {
                 for (Adjustment<MethodDescription> adjustment : methodAdjustments) {

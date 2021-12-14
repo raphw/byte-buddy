@@ -37,7 +37,6 @@ import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.privilege.GetMethodAction;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -154,7 +153,7 @@ public interface ClassInjector {
         /**
          * The protection domain that is used when loading classes.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ProtectionDomain protectionDomain;
 
@@ -185,7 +184,7 @@ public interface ClassInjector {
          * @param classLoader      The {@link java.lang.ClassLoader} into which new class definitions are to be injected. Must not be the bootstrap loader.
          * @param protectionDomain The protection domain to apply during class definition.
          */
-        public UsingReflection(ClassLoader classLoader, @Nullable ProtectionDomain protectionDomain) {
+        public UsingReflection(ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
             this(classLoader,
                     protectionDomain,
                     PackageDefinitionStrategy.Trivial.INSTANCE,
@@ -201,7 +200,7 @@ public interface ClassInjector {
          * @param forbidExisting            Determines if an exception should be thrown when attempting to load a type that already exists.
          */
         public UsingReflection(ClassLoader classLoader,
-                               @Nullable ProtectionDomain protectionDomain,
+                               @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain,
                                PackageDefinitionStrategy packageDefinitionStrategy,
                                boolean forbidExisting) {
             if (classLoader == null) {
@@ -335,7 +334,7 @@ public interface ClassInjector {
              * @param name        The binary name of the class that should be located.
              * @return The class for the binary name or {@code null} if no such class is defined for the provided class loader.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             Class<?> findClass(ClassLoader classLoader, String name);
 
             /**
@@ -347,7 +346,7 @@ public interface ClassInjector {
              * @param protectionDomain     The protection domain for the defined class.
              * @return The defined, loaded class.
              */
-            Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain);
+            Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain);
 
             /**
              * Looks up a package from a class loader. If the operation is not supported, falls back to {@link #getPackage(ClassLoader, String)}
@@ -356,7 +355,7 @@ public interface ClassInjector {
              * @param name        The binary name of the package.
              * @return The package for the given name as defined by the provided class loader or {@code null} if no such package exists.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             Package getDefinedPackage(ClassLoader classLoader, String name);
 
             /**
@@ -366,7 +365,7 @@ public interface ClassInjector {
              * @param name        The binary name of the package.
              * @return The package for the given name as defined by the provided class loader or its ancestor, or {@code null} if no such package exists.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             Package getPackage(ClassLoader classLoader, String name);
 
             /**
@@ -385,13 +384,13 @@ public interface ClassInjector {
              */
             Package definePackage(ClassLoader classLoader,
                                   String name,
-                                  @Nullable String specificationTitle,
-                                  @Nullable String specificationVersion,
-                                  @Nullable String specificationVendor,
-                                  @Nullable String implementationTitle,
-                                  @Nullable String implementationVersion,
-                                  @Nullable String implementationVendor,
-                                  @Nullable URL sealBase);
+                                  @Nonnull(when = When.MAYBE) String specificationTitle,
+                                  @Nonnull(when = When.MAYBE) String specificationVersion,
+                                  @Nonnull(when = When.MAYBE) String specificationVendor,
+                                  @Nonnull(when = When.MAYBE) String implementationTitle,
+                                  @Nonnull(when = When.MAYBE) String implementationVersion,
+                                  @Nonnull(when = When.MAYBE) String implementationVendor,
+                                  @Nonnull(when = When.MAYBE) URL sealBase);
 
             /**
              * Initializes a dispatcher to make non-accessible APIs accessible.
@@ -467,7 +466,7 @@ public interface ClassInjector {
                     /**
                      * {@inheritDoc}
                      */
-                    public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
+                    public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
                         throw new UnsupportedOperationException("Cannot define class using reflection: " + message);
                     }
 
@@ -490,13 +489,13 @@ public interface ClassInjector {
                      */
                     public Package definePackage(ClassLoader classLoader,
                                                  String name,
-                                                 @Nullable String specificationTitle,
-                                                 @Nullable String specificationVersion,
-                                                 @Nullable String specificationVendor,
-                                                 @Nullable String implementationTitle,
-                                                 @Nullable String implementationVersion,
-                                                 @Nullable String implementationVendor,
-                                                 @Nullable URL sealBase) {
+                                                 @Nonnull(when = When.MAYBE) String specificationTitle,
+                                                 @Nonnull(when = When.MAYBE) String specificationVersion,
+                                                 @Nonnull(when = When.MAYBE) String specificationVendor,
+                                                 @Nonnull(when = When.MAYBE) String implementationTitle,
+                                                 @Nonnull(when = When.MAYBE) String implementationVersion,
+                                                 @Nonnull(when = When.MAYBE) String implementationVendor,
+                                                 @Nonnull(when = When.MAYBE) URL sealBase) {
                         throw new UnsupportedOperationException("Cannot define package using injection: " + message);
                     }
                 }
@@ -552,7 +551,7 @@ public interface ClassInjector {
                 /**
                  * An instance of {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 protected final Method getDefinedPackage;
 
                 /**
@@ -576,7 +575,7 @@ public interface ClassInjector {
                  */
                 protected Direct(Method findLoadedClass,
                                  Method defineClass,
-                                 @Nullable Method getDefinedPackage,
+                                 @Nonnull(when = When.MAYBE) Method getDefinedPackage,
                                  Method getPackage,
                                  Method definePackage) {
                     this.findLoadedClass = findLoadedClass;
@@ -679,7 +678,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
                     try {
                         return (Class<?>) defineClass.invoke(classLoader, name, binaryRepresentation, 0, binaryRepresentation.length, protectionDomain);
                     } catch (IllegalAccessException exception) {
@@ -692,7 +691,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Package getDefinedPackage(ClassLoader classLoader, String name) {
                     if (getDefinedPackage == null) {
                         return getPackage(classLoader, name);
@@ -724,13 +723,13 @@ public interface ClassInjector {
                  */
                 public Package definePackage(ClassLoader classLoader,
                                              String name,
-                                             @Nullable String specificationTitle,
-                                             @Nullable String specificationVersion,
-                                             @Nullable String specificationVendor,
-                                             @Nullable String implementationTitle,
-                                             @Nullable String implementationVersion,
-                                             @Nullable String implementationVendor,
-                                             @Nullable URL sealBase) {
+                                             @Nonnull(when = When.MAYBE) String specificationTitle,
+                                             @Nonnull(when = When.MAYBE) String specificationVersion,
+                                             @Nonnull(when = When.MAYBE) String specificationVendor,
+                                             @Nonnull(when = When.MAYBE) String implementationTitle,
+                                             @Nonnull(when = When.MAYBE) String implementationVersion,
+                                             @Nonnull(when = When.MAYBE) String implementationVendor,
+                                             @Nonnull(when = When.MAYBE) URL sealBase) {
                     try {
                         return (Package) definePackage.invoke(classLoader,
                                 name,
@@ -771,7 +770,7 @@ public interface ClassInjector {
                      */
                     protected ForJava7CapableVm(Method findLoadedClass,
                                                 Method defineClass,
-                                                @Nullable Method getDefinedPackage,
+                                                @Nonnull(when = When.MAYBE) Method getDefinedPackage,
                                                 Method getPackage,
                                                 Method definePackage,
                                                 Method getClassLoadingLock) {
@@ -809,7 +808,7 @@ public interface ClassInjector {
                      */
                     protected ForLegacyVm(Method findLoadedClass,
                                           Method defineClass,
-                                          @Nullable Method getDefinedPackage,
+                                          @Nonnull(when = When.MAYBE) Method getDefinedPackage,
                                           Method getPackage,
                                           Method definePackage) {
                         super(findLoadedClass, defineClass, getDefinedPackage, getPackage, definePackage);
@@ -848,7 +847,7 @@ public interface ClassInjector {
                 /**
                  * The accessor method for using {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private final Method getDefinedPackage;
 
                 /**
@@ -882,7 +881,7 @@ public interface ClassInjector {
                 protected UsingUnsafeInjection(Object accessor,
                                                Method findLoadedClass,
                                                Method defineClass,
-                                               @Nullable Method getDefinedPackage,
+                                               @Nonnull(when = When.MAYBE) Method getDefinedPackage,
                                                Method getPackage,
                                                Method definePackage,
                                                Method getClassLoadingLock) {
@@ -1035,7 +1034,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
                     try {
                         return (Class<?>) defineClass.invoke(accessor, classLoader, name, binaryRepresentation, 0, binaryRepresentation.length, protectionDomain);
                     } catch (IllegalAccessException exception) {
@@ -1048,7 +1047,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Package getDefinedPackage(ClassLoader classLoader, String name) {
                     if (getDefinedPackage == null) {
                         return getPackage(classLoader, name);
@@ -1080,13 +1079,13 @@ public interface ClassInjector {
                  */
                 public Package definePackage(ClassLoader classLoader,
                                              String name,
-                                             @Nullable String specificationTitle,
-                                             @Nullable String specificationVersion,
-                                             @Nullable String specificationVendor,
-                                             @Nullable String implementationTitle,
-                                             @Nullable String implementationVersion,
-                                             @Nullable String implementationVendor,
-                                             @Nullable URL sealBase) {
+                                             @Nonnull(when = When.MAYBE) String specificationTitle,
+                                             @Nonnull(when = When.MAYBE) String specificationVersion,
+                                             @Nonnull(when = When.MAYBE) String specificationVendor,
+                                             @Nonnull(when = When.MAYBE) String implementationTitle,
+                                             @Nonnull(when = When.MAYBE) String implementationVersion,
+                                             @Nonnull(when = When.MAYBE) String implementationVendor,
+                                             @Nonnull(when = When.MAYBE) URL sealBase) {
                     try {
                         return (Package) definePackage.invoke(accessor,
                                 classLoader,
@@ -1125,7 +1124,7 @@ public interface ClassInjector {
                 /**
                  * An instance of {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 protected final Method getDefinedPackage;
 
                 /**
@@ -1149,7 +1148,7 @@ public interface ClassInjector {
                  */
                 protected UsingUnsafeOverride(Method findLoadedClass,
                                               Method defineClass,
-                                              @Nullable Method getDefinedPackage,
+                                              @Nonnull(when = When.MAYBE) Method getDefinedPackage,
                                               Method getPackage,
                                               Method definePackage) {
                     this.findLoadedClass = findLoadedClass;
@@ -1281,7 +1280,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
                     try {
                         return (Class<?>) defineClass.invoke(classLoader, name, binaryRepresentation, 0, binaryRepresentation.length, protectionDomain);
                     } catch (IllegalAccessException exception) {
@@ -1294,7 +1293,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Package getDefinedPackage(ClassLoader classLoader, String name) {
                     if (getDefinedPackage == null) {
                         return getPackage(classLoader, name);
@@ -1326,13 +1325,13 @@ public interface ClassInjector {
                  */
                 public Package definePackage(ClassLoader classLoader,
                                              String name,
-                                             @Nullable String specificationTitle,
-                                             @Nullable String specificationVersion,
-                                             @Nullable String specificationVendor,
-                                             @Nullable String implementationTitle,
-                                             @Nullable String implementationVersion,
-                                             @Nullable String implementationVendor,
-                                             @Nullable URL sealBase) {
+                                             @Nonnull(when = When.MAYBE) String specificationTitle,
+                                             @Nonnull(when = When.MAYBE) String specificationVersion,
+                                             @Nonnull(when = When.MAYBE) String specificationVendor,
+                                             @Nonnull(when = When.MAYBE) String implementationTitle,
+                                             @Nonnull(when = When.MAYBE) String implementationVersion,
+                                             @Nonnull(when = When.MAYBE) String implementationVendor,
+                                             @Nonnull(when = When.MAYBE) URL sealBase) {
                     try {
                         return (Package) definePackage.invoke(classLoader,
                                 name,
@@ -1373,7 +1372,7 @@ public interface ClassInjector {
                      */
                     protected ForJava7CapableVm(Method findLoadedClass,
                                                 Method defineClass,
-                                                @Nullable Method getDefinedPackage,
+                                                @Nonnull(when = When.MAYBE) Method getDefinedPackage,
                                                 Method getPackage,
                                                 Method definePackage,
                                                 Method getClassLoadingLock) {
@@ -1411,7 +1410,7 @@ public interface ClassInjector {
                      */
                     protected ForLegacyVm(Method findLoadedClass,
                                           Method defineClass,
-                                          @Nullable Method getDefinedPackage,
+                                          @Nonnull(when = When.MAYBE) Method getDefinedPackage,
                                           Method getPackage,
                                           Method definePackage) {
                         super(findLoadedClass, defineClass, getDefinedPackage, getPackage, definePackage);
@@ -1467,7 +1466,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
                     throw new UnsupportedOperationException("Cannot define class using reflection: " + message);
                 }
 
@@ -1490,13 +1489,13 @@ public interface ClassInjector {
                  */
                 public Package definePackage(ClassLoader classLoader,
                                              String name,
-                                             @Nullable String specificationTitle,
-                                             @Nullable String specificationVersion,
-                                             @Nullable String specificationVendor,
-                                             @Nullable String implementationTitle,
-                                             @Nullable String implementationVersion,
-                                             @Nullable String implementationVendor,
-                                             @Nullable URL sealBase) {
+                                             @Nonnull(when = When.MAYBE) String specificationTitle,
+                                             @Nonnull(when = When.MAYBE) String specificationVersion,
+                                             @Nonnull(when = When.MAYBE) String specificationVendor,
+                                             @Nonnull(when = When.MAYBE) String implementationTitle,
+                                             @Nonnull(when = When.MAYBE) String implementationVersion,
+                                             @Nonnull(when = When.MAYBE) String implementationVendor,
+                                             @Nonnull(when = When.MAYBE) URL sealBase) {
                     throw new UnsupportedOperationException("Cannot define package using injection: " + message);
                 }
             }
@@ -1513,7 +1512,7 @@ public interface ClassInjector {
              *
              * @return The current security manager or {@code null} if not available.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             @JavaDispatcher.IsStatic
             @JavaDispatcher.Defaults
             Object getSecurityManager();
@@ -1739,14 +1738,14 @@ public interface ClassInjector {
         /**
          * The class loader to inject classes into or {@code null} for the bootstrap loader.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ClassLoader classLoader;
 
         /**
          * The protection domain to use or {@code null} for no protection domain.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ProtectionDomain protectionDomain;
 
@@ -1760,7 +1759,7 @@ public interface ClassInjector {
          *
          * @param classLoader The class loader to inject classes into or {@code null} for the bootstrap loader.
          */
-        public UsingUnsafe(@Nullable ClassLoader classLoader) {
+        public UsingUnsafe(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             this(classLoader, ClassLoadingStrategy.NO_PROTECTION_DOMAIN);
         }
 
@@ -1770,7 +1769,7 @@ public interface ClassInjector {
          * @param classLoader      The class loader to inject classes into or {@code null} for the bootstrap loader.
          * @param protectionDomain The protection domain to use or {@code null} for no protection domain.
          */
-        public UsingUnsafe(@Nullable ClassLoader classLoader, @Nullable ProtectionDomain protectionDomain) {
+        public UsingUnsafe(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
             this(classLoader, protectionDomain, DISPATCHER);
         }
 
@@ -1781,7 +1780,7 @@ public interface ClassInjector {
          * @param protectionDomain The protection domain to use or {@code null} for no protection domain.
          * @param dispatcher       The dispatcher to use.
          */
-        protected UsingUnsafe(@Nullable ClassLoader classLoader, @Nullable ProtectionDomain protectionDomain, Dispatcher.Initializable dispatcher) {
+        protected UsingUnsafe(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain, Dispatcher.Initializable dispatcher) {
             this.classLoader = classLoader;
             this.protectionDomain = protectionDomain;
             this.dispatcher = dispatcher;
@@ -1877,10 +1876,10 @@ public interface ClassInjector {
              * @param protectionDomain     The type's protection domain.
              * @return The defined class.
              */
-            Class<?> defineClass(@Nullable ClassLoader classLoader,
+            Class<?> defineClass(@Nonnull(when = When.MAYBE) ClassLoader classLoader,
                                  String name,
                                  byte[] binaryRepresentation,
-                                 @Nullable ProtectionDomain protectionDomain);
+                                 @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain);
 
             /**
              * A class injection dispatcher that is not yet initialized.
@@ -2035,7 +2034,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(@Nullable ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(@Nonnull(when = When.MAYBE) ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
                     try {
                         return (Class<?>) defineClass.invoke(unsafe,
                                 name,
@@ -2089,7 +2088,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(@Nullable ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(@Nonnull(when = When.MAYBE) ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
                     throw new UnsupportedOperationException("Could not access Unsafe class: " + message);
                 }
             }
@@ -2240,7 +2239,7 @@ public interface ClassInjector {
              * @param classLoader The class loader to inject into or {@code null} to inject into the bootstrap loader.
              * @return An appropriate class injector.
              */
-            public ClassInjector make(@Nullable ClassLoader classLoader) {
+            public ClassInjector make(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
                 return make(classLoader, ClassLoadingStrategy.NO_PROTECTION_DOMAIN);
             }
 
@@ -2251,7 +2250,7 @@ public interface ClassInjector {
              * @param protectionDomain The protection domain to apply or {@code null} if no protection domain should be used.
              * @return An appropriate class injector.
              */
-            public ClassInjector make(@Nullable ClassLoader classLoader, @Nullable ProtectionDomain protectionDomain) {
+            public ClassInjector make(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
                 return new UsingUnsafe(classLoader, protectionDomain, dispatcher);
             }
 
@@ -2298,7 +2297,7 @@ public interface ClassInjector {
              *
              * @return The current security manager or {@code null} if not available.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             @JavaDispatcher.IsStatic
             @JavaDispatcher.Defaults
             Object getSecurityManager();
@@ -2570,7 +2569,7 @@ public interface ClassInjector {
             /**
              * The class loader to load classes from.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final ClassLoader classLoader;
 
             /**
@@ -2578,7 +2577,7 @@ public interface ClassInjector {
              *
              * @param classLoader The class loader to load classes from.
              */
-            Target(@Nullable ClassLoader classLoader) {
+            Target(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
                 this.classLoader = classLoader;
             }
 
@@ -2587,7 +2586,7 @@ public interface ClassInjector {
              *
              * @return The class loader to load classes from.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             protected ClassLoader getClassLoader() {
                 return classLoader;
             }
@@ -2623,14 +2622,14 @@ public interface ClassInjector {
         /**
          * The class loader to inject classes into or {@code null} for the bootstrap loader.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ClassLoader classLoader;
 
         /**
          * The protection domain to use or {@code null} for no protection domain.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ProtectionDomain protectionDomain;
 
@@ -2639,7 +2638,7 @@ public interface ClassInjector {
          *
          * @param classLoader The class loader to inject classes into or {@code null} for the bootstrap loader.
          */
-        public UsingJna(@Nullable ClassLoader classLoader) {
+        public UsingJna(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             this(classLoader, ClassLoadingStrategy.NO_PROTECTION_DOMAIN);
         }
 
@@ -2649,7 +2648,7 @@ public interface ClassInjector {
          * @param classLoader      The class loader to inject classes into or {@code null} for the bootstrap loader.
          * @param protectionDomain The protection domain to use or {@code null} for no protection domain.
          */
-        public UsingJna(@Nullable ClassLoader classLoader, @Nullable ProtectionDomain protectionDomain) {
+        public UsingJna(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
             this.classLoader = classLoader;
             this.protectionDomain = protectionDomain;
         }
@@ -2750,10 +2749,10 @@ public interface ClassInjector {
              * @param protectionDomain     The protection domain to use or {@code null} if no protection domain should be used.
              * @return The class that was defined.
              */
-            Class<?> defineClass(@Nullable ClassLoader classLoader,
+            Class<?> defineClass(@Nonnull(when = When.MAYBE) ClassLoader classLoader,
                                  String name,
                                  byte[] binaryRepresentation,
-                                 @Nullable ProtectionDomain protectionDomain);
+                                 @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain);
 
             /**
              * An action for creating a JNA dispatcher.
@@ -2837,7 +2836,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(@Nullable ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(@Nonnull(when = When.MAYBE) ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
                     return jvm.JVM_DefineClass(JNIEnv.CURRENT,
                             name.replace('.', '/'),
                             classLoader,
@@ -2877,7 +2876,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> defineClass(@Nullable ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nullable ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(@Nonnull(when = When.MAYBE) ClassLoader classLoader, String name, byte[] binaryRepresentation, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
                     throw new UnsupportedOperationException("JNA is not available and JNA-based injection cannot be used: " + error);
                 }
             }
@@ -2902,10 +2901,10 @@ public interface ClassInjector {
                 @SuppressWarnings("checkstyle:methodname")
                 Class<?> JVM_DefineClass(JNIEnv env,
                                          String name,
-                                         @Nullable ClassLoader classLoader,
+                                         @Nonnull(when = When.MAYBE) ClassLoader classLoader,
                                          byte[] binaryRepresentation,
                                          int length,
-                                         @Nullable ProtectionDomain protectionDomain) throws LastErrorException;
+                                         @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) throws LastErrorException;
             }
         }
     }

@@ -34,7 +34,8 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaType;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.lang.annotation.ElementType;
 import java.util.*;
 
@@ -152,7 +153,7 @@ public interface InstrumentedType extends TypeDescription {
      * @param declaringType The type that declares the instrumented type or {@code null} if no such type exists.
      * @return A new instrumented type that is declared by the instrumented type.
      */
-    InstrumentedType withDeclaringType(@Nullable TypeDescription declaringType);
+    InstrumentedType withDeclaringType(@Nonnull(when = When.MAYBE) TypeDescription declaringType);
 
     /**
      * Creates a new instrumented type that indicates that it declared the supplied types.
@@ -168,7 +169,7 @@ public interface InstrumentedType extends TypeDescription {
      * @param permittedSubclasses A list of permitted subclasses to include or {@code null} to unseal the type.
      * @return A new instrumented type that includes the supplied permitted subclasses or unseals the type.
      */
-    InstrumentedType withPermittedSubclasses(@Nullable TypeList permittedSubclasses);
+    InstrumentedType withPermittedSubclasses(@Nonnull(when = When.MAYBE) TypeList permittedSubclasses);
 
     /**
      * Creates a new instrumented type that indicates that is defined as a local class. Setting this property
@@ -285,7 +286,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        WithFlexibleName withEnclosingType(@Nullable TypeDescription enclosingType);
+        WithFlexibleName withEnclosingType(@Nonnull(when = When.MAYBE) TypeDescription enclosingType);
 
         /**
          * {@inheritDoc}
@@ -295,7 +296,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        WithFlexibleName withDeclaringType(@Nullable TypeDescription declaringType);
+        WithFlexibleName withDeclaringType(@Nonnull(when = When.MAYBE) TypeDescription declaringType);
 
         /**
          * {@inheritDoc}
@@ -305,7 +306,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        WithFlexibleName withPermittedSubclasses(@Nullable TypeList permittedSubclasses);
+        WithFlexibleName withPermittedSubclasses(@Nonnull(when = When.MAYBE) TypeList permittedSubclasses);
 
         /**
          * {@inheritDoc}
@@ -527,7 +528,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * The generic super type of the instrumented type.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         private final Generic superClass;
 
         /**
@@ -578,19 +579,19 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * The declaring type of the instrumented type or {@code null} if no such type exists.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         private final TypeDescription declaringType;
 
         /**
          * The enclosing method of the instrumented type or {@code null} if no such type exists.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         private final MethodDescription.InDefinedShape enclosingMethod;
 
         /**
          * The enclosing type of the instrumented type or {@code null} if no such type exists.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         private final TypeDescription enclosingType;
 
         /**
@@ -601,7 +602,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * A list of permitted subclasses or {@code null} if this type is not sealed.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         private final List<? extends TypeDescription> permittedSubclasses;
 
         /**
@@ -657,7 +658,7 @@ public interface InstrumentedType extends TypeDescription {
          */
         protected Default(String name,
                           int modifiers,
-                          @Nullable Generic superClass,
+                          @Nonnull(when = When.MAYBE) Generic superClass,
                           List<? extends TypeVariableToken> typeVariables,
                           List<? extends Generic> interfaceTypes,
                           List<? extends FieldDescription.Token> fieldTokens,
@@ -667,11 +668,11 @@ public interface InstrumentedType extends TypeDescription {
                           List<? extends AnnotationDescription> annotationDescriptions,
                           TypeInitializer typeInitializer,
                           LoadedTypeInitializer loadedTypeInitializer,
-                          @Nullable TypeDescription declaringType,
-                          @Nullable MethodDescription.InDefinedShape enclosingMethod,
-                          @Nullable TypeDescription enclosingType,
+                          @Nonnull(when = When.MAYBE) TypeDescription declaringType,
+                          @Nonnull(when = When.MAYBE) MethodDescription.InDefinedShape enclosingMethod,
+                          @Nonnull(when = When.MAYBE) TypeDescription enclosingType,
                           List<? extends TypeDescription> declaredTypes,
-                          @Nullable List<? extends TypeDescription> permittedSubclasses,
+                          @Nonnull(when = When.MAYBE) List<? extends TypeDescription> permittedSubclasses,
                           boolean anonymousClass,
                           boolean localClass,
                           boolean record,
@@ -994,7 +995,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        public WithFlexibleName withEnclosingType(@Nullable TypeDescription enclosingType) {
+        public WithFlexibleName withEnclosingType(@Nonnull(when = When.MAYBE) TypeDescription enclosingType) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -1050,7 +1051,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        public WithFlexibleName withDeclaringType(@Nullable TypeDescription declaringType) {
+        public WithFlexibleName withDeclaringType(@Nonnull(when = When.MAYBE) TypeDescription declaringType) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -1106,7 +1107,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        public WithFlexibleName withPermittedSubclasses(@Nullable TypeList permittedSubclasses) {
+        public WithFlexibleName withPermittedSubclasses(@Nonnull(when = When.MAYBE) TypeList permittedSubclasses) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -1383,7 +1384,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return enclosingMethod;
         }
@@ -1391,7 +1392,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeDescription getEnclosingType() {
             return enclosingType;
         }
@@ -1420,7 +1421,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public PackageDescription getPackage() {
             int packageIndex = name.lastIndexOf('.');
             return packageIndex == -1
@@ -1438,7 +1439,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeDescription getDeclaringType() {
             return declaringType;
         }
@@ -1446,7 +1447,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public Generic getSuperClass() {
             return superClass == null
                     ? Generic.UNDEFINED
@@ -1909,7 +1910,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public Generic getSuperClass() {
             return typeDescription.getSuperClass();
         }
@@ -1952,7 +1953,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public PackageDescription getPackage() {
             return typeDescription.getPackage();
         }
@@ -1960,7 +1961,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeDescription getEnclosingType() {
             return typeDescription.getEnclosingType();
         }
@@ -1968,7 +1969,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public TypeDescription getDeclaringType() {
             return typeDescription.getDeclaringType();
         }
@@ -1983,7 +1984,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return typeDescription.getEnclosingMethod();
         }
@@ -1991,7 +1992,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public String getGenericSignature() {
             // Embrace use of native generic signature by direct delegation.
             return typeDescription.getGenericSignature();
@@ -2118,7 +2119,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        public WithFlexibleName withEnclosingType(@Nullable TypeDescription enclosingType) {
+        public WithFlexibleName withEnclosingType(@Nonnull(when = When.MAYBE) TypeDescription enclosingType) {
             throw new IllegalStateException("Cannot set enclosing type of frozen type: " + typeDescription);
         }
 
@@ -2132,7 +2133,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        public WithFlexibleName withDeclaringType(@Nullable TypeDescription declaringType) {
+        public WithFlexibleName withDeclaringType(@Nonnull(when = When.MAYBE) TypeDescription declaringType) {
             throw new IllegalStateException("Cannot add declaring type to frozen type: " + typeDescription);
         }
 
@@ -2146,7 +2147,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        public WithFlexibleName withPermittedSubclasses(@Nullable TypeList permittedSubclasses) {
+        public WithFlexibleName withPermittedSubclasses(@Nonnull(when = When.MAYBE) TypeList permittedSubclasses) {
             throw new IllegalStateException("Cannot add permitted subclasses to frozen type: " + typeDescription);
         }
 
@@ -2213,7 +2214,7 @@ public interface InstrumentedType extends TypeDescription {
             return TypeInitializer.None.INSTANCE;
         }
 
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         @Override
         public ClassFileVersion getClassFileVersion() {
             return typeDescription.getClassFileVersion();

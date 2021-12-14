@@ -30,7 +30,6 @@ import net.bytebuddy.utility.JavaConstant;
 import org.objectweb.asm.Type;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericDeclaration;
@@ -63,7 +62,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
      *
      * @return An array of all internal names or {@code null} if the list is empty.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     String[] toInternalNames();
 
     /**
@@ -93,7 +92,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public String[] toInternalNames() {
             String[] internalNames = new String[size()];
             int i = 0;
@@ -151,7 +150,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public String[] toInternalNames() {
             String[] internalNames = new String[types.size()];
             int i = 0;

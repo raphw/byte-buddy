@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;

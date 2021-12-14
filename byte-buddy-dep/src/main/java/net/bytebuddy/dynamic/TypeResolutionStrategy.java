@@ -22,7 +22,8 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.TypeInitializer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -63,7 +64,7 @@ public interface TypeResolutionStrategy {
          * @return A map of all type descriptions mapped to their representation as a loaded class.
          */
         <S extends ClassLoader> Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType,
-                                                                          @Nullable S classLoader,
+                                                                          @Nonnull(when = When.MAYBE) S classLoader,
                                                                           ClassLoadingStrategy<? super S> classLoadingStrategy);
     }
 
@@ -96,7 +97,7 @@ public interface TypeResolutionStrategy {
          * {@inheritDoc}
          */
         public <S extends ClassLoader> Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType,
-                                                                                 @Nullable S classLoader,
+                                                                                 @Nonnull(when = When.MAYBE) S classLoader,
                                                                                  ClassLoadingStrategy<? super S> classLoadingStrategy) {
             Map<TypeDescription, Class<?>> types = classLoadingStrategy.load(classLoader, dynamicType.getAllTypes());
             for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {
@@ -180,7 +181,7 @@ public interface TypeResolutionStrategy {
              * {@inheritDoc}
              */
             public <S extends ClassLoader> Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType,
-                                                                                     @Nullable S classLoader,
+                                                                                     @Nonnull(when = When.MAYBE) S classLoader,
                                                                                      ClassLoadingStrategy<? super S> classLoadingStrategy) {
                 Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>(dynamicType.getLoadedTypeInitializers());
                 TypeDescription instrumentedType = dynamicType.getTypeDescription();
@@ -225,7 +226,7 @@ public interface TypeResolutionStrategy {
          * {@inheritDoc}
          */
         public <S extends ClassLoader> Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType,
-                                                                                 @Nullable S classLoader,
+                                                                                 @Nonnull(when = When.MAYBE) S classLoader,
                                                                                  ClassLoadingStrategy<? super S> classLoadingStrategy) {
             return classLoadingStrategy.load(classLoader, dynamicType.getAllTypes());
         }
@@ -259,7 +260,7 @@ public interface TypeResolutionStrategy {
          * {@inheritDoc}
          */
         public <S extends ClassLoader> Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType,
-                                                                                 @Nullable S classLoader,
+                                                                                 @Nonnull(when = When.MAYBE) S classLoader,
                                                                                  ClassLoadingStrategy<? super S> classLoadingStrategy) {
             throw new IllegalStateException("Cannot initialize a dynamic type for a disabled type resolution strategy");
         }

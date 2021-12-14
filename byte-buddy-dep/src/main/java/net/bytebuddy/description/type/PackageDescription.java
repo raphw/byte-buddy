@@ -84,7 +84,7 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             return this == other || other instanceof PackageDescription && getName().equals(((PackageDescription) other).getName());
         }
 

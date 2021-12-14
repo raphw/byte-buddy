@@ -1,5 +1,6 @@
-import java.util.regex.Pattern
 import net.bytebuddy.build.gradle.transform.GradleTypeTransformer
+
+import java.util.regex.Pattern
 
 ext.pom = new XmlSlurper().parse(file('./pom.xml'))
 ext.outerPom = new XmlSlurper().parse(file('../pom.xml'))

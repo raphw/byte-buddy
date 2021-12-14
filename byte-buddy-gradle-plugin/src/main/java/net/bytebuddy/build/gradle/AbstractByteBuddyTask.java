@@ -31,7 +31,7 @@ import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 import org.gradle.util.ConfigureUtil;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull; import javax.annotation.meta.When;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
@@ -280,7 +280,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      *
      * @return The class file version to use for creating auxiliary types.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @Input
     @Optional
     public ClassFileVersion getClassFileVersion() {
@@ -293,7 +293,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      *
      * @param classFileVersion The class file version to use for creating auxiliary types.
      */
-    public void setClassFileVersion(@Nullable ClassFileVersion classFileVersion) {
+    public void setClassFileVersion(@Nonnull(when = When.MAYBE) ClassFileVersion classFileVersion) {
         this.classFileVersion = classFileVersion;
     }
 

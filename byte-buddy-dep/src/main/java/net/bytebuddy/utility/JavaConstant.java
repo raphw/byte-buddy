@@ -28,7 +28,8 @@ import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -270,7 +271,7 @@ public interface JavaConstant {
          * @param classLoader The class loader to use for resolving type information from the supplied value.
          * @return An appropriate Java constant representation.
          */
-        public static JavaConstant ofDescription(Object value, @Nullable ClassLoader classLoader) {
+        public static JavaConstant ofDescription(Object value, @Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             return ofDescription(value, ClassFileLocator.ForClassLoader.of(classLoader));
         }
 
@@ -434,7 +435,7 @@ public interface JavaConstant {
         }
 
         @Override
-        public boolean equals(Object object) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object object) {
             if (this == object) return true;
             if (object == null || getClass() != object.getClass()) return false;
             return value.equals(((Simple<?>) object).value);
@@ -994,7 +995,7 @@ public interface JavaConstant {
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             if (this == other) {
                 return true;
             }
@@ -1391,7 +1392,7 @@ public interface JavaConstant {
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof MethodHandle)) {
@@ -2244,7 +2245,7 @@ public interface JavaConstant {
         }
 
         @Override
-        public boolean equals(Object object) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object object) {
             if (this == object) return true;
             if (object == null || getClass() != object.getClass()) return false;
             Dynamic dynamic = (Dynamic) object;

@@ -42,7 +42,6 @@ import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -211,7 +210,7 @@ public interface TypePool {
         /**
          * The value that is returned on a cache-miss.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         Resolution UNRESOLVED = null;
 
         /**
@@ -220,7 +219,7 @@ public interface TypePool {
          * @param name The name of the type to describe.
          * @return A resolution of the type or {@code null} if no such resolution can be found in the cache..
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         Resolution find(String name);
 
         /**
@@ -252,7 +251,7 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Resolution find(String name) {
                 return UNRESOLVED;
             }
@@ -312,7 +311,7 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Resolution find(String name) {
                 return storage.get(name);
             }
@@ -363,7 +362,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Resolution find(String name) {
                     CacheProvider provider = delegate.get().get();
                     return provider == null
@@ -439,7 +438,7 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Resolution find(String name) {
                 return (matcher.matches(name) ? matched : unmatched).find(name);
             }
@@ -610,7 +609,7 @@ public interface TypePool {
             /**
              * Indicates that no component type is defined for the property.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             String NO_ARRAY = null;
 
             /**
@@ -618,7 +617,7 @@ public interface TypePool {
              *
              * @return The binary name of the component type of the array or {@code null} if the referenced type is not an array.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             String resolve();
         }
 
@@ -817,7 +816,7 @@ public interface TypePool {
          * @param classLoader The class loader for which this class pool is representing types.
          * @return An appropriate type pool.
          */
-        public static TypePool of(@Nullable ClassLoader classLoader) {
+        public static TypePool of(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             return of(ClassFileLocator.ForClassLoader.of(classLoader));
         }
 
@@ -979,7 +978,7 @@ public interface TypePool {
              * @param classLoader The class loader for which this class pool is representing types.
              * @return An appropriate type pool.
              */
-            public static TypePool of(@Nullable ClassLoader classLoader) {
+            public static TypePool of(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
                 return of(ClassFileLocator.ForClassLoader.of(classLoader));
             }
 
@@ -1169,7 +1168,7 @@ public interface TypePool {
                      * @param descriptor The annotation descriptor.
                      * @param typePath   The type variable's type path.
                      */
-                    protected ForTypeVariable(String descriptor, @Nullable TypePath typePath) {
+                    protected ForTypeVariable(String descriptor, @Nonnull(when = When.MAYBE) TypePath typePath) {
                         super(descriptor);
                         this.typePath = typePath == null
                                 ? LazyTypeDescription.GenericTypeToken.EMPTY_TYPE_PATH
@@ -1211,7 +1210,7 @@ public interface TypePool {
                          * @param typePath   The type variable's type path.
                          * @param index      The type variable's index.
                          */
-                        protected WithIndex(String descriptor, @Nullable TypePath typePath, int index) {
+                        protected WithIndex(String descriptor, @Nonnull(when = When.MAYBE) TypePath typePath, int index) {
                             super(descriptor, typePath);
                             this.index = index;
                         }
@@ -1252,7 +1251,7 @@ public interface TypePool {
                              * @param index      The type variable's index.
                              * @param preIndex   The type variable's first index.
                              */
-                            protected DoubleIndexed(String descriptor, @Nullable TypePath typePath, int index, int preIndex) {
+                            protected DoubleIndexed(String descriptor, @Nonnull(when = When.MAYBE) TypePath typePath, int index, int preIndex) {
                                 super(descriptor, typePath, index);
                                 this.preIndex = preIndex;
                             }
@@ -1362,7 +1361,7 @@ public interface TypePool {
                  * @param typePath   The type variable's type path.
                  * @param pathMap    The target collection.
                  */
-                protected ForTypeVariable(String descriptor, @Nullable TypePath typePath, Map<String, List<LazyTypeDescription.AnnotationToken>> pathMap) {
+                protected ForTypeVariable(String descriptor, @Nonnull(when = When.MAYBE) TypePath typePath, Map<String, List<LazyTypeDescription.AnnotationToken>> pathMap) {
                     super(descriptor, typePath);
                     this.pathMap = pathMap;
                 }
@@ -1391,7 +1390,7 @@ public interface TypePool {
                      * @param indexedPathMap The target collection.
                      */
                     protected WithIndex(String descriptor,
-                                        @Nullable TypePath typePath,
+                                        @Nonnull(when = When.MAYBE) TypePath typePath,
                                         int index,
                                         Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> indexedPathMap) {
                         super(descriptor, typePath, index);
@@ -1423,7 +1422,7 @@ public interface TypePool {
                          * @param doubleIndexedPathMap The target collection.
                          */
                         protected DoubleIndexed(String descriptor,
-                                                @Nullable TypePath typePath,
+                                                @Nonnull(when = When.MAYBE) TypePath typePath,
                                                 int index,
                                                 int preIndex,
                                                 Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> doubleIndexedPathMap) {
@@ -1531,18 +1530,19 @@ public interface TypePool {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     public String resolve() {
-                        TypeDescription typeDescription = typePool.describe(annotationName)
+                        TypeDescription componentType = typePool.describe(annotationName)
                                 .resolve()
                                 .getDeclaredMethods()
                                 .filter(named(name))
                                 .getOnly()
                                 .getReturnType()
-                                .asErasure();
-                        return typeDescription.isArray()
-                                ? typeDescription.getComponentType().getName()
-                                : NO_ARRAY;
+                                .asErasure()
+                                .getComponentType();
+                        return componentType == null
+                                ? NO_ARRAY
+                                : componentType.getName();
                     }
                 }
             }
@@ -1799,7 +1799,7 @@ public interface TypePool {
             /**
              * The current token that is in the process of creation.
              */
-            @Nullable
+            @Nonnull(when = When.UNKNOWN)
             private IncompleteToken incompleteToken;
 
             /**
@@ -2138,13 +2138,13 @@ public interface TypePool {
                 /**
                  * The name of the currently constructed type.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 protected String currentTypeParameter;
 
                 /**
                  * The bounds of the currently constructed type.
                  */
-                @Nullable
+                @Nonnull(when = When.UNKNOWN)
                 protected List<LazyTypeDescription.GenericTypeToken> currentBounds;
 
                 /**
@@ -2230,7 +2230,7 @@ public interface TypePool {
                     /**
                      * The super type's generic signature.
                      */
-                    @Nullable
+                    @Nonnull(when = When.UNKNOWN)
                     private LazyTypeDescription.GenericTypeToken superClassToken;
 
                     /**
@@ -2246,7 +2246,7 @@ public interface TypePool {
                      * @param genericSignature The signature to interpret.
                      * @return The interpreted type signature.
                      */
-                    public static LazyTypeDescription.GenericTypeToken.Resolution.ForType extract(@Nullable String genericSignature) {
+                    public static LazyTypeDescription.GenericTypeToken.Resolution.ForType extract(@Nonnull(when = When.MAYBE) String genericSignature) {
                         try {
                             return genericSignature == null
                                     ? LazyTypeDescription.GenericTypeToken.Resolution.Raw.INSTANCE
@@ -2315,7 +2315,7 @@ public interface TypePool {
                     /**
                      * The generic field type.
                      */
-                    @Nullable
+                    @Nonnull(when = When.UNKNOWN)
                     private LazyTypeDescription.GenericTypeToken fieldTypeToken;
 
                     /**
@@ -2324,7 +2324,7 @@ public interface TypePool {
                      * @param genericSignature The signature to interpret.
                      * @return The interpreted field signature.
                      */
-                    public static LazyTypeDescription.GenericTypeToken.Resolution.ForField extract(@Nullable String genericSignature) {
+                    public static LazyTypeDescription.GenericTypeToken.Resolution.ForField extract(@Nonnull(when = When.MAYBE) String genericSignature) {
                         if (genericSignature == null) {
                             return LazyTypeDescription.GenericTypeToken.Resolution.Raw.INSTANCE;
                         } else {
@@ -2374,7 +2374,7 @@ public interface TypePool {
                     /**
                      * The generic return type.
                      */
-                    @Nullable
+                    @Nonnull(when = When.UNKNOWN)
                     private LazyTypeDescription.GenericTypeToken returnTypeToken;
 
                     /**
@@ -2391,7 +2391,7 @@ public interface TypePool {
                      * @param genericSignature The signature to interpret.
                      * @return The interpreted method signature.
                      */
-                    public static LazyTypeDescription.GenericTypeToken.Resolution.ForMethod extract(@Nullable String genericSignature) {
+                    public static LazyTypeDescription.GenericTypeToken.Resolution.ForMethod extract(@Nonnull(when = When.MAYBE) String genericSignature) {
                         try {
                             return genericSignature == null
                                     ? LazyTypeDescription.GenericTypeToken.Resolution.Raw.INSTANCE
@@ -2484,7 +2484,7 @@ public interface TypePool {
                     /**
                      * The generic field type.
                      */
-                    @Nullable
+                    @Nonnull(when = When.UNKNOWN)
                     private LazyTypeDescription.GenericTypeToken recordComponentType;
 
                     /**
@@ -2493,7 +2493,7 @@ public interface TypePool {
                      * @param genericSignature The signature to interpret.
                      * @return The interpreted field signature.
                      */
-                    public static LazyTypeDescription.GenericTypeToken.Resolution.ForRecordComponent extract(@Nullable String genericSignature) {
+                    public static LazyTypeDescription.GenericTypeToken.Resolution.ForRecordComponent extract(@Nonnull(when = When.MAYBE) String genericSignature) {
                         if (genericSignature == null) {
                             return LazyTypeDescription.GenericTypeToken.Resolution.Raw.INSTANCE;
                         } else {
@@ -2562,13 +2562,13 @@ public interface TypePool {
             /**
              * The type's super type's descriptor or {@code null} if this type does not define a super type.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final String superClassDescriptor;
 
             /**
              * The type's generic signature as found in the class file or {@code null} if the type is not generic.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final String genericSignature;
 
             /**
@@ -2589,7 +2589,7 @@ public interface TypePool {
             /**
              * The binary name of this type's declaring type or {@code null} if no such type exists.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final String declaringTypeName;
 
             /**
@@ -2605,7 +2605,7 @@ public interface TypePool {
             /**
              * The binary name of the nest host or {@code null} if no nest host was specified.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final String nestHost;
 
             /**
@@ -2695,14 +2695,14 @@ public interface TypePool {
                                           int actualModifiers,
                                           int modifiers,
                                           String name,
-                                          @Nullable String superClassInternalName,
-                                          @Nullable String[] interfaceInternalName,
-                                          @Nullable String genericSignature,
+                                          @Nonnull(when = When.MAYBE) String superClassInternalName,
+                                          @Nonnull(when = When.MAYBE) String[] interfaceInternalName,
+                                          @Nonnull(when = When.MAYBE) String genericSignature,
                                           TypeContainment typeContainment,
-                                          @Nullable String declaringTypeInternalName,
+                                          @Nonnull(when = When.MAYBE) String declaringTypeInternalName,
                                           List<String> declaredTypes,
                                           boolean anonymousType,
-                                          @Nullable String nestHostInternalName,
+                                          @Nonnull(when = When.MAYBE) String nestHostInternalName,
                                           List<String> nestMemberInternalNames,
                                           Map<String, List<AnnotationToken>> superClassAnnotationTokens,
                                           Map<Integer, Map<String, List<AnnotationToken>>> interfaceAnnotationTokens,
@@ -2764,7 +2764,7 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Generic getSuperClass() {
                 return superClassDescriptor == null || isInterface()
                         ? Generic.UNDEFINED
@@ -2781,7 +2781,7 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public MethodDescription.InDefinedShape getEnclosingMethod() {
                 return typeContainment.getEnclosingMethod(typePool);
             }
@@ -2789,7 +2789,7 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public TypeDescription getEnclosingType() {
                 return typeContainment.getEnclosingType(typePool);
             }
@@ -2832,7 +2832,7 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public PackageDescription getPackage() {
                 String name = getName();
                 int index = name.lastIndexOf('.');
@@ -2851,7 +2851,7 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public TypeDescription getDeclaringType() {
                 return declaringTypeName == null
                         ? TypeDescription.UNDEFINED
@@ -2905,7 +2905,7 @@ public interface TypePool {
             }
 
             @Override
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public String getGenericSignature() {
                 return genericSignature;
             }
@@ -3013,7 +3013,7 @@ public interface TypePool {
                  * @param typePool The type pool to be used for looking up linked types.
                  * @return A method description describing the linked type or {@code null}.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 MethodDescription.InDefinedShape getEnclosingMethod(TypePool typePool);
 
                 /**
@@ -3022,7 +3022,7 @@ public interface TypePool {
                  * @param typePool The type pool to be used for looking up linked types.
                  * @return A type description describing the linked type or {@code null}.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 TypeDescription getEnclosingType(TypePool typePool);
 
                 /**
@@ -3052,7 +3052,7 @@ public interface TypePool {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     public MethodDescription.InDefinedShape getEnclosingMethod(TypePool typePool) {
                         return MethodDescription.UNDEFINED;
                     }
@@ -3060,7 +3060,7 @@ public interface TypePool {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     public TypeDescription getEnclosingType(TypePool typePool) {
                         return TypeDescription.UNDEFINED;
                     }
@@ -3110,7 +3110,7 @@ public interface TypePool {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     public MethodDescription.InDefinedShape getEnclosingMethod(TypePool typePool) {
                         return MethodDescription.UNDEFINED;
                     }
@@ -3176,6 +3176,9 @@ public interface TypePool {
                      */
                     public MethodDescription.InDefinedShape getEnclosingMethod(TypePool typePool) {
                         TypeDescription enclosingType = getEnclosingType(typePool);
+                        if (enclosingType == null) {
+                            throw new IllegalStateException("Could not resolve enclosing type " + name);
+                        }
                         MethodList<MethodDescription.InDefinedShape> enclosingMethod = enclosingType.getDeclaredMethods()
                                 .filter(hasMethodName(methodName).and(hasDescriptor(methodDescriptor)));
                         if (enclosingMethod.isEmpty()) {
@@ -3464,7 +3467,7 @@ public interface TypePool {
                         /**
                          * {@inheritDoc}
                          */
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public Generic getOwnerType() {
                             return Generic.UNDEFINED;
                         }
@@ -3472,7 +3475,7 @@ public interface TypePool {
                         /**
                          * {@inheritDoc}
                          */
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public Generic getComponentType() {
                             return Generic.UNDEFINED;
                         }
@@ -3502,7 +3505,7 @@ public interface TypePool {
                     public Generic toGenericType(TypePool typePool,
                                                  TypeVariableSource typeVariableSource,
                                                  String typePath,
-                                                 @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
+                                                 @Nonnull(when = When.MAYBE) Map<String, List<AnnotationToken>> annotationTokens) {
                         return new LazyUnboundWildcard(typePool,
                                 typePath,
                                 annotationTokens == null
@@ -3742,7 +3745,7 @@ public interface TypePool {
                              * @return An annotated non-generic type.
                              */
                             protected static Generic of(TypePool typePool,
-                                                        @Nullable Map<String, List<AnnotationToken>> annotationTokens,
+                                                        @Nonnull(when = When.MAYBE) Map<String, List<AnnotationToken>> annotationTokens,
                                                         String descriptor) {
                                 return new RawAnnotatedType(typePool,
                                         EMPTY_TYPE_PATH,
@@ -3762,7 +3765,7 @@ public interface TypePool {
                             /**
                              * {@inheritDoc}
                              */
-                            @Nullable
+                            @Nonnull(when = When.MAYBE)
                             public Generic getOwnerType() {
                                 TypeDescription declaringType = typeDescription.getDeclaringType();
                                 return declaringType == null
@@ -3773,7 +3776,7 @@ public interface TypePool {
                             /**
                              * {@inheritDoc}
                              */
-                            @Nullable
+                            @Nonnull(when = When.MAYBE)
                             public Generic getComponentType() {
                                 TypeDescription componentType = typeDescription.getComponentType();
                                 return componentType == null
@@ -3837,7 +3840,7 @@ public interface TypePool {
                                  * @return A generic type list representing the raw types this list represents.
                                  */
                                 protected static TypeList.Generic of(TypePool typePool,
-                                                                     @Nullable Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                     @Nonnull(when = When.MAYBE) Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
                                                                      List<String> descriptors) {
                                     return new LazyRawAnnotatedTypeList(typePool,
                                             annotationTokens == null
@@ -4598,8 +4601,8 @@ public interface TypePool {
                          */
                         public Generic toGenericType(TypePool typePool,
                                                      TypeVariableSource typeVariableSource,
-                                                     @Nullable Map<String, List<AnnotationToken>> annotationTokens,
-                                                     @Nullable Map<Integer, Map<String, List<AnnotationToken>>> boundaryAnnotationTokens) {
+                                                     @Nonnull(when = When.MAYBE) Map<String, List<AnnotationToken>> annotationTokens,
+                                                     @Nonnull(when = When.MAYBE) Map<Integer, Map<String, List<AnnotationToken>>> boundaryAnnotationTokens) {
                             return new LazyTypeVariable(typePool,
                                     typeVariableSource,
                                     annotationTokens == null
@@ -5309,7 +5312,7 @@ public interface TypePool {
                             /**
                              * {@inheritDoc}
                              */
-                            @Nullable
+                            @Nonnull(when = When.MAYBE)
                             public Generic getOwnerType() {
                                 return ownerTypeToken.toGenericType(typePool, typeVariableSource, typePath, annotationTokens);
                             }
@@ -5399,7 +5402,7 @@ public interface TypePool {
                         /**
                          * {@inheritDoc}
                          */
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public Generic getOwnerType() {
                             TypeDescription ownerType = typePool.describe(name).resolve().getEnclosingType();
                             return ownerType == null
@@ -5716,7 +5719,7 @@ public interface TypePool {
                 /**
                  * The field's generic signature as found in the class file or {@code null} if the field is not generic.
                  */
-                @Nullable
+                @Nonnull(when = When.UNKNOWN)
                 private final String genericSignature;
 
                 /**
@@ -5747,7 +5750,7 @@ public interface TypePool {
                 protected FieldToken(String name,
                                      int modifiers,
                                      String descriptor,
-                                     @Nullable String genericSignature,
+                                     @Nonnull(when = When.MAYBE) String genericSignature,
                                      Map<String, List<AnnotationToken>> typeAnnotationTokens,
                                      List<AnnotationToken> annotationTokens) {
                     this.modifiers = modifiers & ~Opcodes.ACC_DEPRECATED;
@@ -5802,7 +5805,7 @@ public interface TypePool {
                 /**
                  * The methods's generic signature as found in the class file or {@code null} if the method is not generic.
                  */
-                @Nullable
+                @Nonnull(when = When.UNKNOWN)
                 private final String genericSignature;
 
                 /**
@@ -5814,7 +5817,7 @@ public interface TypePool {
                  * An array of internal names of the exceptions of the represented method or {@code null} if there
                  * are no such exceptions.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private final String[] exceptionName;
 
                 /**
@@ -5865,7 +5868,7 @@ public interface TypePool {
                 /**
                  * The default value of this method or {@code null} if there is no such value.
                  */
-                @Nullable
+                @Nonnull(when = When.UNKNOWN)
                 private final AnnotationValue<?, ?> defaultValue;
 
                 /**
@@ -5892,8 +5895,8 @@ public interface TypePool {
                 protected MethodToken(String name,
                                       int modifiers,
                                       String descriptor,
-                                      @Nullable String genericSignature,
-                                      @Nullable String[] exceptionName,
+                                      @Nonnull(when = When.MAYBE) String genericSignature,
+                                      @Nonnull(when = When.MAYBE) String[] exceptionName,
                                       Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
                                       Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundAnnotationTokens,
                                       Map<String, List<AnnotationToken>> returnTypeAnnotationTokens,
@@ -5903,7 +5906,7 @@ public interface TypePool {
                                       List<AnnotationToken> annotationTokens,
                                       Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
                                       List<ParameterToken> parameterTokens,
-                                      @Nullable AnnotationValue<?, ?> defaultValue) {
+                                      @Nonnull(when = When.MAYBE) AnnotationValue<?, ?> defaultValue) {
                     this.modifiers = modifiers & ~Opcodes.ACC_DEPRECATED;
                     this.name = name;
                     this.descriptor = descriptor;
@@ -5970,14 +5973,14 @@ public interface TypePool {
                     /**
                      * The name of the parameter or {@code null} if no explicit name for this parameter is known.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                     private final String name;
 
                     /**
                      * The modifiers of the parameter or {@code null} if no modifiers are known for this parameter.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                     private final Integer modifiers;
 
@@ -5993,7 +5996,7 @@ public interface TypePool {
                      *
                      * @param name The name of the parameter.
                      */
-                    protected ParameterToken(@Nullable String name) {
+                    protected ParameterToken(@Nonnull(when = When.MAYBE) String name) {
                         this(name, NO_MODIFIERS);
                     }
 
@@ -6003,7 +6006,7 @@ public interface TypePool {
                      * @param name      The name of the parameter.
                      * @param modifiers The modifiers of the parameter.
                      */
-                    protected ParameterToken(@Nullable String name, @Nullable Integer modifiers) {
+                    protected ParameterToken(@Nonnull(when = When.MAYBE) String name, @Nonnull(when = When.MAYBE) Integer modifiers) {
                         this.name = name;
                         this.modifiers = modifiers;
                     }
@@ -6013,7 +6016,7 @@ public interface TypePool {
                      *
                      * @return The name of the parameter or {@code null} if there is no such name.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     protected String getName() {
                         return name;
                     }
@@ -6023,7 +6026,7 @@ public interface TypePool {
                      *
                      * @return The modifiers of the parameter or {@code null} if no modifiers are known.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     protected Integer getModifiers() {
                         return modifiers;
                     }
@@ -6049,7 +6052,7 @@ public interface TypePool {
                 /**
                  * The record component's generic signature or {@code null} if it is non-generic.
                  */
-                @Nullable
+                @Nonnull(when = When.UNKNOWN)
                 private final String genericSignature;
 
                 /**
@@ -6078,7 +6081,7 @@ public interface TypePool {
                  */
                 protected RecordComponentToken(String name,
                                                String descriptor,
-                                               @Nullable String genericSignature,
+                                               @Nonnull(when = When.MAYBE) String genericSignature,
                                                Map<String, List<AnnotationToken>> typeAnnotationTokens,
                                                List<AnnotationToken> annotationTokens) {
                     this.name = name;
@@ -6149,7 +6152,7 @@ public interface TypePool {
                  * @param tokens   The tokens to represent in the list.
                  * @return A list of the loadable annotations.
                  */
-                protected static AnnotationList asListOfNullable(TypePool typePool, @Nullable List<? extends AnnotationToken> tokens) {
+                protected static AnnotationList asListOfNullable(TypePool typePool, @Nonnull(when = When.MAYBE) List<? extends AnnotationToken> tokens) {
                     return tokens == null
                             ? new AnnotationList.Empty()
                             : asList(typePool, tokens);
@@ -6281,7 +6284,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                public Loaded<V> load(@Nullable ClassLoader classLoader) {
+                public Loaded<V> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
                     return doResolve().load(classLoader);
                 }
 
@@ -6292,7 +6295,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public boolean equals(Object other) {
+                public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
                     return doResolve().equals(other);
                 }
 
@@ -6364,7 +6367,7 @@ public interface TypePool {
                     /**
                      * {@inheritDoc}
                      */
-                    public Loaded<X> load(@Nullable ClassLoader classLoader) {
+                    public Loaded<X> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
                         throw new IllegalStateException("Expected filtering of this unresolved property");
                     }
                 }
@@ -6689,7 +6692,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public String[] toInternalNames() {
                     String[] internalName = new String[descriptors.size()];
                     int index = 0;
@@ -6847,7 +6850,7 @@ public interface TypePool {
                 protected static Generic of(TypePool typePool,
                                             GenericTypeToken genericTypeToken,
                                             String rawTypeDescriptor,
-                                            @Nullable Map<String, List<AnnotationToken>> annotationTokens,
+                                            @Nonnull(when = When.MAYBE) Map<String, List<AnnotationToken>> annotationTokens,
                                             TypeVariableSource typeVariableSource) {
                     return new TokenizedGenericType(typePool,
                             genericTypeToken,
@@ -7154,7 +7157,7 @@ public interface TypePool {
                 /**
                  * The field's generic signature as found in the class file or {@code null} if the field is not generic.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private final String genericSignature;
 
                 /**
@@ -7186,7 +7189,7 @@ public interface TypePool {
                 private LazyFieldDescription(String name,
                                              int modifiers,
                                              String descriptor,
-                                             @Nullable String genericSignature,
+                                             @Nonnull(when = When.MAYBE) String genericSignature,
                                              GenericTypeToken.Resolution.ForField signatureResolution,
                                              Map<String, List<AnnotationToken>> typeAnnotationTokens,
                                              List<AnnotationToken> annotationTokens) {
@@ -7238,7 +7241,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public String getGenericSignature() {
                     return genericSignature;
                 }
@@ -7267,7 +7270,7 @@ public interface TypePool {
                 /**
                  * The method's generic signature as found in the class file or {@code null} if the method is not generic.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private final String genericSignature;
 
                 /**
@@ -7339,7 +7342,7 @@ public interface TypePool {
                 /**
                  * The default value of this method or {@code null} if no such value exists.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private final AnnotationValue<?, ?> defaultValue;
 
                 /**
@@ -7371,9 +7374,9 @@ public interface TypePool {
                 private LazyMethodDescription(String internalName,
                                               int modifiers,
                                               String descriptor,
-                                              @Nullable String genericSignature,
+                                              @Nonnull(when = When.MAYBE) String genericSignature,
                                               GenericTypeToken.Resolution.ForMethod signatureResolution,
-                                              @Nullable String[] exceptionTypeInternalName,
+                                              @Nonnull(when = When.MAYBE) String[] exceptionTypeInternalName,
                                               Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
                                               Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundAnnotationTokens,
                                               Map<String, List<AnnotationToken>> returnTypeAnnotationTokens,
@@ -7383,7 +7386,7 @@ public interface TypePool {
                                               List<AnnotationToken> annotationTokens,
                                               Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
                                               List<MethodToken.ParameterToken> parameterTokens,
-                                              @Nullable AnnotationValue<?, ?> defaultValue) {
+                                              @Nonnull(when = When.MAYBE) AnnotationValue<?, ?> defaultValue) {
                     this.modifiers = modifiers;
                     this.internalName = internalName;
                     Type methodType = Type.getMethodType(descriptor);
@@ -7485,7 +7488,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return defaultValue;
                 }
@@ -7493,7 +7496,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public Generic getReceiverType() {
                     if (isStatic()) {
                         return Generic.UNDEFINED;
@@ -7518,7 +7521,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public String getGenericSignature() {
                     return genericSignature;
                 }
@@ -7678,7 +7681,7 @@ public interface TypePool {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     public Generic getOwnerType() {
                         TypeDescription declaringType = typeDescription.getDeclaringType();
                         if (declaringType == null) {
@@ -7838,7 +7841,7 @@ public interface TypePool {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     public Generic getOwnerType() {
                         TypeDescription declaringType = typeDescription.getDeclaringType();
                         return declaringType == null
@@ -7849,7 +7852,7 @@ public interface TypePool {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     public Generic getComponentType() {
                         return Generic.UNDEFINED;
                     }
@@ -7892,7 +7895,7 @@ public interface TypePool {
                 /**
                  * The record component's generic signature or {@code null} if the record component is non-generic.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private final String genericSignature;
 
                 /**
@@ -7922,7 +7925,7 @@ public interface TypePool {
                  */
                 private LazyRecordComponentDescription(String name,
                                                        String descriptor,
-                                                       @Nullable String genericSignature,
+                                                       @Nonnull(when = When.MAYBE) String genericSignature,
                                                        GenericTypeToken.Resolution.ForRecordComponent signatureResolution,
                                                        Map<String, List<AnnotationToken>> typeAnnotationTokens,
                                                        List<AnnotationToken> annotationTokens) {
@@ -7964,7 +7967,7 @@ public interface TypePool {
                 }
 
                 @Override
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public String getGenericSignature() {
                     return genericSignature;
                 }
@@ -8034,26 +8037,26 @@ public interface TypePool {
             /**
              * The internal name found for this type.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private String internalName;
 
             /**
              * The internal name of the super type found for this type or {@code null} if no such type exists.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private String superClassName;
 
             /**
              * The generic signature of the type or {@code null} if it is not generic.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private String genericSignature;
 
             /**
              * A list of internal names of interfaces implemented by this type or {@code null} if no interfaces
              * are implemented.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private String[] interfaceName;
 
             /**
@@ -8064,7 +8067,7 @@ public interface TypePool {
             /**
              * The nest host that was found in the class file or {@code null} if no nest host was specified.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private String nestHost;
 
             /**
@@ -8080,7 +8083,7 @@ public interface TypePool {
             /**
              * The binary name of this type's declaring type or {@code null} if no such type exists.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private String declaringTypeName;
 
             /**
@@ -8096,7 +8099,7 @@ public interface TypePool {
             /**
              * The discovered class file version or {@code null} if no version was yet discovered.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private ClassFileVersion classFileVersion;
 
             /**
@@ -8123,9 +8126,9 @@ public interface TypePool {
             public void visit(int classFileVersion,
                               int modifiers,
                               String internalName,
-                              @Nullable String genericSignature,
-                              @Nullable String superClassName,
-                              @Nullable String[] interfaceName) {
+                              @Nonnull(when = When.MAYBE) String genericSignature,
+                              @Nonnull(when = When.MAYBE) String superClassName,
+                              @Nonnull(when = When.MAYBE) String[] interfaceName) {
                 this.modifiers = modifiers & REAL_MODIFIER_MASK;
                 actualModifiers = modifiers;
                 this.internalName = internalName;
@@ -8136,7 +8139,7 @@ public interface TypePool {
             }
 
             @Override
-            public void visitOuterClass(@Nullable String typeName, @Nullable String methodName, String methodDescriptor) {
+            public void visitOuterClass(@Nonnull(when = When.MAYBE) String typeName, @Nonnull(when = When.MAYBE) String methodName, String methodDescriptor) {
                 if (methodName != null && !methodName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
                     typeContainment = new LazyTypeDescription.TypeContainment.WithinMethod(typeName, methodName, methodDescriptor);
                 } else if (typeName != null) {
@@ -8145,7 +8148,7 @@ public interface TypePool {
             }
 
             @Override
-            public void visitInnerClass(String internalName, @Nullable String outerName, @Nullable String innerName, int modifiers) {
+            public void visitInnerClass(String internalName, @Nonnull(when = When.MAYBE) String outerName, @Nonnull(when = When.MAYBE) String innerName, int modifiers) {
                 if (internalName.equals(this.internalName)) {
                     if (outerName != null) {
                         declaringTypeName = outerName;
@@ -8163,7 +8166,7 @@ public interface TypePool {
             }
 
             @Override
-            public AnnotationVisitor visitTypeAnnotation(int rawTypeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
+            public AnnotationVisitor visitTypeAnnotation(int rawTypeReference, @Nonnull(when = When.MAYBE) TypePath typePath, String descriptor, boolean visible) {
                 AnnotationRegistrant annotationRegistrant;
                 TypeReference typeReference = new TypeReference(rawTypeReference);
                 switch (typeReference.getSort()) {
@@ -8198,13 +8201,13 @@ public interface TypePool {
             }
 
             @Override
-            public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nullable String genericSignature, @Nullable Object value) {
+            public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String genericSignature, @Nonnull(when = When.MAYBE) Object value) {
                 return new FieldExtractor(modifiers & REAL_MODIFIER_MASK, internalName, descriptor, genericSignature);
             }
 
             @Override
-            @Nullable
-            public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nullable String genericSignature, @Nullable String[] exceptionName) {
+            @Nonnull(when = When.MAYBE)
+            public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String genericSignature, @Nonnull(when = When.MAYBE) String[] exceptionName) {
                 return internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)
                         ? IGNORE_METHOD
                         : new MethodExtractor(modifiers & REAL_MODIFIER_MASK, internalName, descriptor, genericSignature, exceptionName);
@@ -8221,7 +8224,7 @@ public interface TypePool {
             }
 
             @Override
-            public RecordComponentVisitor visitRecordComponent(String name, String descriptor, @Nullable String signature) {
+            public RecordComponentVisitor visitRecordComponent(String name, String descriptor, @Nonnull(when = When.MAYBE) String signature) {
                 return new RecordComponentExtractor(name, descriptor, signature);
             }
 
@@ -8237,6 +8240,9 @@ public interface TypePool {
              * @return A type description reflecting the data that was collected by this instance.
              */
             protected TypeDescription toTypeDescription() {
+                if (internalName == null || classFileVersion == null) {
+                    throw new IllegalStateException("Internal name or class file version were not set");
+                }
                 Map<String, List<LazyTypeDescription.AnnotationToken>> superClassAnnotationTokens = superTypeAnnotationTokens.remove(SUPER_CLASS_INDEX);
                 return new LazyTypeDescription(Default.this,
                         actualModifiers,
@@ -8475,7 +8481,7 @@ public interface TypePool {
                 /**
                  * The generic signature of the field or {@code null} if it is not generic.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private final String genericSignature;
 
                 /**
@@ -8499,7 +8505,7 @@ public interface TypePool {
                 protected FieldExtractor(int modifiers,
                                          String internalName,
                                          String descriptor,
-                                         @Nullable String genericSignature) {
+                                         @Nonnull(when = When.MAYBE) String genericSignature) {
                     super(OpenedClassReader.ASM_API);
                     this.modifiers = modifiers;
                     this.internalName = internalName;
@@ -8510,8 +8516,8 @@ public interface TypePool {
                 }
 
                 @Override
-                @Nullable
-                public AnnotationVisitor visitTypeAnnotation(int rawTypeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
+                @Nonnull(when = When.MAYBE)
+                public AnnotationVisitor visitTypeAnnotation(int rawTypeReference, @Nonnull(when = When.MAYBE) TypePath typePath, String descriptor, boolean visible) {
                     AnnotationRegistrant annotationRegistrant;
                     TypeReference typeReference = new TypeReference(rawTypeReference);
                     switch (typeReference.getSort()) {
@@ -8564,14 +8570,14 @@ public interface TypePool {
                 /**
                  * The generic signature of the method or {@code null} if it is not generic.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private final String genericSignature;
 
                 /**
                  * An array of internal names of the exceptions of the found method
                  * or {@code null} if there are no such exceptions.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private final String[] exceptionName;
 
                 /**
@@ -8630,7 +8636,7 @@ public interface TypePool {
                  * The first label that is found in the method's body, if any, denoting the start of the method.
                  * This label can be used to identify names of local variables that describe the method's parameters.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private Label firstLabel;
 
                 /**
@@ -8646,7 +8652,7 @@ public interface TypePool {
                 /**
                  * The default value of the found method or {@code null} if no such value exists.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private AnnotationValue<?, ?> defaultValue;
 
                 /**
@@ -8662,8 +8668,8 @@ public interface TypePool {
                 protected MethodExtractor(int modifiers,
                                           String internalName,
                                           String descriptor,
-                                          @Nullable String genericSignature,
-                                          @Nullable String[] exceptionName) {
+                                          @Nonnull(when = When.MAYBE) String genericSignature,
+                                          @Nonnull(when = When.MAYBE) String[] exceptionName) {
                     super(OpenedClassReader.ASM_API);
                     this.modifiers = modifiers;
                     this.internalName = internalName;
@@ -8683,7 +8689,7 @@ public interface TypePool {
                 }
 
                 @Override
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 public AnnotationVisitor visitTypeAnnotation(int rawTypeReference, TypePath typePath, String descriptor, boolean visible) {
                     AnnotationRegistrant annotationRegistrant;
                     TypeReference typeReference = new TypeReference(rawTypeReference);
@@ -8831,7 +8837,7 @@ public interface TypePool {
                 /**
                  * The record component's generic signature.
                  */
-                @Nullable
+                @Nonnull(when = When.MAYBE)
                 private final String genericSignature;
 
                 /**
@@ -8851,7 +8857,7 @@ public interface TypePool {
                  * @param descriptor       The record component's descriptor.
                  * @param genericSignature The record component's generic signature.
                  */
-                protected RecordComponentExtractor(String name, String descriptor, @Nullable String genericSignature) {
+                protected RecordComponentExtractor(String name, String descriptor, @Nonnull(when = When.MAYBE) String genericSignature) {
                     super(OpenedClassReader.ASM_API);
                     this.name = name;
                     this.descriptor = descriptor;
@@ -9016,7 +9022,7 @@ public interface TypePool {
         /**
          * The class loader to query.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ClassLoader classLoader;
 
@@ -9027,7 +9033,7 @@ public interface TypePool {
          * @param parent        The parent type pool.
          * @param classLoader   The class loader to use for locating files.
          */
-        public ClassLoading(CacheProvider cacheProvider, TypePool parent, @Nullable ClassLoader classLoader) {
+        public ClassLoading(CacheProvider cacheProvider, TypePool parent, @Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             super(cacheProvider, parent);
             this.classLoader = classLoader;
         }
@@ -9038,7 +9044,7 @@ public interface TypePool {
          * @param classLoader The class loader to use.
          * @return An class loading type pool.
          */
-        public static TypePool of(@Nullable ClassLoader classLoader) {
+        public static TypePool of(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             return of(classLoader, Empty.INSTANCE);
         }
 
@@ -9049,7 +9055,7 @@ public interface TypePool {
          * @param parent      The parent type pool to use.
          * @return An class loading type pool.
          */
-        public static TypePool of(@Nullable ClassLoader classLoader, TypePool parent) {
+        public static TypePool of(@Nonnull(when = When.MAYBE) ClassLoader classLoader, TypePool parent) {
             return new ClassLoading(new CacheProvider.Simple(), parent, classLoader);
         }
 

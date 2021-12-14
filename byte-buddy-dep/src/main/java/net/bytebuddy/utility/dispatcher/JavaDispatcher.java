@@ -27,7 +27,8 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.security.Permission;
@@ -87,7 +88,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     /**
      * The class loader to resolve the proxied type from or {@code null} if the bootstrap loader should be used.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
     private final ClassLoader classLoader;
 
@@ -103,7 +104,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
      * @param classLoader The class loader to resolve the proxied type from or {@code null} if the bootstrap loader should be used.
      * @param generate    {@code true} if a proxy class should be manually generated.
      */
-    protected JavaDispatcher(Class<T> proxy, @Nullable ClassLoader classLoader, boolean generate) {
+    protected JavaDispatcher(Class<T> proxy, @Nonnull(when = When.MAYBE) ClassLoader classLoader, boolean generate) {
         this.proxy = proxy;
         this.classLoader = classLoader;
         this.generate = generate;
@@ -140,7 +141,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
      * @param <T>         The resolved type.
      * @return An action for creating an appropriate dispatcher.
      */
-    protected static <T> PrivilegedAction<T> of(Class<T> type, @Nullable ClassLoader classLoader) {
+    protected static <T> PrivilegedAction<T> of(Class<T> type, @Nonnull(when = When.MAYBE) ClassLoader classLoader) {
         return of(type, classLoader, GENERATE);
     }
 
@@ -153,7 +154,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
      * @param <T>         The resolved type.
      * @return An action for creating an appropriate dispatcher.
      */
-    protected static <T> PrivilegedAction<T> of(Class<T> type, @Nullable ClassLoader classLoader, boolean generate) {
+    protected static <T> PrivilegedAction<T> of(Class<T> type, @Nonnull(when = When.MAYBE) ClassLoader classLoader, boolean generate) {
         if (!type.isInterface()) {
             throw new IllegalArgumentException("Expected an interface instead of " + type);
         } else if (!type.isAnnotationPresent(Proxied.class)) {
@@ -464,7 +465,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         /**
          * {@inheritDoc}
          */
-        public Object invoke(Method method, @Nullable Object instance, Object[] argument) throws IllegalAccessException, InvocationTargetException {
+        public Object invoke(Method method, @Nonnull(when = When.MAYBE) Object instance, Object[] argument) throws IllegalAccessException, InvocationTargetException {
             return method.invoke(instance, argument);
         }
     }
@@ -481,7 +482,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
          * @return The return value.
          * @throws Throwable If any error occurs.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         Object invoke(Object[] argument) throws Throwable;
 
         /**
@@ -632,7 +633,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             /**
              * The default value.
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             private final Object value;
 
             /**
@@ -658,7 +659,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
              * @param returned The opcode to return the default value.
              * @param size     The operand stack size of default value.
              */
-            ForDefaultValue(@Nullable Object value, int load, int returned, int size) {
+            ForDefaultValue(@Nonnull(when = When.MAYBE) Object value, int load, int returned, int size) {
                 this.value = value;
                 this.load = load;
                 this.returned = returned;
@@ -718,7 +719,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Object invoke(Object[] argument) {
                 return value;
             }
@@ -951,7 +952,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public Object invoke(Object[] argument) throws Throwable {
                 return INVOKER.invoke(method, null, argument);
             }
@@ -1125,8 +1126,8 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         /**
          * {@inheritDoc}
          */
-        @Nullable
-        public Object invoke(Object proxy, Method method, @Nullable Object[] argument) throws Throwable {
+        @Nonnull(when = When.MAYBE)
+        public Object invoke(Object proxy, Method method, @Nonnull(when = When.MAYBE) Object[] argument) throws Throwable {
             if (method.getDeclaringClass() == Object.class) {
                 if (method.getName().equals("hashCode")) {
                     return hashCode();
@@ -1346,7 +1347,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
              * @param classLoader The class loader to adjust.
              * @param target      The targeted class for which a proxy is created.
              */
-            void accept(@Nullable ClassLoader classLoader, Class<?> target);
+            void accept(@Nonnull(when = When.MAYBE) ClassLoader classLoader, Class<?> target);
 
             /**
              * An action to create a resolver.
@@ -1388,7 +1389,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 /**
                  * {@inheritDoc}
                  */
-                public void accept(@Nullable ClassLoader classLoader, Class<?> target) {
+                public void accept(@Nonnull(when = When.MAYBE) ClassLoader classLoader, Class<?> target) {
                     /* do nothing */
                 }
             }
@@ -1441,7 +1442,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                  * {@inheritDoc}
                  */
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
-                public void accept(@Nullable ClassLoader classLoader, Class<?> target) {
+                public void accept(@Nonnull(when = When.MAYBE) ClassLoader classLoader, Class<?> target) {
                     Package location = target.getPackage();
                     if (location != null) {
                         try {

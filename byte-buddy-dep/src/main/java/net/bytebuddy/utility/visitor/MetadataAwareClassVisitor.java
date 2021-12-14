@@ -17,7 +17,8 @@ package net.bytebuddy.utility.visitor;
 
 import org.objectweb.asm.*;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 
 /**
  * A class visitor that traces invocations of visitation methods and notifies if a nest host or outer class was not visited.
@@ -119,7 +120,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     }
 
     @Override
-    public final void visitOuterClass(String owner, @Nullable String name, @Nullable String descriptor) {
+    public final void visitOuterClass(String owner, @Nonnull(when = When.MAYBE) String name, @Nonnull(when = When.MAYBE) String descriptor) {
         considerTriggerNestHost();
         triggerOuterClass = false;
         onVisitOuterClass(owner, name, descriptor);
@@ -132,7 +133,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param name       The outer method's name or {@code null} if it does not exist.
      * @param descriptor The outer method's descriptor or {@code null} if it does not exist.
      */
-    protected void onVisitOuterClass(String owner, @Nullable String name, @Nullable String descriptor) {
+    protected void onVisitOuterClass(String owner, @Nonnull(when = When.MAYBE) String name, @Nonnull(when = When.MAYBE) String descriptor) {
         super.visitOuterClass(owner, name, descriptor);
     }
 
@@ -154,8 +155,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     }
 
     @Override
-    @Nullable
-    public RecordComponentVisitor visitRecordComponent(String name, String descriptor, @Nullable String signature) {
+    @Nonnull(when = When.MAYBE)
+    public RecordComponentVisitor visitRecordComponent(String name, String descriptor, @Nonnull(when = When.MAYBE) String signature) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
@@ -170,13 +171,13 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param signature  The record component's generic signature or {@code null} if the record component's type is non-generic.
      * @return The record component visitor or {@code null} if the component should not be visited.
      */
-    @Nullable
-    protected RecordComponentVisitor onVisitRecordComponent(String name, String descriptor, @Nullable String signature) {
+    @Nonnull(when = When.MAYBE)
+    protected RecordComponentVisitor onVisitRecordComponent(String name, String descriptor, @Nonnull(when = When.MAYBE) String signature) {
         return super.visitRecordComponent(name, descriptor, signature);
     }
 
     @Override
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     public final AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
@@ -190,13 +191,13 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param visible    {@code true} if the annotation is visible at runtime.
      * @return An annotation visitor or {@code null} if the annotation should be ignored.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     protected AnnotationVisitor onVisitAnnotation(String descriptor, boolean visible) {
         return super.visitAnnotation(descriptor, visible);
     }
 
     @Override
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     public final AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
@@ -212,7 +213,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param visible       {@code true} if the annotation is visible at runtime.
      * @return An annotation visitor or {@code null} if the annotation should be ignored.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     protected AnnotationVisitor onVisitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
         return super.visitTypeAnnotation(typeReference, typePath, descriptor, visible);
     }
@@ -251,7 +252,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     }
 
     @Override
-    public final void visitInnerClass(String name, @Nullable String outerName, @Nullable String innerName, int modifiers) {
+    public final void visitInnerClass(String name, @Nonnull(when = When.MAYBE) String outerName, @Nonnull(when = When.MAYBE) String innerName, int modifiers) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
@@ -266,13 +267,13 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param innerName The inner class's simple name or {@code null} for an anonymous class.
      * @param modifiers The inner class's source code modifiers.
      */
-    protected void onVisitInnerClass(String name, @Nullable String outerName, @Nullable String innerName, int modifiers) {
+    protected void onVisitInnerClass(String name, @Nonnull(when = When.MAYBE) String outerName, @Nonnull(when = When.MAYBE) String innerName, int modifiers) {
         super.visitInnerClass(name, outerName, innerName, modifiers);
     }
 
     @Override
-    @Nullable
-    public final FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable Object value) {
+    @Nonnull(when = When.MAYBE)
+    public final FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) Object value) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
@@ -289,14 +290,14 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param value        The field's default value or {@code null} if no such value exists.
      * @return A field visitor to visit the field or {@code null} to ignore it.
      */
-    @Nullable
-    protected FieldVisitor onVisitField(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable Object value) {
+    @Nonnull(when = When.MAYBE)
+    protected FieldVisitor onVisitField(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) Object value) {
         return super.visitField(modifiers, internalName, descriptor, signature, value);
     }
 
     @Override
-    @Nullable
-    public final MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable String[] exception) {
+    @Nonnull(when = When.MAYBE)
+    public final MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String[] exception) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
@@ -313,8 +314,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param exception    The method's declared exceptions or {@code null} if no exceptions are declared.
      * @return A method visitor to visit the method or {@code null} to ignore it.
      */
-    @Nullable
-    protected MethodVisitor onVisitMethod(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable String[] exception) {
+    @Nonnull(when = When.MAYBE)
+    protected MethodVisitor onVisitMethod(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String[] exception) {
         return super.visitMethod(modifiers, internalName, descriptor, signature, exception);
     }
 

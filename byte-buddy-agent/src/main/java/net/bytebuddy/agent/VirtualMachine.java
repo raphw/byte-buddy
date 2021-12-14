@@ -22,7 +22,8 @@ import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -77,7 +78,7 @@ public interface VirtualMachine {
      * @param argument The argument to provide or {@code null} if no argument should be provided.
      * @throws IOException If an I/O exception occurs.
      */
-    void loadAgent(String jarFile, @Nullable String argument) throws IOException;
+    void loadAgent(String jarFile, @Nonnull(when = When.MAYBE) String argument) throws IOException;
 
     /**
      * Loads a native agent into the represented virtual machine.
@@ -94,7 +95,7 @@ public interface VirtualMachine {
      * @param argument The argument to provide or {@code null} if no argument should be provided.
      * @throws IOException If an I/O exception occurs.
      */
-    void loadAgentPath(String path, @Nullable String argument) throws IOException;
+    void loadAgentPath(String path, @Nonnull(when = When.MAYBE) String argument) throws IOException;
 
     /**
      * Loads a native agent library into the represented virtual machine.
@@ -111,7 +112,7 @@ public interface VirtualMachine {
      * @param argument The argument to provide or {@code null} if no argument should be provided.
      * @throws IOException If an I/O exception occurs.
      */
-    void loadAgentLibrary(String library, @Nullable String argument) throws IOException;
+    void loadAgentLibrary(String library, @Nonnull(when = When.MAYBE) String argument) throws IOException;
 
     /**
      * Starts a JMX management agent.
@@ -332,21 +333,21 @@ public interface VirtualMachine {
         /**
          * {@inheritDoc}
          */
-        public void loadAgent(String jarFile, @Nullable String argument) throws IOException {
+        public void loadAgent(String jarFile, @Nonnull(when = When.MAYBE) String argument) throws IOException {
             load(jarFile, false, argument);
         }
 
         /**
          * {@inheritDoc}
          */
-        public void loadAgentPath(String path, @Nullable String argument) throws IOException {
+        public void loadAgentPath(String path, @Nonnull(when = When.MAYBE) String argument) throws IOException {
             load(path, true, argument);
         }
 
         /**
          * {@inheritDoc}
          */
-        public void loadAgentLibrary(String library, @Nullable String argument) throws IOException {
+        public void loadAgentLibrary(String library, @Nonnull(when = When.MAYBE) String argument) throws IOException {
             load(library, false, argument);
         }
 
@@ -358,7 +359,7 @@ public interface VirtualMachine {
          * @param argument The argument to the agent or {@code null} if no argument is given.
          * @throws IOException If an I/O exception occurs.
          */
-        protected void load(String file, boolean absolute, @Nullable String argument) throws IOException {
+        protected void load(String file, boolean absolute, @Nonnull(when = When.MAYBE) String argument) throws IOException {
             Connection.Response response = connection.execute(PROTOCOL_VERSION, LOAD_COMMAND, INSTRUMENT_COMMAND, Boolean.toString(absolute), (argument == null
                     ? file
                     : file + ARGUMENT_DELIMITER + argument));
@@ -1130,15 +1131,15 @@ public interface VirtualMachine {
                      * @param threadId           A pointer to the thread id or {@code null} if no thread reference is set.
                      * @return A handle to the created remote thread or {@code null} if the creation failed.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     @SuppressWarnings("checkstyle:methodname")
                     WinNT.HANDLE CreateRemoteThread(WinNT.HANDLE process,
-                                                    @Nullable WinBase.SECURITY_ATTRIBUTES securityAttributes,
+                                                    @Nonnull(when = When.MAYBE) WinBase.SECURITY_ATTRIBUTES securityAttributes,
                                                     int stackSize,
                                                     Pointer code,
                                                     Pointer argument,
-                                                    @Nullable WinDef.DWORD creationFlags,
-                                                    @Nullable Pointer threadId);
+                                                    @Nonnull(when = When.MAYBE) WinDef.DWORD creationFlags,
+                                                    @Nonnull(when = When.MAYBE) Pointer threadId);
 
                     /**
                      * Receives the exit code of a given thread.
@@ -1162,7 +1163,7 @@ public interface VirtualMachine {
                      * @param process A handle to the target process.
                      * @return A pointer to the allocated code or {@code null} if the code could not be allocated.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     @SuppressWarnings("checkstyle:methodname")
                     WinDef.LPVOID allocate_remote_code(WinNT.HANDLE process);
 
@@ -1177,14 +1178,14 @@ public interface VirtualMachine {
                      * @param argument3 The forth  argument or {@code null} if no such argument is provided.
                      * @return A pointer to the allocated argument or {@code null} if the argument could not be allocated.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     @SuppressWarnings("checkstyle:methodname")
                     WinDef.LPVOID allocate_remote_argument(WinNT.HANDLE process,
                                                            String pipe,
-                                                           @Nullable String argument0,
-                                                           @Nullable String argument1,
-                                                           @Nullable String argument2,
-                                                           @Nullable String argument3);
+                                                           @Nonnull(when = When.MAYBE) String argument0,
+                                                           @Nonnull(when = When.MAYBE) String argument1,
+                                                           @Nonnull(when = When.MAYBE) String argument2,
+                                                           @Nonnull(when = When.MAYBE) String argument3);
                 }
 
                 /**
@@ -1442,7 +1443,7 @@ public interface VirtualMachine {
                         /**
                          * A pointer to the operation argument.
                          */
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public Pointer dataPointer;
 
                         /**
@@ -1453,7 +1454,7 @@ public interface VirtualMachine {
                         /**
                          * A pointer to the operation descriptor.
                          */
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public Pointer descriptorPointer;
 
                         /**
@@ -1464,7 +1465,7 @@ public interface VirtualMachine {
                         /**
                          * A pointer to the operation result.
                          */
-                        @Nullable
+                        @Nonnull(when = When.UNKNOWN)
                         public Pointer resultPointer;
 
                         /**
@@ -1794,7 +1795,7 @@ public interface VirtualMachine {
         /**
          * {@inheritDoc}
          */
-        public void loadAgent(String jarFile, @Nullable String argument) throws IOException {
+        public void loadAgent(String jarFile, @Nonnull(when = When.MAYBE) String argument) throws IOException {
             write(socket, ("ATTACH_LOADAGENT(instrument," + jarFile + '=' + (argument == null ? "" : argument) + ')').getBytes("UTF-8"));
             String answer = new String(read(socket), "UTF-8");
             if (answer.startsWith("ATTACH_ERR")) {
@@ -1807,7 +1808,7 @@ public interface VirtualMachine {
         /**
          * {@inheritDoc}
          */
-        public void loadAgentPath(String path, @Nullable String argument) throws IOException {
+        public void loadAgentPath(String path, @Nonnull(when = When.MAYBE) String argument) throws IOException {
             write(socket, ("ATTACH_LOADAGENTPATH(" + path + (argument == null ? "" : (',' + argument)) + ')').getBytes("UTF-8"));
             String answer = new String(read(socket), "UTF-8");
             if (answer.startsWith("ATTACH_ERR")) {
@@ -1820,7 +1821,7 @@ public interface VirtualMachine {
         /**
          * {@inheritDoc}
          */
-        public void loadAgentLibrary(String library, @Nullable String argument) throws IOException {
+        public void loadAgentLibrary(String library, @Nonnull(when = When.MAYBE) String argument) throws IOException {
             write(socket, ("ATTACH_LOADAGENTLIBRARY(" + library + (argument == null ? "" : (',' + argument)) + ')').getBytes("UTF-8"));
             String answer = new String(read(socket), "UTF-8");
             if (answer.startsWith("ATTACH_ERR")) {
@@ -2490,7 +2491,7 @@ public interface VirtualMachine {
                      * @param name          The semaphore's name.
                      * @return The handle or {@code null} if the handle could not be created.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     @SuppressWarnings("checkstyle:methodname")
                     WinNT.HANDLE OpenSemaphoreW(int access, boolean inheritHandle, String name);
 
@@ -2503,9 +2504,9 @@ public interface VirtualMachine {
                      * @param name               The semaphore's name.
                      * @return The handle or {@code null} if the handle could not be created.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     @SuppressWarnings("checkstyle:methodname")
-                    WinNT.HANDLE CreateSemaphoreW(@Nullable WinBase.SECURITY_ATTRIBUTES securityAttributes,
+                    WinNT.HANDLE CreateSemaphoreW(@Nonnull(when = When.MAYBE) WinBase.SECURITY_ATTRIBUTES securityAttributes,
                                                   long count,
                                                   long maximumCount,
                                                   String name);
@@ -2519,7 +2520,7 @@ public interface VirtualMachine {
                      * @return {@code true} if the semaphore was successfully released.
                      */
                     @SuppressWarnings("checkstyle:methodname")
-                    boolean ReleaseSemaphore(WinNT.HANDLE handle, long count, @Nullable Long previousCount);
+                    boolean ReleaseSemaphore(WinNT.HANDLE handle, long count, @Nonnull(when = When.MAYBE) Long previousCount);
 
                     /**
                      * Create or opens a mutex.
@@ -2529,7 +2530,7 @@ public interface VirtualMachine {
                      * @param name       The mutex name.
                      * @return The handle to the mutex or {@code null} if the mutex could not be created.
                      */
-                    @Nullable
+                    @Nonnull(when = When.MAYBE)
                     @SuppressWarnings("checkstyle:methodname")
                     WinNT.HANDLE CreateMutex(SecurityAttributes attributes, boolean owner, String name);
 
@@ -2562,13 +2563,13 @@ public interface VirtualMachine {
                         /**
                          * The descriptor's length.
                          */
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public WinDef.DWORD length;
 
                         /**
                          * A pointer to the descriptor.
                          */
-                        @Nullable
+                        @Nonnull(when = When.MAYBE)
                         public Pointer securityDescriptor;
 
                         /**

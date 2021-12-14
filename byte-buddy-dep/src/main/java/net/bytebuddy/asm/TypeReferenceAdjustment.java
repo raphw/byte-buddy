@@ -27,7 +27,6 @@ import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -178,9 +177,9 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
         public void visit(int version,
                           int modifiers,
                           String internalName,
-                          @Nullable String genericSignature,
-                          @Nullable String superClassInternalName,
-                          @Nullable String[] interfaceInternalName) {
+                          @Nonnull(when = When.MAYBE) String genericSignature,
+                          @Nonnull(when = When.MAYBE) String superClassInternalName,
+                          @Nonnull(when = When.MAYBE) String[] interfaceInternalName) {
             if (superClassInternalName != null) {
                 observedTypes.add(superClassInternalName);
             }
@@ -215,14 +214,14 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        @Nullable
-        public RecordComponentVisitor visitRecordComponent(String name, String descriptor, @Nullable String signature) {
+        @Nonnull(when = When.MAYBE)
+        public RecordComponentVisitor visitRecordComponent(String name, String descriptor, @Nonnull(when = When.MAYBE) String signature) {
             observedTypes.add(Type.getType(descriptor).getInternalName());
             return super.visitRecordComponent(name, descriptor, signature);
         }
 
         @Override
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
             observedTypes.add(Type.getType(descriptor).getInternalName());
             AnnotationVisitor annotationVisitor = super.visitAnnotation(descriptor, visible);
@@ -234,8 +233,8 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        @Nullable
-        public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
+        @Nonnull(when = When.MAYBE)
+        public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nonnull(when = When.MAYBE) TypePath typePath, String descriptor, boolean visible) {
             observedTypes.add(Type.getType(descriptor).getInternalName());
             AnnotationVisitor annotationVisitor = super.visitTypeAnnotation(typeReference, typePath, descriptor, visible);
             if (annotationVisitor != null) {
@@ -246,8 +245,8 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        @Nullable
-        public FieldVisitor visitField(int modifiers, String name, String descriptor, @Nullable String signature, @Nullable Object value) {
+        @Nonnull(when = When.MAYBE)
+        public FieldVisitor visitField(int modifiers, String name, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) Object value) {
             FieldVisitor fieldVisitor = super.visitField(modifiers, name, descriptor, signature, value);
             if (fieldVisitor != null) {
                 resolve(Type.getType(descriptor));
@@ -258,8 +257,8 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        @Nullable
-        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable String[] exceptionInternalName) {
+        @Nonnull(when = When.MAYBE)
+        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String[] exceptionInternalName) {
             MethodVisitor methodVisitor = super.visitMethod(modifiers, internalName, descriptor, signature, exceptionInternalName);
             if (methodVisitor != null) {
                 resolve(Type.getType(descriptor));
@@ -416,7 +415,7 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
             }
 
             @Override
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public AnnotationVisitor visitAnnotation(String name, String descriptor) {
                 observedTypes.add(Type.getType(descriptor).getInternalName());
                 AnnotationVisitor annotationVisitor = super.visitAnnotation(name, descriptor);
@@ -428,7 +427,7 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
             }
 
             @Override
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public AnnotationVisitor visitArray(String name) {
                 AnnotationVisitor annotationVisitor = super.visitArray(name);
                 if (annotationVisitor != null) {
@@ -454,7 +453,7 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
             }
 
             @Override
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                 observedTypes.add(Type.getType(descriptor).getInternalName());
                 AnnotationVisitor annotationVisitor = super.visitAnnotation(descriptor, visible);
@@ -481,7 +480,7 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
             }
 
             @Override
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public AnnotationVisitor visitAnnotationDefault() {
                 AnnotationVisitor annotationVisitor = super.visitAnnotationDefault();
                 if (annotationVisitor != null) {
@@ -492,7 +491,7 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
             }
 
             @Override
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                 observedTypes.add(Type.getType(descriptor).getInternalName());
                 AnnotationVisitor annotationVisitor = super.visitAnnotation(descriptor, visible);
@@ -504,8 +503,8 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
             }
 
             @Override
-            @Nullable
-            public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
+            @Nonnull(when = When.MAYBE)
+            public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nonnull(when = When.MAYBE) TypePath typePath, String descriptor, boolean visible) {
                 observedTypes.add(Type.getType(descriptor).getInternalName());
                 AnnotationVisitor annotationVisitor = super.visitTypeAnnotation(typeReference, typePath, descriptor, visible);
                 if (annotationVisitor != null) {
@@ -516,7 +515,7 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
             }
 
             @Override
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
                 observedTypes.add(Type.getType(descriptor).getInternalName());
                 AnnotationVisitor annotationVisitor = super.visitParameterAnnotation(index, descriptor, visible);
@@ -528,8 +527,8 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
             }
 
             @Override
-            @Nullable
-            public AnnotationVisitor visitInsnAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
+            @Nonnull(when = When.MAYBE)
+            public AnnotationVisitor visitInsnAnnotation(int typeReference, @Nonnull(when = When.MAYBE) TypePath typePath, String descriptor, boolean visible) {
                 observedTypes.add(Type.getType(descriptor).getInternalName());
                 AnnotationVisitor annotationVisitor = super.visitInsnAnnotation(typeReference, typePath, descriptor, visible);
                 if (annotationVisitor != null) {
@@ -540,8 +539,8 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
             }
 
             @Override
-            @Nullable
-            public AnnotationVisitor visitTryCatchAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
+            @Nonnull(when = When.MAYBE)
+            public AnnotationVisitor visitTryCatchAnnotation(int typeReference, @Nonnull(when = When.MAYBE) TypePath typePath, String descriptor, boolean visible) {
                 observedTypes.add(Type.getType(descriptor).getInternalName());
                 AnnotationVisitor annotationVisitor = super.visitTryCatchAnnotation(typeReference, typePath, descriptor, visible);
                 if (annotationVisitor != null) {
@@ -552,9 +551,9 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
             }
 
             @Override
-            @Nullable
+            @Nonnull(when = When.MAYBE)
             public AnnotationVisitor visitLocalVariableAnnotation(int typeReference,
-                                                                  @Nullable TypePath typePath,
+                                                                  @Nonnull(when = When.MAYBE) TypePath typePath,
                                                                   Label[] start,
                                                                   Label[] end,
                                                                   int[] index,
@@ -612,7 +611,7 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
             }
 
             @Override
-            public void visitTryCatchBlock(Label start, Label end, Label handler, @Nullable String typeInternalName) {
+            public void visitTryCatchBlock(Label start, Label end, Label handler, @Nonnull(when = When.MAYBE) String typeInternalName) {
                 if (typeInternalName != null) {
                     observedTypes.add(typeInternalName);
                 }

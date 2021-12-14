@@ -28,7 +28,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.signature.SignatureWriter;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericSignatureFormatError;
@@ -140,7 +139,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         public String getGenericSignature() {
             TypeDescription.Generic fieldType = getType();
             try {
@@ -207,7 +206,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof FieldDescription)) {
@@ -609,7 +608,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             if (this == other) {
                 return true;
             } else if (other == null || getClass() != other.getClass()) {
@@ -676,7 +675,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof SignatureToken)) {

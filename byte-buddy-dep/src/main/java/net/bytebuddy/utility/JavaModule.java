@@ -24,7 +24,6 @@ import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,7 +83,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @param type The type for which to describe the module.
      * @return A representation of the type's module or {@code null} if the current VM does not support modules.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     public static JavaModule ofType(Class<?> type) {
         Object module = RESOLVER.getModule(type);
         return module == null
@@ -136,7 +135,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @return An input stream for the resource or {@code null} if it does not exist.
      * @throws IOException If an I/O exception occurs.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     public InputStream getResourceAsStream(String name) throws IOException {
         return MODULE.getResourceAsStream(module, name);
     }
@@ -146,7 +145,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      *
      * @return The class loader of the represented module.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     public ClassLoader getClassLoader() {
         return MODULE.getClassLoader(module);
     }
@@ -177,7 +176,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @param module             The target module.
      * @return {@code true} if this module exports the supplied package to this module.
      */
-    public boolean isExported(@Nullable PackageDescription packageDescription, JavaModule module) {
+    public boolean isExported(@Nonnull(when = When.MAYBE) PackageDescription packageDescription, JavaModule module) {
         return packageDescription == null || MODULE.isExported(this.module, packageDescription.getName(), module.unwrap());
     }
 
@@ -188,7 +187,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @param module             The target module.
      * @return {@code true} if this module opens the supplied package to this module.
      */
-    public boolean isOpened(@Nullable PackageDescription packageDescription, JavaModule module) {
+    public boolean isOpened(@Nonnull(when = When.MAYBE) PackageDescription packageDescription, JavaModule module) {
         return packageDescription == null || MODULE.isOpen(this.module, packageDescription.getName(), module.unwrap());
     }
 
@@ -205,7 +204,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
     }
 
     @Override
-    public boolean equals(Object other) {
+    public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
         if (this == other) {
             return true;
         } else if (!(other instanceof JavaModule)) {
@@ -232,7 +231,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @param type The type for which to resolve the module.
          * @return The type's module or {@code null} if the module system is not supported.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         @JavaDispatcher.Defaults
         Object getModule(Class<?> type);
     }
@@ -274,7 +273,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @param value The {@code java.lang.Module} for which to return a class loader.
          * @return The module's class loader.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         ClassLoader getClassLoader(Object value);
 
         /**
@@ -285,7 +284,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @return An input stream for the resource or {@code null} if it does not exist.
          * @throws IOException If an I/O exception occurs.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         InputStream getResourceAsStream(Object value, String name) throws IOException;
 
         /**

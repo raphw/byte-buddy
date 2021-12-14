@@ -10,7 +10,7 @@ import java.util.List;
 
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
 

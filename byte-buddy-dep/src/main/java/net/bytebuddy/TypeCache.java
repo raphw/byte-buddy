@@ -20,7 +20,6 @@ import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.utility.CompoundList;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -90,9 +89,9 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @param key         The key for the type in question.
      * @return The stored type or {@code null} if no type was stored.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended")
-    public Class<?> find(@Nullable ClassLoader classLoader, T key) {
+    public Class<?> find(@Nonnull(when = When.MAYBE) ClassLoader classLoader, T key) {
         ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(new LookupKey(classLoader));
         if (storage == null) {
             return NOT_FOUND;
@@ -115,7 +114,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @return The supplied type or a previously submitted type for the same class loader and key combination.
      */
     @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended")
-    public Class<?> insert(@Nullable ClassLoader classLoader, T key, Class<?> type) {
+    public Class<?> insert(@Nonnull(when = When.MAYBE) ClassLoader classLoader, T key, Class<?> type) {
         ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(new LookupKey(classLoader));
         if (storage == null) {
             storage = new ConcurrentHashMap<T, Reference<Class<?>>>();
@@ -171,7 +170,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @param monitor     A monitor to lock before creating the lazy type.
      * @return The lazily created type or a previously submitted type for the same class loader and key combination.
      */
-    public Class<?> findOrInsert(@Nullable ClassLoader classLoader, T key, Callable<Class<?>> lazy, Object monitor) {
+    public Class<?> findOrInsert(@Nonnull(when = When.MAYBE) ClassLoader classLoader, T key, Callable<Class<?>> lazy, Object monitor) {
         Class<?> type = find(classLoader, key);
         if (type != null) {
             return type;
@@ -241,7 +240,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         /**
          * The referenced class loader.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         private final ClassLoader classLoader;
 
         /**
@@ -254,7 +253,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
          *
          * @param classLoader The represented class loader.
          */
-        protected LookupKey(@Nullable ClassLoader classLoader) {
+        protected LookupKey(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
             this.classLoader = classLoader;
             hashCode = System.identityHashCode(classLoader);
         }
@@ -266,7 +265,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
 
         @Override
         @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             if (this == other) {
                 return true;
             } else if (other instanceof LookupKey) {
@@ -296,7 +295,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
          * @param classLoader    The represented class loader.
          * @param referenceQueue The reference queue to notify upon a garbage collection.
          */
-        protected StorageKey(@Nullable ClassLoader classLoader, ReferenceQueue<? super ClassLoader> referenceQueue) {
+        protected StorageKey(@Nonnull(when = When.MAYBE) ClassLoader classLoader, ReferenceQueue<? super ClassLoader> referenceQueue) {
             super(classLoader, referenceQueue);
             hashCode = System.identityHashCode(classLoader);
         }
@@ -308,7 +307,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
 
         @Override
         @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             if (this == other) {
                 return true;
             } else if (other instanceof LookupKey) {
@@ -345,7 +344,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         /**
          * {@inheritDoc}
          */
-        public Class<?> find(@Nullable ClassLoader classLoader, S key) {
+        public Class<?> find(@Nonnull(when = When.MAYBE) ClassLoader classLoader, S key) {
             try {
                 return super.find(classLoader, key);
             } finally {
@@ -356,7 +355,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         /**
          * {@inheritDoc}
          */
-        public Class<?> insert(@Nullable ClassLoader classLoader, S key, Class<?> type) {
+        public Class<?> insert(@Nonnull(when = When.MAYBE) ClassLoader classLoader, S key, Class<?> type) {
             try {
                 return super.insert(classLoader, key, type);
             } finally {
@@ -378,7 +377,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         /**
          * {@inheritDoc}
          */
-        public Class<?> findOrInsert(@Nullable ClassLoader classLoader, S key, Callable<Class<?>> builder, Object monitor) {
+        public Class<?> findOrInsert(@Nonnull(when = When.MAYBE) ClassLoader classLoader, S key, Callable<Class<?>> builder, Object monitor) {
             try {
                 return super.findOrInsert(classLoader, key, builder, monitor);
             } finally {
@@ -436,7 +435,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         }
 
         @Override
-        public boolean equals(Object other) {
+        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
             if (this == other) {
                 return true;
             } else if (other == null || getClass() != other.getClass()) {

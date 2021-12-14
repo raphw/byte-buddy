@@ -20,7 +20,7 @@ import net.bytebuddy.build.Plugin;
 import org.gradle.api.tasks.Input;
 import org.gradle.util.ConfigureUtil;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull; import javax.annotation.meta.When;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,7 +37,7 @@ public class Transformation {
     /**
      * The fully-qualified name of the plugin type.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     private Class<? extends Plugin> plugin;
 
     /**
@@ -85,7 +85,7 @@ public class Transformation {
      * @return The plugin type to apply.
      */
     @Input
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     public Class<? extends Plugin> getPlugin() {
         return plugin;
     }
@@ -95,7 +95,7 @@ public class Transformation {
      *
      * @param plugin The plugin type to apply.
      */
-    public void setPlugin(@Nullable Class<? extends Plugin> plugin) {
+    public void setPlugin(@Nonnull(when = When.MAYBE) Class<? extends Plugin> plugin) {
         this.plugin = plugin;
     }
 }

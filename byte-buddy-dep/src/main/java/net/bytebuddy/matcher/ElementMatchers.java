@@ -33,7 +33,8 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.JavaModule;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Constructor;
@@ -118,7 +119,7 @@ public final class ElementMatchers {
      * @param <T>   The type of the matched object.
      * @return A matcher that matches an exact value.
      */
-    public static <T> ElementMatcher.Junction<T> is(@Nullable Object value) {
+    public static <T> ElementMatcher.Junction<T> is(@Nonnull(when = When.MAYBE) Object value) {
         return value == null
                 ? NullMatcher.<T>make()
                 : new EqualityMatcher<T>(value);
@@ -2256,7 +2257,7 @@ public final class ElementMatchers {
      * @return A matcher that matches the given class loader and any class loader that is a child of the given
      * class loader.
      */
-    public static <T extends ClassLoader> ElementMatcher.Junction<T> isChildOf(@Nullable ClassLoader classLoader) {
+    public static <T extends ClassLoader> ElementMatcher.Junction<T> isChildOf(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
         return classLoader == ClassLoadingStrategy.BOOTSTRAP_LOADER
                 ? BooleanMatcher.<T>of(true)
                 : ElementMatchers.<T>hasChild(is(classLoader));
@@ -2281,7 +2282,7 @@ public final class ElementMatchers {
      * @return A matcher that matches the given class loader and any class loader that is a parent of the given
      * class loader.
      */
-    public static <T extends ClassLoader> ElementMatcher.Junction<T> isParentOf(@Nullable ClassLoader classLoader) {
+    public static <T extends ClassLoader> ElementMatcher.Junction<T> isParentOf(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
         return classLoader == ClassLoadingStrategy.BOOTSTRAP_LOADER
                 ? ElementMatchers.<T>isBootstrapClassLoader()
                 : new ClassLoaderParentMatcher<T>(classLoader);

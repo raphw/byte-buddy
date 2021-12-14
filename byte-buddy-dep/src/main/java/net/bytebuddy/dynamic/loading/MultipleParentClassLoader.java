@@ -19,7 +19,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.matcher.ElementMatcher;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -94,7 +95,7 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
      * @param parents The parents of this class loader in their application order. This list must not contain {@code null},
      *                i.e. the bootstrap class loader which is an implicit parent of any class loader.
      */
-    public MultipleParentClassLoader(@Nullable ClassLoader parent, List<? extends ClassLoader> parents) {
+    public MultipleParentClassLoader(@Nonnull(when = When.MAYBE) ClassLoader parent, List<? extends ClassLoader> parents) {
         this(parent, parents, true);
     }
 
@@ -107,7 +108,7 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
      *                i.e. the bootstrap class loader which is an implicit parent of any class loader.
      * @param sealed  {@code true} if the class loader is sealed for injection of additional classes.
      */
-    public MultipleParentClassLoader(@Nullable ClassLoader parent, List<? extends ClassLoader> parents, boolean sealed) {
+    public MultipleParentClassLoader(@Nonnull(when = When.MAYBE) ClassLoader parent, List<? extends ClassLoader> parents, boolean sealed) {
         super(parent, sealed);
         this.parents = parents;
     }
@@ -182,7 +183,7 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
         /**
          * The currently represented enumeration or {@code null} if no such enumeration is currently selected.
          */
-        @Nullable
+        @Nonnull(when = When.MAYBE)
         private Enumeration<URL> currentEnumeration;
 
         /**
@@ -473,7 +474,7 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
          * @return A multiple parent class loader that includes all collected class loaders and the explicit parent.
          */
         @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
-        private ClassLoader doBuild(@Nullable ClassLoader parent) {
+        private ClassLoader doBuild(@Nonnull(when = When.MAYBE) ClassLoader parent) {
             return new MultipleParentClassLoader(parent, classLoaders, sealed);
         }
     }

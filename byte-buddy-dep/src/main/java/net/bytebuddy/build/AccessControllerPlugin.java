@@ -33,7 +33,8 @@ import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.lang.annotation.*;
 import java.security.Permission;
 import java.security.PrivilegedAction;
@@ -163,7 +164,7 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
      * The property to control if the access controller should be used even
      * if available or {@code null} if such a property should not be available.
      */
-    @Nullable
+    @Nonnull(when = When.MAYBE)
     @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
     private final String property;
 
@@ -182,7 +183,7 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
      *                 if available or {@code null} if such a property should not be available.
      */
     @UsingReflection.Priority(Integer.MAX_VALUE)
-    public AccessControllerPlugin(@Nullable String property) {
+    public AccessControllerPlugin(@Nonnull(when = When.MAYBE) String property) {
         super(declaresMethod(isAnnotatedWith(Enhance.class)));
         this.property = property;
     }
