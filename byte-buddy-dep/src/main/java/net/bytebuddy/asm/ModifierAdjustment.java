@@ -451,7 +451,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        public void visit(int version, int modifiers, String internalName, String signature, String superClassName, String[] interfaceName) {
+        public void visit(int version, int modifiers, String internalName, @Nullable String signature, @Nullable String superClassName, @Nullable String[] interfaceName) {
             for (Adjustment<TypeDescription> adjustment : typeAdjustments) {
                 if (adjustment.matches(instrumentedType)) {
                     modifiers = adjustment.resolve(modifiers);
@@ -462,7 +462,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
+        public void visitInnerClass(String internalName, @Nullable String outerName, @Nullable String innerName, int modifiers) {
             if (instrumentedType.getInternalName().equals(internalName)) {
                 for (Adjustment<TypeDescription> adjustment : typeAdjustments) {
                     if (adjustment.matches(instrumentedType)) {
@@ -475,7 +475,8 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        public FieldVisitor visitField(int modifiers, String internalName, String descriptor, String signature, Object value) {
+        @Nullable
+        public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable Object value) {
             FieldDescription.InDefinedShape fieldDescription = fields.get(internalName + descriptor);
             if (fieldDescription != null) {
                 for (Adjustment<FieldDescription.InDefinedShape> adjustment : fieldAdjustments) {
@@ -489,7 +490,8 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
+        @Nullable
+        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable String[] exception) {
             MethodDescription methodDescription = methods.get(internalName + descriptor);
             if (methodDescription != null) {
                 for (Adjustment<MethodDescription> adjustment : methodAdjustments) {

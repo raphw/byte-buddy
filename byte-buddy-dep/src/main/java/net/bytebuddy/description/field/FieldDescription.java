@@ -82,6 +82,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         TypeDescription.Generic getDeclaringType();
     }
 
@@ -93,6 +94,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         TypeDescription getDeclaringType();
 
         /**
@@ -287,6 +289,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         public TypeDescription getDeclaringType() {
             return TypeDescription.ForLoadedType.of(field.getDeclaringClass());
         }
@@ -396,6 +399,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         public TypeDescription getDeclaringType() {
             return declaringType;
         }
@@ -460,6 +464,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         public TypeDescription.Generic getDeclaringType() {
             return declaringType;
         }

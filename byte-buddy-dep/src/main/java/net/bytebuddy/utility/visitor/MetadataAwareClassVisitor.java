@@ -17,6 +17,8 @@ package net.bytebuddy.utility.visitor;
 
 import org.objectweb.asm.*;
 
+import javax.annotation.Nullable;
+
 /**
  * A class visitor that traces invocations of visitation methods and notifies if a nest host or outer class was not visited.
  */
@@ -117,7 +119,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     }
 
     @Override
-    public final void visitOuterClass(String owner, String name, String descriptor) {
+    public final void visitOuterClass(String owner, @Nullable String name, @Nullable String descriptor) {
         considerTriggerNestHost();
         triggerOuterClass = false;
         onVisitOuterClass(owner, name, descriptor);
@@ -130,7 +132,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param name       The outer method's name or {@code null} if it does not exist.
      * @param descriptor The outer method's descriptor or {@code null} if it does not exist.
      */
-    protected void onVisitOuterClass(String owner, String name, String descriptor) {
+    protected void onVisitOuterClass(String owner, @Nullable String name, @Nullable String descriptor) {
         super.visitOuterClass(owner, name, descriptor);
     }
 
@@ -152,7 +154,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     }
 
     @Override
-    public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
+    @Nullable
+    public RecordComponentVisitor visitRecordComponent(String name, String descriptor, @Nullable String signature) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
@@ -167,11 +170,13 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param signature  The record component's generic signature or {@code null} if the record component's type is non-generic.
      * @return The record component visitor or {@code null} if the component should not be visited.
      */
-    protected RecordComponentVisitor onVisitRecordComponent(String name, String descriptor, String signature) {
+    @Nullable
+    protected RecordComponentVisitor onVisitRecordComponent(String name, String descriptor, @Nullable String signature) {
         return super.visitRecordComponent(name, descriptor, signature);
     }
 
     @Override
+    @Nullable
     public final AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
@@ -185,11 +190,13 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param visible    {@code true} if the annotation is visible at runtime.
      * @return An annotation visitor or {@code null} if the annotation should be ignored.
      */
+    @Nullable
     protected AnnotationVisitor onVisitAnnotation(String descriptor, boolean visible) {
         return super.visitAnnotation(descriptor, visible);
     }
 
     @Override
+    @Nullable
     public final AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
@@ -205,6 +212,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param visible       {@code true} if the annotation is visible at runtime.
      * @return An annotation visitor or {@code null} if the annotation should be ignored.
      */
+    @Nullable
     protected AnnotationVisitor onVisitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
         return super.visitTypeAnnotation(typeReference, typePath, descriptor, visible);
     }
@@ -243,7 +251,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     }
 
     @Override
-    public final void visitInnerClass(String name, String outerName, String innerName, int modifiers) {
+    public final void visitInnerClass(String name, @Nullable String outerName, @Nullable String innerName, int modifiers) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
@@ -254,20 +262,21 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * An order-sensitive invocation of {@link ClassVisitor#visitInnerClass(String, String, String, int)}.
      *
      * @param name      The internal name of the inner class.
-     * @param outerName The internal name of the outer class.
+     * @param outerName The internal name of the outer class or {@code null} for a member class.
      * @param innerName The inner class's simple name or {@code null} for an anonymous class.
      * @param modifiers The inner class's source code modifiers.
      */
-    protected void onVisitInnerClass(String name, String outerName, String innerName, int modifiers) {
+    protected void onVisitInnerClass(String name, @Nullable String outerName, @Nullable String innerName, int modifiers) {
         super.visitInnerClass(name, outerName, innerName, modifiers);
     }
 
     @Override
-    public final FieldVisitor visitField(int modifiers, String internalName, String descriptor, String signature, Object defaultValue) {
+    @Nullable
+    public final FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable Object value) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
-        return onVisitField(modifiers, internalName, descriptor, signature, defaultValue);
+        return onVisitField(modifiers, internalName, descriptor, signature, value);
     }
 
     /**
@@ -277,15 +286,17 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param internalName The field's internal name.
      * @param descriptor   The field type's descriptor.
      * @param signature    The field's generic signature or {@code null} if the field is not generic.
-     * @param defaultValue The field's default value or {@code null} if no such value exists.
+     * @param value        The field's default value or {@code null} if no such value exists.
      * @return A field visitor to visit the field or {@code null} to ignore it.
      */
-    protected FieldVisitor onVisitField(int modifiers, String internalName, String descriptor, String signature, Object defaultValue) {
-        return super.visitField(modifiers, internalName, descriptor, signature, defaultValue);
+    @Nullable
+    protected FieldVisitor onVisitField(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable Object value) {
+        return super.visitField(modifiers, internalName, descriptor, signature, value);
     }
 
     @Override
-    public final MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
+    @Nullable
+    public final MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable String[] exception) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
@@ -302,7 +313,8 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param exception    The method's declared exceptions or {@code null} if no exceptions are declared.
      * @return A method visitor to visit the method or {@code null} to ignore it.
      */
-    protected MethodVisitor onVisitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
+    @Nullable
+    protected MethodVisitor onVisitMethod(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable String[] exception) {
         return super.visitMethod(modifiers, internalName, descriptor, signature, exception);
     }
 

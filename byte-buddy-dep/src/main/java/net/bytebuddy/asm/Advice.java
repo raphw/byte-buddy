@@ -5625,7 +5625,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param stackSize           The size of the operand stack.
          * @param stack               An array containing the types of the current operand stack.
          */
-        void translateFrame(MethodVisitor methodVisitor, int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack);
+        void translateFrame(MethodVisitor methodVisitor,
+                            int type,
+                            int localVariableLength,
+                            @Nullable Object[] localVariable,
+                            int stackSize,
+                            @Nullable Object[] stack);
 
         /**
          * Injects a frame indicating the beginning of a return value handler for the currently handled method.
@@ -5757,9 +5762,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public void translateFrame(MethodVisitor methodVisitor,
                                        int type,
                                        int localVariableLength,
-                                       Object[] localVariable,
+                                       @Nullable Object[] localVariable,
                                        int stackSize,
-                                       Object[] stack) {
+                                       @Nullable Object[] stack) {
                 /* do nothing */
             }
 
@@ -5981,9 +5986,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           List<? extends TypeDescription> additionalTypes,
                                           int type,
                                           int localVariableLength,
-                                          Object[] localVariable,
+                                          @Nullable Object[] localVariable,
                                           int stackSize,
-                                          Object[] stack) {
+                                          @Nullable Object[] stack) {
                 switch (type) {
                     case Opcodes.F_SAME:
                     case Opcodes.F_SAME1:
@@ -6268,9 +6273,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void translateFrame(MethodVisitor methodVisitor,
                                            int type,
                                            int localVariableLength,
-                                           Object[] localVariable,
+                                           @Nullable Object[] localVariable,
                                            int stackSize,
-                                           Object[] stack) {
+                                           @Nullable Object[] stack) {
                     methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
                 }
 
@@ -6366,9 +6371,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                               List<? extends TypeDescription> additionalTypes,
                                               int type,
                                               int localVariableLength,
-                                              Object[] localVariable,
+                                              @Nullable Object[] localVariable,
                                               int stackSize,
-                                              Object[] stack) {
+                                              @Nullable Object[] stack) {
                     if (type == Opcodes.F_FULL && localVariableLength > 0 && localVariable[0] != Opcodes.UNINITIALIZED_THIS) {
                         allowCompactCompletionFrame = true;
                     }
@@ -6524,9 +6529,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public void translateFrame(MethodVisitor methodVisitor,
                                                int type,
                                                int localVariableLength,
-                                               Object[] localVariable,
+                                               @Nullable Object[] localVariable,
                                                int stackSize,
-                                               Object[] stack) {
+                                               @Nullable Object[] stack) {
                         translateFrame(methodVisitor,
                                 TranslationMode.COPY,
                                 instrumentedMethod,
@@ -6623,9 +6628,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public void translateFrame(MethodVisitor methodVisitor,
                                                int type,
                                                int localVariableLength,
-                                               Object[] localVariable,
+                                               @Nullable Object[] localVariable,
                                                int stackSize,
-                                               Object[] stack) {
+                                               @Nullable Object[] stack) {
                         switch (type) {
                             case Opcodes.F_SAME:
                             case Opcodes.F_SAME1:
@@ -6752,9 +6757,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void translateFrame(MethodVisitor methodVisitor,
                                            int type,
                                            int localVariableLength,
-                                           Object[] localVariable,
+                                           @Nullable Object[] localVariable,
                                            int stackSize,
-                                           Object[] stack) {
+                                           @Nullable Object[] stack) {
                     Default.this.translateFrame(methodVisitor,
                             translationMode,
                             adviceMethod,
@@ -8311,7 +8316,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
+                    @Nullable
+                    public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable String[] exception) {
                         return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
                                 ? new ExceptionTableSubstitutor(Inlining.Resolved.this.apply(methodVisitor,
                                 implementationContext,
@@ -8339,7 +8345,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
+                        @Nullable
+                        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable String[] exception) {
                             return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
                                     ? new ExceptionTableCollector(methodVisitor)
                                     : IGNORE_METHOD;
@@ -8368,13 +8375,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
+                        public void visitTryCatchBlock(Label start, Label end, Label handler, @Nullable String type) {
                             methodVisitor.visitTryCatchBlock(start, end, handler, type);
                             labels.addAll(Arrays.asList(start, end, handler));
                         }
 
                         @Override
-                        public AnnotationVisitor visitTryCatchAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                        @Nullable
+                        public AnnotationVisitor visitTryCatchAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
                             return methodVisitor.visitTryCatchAnnotation(typeReference, typePath, descriptor, visible);
                         }
                     }
@@ -8417,7 +8425,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public AnnotationVisitor visitTryCatchAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                        @Nullable
+                        public AnnotationVisitor visitTryCatchAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
                             return IGNORE_ANNOTATION;
                         }
 
@@ -8862,7 +8871,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 : new WithExceptionHandler(adviceMethod, postProcessor, namedTypes, uninitializedNamedTypes, userFactories, classReader, enterType, throwable);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Map<String, TypeDefinition> getNamedTypes() {
                         return uninitializedNamedTypes;
                     }
@@ -9239,21 +9250,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
+                @Nullable
                 public AnnotationVisitor visitAnnotationDefault() {
                     return IGNORE_ANNOTATION;
                 }
 
                 @Override
+                @Nullable
                 public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                     return IGNORE_ANNOTATION;
                 }
 
                 @Override
-                public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                @Nullable
+                public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
                     return IGNORE_ANNOTATION;
                 }
 
                 @Override
+                @Nullable
                 public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
                     return IGNORE_ANNOTATION;
                 }
@@ -9269,7 +9284,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void visitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
+                public void visitFrame(int type, int localVariableLength, @Nullable Object[] localVariable, int stackSize, @Nullable Object[] stack) {
                     stackMapFrameHandler.translateFrame(methodVisitor, type, localVariableLength, localVariable, stackSize, stack);
                 }
 
@@ -10571,7 +10586,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         @Override
-        public void onVisitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
+        public void onVisitFrame(int type, int localVariableLength, @Nullable Object[] localVariable, int stackSize, @Nullable Object[] stack) {
             stackMapFrameHandler.translateFrame(mv, type, localVariableLength, localVariable, stackSize, stack);
         }
 

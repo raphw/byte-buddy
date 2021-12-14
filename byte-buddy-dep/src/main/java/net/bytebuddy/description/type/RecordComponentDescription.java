@@ -28,6 +28,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import org.objectweb.asm.signature.SignatureWriter;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.GenericSignatureFormatError;
@@ -93,6 +94,7 @@ public interface RecordComponentDescription extends DeclaredByType.WithMandatory
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         TypeDescription getDeclaringType();
 
         /**
@@ -238,6 +240,7 @@ public interface RecordComponentDescription extends DeclaredByType.WithMandatory
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         public TypeDescription getDeclaringType() {
             return TypeDescription.ForLoadedType.of(RECORD_COMPONENT.getDeclaringRecord(recordComponent));
         }
@@ -399,6 +402,7 @@ public interface RecordComponentDescription extends DeclaredByType.WithMandatory
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         public TypeDescription getDeclaringType() {
             return declaringType;
         }
@@ -477,6 +481,7 @@ public interface RecordComponentDescription extends DeclaredByType.WithMandatory
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         public TypeDefinition getDeclaringType() {
             return declaringType;
         }

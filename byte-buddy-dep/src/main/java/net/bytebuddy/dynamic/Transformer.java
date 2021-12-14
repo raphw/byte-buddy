@@ -27,6 +27,7 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -221,6 +222,7 @@ public interface Transformer<T> {
             /**
              * {@inheritDoc}
              */
+            @Nonnull
             public TypeDefinition getDeclaringType() {
                 return declaringType;
             }
@@ -424,6 +426,7 @@ public interface Transformer<T> {
             /**
              * {@inheritDoc}
              */
+            @Nonnull
             public TypeDefinition getDeclaringType() {
                 return declaringType;
             }

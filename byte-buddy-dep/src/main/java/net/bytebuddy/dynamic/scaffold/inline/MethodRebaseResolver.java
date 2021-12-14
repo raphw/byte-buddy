@@ -31,6 +31,7 @@ import net.bytebuddy.implementation.auxiliary.TrivialType;
 import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 
@@ -302,6 +303,7 @@ public interface MethodRebaseResolver {
                 /**
                  * {@inheritDoc}
                  */
+                @Nonnull
                 public TypeDescription getDeclaringType() {
                     return methodDescription.getDeclaringType();
                 }
@@ -456,6 +458,7 @@ public interface MethodRebaseResolver {
                 /**
                  * {@inheritDoc}
                  */
+                @Nonnull
                 public TypeDescription getDeclaringType() {
                     return methodDescription.getDeclaringType();
                 }

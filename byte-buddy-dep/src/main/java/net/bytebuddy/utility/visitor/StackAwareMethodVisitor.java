@@ -22,6 +22,7 @@ import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -371,7 +372,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     }
 
     @Override
-    public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
+    public void visitTryCatchBlock(Label start, Label end, Label handler, @Nullable String type) {
         sizes.put(handler, Collections.singletonList(StackSize.SINGLE));
         super.visitTryCatchBlock(start, end, handler, type);
     }

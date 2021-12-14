@@ -36,6 +36,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureWriter;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -310,6 +311,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         TypeDescription.Generic getDeclaringType();
 
         /**
@@ -326,6 +328,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         TypeDescription getDeclaringType();
 
         /**
@@ -1037,6 +1040,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         public TypeDescription getDeclaringType() {
             return TypeDescription.ForLoadedType.of(executable.getDeclaringClass());
         }
@@ -1175,6 +1179,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         public TypeDescription getDeclaringType() {
             return TypeDescription.ForLoadedType.of(executable.getDeclaringClass());
         }
@@ -1482,6 +1487,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         public TypeDescription getDeclaringType() {
             return declaringType;
         }
@@ -1576,6 +1582,7 @@ public interface MethodDescription extends TypeVariableSource,
             /**
              * {@inheritDoc}
              */
+            @Nonnull
             public TypeDescription getDeclaringType() {
                 return typeDescription;
             }
@@ -1687,6 +1694,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         public TypeDescription.Generic getDeclaringType() {
             return declaringType;
         }

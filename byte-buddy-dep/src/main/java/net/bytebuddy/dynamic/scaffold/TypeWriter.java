@@ -58,6 +58,7 @@ import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.commons.SimpleRemapper;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -138,7 +139,8 @@ public interface TypeWriter<T> {
              * @param defaultValue The default value that was defined previously or {@code null} if no default value is defined.
              * @return The default value for the represented field or {@code null} if no default value is to be defined.
              */
-            Object resolveDefault(Object defaultValue);
+            @Nullable
+            Object resolveDefault(@Nullable Object defaultValue);
 
             /**
              * Writes this entry to a given class visitor.
@@ -200,7 +202,7 @@ public interface TypeWriter<T> {
                 /**
                  * {@inheritDoc}
                  */
-                public Object resolveDefault(Object defaultValue) {
+                public Object resolveDefault(@Nullable Object defaultValue) {
                     throw new IllegalStateException("An implicit field record does not expose a default value: " + this);
                 }
 
@@ -287,7 +289,8 @@ public interface TypeWriter<T> {
                 /**
                  * {@inheritDoc}
                  */
-                public Object resolveDefault(Object defaultValue) {
+                @Nullable
+                public Object resolveDefault(@Nullable Object defaultValue) {
                     return this.defaultValue == null
                             ? defaultValue
                             : this.defaultValue;
@@ -1088,6 +1091,7 @@ public interface TypeWriter<T> {
                         /**
                          * {@inheritDoc}
                          */
+                        @Nonnull
                         public TypeDescription getDeclaringType() {
                             return instrumentedType;
                         }
@@ -1358,6 +1362,7 @@ public interface TypeWriter<T> {
                     /**
                      * {@inheritDoc}
                      */
+                    @Nonnull
                     public TypeDescription getDeclaringType() {
                         return instrumentedType;
                     }
@@ -1449,6 +1454,7 @@ public interface TypeWriter<T> {
                     /**
                      * {@inheritDoc}
                      */
+                    @Nonnull
                     public TypeDescription getDeclaringType() {
                         return instrumentedType;
                     }
@@ -2320,7 +2326,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public void visit(int version, int modifiers, String name, String signature, String superName, String[] interfaces) {
+            public void visit(int version, int modifiers, String name, @Nullable String signature, @Nullable String superName, @Nullable String[] interfaceInternalName) {
                 ClassFileVersion classFileVersion = ClassFileVersion.ofMinorMajor(version);
                 List<Constraint> constraints = new ArrayList<Constraint>();
                 constraints.add(new Constraint.ForClassFileVersion(classFileVersion));
@@ -2350,11 +2356,11 @@ public interface TypeWriter<T> {
                     record = false;
                 }
                 constraint = new Constraint.Compound(constraints);
-                constraint.assertType(modifiers, interfaces != null, signature != null);
+                constraint.assertType(modifiers, interfaceInternalName != null, signature != null);
                 if (record) {
                     constraint.assertRecord();
                 }
-                super.visit(version, modifiers, name, signature, superName, interfaces);
+                super.visit(version, modifiers, name, signature, superName, interfaceInternalName);
             }
 
             @Override
@@ -2364,13 +2370,15 @@ public interface TypeWriter<T> {
             }
 
             @Override
+            @Nullable
             public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                 constraint.assertAnnotation();
                 return super.visitAnnotation(descriptor, visible);
             }
 
             @Override
-            public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+            @Nullable
+            public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
                 constraint.assertTypeAnnotation();
                 return super.visitTypeAnnotation(typeReference, typePath, descriptor, visible);
             }
@@ -2388,8 +2396,9 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public FieldVisitor visitField(int modifiers, String name, String descriptor, String signature, Object defaultValue) {
-                if (defaultValue != null) {
+            @Nullable
+            public FieldVisitor visitField(int modifiers, String name, String descriptor, @Nullable String signature, @Nullable Object value) {
+                if (value != null) {
                     Class<?> type;
                     switch (descriptor.charAt(0)) {
                         case 'Z':
@@ -2414,8 +2423,8 @@ public interface TypeWriter<T> {
                             }
                             type = String.class;
                     }
-                    if (!type.isInstance(defaultValue)) {
-                        throw new IllegalStateException("Field " + name + " defines an incompatible default value " + defaultValue);
+                    if (!type.isInstance(value)) {
+                        throw new IllegalStateException("Field " + name + " defines an incompatible default value " + value);
                     } else if (type == Integer.class) {
                         int minimum, maximum;
                         switch (descriptor.charAt(0)) {
@@ -2439,9 +2448,8 @@ public interface TypeWriter<T> {
                                 minimum = Integer.MIN_VALUE;
                                 maximum = Integer.MAX_VALUE;
                         }
-                        int value = (Integer) defaultValue;
-                        if (value < minimum || value > maximum) {
-                            throw new IllegalStateException("Field " + name + " defines an incompatible default value " + defaultValue);
+                        if ((Integer) value < minimum || (Integer) value > maximum) {
+                            throw new IllegalStateException("Field " + name + " defines an incompatible default value " + value);
                         }
                     }
                 }
@@ -2450,14 +2458,15 @@ public interface TypeWriter<T> {
                         (modifiers & Opcodes.ACC_STATIC) != 0,
                         (modifiers & Opcodes.ACC_FINAL) != 0,
                         signature != null);
-                FieldVisitor fieldVisitor = super.visitField(modifiers, name, descriptor, signature, defaultValue);
+                FieldVisitor fieldVisitor = super.visitField(modifiers, name, descriptor, signature, value);
                 return fieldVisitor == null
                         ? IGNORE_FIELD
                         : new ValidatingFieldVisitor(fieldVisitor);
             }
 
             @Override
-            public MethodVisitor visitMethod(int modifiers, String name, String descriptor, String signature, String[] exceptions) {
+            @Nullable
+            public MethodVisitor visitMethod(int modifiers, String name, String descriptor, @Nullable String signature, @Nullable String[] exceptionInternalName) {
                 constraint.assertMethod(name,
                         (modifiers & Opcodes.ACC_ABSTRACT) != 0,
                         (modifiers & Opcodes.ACC_PUBLIC) != 0,
@@ -2469,7 +2478,7 @@ public interface TypeWriter<T> {
                         name.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME),
                         !descriptor.startsWith(NO_PARAMETERS) || descriptor.endsWith(RETURNS_VOID),
                         signature != null);
-                MethodVisitor methodVisitor = super.visitMethod(modifiers, name, descriptor, signature, exceptions);
+                MethodVisitor methodVisitor = super.visitMethod(modifiers, name, descriptor, signature, exceptionInternalName);
                 return methodVisitor == null
                         ? IGNORE_METHOD
                         : new ValidatingMethodVisitor(methodVisitor, name);
@@ -3713,9 +3722,9 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+                public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                     constraint.assertAnnotation();
-                    return super.visitAnnotation(desc, visible);
+                    return super.visitAnnotation(descriptor, visible);
                 }
             }
 
@@ -3741,12 +3750,14 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+                @Nullable
+                public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                     constraint.assertAnnotation();
-                    return super.visitAnnotation(desc, visible);
+                    return super.visitAnnotation(descriptor, visible);
                 }
 
                 @Override
+                @Nullable
                 public AnnotationVisitor visitAnnotationDefault() {
                     constraint.assertDefaultValue(name);
                     return super.visitAnnotationDefault();
@@ -4306,7 +4317,7 @@ public interface TypeWriter<T> {
                         protected abstract void onStart();
 
                         @Override
-                        public void visitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
+                        public void visitFrame(int type, int localVariableLength, @Nullable Object[] localVariable, int stackSize, @Nullable Object[] stack) {
                             super.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
                             frameWriter.onFrame(type, localVariableLength);
                         }
@@ -4923,7 +4934,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    protected void onVisitOuterClass(String owner, String name, String descriptor) {
+                    protected void onVisitOuterClass(String owner, @Nullable String name, @Nullable String descriptor) {
                         try { // The Groovy compiler often gets this attribute wrong such that this safety just retains it.
                             onOuterType();
                         } catch (Throwable ignored) {
@@ -4949,6 +4960,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    @Nullable
                     protected AnnotationVisitor onVisitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
                         return annotationRetention.isEnabled()
                                 ? cv.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
@@ -4956,6 +4968,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    @Nullable
                     protected AnnotationVisitor onVisitAnnotation(String descriptor, boolean visible) {
                         return annotationRetention.isEnabled()
                                 ? cv.visitAnnotation(descriptor, visible)
@@ -4963,7 +4976,8 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    protected RecordComponentVisitor onVisitRecordComponent(String name, String descriptor, String genericSignature) {
+                    @Nullable
+                    protected RecordComponentVisitor onVisitRecordComponent(String name, String descriptor, @Nullable String genericSignature) {
                         RecordComponentDescription recordComponentDescription = declarableRecordComponents.remove(name);
                         if (recordComponentDescription != null) {
                             RecordComponentPool.Record record = recordComponentPool.target(recordComponentDescription);
@@ -4981,7 +4995,8 @@ public interface TypeWriter<T> {
                      * @param genericSignature The record component's original generic signature which can be {@code null}.
                      * @return A record component visitor for visiting the existing record component definition.
                      */
-                    protected RecordComponentVisitor redefine(RecordComponentPool.Record record, String genericSignature) {
+                    @Nullable
+                    protected RecordComponentVisitor redefine(RecordComponentPool.Record record, @Nullable String genericSignature) {
                         RecordComponentDescription recordComponentDescription = record.getRecordComponent();
                         RecordComponentVisitor recordComponentVisitor = cv.visitRecordComponent(recordComponentDescription.getActualName(),
                                 recordComponentDescription.getDescriptor(),
@@ -4994,31 +5009,33 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    @Nullable
                     protected FieldVisitor onVisitField(int modifiers,
                                                         String internalName,
                                                         String descriptor,
-                                                        String genericSignature,
-                                                        Object defaultValue) {
+                                                        @Nullable String genericSignature,
+                                                        @Nullable Object value) {
                         FieldDescription fieldDescription = declarableFields.remove(new SignatureKey(internalName, descriptor));
                         if (fieldDescription != null) {
                             FieldPool.Record record = fieldPool.target(fieldDescription);
                             if (!record.isImplicit()) {
-                                return redefine(record, defaultValue, modifiers, genericSignature);
+                                return redefine(record, value, modifiers, genericSignature);
                             }
                         }
-                        return cv.visitField(modifiers, internalName, descriptor, genericSignature, defaultValue);
+                        return cv.visitField(modifiers, internalName, descriptor, genericSignature, value);
                     }
 
                     /**
                      * Redefines a field using the given explicit field pool record and default value.
                      *
                      * @param record           The field pool value to apply during visitation of the existing field.
-                     * @param defaultValue     The default value to write onto the field which might be {@code null}.
+                     * @param value            The default value to write onto the field which might be {@code null}.
                      * @param modifiers        The original modifiers of the transformed field.
                      * @param genericSignature The field's original generic signature which can be {@code null}.
                      * @return A field visitor for visiting the existing field definition.
                      */
-                    protected FieldVisitor redefine(FieldPool.Record record, Object defaultValue, int modifiers, String genericSignature) {
+                    @Nullable
+                    protected FieldVisitor redefine(FieldPool.Record record, @Nullable Object value, int modifiers, @Nullable String genericSignature) {
                         FieldDescription instrumentedField = record.getField();
                         FieldVisitor fieldVisitor = cv.visitField(instrumentedField.getActualModifiers() | resolveDeprecationModifiers(modifiers),
                                 instrumentedField.getInternalName(),
@@ -5026,18 +5043,19 @@ public interface TypeWriter<T> {
                                 TypeDescription.AbstractBase.RAW_TYPES
                                         ? genericSignature
                                         : instrumentedField.getGenericSignature(),
-                                record.resolveDefault(defaultValue));
+                                record.resolveDefault(value));
                         return fieldVisitor == null
                                 ? IGNORE_FIELD
                                 : new AttributeObtainingFieldVisitor(fieldVisitor, record);
                     }
 
                     @Override
+                    @Nullable
                     protected MethodVisitor onVisitMethod(int modifiers,
                                                           String internalName,
                                                           String descriptor,
-                                                          String genericSignature,
-                                                          String[] exceptionName) {
+                                                          @Nullable String genericSignature,
+                                                          @Nullable String[] exceptionName) {
                         if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
                             MethodVisitor methodVisitor = cv.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName);
                             return methodVisitor == null
@@ -5067,7 +5085,8 @@ public interface TypeWriter<T> {
                      * @param genericSignature  The method's original generic signature which can be {@code null}.
                      * @return A method visitor which is capable of consuming the original method.
                      */
-                    protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin, int modifiers, String genericSignature) {
+                    @Nullable
+                    protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin, int modifiers, @Nullable String genericSignature) {
                         MethodPool.Record record = methodPool.target(methodDescription);
                         if (!record.getSort().isDefined()) {
                             return cv.visitMethod(methodDescription.getActualModifiers() | resolveDeprecationModifiers(modifiers),
@@ -5114,7 +5133,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    protected void onVisitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
+                    protected void onVisitInnerClass(String internalName, @Nullable String outerName, @Nullable String innerName, int modifiers) {
                         if (!internalName.equals(instrumentedType.getInternalName())) {
                             TypeDescription declaredType = declaredTypes.remove(internalName);
                             if (declaredType == null) {
@@ -5227,13 +5246,15 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
-                        public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                        @Nullable
+                        public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
                                     : IGNORE_ANNOTATION;
                         }
 
                         @Override
+                        @Nullable
                         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitAnnotation(descriptor, visible)
@@ -5329,18 +5350,21 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
+                        @Nullable
                         public AnnotationVisitor visitAnnotationDefault() {
                             return IGNORE_ANNOTATION; // Annotation types can never be rebased.
                         }
 
                         @Override
-                        public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                        @Nullable
+                        public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
                                     : IGNORE_ANNOTATION;
                         }
 
                         @Override
+                        @Nullable
                         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitAnnotation(descriptor, visible)
@@ -5355,6 +5379,7 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
+                        @Nullable
                         public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitParameterAnnotation(index, descriptor, visible)
@@ -5451,18 +5476,21 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
+                        @Nullable
                         public AnnotationVisitor visitAnnotationDefault() {
                             return IGNORE_ANNOTATION;
                         }
 
                         @Override
-                        public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                        @Nullable
+                        public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nullable TypePath typePath, String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
                                     : IGNORE_ANNOTATION;
                         }
 
                         @Override
+                        @Nullable
                         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitAnnotation(descriptor, visible)
@@ -5470,6 +5498,7 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
+                        @Nullable
                         public void visitAnnotableParameterCount(int count, boolean visible) {
                             if (annotationRetention.isEnabled()) {
                                 super.visitAnnotableParameterCount(count, visible);
@@ -5477,6 +5506,7 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
+                        @Nullable
                         public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
                             return annotationRetention.isEnabled()
                                     ? super.visitParameterAnnotation(index, descriptor, visible)
@@ -5513,8 +5543,9 @@ public interface TypeWriter<T> {
 
                     /**
                      * Creates a new signature key.
+                     *
                      * @param internalName The represented internal name.
-                     * @param descriptor The represented descriptor.
+                     * @param descriptor   The represented descriptor.
                      */
                     public SignatureKey(String internalName, String descriptor) {
                         this.internalName = internalName;
@@ -5715,6 +5746,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    @Nullable
                     protected AnnotationVisitor onVisitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
                         return annotationRetention.isEnabled()
                                 ? cv.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
@@ -5722,6 +5754,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    @Nullable
                     protected AnnotationVisitor onVisitAnnotation(String descriptor, boolean visible) {
                         return annotationRetention.isEnabled()
                                 ? cv.visitAnnotation(descriptor, visible)

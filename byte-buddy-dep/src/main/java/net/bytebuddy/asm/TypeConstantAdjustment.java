@@ -26,6 +26,8 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
 
+import javax.annotation.Nullable;
+
 /**
  * <p>
  * This class visitor wrapper ensures that class files of a version previous to Java 5 do not store class entries in the generated class's constant pool.
@@ -95,13 +97,14 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
         }
 
         @Override
-        public void visit(int version, int modifiers, String name, String signature, String superClassName, String[] interfaceName) {
+        public void visit(int version, int modifiers, String name, @Nullable String signature, @Nullable String superClassName, @Nullable String[] interfaceName) {
             supportsTypeConstants = ClassFileVersion.ofMinorMajor(version).isAtLeast(ClassFileVersion.JAVA_V5);
             super.visit(version, modifiers, name, signature, superClassName, interfaceName);
         }
 
         @Override
-        public MethodVisitor visitMethod(int modifiers, String name, String descriptor, String signature, String[] exception) {
+        @Nullable
+        public MethodVisitor visitMethod(int modifiers, String name, String descriptor, @Nullable String signature, @Nullable String[] exception) {
             MethodVisitor methodVisitor = super.visitMethod(modifiers, name, descriptor, signature, exception);
             return supportsTypeConstants || methodVisitor == null
                     ? methodVisitor

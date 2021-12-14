@@ -17,6 +17,7 @@ package net.bytebuddy.description;
 
 import net.bytebuddy.description.type.TypeDefinition;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -40,6 +41,7 @@ public interface DeclaredByType {
         /**
          * {@inheritDoc}
          */
+        @Nonnull
         TypeDefinition getDeclaringType();
     }
 }

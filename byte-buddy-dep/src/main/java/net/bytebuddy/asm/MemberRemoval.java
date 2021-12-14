@@ -207,7 +207,8 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        public FieldVisitor visitField(int modifiers, String internalName, String descriptor, String signature, Object value) {
+        @Nullable
+        public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable Object value) {
             FieldDescription.InDefinedShape fieldDescription = fields.get(internalName + descriptor);
             return fieldDescription != null && fieldMatcher.matches(fieldDescription)
                     ? REMOVE_FIELD
@@ -215,7 +216,8 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
+        @Nullable
+        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable String[] exception) {
             MethodDescription methodDescription = methods.get(internalName + descriptor);
             return methodDescription != null && methodMatcher.matches(methodDescription)
                     ? REMOVE_METHOD

@@ -309,8 +309,9 @@ public interface AsmVisitorWrapper {
             }
 
             @Override
-            public FieldVisitor visitField(int modifiers, String internalName, String descriptor, String signature, Object defaultValue) {
-                FieldVisitor fieldVisitor = super.visitField(modifiers, internalName, descriptor, signature, defaultValue);
+            @Nullable
+            public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable Object value) {
+                FieldVisitor fieldVisitor = super.visitField(modifiers, internalName, descriptor, signature, value);
                 FieldDescription.InDefinedShape fieldDescription = fields.get(internalName + descriptor);
                 if (fieldVisitor != null && fieldDescription != null) {
                     for (Entry entry : entries) {
@@ -646,7 +647,8 @@ public interface AsmVisitorWrapper {
             }
 
             @Override
-            public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exceptions) {
+            @Nullable
+            public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nullable String signature, @Nullable String[] exceptions) {
                 MethodVisitor methodVisitor = super.visitMethod(modifiers, internalName, descriptor, signature, exceptions);
                 MethodDescription methodDescription = methods.get(internalName + descriptor);
                 if (methodVisitor != null && methodDescription != null) {

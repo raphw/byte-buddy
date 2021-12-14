@@ -48,6 +48,7 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 
@@ -999,6 +1000,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * {@inheritDoc}
                  */
+                @Nonnull
                 public TypeDescription getDeclaringType() {
                     return instrumentedType;
                 }
@@ -1207,6 +1209,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * {@inheritDoc}
                  */
+                @Nonnull
                 public TypeDescription getDeclaringType() {
                     return instrumentedType;
                 }
@@ -1305,6 +1308,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * {@inheritDoc}
                  */
+                @Nonnull
                 public TypeDescription getDeclaringType() {
                     return instrumentedType;
                 }
@@ -1403,6 +1407,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * {@inheritDoc}
                  */
+                @Nonnull
                 public TypeDescription getDeclaringType() {
                     return instrumentedType;
                 }
