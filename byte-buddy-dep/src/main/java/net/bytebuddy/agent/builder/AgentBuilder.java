@@ -8074,12 +8074,6 @@ public interface AgentBuilder {
         };
 
         /**
-         * Indicates that an original implementation can be ignored when redefining a method.
-         */
-        @Nonnull(when = When.NEVER)
-        protected static final MethodVisitor IGNORE_ORIGINAL = null;
-
-        /**
          * Releases the supplied class file transformer when it was built with {@link AgentBuilder#with(LambdaInstrumentationStrategy)} enabled.
          * Subsequently, the class file transformer is no longer applied when a class that represents a lambda expression is created.
          *
