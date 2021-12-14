@@ -44,6 +44,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.io.Serializable;
@@ -3765,7 +3766,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Type check is performed by erasure implementation")
-            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+            public boolean equals(@CheckForNull Object other) {
                 return this == other || asErasure().equals(other);
             }
 
@@ -4334,7 +4335,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Type check is performed by erasure implementation")
-            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+            public boolean equals(@CheckForNull Object other) {
                 if (this == other) {
                     return true;
                 } else if (getSort().isNonGeneric()) {
@@ -4633,7 +4634,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+            public boolean equals(@CheckForNull Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof Generic)) {
@@ -5076,7 +5077,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+            public boolean equals(@CheckForNull Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof Generic)) {
@@ -5675,7 +5676,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+            public boolean equals(@CheckForNull Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof Generic)) {
@@ -5903,7 +5904,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
-                public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+                public boolean equals(@CheckForNull Object other) {
                     if (this == other) {
                         return true;
                     } else if (!(other instanceof Generic)) {
@@ -6260,7 +6261,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+            public boolean equals(@CheckForNull Object other) {
                 return this == other || other instanceof TypeDefinition && resolve().equals(other);
             }
 
@@ -8211,7 +8212,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+        public boolean equals(@CheckForNull Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof TypeDefinition)) {

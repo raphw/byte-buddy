@@ -28,6 +28,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.lang.annotation.*;
@@ -385,7 +386,7 @@ public interface AnnotationDescription {
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+        public boolean equals(@CheckForNull Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof AnnotationInvocationHandler)) {
@@ -505,7 +506,7 @@ public interface AnnotationDescription {
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+        public boolean equals(@CheckForNull Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof AnnotationDescription)) {

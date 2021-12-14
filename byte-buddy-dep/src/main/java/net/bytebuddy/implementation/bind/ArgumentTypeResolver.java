@@ -19,6 +19,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 
@@ -274,7 +275,7 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+        public boolean equals(@CheckForNull Object other) {
             if (this == other) {
                 return true;
             } else if (other == null || getClass() != other.getClass()) {

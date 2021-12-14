@@ -20,6 +20,7 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 
@@ -84,7 +85,7 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+        public boolean equals(@CheckForNull Object other) {
             return this == other || other instanceof PackageDescription && getName().equals(((PackageDescription) other).getName());
         }
 

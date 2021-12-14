@@ -19,6 +19,7 @@ import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.util.ArrayList;
@@ -72,7 +73,7 @@ public interface EnumerationDescription extends NamedElement {
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+        public boolean equals(@CheckForNull Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof EnumerationDescription)) {

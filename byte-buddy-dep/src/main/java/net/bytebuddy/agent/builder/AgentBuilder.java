@@ -69,6 +69,7 @@ import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import org.objectweb.asm.*;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.io.*;
@@ -7436,7 +7437,7 @@ public interface AgentBuilder {
 
                     @Override
                     @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
-                    public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+                    public boolean equals(@CheckForNull Object other) {
                         if (this == other) {
                             return true;
                         } else if (other instanceof LookupKey) {
@@ -7486,7 +7487,7 @@ public interface AgentBuilder {
 
                     @Override
                     @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
-                    public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+                    public boolean equals(@CheckForNull Object other) {
                         if (this == other) {
                             return true;
                         } else if (other instanceof LookupKey) {

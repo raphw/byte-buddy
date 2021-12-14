@@ -58,6 +58,7 @@ import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.commons.SimpleRemapper;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.io.File;
@@ -5558,7 +5559,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+                    public boolean equals(@CheckForNull Object other) {
                         if (this == other) return true;
                         if (other == null || getClass() != other.getClass()) return false;
                         SignatureKey that = (SignatureKey) other;

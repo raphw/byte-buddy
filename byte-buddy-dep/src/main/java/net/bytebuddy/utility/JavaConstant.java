@@ -28,6 +28,7 @@ import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.lang.reflect.Constructor;
@@ -435,7 +436,7 @@ public interface JavaConstant {
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object object) {
+        public boolean equals(@CheckForNull Object object) {
             if (this == object) return true;
             if (object == null || getClass() != object.getClass()) return false;
             return value.equals(((Simple<?>) object).value);
@@ -995,7 +996,7 @@ public interface JavaConstant {
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+        public boolean equals(@CheckForNull Object other) {
             if (this == other) {
                 return true;
             }
@@ -1392,7 +1393,7 @@ public interface JavaConstant {
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+        public boolean equals(@CheckForNull Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof MethodHandle)) {
@@ -2245,7 +2246,7 @@ public interface JavaConstant {
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object object) {
+        public boolean equals(@CheckForNull Object object) {
             if (this == object) return true;
             if (object == null || getClass() != object.getClass()) return false;
             Dynamic dynamic = (Dynamic) object;

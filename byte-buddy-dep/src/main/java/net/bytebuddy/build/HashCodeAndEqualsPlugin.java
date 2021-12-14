@@ -198,9 +198,8 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
      */
     public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
         if (jsr305) {
-            AnnotationVisitor annotationVisitor = methodVisitor.visitParameterAnnotation(0, "Ljavax/annotation/Nonnull;", true);
+            AnnotationVisitor annotationVisitor = methodVisitor.visitParameterAnnotation(0, "Ljavax/annotation/CheckForNull;", true);
             if (annotationVisitor != null) {
-                annotationVisitor.visitEnum("when", "Ljavax/annotation/meta/When;", "MAYBE");
                 annotationVisitor.visitEnd();
             }
         }

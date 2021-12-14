@@ -18,6 +18,7 @@ package net.bytebuddy.dynamic.loading;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.io.IOException;
@@ -494,7 +495,7 @@ public interface PackageDefinitionStrategy {
 
             @Override
             @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
-            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+            public boolean equals(@CheckForNull Object other) {
                 if (this == other) {
                     return true;
                 } else if (other == null || getClass() != other.getClass()) {
@@ -677,7 +678,7 @@ public interface PackageDefinitionStrategy {
 
                 @Override
                 @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
-                public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+                public boolean equals(@CheckForNull Object other) {
                     if (this == other) {
                         return true;
                     } else if (other == null || getClass() != other.getClass()) {

@@ -26,6 +26,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.util.*;
@@ -782,7 +783,7 @@ public interface MethodGraph {
                         }
 
                         @Override
-                        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+                        public boolean equals(@CheckForNull Object other) {
                             return this == other || other instanceof Token && typeToken.getParameterTypes().equals(((Token) other).typeToken.getParameterTypes());
                         }
 
@@ -841,7 +842,7 @@ public interface MethodGraph {
                         }
 
                         @Override
-                        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+                        public boolean equals(@CheckForNull Object other) {
                             if (this == other) {
                                 return true;
                             } else if (!(other instanceof Token)) {
@@ -957,7 +958,7 @@ public interface MethodGraph {
                 }
 
                 @Override
-                public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+                public boolean equals(@CheckForNull Object other) {
                     if (this == other) {
                         return true;
                     } else if (!(other instanceof Key)) {
@@ -1381,7 +1382,7 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+                            public boolean equals(@CheckForNull Object other) {
                                 if (this == other) {
                                     return true;
                                 } else if (other == null || getClass() != other.getClass()) {

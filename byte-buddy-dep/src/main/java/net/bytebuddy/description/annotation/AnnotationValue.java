@@ -22,6 +22,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.lang.annotation.Annotation;
@@ -1102,7 +1103,7 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+        public boolean equals(@CheckForNull Object other) {
             return this == other || other instanceof AnnotationValue<?, ?> && propertyDelegate.equals(value, ((AnnotationValue<?, ?>) other).resolve());
         }
 
@@ -1591,7 +1592,7 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
-            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+            public boolean equals(@CheckForNull Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
@@ -1692,7 +1693,7 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+        public boolean equals(@CheckForNull Object other) {
             return this == other || other instanceof AnnotationValue<?, ?> && annotationDescription.equals(((AnnotationValue<?, ?>) other).resolve());
         }
 
@@ -1749,7 +1750,7 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
-            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+            public boolean equals(@CheckForNull Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
@@ -1846,7 +1847,7 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+        public boolean equals(@CheckForNull Object other) {
             return this == other || other instanceof AnnotationValue<?, ?> && enumerationDescription.equals(((AnnotationValue<?, ?>) other).resolve());
         }
 
@@ -1903,7 +1904,7 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
-            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+            public boolean equals(@CheckForNull Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
@@ -2198,7 +2199,7 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+        public boolean equals(@CheckForNull Object other) {
             return this == other || other instanceof AnnotationValue<?, ?> && typeDescription.equals(((AnnotationValue<?, ?>) other).resolve());
         }
 
@@ -2255,7 +2256,7 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
-            public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+            public boolean equals(@CheckForNull Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
@@ -2439,7 +2440,7 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
-        public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+        public boolean equals(@CheckForNull Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof AnnotationValue<?, ?>)) {
@@ -2550,7 +2551,7 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
-            public boolean equals(Object other) {
+            public boolean equals(@CheckForNull Object other) {
                 if (this == other) {
                     return true;
                 } else if (!(other instanceof AnnotationValue.Loaded<?>)) {

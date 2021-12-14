@@ -33,6 +33,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
 import java.lang.annotation.Annotation;
@@ -660,7 +661,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     }
 
                     @Override
-                    public boolean equals(@Nonnull(when = When.MAYBE) Object other) {
+                    public boolean equals(@CheckForNull Object other) {
                         return this == other || other instanceof Argument && parameterIndex == ((Argument) other).value();
                     }
 

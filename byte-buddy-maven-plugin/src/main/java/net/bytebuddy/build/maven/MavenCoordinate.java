@@ -18,6 +18,8 @@ package net.bytebuddy.build.maven;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 
+import javax.annotation.CheckForNull;
+
 /**
  * A Maven coordinate.
  */
@@ -68,7 +70,7 @@ public class MavenCoordinate {
     }
 
     @Override
-    public boolean equals(Object object) {
+    public boolean equals(@CheckForNull Object object) {
         if (this == object) {
             return true;
         }
