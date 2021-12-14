@@ -638,6 +638,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * The value to resolve for the represented index.
                      */
+                    @Nullable
+                    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                     private final Object value;
 
                     /**
@@ -646,7 +648,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      * @param index The index of the parameter to resolve.
                      * @param value The value to resolve for the represented index.
                      */
-                    public ForIndex(int index, Object value) {
+                    public ForIndex(int index, @Nullable Object value) {
                         this.index = index;
                         this.value = value;
                     }
@@ -2495,6 +2497,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * @param <T>  The requested spezialized type.
                  * @return The resolved element or {@code null} if a transformation is impossible.
                  */
+                @Nullable
                 <T> T resolveAs(Class<T> type);
 
                 /**
@@ -2542,6 +2545,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
+                    @Nullable
                     public <T> T resolveAs(Class<T> type) {
                         return null;
                     }
@@ -2591,6 +2595,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
+                    @Nullable
                     @SuppressWarnings("unchecked")
                     public <T> T resolveAs(Class<T> type) {
                         return File.class.isAssignableFrom(type)
@@ -2643,6 +2648,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
+                    @Nullable
                     @SuppressWarnings("unchecked")
                     public <T> T resolveAs(Class<T> type) {
                         return JarEntry.class.isAssignableFrom(type)

@@ -230,6 +230,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @param type The type for which to resolve the module.
          * @return The type's module or {@code null} if the module system is not supported.
          */
+        @Nullable
         @JavaDispatcher.Defaults
         Object getModule(Class<?> type);
     }

@@ -71,12 +71,14 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * The Maven project.
      */
+    @Nullable
     @Parameter(defaultValue = "${project}", readonly = true)
     public MavenProject project;
 
     /**
      * The currently used repository system.
      */
+    @Nullable
     @Component
     public RepositorySystem repositorySystem;
 
@@ -189,6 +191,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * where each line contains the fully qualified class name. Discovered plugins are not provided with any
      * explicit constructor arguments.
      */
+    @Nullable
     @Parameter(defaultValue = "EMPTY", required = true)
     public Discovery discovery;
 
@@ -208,7 +211,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * {@inheritDoc}
      */
     public void execute() throws MojoExecutionException, MojoFailureException {
-        if (skip) {
+        if (project == null || repositorySystem == null || discovery == null) {
+            throw new MojoExecutionException("Plugin is not initialized correctly");
+        } else if (skip) {
             getLog().info("Not applying instrumentation as a result of plugin configuration.");
             return;
         }

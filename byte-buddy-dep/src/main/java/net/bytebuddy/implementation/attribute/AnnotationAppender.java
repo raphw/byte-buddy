@@ -70,6 +70,7 @@ public interface AnnotationAppender {
          * @param visible                  {@code true} if the annotation is to be visible at runtime.
          * @return An annotation visitor for consuming the specified annotation.
          */
+        @Nullable
         AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible);
 
         /**
@@ -81,6 +82,7 @@ public interface AnnotationAppender {
          * @param typePath                 The type annotation's type path.
          * @return An annotation visitor for consuming the specified annotation.
          */
+        @Nullable
         AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath);
 
         /**
@@ -106,6 +108,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return classVisitor.visitAnnotation(annotationTypeDescriptor, visible);
             }
@@ -113,6 +116,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return classVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
@@ -141,6 +145,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return fieldVisitor.visitAnnotation(annotationTypeDescriptor, visible);
             }
@@ -148,6 +153,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return fieldVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
@@ -176,6 +182,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return methodVisitor.visitAnnotation(annotationTypeDescriptor, visible);
             }
@@ -183,6 +190,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return methodVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
@@ -218,6 +226,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return methodVisitor.visitParameterAnnotation(parameterIndex, annotationTypeDescriptor, visible);
             }
@@ -225,6 +234,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return methodVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
@@ -253,6 +263,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return recordComponentVisitor.visitAnnotation(annotationTypeDescriptor, visible);
             }
@@ -260,6 +271,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return recordComponentVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
@@ -307,11 +319,11 @@ public interface AnnotationAppender {
          * Performs the writing of a given annotation value to an annotation visitor.
          *
          * @param annotationVisitor The annotation visitor the write process is to be applied on.
-         * @param valueType         The type of the annotation value.
-         * @param name              The name of the annotation type.
+         * @param valueType         The type of the annotation.
+         * @param name              The name of the annotation type or {@code null} if no name is available..
          * @param value             The annotation's value.
          */
-        public static void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, String name, Object value) {
+        public static void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, @Nullable String name, Object value) {
             if (valueType.isArray()) { // The Android emulator reads annotation arrays as annotation types. Therefore, this check needs to come first.
                 AnnotationVisitor arrayVisitor = annotationVisitor.visitArray(name);
                 int length = Array.getLength(value);

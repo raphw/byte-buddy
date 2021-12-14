@@ -233,6 +233,9 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
              * {@inheritDoc}
              */
             public Map<TypeDescription, Class<?>> load(@Nullable ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+                if (classLoader == null) {
+                    throw new IllegalArgumentException("Cannot inject classes into the bootstrap class loader");
+                }
                 return new ClassInjector.UsingReflection(classLoader,
                         protectionDomain,
                         packageDefinitionStrategy,

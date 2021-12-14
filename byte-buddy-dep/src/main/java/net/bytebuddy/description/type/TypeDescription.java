@@ -564,6 +564,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * @return The value that is bound to the supplied type variable or {@code null} if the type variable
          * is not bound by this parameterized type.
          */
+        @Nullable
         Generic findBindingOf(Generic typeVariable);
 
         /**
@@ -1538,11 +1539,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * The {@link ElementType}'s {@code TYPE_USE} constant.
                      */
+                    @Nullable
                     private final ElementType typeUse;
 
                     /**
                      * The {@link ElementType}'s {@code TYPE_PARAMETER} constant.
                      */
+                    @Nullable
                     private final ElementType typeParameter;
 
                     /**
@@ -2259,7 +2262,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         this.typeDescription = typeDescription;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic onTypeVariable(Generic typeVariable) {
                         return typeVariable;
                     }
@@ -2817,7 +2822,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      */
                     public AnnotatedElement resolve() {
                         AnnotatedElement element = ForLoadedType.DISPATCHER.getAnnotatedSuperclass(type);
-                        return element == null ? NoOp.INSTANCE : element;
+                        return element == null
+                                ? NoOp.INSTANCE
+                                : element;
                     }
                 }
 
@@ -2887,7 +2894,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      */
                     public AnnotatedElement resolve() {
                         AnnotatedElement element = DISPATCHER.getAnnotatedType(field);
-                        return element == null ? NoOp.INSTANCE : element;
+                        return element == null
+                                ? NoOp.INSTANCE
+                                : element;
                     }
 
                     /**
@@ -2902,6 +2911,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                          * @param field The field for which to resolve the annotated type.
                          * @return The field type annotations or {@code null} if this feature is not supported.
                          */
+                        @Nullable
                         @JavaDispatcher.Defaults
                         AnnotatedElement getAnnotatedType(Field field);
                     }
@@ -2937,7 +2947,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      */
                     public AnnotatedElement resolve() {
                         AnnotatedElement element = DISPATCHER.getAnnotatedReturnType(method);
-                        return element == null ? NoOp.INSTANCE : element;
+                        return element == null
+                                ? NoOp.INSTANCE
+                                : element;
                     }
 
                     /**
@@ -2952,6 +2964,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                          * @param method The executable for which to resolve the annotated return type.
                          * @return The return type annotations or {@code null} if this feature is not supported.
                          */
+                        @Nullable
                         @JavaDispatcher.Defaults
                         AnnotatedElement getAnnotatedReturnType(Method method);
                     }
@@ -3522,6 +3535,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * @param value The annotated type to resolve.
                      * @return The annotated owner type for the supplied annotated type or {@code null} if this feature is not supported.
                      */
+                    @Nullable
                     @JavaDispatcher.Defaults
                     AnnotatedElement getAnnotatedOwnerType(AnnotatedElement value);
                 }
@@ -4934,6 +4948,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Generic findBindingOf(Generic typeVariable) {
                 Generic typeDescription = this;
                 do {
@@ -6154,6 +6169,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @Nullable
             public Generic findBindingOf(Generic typeVariable) {
                 return resolve().findBindingOf(typeVariable);
             }
@@ -6307,6 +6323,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * @param delegate The lazy projection for which this description is a delegate.
                      * @return A lazy description of the super class or {@code null} if the delegate does not define a super class.
                      */
+                    @Nullable
                     protected static Generic of(LazyProjection delegate) {
                         return delegate.asErasure().getSuperClass() == null
                                 ? Generic.UNDEFINED
@@ -6767,7 +6784,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return Sort.describe(RecordComponentDescription.ForLoadedRecordComponent.RECORD_COMPONENT.getGenericType(recordComponent), getAnnotationReader());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     return ForLoadedType.of(RecordComponentDescription.ForLoadedRecordComponent.RECORD_COMPONENT.getType(recordComponent));
                 }
@@ -6915,7 +6934,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param ownerType The raw type's (annotated) declaring type or {@code null} if no owner type should be declared.
              * @return A builder for creating a raw type.
              */
-            public static Builder rawType(Class<?> type, Generic ownerType) {
+            public static Builder rawType(Class<?> type, @Nullable Generic ownerType) {
                 return rawType(ForLoadedType.of(type), ownerType);
             }
 
@@ -6926,7 +6945,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param ownerType The raw type's (annotated) declaring type or {@code null} if no owner type should be declared.
              * @return A builder for creating a raw type.
              */
-            public static Builder rawType(TypeDescription type, Generic ownerType) {
+            public static Builder rawType(TypeDescription type, @Nullable Generic ownerType) {
                 TypeDescription declaringType = type.getDeclaringType();
                 if (declaringType == null && ownerType != null) {
                     throw new IllegalArgumentException(type + " does not have a declaring type: " + ownerType);
@@ -7025,7 +7044,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param parameters The type arguments to attach to the raw type as parameters.
              * @return A builder for creating a parameterized type.
              */
-            public static Builder parameterizedType(Class<?> rawType, java.lang.reflect.Type ownerType, List<? extends java.lang.reflect.Type> parameters) {
+            public static Builder parameterizedType(Class<?> rawType,
+                                                    @Nullable java.lang.reflect.Type ownerType,
+                                                    List<? extends java.lang.reflect.Type> parameters) {
                 return parameterizedType(ForLoadedType.of(rawType),
                         ownerType == null
                                 ? null
@@ -7063,7 +7084,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param parameters The type arguments to attach to the raw type as parameters.
              * @return A builder for creating a parameterized type.
              */
-            public static Builder parameterizedType(TypeDescription rawType, Generic ownerType, Collection<? extends TypeDefinition> parameters) {
+            public static Builder parameterizedType(TypeDescription rawType,
+                                                    @Nullable Generic ownerType,
+                                                    Collection<? extends TypeDefinition> parameters) {
                 TypeDescription declaringType = rawType.getDeclaringType();
                 if (ownerType == null && declaringType != null && rawType.isStatic()) {
                     ownerType = declaringType.asGenericType();
@@ -8854,7 +8877,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         public TypeDescription getNestHost() {
             Class<?> host = DISPATCHER.getNestHost(type);
-            return host == null ? this : TypeDescription.ForLoadedType.of(host);
+            return host == null
+                    ? this
+                    : TypeDescription.ForLoadedType.of(host);
         }
 
         /**
@@ -8939,6 +8964,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param type The type to resolve.
              * @return The annotated super class of the supplied type or {@code null} if this feature is not supported.
              */
+            @Nullable
             AnnotatedElement getAnnotatedSuperclass(Class<?> type);
 
             /**
@@ -8955,6 +8981,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param type The class for which to locate the nest host.
              * @return The nest host of the specified class.
              */
+            @Nullable
             Class<?> getNestHost(Class<?> type);
 
             /**
@@ -8989,6 +9016,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param type The type for which to check the permitted subclasses.
              * @return The permitted subclasses.
              */
+            @Nullable
             Class<?>[] getPermittedSubclasses(Class<?> type);
 
             /**
@@ -9005,6 +9033,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @param type The type for which to read the record components.
              * @return An array of all declared record components.
              */
+            @Nullable
             Object[] getRecordComponents(Class<?> type);
         }
     }
@@ -9693,6 +9722,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * The class loader to use for loading a super type.
          */
+        @Nullable
         private final ClassLoader classLoader;
 
         /**
@@ -9980,6 +10010,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
              */
+            @Nullable
             private final ClassLoader classLoader;
 
             /**
@@ -10080,6 +10111,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
              */
+            @Nullable
             private final ClassLoader classLoader;
 
             /**

@@ -92,6 +92,7 @@ public enum GraalImageCode {
      * @param <T>    The type of the action's resolved value.
      * @return The action's resolved value.
      */
+    @Nullable
     @AccessControllerPlugin.Enhance
     private static <T> T doPrivileged(PrivilegedAction<T> action) {
         return action.run();

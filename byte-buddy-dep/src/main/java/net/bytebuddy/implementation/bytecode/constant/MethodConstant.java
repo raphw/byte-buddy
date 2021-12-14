@@ -29,6 +29,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import org.objectweb.asm.MethodVisitor;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.security.PrivilegedExceptionAction;
@@ -47,6 +48,7 @@ public abstract class MethodConstant extends StackManipulation.AbstractBase {
      * The {@code java.security.AccessController#doPrivileged(PrivilegedExceptionAction)} method or {@code null} if
      * this method is not available on the current VM.
      */
+    @Nullable
     protected static final MethodDescription.InDefinedShape DO_PRIVILEGED = doPrivileged();
 
     /**
@@ -55,6 +57,7 @@ public abstract class MethodConstant extends StackManipulation.AbstractBase {
      *
      * @return The {@code doPrivileged} method or {@code null}.
      */
+    @Nullable
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but be nulled out")
     private static MethodDescription.InDefinedShape doPrivileged() {
         MethodDescription.InDefinedShape doPrivileged;
@@ -394,6 +397,9 @@ public abstract class MethodConstant extends StackManipulation.AbstractBase {
          * {@inheritDoc}
          */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            if (DO_PRIVILEGED == null) {
+                throw new IllegalStateException("Privileged method invocation is not supported on the current VM");
+            }
             TypeDescription auxiliaryType = implementationContext.register(PrivilegedMemberLookupAction.of(methodDescription));
             return new Compound(
                     TypeCreation.of(auxiliaryType),

@@ -276,7 +276,7 @@ public interface AnnotationDescription {
         /**
          * {@inheritDoc}
          */
-        public Object invoke(Object proxy, Method method, Object[] argument) {
+        public Object invoke(Object proxy, Method method, @Nullable Object[] argument) {
             if (method.getDeclaringClass() != annotationType) {
                 if (method.getName().equals(HASH_CODE)) {
                     return hashCodeRepresentation();

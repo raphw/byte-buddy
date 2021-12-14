@@ -7014,7 +7014,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @return This dispatcher as a dispatcher for entering a method.
              */
             Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                  ClassReader classReader,
+                                                  @Nullable ClassReader classReader,
                                                   Unresolved methodExit,
                                                   PostProcessor.Factory postProcessorFactory);
 
@@ -7028,7 +7028,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @return This dispatcher as a dispatcher for exiting a method.
              */
             Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                ClassReader classReader,
+                                                @Nullable ClassReader classReader,
                                                 Unresolved methodEnter,
                                                 PostProcessor.Factory postProcessorFactory);
         }
@@ -7939,7 +7939,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                         ClassReader classReader,
+                                                         @Nullable ClassReader classReader,
                                                          Unresolved methodExit,
                                                          PostProcessor.Factory postProcessorFactory) {
                 return this;
@@ -7949,7 +7949,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                       ClassReader classReader,
+                                                       @Nullable ClassReader classReader,
                                                        Unresolved methodEnter,
                                                        PostProcessor.Factory postProcessorFactory) {
                 return this;
@@ -8058,9 +8058,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                    ClassReader classReader,
+                                                                    @Nullable ClassReader classReader,
                                                                     Unresolved methodExit,
                                                                     PostProcessor.Factory postProcessorFactory) {
+                if (classReader == null) {
+                    throw new IllegalStateException("Class reader not expected null");
+                }
                 return Resolved.ForMethodEnter.of(adviceMethod,
                         postProcessorFactory.make(adviceMethod, false),
                         namedTypes,
@@ -8074,7 +8077,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                  ClassReader classReader,
+                                                                  @Nullable ClassReader classReader,
                                                                   Unresolved methodEnter,
                                                                   PostProcessor.Factory postProcessorFactory) {
                 Map<String, TypeDefinition> namedTypes = new HashMap<String, TypeDefinition>(methodEnter.getNamedTypes()), uninitializedNamedTypes = new HashMap<String, TypeDefinition>();
@@ -9458,7 +9461,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                    ClassReader classReader,
+                                                                    @Nullable ClassReader classReader,
                                                                     Unresolved methodExit,
                                                                     PostProcessor.Factory postProcessorFactory) {
                 return Resolved.ForMethodEnter.of(adviceMethod, postProcessorFactory.make(adviceMethod, false), delegator, userFactories, methodExit.getAdviceType(), methodExit.isAlive());

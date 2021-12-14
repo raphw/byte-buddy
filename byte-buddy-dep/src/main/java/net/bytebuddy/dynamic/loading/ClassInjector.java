@@ -550,6 +550,7 @@ public interface ClassInjector {
                 /**
                  * An instance of {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                  */
+                @Nullable
                 protected final Method getDefinedPackage;
 
                 /**
@@ -573,7 +574,7 @@ public interface ClassInjector {
                  */
                 protected Direct(Method findLoadedClass,
                                  Method defineClass,
-                                 Method getDefinedPackage,
+                                 @Nullable Method getDefinedPackage,
                                  Method getPackage,
                                  Method definePackage) {
                     this.findLoadedClass = findLoadedClass;
@@ -768,7 +769,7 @@ public interface ClassInjector {
                      */
                     protected ForJava7CapableVm(Method findLoadedClass,
                                                 Method defineClass,
-                                                Method getDefinedPackage,
+                                                @Nullable Method getDefinedPackage,
                                                 Method getPackage,
                                                 Method definePackage,
                                                 Method getClassLoadingLock) {
@@ -806,7 +807,7 @@ public interface ClassInjector {
                      */
                     protected ForLegacyVm(Method findLoadedClass,
                                           Method defineClass,
-                                          Method getDefinedPackage,
+                                          @Nullable Method getDefinedPackage,
                                           Method getPackage,
                                           Method definePackage) {
                         super(findLoadedClass, defineClass, getDefinedPackage, getPackage, definePackage);
@@ -1370,7 +1371,7 @@ public interface ClassInjector {
                      */
                     protected ForJava7CapableVm(Method findLoadedClass,
                                                 Method defineClass,
-                                                Method getDefinedPackage,
+                                                @Nullable Method getDefinedPackage,
                                                 Method getPackage,
                                                 Method definePackage,
                                                 Method getClassLoadingLock) {
@@ -1408,7 +1409,7 @@ public interface ClassInjector {
                      */
                     protected ForLegacyVm(Method findLoadedClass,
                                           Method defineClass,
-                                          Method getDefinedPackage,
+                                          @Nullable Method getDefinedPackage,
                                           Method getPackage,
                                           Method definePackage) {
                         super(findLoadedClass, defineClass, getDefinedPackage, getPackage, definePackage);

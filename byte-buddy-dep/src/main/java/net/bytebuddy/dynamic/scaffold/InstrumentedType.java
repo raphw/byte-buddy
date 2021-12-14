@@ -168,7 +168,7 @@ public interface InstrumentedType extends TypeDescription {
      * @param permittedSubclasses A list of permitted subclasses to include or {@code null} to unseal the type.
      * @return A new instrumented type that includes the supplied permitted subclasses or unseals the type.
      */
-    InstrumentedType withPermittedSubclasses(TypeList permittedSubclasses);
+    InstrumentedType withPermittedSubclasses(@Nullable TypeList permittedSubclasses);
 
     /**
      * Creates a new instrumented type that indicates that is defined as a local class. Setting this property
@@ -305,7 +305,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        WithFlexibleName withPermittedSubclasses(TypeList permittedSubclasses);
+        WithFlexibleName withPermittedSubclasses(@Nullable TypeList permittedSubclasses);
 
         /**
          * {@inheritDoc}
@@ -527,6 +527,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * The generic super type of the instrumented type.
          */
+        @Nullable
         private final Generic superClass;
 
         /**
@@ -577,16 +578,19 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * The declaring type of the instrumented type or {@code null} if no such type exists.
          */
+        @Nullable
         private final TypeDescription declaringType;
 
         /**
          * The enclosing method of the instrumented type or {@code null} if no such type exists.
          */
+        @Nullable
         private final MethodDescription.InDefinedShape enclosingMethod;
 
         /**
          * The enclosing type of the instrumented type or {@code null} if no such type exists.
          */
+        @Nullable
         private final TypeDescription enclosingType;
 
         /**
@@ -595,12 +599,13 @@ public interface InstrumentedType extends TypeDescription {
         private final List<? extends TypeDescription> declaredTypes;
 
         /**
-         * A list of permitted subclasses.
+         * A list of permitted subclasses or {@code null} if this type is not sealed
          */
+        @Nullable
         private final List<? extends TypeDescription> permittedSubclasses;
 
         /**
-         * {@code true} if this type is a anonymous class.
+         * {@code true} if this type is an anonymous class.
          */
         private final boolean anonymousClass;
 
@@ -643,8 +648,8 @@ public interface InstrumentedType extends TypeDescription {
          * @param enclosingMethod        The enclosing method of the instrumented type or {@code null} if no such type exists.
          * @param enclosingType          The enclosing type of the instrumented type or {@code null} if no such type exists.
          * @param declaredTypes          A list of types that are declared by this type.
-         * @param permittedSubclasses    A list of permitted subclasses.
-         * @param anonymousClass         {@code true} if this type is a anonymous class.
+         * @param permittedSubclasses    A list of permitted subclasses or {@code null} if this type is not sealed.
+         * @param anonymousClass         {@code true} if this type is an anonymous class.
          * @param localClass             {@code true} if this type is a local class.
          * @param record                 {@code true} if this type is a record class.
          * @param nestHost               The nest host of this instrumented type or a description of {@link TargetType} if this type is its own nest host.
@@ -652,7 +657,7 @@ public interface InstrumentedType extends TypeDescription {
          */
         protected Default(String name,
                           int modifiers,
-                          Generic superClass,
+                          @Nullable Generic superClass,
                           List<? extends TypeVariableToken> typeVariables,
                           List<? extends Generic> interfaceTypes,
                           List<? extends FieldDescription.Token> fieldTokens,
@@ -662,11 +667,11 @@ public interface InstrumentedType extends TypeDescription {
                           List<? extends AnnotationDescription> annotationDescriptions,
                           TypeInitializer typeInitializer,
                           LoadedTypeInitializer loadedTypeInitializer,
-                          TypeDescription declaringType,
-                          MethodDescription.InDefinedShape enclosingMethod,
-                          TypeDescription enclosingType,
+                          @Nullable TypeDescription declaringType,
+                          @Nullable MethodDescription.InDefinedShape enclosingMethod,
+                          @Nullable TypeDescription enclosingType,
                           List<? extends TypeDescription> declaredTypes,
-                          List<? extends TypeDescription> permittedSubclasses,
+                          @Nullable List<? extends TypeDescription> permittedSubclasses,
                           boolean anonymousClass,
                           boolean localClass,
                           boolean record,
@@ -1101,7 +1106,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        public WithFlexibleName withPermittedSubclasses(TypeList permittedSubclasses) {
+        public WithFlexibleName withPermittedSubclasses(@Nullable TypeList permittedSubclasses) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -2141,7 +2146,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        public WithFlexibleName withPermittedSubclasses(TypeList permittedSubclasses) {
+        public WithFlexibleName withPermittedSubclasses(@Nullable TypeList permittedSubclasses) {
             throw new IllegalStateException("Cannot add permitted subclasses to frozen type: " + typeDescription);
         }
 

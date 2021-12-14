@@ -77,7 +77,7 @@ public interface VirtualMachine {
      * @param argument The argument to provide or {@code null} if no argument should be provided.
      * @throws IOException If an I/O exception occurs.
      */
-    void loadAgent(String jarFile, String argument) throws IOException;
+    void loadAgent(String jarFile, @Nullable String argument) throws IOException;
 
     /**
      * Loads a native agent into the represented virtual machine.
@@ -94,7 +94,7 @@ public interface VirtualMachine {
      * @param argument The argument to provide or {@code null} if no argument should be provided.
      * @throws IOException If an I/O exception occurs.
      */
-    void loadAgentPath(String path, String argument) throws IOException;
+    void loadAgentPath(String path, @Nullable String argument) throws IOException;
 
     /**
      * Loads a native agent library into the represented virtual machine.
@@ -111,7 +111,7 @@ public interface VirtualMachine {
      * @param argument The argument to provide or {@code null} if no argument should be provided.
      * @throws IOException If an I/O exception occurs.
      */
-    void loadAgentLibrary(String library, String argument) throws IOException;
+    void loadAgentLibrary(String library, @Nullable String argument) throws IOException;
 
     /**
      * Starts a JMX management agent.
@@ -332,21 +332,21 @@ public interface VirtualMachine {
         /**
          * {@inheritDoc}
          */
-        public void loadAgent(String jarFile, String argument) throws IOException {
+        public void loadAgent(String jarFile, @Nullable String argument) throws IOException {
             load(jarFile, false, argument);
         }
 
         /**
          * {@inheritDoc}
          */
-        public void loadAgentPath(String path, String argument) throws IOException {
+        public void loadAgentPath(String path, @Nullable String argument) throws IOException {
             load(path, true, argument);
         }
 
         /**
          * {@inheritDoc}
          */
-        public void loadAgentLibrary(String library, String argument) throws IOException {
+        public void loadAgentLibrary(String library, @Nullable String argument) throws IOException {
             load(library, false, argument);
         }
 
@@ -358,7 +358,7 @@ public interface VirtualMachine {
          * @param argument The argument to the agent or {@code null} if no argument is given.
          * @throws IOException If an I/O exception occurs.
          */
-        protected void load(String file, boolean absolute, String argument) throws IOException {
+        protected void load(String file, boolean absolute, @Nullable String argument) throws IOException {
             Connection.Response response = connection.execute(PROTOCOL_VERSION, LOAD_COMMAND, INSTRUMENT_COMMAND, Boolean.toString(absolute), (argument == null
                     ? file
                     : file + ARGUMENT_DELIMITER + argument));
@@ -1130,14 +1130,15 @@ public interface VirtualMachine {
                      * @param threadId           A pointer to the thread id or {@code null} if no thread reference is set.
                      * @return A handle to the created remote thread or {@code null} if the creation failed.
                      */
+                    @Nullable
                     @SuppressWarnings("checkstyle:methodname")
                     WinNT.HANDLE CreateRemoteThread(WinNT.HANDLE process,
-                                                    WinBase.SECURITY_ATTRIBUTES securityAttributes,
+                                                    @Nullable WinBase.SECURITY_ATTRIBUTES securityAttributes,
                                                     int stackSize,
                                                     Pointer code,
                                                     Pointer argument,
-                                                    WinDef.DWORD creationFlags,
-                                                    Pointer threadId);
+                                                    @Nullable WinDef.DWORD creationFlags,
+                                                    @Nullable Pointer threadId);
 
                     /**
                      * Receives the exit code of a given thread.
@@ -1161,6 +1162,7 @@ public interface VirtualMachine {
                      * @param process A handle to the target process.
                      * @return A pointer to the allocated code or {@code null} if the code could not be allocated.
                      */
+                    @Nullable
                     @SuppressWarnings("checkstyle:methodname")
                     WinDef.LPVOID allocate_remote_code(WinNT.HANDLE process);
 
@@ -1175,13 +1177,14 @@ public interface VirtualMachine {
                      * @param argument3 The forth  argument or {@code null} if no such argument is provided.
                      * @return A pointer to the allocated argument or {@code null} if the argument could not be allocated.
                      */
+                    @Nullable
                     @SuppressWarnings("checkstyle:methodname")
                     WinDef.LPVOID allocate_remote_argument(WinNT.HANDLE process,
                                                            String pipe,
-                                                           String argument0,
-                                                           String argument1,
-                                                           String argument2,
-                                                           String argument3);
+                                                           @Nullable String argument0,
+                                                           @Nullable String argument1,
+                                                           @Nullable String argument2,
+                                                           @Nullable String argument3);
                 }
 
                 /**
@@ -1791,7 +1794,7 @@ public interface VirtualMachine {
         /**
          * {@inheritDoc}
          */
-        public void loadAgent(String jarFile, String argument) throws IOException {
+        public void loadAgent(String jarFile, @Nullable String argument) throws IOException {
             write(socket, ("ATTACH_LOADAGENT(instrument," + jarFile + '=' + (argument == null ? "" : argument) + ')').getBytes("UTF-8"));
             String answer = new String(read(socket), "UTF-8");
             if (answer.startsWith("ATTACH_ERR")) {
@@ -1804,7 +1807,7 @@ public interface VirtualMachine {
         /**
          * {@inheritDoc}
          */
-        public void loadAgentPath(String path, String argument) throws IOException {
+        public void loadAgentPath(String path, @Nullable String argument) throws IOException {
             write(socket, ("ATTACH_LOADAGENTPATH(" + path + (argument == null ? "" : (',' + argument)) + ')').getBytes("UTF-8"));
             String answer = new String(read(socket), "UTF-8");
             if (answer.startsWith("ATTACH_ERR")) {
@@ -1817,7 +1820,7 @@ public interface VirtualMachine {
         /**
          * {@inheritDoc}
          */
-        public void loadAgentLibrary(String library, String argument) throws IOException {
+        public void loadAgentLibrary(String library, @Nullable String argument) throws IOException {
             write(socket, ("ATTACH_LOADAGENTLIBRARY(" + library + (argument == null ? "" : (',' + argument)) + ')').getBytes("UTF-8"));
             String answer = new String(read(socket), "UTF-8");
             if (answer.startsWith("ATTACH_ERR")) {
@@ -2487,6 +2490,7 @@ public interface VirtualMachine {
                      * @param name          The semaphore's name.
                      * @return The handle or {@code null} if the handle could not be created.
                      */
+                    @Nullable
                     @SuppressWarnings("checkstyle:methodname")
                     WinNT.HANDLE OpenSemaphoreW(int access, boolean inheritHandle, String name);
 
@@ -2499,8 +2503,12 @@ public interface VirtualMachine {
                      * @param name               The semaphore's name.
                      * @return The handle or {@code null} if the handle could not be created.
                      */
+                    @Nullable
                     @SuppressWarnings("checkstyle:methodname")
-                    WinNT.HANDLE CreateSemaphoreW(WinBase.SECURITY_ATTRIBUTES securityAttributes, long count, long maximumCount, String name);
+                    WinNT.HANDLE CreateSemaphoreW(@Nullable WinBase.SECURITY_ATTRIBUTES securityAttributes,
+                                                  long count,
+                                                  long maximumCount,
+                                                  String name);
 
                     /**
                      * Releases the semaphore.
@@ -2511,7 +2519,7 @@ public interface VirtualMachine {
                      * @return {@code true} if the semaphore was successfully released.
                      */
                     @SuppressWarnings("checkstyle:methodname")
-                    boolean ReleaseSemaphore(WinNT.HANDLE handle, long count, Long previousCount);
+                    boolean ReleaseSemaphore(WinNT.HANDLE handle, long count, @Nullable Long previousCount);
 
                     /**
                      * Create or opens a mutex.
@@ -2521,6 +2529,7 @@ public interface VirtualMachine {
                      * @param name       The mutex name.
                      * @return The handle to the mutex or {@code null} if the mutex could not be created.
                      */
+                    @Nullable
                     @SuppressWarnings("checkstyle:methodname")
                     WinNT.HANDLE CreateMutex(SecurityAttributes attributes, boolean owner, String name);
 

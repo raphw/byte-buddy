@@ -4866,7 +4866,7 @@ public interface DynamicType {
                      */
                     protected FieldDefinitionAdapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                      Transformer<FieldDescription> transformer,
-                                                     Object defaultValue,
+                                                     @Nullable Object defaultValue,
                                                      FieldDescription.Token token) {
                         super(fieldAttributeAppenderFactory, transformer, defaultValue);
                         this.token = token;
@@ -4944,7 +4944,7 @@ public interface DynamicType {
                      */
                     protected FieldMatchAdapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                 Transformer<FieldDescription> transformer,
-                                                Object defaultValue,
+                                                @Nullable Object defaultValue,
                                                 LatentMatcher<? super FieldDescription> matcher) {
                         super(fieldAttributeAppenderFactory, transformer, defaultValue);
                         this.matcher = matcher;

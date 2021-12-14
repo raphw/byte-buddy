@@ -1751,6 +1751,7 @@ public interface TypeWriter<T> {
         /**
          * A folder for dumping class files or {@code null} if no dump should be generated.
          */
+        @Nullable
         protected static final String DUMP_FOLDER;
 
         /*
@@ -4800,6 +4801,7 @@ public interface TypeWriter<T> {
                     /**
                      * A list of internal names of permitted subclasses to include.
                      */
+                    @Nullable
                     private final Set<String> permittedSubclasses;
 
                     /**

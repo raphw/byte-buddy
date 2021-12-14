@@ -59,6 +59,7 @@ import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Type;
@@ -125,11 +126,13 @@ public class ByteBuddy {
     /**
      * The default naming strategy or {@code null} if no such strategy is set.
      */
+    @Nullable
     private static final NamingStrategy DEFAULT_NAMING_STRATEGY;
 
     /**
      * The default auxiliary naming strategy or {@code null} if no such strategy is set.
      */
+    @Nullable
     private static final AuxiliaryType.NamingStrategy DEFAULT_AUXILIARY_NAMING_STRATEGY;
 
     /*
@@ -183,6 +186,7 @@ public class ByteBuddy {
      * @param <T>    The type of the action's resolved value.
      * @return The action's resolved value.
      */
+    @Nullable
     @AccessControllerPlugin.Enhance
     private static <T> T doPrivileged(PrivilegedAction<T> action) {
         return action.run();

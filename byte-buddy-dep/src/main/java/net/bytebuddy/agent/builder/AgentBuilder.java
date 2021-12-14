@@ -1888,7 +1888,7 @@ public interface AgentBuilder {
          * @param module      The instrumented type's module or {@code null} if the current VM does not support modules.
          * @param loaded      {@code true} if the type is already loaded.
          */
-        void onComplete(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded);
+        void onComplete(String typeName, @Nullable ClassLoader classLoader, @Nullable JavaModule module, boolean loaded);
 
         /**
          * A no-op implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.Listener}.
@@ -4394,6 +4394,8 @@ public interface AgentBuilder {
                         /**
                          * The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
                          */
+                        @Nullable
+                        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                         private final ClassLoader classLoader;
 
                         /**
@@ -4418,6 +4420,7 @@ public interface AgentBuilder {
                     /**
                      * A class loading action that notifies the class loader's lock after the type was loaded.
                      */
+                    @HashCodeAndEqualsPlugin.Enhance
                     protected static class NotifyingClassLoadingAction implements Callable<Class<?>> {
 
                         /**
@@ -4426,7 +4429,7 @@ public interface AgentBuilder {
                         private final String name;
 
                         /**
-                         * The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
+                         * The type's class loader which must not be the boot loader, i.e {@code null}.
                          */
                         private final ClassLoader classLoader;
 
@@ -4439,10 +4442,10 @@ public interface AgentBuilder {
                          * Creates a notifying class loading action.
                          *
                          * @param name        The loaded type's name.
-                         * @param classLoader The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
+                         * @param classLoader The type's class loader which must not be the boot loader, i.e {@code null}.
                          * @param signal      The signal that indicates the completion of the class loading with {@code false}.
                          */
-                        protected NotifyingClassLoadingAction(String name, @Nullable ClassLoader classLoader, AtomicBoolean signal) {
+                        protected NotifyingClassLoadingAction(String name, ClassLoader classLoader, AtomicBoolean signal) {
                             this.name = name;
                             this.classLoader = classLoader;
                             this.signal = signal;
@@ -7405,6 +7408,7 @@ public interface AgentBuilder {
                     /**
                      * The represented class loader.
                      */
+                    @Nullable
                     private final ClassLoader classLoader;
 
                     /**
@@ -7763,8 +7767,8 @@ public interface AgentBuilder {
                                     AgentBuilder.Listener listener,
                                     TypeDescription typeDescription,
                                     Class<?> type,
-                                    Class<?> classBeingRedefined,
-                                    JavaModule module,
+                                    @Nullable Class<?> classBeingRedefined,
+                                    @Nullable JavaModule module,
                                     boolean modifiable) {
                 if (!modifiable || !matcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())) {
                     try {
@@ -8044,7 +8048,7 @@ public interface AgentBuilder {
             }
 
             @Override
-            protected boolean isInstrumented(Class<?> type) {
+            protected boolean isInstrumented(@Nullable Class<?> type) {
                 return true;
             }
         },
@@ -8061,7 +8065,7 @@ public interface AgentBuilder {
             }
 
             @Override
-            protected boolean isInstrumented(Class<?> type) {
+            protected boolean isInstrumented(@Nullable Class<?> type) {
                 return type == null || !type.getName().contains("/");
             }
         };
@@ -8126,7 +8130,7 @@ public interface AgentBuilder {
          * @param type The redefined type or {@code null} if no such type exists.
          * @return {@code true} if the supplied type should be instrumented according to this strategy.
          */
-        protected abstract boolean isInstrumented(Class<?> type);
+        protected abstract boolean isInstrumented(@Nullable Class<?> type);
 
         /**
          * A factory for rewriting the JDK's {@code java.lang.invoke.LambdaMetafactory} methods for use with Byte Buddy. The code that is
@@ -11318,16 +11322,19 @@ public interface AgentBuilder {
                 /**
                  * The type's class loader.
                  */
+                @Nullable
                 private final ClassLoader classLoader;
 
                 /**
                  * The type's module.
                  */
+                @Nullable
                 private final JavaModule module;
 
                 /**
                  * The class being redefined or {@code null} if the type was not previously loaded.
                  */
+                @Nullable
                 private final Class<?> classBeingRedefined;
 
                 /**
@@ -11508,6 +11515,7 @@ public interface AgentBuilder {
              * The access control context to use for loading classes or {@code null} if the
              * access controller is not available on the current VM.
              */
+            @Nullable
             private final Object accessControlContext;
 
             /**
@@ -11631,7 +11639,7 @@ public interface AgentBuilder {
              * @return The transformed class file or an empty byte array if this transformer does not apply an instrumentation.
              */
             @Nullable
-            protected byte[] transform(@Nullable Object rawModule,
+            protected byte[] transform(Object rawModule,
                                        @Nullable ClassLoader classLoader,
                                        @Nullable String internalTypeName,
                                        @Nullable Class<?> classBeingRedefined,
@@ -11666,6 +11674,7 @@ public interface AgentBuilder {
              * @param binaryRepresentation The class file of the instrumented class in its current state.
              * @return The transformed class file or an empty byte array if this transformer does not apply an instrumentation.
              */
+            @Nullable
             private byte[] transform(@Nullable JavaModule module,
                                      @Nullable ClassLoader classLoader,
                                      @Nullable String internalTypeName,
@@ -12042,16 +12051,22 @@ public interface AgentBuilder {
                 /**
                  * The type's class loader or {@code null} if the bootstrap class loader is represented.
                  */
+                @Nullable
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final ClassLoader classLoader;
 
                 /**
                  * The type's internal name or {@code null} if no such name exists.
                  */
+                @Nullable
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final String internalTypeName;
 
                 /**
                  * The class being redefined or {@code null} if no such class exists.
                  */
+                @Nullable
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final Class<?> classBeingRedefined;
 
                 /**
@@ -12088,6 +12103,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public byte[] run() {
                     return transform(JavaModule.UNSUPPORTED,
                             classLoader,
@@ -12112,16 +12128,22 @@ public interface AgentBuilder {
                 /**
                  * The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
                  */
+                @Nullable
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final ClassLoader classLoader;
 
                 /**
                  * The type's internal name or {@code null} if no such name exists.
                  */
+                @Nullable
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final String internalTypeName;
 
                 /**
                  * The class being redefined or {@code null} if no such class exists.
                  */
+                @Nullable
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final Class<?> classBeingRedefined;
 
                 /**
@@ -12144,7 +12166,7 @@ public interface AgentBuilder {
                  * @param protectionDomain     The type's protection domain.
                  * @param binaryRepresentation The type's binary representation.
                  */
-                protected Java9CapableVmDispatcher(@Nullable Object rawModule,
+                protected Java9CapableVmDispatcher(Object rawModule,
                                                    @Nullable ClassLoader classLoader,
                                                    @Nullable String internalTypeName,
                                                    @Nullable Class<?> classBeingRedefined,

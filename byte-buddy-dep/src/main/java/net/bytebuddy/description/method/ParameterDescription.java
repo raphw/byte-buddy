@@ -712,11 +712,13 @@ public interface ParameterDescription extends AnnotationSource,
         /**
          * The name of the parameter or {@code null} if no name is explicitly defined.
          */
+        @Nullable
         private final String name;
 
         /**
          * The modifiers of the parameter or {@code null} if no modifiers are explicitly defined.
          */
+        @Nullable
         private final Integer modifiers;
 
         /**
@@ -782,8 +784,8 @@ public interface ParameterDescription extends AnnotationSource,
         public Latent(MethodDescription.InDefinedShape declaringMethod,
                       TypeDescription.Generic parameterType,
                       List<? extends AnnotationDescription> declaredAnnotations,
-                      String name,
-                      Integer modifiers,
+                      @Nullable String name,
+                      @Nullable Integer modifiers,
                       int index,
                       int offset) {
             this.declaringMethod = declaringMethod;
@@ -812,6 +814,7 @@ public interface ParameterDescription extends AnnotationSource,
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public int getIndex() {
             return index;
         }
@@ -819,6 +822,7 @@ public interface ParameterDescription extends AnnotationSource,
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public int getOffset() {
             return offset;
         }
@@ -1004,11 +1008,13 @@ public interface ParameterDescription extends AnnotationSource,
         /**
          * The name of the parameter or {@code null} if no explicit name is defined.
          */
+        @Nullable
         private final String name;
 
         /**
          * The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
          */
+        @Nullable
         private final Integer modifiers;
 
         /**
@@ -1038,7 +1044,7 @@ public interface ParameterDescription extends AnnotationSource,
          * @param name      The name of the parameter or {@code null} if no explicit name is defined.
          * @param modifiers The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
          */
-        public Token(TypeDescription.Generic type, String name, Integer modifiers) {
+        public Token(TypeDescription.Generic type, @Nullable String name, @Nullable Integer modifiers) {
             this(type, Collections.<AnnotationDescription>emptyList(), name, modifiers);
         }
 
@@ -1052,8 +1058,8 @@ public interface ParameterDescription extends AnnotationSource,
          */
         public Token(TypeDescription.Generic type,
                      List<? extends AnnotationDescription> annotations,
-                     String name,
-                     Integer modifiers) {
+                     @Nullable String name,
+                     @Nullable Integer modifiers) {
             this.type = type;
             this.annotations = annotations;
             this.name = name;
@@ -1083,6 +1089,7 @@ public interface ParameterDescription extends AnnotationSource,
          *
          * @return The name of the parameter or {@code null} if no explicit name is defined.
          */
+        @Nullable
         public String getName() {
             return name;
         }
@@ -1092,6 +1099,7 @@ public interface ParameterDescription extends AnnotationSource,
          *
          * @return The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
          */
+        @Nullable
         public Integer getModifiers() {
             return modifiers;
         }

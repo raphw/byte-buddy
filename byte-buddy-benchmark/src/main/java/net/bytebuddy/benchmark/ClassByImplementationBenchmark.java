@@ -474,7 +474,8 @@ public class ClassByImplementationBenchmark {
         return (ExampleInterface) Proxy.newProxyInstance(newClassLoader(),
                 new Class<?>[]{baseClass},
                 new InvocationHandler() {
-                    public Object invoke(Object proxy, Method method, Object[] args) {
+                    @Nullable
+                    public Object invoke(Object proxy, Method method, @Nullable Object[] argument) {
                         Class<?> returnType = method.getReturnType();
                         if (returnType.isPrimitive()) {
                             if (returnType == boolean.class) {

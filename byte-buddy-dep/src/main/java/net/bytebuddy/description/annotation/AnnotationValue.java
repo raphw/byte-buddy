@@ -2443,7 +2443,7 @@ public interface AnnotationValue<T, S> {
             }
             AnnotationValue<?, ?> annotationValue = (AnnotationValue<?, ?>) other;
             Object value = annotationValue.resolve();
-            if (value == null || !value.getClass().isArray()) {
+            if (!value.getClass().isArray()) {
                 return false;
             }
             if (values.size() != Array.getLength(value)) {
