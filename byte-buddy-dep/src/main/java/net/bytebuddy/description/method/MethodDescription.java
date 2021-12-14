@@ -38,6 +38,7 @@ import org.objectweb.asm.signature.SignatureWriter;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.security.PrivilegedAction;
@@ -76,7 +77,7 @@ public interface MethodDescription extends TypeVariableSource,
      * Represents any undefined property of a type description that is instead represented as {@code null} in order
      * to resemble the Java reflection API which returns {@code null} and is intuitive to many Java developers.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     InDefinedShape UNDEFINED = null;
 
     /**

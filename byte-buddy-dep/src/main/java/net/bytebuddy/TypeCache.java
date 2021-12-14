@@ -19,7 +19,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.utility.CompoundList;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
@@ -58,7 +60,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     /**
      * Indicates that a type was not found.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     private static final Class<?> NOT_FOUND = null;
 
     /**

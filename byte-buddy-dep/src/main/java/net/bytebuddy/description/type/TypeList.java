@@ -29,7 +29,9 @@ import net.bytebuddy.matcher.FilterableList;
 import net.bytebuddy.utility.JavaConstant;
 import org.objectweb.asm.Type;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Method;
@@ -46,13 +48,13 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     /**
      * An {@code null} type list.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     TypeList UNDEFINED = null;
 
     /**
      * Represents that a type list does not contain any values for ASM interoperability which is represented by {@code null}.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     @SuppressFBWarnings(value = {"MS_MUTABLE_ARRAY", "MS_OOI_PKGPROTECT"}, justification = "Value is null")
     String[] NO_INTERFACES = null;
 

@@ -60,6 +60,7 @@ import org.objectweb.asm.commons.SimpleRemapper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -1745,7 +1746,7 @@ public interface TypeWriter<T> {
         /**
          * Indicates an empty reference in a class file which is expressed by {@code null}.
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         private static final String NO_REFERENCE = null;
 
         /**
@@ -2293,13 +2294,13 @@ public interface TypeWriter<T> {
             /**
              * Indicates that a field is ignored.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final FieldVisitor IGNORE_FIELD = null;
 
             /**
              * Indicates that a method is ignored.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final MethodVisitor IGNORE_METHOD = null;
 
             /**
@@ -3830,25 +3831,25 @@ public interface TypeWriter<T> {
             /**
              * Indicates that a field should be ignored.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final FieldVisitor IGNORE_FIELD = null;
 
             /**
              * Indicates that a method should be ignored.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final MethodVisitor IGNORE_METHOD = null;
 
             /**
              * Indicates that a record component should be ignored.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final RecordComponentVisitor IGNORE_RECORD_COMPONENT = null;
 
             /**
              * Indicates that an annotation should be ignored.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final AnnotationVisitor IGNORE_ANNOTATION = null;
 
             /**
@@ -5967,7 +5968,7 @@ public interface TypeWriter<T> {
             /**
              * Indicates that nothing is returned from this action.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final Void NOTHING = null;
 
             /**

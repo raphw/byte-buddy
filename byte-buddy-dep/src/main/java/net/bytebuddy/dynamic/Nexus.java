@@ -15,7 +15,9 @@
  */
 package net.bytebuddy.dynamic;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -51,7 +53,7 @@ public class Nexus extends WeakReference<ClassLoader> {
     /**
      * An type-safe constant for a non-operational reference queue.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     private static final ReferenceQueue<ClassLoader> NO_QUEUE = null;
 
     /**

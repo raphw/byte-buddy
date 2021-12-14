@@ -32,6 +32,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.*;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.JavaType;
@@ -42,6 +43,7 @@ import org.objectweb.asm.signature.SignatureVisitor;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.ref.SoftReference;
@@ -740,7 +742,7 @@ public interface TypePool {
         /**
          * Indicates that a visited method should be ignored.
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         private static final MethodVisitor IGNORE_METHOD = null;
 
         /**
@@ -2534,7 +2536,7 @@ public interface TypePool {
             /**
              * Indicates that a type does not exist and does therefore not have a name.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final String NO_TYPE = null;
 
             /**
@@ -5956,13 +5958,13 @@ public interface TypePool {
                     /**
                      * Donates an unknown name of a parameter.
                      */
-                    @Nullable
+                    @Nonnull(when = When.NEVER)
                     protected static final String NO_NAME = null;
 
                     /**
                      * Donates an unknown modifier of a parameter.
                      */
-                    @Nullable
+                    @Nonnull(when = When.NEVER)
                     protected static final Integer NO_MODIFIERS = null;
 
                     /**
@@ -9012,12 +9014,6 @@ public interface TypePool {
     class ClassLoading extends AbstractBase.Hierarchical {
 
         /**
-         * Type-safe representation of the bootstrap class loader which is {@code null}.
-         */
-        @Nullable
-        private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
-
-        /**
          * The class loader to query.
          */
         @Nullable
@@ -9082,7 +9078,7 @@ public interface TypePool {
          * @return An class loading type pool for the bootstrap class loader.
          */
         public static TypePool ofBootLoader() {
-            return of(BOOTSTRAP_CLASS_LOADER);
+            return of(ClassLoadingStrategy.BOOTSTRAP_LOADER);
         }
 
         @Override

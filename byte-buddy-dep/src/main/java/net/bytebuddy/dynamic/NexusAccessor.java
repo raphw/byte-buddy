@@ -36,7 +36,9 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.utility.JavaModule;
 import org.objectweb.asm.MethodVisitor;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.InvocationTargetException;
@@ -60,7 +62,7 @@ public class NexusAccessor {
     /**
      * An type-safe constant for a non-operational reference queue.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     private static final ReferenceQueue<ClassLoader> NO_QUEUE = null;
 
     /**
@@ -274,12 +276,6 @@ public class NexusAccessor {
         class Available implements Dispatcher {
 
             /**
-             * Indicates that a static method is invoked by reflection.
-             */
-            @Nullable
-            private static final Object STATIC_METHOD = null;
-
-            /**
              * The {@link Nexus#register(String, ClassLoader, ReferenceQueue, int, Object)} method.
              */
             private final Method register;
@@ -312,7 +308,7 @@ public class NexusAccessor {
              */
             public void clean(Reference<? extends ClassLoader> reference) {
                 try {
-                    clean.invoke(STATIC_METHOD, reference);
+                    clean.invoke(null, reference);
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException(exception);
                 } catch (InvocationTargetException exception) {
@@ -329,7 +325,7 @@ public class NexusAccessor {
                                  int identification,
                                  LoadedTypeInitializer loadedTypeInitializer) {
                 try {
-                    register.invoke(STATIC_METHOD, name, classLoader, referenceQueue, identification, loadedTypeInitializer);
+                    register.invoke(null, name, classLoader, referenceQueue, identification, loadedTypeInitializer);
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException(exception);
                 } catch (InvocationTargetException exception) {

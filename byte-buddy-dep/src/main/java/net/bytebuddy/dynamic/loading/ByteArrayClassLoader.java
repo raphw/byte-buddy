@@ -23,7 +23,9 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.GraalImageCode;
 import net.bytebuddy.utility.JavaModule;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,7 +69,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     /**
      * Indicates that a URL does not exist to improve code readability.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     private static final URL NO_URL = null;
 
     /**

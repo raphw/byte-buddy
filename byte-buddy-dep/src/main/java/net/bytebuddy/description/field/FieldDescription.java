@@ -29,6 +29,7 @@ import org.objectweb.asm.signature.SignatureWriter;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Modifier;
@@ -48,7 +49,7 @@ public interface FieldDescription extends ByteCodeElement,
     /**
      * A representative of a field's non-set default value.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     Object NO_DEFAULT_VALUE = null;
 
     /**

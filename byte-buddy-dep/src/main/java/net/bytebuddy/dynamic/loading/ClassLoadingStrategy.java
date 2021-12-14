@@ -19,7 +19,9 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.GraalImageCode;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
@@ -37,13 +39,13 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
     /**
      * A type-safe constant representing the bootstrap class loader which is represented by {@code null} within Java.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     ClassLoader BOOTSTRAP_LOADER = null;
 
     /**
      * An undefined protection domain.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     ProtectionDomain NO_PROTECTION_DOMAIN = null;
 
     /**

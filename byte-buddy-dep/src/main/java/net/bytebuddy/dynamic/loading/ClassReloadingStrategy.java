@@ -24,7 +24,9 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.File;
 import java.io.IOException;
 import java.lang.instrument.ClassDefinition;
@@ -52,22 +54,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader> {
-
-    /**
-     * The name of the Byte Buddy {@code net.bytebuddy.agent.Installer} class.
-     */
-    private static final String INSTALLER_TYPE = "net.bytebuddy.agent.Installer";
-
-    /**
-     * The name of the getter for {@code net.bytebuddy.agent.Installer} to read the {@link Instrumentation}.
-     */
-    private static final String INSTALLER_GETTER = "getInstrumentation";
-
-    /**
-     * Indicator for access to a static member via reflection to make the code more readable.
-     */
-    @Nullable
-    private static final Object STATIC_MEMBER = null;
 
     /**
      * A dispatcher to use with some methods of the {@link Instrumentation} API.
@@ -165,13 +151,13 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
      */
     private static Instrumentation resolveByteBuddyAgentInstrumentation() {
         try {
-            Class<?> installer = ClassLoader.getSystemClassLoader().loadClass(INSTALLER_TYPE);
+            Class<?> installer = ClassLoader.getSystemClassLoader().loadClass("net.bytebuddy.agent.Installer");
             JavaModule source = JavaModule.ofType(AgentBuilder.class), target = JavaModule.ofType(installer);
             if (source != null && !source.canRead(target)) {
                 Class<?> module = Class.forName("java.lang.Module");
                 module.getMethod("addReads", module).invoke(source.unwrap(), target.unwrap());
             }
-            return (Instrumentation) installer.getMethod(INSTALLER_GETTER).invoke(STATIC_MEMBER);
+            return (Instrumentation) installer.getMethod("getInstrumentation").invoke(null);
         } catch (RuntimeException exception) {
             throw exception;
         } catch (Exception exception) {
@@ -447,7 +433,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
         /**
          * Indicates that a class is not redefined.
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         private static final byte[] NO_REDEFINITION = null;
 
         /**

@@ -28,7 +28,9 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.lang.annotation.*;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -58,7 +60,7 @@ public interface AnnotationDescription {
     /**
      * Indicates a nonexistent annotation in a type-safe manner.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     AnnotationDescription.Loadable<?> UNDEFINED = null;
 
     /**

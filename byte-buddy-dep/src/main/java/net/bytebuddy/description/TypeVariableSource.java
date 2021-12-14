@@ -19,7 +19,9 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
@@ -31,7 +33,7 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
     /**
      * Indicates that a type variable source is undefined.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     TypeVariableSource UNDEFINED = null;
 
     /**

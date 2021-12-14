@@ -18,6 +18,7 @@ package net.bytebuddy.utility.privilege;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.security.PrivilegedAction;
 
@@ -27,11 +28,6 @@ import java.security.PrivilegedAction;
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class GetMethodAction implements PrivilegedAction<Method> {
-
-    /**
-     * An empty array to indicate that there are no arguments to a method invocation.
-     */
-    private static final Object[] NO_ARGUMENT = new Object[0];
 
     /**
      * The name of the type.
@@ -64,6 +60,7 @@ public class GetMethodAction implements PrivilegedAction<Method> {
     /**
      * {@inheritDoc}
      */
+    @Nullable
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but be nulled out")
     public Method run() {
         try {

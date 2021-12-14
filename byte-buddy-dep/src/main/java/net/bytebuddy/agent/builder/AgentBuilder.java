@@ -68,7 +68,9 @@ import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import org.objectweb.asm.*;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.*;
 import java.lang.instrument.*;
 import java.lang.ref.WeakReference;
@@ -2431,7 +2433,7 @@ public interface AgentBuilder {
             /**
              * Indicates that the circularity lock is not currently acquired.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final Boolean NOT_ACQUIRED = null;
 
             /**
@@ -4772,7 +4774,7 @@ public interface AgentBuilder {
         /**
          * Indicates that an exception is handled.
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         Throwable SUPPRESS_ERROR = null;
 
         /**
@@ -8073,7 +8075,7 @@ public interface AgentBuilder {
         /**
          * Indicates that an original implementation can be ignored when redefining a method.
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         protected static final MethodVisitor IGNORE_ORIGINAL = null;
 
         /**
@@ -8870,7 +8872,7 @@ public interface AgentBuilder {
             /**
              * A type-safe constant to express that a class is not already loaded when applying a class file transformer.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final Class<?> NOT_PREVIOUSLY_DEFINED = null;
 
             /**
@@ -9615,23 +9617,17 @@ public interface AgentBuilder {
         private static final String INSTALLER_GETTER = "getInstrumentation";
 
         /**
-         * Indicator for access to a static member via reflection to make the code more readable.
-         */
-        @Nullable
-        private static final Object STATIC_MEMBER = null;
-
-        /**
          * The value that is to be returned from a {@link java.lang.instrument.ClassFileTransformer} to indicate
          * that no class file transformation is to be applied.
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         private static final byte[] NO_TRANSFORMATION = null;
 
         /**
-         * Indicates that a loaded type should be considered as non-available.
+         * A type-safe constant to express that a class is not already loaded when applying a class file transformer.
          */
-        @Nullable
-        private static final Class<?> NO_LOADED_TYPE = null;
+        @Nonnull(when = When.NEVER)
+        private static final Class<?> NOT_PREVIOUSLY_DEFINED = null;
 
         /**
          * A dipatcher to use for interacting with the instrumentation API.
@@ -10710,7 +10706,7 @@ public interface AgentBuilder {
                     Class<?> module = Class.forName("java.lang.Module");
                     module.getMethod("addReads", module).invoke(source.unwrap(), target.unwrap());
                 }
-                return (Instrumentation) installer.getMethod(INSTALLER_GETTER).invoke(STATIC_MEMBER);
+                return (Instrumentation) installer.getMethod(INSTALLER_GETTER).invoke(null);
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception exception) {
@@ -11073,7 +11069,7 @@ public interface AgentBuilder {
                                             module.unwrap(),
                                             type.getClassLoader(),
                                             Type.getInternalName(type),
-                                            NO_LOADED_TYPE,
+                                            NOT_PREVIOUSLY_DEFINED,
                                             type.getProtectionDomain(),
                                             binaryRepresentation) != null;
                                     if (redefinitionStrategy.isEnabled()) {
@@ -11144,7 +11140,7 @@ public interface AgentBuilder {
             /**
              * Indicates that a type should not be ignored.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final byte[] NONE = null;
 
             /**

@@ -17,7 +17,9 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.AllPermission;
@@ -75,7 +77,7 @@ public interface ClassFilePostProcessor {
         /**
          * Indicates that a class is not currently loaded.
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         private static final Class<?> UNLOADED_TYPE = null;
 
         /**

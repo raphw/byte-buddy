@@ -22,7 +22,9 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.AnnotationTypeMismatchException;
 import java.lang.annotation.IncompleteAnnotationException;
@@ -49,7 +51,7 @@ public interface AnnotationValue<T, S> {
     /**
      * An undefined annotation value.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     AnnotationValue<?, ?> UNDEFINED = null;
 
     /**

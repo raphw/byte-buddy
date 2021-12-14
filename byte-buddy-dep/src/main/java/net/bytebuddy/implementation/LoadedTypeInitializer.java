@@ -22,7 +22,9 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -89,12 +91,6 @@ public interface LoadedTypeInitializer {
          * This class's serial version UID.
          */
         private static final long serialVersionUID = 1L;
-
-        /**
-         * A value for accessing a static field.
-         */
-        @Nullable
-        private static final Object STATIC_FIELD = null;
 
         /**
          * The name of the field.
@@ -167,10 +163,10 @@ public interface LoadedTypeInitializer {
                 if (!Modifier.isPublic(field.getModifiers())
                         || !Modifier.isPublic(field.getDeclaringClass().getModifiers())
                         || JavaModule.isSupported()
-                        && !JavaModule.ofType(type).isExported(new TypeDescription.ForLoadedType(type).getPackage(), JavaModule.ofType(ForStaticField.class))) {
+                        && !JavaModule.ofType(type).isExported(TypeDescription.ForLoadedType.of(type).getPackage(), JavaModule.ofType(ForStaticField.class))) {
                     doPrivileged(new SetAccessibleAction<Field>(field), accessControlContext);
                 }
-                field.set(STATIC_FIELD, value);
+                field.set(null, value);
             } catch (IllegalAccessException exception) {
                 throw new IllegalArgumentException("Cannot access " + fieldName + " from " + type, exception);
             } catch (NoSuchFieldException exception) {

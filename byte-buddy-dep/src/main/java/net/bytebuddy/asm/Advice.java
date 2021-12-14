@@ -58,7 +58,9 @@ import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
 import net.bytebuddy.utility.visitor.StackAwareMethodVisitor;
 import org.objectweb.asm.*;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.annotation.*;
@@ -163,7 +165,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * Indicates that no class reader is available to an advice method.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     private static final ClassReader UNDEFINED = null;
 
     /**
@@ -6962,13 +6964,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Indicates that a method does not represent advice and does not need to be visited.
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         MethodVisitor IGNORE_METHOD = null;
 
         /**
          * Expresses that an annotation should not be visited.
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         AnnotationVisitor IGNORE_ANNOTATION = null;
 
         /**

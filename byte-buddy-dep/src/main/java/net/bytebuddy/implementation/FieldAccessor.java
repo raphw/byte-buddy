@@ -34,7 +34,9 @@ import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 
@@ -1028,7 +1030,7 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             protected Void initialize(TypeDescription instrumentedType) {
                 return null;
             }
@@ -1100,7 +1102,7 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             protected Void initialize(TypeDescription instrumentedType) {
                 return null;
             }
@@ -1183,7 +1185,7 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * {@inheritDoc}
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             protected Void initialize(TypeDescription instrumentedType) {
                 return null;
             }

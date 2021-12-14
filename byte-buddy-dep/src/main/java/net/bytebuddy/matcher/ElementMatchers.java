@@ -30,9 +30,12 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.JavaModule;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Constructor;
@@ -47,12 +50,6 @@ import java.util.concurrent.ConcurrentMap;
  * A utility class that contains a human-readable language for creating {@link net.bytebuddy.matcher.ElementMatcher}s.
  */
 public final class ElementMatchers {
-
-    /**
-     * A readable reference to the bootstrap class loader which is represented by {@code null}.
-     */
-    @Nullable
-    private static final ClassLoader BOOTSTRAP_CLASSLOADER = null;
 
     /**
      * A private constructor that must not be invoked.
@@ -2262,7 +2259,7 @@ public final class ElementMatchers {
      * class loader.
      */
     public static <T extends ClassLoader> ElementMatcher.Junction<T> isChildOf(@Nullable ClassLoader classLoader) {
-        return classLoader == BOOTSTRAP_CLASSLOADER
+        return classLoader == ClassLoadingStrategy.BOOTSTRAP_LOADER
                 ? BooleanMatcher.<T>of(true)
                 : ElementMatchers.<T>hasChild(is(classLoader));
     }

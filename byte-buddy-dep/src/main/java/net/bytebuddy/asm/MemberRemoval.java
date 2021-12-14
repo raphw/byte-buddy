@@ -31,7 +31,9 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -156,13 +158,13 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
         /**
          * Indicates the removal of a field.
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         private static final FieldVisitor REMOVE_FIELD = null;
 
         /**
          * Indicates the removal of a method.
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         private static final MethodVisitor REMOVE_METHOD = null;
 
         /**

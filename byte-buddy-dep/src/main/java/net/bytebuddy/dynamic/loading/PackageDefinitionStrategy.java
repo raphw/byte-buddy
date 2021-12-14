@@ -18,7 +18,9 @@ package net.bytebuddy.dynamic.loading;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -251,13 +253,13 @@ public interface PackageDefinitionStrategy {
             /**
              * An empty value of a package's property.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final String NO_VALUE = null;
 
             /**
              * Represents an unsealed package.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final URL NOT_SEALED = null;
 
             /**
@@ -520,7 +522,7 @@ public interface PackageDefinitionStrategy {
         /**
          * A URL defined a non-sealed package.
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         private static final URL NOT_SEALED = null;
 
         /**

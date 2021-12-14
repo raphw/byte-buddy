@@ -29,7 +29,9 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.FileSystem;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.*;
 import java.lang.annotation.*;
 import java.lang.reflect.Constructor;
@@ -2207,7 +2209,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * Indicates that no manifest exists.
                  */
-                @Nullable
+                @Nonnull(when = When.NEVER)
                 Manifest NO_MANIFEST = null;
 
                 /**
@@ -2545,7 +2547,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nullable
+                    @Nonnull(when = When.NEVER)
                     public <T> T resolveAs(Class<T> type) {
                         return null;
                     }

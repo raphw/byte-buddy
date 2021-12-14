@@ -36,7 +36,9 @@ import net.bytebuddy.utility.RandomString;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.privilege.GetMethodAction;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -314,7 +316,7 @@ public interface ClassInjector {
             /**
              * Indicates a class that is currently not defined.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             Class<?> UNDEFINED = null;
 
             /**

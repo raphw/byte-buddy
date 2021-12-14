@@ -44,7 +44,9 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
@@ -94,7 +96,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      * Represents any undefined property representing a type description that is instead represented as {@code null} in order
      * to resemble the Java reflection API which returns {@code null} and is intuitive to many Java developers.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     TypeDescription UNDEFINED = null;
 
     /**
@@ -483,7 +485,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * Represents any undefined property representing a generic type description that is instead represented as {@code null} in order
          * to resemble the Java reflection API which returns {@code null} and is intuitive to many Java developers.
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         Generic UNDEFINED = null;
 
         /**
@@ -6871,7 +6873,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * Represents an undefined {@link java.lang.reflect.Type} within a build step.
              */
-            @Nullable
+            @Nonnull(when = When.NEVER)
             private static final java.lang.reflect.Type UNDEFINED = null;
 
             /**
@@ -8184,7 +8186,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         public ClassFileVersion getClassFileVersion() {
             return null;
         }

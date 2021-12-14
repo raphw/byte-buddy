@@ -15,7 +15,9 @@
  */
 package net.bytebuddy.description;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 
 /**
  * Represents a Java element with a name.
@@ -25,7 +27,7 @@ public interface NamedElement {
     /**
      * Indicates that an element is not named.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     String NO_NAME = null;
 
     /**
@@ -97,7 +99,7 @@ public interface NamedElement {
         /**
          * The generic type signature of a non-generic byte code element.
          */
-        @Nullable
+        @Nonnull(when = When.NEVER)
         String NON_GENERIC_SIGNATURE = null;
 
         /**

@@ -23,7 +23,9 @@ import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.AnnotatedElement;
@@ -37,7 +39,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
     /**
      * Canonical representation of a Java module on a JVM that does not support the module API.
      */
-    @Nullable
+    @Nonnull(when = When.NEVER)
     public static final JavaModule UNSUPPORTED = null;
 
     /**
