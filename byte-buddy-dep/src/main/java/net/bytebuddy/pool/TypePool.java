@@ -1209,7 +1209,7 @@ public interface TypePool {
                          * @param typePath   The type variable's type path.
                          * @param index      The type variable's index.
                          */
-                        protected WithIndex(String descriptor, TypePath typePath, int index) {
+                        protected WithIndex(String descriptor, @Nullable TypePath typePath, int index) {
                             super(descriptor, typePath);
                             this.index = index;
                         }
@@ -1250,7 +1250,7 @@ public interface TypePool {
                              * @param index      The type variable's index.
                              * @param preIndex   The type variable's first index.
                              */
-                            protected DoubleIndexed(String descriptor, TypePath typePath, int index, int preIndex) {
+                            protected DoubleIndexed(String descriptor, @Nullable TypePath typePath, int index, int preIndex) {
                                 super(descriptor, typePath, index);
                                 this.preIndex = preIndex;
                             }
@@ -1389,7 +1389,7 @@ public interface TypePool {
                      * @param indexedPathMap The target collection.
                      */
                     protected WithIndex(String descriptor,
-                                        TypePath typePath,
+                                        @Nullable TypePath typePath,
                                         int index,
                                         Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> indexedPathMap) {
                         super(descriptor, typePath, index);
@@ -1421,7 +1421,7 @@ public interface TypePool {
                          * @param doubleIndexedPathMap The target collection.
                          */
                         protected DoubleIndexed(String descriptor,
-                                                TypePath typePath,
+                                                @Nullable TypePath typePath,
                                                 int index,
                                                 int preIndex,
                                                 Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> doubleIndexedPathMap) {
@@ -3241,7 +3241,10 @@ public interface TypePool {
                  * @param annotationTokens   A mapping of the type's annotation tokens by their type path.
                  * @return A description of the represented generic type.
                  */
-                Generic toGenericType(TypePool typePool, @Nullable TypeVariableSource typeVariableSource, String typePath, @Nullable Map<String, List<AnnotationToken>> annotationTokens);
+                Generic toGenericType(TypePool typePool,
+                                      TypeVariableSource typeVariableSource,
+                                      String typePath,
+                                      @Nullable Map<String, List<AnnotationToken>> annotationTokens);
 
                 /**
                  * Determines if a generic type tokens represents a primary bound of a type variable. This method must only be invoked on types
@@ -3380,7 +3383,7 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public Generic toGenericType(TypePool typePool,
-                                                 @Nullable TypeVariableSource typeVariableSource,
+                                                 TypeVariableSource typeVariableSource,
                                                  String typePath,
                                                  @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
                         return new LazyPrimitiveType(typePool,
@@ -3494,7 +3497,7 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public Generic toGenericType(TypePool typePool,
-                                                 @Nullable TypeVariableSource typeVariableSource,
+                                                 TypeVariableSource typeVariableSource,
                                                  String typePath,
                                                  @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
                         return new LazyUnboundWildcard(typePool,
@@ -4339,7 +4342,7 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public Generic toGenericType(TypePool typePool,
-                                                 @Nullable TypeVariableSource typeVariableSource,
+                                                 TypeVariableSource typeVariableSource,
                                                  String typePath,
                                                  @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
                         return new Resolution.Raw.RawAnnotatedType(typePool,
@@ -4389,7 +4392,7 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public Generic toGenericType(TypePool typePool,
-                                                 @Nullable TypeVariableSource typeVariableSource,
+                                                 TypeVariableSource typeVariableSource,
                                                  String typePath,
                                                  @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
                         Generic typeVariable = typeVariableSource.findVariable(symbol);
@@ -4774,7 +4777,7 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public Generic toGenericType(TypePool typePool,
-                                                 @Nullable TypeVariableSource typeVariableSource,
+                                                 TypeVariableSource typeVariableSource,
                                                  String typePath,
                                                  @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
                         return new LazyGenericArray(typePool, typeVariableSource, typePath, annotationTokens, componentTypeToken);
@@ -4885,7 +4888,7 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public Generic toGenericType(TypePool typePool,
-                                                 @Nullable TypeVariableSource typeVariableSource,
+                                                 TypeVariableSource typeVariableSource,
                                                  String typePath,
                                                  @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
                         return new LazyLowerBoundWildcard(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
@@ -5003,7 +5006,7 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public Generic toGenericType(TypePool typePool,
-                                                 @Nullable TypeVariableSource typeVariableSource,
+                                                 TypeVariableSource typeVariableSource,
                                                  String typePath,
                                                  @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
                         return new LazyUpperBoundWildcard(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
@@ -5128,7 +5131,7 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public Generic toGenericType(TypePool typePool,
-                                                 @Nullable TypeVariableSource typeVariableSource,
+                                                 TypeVariableSource typeVariableSource,
                                                  String typePath,
                                                  @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
                         return new LazyParameterizedType(typePool, typeVariableSource, typePath, annotationTokens, name, parameterTypeTokens);
@@ -5186,7 +5189,7 @@ public interface TypePool {
                          * {@inheritDoc}
                          */
                         public Generic toGenericType(TypePool typePool,
-                                                     @Nullable TypeVariableSource typeVariableSource,
+                                                     TypeVariableSource typeVariableSource,
                                                      String typePath,
                                                      @Nullable Map<String, List<AnnotationToken>> annotationTokens) {
                             return new LazyParameterizedType(typePool, typeVariableSource, typePath, annotationTokens, name, parameterTypeTokens, ownerTypeToken);
@@ -6794,7 +6797,6 @@ public interface TypePool {
                 /**
                  * The closest type variable source of this generic type's declaration context.
                  */
-                @Nullable
                 private final TypeVariableSource typeVariableSource;
 
                 /**
@@ -6810,7 +6812,7 @@ public interface TypePool {
                                                @Nullable GenericTypeToken genericTypeToken,
                                                String rawTypeDescriptor,
                                                Map<String, List<AnnotationToken>> annotationTokens,
-                                               @Nullable TypeVariableSource typeVariableSource) {
+                                               TypeVariableSource typeVariableSource) {
                     this.typePool = typePool;
                     this.genericTypeToken = genericTypeToken;
                     this.rawTypeDescriptor = rawTypeDescriptor;
