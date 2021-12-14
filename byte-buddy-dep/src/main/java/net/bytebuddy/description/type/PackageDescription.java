@@ -21,7 +21,6 @@ import net.bytebuddy.description.annotation.AnnotationSource;
 import org.objectweb.asm.Opcodes;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.meta.When;
 
 /**

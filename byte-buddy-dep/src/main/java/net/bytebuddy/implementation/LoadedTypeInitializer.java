@@ -22,9 +22,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.annotation.meta.When;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
