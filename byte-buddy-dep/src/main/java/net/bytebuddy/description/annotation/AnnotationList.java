@@ -20,7 +20,9 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.meta.When;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
@@ -137,6 +139,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         /**
          * {@inheritDoc}
          */
+        @Nullable
         public AnnotationDescription ofType(TypeDescription annotationType) {
             for (AnnotationDescription annotation : this) {
                 if (annotation.getAnnotationType().equals(annotationType)) {
@@ -340,7 +343,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        @Nullable
+        @Nonnull(when = When.NEVER)
         public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
             return (AnnotationDescription.Loadable<T>) AnnotationDescription.UNDEFINED;
         }
@@ -348,6 +351,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         /**
          * {@inheritDoc}
          */
+        @Nonnull(when = When.NEVER)
         public AnnotationDescription ofType(TypeDescription annotationType) {
             return AnnotationDescription.UNDEFINED;
         }

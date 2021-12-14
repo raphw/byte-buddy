@@ -60,14 +60,9 @@ public class NexusAccessor {
     private static final Dispatcher DISPATCHER = doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
     /**
-     * An type-safe constant for a non-operational reference queue.
-     */
-    @Nonnull(when = When.NEVER)
-    private static final ReferenceQueue<ClassLoader> NO_QUEUE = null;
-
-    /**
      * The reference queue that is notified upon a GC eligible {@link Nexus} entry or {@code null} if no such queue should be notified.
      */
+    @Nullable
     @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
     private final ReferenceQueue<? super ClassLoader> referenceQueue;
 
@@ -75,7 +70,7 @@ public class NexusAccessor {
      * Creates a new accessor for the {@link Nexus} without any active management of stale references within a nexus.
      */
     public NexusAccessor() {
-        this(NO_QUEUE);
+        this(null);
     }
 
     /**
@@ -86,7 +81,7 @@ public class NexusAccessor {
      * @param referenceQueue The reference queue onto which stale references should be enqueued or {@code null} if no reference queue
      *                       should be notified.
      */
-    public NexusAccessor(ReferenceQueue<? super ClassLoader> referenceQueue) {
+    public NexusAccessor(@Nullable ReferenceQueue<? super ClassLoader> referenceQueue) {
         this.referenceQueue = referenceQueue;
     }
 

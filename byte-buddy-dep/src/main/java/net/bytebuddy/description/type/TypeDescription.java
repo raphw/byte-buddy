@@ -6542,8 +6542,21 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  *
                  * @param type The type of which the super class is represented.
                  */
-                public ForLoadedSuperClass(Class<?> type) {
+                protected ForLoadedSuperClass(Class<?> type) {
                     this.type = type;
+                }
+
+                /**
+                 * Creates a new lazy projection of a type's super class.
+                 *
+                 * @param type The type of which the super class is represented.
+                 * @return A representation of the supplied type's super class or {@code null} if no such class exists.
+                 */
+                @Nullable
+                public static Generic of(Class<?> type) {
+                    return type.getSuperclass() == null
+                            ? TypeDescription.Generic.UNDEFINED
+                            : new Generic.LazyProjection.ForLoadedSuperClass(type);
                 }
 
                 /**
@@ -6551,20 +6564,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 @CachedReturnPlugin.Enhance("resolved")
                 protected Generic resolve() {
-                    java.lang.reflect.Type superClass = type.getGenericSuperclass();
-                    return superClass == null
-                            ? Generic.UNDEFINED
-                            : Sort.describe(superClass, getAnnotationReader());
+                    return Sort.describe(type.getGenericSuperclass(), getAnnotationReader());
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public TypeDescription asErasure() {
-                    Class<?> superClass = type.getSuperclass();
-                    return superClass == null
-                            ? TypeDescription.UNDEFINED
-                            : ForLoadedType.of(superClass);
+                    return ForLoadedType.of(type.getSuperclass());
                 }
 
                 @Override
@@ -8186,7 +8193,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.NEVER)
+        @Nullable
         public ClassFileVersion getClassFileVersion() {
             return null;
         }
@@ -8657,9 +8664,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         ? TypeDescription.Generic.UNDEFINED
                         : Generic.OfNonGenericType.ForLoadedType.of(type.getSuperclass());
             }
-            return type.getSuperclass() == null
-                    ? TypeDescription.Generic.UNDEFINED
-                    : new Generic.LazyProjection.ForLoadedSuperClass(type);
+            return Generic.LazyProjection.ForLoadedSuperClass.of(type);
         }
 
         /**
@@ -9367,6 +9372,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * The super type or {@code null} if no such type exists.
          */
+        @Nullable
         private final Generic superClass;
 
         /**
@@ -9394,7 +9400,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * @param superClass The super type or {@code null} if no such type exists.
          * @param interfaces The interfaces that this type implements.
          */
-        public Latent(String name, int modifiers, Generic superClass, List<? extends Generic> interfaces) {
+        public Latent(String name, int modifiers, @Nullable Generic superClass, List<? extends Generic> interfaces) {
             this.name = name;
             this.modifiers = modifiers;
             this.superClass = superClass;
@@ -9960,8 +9966,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return delegate.getPermittedSubtypes();
         }
 
-        @Override
         @Nullable
+        @Override
         public ClassFileVersion getClassFileVersion() {
             return delegate.getClassFileVersion();
         }

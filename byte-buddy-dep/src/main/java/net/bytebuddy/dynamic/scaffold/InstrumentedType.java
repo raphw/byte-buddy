@@ -147,12 +147,12 @@ public interface InstrumentedType extends TypeDescription {
     InstrumentedType withEnclosingMethod(MethodDescription.InDefinedShape enclosingMethod);
 
     /**
-     * Creates a new instrumented type that is declared by the supplied type..
+     * Creates a new instrumented type that is declared by the supplied type.
      *
-     * @param declaringType The type that declares the instrumented type.
+     * @param declaringType The type that declares the instrumented type or {@code null} if no such type exists.
      * @return A new instrumented type that is declared by the instrumented type.
      */
-    InstrumentedType withDeclaringType(TypeDescription declaringType);
+    InstrumentedType withDeclaringType(@Nullable TypeDescription declaringType);
 
     /**
      * Creates a new instrumented type that indicates that it declared the supplied types.
@@ -285,7 +285,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        WithFlexibleName withEnclosingType(TypeDescription enclosingType);
+        WithFlexibleName withEnclosingType(@Nullable TypeDescription enclosingType);
 
         /**
          * {@inheritDoc}
@@ -295,7 +295,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        WithFlexibleName withDeclaringType(TypeDescription declaringType);
+        WithFlexibleName withDeclaringType(@Nullable TypeDescription declaringType);
 
         /**
          * {@inheritDoc}
@@ -994,7 +994,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        public WithFlexibleName withEnclosingType(TypeDescription enclosingType) {
+        public WithFlexibleName withEnclosingType(@Nullable TypeDescription enclosingType) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -1050,7 +1050,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        public WithFlexibleName withDeclaringType(TypeDescription declaringType) {
+        public WithFlexibleName withDeclaringType(@Nullable TypeDescription declaringType) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -2118,7 +2118,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        public WithFlexibleName withEnclosingType(TypeDescription enclosingType) {
+        public WithFlexibleName withEnclosingType(@Nullable TypeDescription enclosingType) {
             throw new IllegalStateException("Cannot set enclosing type of frozen type: " + typeDescription);
         }
 
@@ -2132,7 +2132,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        public WithFlexibleName withDeclaringType(TypeDescription declaringType) {
+        public WithFlexibleName withDeclaringType(@Nullable TypeDescription declaringType) {
             throw new IllegalStateException("Cannot add declaring type to frozen type: " + typeDescription);
         }
 
@@ -2213,8 +2213,8 @@ public interface InstrumentedType extends TypeDescription {
             return TypeInitializer.None.INSTANCE;
         }
 
-        @Override
         @Nullable
+        @Override
         public ClassFileVersion getClassFileVersion() {
             return typeDescription.getClassFileVersion();
         }
