@@ -383,13 +383,13 @@ public interface ClassInjector {
              */
             Package definePackage(ClassLoader classLoader,
                                   String name,
-                                  String specificationTitle,
-                                  String specificationVersion,
-                                  String specificationVendor,
-                                  String implementationTitle,
-                                  String implementationVersion,
-                                  String implementationVendor,
-                                  URL sealBase);
+                                  @Nullable String specificationTitle,
+                                  @Nullable String specificationVersion,
+                                  @Nullable String specificationVendor,
+                                  @Nullable String implementationTitle,
+                                  @Nullable String implementationVersion,
+                                  @Nullable String implementationVendor,
+                                  @Nullable URL sealBase);
 
             /**
              * Initializes a dispatcher to make non-accessible APIs accessible.
@@ -488,13 +488,13 @@ public interface ClassInjector {
                      */
                     public Package definePackage(ClassLoader classLoader,
                                                  String name,
-                                                 String specificationTitle,
-                                                 String specificationVersion,
-                                                 String specificationVendor,
-                                                 String implementationTitle,
-                                                 String implementationVersion,
-                                                 String implementationVendor,
-                                                 URL sealBase) {
+                                                 @Nullable String specificationTitle,
+                                                 @Nullable String specificationVersion,
+                                                 @Nullable String specificationVendor,
+                                                 @Nullable String implementationTitle,
+                                                 @Nullable String implementationVersion,
+                                                 @Nullable String implementationVendor,
+                                                 @Nullable URL sealBase) {
                         throw new UnsupportedOperationException("Cannot define package using injection: " + message);
                     }
                 }
@@ -722,13 +722,13 @@ public interface ClassInjector {
                  */
                 public Package definePackage(ClassLoader classLoader,
                                              String name,
-                                             String specificationTitle,
-                                             String specificationVersion,
-                                             String specificationVendor,
-                                             String implementationTitle,
-                                             String implementationVersion,
-                                             String implementationVendor,
-                                             URL sealBase) {
+                                             @Nullable String specificationTitle,
+                                             @Nullable String specificationVersion,
+                                             @Nullable String specificationVendor,
+                                             @Nullable String implementationTitle,
+                                             @Nullable String implementationVersion,
+                                             @Nullable String implementationVendor,
+                                             @Nullable URL sealBase) {
                     try {
                         return (Package) definePackage.invoke(classLoader,
                                 name,
@@ -1078,13 +1078,13 @@ public interface ClassInjector {
                  */
                 public Package definePackage(ClassLoader classLoader,
                                              String name,
-                                             String specificationTitle,
-                                             String specificationVersion,
-                                             String specificationVendor,
-                                             String implementationTitle,
-                                             String implementationVersion,
-                                             String implementationVendor,
-                                             URL sealBase) {
+                                             @Nullable String specificationTitle,
+                                             @Nullable String specificationVersion,
+                                             @Nullable String specificationVendor,
+                                             @Nullable String implementationTitle,
+                                             @Nullable String implementationVersion,
+                                             @Nullable String implementationVendor,
+                                             @Nullable URL sealBase) {
                     try {
                         return (Package) definePackage.invoke(accessor,
                                 classLoader,
@@ -1324,13 +1324,13 @@ public interface ClassInjector {
                  */
                 public Package definePackage(ClassLoader classLoader,
                                              String name,
-                                             String specificationTitle,
-                                             String specificationVersion,
-                                             String specificationVendor,
-                                             String implementationTitle,
-                                             String implementationVersion,
-                                             String implementationVendor,
-                                             URL sealBase) {
+                                             @Nullable String specificationTitle,
+                                             @Nullable String specificationVersion,
+                                             @Nullable String specificationVendor,
+                                             @Nullable String implementationTitle,
+                                             @Nullable String implementationVersion,
+                                             @Nullable String implementationVendor,
+                                             @Nullable URL sealBase) {
                     try {
                         return (Package) definePackage.invoke(classLoader,
                                 name,
@@ -1488,13 +1488,13 @@ public interface ClassInjector {
                  */
                 public Package definePackage(ClassLoader classLoader,
                                              String name,
-                                             String specificationTitle,
-                                             String specificationVersion,
-                                             String specificationVendor,
-                                             String implementationTitle,
-                                             String implementationVersion,
-                                             String implementationVendor,
-                                             URL sealBase) {
+                                             @Nullable String specificationTitle,
+                                             @Nullable String specificationVersion,
+                                             @Nullable String specificationVendor,
+                                             @Nullable String implementationTitle,
+                                             @Nullable String implementationVersion,
+                                             @Nullable String implementationVendor,
+                                             @Nullable URL sealBase) {
                     throw new UnsupportedOperationException("Cannot define package using injection: " + message);
                 }
             }

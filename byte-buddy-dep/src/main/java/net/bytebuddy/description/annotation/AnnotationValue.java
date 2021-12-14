@@ -49,6 +49,7 @@ public interface AnnotationValue<T, S> {
     /**
      * An undefined annotation value.
      */
+    @Nullable
     AnnotationValue<?, ?> UNDEFINED = null;
 
     /**
@@ -784,7 +785,9 @@ public interface AnnotationValue<T, S> {
             return type.cast(resolve());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property) {
             return filter(property, property.getReturnType());
         }

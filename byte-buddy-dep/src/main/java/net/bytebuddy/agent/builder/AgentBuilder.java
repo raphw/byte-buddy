@@ -8870,6 +8870,7 @@ public interface AgentBuilder {
             /**
              * A type-safe constant to express that a class is not already loaded when applying a class file transformer.
              */
+            @Nullable
             private static final Class<?> NOT_PREVIOUSLY_DEFINED = null;
 
             /**
