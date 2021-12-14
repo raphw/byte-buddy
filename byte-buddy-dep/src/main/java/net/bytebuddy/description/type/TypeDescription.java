@@ -6871,6 +6871,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * Represents an undefined {@link java.lang.reflect.Type} within a build step.
              */
+            @Nullable
             private static final java.lang.reflect.Type UNDEFINED = null;
 
             /**

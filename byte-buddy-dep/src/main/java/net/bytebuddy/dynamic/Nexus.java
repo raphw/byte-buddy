@@ -51,6 +51,7 @@ public class Nexus extends WeakReference<ClassLoader> {
     /**
      * An type-safe constant for a non-operational reference queue.
      */
+    @Nullable
     private static final ReferenceQueue<ClassLoader> NO_QUEUE = null;
 
     /**
