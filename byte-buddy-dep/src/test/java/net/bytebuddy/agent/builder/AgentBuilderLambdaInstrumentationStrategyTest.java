@@ -2,9 +2,8 @@ package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,7 +16,7 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -144,15 +143,13 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
     @JavaVersionRule.Enforce(7)
     public void testFactoryRegular() throws Exception {
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
-        assertThat(AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.REGULAR.wrap(mock(TypeDescription.class),
-                mock(MethodDescription.class),
+        ByteCodeAppender.Size size = AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.REGULAR.apply(
                 methodVisitor,
                 mock(Implementation.Context.class),
-                mock(TypePool.class),
-                0,
-                0), nullValue(MethodVisitor.class));
-        verify(methodVisitor).visitCode();
-        verify(methodVisitor).visitMaxs(anyInt(), anyInt());
+                mock(MethodDescription.class));
+        verify(methodVisitor, never()).visitCode();
+        assertThat(size.getOperandStackSize(), not(0));
+        assertThat(size.getLocalVariableSize(), not(0));
         verify(methodVisitor, never()).visitLineNumber(anyInt(), Mockito.<Label>any());
     }
 
@@ -160,15 +157,13 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
     @JavaVersionRule.Enforce(7)
     public void testFactoryAlternative() throws Exception {
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
-        assertThat(AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.ALTERNATIVE.wrap(mock(TypeDescription.class),
-                mock(MethodDescription.class),
+        ByteCodeAppender.Size size = AgentBuilder.LambdaInstrumentationStrategy.LambdaMetafactoryFactory.ALTERNATIVE.apply(
                 methodVisitor,
                 mock(Implementation.Context.class),
-                mock(TypePool.class),
-                0,
-                0), nullValue(MethodVisitor.class));
-        verify(methodVisitor).visitCode();
-        verify(methodVisitor).visitMaxs(anyInt(), anyInt());
+                mock(MethodDescription.class));
+        verify(methodVisitor, never()).visitCode();
+        assertThat(size.getOperandStackSize(), not(0));
+        assertThat(size.getLocalVariableSize(), not(0));
         verify(methodVisitor, never()).visitLineNumber(anyInt(), Mockito.<Label>any());
     }
 }

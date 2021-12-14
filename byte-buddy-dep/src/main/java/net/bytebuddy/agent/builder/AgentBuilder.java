@@ -8041,9 +8041,10 @@ public interface AgentBuilder {
                     }
                     byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE)
                             .redefine(lambdaMetaFactory)
-                            .visit(new AsmVisitorWrapper.ForDeclaredMethods()
-                                    .method(named("metafactory"), LambdaMetafactoryFactory.REGULAR)
-                                    .method(named("altMetafactory"), LambdaMetafactoryFactory.ALTERNATIVE))
+                            .method(ElementMatchers.<MethodDescription>isPublic().and(named("metafactory")))
+                            .intercept(new Implementation.Simple(LambdaMetafactoryFactory.REGULAR))
+                            .method(ElementMatchers.<MethodDescription>isPublic().and(named("altMetafactory")))
+                            .intercept(new Implementation.Simple(LambdaMetafactoryFactory.ALTERNATIVE))
                             .make()
                             .load(lambdaMetaFactory.getClassLoader(), ClassReloadingStrategy.of(instrumentation));
                 }
@@ -8207,7 +8208,7 @@ public interface AgentBuilder {
          * }
          * </pre></blockquote>
          */
-        protected enum LambdaMetafactoryFactory implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
+        protected enum LambdaMetafactoryFactory implements ByteCodeAppender {
 
             /**
              * Implements the {@code java.lang.invoke.LambdaMetafactory#metafactory} method.
@@ -8423,17 +8424,10 @@ public interface AgentBuilder {
                 this.localVariableLength = localVariableLength;
             }
 
-            /** // TODO
+            /**
              * {@inheritDoc}
              */
-            public MethodVisitor wrap(TypeDescription typeDescription,
-                                      MethodDescription methodDescription,
-                                      MethodVisitor methodVisitor,
-                                      Implementation.Context implementationContext,
-                                      TypePool typePool,
-                                      int writerFlags,
-                                      int readerFlags) {
-                methodVisitor.visitCode();
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                 onDispatch(methodVisitor);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/ClassLoader", "getSystemClassLoader", "()Ljava/lang/ClassLoader;", false);
                 methodVisitor.visitLdcInsn("net.bytebuddy.agent.builder.LambdaFactory");
@@ -8554,9 +8548,7 @@ public interface AgentBuilder {
                 methodVisitor.visitLabel(second);
                 methodVisitor.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{"java/lang/invoke/CallSite"});
                 methodVisitor.visitInsn(Opcodes.ARETURN);
-                methodVisitor.visitMaxs(Math.max(stackSize, LOADER.getStackSize()), Math.max(localVariableLength, LOADER.getLocalVariableLength()));
-                methodVisitor.visitEnd();
-                return IGNORE_ORIGINAL;
+                return new Size(Math.max(stackSize, LOADER.getStackSize()), Math.max(localVariableLength, LOADER.getLocalVariableLength()));
             }
 
             /**
