@@ -695,7 +695,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
              * @return The loaded class.
              */
             @Nullable
-            Class<?> loadClass(@Nullable dalvik.system.DexFile dexFile, @Nullable ClassLoader classLoader, TypeDescription typeDescription);
+            Class<?> loadClass(dalvik.system.DexFile dexFile, @Nullable ClassLoader classLoader, TypeDescription typeDescription);
 
             /**
              * A dispatcher for legacy VMs that allow {@link dalvik.system.DexFile#loadDex(String, String, int)}.

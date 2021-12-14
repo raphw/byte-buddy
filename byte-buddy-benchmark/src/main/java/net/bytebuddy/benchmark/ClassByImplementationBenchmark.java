@@ -180,6 +180,7 @@ public class ClassByImplementationBenchmark {
     /**
      * A description of {@link ClassByExtensionBenchmark#baseClass}.
      */
+    @Nullable
     private TypeDescription baseClassDescription;
 
     /**
@@ -198,74 +199,138 @@ public class ClassByImplementationBenchmark {
     @Benchmark
     public ExampleInterface baseline() {
         return new ExampleInterface() {
+            /**
+             * {@inheritDoc}
+             */
             public boolean method(boolean arg) {
                 return false;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public byte method(byte arg) {
                 return 0;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public short method(short arg) {
                 return 0;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public int method(int arg) {
                 return 0;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public char method(char arg) {
                 return 0;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public long method(long arg) {
                 return 0;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public float method(float arg) {
                 return 0;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public double method(double arg) {
                 return 0;
             }
 
+            /**
+             * {@inheritDoc}
+             */
+            @Nullable
             public Object method(Object arg) {
                 return null;
             }
 
+            /**
+             * {@inheritDoc}
+             */
+            @Nullable
             public boolean[] method(boolean arg1, boolean arg2, boolean arg3) {
                 return null;
             }
 
+            /**
+             * {@inheritDoc}
+             */
+            @Nullable
             public byte[] method(byte arg1, byte arg2, byte arg3) {
                 return null;
             }
 
+            /**
+             * {@inheritDoc}
+             */
+            @Nullable
             public short[] method(short arg1, short arg2, short arg3) {
                 return null;
             }
 
+            /**
+             * {@inheritDoc}
+             */
+            @Nullable
             public int[] method(int arg1, int arg2, int arg3) {
                 return null;
             }
 
+            /**
+             * {@inheritDoc}
+             */
+            @Nullable
             public char[] method(char arg1, char arg2, char arg3) {
                 return null;
             }
 
+            /**
+             * {@inheritDoc}
+             */
+            @Nullable
             public long[] method(long arg1, long arg2, long arg3) {
                 return null;
             }
 
+            /**
+             * {@inheritDoc}
+             */
+            @Nullable
             public float[] method(float arg1, float arg2, float arg3) {
                 return null;
             }
 
+            /**
+             * {@inheritDoc}
+             */
+            @Nullable
             public double[] method(double arg1, double arg2, double arg3) {
                 return null;
             }
 
+            /**
+             * {@inheritDoc}
+             */
+            @Nullable
             public Object[] method(Object arg1, Object arg2, Object arg3) {
                 return null;
             }

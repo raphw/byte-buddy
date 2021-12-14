@@ -1697,16 +1697,6 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             class Resolved implements Binding {
 
                 /**
-                 * The instrumented type.
-                 */
-                private final TypeDescription instrumentedType;
-
-                /**
-                 * The instrumented method.
-                 */
-                private final MethodDescription instrumentedMethod;
-
-                /**
                  * The type on which a field or method was accessed.
                  */
                 private final TypeDescription targetType;
@@ -1724,19 +1714,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * Creates a new resolved binding.
                  *
-                 * @param instrumentedType   The instrumented type.
-                 * @param instrumentedMethod The instrumented method.
                  * @param targetType         The type on which a field or method was accessed.
                  * @param target             The field or method that was accessed.
                  * @param substitution       The substitution to apply.
                  */
-                protected Resolved(TypeDescription instrumentedType,
-                                   MethodDescription instrumentedMethod,
-                                   TypeDescription targetType,
+                protected Resolved(TypeDescription targetType,
                                    ByteCodeElement target,
                                    Substitution substitution) {
-                    this.instrumentedType = instrumentedType;
-                    this.instrumentedMethod = instrumentedMethod;
                     this.targetType = targetType;
                     this.target = target;
                     this.substitution = substitution;
@@ -1997,7 +1981,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 FieldDescription.InDefinedShape fieldDescription,
                                 boolean writeAccess) {
                 return (writeAccess ? matchFieldWrite : matchFieldRead) && fieldMatcher.matches(fieldDescription)
-                        ? new Binding.Resolved(instrumentedType, instrumentedMethod, fieldDescription.getDeclaringType(), fieldDescription, substitution)
+                        ? new Binding.Resolved(fieldDescription.getDeclaringType(), fieldDescription, substitution)
                         : Binding.Unresolved.INSTANCE;
             }
 
@@ -2010,7 +1994,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 MethodDescription methodDescription,
                                 InvocationType invocationType) {
                 return invocationType.matches(includeVirtualCalls, includeSuperCalls) && methodMatcher.matches(methodDescription)
-                        ? new Binding.Resolved(instrumentedType, instrumentedMethod, typeDescription, methodDescription, substitution)
+                        ? new Binding.Resolved(typeDescription, methodDescription, substitution)
                         : Binding.Unresolved.INSTANCE;
             }
 

@@ -15,6 +15,8 @@
  */
 package net.bytebuddy.benchmark.specimen;
 
+import javax.annotation.Nullable;
+
 /**
  * An example interface with several methods which is used as a specimen in benchmarks.
  */
@@ -90,6 +92,7 @@ public interface ExampleInterface {
      * @param arg An argument.
      * @return The input argument.
      */
+    @Nullable
     Object method(Object arg);
 
     /**
@@ -100,6 +103,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
+    @Nullable
     boolean[] method(boolean arg1, boolean arg2, boolean arg3);
 
     /**
@@ -110,6 +114,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
+    @Nullable
     byte[] method(byte arg1, byte arg2, byte arg3);
 
     /**
@@ -120,6 +125,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
+    @Nullable
     short[] method(short arg1, short arg2, short arg3);
 
     /**
@@ -130,6 +136,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
+    @Nullable
     int[] method(int arg1, int arg2, int arg3);
 
     /**
@@ -140,6 +147,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
+    @Nullable
     char[] method(char arg1, char arg2, char arg3);
 
     /**
@@ -150,6 +158,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
+    @Nullable
     long[] method(long arg1, long arg2, long arg3);
 
     /**
@@ -160,6 +169,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
+    @Nullable
     float[] method(float arg1, float arg2, float arg3);
 
     /**
@@ -170,6 +180,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
+    @Nullable
     double[] method(double arg1, double arg2, double arg3);
 
     /**
@@ -180,5 +191,6 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
+    @Nullable
     Object[] method(Object arg1, Object arg2, Object arg3);
 }
