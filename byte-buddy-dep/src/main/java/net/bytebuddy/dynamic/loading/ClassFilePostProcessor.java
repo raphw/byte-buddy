@@ -70,7 +70,7 @@ public interface ClassFilePostProcessor {
         /**
          * A protection domain that represents all permissions.
          */
-        private static final ProtectionDomain ALL_PRIVILEGES = new ProtectionDomain(null, new AllPermissionsCollection());
+        protected static final ProtectionDomain ALL_PRIVILEGES = new ProtectionDomain(null, new AllPermissionsCollection());
 
         /**
          * Indicates that a class is not currently loaded.

@@ -30,14 +30,14 @@ public class ClassFilePostProcessorTest {
 
     @Test
     public void testClassFileTransformerPostProcessor() throws Exception {
-        when(classFileTransformer.transform(null, "foo/Bar", null, null, new byte[]{1, 2, 3})).thenReturn(new byte[]{4, 5, 6});
+        when(classFileTransformer.transform(null, "foo/Bar", null, ClassFilePostProcessor.ForClassFileTransformer.ALL_PRIVILEGES, new byte[]{1, 2, 3})).thenReturn(new byte[]{4, 5, 6});
         byte[] transformed = new ClassFilePostProcessor.ForClassFileTransformer(classFileTransformer).transform(null, "foo.Bar", null, new byte[]{1, 2, 3});
         assertThat(Arrays.equals(transformed, new byte[]{4, 5, 6}), is(true));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testClassFileTransformerPostProcessorWithException() throws Exception {
-        when(classFileTransformer.transform(null, "foo/Bar", null, null, new byte[]{1, 2, 3})).thenThrow(new IllegalClassFormatException());
+        when(classFileTransformer.transform(null, "foo/Bar", null, ClassFilePostProcessor.ForClassFileTransformer.ALL_PRIVILEGES, new byte[]{1, 2, 3})).thenThrow(new IllegalClassFormatException());
         new ClassFilePostProcessor.ForClassFileTransformer(classFileTransformer).transform(null, "foo.Bar", null, new byte[]{1, 2, 3});
     }
 }
