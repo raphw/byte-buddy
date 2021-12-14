@@ -293,7 +293,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @return The action's resolved value.
      */
     @AccessControllerPlugin.Enhance
-    private static <T> T doPrivileged(PrivilegedAction<T> action, @SuppressWarnings("unused") Object context) {
+    private static <T> T doPrivileged(PrivilegedAction<T> action, @Nullable @SuppressWarnings("unused") Object context) {
         return action.run();
     }
 

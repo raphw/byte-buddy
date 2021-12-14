@@ -104,6 +104,7 @@ public interface LoadedTypeInitializer {
          * The access control context to use for loading classes or {@code null} if the
          * access controller is not available on the current VM.
          */
+        @Nullable
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
         private final transient Object accessControlContext;
 
@@ -139,7 +140,7 @@ public interface LoadedTypeInitializer {
          * @return The action's resolved value.
          */
         @AccessControllerPlugin.Enhance
-        private static <T> T doPrivileged(PrivilegedAction<T> action, @SuppressWarnings("unused") Object context) {
+        private static <T> T doPrivileged(PrivilegedAction<T> action, @Nullable @SuppressWarnings("unused") Object context) {
             return action.run();
         }
 

@@ -599,7 +599,7 @@ public interface InstrumentedType extends TypeDescription {
         private final List<? extends TypeDescription> declaredTypes;
 
         /**
-         * A list of permitted subclasses or {@code null} if this type is not sealed
+         * A list of permitted subclasses or {@code null} if this type is not sealed.
          */
         @Nullable
         private final List<? extends TypeDescription> permittedSubclasses;

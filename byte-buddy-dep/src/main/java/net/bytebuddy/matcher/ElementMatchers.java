@@ -118,7 +118,7 @@ public final class ElementMatchers {
      * @param <T>   The type of the matched object.
      * @return A matcher that matches an exact value.
      */
-    public static <T> ElementMatcher.Junction<T> is(Object value) {
+    public static <T> ElementMatcher.Junction<T> is(@Nullable Object value) {
         return value == null
                 ? NullMatcher.<T>make()
                 : new EqualityMatcher<T>(value);
@@ -1823,7 +1823,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches any Java bean getter method which returns an value with a type matches the supplied matcher.
+     * Matches any Java bean getter method which returns a value with a type matches the supplied matcher.
      *
      * @param matcher A matcher to be allied to a getter method's argument type.
      * @param <T>     The type of the matched object.
@@ -1834,7 +1834,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches any Java bean getter method which returns an value with a type matches the supplied matcher.
+     * Matches any Java bean getter method which returns a value with a type matches the supplied matcher.
      *
      * @param matcher A matcher to be allied to a getter method's argument type.
      * @param <T>     The type of the matched object.
@@ -2009,7 +2009,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a type by a another matcher that is applied on any of its declared fields.
+     * Matches a type by another matcher that is applied on any of its declared fields.
      *
      * @param matcher The matcher that is applied onto each declared field.
      * @param <T>     The type of the matched object.
@@ -2020,7 +2020,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a type by a another matcher that is applied on any of its declared methods.
+     * Matches a type by another matcher that is applied on any of its declared methods.
      *
      * @param matcher The matcher that is applied onto each declared method.
      * @param <T>     The type of the matched object.
@@ -2282,7 +2282,7 @@ public final class ElementMatchers {
      * class loader.
      */
     public static <T extends ClassLoader> ElementMatcher.Junction<T> isParentOf(@Nullable ClassLoader classLoader) {
-        return classLoader == BOOTSTRAP_CLASSLOADER
+        return classLoader == ClassLoadingStrategy.BOOTSTRAP_LOADER
                 ? ElementMatchers.<T>isBootstrapClassLoader()
                 : new ClassLoaderParentMatcher<T>(classLoader);
     }

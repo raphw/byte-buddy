@@ -11054,7 +11054,7 @@ public interface AgentBuilder {
                                 if (module == null) {
                                     transformed |= classFileTransformer.transform(type.getClassLoader(),
                                             Type.getInternalName(type),
-                                            NO_LOADED_TYPE,
+                                            NOT_PREVIOUSLY_DEFINED,
                                             type.getProtectionDomain(),
                                             binaryRepresentation) != null;
                                     if (redefinitionStrategy.isEnabled()) {
@@ -11593,7 +11593,7 @@ public interface AgentBuilder {
              * @return The action's resolved value.
              */
             @AccessControllerPlugin.Enhance
-            private static <T> T doPrivileged(PrivilegedAction<T> action, @SuppressWarnings("unused") Object context) {
+            private static <T> T doPrivileged(PrivilegedAction<T> action, @Nullable @SuppressWarnings("unused") Object context) {
                 return action.run();
             }
 
@@ -11706,7 +11706,7 @@ public interface AgentBuilder {
                         return doTransform(module, classLoader, name, classBeingRedefined, classBeingRedefined != null, protectionDomain, typePool, classFileLocator);
                     } catch (Throwable throwable) {
                         if (classBeingRedefined != null && descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(classBeingRedefined, throwable)) {
-                            return doTransform(module, classLoader, name, NO_LOADED_TYPE, Listener.LOADED, protectionDomain, typePool, classFileLocator);
+                            return doTransform(module, classLoader, name, NOT_PREVIOUSLY_DEFINED, Listener.LOADED, protectionDomain, typePool, classFileLocator);
                         } else {
                             throw throwable;
                         }
@@ -11732,6 +11732,7 @@ public interface AgentBuilder {
              * @param classFileLocator    The class file locator to use.
              * @return The transformed class file or an empty byte array if this transformer does not apply an instrumentation.
              */
+            @Nullable
             private byte[] doTransform(@Nullable JavaModule module,
                                        @Nullable ClassLoader classLoader,
                                        String name,
@@ -12180,6 +12181,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
+                @Nullable
                 public byte[] run() {
                     return transform(JavaModule.of(rawModule),
                             classLoader,

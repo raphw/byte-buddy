@@ -1468,7 +1468,7 @@ public interface ClassFileLocator extends Closeable {
                 private static final Dispatcher.Initializable DISPATCHER = doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
                 /**
-                 * Creates a class loading delegate for a delegating class loader
+                 * Creates a class loading delegate for a delegating class loader.
                  *
                  * @param classLoader The delegating class loader.
                  */

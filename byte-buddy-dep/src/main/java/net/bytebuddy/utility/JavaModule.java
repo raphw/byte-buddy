@@ -177,7 +177,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @param module             The target module.
      * @return {@code true} if this module exports the supplied package to this module.
      */
-    public boolean isExported(PackageDescription packageDescription, JavaModule module) {
+    public boolean isExported(@Nullable PackageDescription packageDescription, JavaModule module) {
         return packageDescription == null || MODULE.isExported(this.module, packageDescription.getName(), module.unwrap());
     }
 
@@ -188,7 +188,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @param module             The target module.
      * @return {@code true} if this module opens the supplied package to this module.
      */
-    public boolean isOpened(PackageDescription packageDescription, JavaModule module) {
+    public boolean isOpened(@Nullable PackageDescription packageDescription, JavaModule module) {
         return packageDescription == null || MODULE.isOpen(this.module, packageDescription.getName(), module.unwrap());
     }
 
