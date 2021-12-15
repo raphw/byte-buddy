@@ -431,7 +431,7 @@ public interface ParameterDescription extends AnnotationSource,
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
+            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs.")
             public MethodDescription.InDefinedShape getDeclaringMethod() {
                 return new MethodDescription.ForLoadedMethod(executable);
             }
@@ -439,7 +439,7 @@ public interface ParameterDescription extends AnnotationSource,
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
+            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs.")
             public TypeDescription.Generic getType() {
                 if (TypeDescription.AbstractBase.RAW_TYPES) {
                     return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(executable.getParameterTypes()[index]);
@@ -450,7 +450,7 @@ public interface ParameterDescription extends AnnotationSource,
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
+            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs.")
             public AnnotationList getDeclaredAnnotations() {
                 return new AnnotationList.ForLoadedAnnotations(parameterAnnotationSource.getParameterAnnotations()[index]);
             }
@@ -475,7 +475,7 @@ public interface ParameterDescription extends AnnotationSource,
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
+            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs.")
             public MethodDescription.InDefinedShape getDeclaringMethod() {
                 return new MethodDescription.ForLoadedConstructor(executable);
             }
@@ -483,7 +483,7 @@ public interface ParameterDescription extends AnnotationSource,
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
+            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs.")
             public TypeDescription.Generic getType() {
                 if (TypeDescription.AbstractBase.RAW_TYPES) {
                     return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(executable.getParameterTypes()[index]);

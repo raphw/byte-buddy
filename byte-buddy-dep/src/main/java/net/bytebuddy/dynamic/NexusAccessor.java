@@ -228,7 +228,7 @@ public class NexusAccessor {
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
             public Dispatcher run() {
                 if (Boolean.getBoolean(Nexus.PROPERTY)) {
                     return new Unavailable("Nexus injection was explicitly disabled");

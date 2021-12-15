@@ -40,7 +40,7 @@ public interface AuxiliaryType {
     /**
      * The default type access of an auxiliary type. <b>This array must not be mutated</b>.
      */
-    @SuppressFBWarnings(value = {"MS_MUTABLE_ARRAY", "MS_OOI_PKGPROTECT"}, justification = "The array is not to be modified by contract")
+    @SuppressFBWarnings(value = {"MS_MUTABLE_ARRAY", "MS_OOI_PKGPROTECT"}, justification = "The array is not modified by class contract.")
     ModifierContributor.ForType[] DEFAULT_TYPE_MODIFIER = {SyntheticState.SYNTHETIC};
 
     /**
@@ -64,7 +64,7 @@ public interface AuxiliaryType {
          * Names an auxiliary type.
          *
          * @param instrumentedType The instrumented type for which an auxiliary type is registered.
-         * @param auxiliaryType The named auxiliary type.
+         * @param auxiliaryType    The named auxiliary type.
          * @return The fully qualified name for the given auxiliary type.
          */
         String name(TypeDescription instrumentedType, AuxiliaryType auxiliaryType);

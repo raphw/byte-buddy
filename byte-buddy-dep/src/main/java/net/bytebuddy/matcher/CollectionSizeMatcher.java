@@ -45,7 +45,7 @@ public class CollectionSizeMatcher<T extends Iterable<?>> extends ElementMatcher
     /**
      * {@inheritDoc}
      */
-    @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE", justification = "Iteration required to count size of an iterable")
+    @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE", justification = "Iteration required to count size of an iterable.")
     protected boolean doMatch(T target) {
         if (target instanceof Collection) {
             return ((Collection<?>) target).size() == size;

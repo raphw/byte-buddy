@@ -15,24 +15,24 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class ArrayLengthTest {
-	
-	@Rule
-	public TestRule mockitoRule = new MockitoRule(this);
-	
-	@Mock
-	private MethodVisitor methodVisitor;
-	
-	@Mock
-	private Implementation.Context implementationContext;
-	
-	@Test
-	public void testLength() throws Exception {
-		assertThat(ArrayLength.INSTANCE.isValid(), is(true));
-		StackManipulation.Size size = ArrayLength.INSTANCE.apply(methodVisitor, implementationContext);
-		assertThat(size.getSizeImpact(), is(0));
-		assertThat(size.getMaximalSize(), is(0));
-		verify(methodVisitor).visitInsn(Opcodes.ARRAYLENGTH);
-		verifyNoMoreInteractions(methodVisitor);
-		verifyZeroInteractions(implementationContext);
-	}
+
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+
+    @Mock
+    private MethodVisitor methodVisitor;
+
+    @Mock
+    private Implementation.Context implementationContext;
+
+    @Test
+    public void testLength() throws Exception {
+        assertThat(ArrayLength.INSTANCE.isValid(), is(true));
+        StackManipulation.Size size = ArrayLength.INSTANCE.apply(methodVisitor, implementationContext);
+        assertThat(size.getSizeImpact(), is(0));
+        assertThat(size.getMaximalSize(), is(0));
+        verify(methodVisitor).visitInsn(Opcodes.ARRAYLENGTH);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyZeroInteractions(implementationContext);
+    }
 }

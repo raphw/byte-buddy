@@ -103,7 +103,7 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
         assertThat(methodAttributeAppender.make(instrumentedType), sameInstance((MethodAttributeAppender) methodAttributeAppender));
         verifyZeroInteractions(instrumentedType);
     }
-    
+
     @Test
     public void testOfMethod() throws Exception {
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
@@ -121,7 +121,7 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
         verifyNoMoreInteractions(parameterDescription);
         verifyZeroInteractions(instrumentedType);
     }
-    
+
     @Test
     public void testOfMethodAnnotations() throws Exception {
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
@@ -137,7 +137,7 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
         verifyZeroInteractions(parameterDescription);
         verifyZeroInteractions(instrumentedType);
     }
-    
+
     @Test
     public void testOfParameterAnnotations() throws Exception {
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));

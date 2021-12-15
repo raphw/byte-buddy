@@ -47,7 +47,7 @@ public abstract class InjectionClassLoader extends ClassLoader {
     /**
      * Registers class loader as parallel capable if possible.
      */
-    @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Must be invoked from targeting ClassLoader class.")
+    @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Must be invoked from targeting class loader type.")
     private static void doRegisterAsParallelCapable() {
         try {
             Method method = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");

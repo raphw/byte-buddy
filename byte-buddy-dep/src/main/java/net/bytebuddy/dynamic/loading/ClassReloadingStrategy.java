@@ -15,7 +15,6 @@
  */
 package net.bytebuddy.dynamic.loading;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
@@ -518,7 +517,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
              * {@inheritDoc}
              */
             @Nonnull(when = When.MAYBE)
-            @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Value is always null")
             public byte[] transform(@Nonnull(when = When.MAYBE) ClassLoader classLoader,
                                     @Nonnull(when = When.MAYBE) String internalTypeName,
                                     @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,

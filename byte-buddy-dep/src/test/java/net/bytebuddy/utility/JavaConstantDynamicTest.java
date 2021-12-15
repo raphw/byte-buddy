@@ -413,14 +413,14 @@ public class JavaConstantDynamicTest {
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
                 .intercept(FixedValue.value(JavaConstant.Dynamic.ofInvocation(bootstrap.getConstructor(
-                        int.class,
-                        long.class,
-                        float.class,
-                        double.class,
-                        String.class,
-                        Class.class,
-                        Class.forName("java.lang.invoke.MethodHandle"),
-                        Class.forName("java.lang.invoke.MethodType")),
+                                int.class,
+                                long.class,
+                                float.class,
+                                double.class,
+                                String.class,
+                                Class.class,
+                                Class.forName("java.lang.invoke.MethodHandle"),
+                                Class.forName("java.lang.invoke.MethodType")),
                         42, 42L, 42f, 42d, FOO,
                         TypeDescription.ForLoadedType.of(Object.class),
                         JavaConstant.MethodHandle.ofLoaded(methodHandle()),
@@ -477,14 +477,14 @@ public class JavaConstantDynamicTest {
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
                 .intercept(FixedValue.value(JavaConstant.Dynamic.ofInvocation(bootstrap.getMethod("make",
-                        int.class,
-                        long.class,
-                        float.class,
-                        double.class,
-                        String.class,
-                        Class.class,
-                        Class.forName("java.lang.invoke.MethodHandle"),
-                        Class.forName("java.lang.invoke.MethodType")),
+                                int.class,
+                                long.class,
+                                float.class,
+                                double.class,
+                                String.class,
+                                Class.class,
+                                Class.forName("java.lang.invoke.MethodHandle"),
+                                Class.forName("java.lang.invoke.MethodType")),
                         42, 42L, 42f, 42d, FOO,
                         TypeDescription.ForLoadedType.of(Object.class),
                         JavaConstant.MethodHandle.ofLoaded(methodHandle()),
@@ -510,14 +510,14 @@ public class JavaConstantDynamicTest {
         Class<? extends Foo> baz = new ByteBuddy()
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-            .intercept(FixedValue.value(value))
+                .intercept(FixedValue.value(value))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(baz.getDeclaredFields().length, is(0));
         assertThat(baz.getDeclaredMethods().length, is(1));
         Foo foo = baz.getDeclaredConstructor().newInstance();
-        assertThat((Integer[]) baz.getDeclaredMethod(FOO).invoke(foo), CoreMatchers.equalTo(new Integer[] {0, 1}));
+        assertThat((Integer[]) baz.getDeclaredMethod(FOO).invoke(foo), CoreMatchers.equalTo(new Integer[]{0, 1}));
         assertThat(baz.getDeclaredMethod(FOO).invoke(foo), sameInstance(baz.getDeclaredMethod(FOO).invoke(foo)));
     }
 
@@ -539,7 +539,7 @@ public class JavaConstantDynamicTest {
         assertThat(baz.getDeclaredFields().length, is(0));
         assertThat(baz.getDeclaredMethods().length, is(1));
         Foo foo = baz.getDeclaredConstructor().newInstance();
-        assertThat((Integer[]) baz.getDeclaredMethod(FOO).invoke(foo), CoreMatchers.equalTo(new Integer[] {0}));
+        assertThat((Integer[]) baz.getDeclaredMethod(FOO).invoke(foo), CoreMatchers.equalTo(new Integer[]{0}));
         assertThat(baz.getDeclaredMethod(FOO).invoke(foo), sameInstance(baz.getDeclaredMethod(FOO).invoke(foo)));
     }
 
@@ -702,11 +702,11 @@ public class JavaConstantDynamicTest {
 
     @Test
     @JavaVersionRule.Enforce(11)
-    public void testHashCode() throws Exception{
+    public void testHashCode() throws Exception {
         Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap");
         assertThat(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getMethod("bootstrap",
-                Class.forName("java.lang.invoke.MethodHandles$Lookup"),
-                Object[].class)).hashCode(),
+                        Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                        Object[].class)).hashCode(),
                 is(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getMethod("bootstrap",
                         Class.forName("java.lang.invoke.MethodHandles$Lookup"),
                         Object[].class)).hashCode()));
@@ -717,8 +717,8 @@ public class JavaConstantDynamicTest {
     public void testEquals() throws Exception {
         Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap");
         assertThat(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getMethod("bootstrap",
-                Class.forName("java.lang.invoke.MethodHandles$Lookup"),
-                Object[].class)),
+                        Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                        Object[].class)),
                 is(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getMethod("bootstrap",
                         Class.forName("java.lang.invoke.MethodHandles$Lookup"),
                         Object[].class))));
@@ -729,8 +729,8 @@ public class JavaConstantDynamicTest {
     public void testToString() throws Exception {
         Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap");
         assertThat(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getMethod("bootstrap",
-                Class.forName("java.lang.invoke.MethodHandles$Lookup"),
-                Object[].class)).toString(),
+                        Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                        Object[].class)).toString(),
                 is("DynamicConstantBootstrap::bootstrap(foo/)DynamicConstantBootstrap"));
     }
 

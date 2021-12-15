@@ -461,16 +461,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      *
      * @param type              The annotation type that indicates a given form of advice that is currently resolved.
      * @param property          An annotation property that indicates if the advice method should be inlined.
-     * @param dispatcher        Any previous dispatcher that was discovered or {@code null} if no such dispatcher was yet found.
+     * @param dispatcher        Any previous dispatcher that was discovered or the previous dispatcher if found.
      * @param methodDescription The method description that is considered as an advice method.
      * @param delegator         The delegator to use.
-     * @return A resolved dispatcher or {@code null} if no dispatcher was resolved.
+     * @return A resolved dispatcher or the previous dispatcher if none was found.
      */
-    private static <T extends Annotation> Dispatcher.Unresolved locate(Class<T> type,
-                                                                       MethodDescription.InDefinedShape property,
-                                                                       Dispatcher.Unresolved dispatcher,
-                                                                       MethodDescription.InDefinedShape methodDescription,
-                                                                       Delegator delegator) {
+    private static Dispatcher.Unresolved locate(Class<? extends Annotation> type,
+                                                MethodDescription.InDefinedShape property,
+                                                Dispatcher.Unresolved dispatcher,
+                                                MethodDescription.InDefinedShape methodDescription,
+                                                Delegator delegator) {
         AnnotationDescription annotation = methodDescription.getDeclaredAnnotations().ofType(type);
         if (annotation == null) {
             return dispatcher;
@@ -2136,7 +2136,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * {@inheritDoc}
                  */
-                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<AllArguments> annotation,
                                           AdviceType adviceType) {
@@ -2555,7 +2555,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "declaringType")
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
                 protected FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                     if (!fieldDescription.isStatic() && !fieldDescription.getDeclaringType().asErasure().isAssignableFrom(instrumentedType)) {
                         throw new IllegalStateException(fieldDescription + " is no member of " + instrumentedType);
@@ -3722,7 +3722,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @return An appropriate offset mapping factory.
                  */
                 @SuppressWarnings("unchecked") // In absence of @SafeVarargs
-                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice.")
                 protected static OffsetMapping.Factory<?> of(MethodDescription.InDefinedShape adviceMethod) {
                     return adviceMethod.getDeclaredAnnotations()
                             .ofType(OnMethodExit.class)
@@ -6628,7 +6628,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * {@inheritDoc}
                      */
-                    @SuppressFBWarnings(value = "RC_REF_COMPARISON_BAD_PRACTICE", justification = "Reference equality is required by ASM")
+                    @SuppressFBWarnings(value = "RC_REF_COMPARISON_BAD_PRACTICE", justification = "Reference equality is required by ASM.")
                     public void translateFrame(MethodVisitor methodVisitor,
                                                int type,
                                                int localVariableLength,
@@ -8517,7 +8517,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param classReader   A class reader to query for the class file of the advice method.
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs
-                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice.")
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                              PostProcessor postProcessor,
                                              Map<String, TypeDefinition> namedTypes,
@@ -8826,7 +8826,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param enterType               The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      */
                     @SuppressWarnings("unchecked")
-                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice.")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                             PostProcessor postProcessor,
                                             Map<String, TypeDefinition> namedTypes,
@@ -8868,7 +8868,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param enterType               The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      * @return An appropriate exit handler.
                      */
-                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice.")
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
                                                                PostProcessor postProcessor,
                                                                Map<String, TypeDefinition> namedTypes,
@@ -9959,7 +9959,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param delegator     The delegator to use.
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs
-                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice.")
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                              PostProcessor postProcessor,
                                              List<? extends OffsetMapping.Factory<?>> userFactories,
@@ -10208,7 +10208,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param delegator     The delegator to use.
                      */
                     @SuppressWarnings("unchecked")
-                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice.")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                             PostProcessor postProcessor,
                                             Map<String, TypeDefinition> namedTypes,
@@ -10247,7 +10247,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      * @return An appropriate exit handler.
                      */
-                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice.")
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
                                                                PostProcessor postProcessor,
                                                                Delegator delegator,
@@ -12262,7 +12262,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * {@inheritDoc}
                  */
-                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
                 public StackManipulation resolve(TypeDescription instrumentedType,
                                                  MethodDescription instrumentedMethod,
                                                  Assigner assigner,
@@ -12606,7 +12606,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * {@inheritDoc}
                  */
-                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
                 public StackManipulation resolve(TypeDescription instrumentedType,
                                                  MethodDescription instrumentedMethod,
                                                  Assigner assigner,
@@ -12984,7 +12984,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * {@inheritDoc}
                      */
-                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice.")
                     public List<AssignReturned.Handler> make(MethodDescription.InDefinedShape advice,
                                                              boolean exit,
                                                              AnnotationDescription.Loadable<? extends ToThrown> annotation) {
@@ -13037,7 +13037,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
             protected TypeDescription.Generic getType() {
                 return type.getComponentType();
             }
@@ -13048,7 +13048,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
             protected StackManipulation toLoadInstruction(Handler handler, int offset) {
                 return new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadFrom(offset),
                         IntegerConstant.forValue(handlers.get(handler)),

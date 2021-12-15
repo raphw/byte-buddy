@@ -8123,7 +8123,7 @@ public interface TypePool {
             }
 
             @Override
-            @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The array is not to be modified by contract")
+            @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The array is not modified by class contract.")
             public void visit(int classFileVersion,
                               int modifiers,
                               String internalName,

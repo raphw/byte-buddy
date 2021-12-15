@@ -37,7 +37,7 @@ public final class TargetType {
      * @param targetType      The actual target type.
      * @return A description of the resolved type.
      */
-    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
     public static TypeDescription resolve(TypeDescription typeDescription, TypeDescription targetType) {
         int arity = 0;
         TypeDescription componentType = typeDescription;

@@ -655,7 +655,7 @@ public final class ElementMatchers {
      * Matches a {@link NamedElement} for its membership of a set.
      *
      * @param names The set of expected names.
-     * @param <T>  The type of the matched object.
+     * @param <T>   The type of the matched object.
      * @return An element matcher which matches if the element's name is found in the set.
      */
     public static <T extends NamedElement> ElementMatcher.Junction<T> namedOneOf(String... names) {
@@ -1335,7 +1335,7 @@ public final class ElementMatchers {
     /**
      * Matches a {@link MethodDescription} with no parameters.
      *
-     * @param <T>    The type of the matched object.
+     * @param <T> The type of the matched object.
      * @return A matcher that matches a method description by the number of its parameters.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesNoArguments() {

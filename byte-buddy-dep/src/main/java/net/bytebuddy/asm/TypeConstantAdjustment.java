@@ -142,7 +142,7 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
             }
 
             @Override
-            @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "Fall through to default case is intentional")
+            @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "Fall through to default case is intentional.")
             public void visitLdcInsn(Object value) {
                 if (value instanceof Type) {
                     Type type = (Type) value;

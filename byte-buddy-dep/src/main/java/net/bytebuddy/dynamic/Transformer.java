@@ -125,7 +125,7 @@ public interface Transformer<T> {
         /**
          * {@inheritDoc}
          */
-        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "declaringType")
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
         public FieldDescription transform(TypeDescription instrumentedType, FieldDescription fieldDescription) {
             return new TransformedField(instrumentedType,
                     fieldDescription.getDeclaringType(),

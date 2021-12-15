@@ -198,7 +198,7 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
     /**
      * {@inheritDoc}
      */
-    @SuppressFBWarnings(value = "SBSC_USE_STRINGBUFFER_CONCATENATION", justification = "Collision is unlikely and buffer overhead not justified")
+    @SuppressFBWarnings(value = "SBSC_USE_STRINGBUFFER_CONCATENATION", justification = "Collision is unlikely and buffer overhead not justified.")
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         String name = NAME;
         while (!typeDescription.getDeclaredFields().filter(named(name)).isEmpty()) {

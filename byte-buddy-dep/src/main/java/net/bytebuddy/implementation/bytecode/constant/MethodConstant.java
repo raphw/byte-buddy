@@ -60,7 +60,7 @@ public abstract class MethodConstant extends StackManipulation.AbstractBase {
      * @return The {@code doPrivileged} method or {@code null}.
      */
     @Nonnull(when = When.MAYBE)
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but be nulled out")
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
     private static MethodDescription.InDefinedShape doPrivileged() {
         MethodDescription.InDefinedShape doPrivileged;
         try {

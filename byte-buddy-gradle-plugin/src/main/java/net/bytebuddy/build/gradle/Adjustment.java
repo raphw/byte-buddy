@@ -20,7 +20,8 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.execution.TaskExecutionGraph;
 
-import javax.annotation.Nonnull; import javax.annotation.meta.When;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.util.*;
 
 /**

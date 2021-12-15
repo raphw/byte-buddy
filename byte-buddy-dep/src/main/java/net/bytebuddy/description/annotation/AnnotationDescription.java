@@ -706,7 +706,7 @@ public interface AnnotationDescription {
          * {@inheritDoc}
          */
         @SuppressWarnings({"deprecation", "rawtypes"})
-        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
+        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity.")
         public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
             if (!property.getDeclaringType().represents(annotation.annotationType())) {
                 throw new IllegalArgumentException(property + " does not represent " + annotation.annotationType());

@@ -34,8 +34,6 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.annotation.*;
 import java.util.Comparator;
 
@@ -112,7 +110,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
     /**
      * Creates a new hash code equals plugin.
      *
-     * @param jsr305  If {@code true}, a JSR305 annotation is added to the {@link Object#equals(Object)} method's parameter.
+     * @param jsr305 If {@code true}, a JSR305 annotation is added to the {@link Object#equals(Object)} method's parameter.
      */
     public HashCodeAndEqualsPlugin(boolean jsr305) {
         this.jsr305 = jsr305;
@@ -135,7 +133,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
     /**
      * {@inheritDoc}
      */
-    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Annotation presence is required by matcher")
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Annotation presence is required by matcher.")
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         AnnotationDescription.Loadable<Enhance> enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class);
         if (typeDescription.getDeclaredMethods().filter(isHashCode()).isEmpty()) {

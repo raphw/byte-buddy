@@ -15,7 +15,6 @@
  */
 package net.bytebuddy.implementation.auxiliary;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
@@ -140,12 +139,11 @@ public class TypeProxy implements AuxiliaryType {
         /**
          * The stack manipulation that throws the abstract method error.
          */
-        private final StackManipulation implementation;
+        private final transient StackManipulation implementation;
 
         /**
          * Creates the singleton instance.
          */
-        @SuppressFBWarnings(value = "SE_BAD_FIELD_STORE", justification = "Fields of enumerations are never serialized")
         AbstractMethodErrorThrow() {
             TypeDescription abstractMethodError = TypeDescription.ForLoadedType.of(AbstractMethodError.class);
             MethodDescription constructor = abstractMethodError.getDeclaredMethods()

@@ -14,7 +14,7 @@ import java.util.logging.Logger;
  * A rule that only executes tests if the access controller is available and
  * if
  */
-public class AccessControllerRule implements MethodRule  {
+public class AccessControllerRule implements MethodRule {
 
     private final boolean available;
 

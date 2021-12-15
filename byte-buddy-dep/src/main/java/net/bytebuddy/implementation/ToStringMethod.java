@@ -639,7 +639,7 @@ public class ToStringMethod implements Implementation {
          * @param typeDescription The type for which to resolve a value resolver.
          * @return An appropriate stack manipulation.
          */
-        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array")
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
         protected static StackManipulation of(TypeDescription typeDescription) {
             if (typeDescription.represents(boolean.class)) {
                 return BOOLEAN;

@@ -349,8 +349,8 @@ public interface AnnotationValue<T, S> {
         /**
          * Creates a new rendering dispatcher.
          *
-         * @param openingBrace         The opening brace of an array {@link String} representation.
-         * @param closingBrace         The closing brace of an array {@link String} representation.
+         * @param openingBrace       The opening brace of an array {@link String} representation.
+         * @param closingBrace       The closing brace of an array {@link String} representation.
          * @param componentAsInteger If {@code true}, annotation types are represented as characters rather then integer values.
          */
         RenderingDispatcher(char openingBrace, char closingBrace, boolean componentAsInteger) {
@@ -2387,7 +2387,7 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
         public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
             if (typeDefinition.isArray() && typeDefinition.getComponentType().asErasure().equals(componentType)) {
                 for (AnnotationValue<?, ?> value : values) {

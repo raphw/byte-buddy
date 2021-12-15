@@ -22,8 +22,6 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.matcher.ElementMatcher;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.util.Collections;
 import java.util.List;
 

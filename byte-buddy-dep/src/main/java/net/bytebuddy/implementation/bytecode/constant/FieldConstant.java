@@ -25,8 +25,6 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import org.objectweb.asm.MethodVisitor;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.reflect.Field;
 
 /**

@@ -481,7 +481,7 @@ public interface PackageDefinitionStrategy {
             }
 
             @Override
-            @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
+            @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality.")
             public int hashCode() {
                 int result = specificationTitle != null ? specificationTitle.hashCode() : 0;
                 result = 31 * result + (specificationVersion != null ? specificationVersion.hashCode() : 0);
@@ -494,7 +494,7 @@ public interface PackageDefinitionStrategy {
             }
 
             @Override
-            @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
+            @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality.")
             public boolean equals(@CheckForNull Object other) {
                 if (this == other) {
                     return true;
@@ -669,7 +669,7 @@ public interface PackageDefinitionStrategy {
                 }
 
                 @Override
-                @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
+                @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality.")
                 public int hashCode() {
                     return sealBase == null
                             ? 17
@@ -677,7 +677,7 @@ public interface PackageDefinitionStrategy {
                 }
 
                 @Override
-                @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
+                @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality.")
                 public boolean equals(@CheckForNull Object other) {
                     if (this == other) {
                         return true;

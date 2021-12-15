@@ -47,7 +47,7 @@ public class LambdaFactory {
      * A mapping of all registered class file transformers and their lambda factories, linked in their application order.
      * This field <b>must not</b> be accessed directly but only by reading this class from the system class loader.
      */
-    @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION_PKGPROTECT", justification = "The field must be accessible by different class loader instances")
+    @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION_PKGPROTECT", justification = "The field must be accessible by different class loader instances.")
     public static final Map<ClassFileTransformer, LambdaFactory> CLASS_FILE_TRANSFORMERS = new ConcurrentHashMap<ClassFileTransformer, LambdaFactory>();
 
     /**

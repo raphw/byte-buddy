@@ -959,7 +959,7 @@ public class InstrumentedTypeDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void testAnnotationTypeIncompatibleSuperClassTypeAnnotation() throws Exception {
         InstrumentedType.Factory.Default.MODIFIABLE.subclass(FOO, ModifierReviewable.EMPTY_MASK, TypeDescription.Generic.Builder.rawType(Object.class)
-                .build(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()))
+                        .build(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()))
                 .validated();
     }
 

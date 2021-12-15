@@ -53,7 +53,7 @@ public class ClassInjectorUsingReflectionTest {
     @ClassReflectionInjectionAvailableRule.Enforce
     public void testInjection() throws Exception {
         new ClassInjector.UsingReflection(classLoader).inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Foo.class),
-                        ClassFileLocator.ForClassLoader.read(Foo.class)));
+                ClassFileLocator.ForClassLoader.read(Foo.class)));
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
     }
 

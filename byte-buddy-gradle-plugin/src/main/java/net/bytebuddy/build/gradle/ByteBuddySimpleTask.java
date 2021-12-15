@@ -129,6 +129,7 @@ public class ByteBuddySimpleTask extends AbstractByteBuddyTask {
 
     /**
      * Applies this task.
+     *
      * @throws IOException If an I/O exception is thrown.
      */
     @TaskAction

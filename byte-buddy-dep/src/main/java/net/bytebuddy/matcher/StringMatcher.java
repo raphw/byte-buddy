@@ -98,7 +98,7 @@ public class StringMatcher extends ElementMatcher.Junction.ForNonNullValues<Stri
          */
         STARTS_WITH_IGNORE_CASE("startsWithIgnoreCase") {
             @Override
-            @SuppressFBWarnings(value = "DM_CONVERT_CASE", justification = "Both strings are transformed by the default locale")
+            @SuppressFBWarnings(value = "DM_CONVERT_CASE", justification = "Both strings are transformed by the default locale.")
             protected boolean matches(String expected, String actual) {
                 return actual.toLowerCase().startsWith(expected.toLowerCase());
             }
@@ -119,7 +119,7 @@ public class StringMatcher extends ElementMatcher.Junction.ForNonNullValues<Stri
          */
         ENDS_WITH_IGNORE_CASE("endsWithIgnoreCase") {
             @Override
-            @SuppressFBWarnings(value = "DM_CONVERT_CASE", justification = "Both strings are transformed by the default locale")
+            @SuppressFBWarnings(value = "DM_CONVERT_CASE", justification = "Both strings are transformed by the default locale.")
             protected boolean matches(String expected, String actual) {
                 return actual.toLowerCase().endsWith(expected.toLowerCase());
             }
@@ -140,7 +140,7 @@ public class StringMatcher extends ElementMatcher.Junction.ForNonNullValues<Stri
          */
         CONTAINS_IGNORE_CASE("containsIgnoreCase") {
             @Override
-            @SuppressFBWarnings(value = "DM_CONVERT_CASE", justification = "Both strings are transformed by the default locale")
+            @SuppressFBWarnings(value = "DM_CONVERT_CASE", justification = "Both strings are transformed by the default locale.")
             protected boolean matches(String expected, String actual) {
                 return actual.toLowerCase().contains(expected.toLowerCase());
             }

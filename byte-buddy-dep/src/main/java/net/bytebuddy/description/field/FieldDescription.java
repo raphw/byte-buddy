@@ -156,7 +156,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * {@inheritDoc}
          */
-        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
         public boolean isVisibleTo(TypeDescription typeDescription) {
             return getDeclaringType().asErasure().isVisibleTo(typeDescription)
                     && (isPublic()
@@ -169,7 +169,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * {@inheritDoc}
          */
-        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
         public boolean isAccessibleTo(TypeDescription typeDescription) {
             return isPublic()
                     || typeDescription.equals(getDeclaringType().asErasure())
@@ -205,13 +205,13 @@ public interface FieldDescription extends ByteCodeElement,
 
         @Override
         @CachedReturnPlugin.Enhance("hashCode")
-        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
         public int hashCode() {
             return getDeclaringType().hashCode() + 31 * (17 + getName().hashCode());
         }
 
         @Override
-        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
         public boolean equals(@CheckForNull Object other) {
             if (this == other) {
                 return true;
@@ -225,7 +225,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * {@inheritDoc}
          */
-        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
         public String toGenericString() {
             StringBuilder stringBuilder = new StringBuilder();
             if (getModifiers() != EMPTY_MASK) {
@@ -237,7 +237,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
         public String toString() {
             StringBuilder stringBuilder = new StringBuilder();
             if (getModifiers() != EMPTY_MASK) {

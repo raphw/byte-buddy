@@ -54,7 +54,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
      * Represents that a type list does not contain any values for ASM interoperability which is represented by {@code null}.
      */
     @Nonnull(when = When.NEVER)
-    @SuppressFBWarnings(value = {"MS_MUTABLE_ARRAY", "MS_OOI_PKGPROTECT"}, justification = "Value is null")
+    @SuppressFBWarnings(value = {"MS_MUTABLE_ARRAY", "MS_OOI_PKGPROTECT"}, justification = "Null reference cannot be mutated.")
     String[] NO_INTERFACES = null;
 
     /**

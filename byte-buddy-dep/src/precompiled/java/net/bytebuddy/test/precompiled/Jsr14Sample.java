@@ -17,7 +17,9 @@ package net.bytebuddy.test.precompiled;
 
 public class Jsr14Sample<TYPE> {
 
-  public Jsr14Sample<TYPE> field;
+    public Jsr14Sample<TYPE> field;
 
-  public <TYPE> Jsr14Sample<TYPE> method() { return null; }
+    public <TYPE> Jsr14Sample<TYPE> method() {
+        return null;
+    }
 }

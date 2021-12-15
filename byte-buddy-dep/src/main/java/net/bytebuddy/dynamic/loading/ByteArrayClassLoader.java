@@ -91,7 +91,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     /**
      * Registers class loader as parallel capable if possible.
      */
-    @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Must be invoked from targeting ClassLoader class.")
+    @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Must be invoked from targeting class loader type.")
     private static void doRegisterAsParallelCapable() {
         try {
             Method method = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
@@ -335,7 +335,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param sealed                    {@code true} if the class loader should be sealed.
      * @return A map of the given type descriptions pointing to their loaded representations.
      */
-    @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
+    @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
     public static Map<TypeDescription, Class<?>> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader,
                                                       Map<TypeDescription, byte[]> types,
                                                       @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain,
@@ -479,7 +479,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
             public Initializable run() {
                 try {
                     try {
@@ -565,7 +565,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicitly user responsibility")
+            @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
             public SynchronizationStrategy initialize() {
                 try {
                     method.setAccessible(true);
@@ -715,7 +715,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
             public PackageLookupStrategy run() {
                 if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
                     try {
@@ -1049,7 +1049,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         /**
          * Registers class loader as parallel capable if possible.
          */
-        @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Must be invoked from targeting ClassLoader class.")
+        @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Must be invoked from targeting class loader type.")
         private static void doRegisterAsParallelCapable() {
             try {
                 Method method = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
@@ -1209,7 +1209,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param sealed                    {@code true} if the class loader should be sealed.
          * @return A map of the given type descriptions pointing to their loaded representations.
          */
-        @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
+        @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
         public static Map<TypeDescription, Class<?>> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader,
                                                           Map<TypeDescription, byte[]> types,
                                                           @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain,

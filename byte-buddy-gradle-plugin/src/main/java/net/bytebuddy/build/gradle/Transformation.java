@@ -20,7 +20,8 @@ import net.bytebuddy.build.Plugin;
 import org.gradle.api.tasks.Input;
 import org.gradle.util.ConfigureUtil;
 
-import javax.annotation.Nonnull; import javax.annotation.meta.When;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.util.ArrayList;
 import java.util.List;
 

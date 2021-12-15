@@ -385,10 +385,10 @@ public class MethodRegistryDefaultTest {
         when(methodToken.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(methodToken);
         when(classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)).thenReturn(true);
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
-            .append(firstMatcher, firstHandler, firstFactory, transformer)
-            .append(secondMatcher, secondHandler, secondFactory, transformer)
-            .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, VisibilityBridgeStrategy.Default.NEVER, methodFilter)
-            .compile(implementationTargetFactory, classFileVersion);
+                .append(firstMatcher, firstHandler, firstFactory, transformer)
+                .append(secondMatcher, secondHandler, secondFactory, transformer)
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, VisibilityBridgeStrategy.Default.NEVER, methodFilter)
+                .compile(implementationTargetFactory, classFileVersion);
         assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods().size(), is(0));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));

@@ -1199,7 +1199,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
          * @param dispatchers The dispatchers to implement.
          * @return An instance of the proxied type.
          */
-        @SuppressFBWarnings(value = {"REC_CATCH_EXCEPTION", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"}, justification = "Expected internal invocation")
+        @SuppressFBWarnings(value = {"REC_CATCH_EXCEPTION", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"}, justification = "Expected internal invocation.")
         protected static Object proxy(Class<?> proxy, Map<Method, Dispatcher> dispatchers) {
             ClassWriter classWriter = new ClassWriter(0);
             classWriter.visit(ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).getMinorMajorVersion(),
@@ -1263,7 +1263,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
          *
          * @return The created {@link Invoker}.
          */
-        @SuppressFBWarnings(value = {"REC_CATCH_EXCEPTION", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"}, justification = "Expected internal invocation")
+        @SuppressFBWarnings(value = {"REC_CATCH_EXCEPTION", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"}, justification = "Expected internal invocation.")
         protected static Invoker invoker() {
             ClassWriter classWriter = new ClassWriter(0);
             classWriter.visit(ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).getMinorMajorVersion(),
@@ -1362,7 +1362,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 /**
                  * {@inheritDoc}
                  */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
                 public Resolver run() {
                     try {
                         Class<?> module = Class.forName("java.lang.Module", false, null);
@@ -1441,7 +1441,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 /**
                  * {@inheritDoc}
                  */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity.")
                 public void accept(@Nonnull(when = When.MAYBE) ClassLoader classLoader, Class<?> target) {
                     Package location = target.getPackage();
                     if (location != null) {

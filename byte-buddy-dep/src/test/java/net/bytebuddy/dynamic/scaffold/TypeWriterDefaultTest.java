@@ -598,7 +598,7 @@ public class TypeWriterDefaultTest {
         assertThat(subclass.getDeclaredMethod(FOO).isBridge(), is(false));
         assertThat(subclass.getDeclaredMethod(FOO).getReturnType(), is((Object) Object.class));
     }
-    
+
     @Test
     public void testClassNoDump() throws Exception {
         TypeWriter.Default.ClassDumpAction.Dispatcher.Disabled.INSTANCE.dump(null, false, null);

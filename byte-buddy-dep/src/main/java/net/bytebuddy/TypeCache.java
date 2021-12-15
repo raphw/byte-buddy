@@ -91,7 +91,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @return The stored type or {@code null} if no type was stored.
      */
     @Nonnull(when = When.MAYBE)
-    @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended")
+    @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended.")
     public Class<?> find(@Nonnull(when = When.MAYBE) ClassLoader classLoader, T key) {
         ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(new LookupKey(classLoader));
         if (storage == null) {
@@ -114,7 +114,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @param type        The type to insert of no previous type was stored in the cache.
      * @return The supplied type or a previously submitted type for the same class loader and key combination.
      */
-    @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended")
+    @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended.")
     public Class<?> insert(@Nonnull(when = When.MAYBE) ClassLoader classLoader, T key, Class<?> type) {
         ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(new LookupKey(classLoader));
         if (storage == null) {
@@ -265,7 +265,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         }
 
         @Override
-        @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
+        @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended.")
         public boolean equals(@CheckForNull Object other) {
             if (this == other) {
                 return true;
@@ -307,7 +307,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         }
 
         @Override
-        @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
+        @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended.")
         public boolean equals(@CheckForNull Object other) {
             if (this == other) {
                 return true;

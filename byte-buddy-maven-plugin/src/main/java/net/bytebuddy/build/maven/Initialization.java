@@ -56,7 +56,7 @@ public class Initialization extends CoordinateConfiguration {
      * @return The resolved entry point.
      * @throws MojoExecutionException If the entry point cannot be created.
      */
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Applies Maven exception wrapper")
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity.")
     public EntryPoint getEntryPoint(ClassLoaderResolver classLoaderResolver, String groupId, String artifactId, String version, String packaging) throws MojoExecutionException {
         if (entryPoint == null || entryPoint.length() == 0) {
             throw new MojoExecutionException("Entry point name is not defined");

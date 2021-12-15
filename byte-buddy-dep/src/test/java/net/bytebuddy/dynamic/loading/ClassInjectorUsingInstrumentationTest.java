@@ -69,7 +69,7 @@ public class ClassInjectorUsingInstrumentationTest {
     public void testAvailable() {
         assertThat(ClassInjector.UsingInstrumentation.isAvailable(), is(true));
         assertThat(ClassInjector.UsingInstrumentation.of(folder,
-                        ClassInjector.UsingInstrumentation.Target.SYSTEM,
-                        ByteBuddyAgent.install()).isAlive(), is(true));
+                ClassInjector.UsingInstrumentation.Target.SYSTEM,
+                ByteBuddyAgent.install()).isAlive(), is(true));
     }
 }

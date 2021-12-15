@@ -196,7 +196,7 @@ public class ByteBuddyPluginTest {
                 @Override
                 public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
                     assertThat(name, is(expectation));
-                    found  = true;
+                    found = true;
                     return null;
                 }
 

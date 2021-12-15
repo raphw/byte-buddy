@@ -247,7 +247,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     }
 
     @Override
-    @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "No default behavior is applied")
+    @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "No action required on default option.")
     public void visitVarInsn(int opcode, int variable) {
         switch (opcode) {
             case Opcodes.ASTORE:

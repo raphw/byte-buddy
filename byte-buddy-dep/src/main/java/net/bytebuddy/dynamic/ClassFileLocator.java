@@ -139,7 +139,7 @@ public interface ClassFileLocator extends Closeable {
              *
              * @param binaryRepresentation The binary data to represent. The array must not be modified.
              */
-            @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The array is not to be modified by contract")
+            @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The array is not modified by class contract.")
             public Explicit(byte[] binaryRepresentation) {
                 this.binaryRepresentation = binaryRepresentation;
             }
@@ -154,7 +154,7 @@ public interface ClassFileLocator extends Closeable {
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The array is not to be modified by contract")
+            @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The array is not modified by class contract.")
             public byte[] resolve() {
                 return binaryRepresentation;
             }
@@ -1774,7 +1774,7 @@ public interface ClassFileLocator extends Closeable {
              * {@inheritDoc}
              */
             @Nonnull(when = When.MAYBE)
-            @SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "The array is not to be modified by contract")
+            @SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "The array is not modified by class contract.")
             public byte[] transform(@Nonnull(when = When.MAYBE) ClassLoader classLoader,
                                     @Nonnull(when = When.MAYBE) String internalName,
                                     @Nonnull(when = When.MAYBE) Class<?> redefinedType,

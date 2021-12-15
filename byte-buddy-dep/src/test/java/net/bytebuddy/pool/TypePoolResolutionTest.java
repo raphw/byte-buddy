@@ -24,7 +24,7 @@ public class TypePoolResolutionTest {
     @Test
     public void testIllegalResolution() throws Exception {
         assertThat(new TypePool.Resolution.Illegal(FOO).isResolved(), is(false));
-        try {  
+        try {
             new TypePool.Resolution.Illegal(FOO).resolve();
             fail();
         } catch (TypePool.Resolution.NoSuchTypeException exception) {

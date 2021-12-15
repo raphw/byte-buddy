@@ -29,7 +29,7 @@ import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAware
  * An assigner is for example responsible for type casting, auto boxing or unboxing or for the widening of primitive
  * types.
  */
-@SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "Safe initialization is implied")
+@SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "Safe initialization is implied.")
 public interface Assigner {
 
     /**

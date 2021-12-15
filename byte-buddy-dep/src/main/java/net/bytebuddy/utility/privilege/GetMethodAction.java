@@ -62,7 +62,7 @@ public class GetMethodAction implements PrivilegedAction<Method> {
      * {@inheritDoc}
      */
     @Nonnull(when = When.MAYBE)
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but be nulled out")
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
     public Method run() {
         try {
             return Class.forName(type).getMethod(name, parameter);

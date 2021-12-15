@@ -97,7 +97,7 @@ public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
      *
      * @param <S> The actual matched type of this matcher.
      */
-    @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Equality does not consider eviction size")
+    @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Equality does not consider eviction size.")
     public static class WithInlineEviction<S> extends CachingMatcher<S> {
 
         /**

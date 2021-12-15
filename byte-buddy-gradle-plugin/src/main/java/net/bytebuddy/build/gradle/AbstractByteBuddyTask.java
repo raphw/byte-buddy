@@ -31,7 +31,8 @@ import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 import org.gradle.util.ConfigureUtil;
 
-import javax.annotation.Nonnull; import javax.annotation.meta.When;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.io.*;
 import java.net.URL;
 import java.util.*;

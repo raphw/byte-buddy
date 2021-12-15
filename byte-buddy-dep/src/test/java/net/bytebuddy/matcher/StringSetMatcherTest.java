@@ -16,38 +16,38 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(Parameterized.class)
 public class StringSetMatcherTest extends AbstractElementMatcherTest<StringSetMatcher> {
 
-  @Parameterized.Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][]{
-            {new String[] {"fo", "fo", "fo"}, "fo", "fooo"},
-            {new String[] {"fo"}, "fo", "fooo"},
-            {new String[] {"f", "fo", "foo"}, "fo", "fooo"}
-    });
-  }
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {new String[]{"fo", "fo", "fo"}, "fo", "fooo"},
+                {new String[]{"fo"}, "fo", "fooo"},
+                {new String[]{"f", "fo", "foo"}, "fo", "fooo"}
+        });
+    }
 
-  private final Set<String> values;
+    private final Set<String> values;
 
-  private final String matching, nonMatching;
+    private final String matching, nonMatching;
 
-  public StringSetMatcherTest(String[] values, String matching, String nonMatching) {
-    super(StringSetMatcher.class, Arrays.toString(values));
-    this.values = new HashSet<String>(Arrays.asList(values));
-    this.matching = matching;
-    this.nonMatching = nonMatching;
-  }
+    public StringSetMatcherTest(String[] values, String matching, String nonMatching) {
+        super(StringSetMatcher.class, Arrays.toString(values));
+        this.values = new HashSet<String>(Arrays.asList(values));
+        this.matching = matching;
+        this.nonMatching = nonMatching;
+    }
 
-  @Test
-  public void testMatch() throws Exception {
-    assertThat(new StringSetMatcher(values).matches(matching), is(true));
-  }
+    @Test
+    public void testMatch() throws Exception {
+        assertThat(new StringSetMatcher(values).matches(matching), is(true));
+    }
 
-  @Test
-  public void testNoMatch() throws Exception {
-    assertThat(new StringSetMatcher(values).matches(nonMatching), is(false));
-  }
+    @Test
+    public void testNoMatch() throws Exception {
+        assertThat(new StringSetMatcher(values).matches(nonMatching), is(false));
+    }
 
-  @Test
-  public void testStringRepresentation() {
-    assertThat(new StringSetMatcher(values).toString(), startsWith("in("));
-  }
+    @Test
+    public void testStringRepresentation() {
+        assertThat(new StringSetMatcher(values).toString(), startsWith("in("));
+    }
 }

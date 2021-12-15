@@ -56,7 +56,7 @@ public class VirtualMachineAttachmentTest {
         }
         assertThat(SampleAgent.argument, is(FOO));
     }
-    
+
     @Test(timeout = 10000L)
     public void testSystemProperties() throws Exception {
         VirtualMachine virtualMachine = (VirtualMachine) VirtualMachine.Resolver.INSTANCE.run()

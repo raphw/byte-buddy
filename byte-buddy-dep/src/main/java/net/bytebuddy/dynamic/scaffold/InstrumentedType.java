@@ -1525,7 +1525,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "superClass")
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming super class for given instance.")
         public boolean isRecord() {
             return record
                     && superClass != null

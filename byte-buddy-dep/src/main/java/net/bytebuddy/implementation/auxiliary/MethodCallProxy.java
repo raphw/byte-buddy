@@ -15,7 +15,6 @@
  */
 package net.bytebuddy.implementation.auxiliary;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
@@ -182,12 +181,11 @@ public class MethodCallProxy implements AuxiliaryType {
         /**
          * The precomputed method graph.
          */
-        private final MethodGraph.Linked methodGraph;
+        private final transient MethodGraph.Linked methodGraph;
 
         /**
          * Creates the precomputed method graph.
          */
-        @SuppressFBWarnings(value = "SE_BAD_FIELD_STORE", justification = "Precomputed method graph is not intended for serialization")
         PrecomputedMethodGraph() {
             LinkedHashMap<MethodDescription.SignatureToken, MethodGraph.Node> nodes = new LinkedHashMap<MethodDescription.SignatureToken, MethodGraph.Node>();
             MethodDescription callMethod = new MethodDescription.Latent(TypeDescription.ForLoadedType.of(Callable.class),

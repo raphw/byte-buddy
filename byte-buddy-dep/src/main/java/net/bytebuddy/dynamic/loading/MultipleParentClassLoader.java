@@ -61,7 +61,7 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
     /**
      * Registers class loader as parallel capable if possible.
      */
-    @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Must be invoked from targeting ClassLoader class.")
+    @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Must be invoked from targeting class loader type.")
     private static void doRegisterAsParallelCapable() {
         try {
             Method method = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
@@ -212,7 +212,7 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
         /**
          * {@inheritDoc}
          */
-        @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Null reference is impossible due to element check")
+        @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Null reference is avoided by element check.")
         public URL nextElement() {
             if (hasMoreElements()) {
                 return currentEnumeration.nextElement();
@@ -439,7 +439,7 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
          *
          * @return A suitable class loader.
          */
-        @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
+        @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
         public ClassLoader build() {
             return classLoaders.size() == 1
                     ? classLoaders.get(ONLY)
@@ -473,7 +473,7 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
          * @param parent The explicit parent class loader.
          * @return A multiple parent class loader that includes all collected class loaders and the explicit parent.
          */
-        @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
+        @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
         private ClassLoader doBuild(@Nonnull(when = When.MAYBE) ClassLoader parent) {
             return new MultipleParentClassLoader(parent, classLoaders, sealed);
         }

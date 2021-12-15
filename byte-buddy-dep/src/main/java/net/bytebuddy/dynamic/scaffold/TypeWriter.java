@@ -2204,7 +2204,7 @@ public interface TypeWriter<T> {
         /**
          * {@inheritDoc}
          */
-        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should never change the program outcome")
+        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should never change the program outcome.")
         public DynamicType.Unloaded<S> make(TypeResolutionStrategy.Resolved typeResolutionStrategy) {
             ClassDumpAction.Dispatcher dispatcher = DUMP_FOLDER == null
                     ? ClassDumpAction.Dispatcher.Disabled.INSTANCE
@@ -3773,7 +3773,7 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "Fall through to default case is intentional")
+                @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "Fall through to default case is intentional.")
                 public void visitLdcInsn(Object value) {
                     if (value instanceof Type) {
                         Type type = (Type) value;
@@ -4000,7 +4000,7 @@ public interface TypeWriter<T> {
                  *
                  * @return The auxiliary types that were registered during class creation
                  */
-                @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Lazy value definition is intended")
+                @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Lazy value definition is intended.")
                 public List<DynamicType> getAuxiliaryTypes() {
                     return implementationContext.getAuxiliaryTypes();
                 }
@@ -4754,7 +4754,7 @@ public interface TypeWriter<T> {
                 /**
                  * A class visitor which is capable of applying a redefinition of an existing class file.
                  */
-                @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM")
+                @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM.")
                 protected class RedefinitionClassVisitor extends MetadataAwareClassVisitor {
 
                     /**
@@ -4885,7 +4885,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Relying on correlated type properties")
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Relying on correlated type properties.")
                     public void visit(int classFileVersionNumber,
                                       int modifiers,
                                       String internalName,
@@ -4954,7 +4954,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "Assuming enclosing type for local or anonymous type")
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "Relying on correlated type properties.")
                     protected void onOuterType() {
                         MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
                         if (enclosingMethod != null) {
@@ -5692,7 +5692,7 @@ public interface TypeWriter<T> {
                 /**
                  * A class visitor that decorates an existing type.
                  */
-                @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM")
+                @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM.")
                 protected class DecorationClassVisitor extends MetadataAwareClassVisitor implements TypeInitializer.Drain {
 
                     /**
@@ -5876,7 +5876,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Relying on correlated type properties")
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Relying on correlated type properties.")
             protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Dispatcher dispatcher) {
                 int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                 ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool);

@@ -206,7 +206,7 @@ public class JavaConstantMethodHandleTest {
         public Void bar;
 
         public Integer baz;
-      
+
         public Foo(Void value) {
             /* empty*/
         }

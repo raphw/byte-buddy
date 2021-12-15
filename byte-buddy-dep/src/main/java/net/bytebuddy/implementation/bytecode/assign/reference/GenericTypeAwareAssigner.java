@@ -286,7 +286,7 @@ public enum GenericTypeAwareAssigner implements Assigner {
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Array property assumes non-nullability")
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
             public Boolean onGenericArray(TypeDescription.Generic genericArray) {
                 TypeDescription.Generic source = typeDescription.getComponentType(), target = genericArray.getComponentType();
                 while (source.getSort().isGenericArray() && target.getSort().isGenericArray()) {

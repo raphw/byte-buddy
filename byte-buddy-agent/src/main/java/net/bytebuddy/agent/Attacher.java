@@ -62,7 +62,7 @@ public class Attacher {
      *             of strings where the first argument is proceeded by any single character
      *             which is stripped off.
      */
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
     public static void main(String[] args) {
         try {
             String argument;

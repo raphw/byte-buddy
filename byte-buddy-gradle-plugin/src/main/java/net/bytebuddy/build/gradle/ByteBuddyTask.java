@@ -22,7 +22,8 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
-import javax.annotation.Nonnull; import javax.annotation.meta.When;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;

@@ -715,7 +715,7 @@ public class ByteBuddyAgent {
      * @return The self-resolved jar file or {@code null} if the jar file cannot be located.
      */
     @Nonnull(when = When.MAYBE)
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
     private static File trySelfResolve() {
         try {
             if (Boolean.getBoolean(LATENT_RESOLVE)) {
@@ -762,7 +762,7 @@ public class ByteBuddyAgent {
      * @return The Byte Buddy agent's {@link java.lang.instrument.Instrumentation} instance.
      */
     @Nonnull(when = When.MAYBE)
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Legal outcome where reflection communicates errors by throwing an exception")
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
     private static Instrumentation doGetInstrumentation() {
         try {
             Class<?> installer = Class.forName(Installer.class.getName(), true, ClassLoader.getSystemClassLoader());
@@ -1162,7 +1162,7 @@ public class ByteBuddyAgent {
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
+            @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
             public Accessor attempt() {
                 File toolsJar = new File(System.getProperty(JAVA_HOME_PROPERTY), toolsJarPath);
                 try {
@@ -1193,7 +1193,7 @@ public class ByteBuddyAgent {
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
+            @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
             public Accessor attempt() {
                 String location = System.getProperty(PROPERTY);
                 if (location == null) {
@@ -1380,7 +1380,7 @@ public class ByteBuddyAgent {
                  *
                  * @return A dispatcher for the current VM.
                  */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
                 public static ProcessProvider make() {
                     try {
                         return new ForJava9CapableVm(Class.forName("java.lang.ProcessHandle").getMethod("current"),
@@ -1604,7 +1604,7 @@ public class ByteBuddyAgent {
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
             public AttachmentTypeEvaluator run() {
                 try {
                     if (Boolean.getBoolean(JDK_ALLOW_SELF_ATTACH)) {

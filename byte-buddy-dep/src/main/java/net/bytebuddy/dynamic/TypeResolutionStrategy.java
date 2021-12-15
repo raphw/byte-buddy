@@ -138,7 +138,7 @@ public interface TypeResolutionStrategy {
         /**
          * {@inheritDoc}
          */
-        @SuppressFBWarnings(value = "DMI_RANDOM_USED_ONLY_ONCE", justification = "Avoid thread-contention")
+        @SuppressFBWarnings(value = "DMI_RANDOM_USED_ONLY_ONCE", justification = "Avoids thread-contention.")
         public TypeResolutionStrategy.Resolved resolve() {
             return new Resolved(nexusAccessor, new Random().nextInt());
         }

@@ -808,7 +808,7 @@ public class MethodCall implements Implementation.Composable {
             public MethodDescription resolve(TypeDescription targetType, MethodDescription instrumentedMethod) {
                 TypeDescription.Generic superClass = instrumentedType.getSuperClass();
                 List<MethodDescription> candidates = CompoundList.<MethodDescription>of(
-                         superClass == null
+                        superClass == null
                                 ? Collections.<MethodDescription>emptyList()
                                 : superClass.getDeclaredMethods().filter(isConstructor().and(matcher)),
                         instrumentedType.getDeclaredMethods().filter(not(ElementMatchers.isVirtual()).and(matcher)),
@@ -1229,7 +1229,7 @@ public class MethodCall implements Implementation.Composable {
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
             public StackManipulation toStackManipulation(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 TypeDescription.Generic componentType;
                 if (target.getType().represents(Object.class)) {
@@ -1317,7 +1317,7 @@ public class MethodCall implements Implementation.Composable {
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
             public StackManipulation toStackManipulation(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.load(parameterDescription),
@@ -2078,7 +2078,7 @@ public class MethodCall implements Implementation.Composable {
                 /**
                  * {@inheritDoc}
                  */
-                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
                 public StackManipulation toStackManipulation(MethodDescription invokedMethod, Assigner assigner, Assigner.Typing typing) {
                     if (instrumentedMethod.isStatic() && !invokedMethod.isStatic() && !invokedMethod.isConstructor()) {
                         throw new IllegalStateException("Cannot invoke " + invokedMethod + " from " + instrumentedMethod);
@@ -2461,7 +2461,7 @@ public class MethodCall implements Implementation.Composable {
                 /**
                  * {@inheritDoc}
                  */
-                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
                 public TargetHandler make(Implementation.Target implementationTarget) {
                     FieldDescription fieldDescription = location.resolve(implementationTarget.getInstrumentedType());
                     if (!fieldDescription.isStatic() && !implementationTarget.getInstrumentedType().isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
@@ -3143,7 +3143,7 @@ public class MethodCall implements Implementation.Composable {
                 /**
                  * {@inheritDoc}
                  */
-                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
                 public TerminationHandler make(TypeDescription instrumentedType) {
                     if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
                         throw new IllegalStateException("Cannot set " + fieldDescription + " from " + instrumentedType);

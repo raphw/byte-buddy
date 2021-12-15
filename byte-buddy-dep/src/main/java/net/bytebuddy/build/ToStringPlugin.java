@@ -26,8 +26,6 @@ import net.bytebuddy.implementation.ToStringMethod;
 import net.bytebuddy.matcher.ElementMatchers;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.annotation.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;

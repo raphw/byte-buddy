@@ -933,7 +933,7 @@ public interface VirtualMachine {
                         /**
                          * Reads a configuration dependant variable into a memory segment.
                          *
-                         * @param name The name of the variable.
+                         * @param name   The name of the variable.
                          * @param buffer The buffer to read the variable into.
                          * @param length The length of the buffer.
                          * @return The amount of bytes written to the buffer.
@@ -2132,7 +2132,7 @@ public interface VirtualMachine {
                                 library.semop(semaphore, target, 1);
                             } catch (LastErrorException exception) {
                                 if (acceptUnavailable && (Native.getLastError() == PosixLibrary.EAGAIN
-                                    || Native.getLastError() == PosixLibrary.EDEADLK)) {
+                                        || Native.getLastError() == PosixLibrary.EDEADLK)) {
                                     break;
                                 } else {
                                     throw exception;

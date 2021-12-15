@@ -661,7 +661,7 @@ public interface AnnotationAppender {
         /**
          * {@inheritDoc}
          */
-        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array")
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
         public AnnotationAppender onGenericArray(TypeDescription.Generic genericArray) {
             return genericArray.getComponentType().accept(new ForTypeAnnotations(apply(genericArray, typePath),
                     annotationValueFilter,

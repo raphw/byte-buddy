@@ -19,7 +19,8 @@ import net.bytebuddy.build.Plugin;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
-import javax.annotation.Nonnull; import javax.annotation.meta.When;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 import java.io.Serializable;
 
 /**

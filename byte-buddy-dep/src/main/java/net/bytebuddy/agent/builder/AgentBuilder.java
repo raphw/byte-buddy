@@ -3559,7 +3559,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "DMI_RANDOM_USED_ONLY_ONCE", justification = "Avoiding synchronization without security concerns")
+            @SuppressFBWarnings(value = "DMI_RANDOM_USED_ONLY_ONCE", justification = "Avoids thread-contention.")
             public InitializationStrategy.Dispatcher dispatcher() {
                 return dispatcher(new Random().nextInt());
             }
@@ -7135,7 +7135,7 @@ public interface AgentBuilder {
                     /**
                      * {@inheritDoc}
                      */
-                    @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Use of unrelated key is intended for avoiding unnecessary weak reference")
+                    @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended.")
                     public void onError(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, Throwable throwable) {
                         if (!loaded && resubmissionOnErrorMatcher.matches(throwable, typeName, classLoader, module)) {
                             Set<String> types = this.types.get(new LookupKey(classLoader));
@@ -7153,7 +7153,7 @@ public interface AgentBuilder {
                     /**
                      * {@inheritDoc}
                      */
-                    @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Use of unrelated key is intended for avoiding unnecessary weak reference")
+                    @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended.")
                     public boolean isEnforced(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined) {
                         if (classBeingRedefined == null && resubmissionImmediateMatcher.matches(typeName, classLoader, module)) {
                             Set<String> types = this.types.get(new LookupKey(classLoader));
@@ -7436,7 +7436,7 @@ public interface AgentBuilder {
                     }
 
                     @Override
-                    @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
+                    @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended.")
                     public boolean equals(@CheckForNull Object other) {
                         if (this == other) {
                             return true;
@@ -7486,7 +7486,7 @@ public interface AgentBuilder {
                     }
 
                     @Override
-                    @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
+                    @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended.")
                     public boolean equals(@CheckForNull Object other) {
                         if (this == other) {
                             return true;
@@ -8369,7 +8369,7 @@ public interface AgentBuilder {
              *
              * @return An appropriate loader.
              */
-            @SuppressFBWarnings(value = {"DE_MIGHT_IGNORE", "REC_CATCH_EXCEPTION"}, justification = "Exception should not be rethrown but trigger a fallback")
+            @SuppressFBWarnings(value = {"DE_MIGHT_IGNORE", "REC_CATCH_EXCEPTION"}, justification = "Exception should not be rethrown but trigger a fallback.")
             private static Loader resolve() {
                 try {
                     Class<?> type = Class.forName("java.lang.invoke.MethodHandles$Lookup", false, null);
@@ -8982,7 +8982,6 @@ public interface AgentBuilder {
             /**
              * Implements a lambda class's executing transformer.
              */
-            @SuppressFBWarnings(value = "SE_BAD_FIELD", justification = "An enumeration does not serialize fields")
             protected enum ConstructorImplementation implements Implementation {
 
                 /**
@@ -8993,7 +8992,7 @@ public interface AgentBuilder {
                 /**
                  * A reference to the {@link Object} class's default executing transformer.
                  */
-                private final MethodDescription.InDefinedShape objectConstructor;
+                private final transient MethodDescription.InDefinedShape objectConstructor;
 
                 /**
                  * Creates a new executing transformer implementation.
@@ -9190,7 +9189,7 @@ public interface AgentBuilder {
                      *
                      * @return An appropriate dispatcher for the current VM.
                      */
-                    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
                     private static Dispatcher dispatcher() {
                         try {
                             Class<?> type = Class.forName("java.lang.invoke.MethodHandles$Lookup", false, null);
@@ -11864,7 +11863,7 @@ public interface AgentBuilder {
                     /**
                      * {@inheritDoc}
                      */
-                    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
                     public Factory run() {
                         try {
                             return new Factory.ForJava9CapableVm(new ByteBuddy()

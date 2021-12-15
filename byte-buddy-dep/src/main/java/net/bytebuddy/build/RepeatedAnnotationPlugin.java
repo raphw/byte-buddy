@@ -57,7 +57,7 @@ public class RepeatedAnnotationPlugin extends Plugin.ForElementMatcher {
     /**
      * {@inheritDoc}
      */
-    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Annotation presence is required by matcher")
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Annotation presence is required by matcher.")
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         TypeDescription target = typeDescription.getDeclaredAnnotations()
                 .ofType(Enhance.class)

@@ -320,7 +320,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
      * @param fallback The version to fallback to if locating a class file version is not possible.
      * @return The currently running Java process's class file version or the fallback if locating this version is impossible.
      */
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
     public static ClassFileVersion ofThisVm(ClassFileVersion fallback) {
         try {
             return ofThisVm();
@@ -515,7 +515,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
             public VersionLocator run() {
                 try {
                     return new Resolved(ClassFileVersion.ofJavaVersion((Integer) Class.forName(Runtime.class.getName() + "$Version")

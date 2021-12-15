@@ -514,7 +514,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
                 public Initializable run() {
                     try {
                         if (JavaModule.isSupported()) {
@@ -591,7 +591,7 @@ public interface ClassInjector {
                  * @return A direct dispatcher for class injection.
                  * @throws Exception If the creation is impossible.
                  */
-                @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
+                @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
                 protected static Initializable make() throws Exception {
                     Method getDefinedPackage;
                     if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
@@ -900,7 +900,7 @@ public interface ClassInjector {
                  * @return An indirect dispatcher for class creation.
                  * @throws Exception If the dispatcher cannot be created.
                  */
-                @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
+                @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
                 protected static Initializable make() throws Exception {
                     if (Boolean.getBoolean(UsingUnsafe.SAFE_PROPERTY)) {
                         return new Initializable.Unavailable("Use of Unsafe was disabled by system property");
@@ -1164,7 +1164,7 @@ public interface ClassInjector {
                  * @return An appropriate initializable.
                  * @throws Exception If the injector cannot be created.
                  */
-                @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
+                @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
                 protected static Initializable make() throws Exception {
                     if (Boolean.getBoolean(UsingUnsafe.SAFE_PROPERTY)) {
                         return new Initializable.Unavailable("Use of Unsafe was disabled by system property");
@@ -1914,7 +1914,7 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
                 public Initializable run() {
                     if (Boolean.getBoolean(SAFE_PROPERTY)) {
                         return new Unavailable("Use of Unsafe was disabled by system property");
@@ -2119,7 +2119,7 @@ public interface ClassInjector {
              *
              * @param accessResolver The access resolver to use.
              */
-            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception is captured to trigger lazy error upon use.")
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
             public Factory(AccessResolver accessResolver) {
                 Dispatcher.Initializable dispatcher;
                 if (DISPATCHER.isAvailable()) {

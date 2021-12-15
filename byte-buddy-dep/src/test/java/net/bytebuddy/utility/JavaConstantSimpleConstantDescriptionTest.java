@@ -86,10 +86,10 @@ public class JavaConstantSimpleConstantDescriptionTest {
                 is(Class.forName("java.lang.constant.DynamicConstantDesc")
                         .getMethod("of", Class.forName("java.lang.constant.DirectMethodHandleDesc"))
                         .invoke(null, describe(Class.forName("java.lang.invoke.MethodHandles$Lookup")
-                        .getMethod("findConstructor", Class.class, Class.forName("java.lang.invoke.MethodType"))
-                        .invoke(Class.forName("java.lang.invoke.MethodHandles").getMethod("lookup").invoke(null),
-                                Object.class,
-                                Class.forName("java.lang.invoke.MethodType").getMethod("methodType", Class.class).invoke(null, void.class))))));
+                                .getMethod("findConstructor", Class.class, Class.forName("java.lang.invoke.MethodType"))
+                                .invoke(Class.forName("java.lang.invoke.MethodHandles").getMethod("lookup").invoke(null),
+                                        Object.class,
+                                        Class.forName("java.lang.invoke.MethodType").getMethod("methodType", Class.class).invoke(null, void.class))))));
     }
 
     @Test(expected = IllegalArgumentException.class)

@@ -207,7 +207,7 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "declaringType")
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
             public Prepared prepare(TypeDescription instrumentedType) {
                 if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
                     throw new IllegalStateException(fieldDescription + " is not declared by " + instrumentedType);

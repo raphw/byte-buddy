@@ -47,19 +47,19 @@ public class ClassFileLocatorSimpleTest {
     }
 
     @Test
-    public void testOfResources() throws Exception{
+    public void testOfResources() throws Exception {
         ClassFileLocator.Resolution resolution = ClassFileLocator.Simple
                 .ofResources(Collections.singletonMap(FOO + "/" + BAR + ".class", QUX))
-                .locate(FOO+ "." + BAR);
+                .locate(FOO + "." + BAR);
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.resolve(), is(QUX));
     }
 
     @Test
-    public void testOfResourcesNoClassFile() throws Exception{
+    public void testOfResourcesNoClassFile() throws Exception {
         ClassFileLocator.Resolution resolution = ClassFileLocator.Simple
                 .ofResources(Collections.singletonMap(FOO + "/" + BAR, QUX))
-                .locate(FOO+ "." + BAR);
+                .locate(FOO + "." + BAR);
         assertThat(resolution.isResolved(), is(false));
     }
 }

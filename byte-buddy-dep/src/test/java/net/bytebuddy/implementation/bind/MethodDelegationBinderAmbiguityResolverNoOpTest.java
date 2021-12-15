@@ -12,8 +12,8 @@ public class MethodDelegationBinderAmbiguityResolverNoOpTest {
     @Test
     public void testResolution() throws Exception {
         assertThat(MethodDelegationBinder.AmbiguityResolver.NoOp.INSTANCE.resolve(mock(MethodDescription.class),
-                mock(MethodDelegationBinder.MethodBinding.class),
-                mock(MethodDelegationBinder.MethodBinding.class)),
+                        mock(MethodDelegationBinder.MethodBinding.class),
+                        mock(MethodDelegationBinder.MethodBinding.class)),
                 is(MethodDelegationBinder.AmbiguityResolver.Resolution.UNKNOWN));
     }
 }

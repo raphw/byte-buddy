@@ -898,7 +898,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "declaringType")
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
             public StackManipulation resolve(TypeDescription targetType,
                                              ByteCodeElement target,
                                              TypeList.Generic parameters,
@@ -1716,9 +1716,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * Creates a new resolved binding.
                  *
-                 * @param targetType         The type on which a field or method was accessed.
-                 * @param target             The field or method that was accessed.
-                 * @param substitution       The substitution to apply.
+                 * @param targetType   The type on which a field or method was accessed.
+                 * @param target       The field or method that was accessed.
+                 * @param substitution The substitution to apply.
                  */
                 protected Resolved(TypeDescription targetType,
                                    ByteCodeElement target,
@@ -2356,13 +2356,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             Replacement.InvocationType.of(opcode, candidates.getOnly()));
                     if (binding.isBound()) {
                         stackSizeBuffer = Math.max(stackSizeBuffer, binding.make(
-                                candidates.getOnly().isStatic() || candidates.getOnly().isConstructor()
-                                        ? candidates.getOnly().getParameters().asTypeList()
-                                        : new TypeList.Generic.Explicit(CompoundList.of(resolution.resolve(), candidates.getOnly().getParameters().asTypeList())),
-                                candidates.getOnly().isConstructor()
-                                        ? candidates.getOnly().getDeclaringType().asGenericType()
-                                        : candidates.getOnly().getReturnType(),
-                                getFreeOffset())
+                                        candidates.getOnly().isStatic() || candidates.getOnly().isConstructor()
+                                                ? candidates.getOnly().getParameters().asTypeList()
+                                                : new TypeList.Generic.Explicit(CompoundList.of(resolution.resolve(), candidates.getOnly().getParameters().asTypeList())),
+                                        candidates.getOnly().isConstructor()
+                                                ? candidates.getOnly().getDeclaringType().asGenericType()
+                                                : candidates.getOnly().getReturnType(),
+                                        getFreeOffset())
                                 .apply(new LocalVariableTracingMethodVisitor(mv), implementationContext).getMaximalSize() - (candidates.getOnly().isConstructor()
                                 ? StackSize.SINGLE
                                 : candidates.getOnly().getReturnType().getStackSize()).getSize());

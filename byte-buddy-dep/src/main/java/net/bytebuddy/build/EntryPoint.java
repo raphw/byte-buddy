@@ -15,7 +15,6 @@
  */
 package net.bytebuddy.build;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
@@ -58,19 +57,22 @@ public interface EntryPoint {
     /**
      * Default implementations for an entry point.
      */
-    @SuppressFBWarnings(value = "SE_BAD_FIELD", justification = "An enumeration does not serialize fields")
     enum Default implements EntryPoint {
 
         /**
          * An entry point that rebases a type.
          */
         REBASE {
-            /** {@inheritDoc} */
+            /**
+             * {@inheritDoc}
+             * */
             public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
                 return new ByteBuddy(classFileVersion);
             }
 
-            /** {@inheritDoc} */
+            /**
+             * {@inheritDoc}
+             * */
             public DynamicType.Builder<?> transform(TypeDescription typeDescription,
                                                     ByteBuddy byteBuddy,
                                                     ClassFileLocator classFileLocator,
@@ -83,12 +85,16 @@ public interface EntryPoint {
          * An entry point that redefines a type.
          */
         REDEFINE {
-            /** {@inheritDoc} */
+            /**
+             * {@inheritDoc}
+             * */
             public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
                 return new ByteBuddy(classFileVersion);
             }
 
-            /** {@inheritDoc} */
+            /**
+             * {@inheritDoc}
+             * */
             public DynamicType.Builder<?> transform(TypeDescription typeDescription,
                                                     ByteBuddy byteBuddy,
                                                     ClassFileLocator classFileLocator,
@@ -102,12 +108,16 @@ public interface EntryPoint {
          * not add any methods or considers intercepting inherited methods.
          */
         REDEFINE_LOCAL {
-            /** {@inheritDoc} */
+            /**
+             * {@inheritDoc}
+             * */
             public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
                 return new ByteBuddy(classFileVersion).with(Implementation.Context.Disabled.Factory.INSTANCE);
             }
 
-            /** {@inheritDoc} */
+            /**
+             * {@inheritDoc}
+             * */
             public DynamicType.Builder<?> transform(TypeDescription typeDescription,
                                                     ByteBuddy byteBuddy,
                                                     ClassFileLocator classFileLocator,
@@ -121,14 +131,18 @@ public interface EntryPoint {
          * for the application of {@link net.bytebuddy.asm.AsmVisitorWrapper}s while improving performance.
          */
         DECORATE {
-            /** {@inheritDoc} */
+            /**
+             * {@inheritDoc}
+             * */
             public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
                 return new ByteBuddy(classFileVersion)
                         .with(MethodGraph.Compiler.ForDeclaredMethods.INSTANCE)
                         .with(Implementation.Context.Disabled.Factory.INSTANCE);
             }
 
-            /** {@inheritDoc} */
+            /**
+             * {@inheritDoc}
+             * */
             public DynamicType.Builder<?> transform(TypeDescription typeDescription,
                                                     ByteBuddy byteBuddy,
                                                     ClassFileLocator classFileLocator,

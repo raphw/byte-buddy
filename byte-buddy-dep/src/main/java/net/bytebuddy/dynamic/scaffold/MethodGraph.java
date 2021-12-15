@@ -418,7 +418,7 @@ public interface MethodGraph {
     /**
      * A compiler to produce a {@link MethodGraph} from a given type.
      */
-    @SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "Safe initialization is implied")
+    @SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "Safe initialization is implied.")
     interface Compiler {
 
         /**

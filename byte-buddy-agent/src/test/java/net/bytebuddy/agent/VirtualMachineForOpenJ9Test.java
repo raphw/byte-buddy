@@ -57,7 +57,8 @@ public class VirtualMachineForOpenJ9Test {
     }
 
     @Test(timeout = 10000L)
-    @JavaVersionRule.Enforce(7) // Fails sometimes on Java 6 due to timeout issues that are difficult to reproduce and solve.
+    @JavaVersionRule.Enforce(7)
+    // Fails sometimes on Java 6 due to timeout issues that are difficult to reproduce and solve.
     public void testAttachment() throws Throwable {
         final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
         VirtualMachine.ForOpenJ9.Dispatcher dispatcher = mock(VirtualMachine.ForOpenJ9.Dispatcher.class);

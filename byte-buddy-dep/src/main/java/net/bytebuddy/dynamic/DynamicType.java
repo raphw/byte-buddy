@@ -5905,7 +5905,7 @@ public interface DynamicType {
          * @param loadedTypeInitializer The loaded type initializer of this dynamic type.
          * @param auxiliaryTypes        The auxiliary type required for this dynamic type.
          */
-        @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The array is not to be modified by contract")
+        @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The array is not modified by class contract.")
         public Default(TypeDescription typeDescription,
                        byte[] binaryRepresentation,
                        LoadedTypeInitializer loadedTypeInitializer,
@@ -5962,7 +5962,7 @@ public interface DynamicType {
         /**
          * {@inheritDoc}
          */
-        @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The array is not to be modified by contract")
+        @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The array is not modified by class contract.")
         public byte[] getBytes() {
             return binaryRepresentation;
         }

@@ -19,6 +19,6 @@ import net.bytebuddy.description.type.AbstractTypeDescriptionTest;
 
 import java.util.List;
 
-public record SampleRecord(@AbstractTypeDescriptionTest.SampleAnnotation @TypeAnnotation(42) List<@TypeAnnotation(84) String> foo) {
-    /* empty */
-}
+public record SampleRecord(@AbstractTypeDescriptionTest.SampleAnnotation @TypeAnnotation(42) List<@TypeAnnotation(84) String> foo){
+        /* empty */
+        }

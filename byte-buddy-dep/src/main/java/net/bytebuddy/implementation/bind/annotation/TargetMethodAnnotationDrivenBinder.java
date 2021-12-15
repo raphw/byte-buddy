@@ -160,7 +160,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
      *
      * @param <T> The {@link java.lang.annotation.Annotation#annotationType()} handled by this parameter binder.
      */
-    @SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "Safe initialization is implied")
+    @SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "Safe initialization is implied.")
     public interface ParameterBinder<T extends Annotation> {
 
         /**

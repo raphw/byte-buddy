@@ -118,7 +118,7 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
 
     /**
      * Specifies that any method or constructor that matches the specified matcher should be removed. Note that this implementation will
-     *      * not strip bridge methods for virtual overrides of generic methods.
+     * not strip bridge methods for virtual overrides of generic methods.
      *
      * @param matcher The matcher that decides upon method and constructor removal.
      * @return A new member removal instance that removes all previously specified members and any method or constructor that matches the specified matcher.

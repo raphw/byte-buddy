@@ -13,7 +13,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class VirtualMachineForHotSpotTest {
-    
+
     private static final String FOO = "foo", BAR = "bar";
 
     @Test

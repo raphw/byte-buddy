@@ -2505,7 +2505,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * An element representation for a byte array.
                  */
-                @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Not mutating the byte array is part of the class contract.")
+                @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The array is not modified by class contract.")
                 @HashCodeAndEqualsPlugin.Enhance
                 class ForByteArray implements Element {
 

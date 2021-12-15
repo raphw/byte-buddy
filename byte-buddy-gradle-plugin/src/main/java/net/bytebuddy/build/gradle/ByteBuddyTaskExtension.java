@@ -15,7 +15,8 @@
  */
 package net.bytebuddy.build.gradle;
 
-import javax.annotation.Nonnull; import javax.annotation.meta.When;
+import javax.annotation.Nonnull;
+import javax.annotation.meta.When;
 
 /**
  * A Byte Buddy task extension.

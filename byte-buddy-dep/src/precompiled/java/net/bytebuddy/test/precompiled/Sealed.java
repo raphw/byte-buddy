@@ -15,13 +15,19 @@
  */
 package net.bytebuddy.test.precompiled;
 
-public sealed class Sealed permits Sealed.SubNonSealed, Sealed.SubSealed, Sealed.SubFinal {
+public sealed
 
-    public static non-sealed class SubNonSealed extends Sealed {
+class Sealed permits Sealed.SubNonSealed, Sealed.SubSealed, Sealed.SubFinal {
+
+    public static non-sealed
+
+    class SubNonSealed extends Sealed {
         /* empty */
     }
 
-    public static sealed class SubSealed extends Sealed permits SubSealed.SubSubFinal {
+    public static sealed
+
+    class SubSealed extends Sealed permits SubSealed.SubSubFinal {
 
         public static final class SubSubFinal extends SubSealed {
             /* empty */

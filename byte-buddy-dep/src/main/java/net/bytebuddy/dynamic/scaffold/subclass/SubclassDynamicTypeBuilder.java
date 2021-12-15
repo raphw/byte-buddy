@@ -211,10 +211,10 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         MethodRegistry.Compiled methodRegistry = constructorStrategy
                 .inject(instrumentedType, this.methodRegistry)
                 .prepare(applyConstructorStrategy(instrumentedType),
-                    methodGraphCompiler,
-                    typeValidation,
-                    visibilityBridgeStrategy,
-                    new InstrumentableMatcher(ignoredMethods))
+                        methodGraphCompiler,
+                        typeValidation,
+                        visibilityBridgeStrategy,
+                        new InstrumentableMatcher(ignoredMethods))
                 .compile(SubclassImplementationTarget.Factory.SUPER_CLASS, classFileVersion);
         return TypeWriter.Default.<T>forCreation(methodRegistry,
                 auxiliaryTypes,
