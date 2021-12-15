@@ -213,6 +213,22 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
     public static class WithNonNullableFields extends HashCodeAndEqualsPlugin {
 
         /**
+         * Creates a new hash code equals plugin without JSR305 annotations where fields are assumed nullable by default.
+         */
+        public WithNonNullableFields() {
+            this(false);
+        }
+
+        /**
+         * Creates a new hash code equals plugin where fields are assumed nullable by default.
+         *
+         * @param jsr305 If {@code true}, a JSR305 annotation is added to the {@link Object#equals(Object)} method's parameter.
+         */
+        public WithNonNullableFields(boolean jsr305) {
+            super(jsr305);
+        }
+
+        /**
          * {@inheritDoc}
          */
         protected ElementMatcher<FieldDescription> nonNullable(ElementMatcher<FieldDescription> matcher) {

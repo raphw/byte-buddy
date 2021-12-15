@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 15. December 2021: version 1.12.4
+
+- Make paths in Gradle plugin relative and therewith cachable.
+- Add explicit check for empty or non-existent source folder to Maven and Gradle plugins.
+- Add support for modules when accessing system class loader for `Nexus` or `Installer`.
+- Add nullability annotations to all type members which are nullable and declare non-nullability the default.
+
 ### 2. December 2021: version 1.12.3
 
 - Move configuration for Java version to extension and avoid implicit configuration during task execution to allow for using a configuration cache.
