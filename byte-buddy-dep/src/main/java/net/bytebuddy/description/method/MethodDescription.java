@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.description.method;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.*;
@@ -668,6 +669,7 @@ public interface MethodDescription extends TypeVariableSource,
          * @param bootstrapped The type of the bootstrap method's type representation.
          * @return {@code true} if this method is a bootstrap method assuming the supplied type representation.
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Component type is assumed for array type")
         private boolean isBootstrap(TypeDescription bootstrapped) {
             TypeList parameterTypes = getParameters().asTypeList().asErasures();
             switch (parameterTypes.size()) {
@@ -696,6 +698,7 @@ public interface MethodDescription extends TypeVariableSource,
          * @param arguments The types of the explicit arguments that are supplied to the bootstrap method.
          * @return {@code true} if this method is a bootstrap method for the supplied arguments.
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Component type is assumed for array type")
         private boolean isBootstrapping(List<? extends TypeDefinition> arguments) {
             TypeList targets = getParameters().asTypeList().asErasures();
             if (targets.size() < 4) {
@@ -779,6 +782,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Component type is assumed for array type")
         public boolean isDefaultValue(AnnotationValue<?, ?> annotationValue) {
             if (!isDefaultValue()) {
                 return false;

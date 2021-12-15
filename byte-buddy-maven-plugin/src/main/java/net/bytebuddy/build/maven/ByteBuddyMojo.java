@@ -73,14 +73,14 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * The Maven project.
      */
-    @Nonnull(when = When.MAYBE)
+    @Nonnull(when = When.UNKNOWN)
     @Parameter(defaultValue = "${project}", readonly = true)
     public MavenProject project;
 
     /**
      * The currently used repository system.
      */
-    @Nonnull(when = When.MAYBE)
+    @Nonnull(when = When.UNKNOWN)
     @Component
     public RepositorySystem repositorySystem;
 
@@ -259,11 +259,12 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             getLog().debug(transformers.size() + " plugins are being applied via configuration and discovery");
         }
         try {
-            if (incremental && context != null && getSourceDirectory() != null) {
+            String sourceDirectory = getSourceDirectory();
+            if (incremental && context != null && sourceDirectory != null) {
                 getLog().debug("Considering incremental build with context: " + context);
                 Plugin.Engine.Source source;
                 if (context.isIncremental()) {
-                    Scanner scanner = context.newScanner(new File(getSourceDirectory()));
+                    Scanner scanner = context.newScanner(new File(sourceDirectory));
                     scanner.scan();
                     List<String> names = new ArrayList<String>();
                     for (String file : scanner.getIncludedFiles()) {

@@ -692,7 +692,7 @@ public interface MethodGraph {
              * @param relevanceMatcher A matcher for filtering methods that should be included in the graph.
              * @return A key store describing the provided type.
              */
-            protected Key.Store<T> analyzeNullable(TypeDescription.Generic typeDescription,
+            protected Key.Store<T> analyzeNullable(@Nonnull(when = When.MAYBE) TypeDescription.Generic typeDescription,
                                                    Map<TypeDefinition, Key.Store<T>> snapshots,
                                                    ElementMatcher<? super MethodDescription> relevanceMatcher) {
                 return typeDescription == null

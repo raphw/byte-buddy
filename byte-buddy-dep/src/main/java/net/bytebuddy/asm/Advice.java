@@ -2136,6 +2136,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<AllArguments> annotation,
                                           AdviceType adviceType) {
@@ -2554,6 +2555,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "declaringType")
                 protected FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                     if (!fieldDescription.isStatic() && !fieldDescription.getDeclaringType().asErasure().isAssignableFrom(instrumentedType)) {
                         throw new IllegalStateException(fieldDescription + " is no member of " + instrumentedType);
@@ -8019,11 +8021,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected Inlining(MethodDescription.InDefinedShape adviceMethod) {
                 this.adviceMethod = adviceMethod;
                 namedTypes = new HashMap<String, TypeDefinition>();
-                for (ParameterDescription parameterDescription : adviceMethod.getParameters().filter(isAnnotatedWith(Local.class))) {
-                    String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).getValue(OffsetMapping.ForLocalValue.Factory.LOCAL_VALUE).resolve(String.class);
-                    TypeDefinition previous = namedTypes.put(name, parameterDescription.getType());
-                    if (previous != null && !previous.equals(parameterDescription.getType())) {
-                        throw new IllegalStateException("Local variable for " + name + " is defined with inconsistent types");
+                for (ParameterDescription parameterDescription : adviceMethod.getParameters()) {
+                    AnnotationDescription.Loadable<Local> annotationDescription = parameterDescription.getDeclaredAnnotations().ofType(Local.class);
+                    if (annotationDescription != null) {
+                        String name = annotationDescription.getValue(OffsetMapping.ForLocalValue.Factory.LOCAL_VALUE).resolve(String.class);
+                        TypeDefinition previous = namedTypes.put(name, parameterDescription.getType());
+                        if (previous != null && !previous.equals(parameterDescription.getType())) {
+                            throw new IllegalStateException("Local variable for " + name + " is defined with inconsistent types");
+                        }
                     }
                 }
             }
@@ -8512,6 +8517,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param classReader   A class reader to query for the class file of the advice method.
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                              PostProcessor postProcessor,
                                              Map<String, TypeDefinition> namedTypes,
@@ -8820,6 +8826,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param enterType               The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      */
                     @SuppressWarnings("unchecked")
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                             PostProcessor postProcessor,
                                             Map<String, TypeDefinition> namedTypes,
@@ -8861,6 +8868,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param enterType               The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      * @return An appropriate exit handler.
                      */
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
                                                                PostProcessor postProcessor,
                                                                Map<String, TypeDefinition> namedTypes,
@@ -9408,7 +9416,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * A dispatcher for an advice method that is being invoked from the instrumented method.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class Delegating implements Unresolved<T> {
+        class Delegating implements Unresolved {
 
             /**
              * The advice method.
@@ -9473,17 +9481,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                  ClassReader classReader,
+                                                                  @Nonnull(when = When.MAYBE) ClassReader classReader,
                                                                   Unresolved methodEnter,
                                                                   PostProcessor.Factory postProcessorFactory) {
                 Map<String, TypeDefinition> namedTypes = methodEnter.getNamedTypes();
-                for (ParameterDescription parameterDescription : adviceMethod.getParameters().filter(isAnnotatedWith(Local.class))) {
-                    String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).getValue(OffsetMapping.ForLocalValue.Factory.LOCAL_VALUE).resolve(String.class);
-                    TypeDefinition typeDefinition = namedTypes.get(name);
-                    if (typeDefinition == null) {
-                        throw new IllegalStateException(adviceMethod + " attempts use of undeclared local variable " + name);
-                    } else if (!typeDefinition.equals(parameterDescription.getType())) {
-                        throw new IllegalStateException(adviceMethod + " does not read variable " + name + " as " + typeDefinition);
+                for (ParameterDescription parameterDescription : adviceMethod.getParameters()) {
+                    AnnotationDescription.Loadable<Local> annotationDescription = parameterDescription.getDeclaredAnnotations().ofType(Local.class);
+                    if (annotationDescription != null) {
+                        String name = annotationDescription.getValue(OffsetMapping.ForLocalValue.Factory.LOCAL_VALUE).resolve(String.class);
+                        TypeDefinition typeDefinition = namedTypes.get(name);
+                        if (typeDefinition == null) {
+                            throw new IllegalStateException(adviceMethod + " attempts use of undeclared local variable " + name);
+                        } else if (!typeDefinition.equals(parameterDescription.getType())) {
+                            throw new IllegalStateException(adviceMethod + " does not read variable " + name + " as " + typeDefinition);
+                        }
                     }
                 }
                 return Resolved.ForMethodExit.of(adviceMethod, postProcessorFactory.make(adviceMethod, true), delegator, namedTypes, userFactories, methodEnter.getAdviceType());
@@ -9948,6 +9959,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param delegator     The delegator to use.
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                              PostProcessor postProcessor,
                                              List<? extends OffsetMapping.Factory<?>> userFactories,
@@ -10196,6 +10208,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param delegator     The delegator to use.
                      */
                     @SuppressWarnings("unchecked")
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                             PostProcessor postProcessor,
                                             Map<String, TypeDefinition> namedTypes,
@@ -10234,6 +10247,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      * @return An appropriate exit handler.
                      */
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
                                                                PostProcessor postProcessor,
                                                                Delegator delegator,
@@ -12248,6 +12262,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
                 public StackManipulation resolve(TypeDescription instrumentedType,
                                                  MethodDescription instrumentedMethod,
                                                  Assigner assigner,
@@ -12591,6 +12606,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
                 public StackManipulation resolve(TypeDescription instrumentedType,
                                                  MethodDescription instrumentedMethod,
                                                  Assigner assigner,
@@ -12968,6 +12984,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * {@inheritDoc}
                      */
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice")
                     public List<AssignReturned.Handler> make(MethodDescription.InDefinedShape advice,
                                                              boolean exit,
                                                              AnnotationDescription.Loadable<? extends ToThrown> annotation) {

@@ -551,7 +551,7 @@ public interface ClassInjector {
                 /**
                  * An instance of {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                  */
-                @Nonnull(when = When.MAYBE)
+                @Nonnull(when = When.UNKNOWN)
                 protected final Method getDefinedPackage;
 
                 /**
@@ -847,7 +847,7 @@ public interface ClassInjector {
                 /**
                  * The accessor method for using {@code java.lang.ClassLoader#getDefinedPackage(String)}. May be {@code null}.
                  */
-                @Nonnull(when = When.MAYBE)
+                @Nonnull(when = When.UNKNOWN)
                 private final Method getDefinedPackage;
 
                 /**
@@ -2177,7 +2177,9 @@ public interface ClassInjector {
              *                        other classes within this class's module.
              * @return An appropriate injection strategy.
              */
-            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception intends to trigger disabled injection strategy.")
+            @SuppressFBWarnings(
+                    value = {"REC_CATCH_EXCEPTION", "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"},
+                    justification = "Exception intends to trigger disabled injection strategy. Modules are assumed if module system is supported.")
             public static Factory resolve(Instrumentation instrumentation, boolean local) {
                 if (ClassInjector.UsingUnsafe.isAvailable() || !JavaModule.isSupported()) {
                     return new Factory();

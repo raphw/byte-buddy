@@ -89,6 +89,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
      * @param token A token describing the method to be invoked.
      * @return A special method invocation for a method representing the given method token, if available.
      */
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Never applied on types without super type")
     private Implementation.SpecialMethodInvocation invokeMethod(MethodDescription.SignatureToken token) {
         MethodGraph.Node methodNode = methodGraph.getSuperClassGraph().locate(token);
         return methodNode.getSort().isUnique()

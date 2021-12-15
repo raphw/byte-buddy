@@ -11,8 +11,7 @@ import net.bytebuddy.implementation.EqualsMethod;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
+import javax.annotation.CheckForNull;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Comparator;
@@ -214,12 +213,11 @@ public class HashCodeAndEqualsPluginTest {
         Class<?> type = new HashCodeAndEqualsPlugin(true)
                 .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class), ClassFileLocator.ForClassLoader.of(SimpleSample.class.getClassLoader()))
                 .make()
-                .load(Nonnull.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .load(CheckForNull.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         Method method = type.getMethod("equals", Object.class);
         assertThat(method.getParameterAnnotations()[0].length, is(1));
-        assertThat(method.getParameterAnnotations()[0][0], CoreMatchers.<Annotation>instanceOf(Nonnull.class));
-        assertThat(((Nonnull) method.getParameterAnnotations()[0][0]).when(), is(When.MAYBE));
+        assertThat(method.getParameterAnnotations()[0][0], CoreMatchers.<Annotation>instanceOf(CheckForNull.class));
         assertThat(type.getDeclaredConstructor().newInstance().hashCode(), is(type.getDeclaredConstructor().newInstance().hashCode()));
         assertThat(type.getDeclaredConstructor().newInstance(), is(type.getDeclaredConstructor().newInstance()));
     }

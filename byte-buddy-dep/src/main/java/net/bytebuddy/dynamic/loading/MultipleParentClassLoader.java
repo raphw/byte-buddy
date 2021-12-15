@@ -183,7 +183,7 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
         /**
          * The currently represented enumeration or {@code null} if no such enumeration is currently selected.
          */
-        @Nonnull(when = When.MAYBE)
+        @Nonnull(when = When.UNKNOWN)
         private Enumeration<URL> currentEnumeration;
 
         /**

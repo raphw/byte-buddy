@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.build;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -134,6 +135,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
     /**
      * {@inheritDoc}
      */
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Annotation presence is required by matcher")
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         AnnotationDescription.Loadable<Enhance> enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class);
         if (typeDescription.getDeclaredMethods().filter(isHashCode()).isEmpty()) {
@@ -307,7 +309,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
                                     ? EqualsMethod.isolated()
                                     : EqualsMethod.requiringSuperClassEquality();
                         }
-                        typeDefinition = typeDefinition.getSuperClass().asErasure();
+                        typeDefinition = typeDefinition.getSuperClass();
                     }
                     return EqualsMethod.isolated();
                 }

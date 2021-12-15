@@ -207,6 +207,7 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * {@inheritDoc}
              */
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "declaringType")
             public Prepared prepare(TypeDescription instrumentedType) {
                 if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
                     throw new IllegalStateException(fieldDescription + " is not declared by " + instrumentedType);
@@ -1371,7 +1372,7 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * {@inheritDoc}
              */
-            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Expects its own initialized value as argument")
+            @SuppressFBWarnings(value = "NP_PARAMETER_MUST_BE_NONNULL_BUT_MARKED_AS_NULLABLE", justification = "Expects its own initialized value as argument")
             protected StackManipulation resolve(@Nonnull(when = When.MAYBE) FieldLocation.Prepared target,
                                                 FieldDescription fieldDescription,
                                                 TypeDescription instrumentedType,

@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.dynamic.scaffold;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -1524,8 +1525,11 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "superClass")
         public boolean isRecord() {
-            return record && getSuperClass().asErasure().equals(JavaType.RECORD.getTypeStub());
+            return record
+                    && superClass != null
+                    && getSuperClass().asErasure().equals(JavaType.RECORD.getTypeStub());
         }
 
         @Override

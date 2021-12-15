@@ -67,6 +67,15 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
     TypeDescription.Generic findVariable(String symbol);
 
     /**
+     * Finds a particular variable with the given name in the closes type variable source that is visible from this instance.
+     * If the variable is not found, an exception is thrown.
+     *
+     * @param symbol The symbolic name of the type variable.
+     * @return The type variable.
+     */
+    TypeDescription.Generic findExpectedVariable(String symbol);
+
+    /**
      * Applies a visitor on this type variable source.
      *
      * @param visitor The visitor to apply.
@@ -154,6 +163,17 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
             } else {
                 return typeVariables.getOnly();
             }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeDescription.Generic findExpectedVariable(String symbol) {
+            TypeDescription.Generic variable = findVariable(symbol);
+            if (variable == null) {
+                throw new IllegalArgumentException("Cannot resolve " + symbol + " from " + this);
+            }
+            return variable;
         }
     }
 }

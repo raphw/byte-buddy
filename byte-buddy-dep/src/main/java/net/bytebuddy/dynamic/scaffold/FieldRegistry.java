@@ -163,6 +163,7 @@ public interface FieldRegistry {
              * The default value to write to the field or {@code null} if no default value is to be set for the field.
              */
             @Nonnull(when = When.MAYBE)
+            @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
             private final Object defaultValue;
 
             /**

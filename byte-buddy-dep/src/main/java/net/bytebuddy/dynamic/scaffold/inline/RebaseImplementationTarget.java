@@ -99,8 +99,9 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
      * @return A special method invocation for the provided node.
      */
     private Implementation.SpecialMethodInvocation invokeSuper(MethodGraph.Node node) {
-        return node.getSort().isResolved()
-                ? Implementation.SpecialMethodInvocation.Simple.of(node.getRepresentative(), instrumentedType.getSuperClass().asErasure())
+        TypeDescription.Generic superClass = instrumentedType.getSuperClass();
+        return node.getSort().isResolved() && superClass != null
+                ? Implementation.SpecialMethodInvocation.Simple.of(node.getRepresentative(), superClass.asErasure())
                 : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
     }
 

@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.description.field;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.DeclaredByType;
@@ -155,6 +156,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * {@inheritDoc}
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
         public boolean isVisibleTo(TypeDescription typeDescription) {
             return getDeclaringType().asErasure().isVisibleTo(typeDescription)
                     && (isPublic()
@@ -167,6 +169,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * {@inheritDoc}
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
         public boolean isAccessibleTo(TypeDescription typeDescription) {
             return isPublic()
                     || typeDescription.equals(getDeclaringType().asErasure())
@@ -202,11 +205,13 @@ public interface FieldDescription extends ByteCodeElement,
 
         @Override
         @CachedReturnPlugin.Enhance("hashCode")
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
         public int hashCode() {
             return getDeclaringType().hashCode() + 31 * (17 + getName().hashCode());
         }
 
         @Override
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
         public boolean equals(@CheckForNull Object other) {
             if (this == other) {
                 return true;
@@ -220,6 +225,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * {@inheritDoc}
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
         public String toGenericString() {
             StringBuilder stringBuilder = new StringBuilder();
             if (getModifiers() != EMPTY_MASK) {
@@ -231,6 +237,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
         public String toString() {
             StringBuilder stringBuilder = new StringBuilder();
             if (getModifiers() != EMPTY_MASK) {

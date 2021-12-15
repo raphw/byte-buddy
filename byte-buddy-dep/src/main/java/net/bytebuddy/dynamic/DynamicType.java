@@ -1880,7 +1880,7 @@ public interface DynamicType {
                              */
                             protected abstract FieldDefinition.Optional<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                                                        Transformer<FieldDescription> transformer,
-                                                                                       Object defaultValue);
+                                                                                       @Nonnull(when = When.MAYBE) Object defaultValue);
                         }
                     }
                 }
@@ -4907,7 +4907,7 @@ public interface DynamicType {
                     @Override
                     protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                       Transformer<FieldDescription> transformer,
-                                                      Object defaultValue) {
+                                                      @Nonnull(when = When.MAYBE) Object defaultValue) {
                         return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, token);
                     }
                 }
@@ -4982,7 +4982,7 @@ public interface DynamicType {
                     @Override
                     protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                       Transformer<FieldDescription> transformer,
-                                                      Object defaultValue) {
+                                                      @Nonnull(when = When.MAYBE) Object defaultValue) {
                         return new FieldMatchAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, matcher);
                     }
                 }

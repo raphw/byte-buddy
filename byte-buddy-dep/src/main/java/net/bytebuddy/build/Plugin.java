@@ -709,8 +709,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         public Resolution resolve(int index, Class<?> type) {
                             if (this.index != index) {
                                 return Resolution.Unresolved.INSTANCE;
-                            } else if (type == char.class || type == Character.class && value != null) {
-                                return value.length() == 1
+                            } else if (type == char.class || type == Character.class) {
+                                return value != null && value.length() == 1
                                         ? new Resolution.Resolved(value.charAt(0))
                                         : Resolution.Unresolved.INSTANCE;
                             } else if (type == String.class) {
@@ -1125,7 +1125,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
              *
              * @param manifest The located manifest or {@code null} if no manifest was found.
              */
-            void onManifest(Manifest manifest);
+            void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest);
 
             /**
              * Invoked if a resource that is not a class file is discovered.
@@ -1293,7 +1293,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 MANIFEST_REQUIRED {
                     @Override
-                    public void onManifest(Manifest manifest) {
+                    public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
                         if (manifest == null) {
                             throw new IllegalStateException("Required a manifest but no manifest was found");
                         }
@@ -1345,7 +1345,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public void onManifest(Manifest manifest) {
+                public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
                     /* do nothing */
                 }
 
@@ -1450,7 +1450,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public void onManifest(Manifest manifest) {
+                public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
                     for (ErrorHandler errorHandler : errorHandlers) {
                         errorHandler.onManifest(manifest);
                     }
@@ -1617,7 +1617,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public void onManifest(Manifest manifest) {
+                public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
                     /* do nothing */
                 }
 
@@ -1721,7 +1721,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public void onManifest(Manifest manifest) {
+                public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
                     /* do nothing */
                 }
 
@@ -1859,7 +1859,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public void onManifest(Manifest manifest) {
+                public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
                     printStream.printf(PREFIX + " MANIFEST %b", manifest != null);
                 }
 
@@ -2014,7 +2014,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 }
 
                 @Override
-                public void onManifest(Manifest manifest) {
+                public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
                     errorHandler.onManifest(manifest);
                 }
 
@@ -2171,7 +2171,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public void onManifest(Manifest manifest) {
+                public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
                     for (Listener listener : listeners) {
                         listener.onManifest(manifest);
                     }
@@ -3071,7 +3071,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
              * @return The sink to write to.
              * @throws IOException If an I/O error occurs.
              */
-            Sink write(Manifest manifest) throws IOException;
+            Sink write(@Nonnull(when = When.MAYBE) Manifest manifest) throws IOException;
 
             /**
              * A sink represents an active writing process.
@@ -3167,7 +3167,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public Sink write(Manifest manifest) {
+                public Sink write(@Nonnull(when = When.MAYBE) Manifest manifest) {
                     return this;
                 }
 
@@ -3223,7 +3223,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public Sink write(Manifest manifest) throws IOException {
+                public Sink write(@Nonnull(when = When.MAYBE) Manifest manifest) throws IOException {
                     if (manifest != null) {
                         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                         try {
@@ -3327,7 +3327,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public Sink write(Manifest manifest) throws IOException {
+                public Sink write(@Nonnull(when = When.MAYBE) Manifest manifest) throws IOException {
                     if (manifest != null) {
                         File target = new File(folder, JarFile.MANIFEST_NAME);
                         if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
@@ -3425,7 +3425,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public Sink write(Manifest manifest) throws IOException {
+                public Sink write(@Nonnull(when = When.MAYBE) Manifest manifest) throws IOException {
                     return manifest == null
                             ? new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file)))
                             : new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file), manifest));

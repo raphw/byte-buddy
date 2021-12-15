@@ -359,6 +359,7 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
         /**
          * The next class to represent.
          */
+        @Nonnull(when = When.UNKNOWN)
         private TypeDefinition nextClass;
 
         /**

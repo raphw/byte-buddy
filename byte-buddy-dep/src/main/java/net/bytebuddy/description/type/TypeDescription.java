@@ -769,6 +769,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
                 public Generic onGenericArray(Generic genericArray) {
                     return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), Empty.INSTANCE);
                 }
@@ -803,6 +804,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
                 public Generic onNonGenericType(Generic typeDescription) {
                     return typeDescription.isArray()
                             ? new OfGenericArray.Latent(onNonGenericType(typeDescription.getComponentType()), Empty.INSTANCE)
@@ -954,6 +956,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         /**
                          * {@inheritDoc}
                          */
+                        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
                         public Boolean onGenericArray(Generic genericArray) {
                             return typeDescription.isArray()
                                     ? genericArray.getComponentType().accept(new ForNonGenericType(typeDescription.getComponentType()))
@@ -1335,6 +1338,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         /**
                          * {@inheritDoc}
                          */
+                        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
                         public Boolean onGenericArray(Generic genericArray) {
                             return this.genericArray.getComponentType().accept(Assigner.INSTANCE).isAssignableFrom(genericArray.getComponentType());
                         }
@@ -1363,6 +1367,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         /**
                          * {@inheritDoc}
                          */
+                        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
                         public Boolean onNonGenericType(Generic typeDescription) {
                             return typeDescription.isArray()
                                     && genericArray.getComponentType().accept(Assigner.INSTANCE).isAssignableFrom(typeDescription.getComponentType());
@@ -1586,6 +1591,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * {@inheritDoc}
                      */
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
                     public Boolean onGenericArray(Generic genericArray) {
                         return isValid(genericArray) && genericArray.getComponentType().accept(this);
                     }
@@ -1632,6 +1638,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * {@inheritDoc}
                      */
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
                     public Boolean onNonGenericType(Generic typeDescription) {
                         return isValid(typeDescription) && (!typeDescription.isArray() || typeDescription.getComponentType().accept(this));
                     }
@@ -1741,6 +1748,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
                 public SignatureVisitor onGenericArray(Generic genericArray) {
                     genericArray.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
                     return signatureVisitor;
@@ -1791,6 +1799,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
                 public SignatureVisitor onNonGenericType(Generic typeDescription) {
                     if (typeDescription.isArray()) {
                         typeDescription.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
@@ -1892,6 +1901,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
                 public Generic onGenericArray(Generic genericArray) {
                     return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), genericArray);
                 }
@@ -1906,6 +1916,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
                 public Generic onNonGenericType(Generic typeDescription) {
                     return typeDescription.isArray()
                             ? new OfGenericArray.Latent(typeDescription.getComponentType().accept(this), typeDescription)
@@ -1992,6 +2003,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * @param fieldDescription The field description to which visited types should be attached to.
                      * @return A substitutor that attaches visited types to the given field's type context.
                      */
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "declaringType")
                     public static ForAttachment of(FieldDescription fieldDescription) {
                         return new ForAttachment(fieldDescription.getDeclaringType(), fieldDescription.getDeclaringType().asErasure());
                     }
@@ -2030,12 +2042,10 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * {@inheritDoc}
                      */
                     public Generic onTypeVariable(Generic typeVariable) {
-                        Generic attachedVariable = typeVariableSource.findVariable(typeVariable.getSymbol());
-                        if (attachedVariable == null) {
-                            throw new IllegalArgumentException("Cannot attach undefined variable: " + typeVariable);
-                        } else {
-                            return new OfTypeVariable.WithAnnotationOverlay(attachedVariable, typeVariable);
-                        }
+                        Generic variable = typeVariableSource.findVariable(typeVariable.getSymbol());
+                        return new OfTypeVariable.WithAnnotationOverlay(variable == null
+                                ? new UnresolvedTypeVariable(typeVariable, typeVariableSource)
+                                : variable, typeVariable);
                     }
 
                     @Override
@@ -2043,6 +2053,61 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return typeDescription.represents(TargetType.class)
                                 ? new OfNonGenericType.Latent(declaringType, typeDescription)
                                 : typeDescription;
+                    }
+
+                    /**
+                     * Represents an unresolved type variable.
+                     */
+                    protected static class UnresolvedTypeVariable extends Generic.OfTypeVariable {
+
+                        /**
+                         * The delegated type variable.
+                         */
+                        private final Generic delegate;
+
+                        /**
+                         * The targeted type variable source.
+                         */
+                        private final TypeVariableSource typeVariableSource;
+
+                        /**
+                         * Creates an unresolved type variable.
+                         *
+                         * @param delegate           The delegated type variable.
+                         * @param typeVariableSource The targeted type variable source.
+                         */
+                        protected UnresolvedTypeVariable(Generic delegate, TypeVariableSource typeVariableSource) {
+                            this.delegate = delegate;
+                            this.typeVariableSource = typeVariableSource;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public TypeList.Generic getUpperBounds() {
+                            throw new IllegalStateException("Could not resolve " + delegate.getSymbol() + " from " + typeVariableSource);
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public TypeVariableSource getTypeVariableSource() {
+                            return typeVariableSource;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public String getSymbol() {
+                            return delegate.getSymbol();
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public AnnotationList getDeclaredAnnotations() {
+                            return delegate.getDeclaredAnnotations();
+                        }
                     }
                 }
 
@@ -2382,6 +2447,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
                 public TypeDescription onGenericArray(Generic genericArray) {
                     Generic targetType = genericArray;
                     int arity = 0;
@@ -2396,7 +2462,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             }
                         }
                         return TargetType.resolve(TypeDescription.ArrayProjection.of(
-                                declaringType.findVariable(targetType.getSymbol()).asErasure(),
+                                declaringType.findExpectedVariable(targetType.getSymbol()).asErasure(),
                                 arity), declaringType);
                     } else {
                         return TargetType.resolve(genericArray.asErasure(), declaringType);
@@ -2426,7 +2492,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return typeVariableToken.getBounds().get(0).accept(this);
                         }
                     }
-                    return TargetType.resolve(declaringType.findVariable(typeVariable.getSymbol()).asErasure(), declaringType);
+                    return TargetType.resolve(declaringType.findExpectedVariable(typeVariable.getSymbol()).asErasure(), declaringType);
                 }
 
                 /**
@@ -4164,6 +4230,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
             public Sort getSort() {
                 return getComponentType().getSort().isNonGeneric()
                         ? Sort.NON_GENERIC
@@ -4173,6 +4240,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
             public TypeDescription asErasure() {
                 return ArrayProjection.of(getComponentType().asErasure(), 1);
             }
@@ -4327,6 +4395,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             @CachedReturnPlugin.Enhance("hashCode")
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
             public int hashCode() {
                 return getSort().isNonGeneric()
                         ? asErasure().hashCode()
@@ -4334,7 +4403,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Type check is performed by erasure implementation")
+            @SuppressFBWarnings(
+                    value = {"EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"},
+                    justification = "Type check is performed by erasure implementation. Assuming component type for array type.")
             public boolean equals(@CheckForNull Object other) {
                 if (this == other) {
                     return true;
@@ -4349,6 +4420,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
+            @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
             public String toString() {
                 return getSort().isNonGeneric()
                         ? asErasure().toString()
@@ -5124,7 +5196,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 FOR_LEGACY_VM {
                     @Override
-                    protected void apply(StringBuilder stringBuilder, TypeDescription erasure, Generic ownerType) {
+                    protected void apply(StringBuilder stringBuilder, TypeDescription erasure, @Nonnull(when = When.MAYBE) Generic ownerType) {
                         if (ownerType != null) {
                             stringBuilder.append(ownerType.getTypeName()).append('.').append(ownerType.getSort().isParameterized()
                                     ? erasure.getSimpleName()
@@ -5140,7 +5212,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 FOR_JAVA_8_CAPABLE_VM {
                     @Override
-                    protected void apply(StringBuilder stringBuilder, TypeDescription erasure, Generic ownerType) {
+                    protected void apply(StringBuilder stringBuilder, TypeDescription erasure, @Nonnull(when = When.MAYBE) Generic ownerType) {
                         if (ownerType != null) {
                             stringBuilder.append(ownerType.getTypeName()).append('$');
                             if (ownerType.getSort().isParameterized()) {
@@ -5166,9 +5238,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  *
                  * @param stringBuilder The string builder which is used for creating a parameterized type's string representation.
                  * @param erasure       The rendered type's erasure.
-                 * @param ownerType     The rendered type's owner type.
+                 * @param ownerType     The rendered type's owner type which might be {@code null}.
                  */
-                protected abstract void apply(StringBuilder stringBuilder, TypeDescription erasure, Generic ownerType);
+                protected abstract void apply(StringBuilder stringBuilder, TypeDescription erasure, @Nonnull(when = When.MAYBE) Generic ownerType);
             }
 
             /**
@@ -6342,12 +6414,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * {@inheritDoc}
                      */
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "superClass")
                     public TypeDescription asErasure() {
                         return delegate.asErasure().getSuperClass().asErasure();
                     }
 
                     @Override
                     @CachedReturnPlugin.Enhance("resolved")
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "superClass")
                     protected Generic resolve() {
                         return delegate.resolve().getSuperClass();
                     }
@@ -7358,6 +7432,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
                 public Builder onGenericArray(Generic genericArray) {
                     return new OfGenericArrayType(genericArray.getComponentType(), genericArray.getDeclaredAnnotations());
                 }
@@ -7389,6 +7464,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
                 public Builder onNonGenericType(Generic typeDescription) {
                     return typeDescription.isArray()
                             ? typeDescription.getComponentType().accept(this).asArray().annotate(typeDescription.getDeclaredAnnotations())
@@ -7488,6 +7564,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The generic owner type.
                  */
+                @Nonnull(when = When.MAYBE)
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final Generic ownerType;
 
                 /**
@@ -7502,7 +7580,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param ownerType      The generic owner type.
                  * @param parameterTypes The parameter types.
                  */
-                protected OfParameterizedType(TypeDescription rawType, Generic ownerType, List<? extends Generic> parameterTypes) {
+                protected OfParameterizedType(TypeDescription rawType,
+                                              @Nonnull(when = When.MAYBE) Generic ownerType,
+                                              List<? extends Generic> parameterTypes) {
                     this(rawType, ownerType, parameterTypes, Collections.<AnnotationDescription>emptyList());
                 }
 
@@ -7515,7 +7595,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param annotations    The type's type annotations.
                  */
                 protected OfParameterizedType(TypeDescription rawType,
-                                              Generic ownerType,
+                                              @Nonnull(when = When.MAYBE) Generic ownerType,
                                               List<? extends Generic> parameterTypes,
                                               List<? extends AnnotationDescription> annotations) {
                     super(annotations);
@@ -7664,6 +7744,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * @param targetType The target type that is to be assigned to the source type.
          * @return {@code true} if the target type is assignable to the source type.
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type")
         private static boolean isAssignable(TypeDescription sourceType, TypeDescription targetType) {
             // Means that '[sourceType] var = ([targetType]) val;' is a valid assignment. This is true, if:
             // (1) Both types are equal (implies primitive types.)
@@ -7886,6 +7967,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
         public boolean isVisibleTo(TypeDescription typeDescription) {
             return isPrimitive() || (isArray()
                     ? getComponentType().isVisibleTo(typeDescription)
@@ -7895,6 +7977,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
         public boolean isAccessibleTo(TypeDescription typeDescription) {
             return isPrimitive() || (isArray()
                     ? getComponentType().isVisibleTo(typeDescription)
@@ -7921,6 +8004,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
         public String getActualName() {
             if (isArray()) {
                 TypeDescription typeDescription = this;
@@ -7957,6 +8041,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
         public boolean isAnnotationReturnType() {
             return isPrimitive()
                     || represents(String.class)
@@ -7969,6 +8054,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
         public boolean isAnnotationValue() {
             return isPrimitive()
                     || represents(String.class)
@@ -9099,6 +9185,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * @param arity         The arity of this array.
          * @return A projection of the component type as an array of the given value with the supplied arity.
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
         public static TypeDescription of(TypeDescription componentType, int arity) {
             if (arity < 0) {
                 throw new IllegalArgumentException("Arrays cannot have a negative arity");
@@ -9293,7 +9380,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @Nonnull(when = When.NEVER)
         public TypeDescription getDeclaringType() {
             return TypeDescription.UNDEFINED;
         }
@@ -9301,6 +9388,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "array")
         public int getModifiers() {
             return (getComponentType().getModifiers() & ~ARRAY_EXCLUDED) | ARRAY_IMPLIED;
         }

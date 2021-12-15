@@ -806,10 +806,11 @@ public class MethodCall implements Implementation.Composable {
              * {@inheritDoc}
              */
             public MethodDescription resolve(TypeDescription targetType, MethodDescription instrumentedMethod) {
+                TypeDescription.Generic superClass = instrumentedType.getSuperClass();
                 List<MethodDescription> candidates = CompoundList.<MethodDescription>of(
-                        instrumentedType.getSuperClass() == null
+                         superClass == null
                                 ? Collections.<MethodDescription>emptyList()
-                                : instrumentedType.getSuperClass().getDeclaredMethods().filter(isConstructor().and(matcher)),
+                                : superClass.getDeclaredMethods().filter(isConstructor().and(matcher)),
                         instrumentedType.getDeclaredMethods().filter(not(ElementMatchers.isVirtual()).and(matcher)),
                         methodGraphCompiler.compile((TypeDefinition) targetType, instrumentedType).listNodes().asMethodList().filter(matcher));
                 if (candidates.size() == 1) {
@@ -2077,6 +2078,7 @@ public class MethodCall implements Implementation.Composable {
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
                 public StackManipulation toStackManipulation(MethodDescription invokedMethod, Assigner assigner, Assigner.Typing typing) {
                     if (instrumentedMethod.isStatic() && !invokedMethod.isStatic() && !invokedMethod.isConstructor()) {
                         throw new IllegalStateException("Cannot invoke " + invokedMethod + " from " + instrumentedMethod);
@@ -2459,6 +2461,7 @@ public class MethodCall implements Implementation.Composable {
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
                 public TargetHandler make(Implementation.Target implementationTarget) {
                     FieldDescription fieldDescription = location.resolve(implementationTarget.getInstrumentedType());
                     if (!fieldDescription.isStatic() && !implementationTarget.getInstrumentedType().isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
@@ -3140,6 +3143,7 @@ public class MethodCall implements Implementation.Composable {
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Declaring type is never null for field")
                 public TerminationHandler make(TypeDescription instrumentedType) {
                     if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
                         throw new IllegalStateException("Cannot set " + fieldDescription + " from " + instrumentedType);

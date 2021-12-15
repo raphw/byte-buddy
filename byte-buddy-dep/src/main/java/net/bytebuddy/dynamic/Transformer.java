@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.dynamic;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -124,6 +125,7 @@ public interface Transformer<T> {
         /**
          * {@inheritDoc}
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "declaringType")
         public FieldDescription transform(TypeDescription instrumentedType, FieldDescription fieldDescription) {
             return new TransformedField(instrumentedType,
                     fieldDescription.getDeclaringType(),
@@ -548,18 +550,20 @@ public interface Transformer<T> {
                  * {@inheritDoc}
                  */
                 public String getName() {
-                    return isNamed()
-                            ? parameterToken.getName()
-                            : super.getName();
+                    String name = parameterToken.getName();
+                    return name == null
+                            ? super.getName()
+                            : name;
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public int getModifiers() {
-                    return hasModifiers()
-                            ? parameterToken.getModifiers()
-                            : super.getModifiers();
+                    Integer modifiers = parameterToken.getModifiers();
+                    return modifiers == null
+                            ? super.getModifiers()
+                            : modifiers;
                 }
 
                 /**
@@ -590,14 +594,9 @@ public interface Transformer<T> {
                  */
                 public TypeDescription.Generic onTypeVariable(TypeDescription.Generic typeVariable) {
                     TypeList.Generic candidates = getTypeVariables().filter(named(typeVariable.getSymbol()));
-                    TypeDescription.Generic attached = candidates.isEmpty()
-                            ? instrumentedType.findVariable(typeVariable.getSymbol())
-                            : candidates.getOnly();
-                    if (attached == null) {
-                        throw new IllegalArgumentException("Cannot attach undefined variable: " + typeVariable);
-                    } else {
-                        return new TypeDescription.Generic.OfTypeVariable.WithAnnotationOverlay(attached, typeVariable);
-                    }
+                    return new TypeDescription.Generic.OfTypeVariable.WithAnnotationOverlay(candidates.isEmpty()
+                            ? instrumentedType.findExpectedVariable(typeVariable.getSymbol())
+                            : candidates.getOnly(), typeVariable);
                 }
             }
         }

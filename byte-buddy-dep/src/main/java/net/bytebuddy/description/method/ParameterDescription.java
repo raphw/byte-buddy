@@ -816,7 +816,6 @@ public interface ParameterDescription extends AnnotationSource,
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
         public int getIndex() {
             return index;
         }
@@ -824,7 +823,6 @@ public interface ParameterDescription extends AnnotationSource,
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
         public int getOffset() {
             return offset;
         }
@@ -847,18 +845,18 @@ public interface ParameterDescription extends AnnotationSource,
          * {@inheritDoc}
          */
         public String getName() {
-            return isNamed()
-                    ? name
-                    : super.getName();
+            return name == null
+                    ? super.getName()
+                    : name;
         }
 
         /**
          * {@inheritDoc}
          */
         public int getModifiers() {
-            return hasModifiers()
-                    ? modifiers
-                    : super.getModifiers();
+            return modifiers == null
+                    ? super.getModifiers()
+                    : modifiers;
         }
 
         /**
