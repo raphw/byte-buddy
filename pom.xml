@@ -60,7 +60,7 @@
         <bytecode.test.version>1.6</bytecode.test.version>
         <pitest.target>net.bytebuddy</pitest.target>
         <asm.url>https://asm.ow2.io</asm.url>
-        <nexus.url>https://oss.sonatype.org</nexus.url>
+        <nexus.url>https://s01.oss.sonatype.org</nexus.url>
         <version.asm>9.2</version.asm>
         <jna.version>5.8.0</jna.version>
         <version.junit>4.13.2</version.junit>
