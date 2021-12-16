@@ -21,8 +21,8 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import net.bytebuddy.agent.nullability.MaybeNull;
-import net.bytebuddy.agent.nullability.UnknownNull;
+import net.bytebuddy.agent.utility.nullability.MaybeNull;
+import net.bytebuddy.agent.utility.nullability.UnknownNull;
 
 import java.io.*;
 import java.net.ServerSocket;

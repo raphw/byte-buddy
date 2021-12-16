@@ -15,7 +15,7 @@
  */
 package net.bytebuddy.agent;
 
-import net.bytebuddy.agent.nullability.MaybeNull;
+import net.bytebuddy.agent.utility.nullability.MaybeNull;
 
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;

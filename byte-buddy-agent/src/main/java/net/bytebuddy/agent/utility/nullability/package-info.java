@@ -16,4 +16,4 @@
 /**
  * A package to contain nullability annotations to be used within the Byte Buddy agent project.
  */
-package net.bytebuddy.agent.nullability;
+package net.bytebuddy.agent.utility.nullability;

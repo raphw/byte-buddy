@@ -19,4 +19,4 @@
 @NeverNull
 package net.bytebuddy.agent;
 
-import net.bytebuddy.agent.nullability.NeverNull;
+import net.bytebuddy.agent.utility.nullability.NeverNull;

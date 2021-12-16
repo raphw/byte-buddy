@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.agent.nullability;
+package net.bytebuddy.agent.utility.nullability;
 
+import javax.annotation.meta.When;
 import java.lang.annotation.*;
 
 /**
- * Indicates that a field, method or parameter can sometimes be {@code null}.
+ * Indicates that a field, method or parameter is undefined for its usage {@code null}.
  */
 @Documented
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
-@javax.annotation.Nonnull(when = javax.annotation.meta.When.MAYBE)
+@javax.annotation.Nonnull(when = When.UNKNOWN)
 @javax.annotation.meta.TypeQualifierDefault({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
 @SuppressWarnings("deprecation") // for compilation with deprecated dependency
-public @interface MaybeNull {
+public @interface UnknownNull {
     /* empty */
 }

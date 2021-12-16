@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.agent.nullability;
+package net.bytebuddy.agent.utility.nullability;
 
 import java.lang.annotation.*;
 

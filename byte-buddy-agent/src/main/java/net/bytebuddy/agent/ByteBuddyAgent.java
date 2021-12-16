@@ -16,8 +16,8 @@
 package net.bytebuddy.agent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import net.bytebuddy.agent.nullability.AlwaysNull;
-import net.bytebuddy.agent.nullability.MaybeNull;
+import net.bytebuddy.agent.utility.nullability.AlwaysNull;
+import net.bytebuddy.agent.utility.nullability.MaybeNull;
 
 import java.io.*;
 import java.lang.instrument.Instrumentation;
