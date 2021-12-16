@@ -96,24 +96,29 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
     }
 
     /**
-     * If {@code true}, a JSR305 annotation is added to the {@link Object#equals(Object)} method's parameter.
+     * Defines the binary name of a runtime-visible annotation type that should be added to the parameter of the
+     * {@link Object#equals(Object)} method, or {@code null} if no such name should be defined.
      */
-    private final boolean jsr305;
+    @MaybeNull
+    @ValueHandling(ValueHandling.Sort.REVERSE_NULLABILITY)
+    private final String annotationType;
 
     /**
-     * Creates a new hash code equals plugin without JSR305 annotations.
+     * Creates a new hash code equals plugin.
      */
     public HashCodeAndEqualsPlugin() {
-        this(false);
+        this(null);
     }
 
     /**
      * Creates a new hash code equals plugin.
      *
-     * @param jsr305 If {@code true}, a JSR305 annotation is added to the {@link Object#equals(Object)} method's parameter.
+     * @param annotationType Defines the binary name of a runtime-visible annotation type that should be added to the
+     *                       parameter of the {@link Object#equals(Object)} method, or {@code null} if no such name
+     *                       should be defined.
      */
-    public HashCodeAndEqualsPlugin(boolean jsr305) {
-        this.jsr305 = jsr305;
+    public HashCodeAndEqualsPlugin(@MaybeNull String annotationType) {
+        this.annotationType = annotationType;
     }
 
     /**
@@ -198,8 +203,10 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
      * {@inheritDoc}
      */
     public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
-        if (jsr305) {
-            AnnotationVisitor annotationVisitor = methodVisitor.visitParameterAnnotation(0, "Ljavax/annotation/CheckForNull;", true);
+        if (annotationType != null) {
+            AnnotationVisitor annotationVisitor = methodVisitor.visitParameterAnnotation(0,
+                    "L" + annotationType.replace('.', '/') + ";",
+                    true);
             if (annotationVisitor != null) {
                 annotationVisitor.visitEnd();
             }
@@ -213,19 +220,21 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
     public static class WithNonNullableFields extends HashCodeAndEqualsPlugin {
 
         /**
-         * Creates a new hash code equals plugin without JSR305 annotations where fields are assumed nullable by default.
+         * Creates a new hash code equals plugin where fields are assumed nullable by default.
          */
         public WithNonNullableFields() {
-            this(false);
+            this(null);
         }
 
         /**
          * Creates a new hash code equals plugin where fields are assumed nullable by default.
          *
-         * @param jsr305 If {@code true}, a JSR305 annotation is added to the {@link Object#equals(Object)} method's parameter.
+         * @param annotationType Defines the binary name of a runtime-visible annotation type that should be added to the
+         *                       parameter of the {@link Object#equals(Object)} method, or {@code null} if no such name
+         *                       should be defined.
          */
-        public WithNonNullableFields(boolean jsr305) {
-            super(jsr305);
+        public WithNonNullableFields(@MaybeNull String annotationType) {
+            super(annotationType);
         }
 
         /**

@@ -15,24 +15,30 @@
  */
 package net.bytebuddy.utility.nullability;
 
+import javax.annotation.Nonnull;
+import javax.annotation.meta.TypeQualifierDefault;
+import javax.annotation.meta.TypeQualifierNickname;
 import java.lang.annotation.*;
 
 /**
- * Indicates that a field, method or parameter can never be {@code null}. This is normally the case.
+ * Indicates that a field, method or parameter can never be {@code null}. Typically, this does not need to
+ * be declared explicitly but is guaranteed by {@link ByDefault}.
  */
 @Documented
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
-@javax.annotation.Nonnull
-@javax.annotation.meta.TypeQualifierDefault({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
-@SuppressWarnings("deprecation") // for compilation with deprecated dependency
+@Nonnull
+@TypeQualifierNickname
 public @interface NeverNull {
 
+    /**
+     * Indicates that any field, method return or method and constructor parameter of a package is never {@code null}.
+     */
     @Documented
     @Target(ElementType.PACKAGE)
     @Retention(RetentionPolicy.RUNTIME)
-    @javax.annotation.Nonnull
-    @javax.annotation.meta.TypeQualifierDefault({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
+    @Nonnull
+    @TypeQualifierDefault({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
     @interface ByDefault {
         /* empty */
     }

@@ -15,6 +15,9 @@
  */
 package net.bytebuddy.agent.utility.nullability;
 
+import javax.annotation.Nonnull;
+import javax.annotation.meta.TypeQualifierNickname;
+import javax.annotation.meta.When;
 import java.lang.annotation.*;
 
 /**
@@ -23,9 +26,8 @@ import java.lang.annotation.*;
 @Documented
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
-@javax.annotation.Nonnull(when = javax.annotation.meta.When.MAYBE)
-@javax.annotation.meta.TypeQualifierDefault({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
-@SuppressWarnings("deprecation") // for compilation with deprecated dependency
+@Nonnull(when = When.MAYBE)
+@TypeQualifierNickname
 public @interface MaybeNull {
     /* empty */
 }

@@ -16,7 +16,7 @@
 /**
  * The Byte Buddy agent allows the redefinition of classes at runtime.
  */
-@NeverNull
+@NeverNull.ByDefault
 package net.bytebuddy.agent;
 
 import net.bytebuddy.agent.utility.nullability.NeverNull;

@@ -8,10 +8,10 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.EqualsMethod;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
-import javax.annotation.CheckForNull;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Comparator;
@@ -210,14 +210,14 @@ public class HashCodeAndEqualsPluginTest {
 
     @Test
     public void testPluginEnhanceJsr305() throws Exception {
-        Class<?> type = new HashCodeAndEqualsPlugin(true)
+        Class<?> type = new HashCodeAndEqualsPlugin(MaybeNull.class.getName())
                 .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class), ClassFileLocator.ForClassLoader.of(SimpleSample.class.getClassLoader()))
                 .make()
-                .load(CheckForNull.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .load(MaybeNull.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         Method method = type.getMethod("equals", Object.class);
         assertThat(method.getParameterAnnotations()[0].length, is(1));
-        assertThat(method.getParameterAnnotations()[0][0], CoreMatchers.<Annotation>instanceOf(CheckForNull.class));
+        assertThat(method.getParameterAnnotations()[0][0], CoreMatchers.<Annotation>instanceOf(MaybeNull.class));
         assertThat(type.getDeclaredConstructor().newInstance().hashCode(), is(type.getDeclaredConstructor().newInstance().hashCode()));
         assertThat(type.getDeclaredConstructor().newInstance(), is(type.getDeclaredConstructor().newInstance()));
     }
