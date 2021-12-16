@@ -20,6 +20,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
 import javax.annotation.CheckForNull;
 import java.util.Arrays;
@@ -163,7 +164,7 @@ public interface LatentMatcher<T> {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(@CheckForNull FieldDescription target) {
+            public boolean matches(@MaybeNull FieldDescription target) {
                 return target != null && target.asSignatureToken().equals(signatureToken);
             }
         }
@@ -219,7 +220,7 @@ public interface LatentMatcher<T> {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(@CheckForNull MethodDescription target) {
+            public boolean matches(@MaybeNull MethodDescription target) {
                 return target != null && target.asSignatureToken().equals(signatureToken);
             }
         }

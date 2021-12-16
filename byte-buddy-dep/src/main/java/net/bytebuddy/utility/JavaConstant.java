@@ -29,8 +29,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -272,7 +270,7 @@ public interface JavaConstant {
          * @param classLoader The class loader to use for resolving type information from the supplied value.
          * @return An appropriate Java constant representation.
          */
-        public static JavaConstant ofDescription(Object value, @Nonnull(when = When.MAYBE) ClassLoader classLoader) {
+        public static JavaConstant ofDescription(Object value, @MaybeNull ClassLoader classLoader) {
             return ofDescription(value, ClassFileLocator.ForClassLoader.of(classLoader));
         }
 
@@ -436,7 +434,7 @@ public interface JavaConstant {
         }
 
         @Override
-        public boolean equals(@CheckForNull Object object) {
+        public boolean equals(@MaybeNull Object object) {
             if (this == object) return true;
             if (object == null || getClass() != object.getClass()) return false;
             return value.equals(((Simple<?>) object).value);
@@ -996,7 +994,7 @@ public interface JavaConstant {
         }
 
         @Override
-        public boolean equals(@CheckForNull Object other) {
+        public boolean equals(@MaybeNull Object other) {
             if (this == other) {
                 return true;
             }
@@ -1393,7 +1391,7 @@ public interface JavaConstant {
         }
 
         @Override
-        public boolean equals(@CheckForNull Object other) {
+        public boolean equals(@MaybeNull Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof MethodHandle)) {
@@ -2246,7 +2244,7 @@ public interface JavaConstant {
         }
 
         @Override
-        public boolean equals(@CheckForNull Object object) {
+        public boolean equals(@MaybeNull Object object) {
             if (this == object) return true;
             if (object == null || getClass() != object.getClass()) return false;
             Dynamic dynamic = (Dynamic) object;

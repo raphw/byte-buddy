@@ -17,10 +17,9 @@ package net.bytebuddy.build.maven;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.Plugin;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.apache.maven.plugin.MojoExecutionException;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,13 +33,13 @@ public class Transformation extends CoordinateConfiguration {
     /**
      * The fully-qualified name of the plugin type.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     public String plugin;
 
     /**
      * A list of arguments that are provided to the plugin for construction.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     public List<PluginArgument> arguments;
 
     /**

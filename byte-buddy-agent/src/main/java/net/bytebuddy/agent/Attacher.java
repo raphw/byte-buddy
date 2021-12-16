@@ -16,9 +16,8 @@
 package net.bytebuddy.agent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.agent.nullability.MaybeNull;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -97,7 +96,7 @@ public class Attacher {
                                   String processId,
                                   String agent,
                                   boolean isNative,
-                                  @Nonnull(when = When.MAYBE) String argument) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+                                  @MaybeNull String argument) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Object virtualMachineInstance = virtualMachineType
                 .getMethod(ATTACH_METHOD_NAME, String.class)
                 .invoke(null, processId);

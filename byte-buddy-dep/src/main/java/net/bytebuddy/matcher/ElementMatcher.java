@@ -16,10 +16,8 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,7 +38,7 @@ public interface ElementMatcher<T> {
      * @param target The instance to be matched or {@code null}.
      * @return {@code true} if the given element is matched by this matcher or {@code false} otherwise.
      */
-    boolean matches(@CheckForNull T target);
+    boolean matches(@MaybeNull T target);
 
     /**
      * A junctions allows to chain different {@link net.bytebuddy.matcher.ElementMatcher}s in a readable manner.
@@ -142,7 +140,7 @@ public interface ElementMatcher<T> {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(@Nonnull(when = When.MAYBE) W target) {
+            public boolean matches(@MaybeNull W target) {
                 for (ElementMatcher<? super W> matcher : matchers) {
                     if (!matcher.matches(target)) {
                         return false;
@@ -210,7 +208,7 @@ public interface ElementMatcher<T> {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(@Nonnull(when = When.MAYBE) W target) {
+            public boolean matches(@MaybeNull W target) {
                 for (ElementMatcher<? super W> matcher : matchers) {
                     if (matcher.matches(target)) {
                         return true;
@@ -246,7 +244,7 @@ public interface ElementMatcher<T> {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(@Nonnull(when = When.MAYBE) W target) {
+            public boolean matches(@MaybeNull W target) {
                 return target != null && doMatch(target);
             }
 

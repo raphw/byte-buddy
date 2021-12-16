@@ -18,11 +18,10 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
+import net.bytebuddy.utility.nullability.AlwaysNull;
 import org.objectweb.asm.Opcodes;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 
 /**
  * A package description represents a Java package.
@@ -42,7 +41,7 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
     /**
      * A named constant for an undefined package what applies for primitive and array types.
      */
-    @Nonnull(when = When.NEVER)
+    @AlwaysNull
     PackageDescription UNDEFINED = null;
 
     /**
@@ -85,7 +84,7 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
         }
 
         @Override
-        public boolean equals(@CheckForNull Object other) {
+        public boolean equals(@MaybeNull Object other) {
             return this == other || other instanceof PackageDescription && getName().equals(((PackageDescription) other).getName());
         }
 

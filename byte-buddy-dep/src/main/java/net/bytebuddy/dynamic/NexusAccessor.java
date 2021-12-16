@@ -34,10 +34,9 @@ import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.utility.JavaModule;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.MethodVisitor;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.InvocationTargetException;
@@ -61,7 +60,7 @@ public class NexusAccessor {
     /**
      * The reference queue that is notified upon a GC eligible {@link Nexus} entry or {@code null} if no such queue should be notified.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
     private final ReferenceQueue<? super ClassLoader> referenceQueue;
 
@@ -80,7 +79,7 @@ public class NexusAccessor {
      * @param referenceQueue The reference queue onto which stale references should be enqueued or {@code null} if no reference queue
      *                       should be notified.
      */
-    public NexusAccessor(@Nonnull(when = When.MAYBE) ReferenceQueue<? super ClassLoader> referenceQueue) {
+    public NexusAccessor(@MaybeNull ReferenceQueue<? super ClassLoader> referenceQueue) {
         this.referenceQueue = referenceQueue;
     }
 
@@ -124,7 +123,7 @@ public class NexusAccessor {
      * @param identification        The id used for identifying the loaded type initializer that was added to the {@link Nexus}.
      * @param loadedTypeInitializer The loaded type initializer to make available via the {@link Nexus}.
      */
-    public void register(String name, @Nonnull(when = When.MAYBE) ClassLoader classLoader, int identification, LoadedTypeInitializer loadedTypeInitializer) {
+    public void register(String name, @MaybeNull ClassLoader classLoader, int identification, LoadedTypeInitializer loadedTypeInitializer) {
         if (loadedTypeInitializer.isAlive()) {
             DISPATCHER.register(name, classLoader, referenceQueue, identification, loadedTypeInitializer);
         }
@@ -210,8 +209,8 @@ public class NexusAccessor {
          * @param loadedTypeInitializer The loaded type initializer to be registered.
          */
         void register(String name,
-                      @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                      @Nonnull(when = When.MAYBE) ReferenceQueue<? super ClassLoader> referenceQueue,
+                      @MaybeNull ClassLoader classLoader,
+                      @MaybeNull ReferenceQueue<? super ClassLoader> referenceQueue,
                       int identification,
                       LoadedTypeInitializer loadedTypeInitializer);
 
@@ -314,8 +313,8 @@ public class NexusAccessor {
              * {@inheritDoc}
              */
             public void register(String name,
-                                 @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                 @Nonnull(when = When.MAYBE) ReferenceQueue<? super ClassLoader> referenceQueue,
+                                 @MaybeNull ClassLoader classLoader,
+                                 @MaybeNull ReferenceQueue<? super ClassLoader> referenceQueue,
                                  int identification,
                                  LoadedTypeInitializer loadedTypeInitializer) {
                 try {
@@ -366,8 +365,8 @@ public class NexusAccessor {
              * {@inheritDoc}
              */
             public void register(String name,
-                                 @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                 @Nonnull(when = When.MAYBE) ReferenceQueue<? super ClassLoader> referenceQueue,
+                                 @MaybeNull ClassLoader classLoader,
+                                 @MaybeNull ReferenceQueue<? super ClassLoader> referenceQueue,
                                  int identification,
                                  LoadedTypeInitializer loadedTypeInitializer) {
                 throw new UnsupportedOperationException("Could not initialize Nexus accessor: " + message);

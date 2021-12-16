@@ -125,7 +125,7 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
     }
 
     @Override
-    public boolean equals(@CheckForNull Object other) {
+    public boolean equals(@MaybeNull Object other) {
         if (this == other) {
             return true;
         } else if (!(other instanceof TypeVariableToken)) {

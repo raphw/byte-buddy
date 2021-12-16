@@ -17,7 +17,7 @@
  * {@link net.bytebuddy.implementation.bytecode.assign.Assigner} implementations of this package
  * are capable of assigning non-primitive types to each other.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.implementation.bytecode.assign.reference;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

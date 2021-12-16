@@ -27,13 +27,11 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.OpenedClassReader;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -375,7 +373,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@CheckForNull T target) {
+        public boolean matches(@MaybeNull T target) {
             return matcher.matches(target);
         }
 
@@ -453,7 +451,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        public void visit(int version, int modifiers, String internalName, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String superClassName, @Nonnull(when = When.MAYBE) String[] interfaceName) {
+        public void visit(int version, int modifiers, String internalName, @MaybeNull String signature, @MaybeNull String superClassName, @MaybeNull String[] interfaceName) {
             for (Adjustment<TypeDescription> adjustment : typeAdjustments) {
                 if (adjustment.matches(instrumentedType)) {
                     modifiers = adjustment.resolve(modifiers);
@@ -464,7 +462,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        public void visitInnerClass(String internalName, @Nonnull(when = When.MAYBE) String outerName, @Nonnull(when = When.MAYBE) String innerName, int modifiers) {
+        public void visitInnerClass(String internalName, @MaybeNull String outerName, @MaybeNull String innerName, int modifiers) {
             if (instrumentedType.getInternalName().equals(internalName)) {
                 for (Adjustment<TypeDescription> adjustment : typeAdjustments) {
                     if (adjustment.matches(instrumentedType)) {
@@ -477,8 +475,8 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        @Nonnull(when = When.MAYBE)
-        public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) Object value) {
+        @MaybeNull
+        public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull Object value) {
             FieldDescription.InDefinedShape fieldDescription = fields.get(internalName + descriptor);
             if (fieldDescription != null) {
                 for (Adjustment<FieldDescription.InDefinedShape> adjustment : fieldAdjustments) {
@@ -492,8 +490,8 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        @Nonnull(when = When.MAYBE)
-        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String[] exception) {
+        @MaybeNull
+        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull String[] exception) {
             MethodDescription methodDescription = methods.get(internalName + descriptor);
             if (methodDescription != null) {
                 for (Adjustment<MethodDescription> adjustment : methodAdjustments) {

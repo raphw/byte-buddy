@@ -16,7 +16,7 @@
 /**
  * Contains an API for matching Java byte code entities.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

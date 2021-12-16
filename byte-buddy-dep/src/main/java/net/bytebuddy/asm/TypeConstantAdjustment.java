@@ -24,10 +24,8 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.OpenedClassReader;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.*;
-
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 
 /**
  * <p>
@@ -98,14 +96,14 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
         }
 
         @Override
-        public void visit(int version, int modifiers, String name, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String superClassName, @Nonnull(when = When.MAYBE) String[] interfaceName) {
+        public void visit(int version, int modifiers, String name, @MaybeNull String signature, @MaybeNull String superClassName, @MaybeNull String[] interfaceName) {
             supportsTypeConstants = ClassFileVersion.ofMinorMajor(version).isAtLeast(ClassFileVersion.JAVA_V5);
             super.visit(version, modifiers, name, signature, superClassName, interfaceName);
         }
 
         @Override
-        @Nonnull(when = When.MAYBE)
-        public MethodVisitor visitMethod(int modifiers, String name, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String[] exception) {
+        @MaybeNull
+        public MethodVisitor visitMethod(int modifiers, String name, String descriptor, @MaybeNull String signature, @MaybeNull String[] exception) {
             MethodVisitor methodVisitor = super.visitMethod(modifiers, name, descriptor, signature, exception);
             return supportsTypeConstants || methodVisitor == null
                     ? methodVisitor

@@ -55,12 +55,11 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.utility.*;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Type;
@@ -127,13 +126,13 @@ public class ByteBuddy {
     /**
      * The default naming strategy or {@code null} if no such strategy is set.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private static final NamingStrategy DEFAULT_NAMING_STRATEGY;
 
     /**
      * The default auxiliary naming strategy or {@code null} if no such strategy is set.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private static final AuxiliaryType.NamingStrategy DEFAULT_AUXILIARY_NAMING_STRATEGY;
 
     /*
@@ -187,7 +186,7 @@ public class ByteBuddy {
      * @param <T>    The type of the action's resolved value.
      * @return The action's resolved value.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     @AccessControllerPlugin.Enhance
     private static <T> T doPrivileged(PrivilegedAction<T> action) {
         return action.run();

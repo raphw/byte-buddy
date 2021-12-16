@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.utility;
+package net.bytebuddy.agent.nullability;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.TypeQualifierDefault;
 import java.lang.annotation.*;
 
 /**
- * An annotation to indicate that Byte Buddy expects non-null values by default.
+ * Indicates that a field, method or parameter can only be {@code null}.
  */
 @Documented
-@Target(ElementType.PACKAGE)
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
-@Nonnull
-@TypeQualifierDefault({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
-public @interface NonnullByDefault {
+@javax.annotation.Nonnull(when = javax.annotation.meta.When.NEVER)
+@javax.annotation.meta.TypeQualifierDefault({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
+@SuppressWarnings("deprecation") // for compilation with deprecated dependency
+public @interface AlwaysNull {
     /* empty */
 }

@@ -18,7 +18,7 @@
  * are capable of handling primitive types or the {@code void} type. On assignments from or to reference types,
  * these assigners usually delegate a boxed assignment to a reference aware assigner.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.implementation.bytecode.assign.primitive;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

@@ -32,11 +32,10 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -339,7 +338,7 @@ public class ToStringMethod implements Implementation {
          * @param instrumentedType The instrumented type.
          * @return The value to be prefixed.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         String resolve(TypeDescription instrumentedType);
 
         /**
@@ -362,7 +361,7 @@ public class ToStringMethod implements Implementation {
              */
             CANONICAL_CLASS_NAME {
                 /** {@inheritDoc} */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 public String resolve(TypeDescription instrumentedType) {
                     return instrumentedType.getCanonicalName();
                 }

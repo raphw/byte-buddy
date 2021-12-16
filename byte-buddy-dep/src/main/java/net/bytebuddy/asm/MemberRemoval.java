@@ -27,12 +27,12 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.OpenedClassReader;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -157,13 +157,13 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
         /**
          * Indicates the removal of a field.
          */
-        @Nonnull(when = When.NEVER)
+        @javax.annotation.Nonnull(when = javax.annotation.meta.When.NEVER)
         private static final FieldVisitor REMOVE_FIELD = null;
 
         /**
          * Indicates the removal of a method.
          */
-        @Nonnull(when = When.NEVER)
+        @AlwaysNull
         private static final MethodVisitor REMOVE_METHOD = null;
 
         /**
@@ -208,8 +208,8 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        @Nonnull(when = When.MAYBE)
-        public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) Object value) {
+        @MaybeNull
+        public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull Object value) {
             FieldDescription.InDefinedShape fieldDescription = fields.get(internalName + descriptor);
             return fieldDescription != null && fieldMatcher.matches(fieldDescription)
                     ? REMOVE_FIELD
@@ -217,8 +217,8 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        @Nonnull(when = When.MAYBE)
-        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String[] exception) {
+        @MaybeNull
+        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull String[] exception) {
             MethodDescription methodDescription = methods.get(internalName + descriptor);
             return methodDescription != null && methodMatcher.matches(methodDescription)
                     ? REMOVE_METHOD

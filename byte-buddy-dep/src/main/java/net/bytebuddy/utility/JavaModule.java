@@ -22,10 +22,10 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.AnnotatedElement;
@@ -39,7 +39,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
     /**
      * Canonical representation of a Java module on a JVM that does not support the module API.
      */
-    @Nonnull(when = When.NEVER)
+    @AlwaysNull
     public static final JavaModule UNSUPPORTED = null;
 
     /**
@@ -84,7 +84,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @param type The type for which to describe the module.
      * @return A representation of the type's module or {@code null} if the current VM does not support modules.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     public static JavaModule ofType(Class<?> type) {
         Object module = RESOLVER.getModule(type);
         return module == null
@@ -136,7 +136,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @return An input stream for the resource or {@code null} if it does not exist.
      * @throws IOException If an I/O exception occurs.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     public InputStream getResourceAsStream(String name) throws IOException {
         return MODULE.getResourceAsStream(module, name);
     }
@@ -146,7 +146,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      *
      * @return The class loader of the represented module.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     public ClassLoader getClassLoader() {
         return MODULE.getClassLoader(module);
     }
@@ -177,7 +177,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @param module             The target module.
      * @return {@code true} if this module exports the supplied package to this module.
      */
-    public boolean isExported(@Nonnull(when = When.MAYBE) PackageDescription packageDescription, JavaModule module) {
+    public boolean isExported(@MaybeNull PackageDescription packageDescription, JavaModule module) {
         return packageDescription == null || MODULE.isExported(this.module, packageDescription.getName(), module.unwrap());
     }
 
@@ -188,7 +188,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      * @param module             The target module.
      * @return {@code true} if this module opens the supplied package to this module.
      */
-    public boolean isOpened(@Nonnull(when = When.MAYBE) PackageDescription packageDescription, JavaModule module) {
+    public boolean isOpened(@MaybeNull PackageDescription packageDescription, JavaModule module) {
         return packageDescription == null || MODULE.isOpen(this.module, packageDescription.getName(), module.unwrap());
     }
 
@@ -205,7 +205,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
     }
 
     @Override
-    public boolean equals(@CheckForNull Object other) {
+    public boolean equals(@MaybeNull Object other) {
         if (this == other) {
             return true;
         } else if (!(other instanceof JavaModule)) {
@@ -232,7 +232,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @param type The type for which to resolve the module.
          * @return The type's module or {@code null} if the module system is not supported.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         @JavaDispatcher.Defaults
         Object getModule(Class<?> type);
     }
@@ -274,7 +274,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @param value The {@code java.lang.Module} for which to return a class loader.
          * @return The module's class loader.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         ClassLoader getClassLoader(Object value);
 
         /**
@@ -285,7 +285,7 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @return An input stream for the resource or {@code null} if it does not exist.
          * @throws IOException If an I/O exception occurs.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         InputStream getResourceAsStream(Object value, String name) throws IOException;
 
         /**

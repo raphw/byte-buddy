@@ -16,7 +16,7 @@
 /**
  * Contains descriptions of Java types and packages.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.description.type;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

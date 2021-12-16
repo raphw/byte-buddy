@@ -16,7 +16,7 @@
 /**
  * Specimen classes which are required for some benchmarks.
  */
-@NonnullByDefault
+@NeverNull
 package net.bytebuddy.benchmark.specimen;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

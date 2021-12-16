@@ -24,11 +24,10 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.Opcodes;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -692,7 +691,7 @@ public interface MethodGraph {
              * @param relevanceMatcher A matcher for filtering methods that should be included in the graph.
              * @return A key store describing the provided type.
              */
-            protected Key.Store<T> analyzeNullable(@Nonnull(when = When.MAYBE) TypeDescription.Generic typeDescription,
+            protected Key.Store<T> analyzeNullable(@MaybeNull TypeDescription.Generic typeDescription,
                                                    Map<TypeDefinition, Key.Store<T>> snapshots,
                                                    ElementMatcher<? super MethodDescription> relevanceMatcher) {
                 return typeDescription == null
@@ -783,7 +782,7 @@ public interface MethodGraph {
                         }
 
                         @Override
-                        public boolean equals(@CheckForNull Object other) {
+                        public boolean equals(@MaybeNull Object other) {
                             return this == other || other instanceof Token && typeToken.getParameterTypes().equals(((Token) other).typeToken.getParameterTypes());
                         }
 
@@ -842,7 +841,7 @@ public interface MethodGraph {
                         }
 
                         @Override
-                        public boolean equals(@CheckForNull Object other) {
+                        public boolean equals(@MaybeNull Object other) {
                             if (this == other) {
                                 return true;
                             } else if (!(other instanceof Token)) {
@@ -958,7 +957,7 @@ public interface MethodGraph {
                 }
 
                 @Override
-                public boolean equals(@CheckForNull Object other) {
+                public boolean equals(@MaybeNull Object other) {
                     if (this == other) {
                         return true;
                     } else if (!(other instanceof Key)) {
@@ -1382,7 +1381,7 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public boolean equals(@CheckForNull Object other) {
+                            public boolean equals(@MaybeNull Object other) {
                                 if (this == other) {
                                     return true;
                                 } else if (other == null || getClass() != other.getClass()) {

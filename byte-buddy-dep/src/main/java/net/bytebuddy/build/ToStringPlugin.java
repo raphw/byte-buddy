@@ -66,7 +66,7 @@ public class ToStringPlugin implements Plugin, Plugin.Factory {
     /**
      * {@inheritDoc}
      */
-    public boolean matches(@CheckForNull TypeDescription target) {
+    public boolean matches(@MaybeNull TypeDescription target) {
         return target != null && target.getDeclaredAnnotations().isAnnotationPresent(Enhance.class);
     }
 

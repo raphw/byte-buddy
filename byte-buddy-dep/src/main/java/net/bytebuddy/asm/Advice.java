@@ -53,13 +53,13 @@ import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.OpenedClassReader;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.visitor.ExceptionTableSensitiveMethodVisitor;
 import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
 import net.bytebuddy.utility.visitor.StackAwareMethodVisitor;
 import org.objectweb.asm.*;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.annotation.*;
@@ -164,7 +164,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * Indicates that no class reader is available to an advice method.
      */
-    @Nonnull(when = When.NEVER)
+    @AlwaysNull
     private static final ClassReader UNDEFINED = null;
 
     /**
@@ -5632,9 +5632,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         void translateFrame(MethodVisitor methodVisitor,
                             int type,
                             int localVariableLength,
-                            @Nonnull(when = When.MAYBE) Object[] localVariable,
+                            @MaybeNull Object[] localVariable,
                             int stackSize,
-                            @Nonnull(when = When.MAYBE) Object[] stack);
+                            @MaybeNull Object[] stack);
 
         /**
          * Injects a frame indicating the beginning of a return value handler for the currently handled method.
@@ -5766,9 +5766,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public void translateFrame(MethodVisitor methodVisitor,
                                        int type,
                                        int localVariableLength,
-                                       @Nonnull(when = When.MAYBE) Object[] localVariable,
+                                       @MaybeNull Object[] localVariable,
                                        int stackSize,
-                                       @Nonnull(when = When.MAYBE) Object[] stack) {
+                                       @MaybeNull Object[] stack) {
                 /* do nothing */
             }
 
@@ -5990,9 +5990,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           List<? extends TypeDescription> additionalTypes,
                                           int type,
                                           int localVariableLength,
-                                          @Nonnull(when = When.MAYBE) Object[] localVariable,
+                                          @MaybeNull Object[] localVariable,
                                           int stackSize,
-                                          @Nonnull(when = When.MAYBE) Object[] stack) {
+                                          @MaybeNull Object[] stack) {
                 switch (type) {
                     case Opcodes.F_SAME:
                     case Opcodes.F_SAME1:
@@ -6277,9 +6277,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void translateFrame(MethodVisitor methodVisitor,
                                            int type,
                                            int localVariableLength,
-                                           @Nonnull(when = When.MAYBE) Object[] localVariable,
+                                           @MaybeNull Object[] localVariable,
                                            int stackSize,
-                                           @Nonnull(when = When.MAYBE) Object[] stack) {
+                                           @MaybeNull Object[] stack) {
                     methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
                 }
 
@@ -6375,9 +6375,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                               List<? extends TypeDescription> additionalTypes,
                                               int type,
                                               int localVariableLength,
-                                              @Nonnull(when = When.MAYBE) Object[] localVariable,
+                                              @MaybeNull Object[] localVariable,
                                               int stackSize,
-                                              @Nonnull(when = When.MAYBE) Object[] stack) {
+                                              @MaybeNull Object[] stack) {
                     if (type == Opcodes.F_FULL && localVariableLength > 0 && localVariable[0] != Opcodes.UNINITIALIZED_THIS) {
                         allowCompactCompletionFrame = true;
                     }
@@ -6533,9 +6533,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public void translateFrame(MethodVisitor methodVisitor,
                                                int type,
                                                int localVariableLength,
-                                               @Nonnull(when = When.MAYBE) Object[] localVariable,
+                                               @MaybeNull Object[] localVariable,
                                                int stackSize,
-                                               @Nonnull(when = When.MAYBE) Object[] stack) {
+                                               @MaybeNull Object[] stack) {
                         translateFrame(methodVisitor,
                                 TranslationMode.COPY,
                                 instrumentedMethod,
@@ -6632,9 +6632,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public void translateFrame(MethodVisitor methodVisitor,
                                                int type,
                                                int localVariableLength,
-                                               @Nonnull(when = When.MAYBE) Object[] localVariable,
+                                               @MaybeNull Object[] localVariable,
                                                int stackSize,
-                                               @Nonnull(when = When.MAYBE) Object[] stack) {
+                                               @MaybeNull Object[] stack) {
                         switch (type) {
                             case Opcodes.F_SAME:
                             case Opcodes.F_SAME1:
@@ -6761,9 +6761,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void translateFrame(MethodVisitor methodVisitor,
                                            int type,
                                            int localVariableLength,
-                                           @Nonnull(when = When.MAYBE) Object[] localVariable,
+                                           @MaybeNull Object[] localVariable,
                                            int stackSize,
-                                           @Nonnull(when = When.MAYBE) Object[] stack) {
+                                           @MaybeNull Object[] stack) {
                     Default.this.translateFrame(methodVisitor,
                             translationMode,
                             adviceMethod,
@@ -6966,13 +6966,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Indicates that a method does not represent advice and does not need to be visited.
          */
-        @Nonnull(when = When.NEVER)
+        @AlwaysNull
         MethodVisitor IGNORE_METHOD = null;
 
         /**
          * Expresses that an annotation should not be visited.
          */
-        @Nonnull(when = When.NEVER)
+        @AlwaysNull
         AnnotationVisitor IGNORE_ANNOTATION = null;
 
         /**
@@ -7018,7 +7018,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @return This dispatcher as a dispatcher for entering a method.
              */
             Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                  @Nonnull(when = When.MAYBE) ClassReader classReader,
+                                                  @MaybeNull ClassReader classReader,
                                                   Unresolved methodExit,
                                                   PostProcessor.Factory postProcessorFactory);
 
@@ -7032,7 +7032,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @return This dispatcher as a dispatcher for exiting a method.
              */
             Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                @Nonnull(when = When.MAYBE) ClassReader classReader,
+                                                @MaybeNull ClassReader classReader,
                                                 Unresolved methodEnter,
                                                 PostProcessor.Factory postProcessorFactory);
         }
@@ -7943,7 +7943,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                         @Nonnull(when = When.MAYBE) ClassReader classReader,
+                                                         @MaybeNull ClassReader classReader,
                                                          Unresolved methodExit,
                                                          PostProcessor.Factory postProcessorFactory) {
                 return this;
@@ -7953,7 +7953,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                       @Nonnull(when = When.MAYBE) ClassReader classReader,
+                                                       @MaybeNull ClassReader classReader,
                                                        Unresolved methodEnter,
                                                        PostProcessor.Factory postProcessorFactory) {
                 return this;
@@ -8065,7 +8065,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                    @Nonnull(when = When.MAYBE) ClassReader classReader,
+                                                                    @MaybeNull ClassReader classReader,
                                                                     Unresolved methodExit,
                                                                     PostProcessor.Factory postProcessorFactory) {
                 if (classReader == null) {
@@ -8084,7 +8084,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                  @Nonnull(when = When.MAYBE) ClassReader classReader,
+                                                                  @MaybeNull ClassReader classReader,
                                                                   Unresolved methodEnter,
                                                                   PostProcessor.Factory postProcessorFactory) {
                 Map<String, TypeDefinition> namedTypes = new HashMap<String, TypeDefinition>(methodEnter.getNamedTypes()), uninitializedNamedTypes = new HashMap<String, TypeDefinition>();
@@ -8326,8 +8326,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    @Nonnull(when = When.MAYBE)
-                    public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String[] exception) {
+                    @MaybeNull
+                    public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull String[] exception) {
                         return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
                                 ? new ExceptionTableSubstitutor(Inlining.Resolved.this.apply(methodVisitor,
                                 implementationContext,
@@ -8355,8 +8355,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        @Nonnull(when = When.MAYBE)
-                        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String[] exception) {
+                        @MaybeNull
+                        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull String[] exception) {
                             return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
                                     ? new ExceptionTableCollector(methodVisitor)
                                     : IGNORE_METHOD;
@@ -8385,14 +8385,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void visitTryCatchBlock(Label start, Label end, Label handler, @Nonnull(when = When.MAYBE) String type) {
+                        public void visitTryCatchBlock(Label start, Label end, Label handler, @MaybeNull String type) {
                             methodVisitor.visitTryCatchBlock(start, end, handler, type);
                             labels.addAll(Arrays.asList(start, end, handler));
                         }
 
                         @Override
-                        @Nonnull(when = When.MAYBE)
-                        public AnnotationVisitor visitTryCatchAnnotation(int typeReference, @Nonnull(when = When.MAYBE) TypePath typePath, String descriptor, boolean visible) {
+                        @MaybeNull
+                        public AnnotationVisitor visitTryCatchAnnotation(int typeReference, @MaybeNull TypePath typePath, String descriptor, boolean visible) {
                             return methodVisitor.visitTryCatchAnnotation(typeReference, typePath, descriptor, visible);
                         }
                     }
@@ -8435,8 +8435,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        @Nonnull(when = When.MAYBE)
-                        public AnnotationVisitor visitTryCatchAnnotation(int typeReference, @Nonnull(when = When.MAYBE) TypePath typePath, String descriptor, boolean visible) {
+                        @MaybeNull
+                        public AnnotationVisitor visitTryCatchAnnotation(int typeReference, @MaybeNull TypePath typePath, String descriptor, boolean visible) {
                             return IGNORE_ANNOTATION;
                         }
 
@@ -9263,25 +9263,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 public AnnotationVisitor visitAnnotationDefault() {
                     return IGNORE_ANNOTATION;
                 }
 
                 @Override
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                     return IGNORE_ANNOTATION;
                 }
 
                 @Override
-                @Nonnull(when = When.MAYBE)
-                public AnnotationVisitor visitTypeAnnotation(int typeReference, @Nonnull(when = When.MAYBE) TypePath typePath, String descriptor, boolean visible) {
+                @MaybeNull
+                public AnnotationVisitor visitTypeAnnotation(int typeReference, @MaybeNull TypePath typePath, String descriptor, boolean visible) {
                     return IGNORE_ANNOTATION;
                 }
 
                 @Override
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
                     return IGNORE_ANNOTATION;
                 }
@@ -9297,7 +9297,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void visitFrame(int type, int localVariableLength, @Nonnull(when = When.MAYBE) Object[] localVariable, int stackSize, @Nonnull(when = When.MAYBE) Object[] stack) {
+                public void visitFrame(int type, int localVariableLength, @MaybeNull Object[] localVariable, int stackSize, @MaybeNull Object[] stack) {
                     stackMapFrameHandler.translateFrame(methodVisitor, type, localVariableLength, localVariable, stackSize, stack);
                 }
 
@@ -9471,7 +9471,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                    @Nonnull(when = When.MAYBE) ClassReader classReader,
+                                                                    @MaybeNull ClassReader classReader,
                                                                     Unresolved methodExit,
                                                                     PostProcessor.Factory postProcessorFactory) {
                 return Resolved.ForMethodEnter.of(adviceMethod, postProcessorFactory.make(adviceMethod, false), delegator, userFactories, methodExit.getAdviceType(), methodExit.isAlive());
@@ -9481,7 +9481,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                  @Nonnull(when = When.MAYBE) ClassReader classReader,
+                                                                  @MaybeNull ClassReader classReader,
                                                                   Unresolved methodEnter,
                                                                   PostProcessor.Factory postProcessorFactory) {
                 Map<String, TypeDefinition> namedTypes = methodEnter.getNamedTypes();
@@ -10605,7 +10605,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         @Override
-        public void onVisitFrame(int type, int localVariableLength, @Nonnull(when = When.MAYBE) Object[] localVariable, int stackSize, @Nonnull(when = When.MAYBE) Object[] stack) {
+        public void onVisitFrame(int type, int localVariableLength, @MaybeNull Object[] localVariable, int stackSize, @MaybeNull Object[] stack) {
             stackMapFrameHandler.translateFrame(mv, type, localVariableLength, localVariable, stackSize, stack);
         }
 

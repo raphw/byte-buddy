@@ -16,8 +16,6 @@
 package net.bytebuddy.dynamic;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -53,7 +51,7 @@ public class Nexus extends WeakReference<ClassLoader> {
     /**
      * An type-safe constant for a non-operational reference queue.
      */
-    @Nonnull(when = When.NEVER)
+    @AlwaysNull
     private static final ReferenceQueue<ClassLoader> NO_QUEUE = null;
 
     /**
@@ -97,7 +95,7 @@ public class Nexus extends WeakReference<ClassLoader> {
      * @param referenceQueue The reference queue to notify upon the class loader's collection or {@code null} if no queue should be notified.
      * @param identification An identification for the initializer to run.
      */
-    private Nexus(String name, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ReferenceQueue<? super ClassLoader> referenceQueue, int identification) {
+    private Nexus(String name, @MaybeNull ClassLoader classLoader, @MaybeNull ReferenceQueue<? super ClassLoader> referenceQueue, int identification) {
         super(classLoader, classLoader == null
                 ? null
                 : referenceQueue);
@@ -164,7 +162,7 @@ public class Nexus extends WeakReference<ClassLoader> {
      *                        of {@link net.bytebuddy.implementation.LoadedTypeInitializer} where
      *                        it does however not matter which class loader loaded this latter type.
      */
-    public static void register(String name, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ReferenceQueue<? super ClassLoader> referenceQueue, int identification, Object typeInitializer) {
+    public static void register(String name, @MaybeNull ClassLoader classLoader, @MaybeNull ReferenceQueue<? super ClassLoader> referenceQueue, int identification, Object typeInitializer) {
         TYPE_INITIALIZERS.put(new Nexus(name, classLoader, referenceQueue, identification), typeInitializer);
     }
 
@@ -194,7 +192,7 @@ public class Nexus extends WeakReference<ClassLoader> {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object other) {
+    public boolean equals(@MaybeNull Object other) {
         if (this == other) {
             return true;
         } else if (other == null || getClass() != other.getClass()) {

@@ -70,7 +70,7 @@ public class MavenCoordinate {
     }
 
     @Override
-    public boolean equals(@CheckForNull Object object) {
+    public boolean equals(@MaybeNull Object object) {
         if (this == object) {
             return true;
         }

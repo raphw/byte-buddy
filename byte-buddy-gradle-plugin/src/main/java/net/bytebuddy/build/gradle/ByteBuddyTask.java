@@ -22,8 +22,7 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
+import net.bytebuddy.utility.nullability.MaybeNull
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +37,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
     /**
      * The incremental builder to apply or {@code null} if no incremental build should be applied.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private IncrementalResolver incrementalResolver;
 
     /**
@@ -82,7 +81,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
      * @return The incremental builder to apply or {@code null} if no incremental build should be applied.
      */
     @Internal
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     public IncrementalResolver getIncrementalResolver() {
         return incrementalResolver;
     }
@@ -92,7 +91,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
      *
      * @param incrementalResolver The incremental builder to apply or {@code null} if no incremental build should be applied.
      */
-    public void setIncrementalResolver(@Nonnull(when = When.MAYBE) IncrementalResolver incrementalResolver) {
+    public void setIncrementalResolver(@MaybeNull IncrementalResolver incrementalResolver) {
         this.incrementalResolver = incrementalResolver;
     }
 

@@ -19,9 +19,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
-
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -32,7 +29,7 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
     /**
      * Indicates that a type variable source is undefined.
      */
-    @Nonnull(when = When.NEVER)
+    @AlwaysNull
     TypeVariableSource UNDEFINED = null;
 
     /**
@@ -47,7 +44,7 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
      *
      * @return The enclosing source or {@code null} if no such source exists.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     TypeVariableSource getEnclosingSource();
 
     /**
@@ -63,7 +60,7 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
      * @param symbol The symbolic name of the type variable.
      * @return The type variable or {@code null} if it was not found.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     TypeDescription.Generic findVariable(String symbol);
 
     /**
@@ -152,7 +149,7 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public TypeDescription.Generic findVariable(String symbol) {
             TypeList.Generic typeVariables = getTypeVariables().filter(named(symbol));
             if (typeVariables.isEmpty()) {

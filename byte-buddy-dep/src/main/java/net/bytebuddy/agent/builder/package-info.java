@@ -19,7 +19,7 @@
  * but offers higher-level APIs in order to allow for the implementation of very readable transformations using
  * {@link net.bytebuddy.ByteBuddy}.
  */
-@NonnullByDefault
+@NeverNull
 package net.bytebuddy.agent.builder;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

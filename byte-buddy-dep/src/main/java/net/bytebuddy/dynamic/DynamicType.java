@@ -43,8 +43,6 @@ import net.bytebuddy.utility.FileSystem;
 import net.bytebuddy.utility.GraalImageCode;
 import org.objectweb.asm.Opcodes;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.io.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -1831,7 +1829,7 @@ public interface DynamicType {
                             /**
                              * The field's default value or {@code null} if no value is to be defined.
                              */
-                            @Nonnull(when = When.MAYBE)
+                            @MaybeNull
                             @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                             protected final Object defaultValue;
 
@@ -1844,7 +1842,7 @@ public interface DynamicType {
                              */
                             protected Adapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                               Transformer<FieldDescription> transformer,
-                                              @Nonnull(when = When.MAYBE) Object defaultValue) {
+                                              @MaybeNull Object defaultValue) {
                                 this.fieldAttributeAppenderFactory = fieldAttributeAppenderFactory;
                                 this.transformer = transformer;
                                 this.defaultValue = defaultValue;
@@ -1880,7 +1878,7 @@ public interface DynamicType {
                              */
                             protected abstract FieldDefinition.Optional<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                                                        Transformer<FieldDescription> transformer,
-                                                                                       @Nonnull(when = When.MAYBE) Object defaultValue);
+                                                                                       @MaybeNull Object defaultValue);
                         }
                     }
                 }
@@ -4867,7 +4865,7 @@ public interface DynamicType {
                      */
                     protected FieldDefinitionAdapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                      Transformer<FieldDescription> transformer,
-                                                     @Nonnull(when = When.MAYBE) Object defaultValue,
+                                                     @MaybeNull Object defaultValue,
                                                      FieldDescription.Token token) {
                         super(fieldAttributeAppenderFactory, transformer, defaultValue);
                         this.token = token;
@@ -4907,7 +4905,7 @@ public interface DynamicType {
                     @Override
                     protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                       Transformer<FieldDescription> transformer,
-                                                      @Nonnull(when = When.MAYBE) Object defaultValue) {
+                                                      @MaybeNull Object defaultValue) {
                         return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, token);
                     }
                 }
@@ -4945,7 +4943,7 @@ public interface DynamicType {
                      */
                     protected FieldMatchAdapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                 Transformer<FieldDescription> transformer,
-                                                @Nonnull(when = When.MAYBE) Object defaultValue,
+                                                @MaybeNull Object defaultValue,
                                                 LatentMatcher<? super FieldDescription> matcher) {
                         super(fieldAttributeAppenderFactory, transformer, defaultValue);
                         this.matcher = matcher;
@@ -4982,7 +4980,7 @@ public interface DynamicType {
                     @Override
                     protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                       Transformer<FieldDescription> transformer,
-                                                      @Nonnull(when = When.MAYBE) Object defaultValue) {
+                                                      @MaybeNull Object defaultValue) {
                         return new FieldMatchAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, matcher);
                     }
                 }
@@ -5769,7 +5767,7 @@ public interface DynamicType {
          * @param classLoader The class loader to use for this class loading or {@code null} for using the boot loader.
          * @return This dynamic type in its loaded state.
          */
-        Loaded<T> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader);
+        Loaded<T> load(@MaybeNull ClassLoader classLoader);
 
         /**
          * <p>
@@ -5786,7 +5784,7 @@ public interface DynamicType {
          * @return This dynamic type in its loaded state.
          * @see net.bytebuddy.dynamic.loading.ClassLoadingStrategy.Default
          */
-        <S extends ClassLoader> Loaded<T> load(@Nonnull(when = When.MAYBE) S classLoader, ClassLoadingStrategy<? super S> classLoadingStrategy);
+        <S extends ClassLoader> Loaded<T> load(@MaybeNull S classLoader, ClassLoadingStrategy<? super S> classLoadingStrategy);
 
         /**
          * Includes the provided dynamic types as auxiliary types of this instance.
@@ -6141,7 +6139,7 @@ public interface DynamicType {
             /**
              * {@inheritDoc}
              */
-            public DynamicType.Loaded<T> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
+            public DynamicType.Loaded<T> load(@MaybeNull ClassLoader classLoader) {
                 if (GraalImageCode.getCurrent().isNativeImageExecution()) {
                     return load(classLoader, ClassLoadingStrategy.ForPreloadedTypes.INSTANCE);
                 } else if (classLoader instanceof InjectionClassLoader && !((InjectionClassLoader) classLoader).isSealed()) {
@@ -6154,7 +6152,7 @@ public interface DynamicType {
             /**
              * {@inheritDoc}
              */
-            public <S extends ClassLoader> DynamicType.Loaded<T> load(@Nonnull(when = When.MAYBE) S classLoader, ClassLoadingStrategy<? super S> classLoadingStrategy) {
+            public <S extends ClassLoader> DynamicType.Loaded<T> load(@MaybeNull S classLoader, ClassLoadingStrategy<? super S> classLoadingStrategy) {
                 return new Default.Loaded<T>(typeDescription,
                         binaryRepresentation,
                         loadedTypeInitializer,

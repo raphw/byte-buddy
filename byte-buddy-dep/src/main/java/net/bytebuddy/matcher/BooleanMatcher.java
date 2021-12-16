@@ -16,9 +16,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
-
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
 /**
  * An element matcher that returns a fixed result.
@@ -67,7 +65,7 @@ public class BooleanMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
     /**
      * {@inheritDoc}
      */
-    public boolean matches(@Nonnull(when = When.MAYBE) T target) {
+    public boolean matches(@MaybeNull T target) {
         return matches;
     }
 

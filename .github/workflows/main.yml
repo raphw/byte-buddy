@@ -30,8 +30,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-18.04, macOS-10.15, windows-2019]
-        java: [8, 11, 17]
+        os: [ ubuntu-18.04, macOS-10.15, windows-2019 ]
+        java: [ 8, 11, 17 ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -48,8 +48,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-18.04, macOS-10.15, windows-2019]
-        java: [8, 11]
+        os: [ ubuntu-18.04, macOS-10.15, windows-2019 ]
+        java: [ 8, 11 ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -66,7 +66,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [9, 10, 12, 13, 14, 15, 16]
+        java: [ 9, 10, 12, 13, 14, 15, 16 ]
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
@@ -83,8 +83,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-18.04, windows-2019]
-        java: [8]
+        os: [ ubuntu-18.04, windows-2019 ]
+        java: [ 8 ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -101,7 +101,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [6, 7]
+        java: [ 6, 7 ]
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
@@ -120,7 +120,7 @@ jobs:
   coverage:
     name: Coverage
     runs-on: ubuntu-18.04
-    needs: [hotspot-ea, hotspot-supported, j9-supported, hotspot-unsupported, hotspot-32, hotspot-legacy]
+    needs: [ hotspot-ea, hotspot-supported, j9-supported, hotspot-unsupported, hotspot-32, hotspot-legacy ]
     if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v2
@@ -135,7 +135,7 @@ jobs:
   release:
     name: Release new version
     runs-on: ubuntu-18.04
-    needs: [coverage]
+    needs: [ coverage ]
     if: github.event_name == 'push' && startsWith(github.event.head_commit.message, '[release]')
     steps:
       - uses: actions/setup-java@v2

@@ -20,10 +20,9 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.Opcodes;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.io.Serializable;
 import java.lang.reflect.*;
 import java.util.List;
@@ -189,7 +188,7 @@ public enum JavaType {
      * @param superClass  The super class of this type when creating a stub or {@code null} if no super class is defined.
      * @param anInterface The interfaces of this type when creating a stub.
      */
-    JavaType(String typeName, int modifiers, @Nonnull(when = When.MAYBE) Type superClass, Type... anInterface) {
+    JavaType(String typeName, int modifiers, @MaybeNull Type superClass, Type... anInterface) {
         this(typeName, modifiers, superClass == null
                 ? TypeDescription.Generic.UNDEFINED
                 : TypeDescription.Generic.Sort.describe(superClass), new TypeList.Generic.ForLoadedTypes(anInterface));
@@ -203,7 +202,7 @@ public enum JavaType {
      * @param superClass  The super class of this type when creating a stub or {@code null} if no super class is defined.
      * @param anInterface The interfaces of this type when creating a stub.
      */
-    JavaType(String typeName, int modifiers, @Nonnull(when = When.MAYBE) TypeDefinition superClass, TypeDefinition... anInterface) {
+    JavaType(String typeName, int modifiers, @MaybeNull TypeDefinition superClass, TypeDefinition... anInterface) {
         this(typeName, modifiers, superClass == null
                 ? TypeDescription.Generic.UNDEFINED
                 : superClass.asGenericType(), new TypeList.Generic.Explicit(anInterface));
@@ -217,7 +216,7 @@ public enum JavaType {
      * @param superClass The super class of this type when creating a stub or {@code null} if no super class is defined.
      * @param interfaces The interfaces of this type when creating a stub.
      */
-    JavaType(String typeName, int modifiers, @Nonnull(when = When.MAYBE) TypeDescription.Generic superClass, TypeList.Generic interfaces) {
+    JavaType(String typeName, int modifiers, @MaybeNull TypeDescription.Generic superClass, TypeList.Generic interfaces) {
         typeDescription = new LatentTypeWithSimpleName(typeName, modifiers, superClass, interfaces);
     }
 
@@ -308,7 +307,7 @@ public enum JavaType {
          * @param superClass The super type or {@code null} if no such type exists.
          * @param interfaces The interfaces that this type implements.
          */
-        protected LatentTypeWithSimpleName(String name, int modifiers, @Nonnull(when = When.MAYBE) Generic superClass, List<? extends Generic> interfaces) {
+        protected LatentTypeWithSimpleName(String name, int modifiers, @MaybeNull Generic superClass, List<? extends Generic> interfaces) {
             super(name, modifiers, superClass, interfaces);
         }
 

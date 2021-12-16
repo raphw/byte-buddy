@@ -18,7 +18,7 @@
  * representing a Java class. These utilities allow to write a Java type in a more modular manner and take away
  * complexity from the actual implementations of {@link net.bytebuddy.dynamic.DynamicType.Builder}.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

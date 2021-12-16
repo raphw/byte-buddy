@@ -16,7 +16,7 @@
 /**
  * A package that contains classes for describing enumeration values.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.description.enumeration;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

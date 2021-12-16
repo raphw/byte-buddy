@@ -17,10 +17,9 @@ package net.bytebuddy.utility;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.AccessControllerPlugin;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.security.PrivilegedAction;
 
 /**
@@ -57,7 +56,7 @@ public enum GraalImageCode {
      * The current image code or {@code null} if the image code was not yet resolved. The image code must be
      * initialized lazily to avoid that it's bound to a value during native compilation.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private static GraalImageCode current;
 
     /**
@@ -93,7 +92,7 @@ public enum GraalImageCode {
      * @param <T>    The type of the action's resolved value.
      * @return The action's resolved value.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     @AccessControllerPlugin.Enhance
     private static <T> T doPrivileged(PrivilegedAction<T> action) {
         return action.run();

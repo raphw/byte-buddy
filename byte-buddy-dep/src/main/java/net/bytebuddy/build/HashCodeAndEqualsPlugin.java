@@ -126,7 +126,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
     /**
      * {@inheritDoc}
      */
-    public boolean matches(@CheckForNull TypeDescription target) {
+    public boolean matches(@MaybeNull TypeDescription target) {
         return target != null && target.getDeclaredAnnotations().isAnnotationPresent(Enhance.class);
     }
 
@@ -507,7 +507,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@CheckForNull FieldDescription target) {
+        public boolean matches(@MaybeNull FieldDescription target) {
             if (target == null) {
                 return false;
             }

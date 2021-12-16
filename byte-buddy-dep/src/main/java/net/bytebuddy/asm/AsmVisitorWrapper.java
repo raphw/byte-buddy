@@ -26,13 +26,12 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.OpenedClassReader;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
@@ -267,7 +266,7 @@ public interface AsmVisitorWrapper {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(@CheckForNull FieldDescription.InDefinedShape target) {
+            public boolean matches(@MaybeNull FieldDescription.InDefinedShape target) {
                 return matcher.matches(target);
             }
 
@@ -311,8 +310,8 @@ public interface AsmVisitorWrapper {
             }
 
             @Override
-            @Nonnull(when = When.MAYBE)
-            public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) Object value) {
+            @MaybeNull
+            public FieldVisitor visitField(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull Object value) {
                 FieldVisitor fieldVisitor = super.visitField(modifiers, internalName, descriptor, signature, value);
                 FieldDescription.InDefinedShape fieldDescription = fields.get(internalName + descriptor);
                 if (fieldVisitor != null && fieldDescription != null) {
@@ -559,7 +558,7 @@ public interface AsmVisitorWrapper {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(@CheckForNull MethodDescription target) {
+            public boolean matches(@MaybeNull MethodDescription target) {
                 return matcher.matches(target);
             }
 
@@ -649,8 +648,8 @@ public interface AsmVisitorWrapper {
             }
 
             @Override
-            @Nonnull(when = When.MAYBE)
-            public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @Nonnull(when = When.MAYBE) String signature, @Nonnull(when = When.MAYBE) String[] exceptions) {
+            @MaybeNull
+            public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull String[] exceptions) {
                 MethodVisitor methodVisitor = super.visitMethod(modifiers, internalName, descriptor, signature, exceptions);
                 MethodDescription methodDescription = methods.get(internalName + descriptor);
                 if (methodVisitor != null && methodDescription != null) {

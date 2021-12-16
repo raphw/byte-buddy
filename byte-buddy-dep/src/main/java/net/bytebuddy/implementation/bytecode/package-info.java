@@ -17,7 +17,7 @@
  * Types and classes in this package are responsible for creating Java byte code for a given byte code target
  * which is represented by a {@link net.bytebuddy.description.method.MethodDescription}.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.implementation.bytecode;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

@@ -22,6 +22,8 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
+import net.bytebuddy.utility.nullability.MaybeNull;
+import net.bytebuddy.utility.nullability.UnknownNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.meta.When;
@@ -76,7 +78,7 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
      *
      * @return The super class of this type or {@code null} if no super class exists for this type.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     TypeDescription.Generic getSuperClass();
 
     /**
@@ -117,7 +119,7 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
      *
      * @return The component type of this type or {@code null} if this type does not represent an array type.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     TypeDefinition getComponentType();
 
     /**
@@ -359,7 +361,7 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
         /**
          * The next class to represent.
          */
-        @Nonnull(when = When.UNKNOWN)
+        @UnknownNull
         private TypeDefinition nextClass;
 
         /**

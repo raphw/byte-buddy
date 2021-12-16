@@ -20,10 +20,9 @@ import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaModule;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -105,7 +104,7 @@ public interface LoadedTypeInitializer {
          * The access control context to use for loading classes or {@code null} if the
          * access controller is not available on the current VM.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
         private final transient Object accessControlContext;
 
@@ -126,7 +125,7 @@ public interface LoadedTypeInitializer {
          *
          * @return The current access control context or {@code null} if the current VM does not support it.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         @AccessControllerPlugin.Enhance
         private static Object getContext() {
             return null;
@@ -141,7 +140,7 @@ public interface LoadedTypeInitializer {
          * @return The action's resolved value.
          */
         @AccessControllerPlugin.Enhance
-        private static <T> T doPrivileged(PrivilegedAction<T> action, @Nonnull(when = When.MAYBE) @SuppressWarnings("unused") Object context) {
+        private static <T> T doPrivileged(PrivilegedAction<T> action, @MaybeNull @SuppressWarnings("unused") Object context) {
             return action.run();
         }
 

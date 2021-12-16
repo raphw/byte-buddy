@@ -18,8 +18,7 @@ package net.bytebuddy.implementation.bind;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-
-import javax.annotation.CheckForNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
 /**
  * Implementation of an
@@ -273,7 +272,7 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
         }
 
         @Override
-        public boolean equals(@CheckForNull Object other) {
+        public boolean equals(@MaybeNull Object other) {
             if (this == other) {
                 return true;
             } else if (other == null || getClass() != other.getClass()) {

@@ -15,9 +15,6 @@
  */
 package net.bytebuddy.benchmark.specimen;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
-
 /**
  * An example interface with several methods which is used as a specimen in benchmarks.
  */
@@ -93,7 +90,7 @@ public interface ExampleInterface {
      * @param arg An argument.
      * @return The input argument.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     Object method(Object arg);
 
     /**
@@ -104,7 +101,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     boolean[] method(boolean arg1, boolean arg2, boolean arg3);
 
     /**
@@ -115,7 +112,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     byte[] method(byte arg1, byte arg2, byte arg3);
 
     /**
@@ -126,7 +123,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     short[] method(short arg1, short arg2, short arg3);
 
     /**
@@ -137,7 +134,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     int[] method(int arg1, int arg2, int arg3);
 
     /**
@@ -148,7 +145,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     char[] method(char arg1, char arg2, char arg3);
 
     /**
@@ -159,7 +156,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     long[] method(long arg1, long arg2, long arg3);
 
     /**
@@ -170,7 +167,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     float[] method(float arg1, float arg2, float arg3);
 
     /**
@@ -181,7 +178,7 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     double[] method(double arg1, double arg2, double arg3);
 
     /**
@@ -192,6 +189,6 @@ public interface ExampleInterface {
      * @param arg3 An argument.
      * @return All arguments stored in an array.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     Object[] method(Object arg1, Object arg2, Object arg3);
 }

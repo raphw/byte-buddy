@@ -29,10 +29,10 @@ import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.auxiliary.TrivialType;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.nullability.AlwaysNull;
 import org.objectweb.asm.Opcodes;
 
 import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.util.*;
 
 /**
@@ -281,7 +281,7 @@ public interface MethodRebaseResolver {
                 /**
                  * {@inheritDoc}
                  */
-                @Nonnull(when = When.MAYBE)
+                @AlwaysNull
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }
@@ -436,7 +436,7 @@ public interface MethodRebaseResolver {
                 /**
                  * {@inheritDoc}
                  */
-                @Nonnull(when = When.MAYBE)
+                @AlwaysNull
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }

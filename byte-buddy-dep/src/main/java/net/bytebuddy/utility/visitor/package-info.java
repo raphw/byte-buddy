@@ -16,7 +16,7 @@
 /**
  * A package containing visitor classes for ASM.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.utility.visitor;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

@@ -27,10 +27,10 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 import net.bytebuddy.utility.JavaConstant;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.Type;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Method;
@@ -47,13 +47,13 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     /**
      * An {@code null} type list.
      */
-    @Nonnull(when = When.NEVER)
+    @AlwaysNull
     TypeList UNDEFINED = null;
 
     /**
      * Represents that a type list does not contain any values for ASM interoperability which is represented by {@code null}.
      */
-    @Nonnull(when = When.NEVER)
+    @AlwaysNull
     @SuppressFBWarnings(value = {"MS_MUTABLE_ARRAY", "MS_OOI_PKGPROTECT"}, justification = "Null reference cannot be mutated.")
     String[] NO_INTERFACES = null;
 
@@ -62,7 +62,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
      *
      * @return An array of all internal names or {@code null} if the list is empty.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     String[] toInternalNames();
 
     /**
@@ -92,7 +92,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public String[] toInternalNames() {
             String[] internalNames = new String[size()];
             int i = 0;
@@ -150,7 +150,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public String[] toInternalNames() {
             String[] internalNames = new String[types.size()];
             int i = 0;

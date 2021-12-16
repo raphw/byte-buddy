@@ -24,6 +24,8 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.nullability.MaybeNull;
+import net.bytebuddy.utility.nullability.UnknownNull;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -39,8 +41,6 @@ import org.eclipse.aether.RepositorySystemSession;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -66,28 +66,28 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * The build context to support incremental builds.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     @Component
     public BuildContext context;
 
     /**
      * The Maven project.
      */
-    @Nonnull(when = When.UNKNOWN)
+    @UnknownNull
     @Parameter(defaultValue = "${project}", readonly = true)
     public MavenProject project;
 
     /**
      * The currently used repository system.
      */
-    @Nonnull(when = When.UNKNOWN)
+    @UnknownNull
     @Component
     public RepositorySystem repositorySystem;
 
     /**
      * The currently used system session for the repository system.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     @Parameter(defaultValue = "${repositorySystemSession}", readonly = true)
     public RepositorySystemSession repositorySystemSession;
 
@@ -113,7 +113,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * If the list of {@code transformations} is empty or is not supplied at all, this plugin does not apply but prints a warning.
      * </p>
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     @Parameter
     public List<Transformation> transformations;
 
@@ -135,7 +135,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * < /initialization>
      * }</pre></blockquote>
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     @Parameter
     public Initialization initialization;
 
@@ -144,7 +144,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * set or is empty, a random suffix will be appended to any rebased method. If this property is set, the supplied
      * value is appended to the original method name.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     @Parameter
     public String suffix;
 
@@ -193,7 +193,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * where each line contains the fully qualified class name. Discovered plugins are not provided with any
      * explicit constructor arguments.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     @Parameter(defaultValue = "EMPTY", required = true)
     public Discovery discovery;
 
@@ -303,7 +303,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      *
      * @return The source directory that serves as an input for the transformation.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     protected abstract String getSourceDirectory();
 
     /**
@@ -442,7 +442,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param project The relevant Maven project.
      * @return The Java version string of the configured build target version or {@code null} if no explicit configuration was detected.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private static String findJavaVersionString(MavenProject project) {
         while (project != null) {
             String target = project.getProperties().getProperty("maven.compiler.target");
@@ -486,7 +486,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@CheckForNull Plugin.Engine.Source.Element target) {
+        public boolean matches(@MaybeNull Plugin.Engine.Source.Element target) {
             if (target == null) {
                 return false;
             }
@@ -511,7 +511,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             return project.getBuild().getOutputDirectory();
         }
 
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         @Override
         protected String getSourceDirectory() {
             return project.getBuild().getSourceDirectory();
@@ -573,7 +573,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             return project.getBuild().getTestOutputDirectory();
         }
 
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         @Override
         protected String getSourceDirectory() {
             return project.getBuild().getTestSourceDirectory();

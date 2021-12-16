@@ -16,7 +16,7 @@
 /**
  * The types and classes of this package are responsible for binding a method call to calling another method.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.implementation.bind;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

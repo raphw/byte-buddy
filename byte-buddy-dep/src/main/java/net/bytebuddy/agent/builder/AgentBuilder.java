@@ -67,11 +67,10 @@ import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.*;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.io.*;
 import java.lang.instrument.*;
 import java.lang.ref.WeakReference;
@@ -868,7 +867,7 @@ public interface AgentBuilder {
              * @param module      The module of the instrumented type or {@code null} if the current VM does not support modules.
              * @return {@code true} if the type should be resubmitted.
              */
-            boolean matches(Throwable throwable, String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module);
+            boolean matches(Throwable throwable, String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module);
 
             /**
              * A trivial matcher for resubmission upon an exception.
@@ -902,7 +901,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean matches(Throwable throwable, String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module) {
+                public boolean matches(Throwable throwable, String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module) {
                     return matching;
                 }
             }
@@ -946,7 +945,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean matches(Throwable throwable, String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module) {
+                public boolean matches(Throwable throwable, String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module) {
                     for (ResubmissionOnErrorMatcher matcher : matchers) {
                         if (!matcher.matches(throwable, typeName, classLoader, module)) {
                             return false;
@@ -995,7 +994,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean matches(Throwable throwable, String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module) {
+                public boolean matches(Throwable throwable, String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module) {
                     for (ResubmissionOnErrorMatcher matcher : matchers) {
                         if (matcher.matches(throwable, typeName, classLoader, module)) {
                             return true;
@@ -1052,7 +1051,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean matches(Throwable throwable, String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module) {
+                public boolean matches(Throwable throwable, String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module) {
                     return exceptionMatcher.matches(throwable)
                             && typeNameMatcher.matches(typeName)
                             && classLoaderMatcher.matches(classLoader)
@@ -1074,7 +1073,7 @@ public interface AgentBuilder {
              * @param module      The module of the instrumented type or {@code null} if the current VM does not support modules.
              * @return {@code true} if the type should be resubmitted.
              */
-            boolean matches(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module);
+            boolean matches(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module);
 
             /**
              * A trivial matcher for immediate resubmission.
@@ -1108,7 +1107,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean matches(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module) {
+                public boolean matches(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module) {
                     return matching;
                 }
             }
@@ -1152,7 +1151,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean matches(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module) {
+                public boolean matches(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module) {
                     for (ResubmissionImmediateMatcher matcher : matchers) {
                         if (!matcher.matches(typeName, classLoader, module)) {
                             return false;
@@ -1201,7 +1200,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean matches(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module) {
+                public boolean matches(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module) {
                     for (ResubmissionImmediateMatcher matcher : matchers) {
                         if (matcher.matches(typeName, classLoader, module)) {
                             return true;
@@ -1250,7 +1249,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean matches(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module) {
+                public boolean matches(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module) {
                     return typeNameMatcher.matches(typeName)
                             && classLoaderMatcher.matches(classLoader)
                             && moduleMatcher.matches(module);
@@ -1489,9 +1488,9 @@ public interface AgentBuilder {
          * be applied for the given {@code typeDescription}.
          */
         boolean matches(TypeDescription typeDescription,
-                        @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                        @Nonnull(when = When.MAYBE) JavaModule module,
-                        @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                        @MaybeNull ClassLoader classLoader,
+                        @MaybeNull JavaModule module,
+                        @MaybeNull Class<?> classBeingRedefined,
                         ProtectionDomain protectionDomain);
 
         /**
@@ -1527,9 +1526,9 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public boolean matches(TypeDescription typeDescription,
-                                   @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                   @Nonnull(when = When.MAYBE) JavaModule module,
-                                   @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                   @MaybeNull ClassLoader classLoader,
+                                   @MaybeNull JavaModule module,
+                                   @MaybeNull Class<?> classBeingRedefined,
                                    ProtectionDomain protectionDomain) {
                 return matches;
             }
@@ -1568,9 +1567,9 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public boolean matches(TypeDescription typeDescription,
-                                   @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                   @Nonnull(when = When.MAYBE) JavaModule module,
-                                   @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                   @MaybeNull ClassLoader classLoader,
+                                   @MaybeNull JavaModule module,
+                                   @MaybeNull Class<?> classBeingRedefined,
                                    ProtectionDomain protectionDomain) {
                 return classBeingRedefined == null == unloaded;
             }
@@ -1591,9 +1590,9 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public boolean matches(TypeDescription typeDescription,
-                                   @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                   @Nonnull(when = When.MAYBE) JavaModule module,
-                                   @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                   @MaybeNull ClassLoader classLoader,
+                                   @MaybeNull JavaModule module,
+                                   @MaybeNull Class<?> classBeingRedefined,
                                    ProtectionDomain protectionDomain) {
                 if (classBeingRedefined != null) {
                     try {
@@ -1656,9 +1655,9 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public boolean matches(TypeDescription typeDescription,
-                                   @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                   @Nonnull(when = When.MAYBE) JavaModule module,
-                                   @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                   @MaybeNull ClassLoader classLoader,
+                                   @MaybeNull JavaModule module,
+                                   @MaybeNull Class<?> classBeingRedefined,
                                    ProtectionDomain protectionDomain) {
                 for (RawMatcher matcher : matchers) {
                     if (!matcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
@@ -1709,9 +1708,9 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public boolean matches(TypeDescription typeDescription,
-                                   @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                   @Nonnull(when = When.MAYBE) JavaModule module,
-                                   @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                   @MaybeNull ClassLoader classLoader,
+                                   @MaybeNull JavaModule module,
+                                   @MaybeNull Class<?> classBeingRedefined,
                                    ProtectionDomain protectionDomain) {
                 for (RawMatcher matcher : matchers) {
                     if (matcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
@@ -1746,9 +1745,9 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public boolean matches(TypeDescription typeDescription,
-                                   @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                   @Nonnull(when = When.MAYBE) JavaModule module,
-                                   @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                   @MaybeNull ClassLoader classLoader,
+                                   @MaybeNull JavaModule module,
+                                   @MaybeNull Class<?> classBeingRedefined,
                                    ProtectionDomain protectionDomain) {
                 return !matcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
             }
@@ -1822,9 +1821,9 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public boolean matches(TypeDescription typeDescription,
-                                   @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                   @Nonnull(when = When.MAYBE) JavaModule module,
-                                   @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                   @MaybeNull ClassLoader classLoader,
+                                   @MaybeNull JavaModule module,
+                                   @MaybeNull Class<?> classBeingRedefined,
                                    ProtectionDomain protectionDomain) {
                 return moduleMatcher.matches(module) && classLoaderMatcher.matches(classLoader) && typeMatcher.matches(typeDescription);
             }
@@ -1849,7 +1848,7 @@ public interface AgentBuilder {
          * @param module      The instrumented type's module or {@code null} if the current VM does not support modules.
          * @param loaded      {@code true} if the type is already loaded.
          */
-        void onDiscovery(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded);
+        void onDiscovery(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded);
 
         /**
          * Invoked prior to a successful transformation being applied.
@@ -1860,7 +1859,7 @@ public interface AgentBuilder {
          * @param loaded          {@code true} if the type is already loaded.
          * @param dynamicType     The dynamic type that was created.
          */
-        void onTransformation(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, DynamicType dynamicType);
+        void onTransformation(TypeDescription typeDescription, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, DynamicType dynamicType);
 
         /**
          * Invoked when a type is not transformed but ignored.
@@ -1870,7 +1869,7 @@ public interface AgentBuilder {
          * @param module          The ignored type's module or {@code null} if the current VM does not support modules.
          * @param loaded          {@code true} if the type is already loaded.
          */
-        void onIgnored(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded);
+        void onIgnored(TypeDescription typeDescription, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded);
 
         /**
          * Invoked when an error has occurred during transformation.
@@ -1881,7 +1880,7 @@ public interface AgentBuilder {
          * @param loaded      {@code true} if the type is already loaded.
          * @param throwable   The occurred error.
          */
-        void onError(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, Throwable throwable);
+        void onError(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, Throwable throwable);
 
         /**
          * Invoked after a class was attempted to be loaded, independently of its treatment.
@@ -1891,7 +1890,7 @@ public interface AgentBuilder {
          * @param module      The instrumented type's module or {@code null} if the current VM does not support modules.
          * @param loaded      {@code true} if the type is already loaded.
          */
-        void onComplete(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded);
+        void onComplete(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded);
 
         /**
          * A no-op implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.Listener}.
@@ -1906,35 +1905,35 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onDiscovery(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onDiscovery(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 /* do nothing */
             }
 
             /**
              * {@inheritDoc}
              */
-            public void onTransformation(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, DynamicType dynamicType) {
                 /* do nothing */
             }
 
             /**
              * {@inheritDoc}
              */
-            public void onIgnored(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onIgnored(TypeDescription typeDescription, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 /* do nothing */
             }
 
             /**
              * {@inheritDoc}
              */
-            public void onError(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, Throwable throwable) {
+            public void onError(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, Throwable throwable) {
                 /* do nothing */
             }
 
             /**
              * {@inheritDoc}
              */
-            public void onComplete(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onComplete(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 /* do nothing */
             }
         }
@@ -1947,35 +1946,35 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onDiscovery(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onDiscovery(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 /* do nothing */
             }
 
             /**
              * {@inheritDoc}
              */
-            public void onTransformation(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, DynamicType dynamicType) {
                 /* do nothing */
             }
 
             /**
              * {@inheritDoc}
              */
-            public void onIgnored(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onIgnored(TypeDescription typeDescription, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 /* do nothing */
             }
 
             /**
              * {@inheritDoc}
              */
-            public void onError(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, Throwable throwable) {
+            public void onError(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, Throwable throwable) {
                 /* do nothing */
             }
 
             /**
              * {@inheritDoc}
              */
-            public void onComplete(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onComplete(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 /* do nothing */
             }
         }
@@ -2045,28 +2044,28 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onDiscovery(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onDiscovery(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 printStream.printf(PREFIX + " DISCOVERY %s [%s, %s, %s, loaded=%b]%n", typeName, classLoader, module, Thread.currentThread(), loaded);
             }
 
             /**
              * {@inheritDoc}
              */
-            public void onTransformation(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, DynamicType dynamicType) {
                 printStream.printf(PREFIX + " TRANSFORM %s [%s, %s, %s, loaded=%b]%n", typeDescription.getName(), classLoader, module, Thread.currentThread(), loaded);
             }
 
             /**
              * {@inheritDoc}
              */
-            public void onIgnored(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onIgnored(TypeDescription typeDescription, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 printStream.printf(PREFIX + " IGNORE %s [%s, %s, %s, loaded=%b]%n", typeDescription.getName(), classLoader, module, Thread.currentThread(), loaded);
             }
 
             /**
              * {@inheritDoc}
              */
-            public void onError(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, Throwable throwable) {
+            public void onError(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, Throwable throwable) {
                 synchronized (printStream) {
                     printStream.printf(PREFIX + " ERROR %s [%s, %s, %s, loaded=%b]%n", typeName, classLoader, module, Thread.currentThread(), loaded);
                     throwable.printStackTrace(printStream);
@@ -2076,7 +2075,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onComplete(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onComplete(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 printStream.printf(PREFIX + " COMPLETE %s [%s, %s, %s, loaded=%b]%n", typeName, classLoader, module, Thread.currentThread(), loaded);
             }
         }
@@ -2111,7 +2110,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onDiscovery(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onDiscovery(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 if (matcher.matches(typeName)) {
                     delegate.onDiscovery(typeName, classLoader, module, loaded);
                 }
@@ -2120,7 +2119,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onTransformation(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, DynamicType dynamicType) {
                 if (matcher.matches(typeDescription.getName())) {
                     delegate.onTransformation(typeDescription, classLoader, module, loaded, dynamicType);
                 }
@@ -2129,7 +2128,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onIgnored(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onIgnored(TypeDescription typeDescription, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 if (matcher.matches(typeDescription.getName())) {
                     delegate.onIgnored(typeDescription, classLoader, module, loaded);
                 }
@@ -2138,7 +2137,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onError(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, Throwable throwable) {
+            public void onError(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, Throwable throwable) {
                 if (matcher.matches(typeName)) {
                     delegate.onError(typeName, classLoader, module, loaded, throwable);
                 }
@@ -2147,7 +2146,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onComplete(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onComplete(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 if (matcher.matches(typeName)) {
                     delegate.onComplete(typeName, classLoader, module, loaded);
                 }
@@ -2175,12 +2174,12 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onTransformation(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, DynamicType dynamicType) {
                 delegate.onTransformation(typeDescription, classLoader, module, loaded, dynamicType);
             }
 
             @Override
-            public void onError(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, Throwable throwable) {
+            public void onError(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, Throwable throwable) {
                 delegate.onError(typeName, classLoader, module, loaded, throwable);
             }
         }
@@ -2206,7 +2205,7 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onError(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, Throwable throwable) {
+            public void onError(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, Throwable throwable) {
                 delegate.onError(typeName, classLoader, module, loaded, throwable);
             }
         }
@@ -2269,7 +2268,7 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onTransformation(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, DynamicType dynamicType) {
                 if (module != JavaModule.UNSUPPORTED && module.isNamed()) {
                     for (JavaModule target : modules) {
                         if (!module.canRead(target) || addTargetEdge && !module.isOpened(typeDescription.getPackage(), target)) {
@@ -2337,7 +2336,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onDiscovery(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onDiscovery(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 for (Listener listener : listeners) {
                     listener.onDiscovery(typeName, classLoader, module, loaded);
                 }
@@ -2346,7 +2345,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onTransformation(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, DynamicType dynamicType) {
                 for (Listener listener : listeners) {
                     listener.onTransformation(typeDescription, classLoader, module, loaded, dynamicType);
                 }
@@ -2355,7 +2354,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onIgnored(TypeDescription typeDescription, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onIgnored(TypeDescription typeDescription, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 for (Listener listener : listeners) {
                     listener.onIgnored(typeDescription, classLoader, module, loaded);
                 }
@@ -2364,7 +2363,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onError(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, Throwable throwable) {
+            public void onError(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, Throwable throwable) {
                 for (Listener listener : listeners) {
                     listener.onError(typeName, classLoader, module, loaded, throwable);
                 }
@@ -2373,7 +2372,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onComplete(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded) {
+            public void onComplete(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded) {
                 for (Listener listener : listeners) {
                     listener.onComplete(typeName, classLoader, module, loaded);
                 }
@@ -2435,7 +2434,7 @@ public interface AgentBuilder {
             /**
              * Indicates that the circularity lock is not currently acquired.
              */
-            @Nonnull(when = When.NEVER)
+            @AlwaysNull
             private static final Boolean NOT_ACQUIRED = null;
 
             /**
@@ -2541,9 +2540,9 @@ public interface AgentBuilder {
                                        ByteBuddy byteBuddy,
                                        ClassFileLocator classFileLocator,
                                        MethodNameTransformer methodNameTransformer,
-                                       @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                       @Nonnull(when = When.MAYBE) JavaModule module,
-                                       @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain);
+                                       @MaybeNull ClassLoader classLoader,
+                                       @MaybeNull JavaModule module,
+                                       @MaybeNull ProtectionDomain protectionDomain);
 
         /**
          * Default implementations of type strategies.
@@ -2559,9 +2558,9 @@ public interface AgentBuilder {
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
                                                       MethodNameTransformer methodNameTransformer,
-                                                      @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                                      @Nonnull(when = When.MAYBE) JavaModule module,
-                                                      @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
+                                                      @MaybeNull ClassLoader classLoader,
+                                                      @MaybeNull JavaModule module,
+                                                      @MaybeNull ProtectionDomain protectionDomain) {
                     return byteBuddy.rebase(typeDescription, classFileLocator, methodNameTransformer);
                 }
             },
@@ -2585,9 +2584,9 @@ public interface AgentBuilder {
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
                                                       MethodNameTransformer methodNameTransformer,
-                                                      @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                                      @Nonnull(when = When.MAYBE) JavaModule module,
-                                                      @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
+                                                      @MaybeNull ClassLoader classLoader,
+                                                      @MaybeNull JavaModule module,
+                                                      @MaybeNull ProtectionDomain protectionDomain) {
                     return byteBuddy.redefine(typeDescription, classFileLocator);
                 }
             },
@@ -2612,9 +2611,9 @@ public interface AgentBuilder {
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
                                                       MethodNameTransformer methodNameTransformer,
-                                                      @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                                      @Nonnull(when = When.MAYBE) JavaModule module,
-                                                      @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
+                                                      @MaybeNull ClassLoader classLoader,
+                                                      @MaybeNull JavaModule module,
+                                                      @MaybeNull ProtectionDomain protectionDomain) {
                     return byteBuddy.with(InstrumentedType.Factory.Default.FROZEN)
                             .with(VisibilityBridgeStrategy.Default.NEVER)
                             .redefine(typeDescription, classFileLocator)
@@ -2645,9 +2644,9 @@ public interface AgentBuilder {
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
                                                       MethodNameTransformer methodNameTransformer,
-                                                      @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                                      @Nonnull(when = When.MAYBE) JavaModule module,
-                                                      @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
+                                                      @MaybeNull ClassLoader classLoader,
+                                                      @MaybeNull JavaModule module,
+                                                      @MaybeNull ProtectionDomain protectionDomain) {
                     return byteBuddy.decorate(typeDescription, classFileLocator);
                 }
             }
@@ -2680,9 +2679,9 @@ public interface AgentBuilder {
                                                   ByteBuddy byteBuddy,
                                                   ClassFileLocator classFileLocator,
                                                   MethodNameTransformer methodNameTransformer,
-                                                  @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                                  @Nonnull(when = When.MAYBE) JavaModule module,
-                                                  @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
+                                                  @MaybeNull ClassLoader classLoader,
+                                                  @MaybeNull JavaModule module,
+                                                  @MaybeNull ProtectionDomain protectionDomain) {
                 return entryPoint.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer);
             }
         }
@@ -2705,8 +2704,8 @@ public interface AgentBuilder {
          */
         DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                          TypeDescription typeDescription,
-                                         @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                         @Nonnull(when = When.MAYBE) JavaModule module);
+                                         @MaybeNull ClassLoader classLoader,
+                                         @MaybeNull JavaModule module);
 
         /**
          * A transformer that applies a build {@link Plugin}. Note that a transformer is never completed as class loading
@@ -2734,8 +2733,8 @@ public interface AgentBuilder {
              */
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                     TypeDescription typeDescription,
-                                                    @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                                    @Nonnull(when = When.MAYBE) JavaModule module) {
+                                                    @MaybeNull ClassLoader classLoader,
+                                                    @MaybeNull JavaModule module) {
                 return plugin.apply(builder, typeDescription, ClassFileLocator.ForClassLoader.of(classLoader));
             }
         }
@@ -2839,8 +2838,8 @@ public interface AgentBuilder {
              */
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                     TypeDescription typeDescription,
-                                                    @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                                    @Nonnull(when = When.MAYBE) JavaModule module) {
+                                                    @MaybeNull ClassLoader classLoader,
+                                                    @MaybeNull JavaModule module) {
                 ClassFileLocator classFileLocator = new ClassFileLocator.Compound(this.classFileLocator, locationStrategy.classFileLocator(classLoader, module));
                 TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
                 AsmVisitorWrapper.ForDeclaredMethods asmVisitorWrapper = new AsmVisitorWrapper.ForDeclaredMethods();
@@ -3114,7 +3113,7 @@ public interface AgentBuilder {
          *                         created or {@code null} if the boot loader.
          * @return A type pool for the supplied class file locator.
          */
-        TypePool typePool(ClassFileLocator classFileLocator, @Nonnull(when = When.MAYBE) ClassLoader classLoader);
+        TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader);
 
         /**
          * Creates a type pool for a given class file locator. If a cache is used, the type that is
@@ -3126,7 +3125,7 @@ public interface AgentBuilder {
          * @param name             The name of the currently instrumented type.
          * @return A type pool for the supplied class file locator.
          */
-        TypePool typePool(ClassFileLocator classFileLocator, @Nonnull(when = When.MAYBE) ClassLoader classLoader, String name);
+        TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader, String name);
 
         /**
          * <p>
@@ -3172,14 +3171,14 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public TypePool typePool(ClassFileLocator classFileLocator, @Nonnull(when = When.MAYBE) ClassLoader classLoader) {
+            public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader) {
                 return new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode);
             }
 
             /**
              * {@inheritDoc}
              */
-            public TypePool typePool(ClassFileLocator classFileLocator, @Nonnull(when = When.MAYBE) ClassLoader classLoader, String name) {
+            public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader, String name) {
                 return typePool(classFileLocator, classLoader);
             }
         }
@@ -3228,14 +3227,14 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public TypePool typePool(ClassFileLocator classFileLocator, @Nonnull(when = When.MAYBE) ClassLoader classLoader) {
+            public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader) {
                 return new TypePool.Default(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode);
             }
 
             /**
              * {@inheritDoc}
              */
-            public TypePool typePool(ClassFileLocator classFileLocator, @Nonnull(when = When.MAYBE) ClassLoader classLoader, String name) {
+            public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader, String name) {
                 return typePool(classFileLocator, classLoader);
             }
         }
@@ -3285,14 +3284,14 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public TypePool typePool(ClassFileLocator classFileLocator, @Nonnull(when = When.MAYBE) ClassLoader classLoader) {
+            public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader) {
                 return TypePool.ClassLoading.of(classLoader, new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode));
             }
 
             /**
              * {@inheritDoc}
              */
-            public TypePool typePool(ClassFileLocator classFileLocator, @Nonnull(when = When.MAYBE) ClassLoader classLoader, String name) {
+            public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader, String name) {
                 return typePool(classFileLocator, classLoader);
             }
         }
@@ -3328,14 +3327,14 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public TypePool typePool(ClassFileLocator classFileLocator, @Nonnull(when = When.MAYBE) ClassLoader classLoader) {
+            public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader) {
                 return new TypePool.Default.WithLazyResolution(locate(classLoader), classFileLocator, readerMode);
             }
 
             /**
              * {@inheritDoc}
              */
-            public TypePool typePool(ClassFileLocator classFileLocator, @Nonnull(when = When.MAYBE) ClassLoader classLoader, String name) {
+            public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader, String name) {
                 return new TypePool.Default.WithLazyResolution(new TypePool.CacheProvider.Discriminating(ElementMatchers.<String>is(name),
                         new TypePool.CacheProvider.Simple(),
                         locate(classLoader)), classFileLocator, readerMode);
@@ -3348,7 +3347,7 @@ public interface AgentBuilder {
              *                    be {@code null} to represent the bootstrap loader.
              * @return The cache provider to use.
              */
-            protected abstract TypePool.CacheProvider locate(@Nonnull(when = When.MAYBE) ClassLoader classLoader);
+            protected abstract TypePool.CacheProvider locate(@MaybeNull ClassLoader classLoader);
 
             /**
              * An implementation of a type locator {@link WithTypePoolCache} (note documentation of the linked class) that is based on a
@@ -3384,7 +3383,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                protected TypePool.CacheProvider locate(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
+                protected TypePool.CacheProvider locate(@MaybeNull ClassLoader classLoader) {
                     classLoader = classLoader == null ? getBootstrapMarkerLoader() : classLoader;
                     TypePool.CacheProvider cacheProvider = cacheProviders.get(classLoader);
                     while (cacheProvider == null) {
@@ -3453,7 +3452,7 @@ public interface AgentBuilder {
              * @param protectionDomain  The instrumented type's protection domain or {@code null} if no protection domain is available.
              * @param injectionStrategy The injection strategy to use.
              */
-            void register(DynamicType dynamicType, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy);
+            void register(DynamicType dynamicType, @MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy);
         }
 
         /**
@@ -3483,7 +3482,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void register(DynamicType dynamicType, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
+            public void register(DynamicType dynamicType, @MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
                 /* do nothing */
             }
         }
@@ -3517,7 +3516,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void register(DynamicType dynamicType, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
+            public void register(DynamicType dynamicType, @MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
                 Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                 Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                 for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
@@ -3716,7 +3715,7 @@ public interface AgentBuilder {
                     /**
                      * {@inheritDoc}
                      */
-                    public void register(DynamicType dynamicType, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
+                    public void register(DynamicType dynamicType, @MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
                         Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                         LoadedTypeInitializer loadedTypeInitializer;
                         if (!auxiliaryTypes.isEmpty()) {
@@ -3792,7 +3791,7 @@ public interface AgentBuilder {
                     /**
                      * {@inheritDoc}
                      */
-                    public void register(DynamicType dynamicType, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
+                    public void register(DynamicType dynamicType, @MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
                         Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                         LoadedTypeInitializer loadedTypeInitializer = auxiliaryTypes.isEmpty()
                                 ? dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription())
@@ -3846,7 +3845,7 @@ public interface AgentBuilder {
                     /**
                      * {@inheritDoc}
                      */
-                    public void register(DynamicType dynamicType, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
+                    public void register(DynamicType dynamicType, @MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
                         Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                         if (!auxiliaryTypes.isEmpty()) {
@@ -3874,7 +3873,7 @@ public interface AgentBuilder {
          * @param protectionDomain The protection domain to use or {@code null} if all privileges should be assigned.
          * @return The class injector to use.
          */
-        ClassInjector resolve(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain);
+        ClassInjector resolve(@MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain);
 
         /**
          * An injection strategy that does not permit class injection.
@@ -3889,7 +3888,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public ClassInjector resolve(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
+            public ClassInjector resolve(@MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain) {
                 throw new IllegalStateException("Class injection is disabled");
             }
         }
@@ -3907,7 +3906,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public ClassInjector resolve(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
+            public ClassInjector resolve(@MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain) {
                 if (classLoader == null) {
                     throw new IllegalStateException("Cannot inject auxiliary class into bootstrap loader using reflection");
                 } else if (ClassInjector.UsingReflection.isAvailable()) {
@@ -3931,7 +3930,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public ClassInjector resolve(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
+            public ClassInjector resolve(@MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain) {
                 if (ClassInjector.UsingUnsafe.isAvailable()) {
                     return new ClassInjector.UsingUnsafe(classLoader, protectionDomain);
                 } else {
@@ -3962,7 +3961,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public ClassInjector resolve(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
+                public ClassInjector resolve(@MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain) {
                     return factory.make(classLoader, protectionDomain);
                 }
             }
@@ -3981,7 +3980,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public ClassInjector resolve(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
+            public ClassInjector resolve(@MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain) {
                 if (ClassInjector.UsingJna.isAvailable()) {
                     return new ClassInjector.UsingJna(classLoader, protectionDomain);
                 } else {
@@ -4020,7 +4019,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public ClassInjector resolve(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
+            public ClassInjector resolve(@MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain) {
                 return classLoader == null
                         ? ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation)
                         : UsingReflection.INSTANCE.resolve(classLoader, protectionDomain);
@@ -4052,7 +4051,7 @@ public interface AgentBuilder {
          * @param module          The type's module or {@code null} if the current VM does not support modules.
          * @return An appropriate type description.
          */
-        TypeDescription apply(String name, @Nonnull(when = When.MAYBE) Class<?> type, TypePool typePool, CircularityLock circularityLock, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module);
+        TypeDescription apply(String name, @MaybeNull Class<?> type, TypePool typePool, CircularityLock circularityLock, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module);
 
         /**
          * Default implementations of a {@link DescriptionStrategy}.
@@ -4074,11 +4073,11 @@ public interface AgentBuilder {
             HYBRID(true) {
                 /** {@inheritDoc} */
                 public TypeDescription apply(String name,
-                                             @Nonnull(when = When.MAYBE) Class<?> type,
+                                             @MaybeNull Class<?> type,
                                              TypePool typePool,
                                              CircularityLock circularityLock,
-                                             @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                             @Nonnull(when = When.MAYBE) JavaModule module) {
+                                             @MaybeNull ClassLoader classLoader,
+                                             @MaybeNull JavaModule module) {
                     return type == null
                             ? typePool.describe(name).resolve()
                             : TypeDescription.ForLoadedType.of(type);
@@ -4101,11 +4100,11 @@ public interface AgentBuilder {
             POOL_ONLY(false) {
                 /** {@inheritDoc} */
                 public TypeDescription apply(String name,
-                                             @Nonnull(when = When.MAYBE) Class<?> type,
+                                             @MaybeNull Class<?> type,
                                              TypePool typePool,
                                              CircularityLock circularityLock,
-                                             @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                             @Nonnull(when = When.MAYBE) JavaModule module) {
+                                             @MaybeNull ClassLoader classLoader,
+                                             @MaybeNull JavaModule module) {
                     return typePool.describe(name).resolve();
                 }
             },
@@ -4125,11 +4124,11 @@ public interface AgentBuilder {
             POOL_FIRST(false) {
                 /** {@inheritDoc} */
                 public TypeDescription apply(String name,
-                                             @Nonnull(when = When.MAYBE) Class<?> type,
+                                             @MaybeNull Class<?> type,
                                              TypePool typePool,
                                              CircularityLock circularityLock,
-                                             @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                             @Nonnull(when = When.MAYBE) JavaModule module) {
+                                             @MaybeNull ClassLoader classLoader,
+                                             @MaybeNull JavaModule module) {
                     TypePool.Resolution resolution = typePool.describe(name);
                     return resolution.isResolved() || type == null
                             ? resolution.resolve()
@@ -4223,11 +4222,11 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public TypeDescription apply(String name,
-                                         @Nonnull(when = When.MAYBE) Class<?> type,
+                                         @MaybeNull Class<?> type,
                                          TypePool typePool,
                                          CircularityLock circularityLock,
-                                         @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                         @Nonnull(when = When.MAYBE) JavaModule module) {
+                                         @MaybeNull ClassLoader classLoader,
+                                         @MaybeNull JavaModule module) {
                 TypeDescription typeDescription = delegate.apply(name, type, typePool, circularityLock, classLoader, module);
                 return typeDescription instanceof TypeDescription.ForLoadedType
                         ? typeDescription
@@ -4257,7 +4256,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public Class<?> load(String name, @Nonnull(when = When.MAYBE) ClassLoader classLoader) throws ClassNotFoundException {
+                public Class<?> load(String name, @MaybeNull ClassLoader classLoader) throws ClassNotFoundException {
                     circularityLock.release();
                     try {
                         return Class.forName(name, false, classLoader);
@@ -4332,11 +4331,11 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public TypeDescription apply(String name,
-                                             @Nonnull(when = When.MAYBE) Class<?> type,
+                                             @MaybeNull Class<?> type,
                                              TypePool typePool,
                                              CircularityLock circularityLock,
-                                             @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                             @Nonnull(when = When.MAYBE) JavaModule module) {
+                                             @MaybeNull ClassLoader classLoader,
+                                             @MaybeNull JavaModule module) {
                     TypeDescription typeDescription = delegate.apply(name, type, typePool, circularityLock, classLoader, module);
                     return typeDescription instanceof TypeDescription.ForLoadedType
                             ? typeDescription
@@ -4366,7 +4365,7 @@ public interface AgentBuilder {
                     /**
                      * {@inheritDoc}
                      */
-                    public Class<?> load(String name, @Nonnull(when = When.MAYBE) ClassLoader classLoader) {
+                    public Class<?> load(String name, @MaybeNull ClassLoader classLoader) {
                         boolean holdsLock = classLoader != null && Thread.holdsLock(classLoader);
                         AtomicBoolean signal = new AtomicBoolean(holdsLock);
                         Future<Class<?>> future = executorService.submit(holdsLock
@@ -4398,7 +4397,7 @@ public interface AgentBuilder {
                         /**
                          * The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
                          */
-                        @Nonnull(when = When.MAYBE)
+                        @MaybeNull
                         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                         private final ClassLoader classLoader;
 
@@ -4408,7 +4407,7 @@ public interface AgentBuilder {
                          * @param name        The loaded type's name.
                          * @param classLoader The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
                          */
-                        protected SimpleClassLoadingAction(String name, @Nonnull(when = When.MAYBE) ClassLoader classLoader) {
+                        protected SimpleClassLoadingAction(String name, @MaybeNull ClassLoader classLoader) {
                             this.name = name;
                             this.classLoader = classLoader;
                         }
@@ -4486,7 +4485,7 @@ public interface AgentBuilder {
          * @param module      The type's module or {@code null} if Java modules are not supported on the current VM.
          * @return The class file locator to use.
          */
-        ClassFileLocator classFileLocator(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module);
+        ClassFileLocator classFileLocator(@MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module);
 
         /**
          * A location strategy that never locates any byte code.
@@ -4501,7 +4500,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public ClassFileLocator classFileLocator(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module) {
+            public ClassFileLocator classFileLocator(@MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module) {
                 return ClassFileLocator.NoOp.INSTANCE;
             }
         }
@@ -4516,7 +4515,7 @@ public interface AgentBuilder {
              */
             STRONG {
                 /** {@inheritDoc} */
-                public ClassFileLocator classFileLocator(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module) {
+                public ClassFileLocator classFileLocator(@MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module) {
                     return ClassFileLocator.ForClassLoader.of(classLoader);
                 }
             },
@@ -4527,7 +4526,7 @@ public interface AgentBuilder {
              */
             WEAK {
                 /** {@inheritDoc} */
-                public ClassFileLocator classFileLocator(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module) {
+                public ClassFileLocator classFileLocator(@MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module) {
                     return ClassFileLocator.ForClassLoader.WeaklyReferenced.of(classLoader);
                 }
             };
@@ -4605,7 +4604,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public ClassFileLocator classFileLocator(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module) {
+            public ClassFileLocator classFileLocator(@MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module) {
                 return classFileLocator;
             }
         }
@@ -4649,7 +4648,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public ClassFileLocator classFileLocator(@Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module) {
+            public ClassFileLocator classFileLocator(@MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module) {
                 List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(locationStrategies.size());
                 for (LocationStrategy locationStrategy : locationStrategies) {
                     classFileLocators.add(locationStrategy.classFileLocator(classLoader, module));
@@ -4776,7 +4775,7 @@ public interface AgentBuilder {
         /**
          * Indicates that an exception is handled.
          */
-        @Nonnull(when = When.NEVER)
+        @AlwaysNull
         Throwable SUPPRESS_ERROR = null;
 
         /**
@@ -4805,7 +4804,7 @@ public interface AgentBuilder {
          * @param throwable            The throwable that causes the error.
          * @return The error to propagate or {@code null} if the error is handled. Any subsequent listeners are not called if the exception is handled.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable);
 
         /**
@@ -4929,7 +4928,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
                 return SUPPRESS_ERROR;
             }
@@ -5175,7 +5174,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
                 for (InstallationListener installationListener : installationListeners) {
                     if (throwable == SUPPRESS_ERROR) {
@@ -5239,7 +5238,7 @@ public interface AgentBuilder {
          * @param protectionDomain     The instrumented type's protection domain.
          * @return An appropriate class file locator.
          */
-        ClassFileLocator resolve(String name, byte[] binaryRepresentation, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, ProtectionDomain protectionDomain);
+        ClassFileLocator resolve(String name, byte[] binaryRepresentation, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, ProtectionDomain protectionDomain);
 
         /**
          * Resolves the type pool for a given type name by the supplied {@link PoolStrategy}.
@@ -5250,7 +5249,7 @@ public interface AgentBuilder {
          * @param name             The name of the type for which the type pool is resolved.
          * @return A suitable type pool.
          */
-        TypePool typePool(PoolStrategy poolStrategy, ClassFileLocator classFileLocator, @Nonnull(when = When.MAYBE) ClassLoader classLoader, String name);
+        TypePool typePool(PoolStrategy poolStrategy, ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader, String name);
 
         /**
          * An implementation of default class file buffer strategy.
@@ -5264,8 +5263,8 @@ public interface AgentBuilder {
                 /** {@inheritDoc} */
                 public ClassFileLocator resolve(String name,
                                                 byte[] binaryRepresentation,
-                                                @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                                @Nonnull(when = When.MAYBE) JavaModule module,
+                                                @MaybeNull ClassLoader classLoader,
+                                                @MaybeNull JavaModule module,
                                                 ProtectionDomain protectionDomain) {
                     return ClassFileLocator.Simple.of(name, binaryRepresentation);
                 }
@@ -5273,7 +5272,7 @@ public interface AgentBuilder {
                 /** {@inheritDoc} */
                 public TypePool typePool(PoolStrategy poolStrategy,
                                          ClassFileLocator classFileLocator,
-                                         @Nonnull(when = When.MAYBE) ClassLoader classLoader,
+                                         @MaybeNull ClassLoader classLoader,
                                          String name) {
                     return poolStrategy.typePool(classFileLocator, classLoader, name);
                 }
@@ -5291,8 +5290,8 @@ public interface AgentBuilder {
                 /** {@inheritDoc} */
                 public ClassFileLocator resolve(String name,
                                                 byte[] binaryRepresentation,
-                                                @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                                @Nonnull(when = When.MAYBE) JavaModule module,
+                                                @MaybeNull ClassLoader classLoader,
+                                                @MaybeNull JavaModule module,
                                                 ProtectionDomain protectionDomain) {
                     return ClassFileLocator.NoOp.INSTANCE;
                 }
@@ -5300,7 +5299,7 @@ public interface AgentBuilder {
                 /** {@inheritDoc} */
                 public TypePool typePool(PoolStrategy poolStrategy,
                                          ClassFileLocator classFileLocator,
-                                         @Nonnull(when = When.MAYBE) ClassLoader classLoader,
+                                         @MaybeNull ClassLoader classLoader,
                                          String name) {
                     return poolStrategy.typePool(classFileLocator, classLoader);
                 }
@@ -6511,7 +6510,7 @@ public interface AgentBuilder {
                         /**
                          * The current iterator or {@code null} if no such iterator is defined.
                          */
-                        @Nonnull(when = When.MAYBE)
+                        @MaybeNull
                         private Iterator<? extends List<Class<?>>> current;
 
                         /**
@@ -6668,7 +6667,7 @@ public interface AgentBuilder {
                     /**
                      * The current list of types or {@code null} if the current list of types is not prepared.
                      */
-                    @Nonnull(when = When.MAYBE)
+                    @MaybeNull
                     private List<Class<?>> types;
 
                     /**
@@ -7136,7 +7135,7 @@ public interface AgentBuilder {
                      * {@inheritDoc}
                      */
                     @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended.")
-                    public void onError(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, boolean loaded, Throwable throwable) {
+                    public void onError(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, boolean loaded, Throwable throwable) {
                         if (!loaded && resubmissionOnErrorMatcher.matches(throwable, typeName, classLoader, module)) {
                             Set<String> types = this.types.get(new LookupKey(classLoader));
                             if (types == null) {
@@ -7154,7 +7153,7 @@ public interface AgentBuilder {
                      * {@inheritDoc}
                      */
                     @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended.")
-                    public boolean isEnforced(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined) {
+                    public boolean isEnforced(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, @MaybeNull Class<?> classBeingRedefined) {
                         if (classBeingRedefined == null && resubmissionImmediateMatcher.matches(typeName, classLoader, module)) {
                             Set<String> types = this.types.get(new LookupKey(classLoader));
                             if (types == null) {
@@ -7289,7 +7288,7 @@ public interface AgentBuilder {
                     /**
                      * This scheduler's cancelable or {@code null} if no cancelable was registered.
                      */
-                    @Nonnull(when = When.MAYBE)
+                    @MaybeNull
                     private volatile ResubmissionScheduler.Cancelable cancelable;
 
                     /**
@@ -7412,7 +7411,7 @@ public interface AgentBuilder {
                     /**
                      * The represented class loader.
                      */
-                    @Nonnull(when = When.MAYBE)
+                    @MaybeNull
                     private final ClassLoader classLoader;
 
                     /**
@@ -7425,7 +7424,7 @@ public interface AgentBuilder {
                      *
                      * @param classLoader The represented class loader.
                      */
-                    protected LookupKey(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
+                    protected LookupKey(@MaybeNull ClassLoader classLoader) {
                         this.classLoader = classLoader;
                         hashCode = System.identityHashCode(classLoader);
                     }
@@ -7437,7 +7436,7 @@ public interface AgentBuilder {
 
                     @Override
                     @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended.")
-                    public boolean equals(@CheckForNull Object other) {
+                    public boolean equals(@MaybeNull Object other) {
                         if (this == other) {
                             return true;
                         } else if (other instanceof LookupKey) {
@@ -7466,7 +7465,7 @@ public interface AgentBuilder {
                      *
                      * @param classLoader The represented class loader or {@code null} for the bootstrap class loader.
                      */
-                    protected StorageKey(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
+                    protected StorageKey(@MaybeNull ClassLoader classLoader) {
                         super(classLoader);
                         hashCode = System.identityHashCode(classLoader);
                     }
@@ -7487,7 +7486,7 @@ public interface AgentBuilder {
 
                     @Override
                     @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended.")
-                    public boolean equals(@CheckForNull Object other) {
+                    public boolean equals(@MaybeNull Object other) {
                         if (this == other) {
                             return true;
                         } else if (other instanceof LookupKey) {
@@ -7580,7 +7579,7 @@ public interface AgentBuilder {
              * @param classBeingRedefined The class to be redefined or {@code null} if the current type is loaded for the first time.
              * @return {@code true} if the class should be scheduled for resubmission.
              */
-            boolean isEnforced(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined);
+            boolean isEnforced(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, @MaybeNull Class<?> classBeingRedefined);
 
             /**
              * A resubmission enforcer that does not consider non-loaded classes.
@@ -7595,7 +7594,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean isEnforced(String typeName, @Nonnull(when = When.MAYBE) ClassLoader classLoader, @Nonnull(when = When.MAYBE) JavaModule module, @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined) {
+                public boolean isEnforced(String typeName, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, @MaybeNull Class<?> classBeingRedefined) {
                     return false;
                 }
             }
@@ -7771,8 +7770,8 @@ public interface AgentBuilder {
                                     AgentBuilder.Listener listener,
                                     TypeDescription typeDescription,
                                     Class<?> type,
-                                    @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
-                                    @Nonnull(when = When.MAYBE) JavaModule module,
+                                    @MaybeNull Class<?> classBeingRedefined,
+                                    @MaybeNull JavaModule module,
                                     boolean modifiable) {
                 if (!modifiable || !matcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())) {
                     try {
@@ -8053,7 +8052,7 @@ public interface AgentBuilder {
             }
 
             @Override
-            protected boolean isInstrumented(@Nonnull(when = When.MAYBE) Class<?> type) {
+            protected boolean isInstrumented(@MaybeNull Class<?> type) {
                 return true;
             }
         },
@@ -8070,7 +8069,7 @@ public interface AgentBuilder {
             }
 
             @Override
-            protected boolean isInstrumented(@Nonnull(when = When.MAYBE) Class<?> type) {
+            protected boolean isInstrumented(@MaybeNull Class<?> type) {
                 return type == null || !type.getName().contains("/");
             }
         };
@@ -8129,7 +8128,7 @@ public interface AgentBuilder {
          * @param type The redefined type or {@code null} if no such type exists.
          * @return {@code true} if the supplied type should be instrumented according to this strategy.
          */
-        protected abstract boolean isInstrumented(@Nonnull(when = When.MAYBE) Class<?> type);
+        protected abstract boolean isInstrumented(@MaybeNull Class<?> type);
 
         /**
          * A factory for rewriting the JDK's {@code java.lang.invoke.LambdaMetafactory} methods for use with Byte Buddy. The code that is
@@ -8860,7 +8859,7 @@ public interface AgentBuilder {
             /**
              * A type-safe constant to express that a class is not already loaded when applying a class file transformer.
              */
-            @Nonnull(when = When.NEVER)
+            @AlwaysNull
             private static final Class<?> NOT_PREVIOUSLY_DEFINED = null;
 
             /**
@@ -9607,13 +9606,13 @@ public interface AgentBuilder {
          * The value that is to be returned from a {@link java.lang.instrument.ClassFileTransformer} to indicate
          * that no class file transformation is to be applied.
          */
-        @Nonnull(when = When.NEVER)
+        @AlwaysNull
         private static final byte[] NO_TRANSFORMATION = null;
 
         /**
          * A type-safe constant to express that a class is not already loaded when applying a class file transformer.
          */
-        @Nonnull(when = When.NEVER)
+        @AlwaysNull
         private static final Class<?> NOT_PREVIOUSLY_DEFINED = null;
 
         /**
@@ -11108,10 +11107,10 @@ public interface AgentBuilder {
                      * @throws IllegalClassFormatException If the class file cannot be generated.
                      */
                     byte[] transform(ClassFileTransformer target,
-                                     @Nonnull(when = When.MAYBE) @JavaDispatcher.Proxied("java.lang.Module") Object module,
-                                     @Nonnull(when = When.MAYBE) ClassLoader classLoader,
+                                     @MaybeNull @JavaDispatcher.Proxied("java.lang.Module") Object module,
+                                     @MaybeNull ClassLoader classLoader,
                                      String name,
-                                     @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                     @MaybeNull Class<?> classBeingRedefined,
                                      ProtectionDomain protectionDomain,
                                      byte[] binaryRepresentation) throws IllegalClassFormatException;
                 }
@@ -11127,7 +11126,7 @@ public interface AgentBuilder {
             /**
              * Indicates that a type should not be ignored.
              */
-            @Nonnull(when = When.NEVER)
+            @AlwaysNull
             private static final byte[] NONE = null;
 
             /**
@@ -11216,9 +11215,9 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public boolean matches(TypeDescription typeDescription,
-                                       @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                       @Nonnull(when = When.MAYBE) JavaModule module,
-                                       @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                       @MaybeNull ClassLoader classLoader,
+                                       @MaybeNull JavaModule module,
+                                       @MaybeNull Class<?> classBeingRedefined,
                                        ProtectionDomain protectionDomain) {
                     if (ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
                         return false;
@@ -11272,9 +11271,9 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public boolean matches(TypeDescription typeDescription,
-                                       @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                       @Nonnull(when = When.MAYBE) JavaModule module,
-                                       @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                       @MaybeNull ClassLoader classLoader,
+                                       @MaybeNull JavaModule module,
+                                       @MaybeNull Class<?> classBeingRedefined,
                                        ProtectionDomain protectionDomain) {
                     Iterator<Transformer> iterator = classFileTransformer.iterator(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
                     if (ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
@@ -11306,19 +11305,19 @@ public interface AgentBuilder {
                 /**
                  * The type's class loader.
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 private final ClassLoader classLoader;
 
                 /**
                  * The type's module.
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 private final JavaModule module;
 
                 /**
                  * The class being redefined or {@code null} if the type was not previously loaded.
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 private final Class<?> classBeingRedefined;
 
                 /**
@@ -11347,9 +11346,9 @@ public interface AgentBuilder {
                  * @param transformations     The matched transformations.
                  */
                 protected TransformerIterator(TypeDescription typeDescription,
-                                              @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                              @Nonnull(when = When.MAYBE) JavaModule module,
-                                              @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                              @MaybeNull ClassLoader classLoader,
+                                              @MaybeNull JavaModule module,
+                                              @MaybeNull Class<?> classBeingRedefined,
                                               ProtectionDomain protectionDomain,
                                               List<Transformation> transformations) {
                     this.typeDescription = typeDescription;
@@ -11499,7 +11498,7 @@ public interface AgentBuilder {
              * The access control context to use for loading classes or {@code null} if the
              * access controller is not available on the current VM.
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             private final Object accessControlContext;
 
             /**
@@ -11565,7 +11564,7 @@ public interface AgentBuilder {
              *
              * @return The current access control context or {@code null} if the current VM does not support it.
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             @AccessControllerPlugin.Enhance
             private static Object getContext() {
                 return null;
@@ -11580,17 +11579,17 @@ public interface AgentBuilder {
              * @return The action's resolved value.
              */
             @AccessControllerPlugin.Enhance
-            private static <T> T doPrivileged(PrivilegedAction<T> action, @Nonnull(when = When.MAYBE) @SuppressWarnings("unused") Object context) {
+            private static <T> T doPrivileged(PrivilegedAction<T> action, @MaybeNull @SuppressWarnings("unused") Object context) {
                 return action.run();
             }
 
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
-            public byte[] transform(@Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                    @Nonnull(when = When.MAYBE) String internalTypeName,
-                                    @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+            @MaybeNull
+            public byte[] transform(@MaybeNull ClassLoader classLoader,
+                                    @MaybeNull String internalTypeName,
+                                    @MaybeNull Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) {
                 if (circularityLock.acquire()) {
@@ -11622,11 +11621,11 @@ public interface AgentBuilder {
              * @param binaryRepresentation The class file of the instrumented class in its current state.
              * @return The transformed class file or an empty byte array if this transformer does not apply an instrumentation.
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             protected byte[] transform(Object rawModule,
-                                       @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                       @Nonnull(when = When.MAYBE) String internalTypeName,
-                                       @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                       @MaybeNull ClassLoader classLoader,
+                                       @MaybeNull String internalTypeName,
+                                       @MaybeNull Class<?> classBeingRedefined,
                                        ProtectionDomain protectionDomain,
                                        byte[] binaryRepresentation) {
                 if (circularityLock.acquire()) {
@@ -11658,11 +11657,11 @@ public interface AgentBuilder {
              * @param binaryRepresentation The class file of the instrumented class in its current state.
              * @return The transformed class file or an empty byte array if this transformer does not apply an instrumentation.
              */
-            @Nonnull(when = When.MAYBE)
-            private byte[] transform(@Nonnull(when = When.MAYBE) JavaModule module,
-                                     @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                     @Nonnull(when = When.MAYBE) String internalTypeName,
-                                     @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+            @MaybeNull
+            private byte[] transform(@MaybeNull JavaModule module,
+                                     @MaybeNull ClassLoader classLoader,
+                                     @MaybeNull String internalTypeName,
+                                     @MaybeNull Class<?> classBeingRedefined,
                                      ProtectionDomain protectionDomain,
                                      byte[] binaryRepresentation) {
                 if (internalTypeName == null || !lambdaInstrumentationStrategy.isInstrumented(classBeingRedefined)) {
@@ -11719,11 +11718,11 @@ public interface AgentBuilder {
              * @param classFileLocator    The class file locator to use.
              * @return The transformed class file or an empty byte array if this transformer does not apply an instrumentation.
              */
-            @Nonnull(when = When.MAYBE)
-            private byte[] doTransform(@Nonnull(when = When.MAYBE) JavaModule module,
-                                       @Nonnull(when = When.MAYBE) ClassLoader classLoader,
+            @MaybeNull
+            private byte[] doTransform(@MaybeNull JavaModule module,
+                                       @MaybeNull ClassLoader classLoader,
                                        String name,
-                                       @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                       @MaybeNull Class<?> classBeingRedefined,
                                        boolean loaded,
                                        ProtectionDomain protectionDomain,
                                        TypePool typePool,
@@ -11765,9 +11764,9 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public Iterator<Transformer> iterator(TypeDescription typeDescription,
-                                                  @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                                  @Nonnull(when = When.MAYBE) JavaModule module,
-                                                  @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                                  @MaybeNull ClassLoader classLoader,
+                                                  @MaybeNull JavaModule module,
+                                                  @MaybeNull Class<?> classBeingRedefined,
                                                   ProtectionDomain protectionDomain) {
                 return ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
                         ? Collections.<Transformer>emptySet().iterator()
@@ -12036,21 +12035,21 @@ public interface AgentBuilder {
                 /**
                  * The type's class loader or {@code null} if the bootstrap class loader is represented.
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final ClassLoader classLoader;
 
                 /**
                  * The type's internal name or {@code null} if no such name exists.
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final String internalTypeName;
 
                 /**
                  * The class being redefined or {@code null} if no such class exists.
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final Class<?> classBeingRedefined;
 
@@ -12073,9 +12072,9 @@ public interface AgentBuilder {
                  * @param protectionDomain     The type's protection domain.
                  * @param binaryRepresentation The type's binary representation.
                  */
-                protected LegacyVmDispatcher(@Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                             @Nonnull(when = When.MAYBE) String internalTypeName,
-                                             @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                protected LegacyVmDispatcher(@MaybeNull ClassLoader classLoader,
+                                             @MaybeNull String internalTypeName,
+                                             @MaybeNull Class<?> classBeingRedefined,
                                              ProtectionDomain protectionDomain,
                                              byte[] binaryRepresentation) {
                     this.classLoader = classLoader;
@@ -12088,7 +12087,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 public byte[] run() {
                     return transform(JavaModule.UNSUPPORTED,
                             classLoader,
@@ -12113,21 +12112,21 @@ public interface AgentBuilder {
                 /**
                  * The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final ClassLoader classLoader;
 
                 /**
                  * The type's internal name or {@code null} if no such name exists.
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final String internalTypeName;
 
                 /**
                  * The class being redefined or {@code null} if no such class exists.
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final Class<?> classBeingRedefined;
 
@@ -12152,9 +12151,9 @@ public interface AgentBuilder {
                  * @param binaryRepresentation The type's binary representation.
                  */
                 protected Java9CapableVmDispatcher(Object rawModule,
-                                                   @Nonnull(when = When.MAYBE) ClassLoader classLoader,
-                                                   @Nonnull(when = When.MAYBE) String internalTypeName,
-                                                   @Nonnull(when = When.MAYBE) Class<?> classBeingRedefined,
+                                                   @MaybeNull ClassLoader classLoader,
+                                                   @MaybeNull String internalTypeName,
+                                                   @MaybeNull Class<?> classBeingRedefined,
                                                    ProtectionDomain protectionDomain,
                                                    byte[] binaryRepresentation) {
                     this.rawModule = rawModule;
@@ -12168,7 +12167,7 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 public byte[] run() {
                     return transform(JavaModule.of(rawModule),
                             classLoader,

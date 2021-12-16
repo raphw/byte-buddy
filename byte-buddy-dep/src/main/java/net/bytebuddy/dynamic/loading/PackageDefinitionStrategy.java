@@ -17,10 +17,10 @@ package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -101,7 +101,7 @@ public interface PackageDefinitionStrategy {
          *
          * @return The package specification's title.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         String getSpecificationTitle();
 
         /**
@@ -110,7 +110,7 @@ public interface PackageDefinitionStrategy {
          *
          * @return The package specification's version.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         String getSpecificationVersion();
 
         /**
@@ -119,7 +119,7 @@ public interface PackageDefinitionStrategy {
          *
          * @return The package specification's vendor.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         String getSpecificationVendor();
 
         /**
@@ -128,7 +128,7 @@ public interface PackageDefinitionStrategy {
          *
          * @return The package implementation's title.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         String getImplementationTitle();
 
         /**
@@ -137,7 +137,7 @@ public interface PackageDefinitionStrategy {
          *
          * @return The package implementation's version.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         String getImplementationVersion();
 
         /**
@@ -146,7 +146,7 @@ public interface PackageDefinitionStrategy {
          *
          * @return The package implementation's vendor.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         String getImplementationVendor();
 
         /**
@@ -154,7 +154,7 @@ public interface PackageDefinitionStrategy {
          *
          * @return The seal base of the package.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         URL getSealBase();
 
         /**
@@ -253,13 +253,13 @@ public interface PackageDefinitionStrategy {
             /**
              * An empty value of a package's property.
              */
-            @Nonnull(when = When.NEVER)
+            @AlwaysNull
             private static final String NO_VALUE = null;
 
             /**
              * Represents an unsealed package.
              */
-            @Nonnull(when = When.NEVER)
+            @AlwaysNull
             private static final URL NOT_SEALED = null;
 
             /**
@@ -272,7 +272,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public String getSpecificationTitle() {
                 return NO_VALUE;
             }
@@ -280,7 +280,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public String getSpecificationVersion() {
                 return NO_VALUE;
             }
@@ -288,7 +288,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public String getSpecificationVendor() {
                 return NO_VALUE;
             }
@@ -296,7 +296,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public String getImplementationTitle() {
                 return NO_VALUE;
             }
@@ -304,7 +304,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public String getImplementationVersion() {
                 return NO_VALUE;
             }
@@ -319,7 +319,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public URL getSealBase() {
                 return NOT_SEALED;
             }
@@ -340,43 +340,43 @@ public interface PackageDefinitionStrategy {
             /**
              * The seal base or {@code null} if the package is not sealed.
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             protected final URL sealBase;
 
             /**
              * The package specification's title or {@code null} if no such title exists.
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             private final String specificationTitle;
 
             /**
              * The package specification's version or {@code null} if no such version exists.
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             private final String specificationVersion;
 
             /**
              * The package specification's vendor or {@code null} if no such vendor exists.
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             private final String specificationVendor;
 
             /**
              * The package implementation's title or {@code null} if no such title exists.
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             private final String implementationTitle;
 
             /**
              * The package implementation's version or {@code null} if no such version exists.
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             private final String implementationVersion;
 
             /**
              * The package implementation's vendor or {@code null} if no such vendor exists.
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             private final String implementationVendor;
 
             /**
@@ -390,13 +390,13 @@ public interface PackageDefinitionStrategy {
              * @param implementationVendor  The package implementation's vendor or {@code null} if no such vendor exists.
              * @param sealBase              The seal base or {@code null} if the package is not sealed.
              */
-            public Simple(@Nonnull(when = When.MAYBE) String specificationTitle,
-                          @Nonnull(when = When.MAYBE) String specificationVersion,
-                          @Nonnull(when = When.MAYBE) String specificationVendor,
-                          @Nonnull(when = When.MAYBE) String implementationTitle,
-                          @Nonnull(when = When.MAYBE) String implementationVersion,
-                          @Nonnull(when = When.MAYBE) String implementationVendor,
-                          @Nonnull(when = When.MAYBE) URL sealBase) {
+            public Simple(@MaybeNull String specificationTitle,
+                          @MaybeNull String specificationVersion,
+                          @MaybeNull String specificationVendor,
+                          @MaybeNull String implementationTitle,
+                          @MaybeNull String implementationVersion,
+                          @MaybeNull String implementationVendor,
+                          @MaybeNull URL sealBase) {
                 this.specificationTitle = specificationTitle;
                 this.specificationVersion = specificationVersion;
                 this.specificationVendor = specificationVendor;
@@ -416,7 +416,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public String getSpecificationTitle() {
                 return specificationTitle;
             }
@@ -424,7 +424,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public String getSpecificationVersion() {
                 return specificationVersion;
             }
@@ -432,7 +432,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public String getSpecificationVendor() {
                 return specificationVendor;
             }
@@ -440,7 +440,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public String getImplementationTitle() {
                 return implementationTitle;
             }
@@ -448,7 +448,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public String getImplementationVersion() {
                 return implementationVersion;
             }
@@ -456,7 +456,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public String getImplementationVendor() {
                 return implementationVendor;
             }
@@ -464,7 +464,7 @@ public interface PackageDefinitionStrategy {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public URL getSealBase() {
                 return sealBase;
             }
@@ -495,7 +495,7 @@ public interface PackageDefinitionStrategy {
 
             @Override
             @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality.")
-            public boolean equals(@CheckForNull Object other) {
+            public boolean equals(@MaybeNull Object other) {
                 if (this == other) {
                     return true;
                 } else if (other == null || getClass() != other.getClass()) {
@@ -522,7 +522,7 @@ public interface PackageDefinitionStrategy {
         /**
          * A URL defined a non-sealed package.
          */
-        @Nonnull(when = When.NEVER)
+        @AlwaysNull
         private static final URL NOT_SEALED = null;
 
         /**
@@ -616,7 +616,7 @@ public interface PackageDefinitionStrategy {
              * @param typeName    The name of the type being loaded that triggered the package definition.
              * @return The URL that is used for sealing a package or {@code null} if the package should not be sealed.
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             URL findSealBase(ClassLoader classLoader, String typeName);
 
             /**
@@ -632,7 +632,7 @@ public interface PackageDefinitionStrategy {
                 /**
                  * {@inheritDoc}
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 public URL findSealBase(ClassLoader classLoader, String typeName) {
                     return NOT_SEALED;
                 }
@@ -647,7 +647,7 @@ public interface PackageDefinitionStrategy {
                 /**
                  * The seal base URL.
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final URL sealBase;
 
@@ -656,14 +656,14 @@ public interface PackageDefinitionStrategy {
                  *
                  * @param sealBase The seal base URL.
                  */
-                public ForFixedValue(@Nonnull(when = When.MAYBE) URL sealBase) {
+                public ForFixedValue(@MaybeNull URL sealBase) {
                     this.sealBase = sealBase;
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 public URL findSealBase(ClassLoader classLoader, String typeName) {
                     return sealBase;
                 }
@@ -678,7 +678,7 @@ public interface PackageDefinitionStrategy {
 
                 @Override
                 @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality.")
-                public boolean equals(@CheckForNull Object other) {
+                public boolean equals(@MaybeNull Object other) {
                     if (this == other) {
                         return true;
                     } else if (other == null || getClass() != other.getClass()) {
@@ -749,7 +749,7 @@ public interface PackageDefinitionStrategy {
                 /**
                  * {@inheritDoc}
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 public URL findSealBase(ClassLoader classLoader, String typeName) {
                     URL url = classLoader.getResource(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
                     if (url != null) {

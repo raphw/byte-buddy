@@ -16,9 +16,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
-
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
 /**
  * An element matcher that matches a class loader for being a parent of the given class loader.
@@ -31,7 +29,7 @@ public class ClassLoaderParentMatcher<T extends ClassLoader> extends ElementMatc
     /**
      * The class loader that is matched for being a child of the matched class loader.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
     private final ClassLoader classLoader;
 
@@ -40,14 +38,14 @@ public class ClassLoaderParentMatcher<T extends ClassLoader> extends ElementMatc
      *
      * @param classLoader The class loader that is matched for being a child of the matched class loader.
      */
-    public ClassLoaderParentMatcher(@Nonnull(when = When.MAYBE) ClassLoader classLoader) {
+    public ClassLoaderParentMatcher(@MaybeNull ClassLoader classLoader) {
         this.classLoader = classLoader;
     }
 
     /**
      * {@inheritDoc}
      */
-    public boolean matches(@Nonnull(when = When.MAYBE) T target) {
+    public boolean matches(@MaybeNull T target) {
         ClassLoader current = classLoader;
         while (current != null) {
             if (current == target) {

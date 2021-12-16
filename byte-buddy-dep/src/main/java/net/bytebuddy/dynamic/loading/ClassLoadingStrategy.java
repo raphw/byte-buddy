@@ -18,9 +18,9 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.GraalImageCode;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
@@ -38,13 +38,13 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
     /**
      * A type-safe constant representing the bootstrap class loader which is represented by {@code null} within Java.
      */
-    @Nonnull(when = When.NEVER)
+    @AlwaysNull
     ClassLoader BOOTSTRAP_LOADER = null;
 
     /**
      * An undefined protection domain.
      */
-    @Nonnull(when = When.NEVER)
+    @AlwaysNull
     ProtectionDomain NO_PROTECTION_DOMAIN = null;
 
     /**
@@ -57,7 +57,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
      * @return A collection of the loaded classes which will be initialized in the iteration order of the
      * returned collection.
      */
-    Map<TypeDescription, Class<?>> load(@Nonnull(when = When.MAYBE) T classLoader, Map<TypeDescription, byte[]> types);
+    Map<TypeDescription, Class<?>> load(@MaybeNull T classLoader, Map<TypeDescription, byte[]> types);
 
     /**
      * This class contains implementations of default class loading strategies.
@@ -146,7 +146,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         /**
          * {@inheritDoc}
          */
-        public Map<TypeDescription, Class<?>> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+        public Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             return dispatcher.load(classLoader, types);
         }
 
@@ -194,7 +194,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             /**
              * The protection domain to apply or {@code null} if no protection domain is set.
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
             private final ProtectionDomain protectionDomain;
 
@@ -222,7 +222,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
              * @param packageDefinitionStrategy The package definer to be used for querying information on package information.
              * @param forbidExisting            Determines if an exception should be thrown when attempting to load a type that already exists.
              */
-            private InjectionDispatcher(@Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain,
+            private InjectionDispatcher(@MaybeNull ProtectionDomain protectionDomain,
                                         PackageDefinitionStrategy packageDefinitionStrategy,
                                         boolean forbidExisting) {
                 this.protectionDomain = protectionDomain;
@@ -233,7 +233,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             /**
              * {@inheritDoc}
              */
-            public Map<TypeDescription, Class<?>> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+            public Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
                 if (classLoader == null) {
                     throw new IllegalArgumentException("Cannot inject classes into the bootstrap class loader");
                 }
@@ -292,7 +292,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             /**
              * The protection domain to apply or {@code null} if no protection domain is set.
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
             private final ProtectionDomain protectionDomain;
 
@@ -346,7 +346,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
              * @param forbidExisting            Determines if an exception should be thrown when attempting to load a type that already exists.
              * @param sealed                    {@code true} if the class loader should be sealed.
              */
-            private WrappingDispatcher(@Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain,
+            private WrappingDispatcher(@MaybeNull ProtectionDomain protectionDomain,
                                        PackageDefinitionStrategy packageDefinitionStrategy,
                                        ByteArrayClassLoader.PersistenceHandler persistenceHandler,
                                        boolean childFirst,
@@ -363,7 +363,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             /**
              * {@inheritDoc}
              */
-            public Map<TypeDescription, Class<?>> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+            public Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
                 return childFirst
                         ? ByteArrayClassLoader.ChildFirst.load(classLoader, types, protectionDomain, persistenceHandler, packageDefinitionStrategy, forbidExisting, sealed)
                         : ByteArrayClassLoader.load(classLoader, types, protectionDomain, persistenceHandler, packageDefinitionStrategy, forbidExisting, sealed);
@@ -501,7 +501,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         /**
          * {@inheritDoc}
          */
-        public Map<TypeDescription, Class<?>> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+        public Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             return classInjector.inject(types);
         }
     }
@@ -537,7 +537,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         /**
          * {@inheritDoc}
          */
-        public Map<TypeDescription, Class<?>> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+        public Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             ClassInjector classInjector = classLoader == null
                     ? ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation)
                     : new ClassInjector.UsingReflection(classLoader);
@@ -554,7 +554,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         /**
          * The protection domain to use or {@code null} if no protection domain is set.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ProtectionDomain protectionDomain;
 
@@ -570,14 +570,14 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          *
          * @param protectionDomain The protection domain to use or {@code null} if no protection domain is set.
          */
-        public ForUnsafeInjection(@Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
+        public ForUnsafeInjection(@MaybeNull ProtectionDomain protectionDomain) {
             this.protectionDomain = protectionDomain;
         }
 
         /**
          * {@inheritDoc}
          */
-        public Map<TypeDescription, Class<?>> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+        public Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             return new ClassInjector.UsingUnsafe(classLoader, protectionDomain).inject(types);
         }
     }
@@ -592,7 +592,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         /**
          * The protection domain to use or {@code null} if no protection domain is set.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ProtectionDomain protectionDomain;
 
@@ -608,14 +608,14 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          *
          * @param protectionDomain The protection domain to use or {@code null} if no protection domain is set.
          */
-        public ForJnaInjection(@Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain) {
+        public ForJnaInjection(@MaybeNull ProtectionDomain protectionDomain) {
             this.protectionDomain = protectionDomain;
         }
 
         /**
          * {@inheritDoc}
          */
-        public Map<TypeDescription, Class<?>> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+        public Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             return new ClassInjector.UsingUnsafe(classLoader, protectionDomain).inject(types);
         }
     }
@@ -635,7 +635,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         /**
          * {@inheritDoc}
          */
-        public Map<TypeDescription, Class<?>> load(@Nonnull(when = When.MAYBE) ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+        public Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             Map<TypeDescription, Class<?>> result = new LinkedHashMap<TypeDescription, Class<?>>();
             for (TypeDescription typeDescription : types.keySet()) {
                 try {

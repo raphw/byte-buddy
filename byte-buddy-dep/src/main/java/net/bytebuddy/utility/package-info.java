@@ -16,5 +16,7 @@
 /**
  * This package contains utility classes for common use within any Byte Buddy logic.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.utility;
+
+import net.bytebuddy.utility.nullability.NeverNull;

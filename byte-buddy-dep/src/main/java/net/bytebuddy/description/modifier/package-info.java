@@ -16,7 +16,7 @@
 /**
  * The modifier package contains high-level and type-safe descriptions of Java modifiers.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.description.modifier;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

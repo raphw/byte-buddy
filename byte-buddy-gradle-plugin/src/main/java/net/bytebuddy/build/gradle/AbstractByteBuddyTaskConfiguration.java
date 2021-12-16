@@ -24,8 +24,7 @@ import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.JavaCompile;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
+import net.bytebuddy.utility.nullability.MaybeNull
 
 /**
  * An abstract configuration for a Byte Buddy task and extension.
@@ -231,7 +230,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public Void call(Object... argument) {
             action.execute(taskExecutionGraph);
             return null;

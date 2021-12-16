@@ -19,7 +19,7 @@
  * This way, external users cannot emulate Byte Buddy's privilege when caller sensitive code
  * would be proxied.
  */
-@NonnullByDefault
+@NeverNull
 package net.bytebuddy.utility.dispatcher;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

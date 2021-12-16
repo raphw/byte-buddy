@@ -15,8 +15,8 @@
  */
 package net.bytebuddy.agent;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
+import net.bytebuddy.agent.nullability.MaybeNull;
+
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.security.Permission;
@@ -33,7 +33,7 @@ public class Installer {
      * of the Byte Buddy agent as this class might be loaded by a different class loader than the system class
      * loader.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private static volatile Instrumentation instrumentation;
 
     /**

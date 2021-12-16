@@ -18,7 +18,7 @@
  * reflection API, it would be required to load classes but by using these descriptions, it is possible to
  * represent byte code elements without prior loading.
  */
-@NonnullByDefault
+@NeverNull
 package net.bytebuddy.description;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

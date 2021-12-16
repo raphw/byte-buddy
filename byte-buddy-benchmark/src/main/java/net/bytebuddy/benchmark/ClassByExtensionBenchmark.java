@@ -31,8 +31,6 @@ import net.bytebuddy.pool.TypePool;
 import net.sf.cglib.proxy.*;
 import org.openjdk.jmh.annotations.*;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -88,61 +86,61 @@ public class ClassByExtensionBenchmark {
     /**
      * An implementation to be used by {@link ClassByExtensionBenchmark#benchmarkByteBuddyWithProxyAndReusedDelegator()}.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private Implementation proxyInterceptor;
 
     /**
      * An implementation to be used by {@link ClassByExtensionBenchmark#benchmarkByteBuddyWithAccessorAndReusedDelegator()}.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private Implementation accessInterceptor;
 
     /**
      * An implementation to be used by {@link ClassByExtensionBenchmark#benchmarkByteBuddyWithPrefixAndReusedDelegator()}.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private Implementation.Composable prefixInterceptor;
 
     /**
      * A description of {@link ClassByExtensionBenchmark#baseClass}.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private TypeDescription baseClassDescription;
 
     /**
      * A description of {@link ByteBuddyProxyInterceptor}.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private TypeDescription proxyClassDescription;
 
     /**
      * A description of {@link ByteBuddyAccessInterceptor}.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private TypeDescription accessClassDescription;
 
     /**
      * A description of {@link ByteBuddyPrefixInterceptor}.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private TypeDescription prefixClassDescription;
 
     /**
      * A method delegation to {@link ByteBuddyProxyInterceptor}.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private Implementation proxyInterceptorDescription;
 
     /**
      * A method delegation to {@link ByteBuddyAccessInterceptor}.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private Implementation accessInterceptorDescription;
 
     /**
      * A method delegation to {@link ByteBuddyPrefixInterceptor}.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     private Implementation.Composable prefixInterceptorDescription;
 
     /**

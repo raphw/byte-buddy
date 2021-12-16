@@ -17,7 +17,7 @@
  * This package is dedicated to creating {@link net.bytebuddy.implementation.bytecode.StackManipulation}s
  * that create collections or arrays from a given number of values.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.implementation.bytecode.collection;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

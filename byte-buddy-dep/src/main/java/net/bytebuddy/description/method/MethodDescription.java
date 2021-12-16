@@ -33,13 +33,14 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureWriter;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.security.PrivilegedAction;
@@ -78,7 +79,7 @@ public interface MethodDescription extends TypeVariableSource,
      * Represents any undefined property of a type description that is instead represented as {@code null} in order
      * to resemble the Java reflection API which returns {@code null} and is intuitive to many Java developers.
      */
-    @Nonnull(when = When.NEVER)
+    @AlwaysNull
     InDefinedShape UNDEFINED = null;
 
     /**
@@ -204,7 +205,7 @@ public interface MethodDescription extends TypeVariableSource,
      *
      * @return The method's default annotation value or {@code null} if no default value is defined for this method.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     AnnotationValue<?, ?> getDefaultValue();
 
     /**
@@ -215,7 +216,7 @@ public interface MethodDescription extends TypeVariableSource,
      * @param <T>  The type to cast the default value to.
      * @return The casted default value.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     <T> T getDefaultValue(Class<T> type);
 
     /**
@@ -280,7 +281,7 @@ public interface MethodDescription extends TypeVariableSource,
      *
      * @return This method's (annotated) receiver type.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     TypeDescription.Generic getReceiverType();
 
     /**
@@ -353,7 +354,7 @@ public interface MethodDescription extends TypeVariableSource,
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public TypeDescription.Generic getReceiverType() {
                 if (isStatic()) {
                     return TypeDescription.Generic.UNDEFINED;
@@ -432,7 +433,7 @@ public interface MethodDescription extends TypeVariableSource,
                  * @param value The {@code java.lang.reflect.Executable} to resolve.
                  * @return An instance of {@code java.lang.reflect.AnnotatedType} that represents the receiver of the supplied executable.
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 @JavaDispatcher.Defaults
                 AnnotatedElement getAnnotatedReceiverType(Object value);
             }
@@ -530,7 +531,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public String getGenericSignature() {
             try {
                 SignatureWriter signatureWriter = new SignatureWriter();
@@ -646,7 +647,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public <T> T getDefaultValue(Class<T> type) {
             return type.cast(getDefaultValue());
         }
@@ -850,7 +851,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public TypeVariableSource getEnclosingSource() {
             return isStatic()
                     ? TypeVariableSource.UNDEFINED
@@ -937,7 +938,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public boolean equals(@CheckForNull Object other) {
+        public boolean equals(@MaybeNull Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof MethodDescription)) {
@@ -1139,7 +1140,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @AlwaysNull
         public AnnotationValue<?, ?> getDefaultValue() {
             return AnnotationValue.UNDEFINED;
         }
@@ -1308,7 +1309,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public AnnotationValue<?, ?> getDefaultValue() {
             Object value = executable.getDefaultValue();
             return value == null
@@ -1384,13 +1385,13 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * The default value of this method or {@code null} if no default annotation value is defined.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         private final AnnotationValue<?, ?> defaultValue;
 
         /**
          * The receiver type of this method or {@code null} if the receiver type is defined implicitly.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         private final TypeDescription.Generic receiverType;
 
         /**
@@ -1434,8 +1435,8 @@ public interface MethodDescription extends TypeVariableSource,
                       List<? extends ParameterDescription.Token> parameterTokens,
                       List<? extends TypeDescription.Generic> exceptionTypes,
                       List<? extends AnnotationDescription> declaredAnnotations,
-                      @Nonnull(when = When.MAYBE) AnnotationValue<?, ?> defaultValue,
-                      @Nonnull(when = When.MAYBE) TypeDescription.Generic receiverType) {
+                      @MaybeNull AnnotationValue<?, ?> defaultValue,
+                      @MaybeNull TypeDescription.Generic receiverType) {
             this.declaringType = declaringType;
             this.internalName = internalName;
             this.modifiers = modifiers;
@@ -1508,7 +1509,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public AnnotationValue<?, ?> getDefaultValue() {
             return defaultValue;
         }
@@ -1516,7 +1517,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public TypeDescription.Generic getReceiverType() {
             return receiverType == null
                     ? super.getReceiverType()
@@ -1566,7 +1567,7 @@ public interface MethodDescription extends TypeVariableSource,
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @AlwaysNull
             public AnnotationValue<?, ?> getDefaultValue() {
                 return AnnotationValue.UNDEFINED;
             }
@@ -1675,7 +1676,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public AnnotationValue<?, ?> getDefaultValue() {
             return methodDescription.getDefaultValue();
         }
@@ -1791,13 +1792,13 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * The default value of the represented method or {@code null} if no such value exists.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         private final AnnotationValue<?, ?> defaultValue;
 
         /**
          * The receiver type of the represented method or {@code null} if the receiver type is implicit.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         private final TypeDescription.Generic receiverType;
 
         /**
@@ -1862,8 +1863,8 @@ public interface MethodDescription extends TypeVariableSource,
                      List<? extends ParameterDescription.Token> parameterTokens,
                      List<? extends TypeDescription.Generic> exceptionTypes,
                      List<? extends AnnotationDescription> annotations,
-                     @Nonnull(when = When.MAYBE) AnnotationValue<?, ?> defaultValue,
-                     @Nonnull(when = When.MAYBE) TypeDescription.Generic receiverType) {
+                     @MaybeNull AnnotationValue<?, ?> defaultValue,
+                     @MaybeNull TypeDescription.Generic receiverType) {
             this.name = name;
             this.modifiers = modifiers;
             this.typeVariableTokens = typeVariableTokens;
@@ -1943,7 +1944,7 @@ public interface MethodDescription extends TypeVariableSource,
          *
          * @return The default value of the represented method or {@code null} if no such value exists.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public AnnotationValue<?, ?> getDefaultValue() {
             return defaultValue;
         }
@@ -1953,7 +1954,7 @@ public interface MethodDescription extends TypeVariableSource,
          *
          * @return The receiver type of this token or {@code null} if the receiver type is implicit.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public TypeDescription.Generic getReceiverType() {
             return receiverType;
         }
@@ -2006,7 +2007,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public boolean equals(@CheckForNull Object other) {
+        public boolean equals(@MaybeNull Object other) {
             if (this == other) {
                 return true;
             } else if (other == null || getClass() != other.getClass()) {
@@ -2144,7 +2145,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public boolean equals(@CheckForNull Object other) {
+        public boolean equals(@MaybeNull Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof SignatureToken)) {
@@ -2226,7 +2227,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public boolean equals(@CheckForNull Object other) {
+        public boolean equals(@MaybeNull Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof TypeToken)) {

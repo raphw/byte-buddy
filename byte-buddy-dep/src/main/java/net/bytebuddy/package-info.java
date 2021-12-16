@@ -28,7 +28,7 @@
  * creates a subclass of the {@link java.lang.Object} class which implements the {@link java.io.Serializable}
  * interface. The {@link java.lang.Object#toString()} method is overridden to return {@code Hello World!}.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

@@ -16,9 +16,9 @@
 package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.AllPermission;
@@ -42,7 +42,7 @@ public interface ClassFilePostProcessor {
      * @param binaryRepresentation The binary representation of the class file.
      * @return The class file to use.
      */
-    byte[] transform(@Nonnull(when = When.MAYBE) ClassLoader classLoader, String name, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain, byte[] binaryRepresentation);
+    byte[] transform(@MaybeNull ClassLoader classLoader, String name, @MaybeNull ProtectionDomain protectionDomain, byte[] binaryRepresentation);
 
     /**
      * A non-operation class file post processor.
@@ -57,7 +57,7 @@ public interface ClassFilePostProcessor {
         /**
          * {@inheritDoc}
          */
-        public byte[] transform(@Nonnull(when = When.MAYBE) ClassLoader classLoader, String name, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
+        public byte[] transform(@MaybeNull ClassLoader classLoader, String name, @MaybeNull ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
             return binaryRepresentation;
         }
     }
@@ -76,7 +76,7 @@ public interface ClassFilePostProcessor {
         /**
          * Indicates that a class is not currently loaded.
          */
-        @Nonnull(when = When.NEVER)
+        @AlwaysNull
         private static final Class<?> UNLOADED_TYPE = null;
 
         /**
@@ -96,7 +96,7 @@ public interface ClassFilePostProcessor {
         /**
          * {@inheritDoc}
          */
-        public byte[] transform(@Nonnull(when = When.MAYBE) ClassLoader classLoader, String name, @Nonnull(when = When.MAYBE) ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
+        public byte[] transform(@MaybeNull ClassLoader classLoader, String name, @MaybeNull ProtectionDomain protectionDomain, byte[] binaryRepresentation) {
             try {
                 byte[] transformed = classFileTransformer.transform(classLoader, name.replace('.', '/'),
                         UNLOADED_TYPE,

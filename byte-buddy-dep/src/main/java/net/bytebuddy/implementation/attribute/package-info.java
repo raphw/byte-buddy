@@ -18,7 +18,7 @@
  * i.e. fields, types and byte code methods. A common Java attribute is a Java annotation which are represented by
  * the {@link java.lang.annotation.Annotation} interface.
  */
-@NonnullByDefault
+@NeverNull
 package net.bytebuddy.implementation.attribute;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

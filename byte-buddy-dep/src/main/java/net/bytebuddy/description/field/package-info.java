@@ -16,7 +16,7 @@
 /**
  * Contains descriptions of Java fields.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.description.field;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

@@ -24,8 +24,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import org.objectweb.asm.*;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.reflect.Array;
 import java.util.List;
 
@@ -37,7 +35,7 @@ public interface AnnotationAppender {
     /**
      * A constant for informing ASM over ignoring a given name.
      */
-    @Nonnull(when = When.NEVER)
+    @AlwaysNull
     String NO_NAME = null;
 
     /**
@@ -72,7 +70,7 @@ public interface AnnotationAppender {
          * @param visible                  {@code true} if the annotation is to be visible at runtime.
          * @return An annotation visitor for consuming the specified annotation.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible);
 
         /**
@@ -84,7 +82,7 @@ public interface AnnotationAppender {
          * @param typePath                 The type annotation's type path.
          * @return An annotation visitor for consuming the specified annotation.
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath);
 
         /**
@@ -110,7 +108,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return classVisitor.visitAnnotation(annotationTypeDescriptor, visible);
             }
@@ -118,7 +116,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return classVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
@@ -147,7 +145,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return fieldVisitor.visitAnnotation(annotationTypeDescriptor, visible);
             }
@@ -155,7 +153,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return fieldVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
@@ -184,7 +182,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return methodVisitor.visitAnnotation(annotationTypeDescriptor, visible);
             }
@@ -192,7 +190,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return methodVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
@@ -228,7 +226,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return methodVisitor.visitParameterAnnotation(parameterIndex, annotationTypeDescriptor, visible);
             }
@@ -236,7 +234,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return methodVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
@@ -265,7 +263,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return recordComponentVisitor.visitAnnotation(annotationTypeDescriptor, visible);
             }
@@ -273,7 +271,7 @@ public interface AnnotationAppender {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return recordComponentVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
@@ -325,7 +323,7 @@ public interface AnnotationAppender {
          * @param name              The name of the annotation type or {@code null} if no name is available..
          * @param value             The annotation's value.
          */
-        public static void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, @Nonnull(when = When.MAYBE) String name, Object value) {
+        public static void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, @MaybeNull String name, Object value) {
             if (valueType.isArray()) { // The Android emulator reads annotation arrays as annotation types. Therefore, this check needs to come first.
                 AnnotationVisitor arrayVisitor = annotationVisitor.visitArray(name);
                 int length = Array.getLength(value);

@@ -19,9 +19,9 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
@@ -57,7 +57,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
      * @param <T>            The annotation type.
      * @return The annotation description or {@code null} if no such annotation was found.
      */
-    @Nonnull(when = When.MAYBE)
+    @MaybeNull
     <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType);
 
     /**
@@ -125,7 +125,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
             for (AnnotationDescription annotation : this) {
                 if (annotation.getAnnotationType().represents(annotationType)) {
@@ -138,7 +138,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public AnnotationDescription ofType(TypeDescription annotationType) {
             for (AnnotationDescription annotation : this) {
                 if (annotation.getAnnotationType().equals(annotationType)) {
@@ -342,7 +342,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        @Nonnull(when = When.NEVER)
+        @AlwaysNull
         public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
             return (AnnotationDescription.Loadable<T>) AnnotationDescription.UNDEFINED;
         }
@@ -350,7 +350,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.NEVER)
+        @AlwaysNull
         public AnnotationDescription ofType(TypeDescription annotationType) {
             return AnnotationDescription.UNDEFINED;
         }

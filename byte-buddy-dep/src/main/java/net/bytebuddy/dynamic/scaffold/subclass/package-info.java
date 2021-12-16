@@ -17,7 +17,7 @@
  * All classes and types in this package are related to creating a {@link net.bytebuddy.dynamic.DynamicType} by
  * creating a subclass of a given type.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.dynamic.scaffold.subclass;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

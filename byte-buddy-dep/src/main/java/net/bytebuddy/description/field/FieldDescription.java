@@ -25,12 +25,13 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.signature.SignatureWriter;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Modifier;
@@ -50,7 +51,7 @@ public interface FieldDescription extends ByteCodeElement,
     /**
      * A representative of a field's non-set default value.
      */
-    @Nonnull(when = When.NEVER)
+    @AlwaysNull
     Object NO_DEFAULT_VALUE = null;
 
     /**
@@ -141,7 +142,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * {@inheritDoc}
          */
-        @Nonnull(when = When.MAYBE)
+        @MaybeNull
         public String getGenericSignature() {
             TypeDescription.Generic fieldType = getType();
             try {
@@ -212,7 +213,7 @@ public interface FieldDescription extends ByteCodeElement,
 
         @Override
         @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
-        public boolean equals(@CheckForNull Object other) {
+        public boolean equals(@MaybeNull Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof FieldDescription)) {
@@ -616,7 +617,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public boolean equals(@CheckForNull Object other) {
+        public boolean equals(@MaybeNull Object other) {
             if (this == other) {
                 return true;
             } else if (other == null || getClass() != other.getClass()) {
@@ -683,7 +684,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public boolean equals(@CheckForNull Object other) {
+        public boolean equals(@MaybeNull Object other) {
             if (this == other) {
                 return true;
             } else if (!(other instanceof SignatureToken)) {

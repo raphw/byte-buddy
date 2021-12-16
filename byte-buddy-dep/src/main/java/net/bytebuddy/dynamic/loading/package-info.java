@@ -17,7 +17,7 @@
  * This package contains classes that are responsible for class loading of classes that are represented by
  * {@code byte} arrays.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.dynamic.loading;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

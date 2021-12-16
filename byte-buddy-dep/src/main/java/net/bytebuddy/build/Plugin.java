@@ -28,10 +28,10 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.FileSystem;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.io.*;
 import java.lang.annotation.*;
 import java.lang.reflect.Constructor;
@@ -470,7 +470,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      *
                      * @return The resolved argument if the resolution was successful.
                      */
-                    @Nonnull(when = When.MAYBE)
+                    @MaybeNull
                     Object getArgument();
 
                     /**
@@ -507,7 +507,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         /**
                          * The resolved argument which might be {@code null}.
                          */
-                        @Nonnull(when = When.MAYBE)
+                        @MaybeNull
                         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                         private final Object argument;
 
@@ -516,7 +516,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                          *
                          * @param argument The resolved argument which might be {@code null}.
                          */
-                        public Resolved(@Nonnull(when = When.MAYBE) Object argument) {
+                        public Resolved(@MaybeNull Object argument) {
                             this.argument = argument;
                         }
 
@@ -530,7 +530,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         /**
                          * {@inheritDoc}
                          */
-                        @Nonnull(when = When.MAYBE)
+                        @MaybeNull
                         public Object getArgument() {
                             return argument;
                         }
@@ -640,7 +640,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * The value to resolve for the represented index.
                      */
-                    @Nonnull(when = When.MAYBE)
+                    @MaybeNull
                     @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                     private final Object value;
 
@@ -650,7 +650,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      * @param index The index of the parameter to resolve.
                      * @param value The value to resolve for the represented index.
                      */
-                    public ForIndex(int index, @Nonnull(when = When.MAYBE) Object value) {
+                    public ForIndex(int index, @MaybeNull Object value) {
                         this.index = index;
                         this.value = value;
                     }
@@ -688,7 +688,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         /**
                          * A string representation of the supplied value.
                          */
-                        @Nonnull(when = When.MAYBE)
+                        @MaybeNull
                         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                         private final String value;
 
@@ -698,7 +698,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                          * @param index The index of the parameter to resolve.
                          * @param value A string representation of the supplied value.
                          */
-                        public WithDynamicType(int index, @Nonnull(when = When.MAYBE) String value) {
+                        public WithDynamicType(int index, @MaybeNull String value) {
                             this.index = index;
                             this.value = value;
                         }
@@ -1125,7 +1125,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
              *
              * @param manifest The located manifest or {@code null} if no manifest was found.
              */
-            void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest);
+            void onManifest(@MaybeNull Manifest manifest);
 
             /**
              * Invoked if a resource that is not a class file is discovered.
@@ -1293,7 +1293,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 MANIFEST_REQUIRED {
                     @Override
-                    public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
+                    public void onManifest(@MaybeNull Manifest manifest) {
                         if (manifest == null) {
                             throw new IllegalStateException("Required a manifest but no manifest was found");
                         }
@@ -1345,7 +1345,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
+                public void onManifest(@MaybeNull Manifest manifest) {
                     /* do nothing */
                 }
 
@@ -1450,7 +1450,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
+                public void onManifest(@MaybeNull Manifest manifest) {
                     for (ErrorHandler errorHandler : errorHandlers) {
                         errorHandler.onManifest(manifest);
                     }
@@ -1617,7 +1617,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
+                public void onManifest(@MaybeNull Manifest manifest) {
                     /* do nothing */
                 }
 
@@ -1721,7 +1721,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
+                public void onManifest(@MaybeNull Manifest manifest) {
                     /* do nothing */
                 }
 
@@ -1859,7 +1859,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
+                public void onManifest(@MaybeNull Manifest manifest) {
                     printStream.printf(PREFIX + " MANIFEST %b", manifest != null);
                 }
 
@@ -2014,7 +2014,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 }
 
                 @Override
-                public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
+                public void onManifest(@MaybeNull Manifest manifest) {
                     errorHandler.onManifest(manifest);
                 }
 
@@ -2171,7 +2171,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public void onManifest(@Nonnull(when = When.MAYBE) Manifest manifest) {
+                public void onManifest(@MaybeNull Manifest manifest) {
                     for (Listener listener : listeners) {
                         listener.onManifest(manifest);
                     }
@@ -2209,7 +2209,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * Indicates that no manifest exists.
                  */
-                @Nonnull(when = When.NEVER)
+                @AlwaysNull
                 Manifest NO_MANIFEST = null;
 
                 /**
@@ -2218,7 +2218,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * @return This source's manifest or {@code null}.
                  * @throws IOException If an I/O error occurs.
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 Manifest getManifest() throws IOException;
 
                 /**
@@ -2251,7 +2251,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nonnull(when = When.MAYBE)
+                    @MaybeNull
                     public Manifest getManifest() throws IOException {
                         return file.getManifest();
                     }
@@ -2366,7 +2366,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nonnull(when = When.MAYBE)
+                    @MaybeNull
                     public Manifest getManifest() throws IOException {
                         return manifest ? delegate.getManifest() : NO_MANIFEST;
                     }
@@ -2410,7 +2410,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         /**
                          * The current element or {@code null} if no further elements are available.
                          */
-                        @Nonnull(when = When.MAYBE)
+                        @MaybeNull
                         private Element current;
 
                         /**
@@ -2499,7 +2499,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * @param <T>  The requested spezialized type.
                  * @return The resolved element or {@code null} if a transformation is impossible.
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 <T> T resolveAs(Class<T> type);
 
                 /**
@@ -2547,7 +2547,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nonnull(when = When.NEVER)
+                    @AlwaysNull
                     public <T> T resolveAs(Class<T> type) {
                         return null;
                     }
@@ -2597,7 +2597,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nonnull(when = When.MAYBE)
+                    @MaybeNull
                     @SuppressWarnings("unchecked")
                     public <T> T resolveAs(Class<T> type) {
                         return File.class.isAssignableFrom(type)
@@ -2650,7 +2650,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
-                    @Nonnull(when = When.MAYBE)
+                    @MaybeNull
                     @SuppressWarnings("unchecked")
                     public <T> T resolveAs(Class<T> type) {
                         return JarEntry.class.isAssignableFrom(type)
@@ -2687,7 +2687,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 public Manifest getManifest() {
                     return NO_MANIFEST;
                 }
@@ -2782,7 +2782,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 public Manifest getManifest() throws IOException {
                     byte[] binaryRepresentation = storage.get(JarFile.MANIFEST_NAME);
                     if (binaryRepresentation == null) {
@@ -2888,7 +2888,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                @Nonnull(when = When.MAYBE)
+                @MaybeNull
                 public Manifest getManifest() throws IOException {
                     File file = new File(folder, JarFile.MANIFEST_NAME);
                     if (file.exists()) {
@@ -3071,7 +3071,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
              * @return The sink to write to.
              * @throws IOException If an I/O error occurs.
              */
-            Sink write(@Nonnull(when = When.MAYBE) Manifest manifest) throws IOException;
+            Sink write(@MaybeNull Manifest manifest) throws IOException;
 
             /**
              * A sink represents an active writing process.
@@ -3167,7 +3167,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public Sink write(@Nonnull(when = When.MAYBE) Manifest manifest) {
+                public Sink write(@MaybeNull Manifest manifest) {
                     return this;
                 }
 
@@ -3223,7 +3223,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public Sink write(@Nonnull(when = When.MAYBE) Manifest manifest) throws IOException {
+                public Sink write(@MaybeNull Manifest manifest) throws IOException {
                     if (manifest != null) {
                         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                         try {
@@ -3327,7 +3327,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public Sink write(@Nonnull(when = When.MAYBE) Manifest manifest) throws IOException {
+                public Sink write(@MaybeNull Manifest manifest) throws IOException {
                     if (manifest != null) {
                         File target = new File(folder, JarFile.MANIFEST_NAME);
                         if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
@@ -3425,7 +3425,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public Sink write(@Nonnull(when = When.MAYBE) Manifest manifest) throws IOException {
+                public Sink write(@MaybeNull Manifest manifest) throws IOException {
                     return manifest == null
                             ? new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file)))
                             : new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file), manifest));
@@ -4097,7 +4097,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             }
 
             @Override
-            public boolean equals(@CheckForNull Object other) {
+            public boolean equals(@MaybeNull Object other) {
                 if (this == other) {
                     return true;
                 } else if (other == null || getClass() != other.getClass()) {
@@ -4745,7 +4745,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@CheckForNull TypeDescription target) {
+        public boolean matches(@MaybeNull TypeDescription target) {
             return false;
         }
 
@@ -4787,7 +4787,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@CheckForNull TypeDescription target) {
+        public boolean matches(@MaybeNull TypeDescription target) {
             return matcher.matches(target);
         }
     }

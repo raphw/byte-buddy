@@ -27,9 +27,9 @@ import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
 import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -443,7 +443,7 @@ public interface Transformer<T> {
             /**
              * {@inheritDoc}
              */
-            @Nonnull(when = When.MAYBE)
+            @MaybeNull
             public AnnotationValue<?, ?> getDefaultValue() {
                 return token.getDefaultValue();
             }
