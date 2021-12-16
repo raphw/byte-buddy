@@ -29,7 +29,6 @@ import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.signature.SignatureWriter;
 
-import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.GenericSignatureFormatError;

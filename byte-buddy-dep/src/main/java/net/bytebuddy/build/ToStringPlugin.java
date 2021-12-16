@@ -24,8 +24,8 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.ToStringMethod;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
-import javax.annotation.CheckForNull;
 import java.lang.annotation.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;

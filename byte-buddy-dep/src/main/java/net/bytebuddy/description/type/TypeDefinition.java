@@ -25,8 +25,6 @@ import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.lang.reflect.*;
 import java.security.PrivilegedAction;
 import java.util.Iterator;

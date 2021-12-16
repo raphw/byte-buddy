@@ -19,7 +19,7 @@ import net.bytebuddy.build.Plugin;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
-import net.bytebuddy.utility.nullability.MaybeNull
+import net.bytebuddy.utility.nullability.MaybeNull;
 import java.io.Serializable;
 
 /**

@@ -31,7 +31,6 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import javax.annotation.CheckForNull;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;

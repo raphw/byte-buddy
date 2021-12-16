@@ -16,6 +16,7 @@
 package net.bytebuddy.benchmark;
 
 import net.bytebuddy.benchmark.specimen.ExampleInterface;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 

@@ -15,6 +15,8 @@
  */
 package net.bytebuddy.benchmark.specimen;
 
+import net.bytebuddy.utility.nullability.MaybeNull;
+
 /**
  * An example interface with several methods which is used as a specimen in benchmarks.
  */

@@ -16,7 +16,7 @@
 /**
  * This package is dedicated to supporting Byte Buddy on Android devices.
  */
-@NeverNull
+@NeverNull.ByDefault
 package net.bytebuddy.android;
 
 import net.bytebuddy.utility.nullability.NeverNull;

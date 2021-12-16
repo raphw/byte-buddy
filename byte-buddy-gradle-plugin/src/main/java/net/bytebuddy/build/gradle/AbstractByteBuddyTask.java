@@ -31,7 +31,7 @@ import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 import org.gradle.util.ConfigureUtil;
 
-import net.bytebuddy.utility.nullability.MaybeNull
+import net.bytebuddy.utility.nullability.MaybeNull;
 import java.io.*;
 import java.net.URL;
 import java.util.*;

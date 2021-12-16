@@ -67,10 +67,10 @@ import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
+import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.*;
 
-import javax.annotation.CheckForNull;
 import java.io.*;
 import java.lang.instrument.*;
 import java.lang.ref.WeakReference;

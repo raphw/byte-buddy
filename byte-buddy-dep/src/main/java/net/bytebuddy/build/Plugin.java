@@ -31,7 +31,6 @@ import net.bytebuddy.utility.FileSystem;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 
-import javax.annotation.CheckForNull;
 import java.io.*;
 import java.lang.annotation.*;
 import java.lang.reflect.Constructor;

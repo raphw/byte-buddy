@@ -18,8 +18,8 @@ package net.bytebuddy.description.enumeration;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
-import javax.annotation.CheckForNull;
 import java.util.ArrayList;
 import java.util.List;
 

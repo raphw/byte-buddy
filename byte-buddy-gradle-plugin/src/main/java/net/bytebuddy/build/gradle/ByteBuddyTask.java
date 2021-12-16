@@ -22,7 +22,7 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
-import net.bytebuddy.utility.nullability.MaybeNull
+import net.bytebuddy.utility.nullability.MaybeNull;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;

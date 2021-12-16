@@ -20,7 +20,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.execution.TaskExecutionGraph;
 
-import net.bytebuddy.utility.nullability.MaybeNull
+import net.bytebuddy.utility.nullability.MaybeNull;
 import java.util.*;
 
 /**

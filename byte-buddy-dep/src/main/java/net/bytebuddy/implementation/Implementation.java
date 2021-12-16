@@ -49,7 +49,6 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.util.*;
 

@@ -22,7 +22,6 @@ import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.nullability.MaybeNull;
 
-import javax.annotation.CheckForNull;
 import java.util.Arrays;
 import java.util.List;
 

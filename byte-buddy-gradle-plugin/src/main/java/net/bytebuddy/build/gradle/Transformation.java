@@ -20,7 +20,7 @@ import net.bytebuddy.build.Plugin;
 import org.gradle.api.tasks.Input;
 import org.gradle.util.ConfigureUtil;
 
-import net.bytebuddy.utility.nullability.MaybeNull
+import net.bytebuddy.utility.nullability.MaybeNull;
 import java.util.ArrayList;
 import java.util.List;
 

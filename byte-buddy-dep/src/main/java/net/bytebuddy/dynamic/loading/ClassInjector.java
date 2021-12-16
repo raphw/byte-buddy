@@ -39,8 +39,6 @@ import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
 import net.bytebuddy.utility.privilege.GetMethodAction;
 
-import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

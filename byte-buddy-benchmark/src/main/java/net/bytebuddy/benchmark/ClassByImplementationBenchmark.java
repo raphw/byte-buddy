@@ -25,6 +25,8 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import net.sf.cglib.proxy.CallbackHelper;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.FixedValue;
@@ -257,7 +259,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @MaybeNull
+            @AlwaysNull
             public Object method(Object arg) {
                 return null;
             }
@@ -265,7 +267,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @MaybeNull
+            @AlwaysNull
             public boolean[] method(boolean arg1, boolean arg2, boolean arg3) {
                 return null;
             }
@@ -273,7 +275,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @MaybeNull
+            @AlwaysNull
             public byte[] method(byte arg1, byte arg2, byte arg3) {
                 return null;
             }
@@ -281,7 +283,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @MaybeNull
+            @AlwaysNull
             public short[] method(short arg1, short arg2, short arg3) {
                 return null;
             }
@@ -289,7 +291,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @MaybeNull
+            @AlwaysNull
             public int[] method(int arg1, int arg2, int arg3) {
                 return null;
             }
@@ -297,7 +299,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @MaybeNull
+            @AlwaysNull
             public char[] method(char arg1, char arg2, char arg3) {
                 return null;
             }
@@ -305,7 +307,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @MaybeNull
+            @AlwaysNull
             public long[] method(long arg1, long arg2, long arg3) {
                 return null;
             }
@@ -313,7 +315,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @MaybeNull
+            @AlwaysNull
             public float[] method(float arg1, float arg2, float arg3) {
                 return null;
             }
@@ -321,7 +323,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @MaybeNull
+            @AlwaysNull
             public double[] method(double arg1, double arg2, double arg3) {
                 return null;
             }
@@ -329,7 +331,7 @@ public class ClassByImplementationBenchmark {
             /**
              * {@inheritDoc}
              */
-            @MaybeNull
+            @AlwaysNull
             public Object[] method(Object arg1, Object arg2, Object arg3) {
                 return null;
             }

@@ -16,7 +16,7 @@
 /**
  * A package containing benchmarks for Byte Buddy and other code generation libraries.
  */
-@NeverNull
+@NeverNull.ByDefault
 package net.bytebuddy.benchmark;
 
 import net.bytebuddy.utility.nullability.NeverNull;

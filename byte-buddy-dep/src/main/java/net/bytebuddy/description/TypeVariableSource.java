@@ -18,6 +18,8 @@ package net.bytebuddy.description;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 

@@ -23,7 +23,7 @@ import org.gradle.api.Task;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.util.ConfigureUtil;
 
-import net.bytebuddy.utility.nullability.MaybeNull
+import net.bytebuddy.utility.nullability.MaybeNull;
 import java.util.ArrayList;
 import java.util.List;
 

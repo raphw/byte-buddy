@@ -15,7 +15,9 @@
  */
 package net.bytebuddy.dynamic;
 
-import javax.annotation.CheckForNull;
+import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
+
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;

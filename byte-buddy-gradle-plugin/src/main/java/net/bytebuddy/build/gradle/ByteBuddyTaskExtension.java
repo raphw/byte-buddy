@@ -15,7 +15,7 @@
  */
 package net.bytebuddy.build.gradle;
 
-import net.bytebuddy.utility.nullability.MaybeNull
+import net.bytebuddy.utility.nullability.MaybeNull;
 
 /**
  * A Byte Buddy task extension.

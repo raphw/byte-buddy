@@ -16,7 +16,7 @@
 /**
  * A package containing classes for applying Byte Buddy transformers within a Gradle build.
  */
-@NonnullByDefault
+@NeverNull.ByDefault
 package net.bytebuddy.build.gradle;
 
-import net.bytebuddy.utility.NonnullByDefault;
+import net.bytebuddy.utility.nullability.NeverNull;

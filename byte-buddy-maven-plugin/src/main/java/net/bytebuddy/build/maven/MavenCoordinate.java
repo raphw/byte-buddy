@@ -15,10 +15,9 @@
  */
 package net.bytebuddy.build.maven;
 
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
-
-import javax.annotation.CheckForNull;
 
 /**
  * A Maven coordinate.

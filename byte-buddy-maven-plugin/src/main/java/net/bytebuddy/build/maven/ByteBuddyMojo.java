@@ -40,7 +40,6 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
-import javax.annotation.CheckForNull;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;

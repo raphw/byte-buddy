@@ -19,9 +19,8 @@ import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.utility.nullability.AlwaysNull;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.Opcodes;
-
-import javax.annotation.CheckForNull;
 
 /**
  * A package description represents a Java package.

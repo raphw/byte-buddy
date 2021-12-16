@@ -30,7 +30,6 @@ import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
-import javax.annotation.CheckForNull;
 import java.lang.annotation.*;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;

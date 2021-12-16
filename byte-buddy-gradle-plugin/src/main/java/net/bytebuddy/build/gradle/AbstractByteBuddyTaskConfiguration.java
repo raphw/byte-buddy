@@ -24,7 +24,7 @@ import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.JavaCompile;
 
-import net.bytebuddy.utility.nullability.MaybeNull
+import net.bytebuddy.utility.nullability.MaybeNull;
 
 /**
  * An abstract configuration for a Byte Buddy task and extension.

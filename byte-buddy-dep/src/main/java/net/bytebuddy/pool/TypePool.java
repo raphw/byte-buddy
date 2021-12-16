@@ -44,9 +44,7 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 
-import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import javax.annotation.meta.When;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.ref.SoftReference;
