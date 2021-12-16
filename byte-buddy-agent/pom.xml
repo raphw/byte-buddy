@@ -15,7 +15,7 @@
         <bytebuddy.agent>net.bytebuddy.agent.Installer</bytebuddy.agent>
         <attach.package.sun>com.sun.tools.attach</attach.package.sun>
         <attach.package.ibm>com.ibm.tools.attach</attach.package.ibm>
-        <packages.list>net.bytebuddy.agent</packages.list>
+        <packages.list>net.bytebuddy.agent,net.bytebuddy.agent.nullability</packages.list>
         <native.compiler.32>i686-w64-mingw32-gcc</native.compiler.32>
         <native.compiler.64>x86_64-w64-mingw32-gcc</native.compiler.64>
     </properties>

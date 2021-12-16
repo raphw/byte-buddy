@@ -61,6 +61,7 @@
             net.bytebuddy.matcher,
             net.bytebuddy.pool,
             net.bytebuddy.utility,
+            net.bytebuddy.utility.nullability,
             net.bytebuddy.utility.privilege,
             net.bytebuddy.utility.visitor,
             ${shade.target},
