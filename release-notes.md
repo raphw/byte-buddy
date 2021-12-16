@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 16. December 2021: version 1.12.5
+
+- Add alias annotations to avoid compilation warnings for optional findbugs dependency.
+- Adjust `HashCodeEqualsPlugin` to allow for inclusion of custom annotation type on equals method parameter.
+
 ### 15. December 2021: version 1.12.4
 
 - Make paths in Gradle plugin relative and therewith cachable.
