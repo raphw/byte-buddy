@@ -147,19 +147,13 @@
             <version>${version.utility.findbugs}</version>
             <scope>provided</scope>
         </dependency>
+        <!-- Allow for marking nullability of values.-->
         <dependency>
-            <groupId>com.github.spotbugs</groupId>
-            <artifactId>spotbugs-annotations</artifactId>
-            <version>4.5.2</version>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>${version.utility.jsr305}</version>
             <scope>provided</scope>
         </dependency>
-        <!-- Allow for marking nullability of values.-->
-<!--        <dependency>-->
-<!--            <groupId>com.google.code.findbugs</groupId>-->
-<!--            <artifactId>jsr305</artifactId>-->
-<!--            <version>${version.utility.jsr305}</version>-->
-<!--            <scope>provided</scope>-->
-<!--        </dependency>-->
     </dependencies>
 
     <build>
