@@ -141,7 +141,7 @@ public interface ElementMatcher<T> {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(@MaybeNull W target) {
+            public boolean matches(@UnknownNull W target) {
                 for (ElementMatcher<? super W> matcher : matchers) {
                     if (!matcher.matches(target)) {
                         return false;
@@ -209,7 +209,7 @@ public interface ElementMatcher<T> {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(@MaybeNull W target) {
+            public boolean matches(@UnknownNull W target) {
                 for (ElementMatcher<? super W> matcher : matchers) {
                     if (matcher.matches(target)) {
                         return true;
