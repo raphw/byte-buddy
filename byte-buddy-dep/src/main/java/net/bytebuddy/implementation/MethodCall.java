@@ -43,6 +43,7 @@ import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -1822,7 +1823,7 @@ public class MethodCall implements Implementation.Composable {
              * @param value The value to load as an argument or {@code null}.
              * @return An appropriate argument loader.
              */
-            public static ArgumentLoader.Factory of(Object value) {
+            public static ArgumentLoader.Factory of(@MaybeNull Object value) {
                 if (value == null) {
                     return ForNullConstant.INSTANCE;
                 } else if (value instanceof Boolean) {

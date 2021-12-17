@@ -684,7 +684,7 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * {@inheritDoc}
          */
-        public Composable setsValue(Object value) {
+        public Composable setsValue(@MaybeNull Object value) {
             if (value == null) {
                 return setsDefaultValue();
             }

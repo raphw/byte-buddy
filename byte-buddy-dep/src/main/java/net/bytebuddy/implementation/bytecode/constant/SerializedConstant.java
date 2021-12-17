@@ -23,6 +23,7 @@ import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.TypeCreation;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.MethodVisitor;
 
 import java.io.*;
@@ -58,7 +59,7 @@ public class SerializedConstant extends StackManipulation.AbstractBase {
      * @param value The value to serialize.
      * @return A stack manipulation to serialize the supplied value.
      */
-    public static StackManipulation of(Serializable value) {
+    public static StackManipulation of(@MaybeNull Serializable value) {
         if (value == null) {
             return NullConstant.INSTANCE;
         }
