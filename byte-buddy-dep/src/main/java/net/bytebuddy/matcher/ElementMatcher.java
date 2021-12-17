@@ -17,6 +17,7 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import net.bytebuddy.utility.nullability.UnknownNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +39,7 @@ public interface ElementMatcher<T> {
      * @param target The instance to be matched or {@code null}.
      * @return {@code true} if the given element is matched by this matcher or {@code false} otherwise.
      */
-    boolean matches(@MaybeNull T target);
+    boolean matches(@UnknownNull T target);
 
     /**
      * A junctions allows to chain different {@link net.bytebuddy.matcher.ElementMatcher}s in a readable manner.
