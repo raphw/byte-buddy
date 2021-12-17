@@ -56,7 +56,7 @@ public class SerializedConstant extends StackManipulation.AbstractBase {
     /**
      * Creates a new stack manipulation to load the supplied value onto the stack.
      *
-     * @param value The value to serialize.
+     * @param value The value to serialize or {@code null}.
      * @return A stack manipulation to serialize the supplied value.
      */
     public static StackManipulation of(@MaybeNull Serializable value) {
