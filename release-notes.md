@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 20. December 2021: version 1.12.6
+
+- Mark argument for `equals` method as `@MaybeNull`.
+- Mark argument for `ElementMatcher` as `@UnknownNull`.
+
 ### 16. December 2021: version 1.12.5
 
 - Add alias annotations to avoid compilation warnings for optional findbugs dependency.
