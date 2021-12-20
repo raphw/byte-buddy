@@ -8,11 +8,12 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.EqualsMethod;
-import net.bytebuddy.utility.nullability.MaybeNull;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
 import java.util.Comparator;
 
@@ -209,15 +210,15 @@ public class HashCodeAndEqualsPluginTest {
     }
 
     @Test
-    public void testPluginEnhanceJsr305() throws Exception {
-        Class<?> type = new HashCodeAndEqualsPlugin(MaybeNull.class.getName())
+    public void testPluginEnhanceWithAnnotation() throws Exception {
+        Class<?> type = new HashCodeAndEqualsPlugin(SampleAnnotation.class.getName())
                 .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class), ClassFileLocator.ForClassLoader.of(SimpleSample.class.getClassLoader()))
                 .make()
-                .load(MaybeNull.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .load(SampleAnnotation.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         Method method = type.getMethod("equals", Object.class);
         assertThat(method.getParameterAnnotations()[0].length, is(1));
-        assertThat(method.getParameterAnnotations()[0][0], CoreMatchers.<Annotation>instanceOf(MaybeNull.class));
+        assertThat(method.getParameterAnnotations()[0][0], CoreMatchers.<Annotation>instanceOf(SampleAnnotation.class));
         assertThat(type.getDeclaredConstructor().newInstance().hashCode(), is(type.getDeclaredConstructor().newInstance().hashCode()));
         assertThat(type.getDeclaredConstructor().newInstance(), is(type.getDeclaredConstructor().newInstance()));
     }
@@ -289,5 +290,10 @@ public class HashCodeAndEqualsPluginTest {
 
         @HashCodeAndEqualsPlugin.Sorted(1)
         public String qux;
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface SampleAnnotation {
+        /* empty */
     }
 }

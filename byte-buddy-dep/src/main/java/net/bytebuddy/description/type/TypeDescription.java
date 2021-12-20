@@ -242,6 +242,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     String getSimpleName();
 
     /**
+     * Returns a form of a type's simple name which only shortens the package name but not the names of outer classes.
+     *
+     * @return The long form of the simple name of this type.
+     */
+    String getLongSimpleName();
+
+    /**
      * Returns the canonical name of this type if it exists.
      *
      * @return The canonical name of this type. Might be {@code null}.
@@ -7962,6 +7969,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             } else {
                 return getName();
             }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public String getLongSimpleName() {
+            TypeDescription declaringType = getDeclaringType();
+            return declaringType == null
+                    ? getSimpleName()
+                    : declaringType.getLongSimpleName() + "." + getSimpleName();
         }
 
         /**

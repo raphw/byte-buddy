@@ -213,8 +213,20 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     public void testSimpleName() throws Exception {
         for (Class<?> type : standardTypes) {
-            if (type.getName().equals("net.bytebuddy.test.scope.EnclosingType$1Foo"))
-                assertThat(describe(type).getSimpleName(), is(type.getSimpleName()));
+            assertThat(describe(type).getSimpleName(), is(type.getSimpleName()));
+        }
+    }
+
+    @Test
+    public void getLongSimpleName() throws Exception {
+        for (Class<?> type : standardTypes) {
+            if (type.getDeclaringClass() == null) {
+                assertThat(describe(type).getLongSimpleName(), is(type.getSimpleName()));
+            } else {
+                assertThat(describe(type).getLongSimpleName(), is(type.getDeclaringClass().getSimpleName()
+                        + "."
+                        + type.getSimpleName()));
+            }
         }
     }
 
