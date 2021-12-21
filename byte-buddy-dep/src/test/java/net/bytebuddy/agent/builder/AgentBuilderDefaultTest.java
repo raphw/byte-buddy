@@ -2119,7 +2119,13 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(transformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onBeforeWarmUp(Collections.<Class<?>>singleton(REDEFINED), classFileTransformer);
-        verify(installationListener).onAfterWarmUp(Collections.<Class<?>>singleton(REDEFINED), classFileTransformer, true);
+        verify(installationListener).onAfterWarmUp(argThat(new ArgumentMatcher<Map<Class<?>, byte[]>>() {
+            public boolean matches(Map<Class<?>, byte[]> argument) {
+                return argument.size() == 1
+                        && argument.containsKey(REDEFINED)
+                        && Arrays.equals(argument.get(REDEFINED), new byte[]{4, 5, 6});
+            }
+        }), eq(classFileTransformer), eq(true));
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
     }

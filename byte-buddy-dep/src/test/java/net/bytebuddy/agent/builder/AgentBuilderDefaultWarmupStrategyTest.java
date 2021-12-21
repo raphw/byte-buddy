@@ -6,12 +6,15 @@ import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.objectweb.asm.Type;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.security.ProtectionDomain;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -73,7 +76,7 @@ public class AgentBuilderDefaultWarmupStrategyTest {
         verify(circularityLock).acquire();
         verifyNoMoreInteractions(circularityLock);
         verify(listener).onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
-        verify(listener).onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, false);
+        verify(listener).onAfterWarmUp(Collections.<Class<?>, byte[]>singletonMap(Object.class, null), classFileTransformer, false);
         verifyNoMoreInteractions(listener);
     }
 
@@ -87,7 +90,7 @@ public class AgentBuilderDefaultWarmupStrategyTest {
                 Type.getInternalName(Object.class),
                 null,
                 Object.class.getProtectionDomain(),
-                new byte[0])).thenReturn(new byte[0]);
+                new byte[0])).thenReturn(new byte[]{4, 5, 6});
         new AgentBuilder.Default.WarmupStrategy.Enabled(Collections.<Class<?>>singleton(Object.class)).apply(classFileTransformer,
                 locationStrategy,
                 AgentBuilder.RedefinitionStrategy.DISABLED,
@@ -107,7 +110,13 @@ public class AgentBuilderDefaultWarmupStrategyTest {
         verify(circularityLock).acquire();
         verifyNoMoreInteractions(circularityLock);
         verify(listener).onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
-        verify(listener).onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, true);
+        verify(listener).onAfterWarmUp(argThat(new ArgumentMatcher<Map<Class<?>, byte[]>>() {
+            public boolean matches(Map<Class<?>, byte[]> argument) {
+                return argument.size() == 1
+                        && argument.containsKey(Object.class)
+                        && Arrays.equals(argument.get(Object.class), new byte[]{4, 5, 6});
+            }
+        }), eq(classFileTransformer), eq(true));
         verifyNoMoreInteractions(listener);
     }
 
@@ -141,7 +150,7 @@ public class AgentBuilderDefaultWarmupStrategyTest {
         verify(circularityLock).acquire();
         verifyNoMoreInteractions(circularityLock);
         verify(listener).onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
-        verify(listener).onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, false);
+        verify(listener).onAfterWarmUp(Collections.<Class<?>, byte[]>singletonMap(Object.class, null), classFileTransformer, false);
         verifyNoMoreInteractions(listener);
     }
 
@@ -176,7 +185,7 @@ public class AgentBuilderDefaultWarmupStrategyTest {
         verifyNoMoreInteractions(circularityLock);
         verify(listener).onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
         verify(listener).onWarmUpError(Object.class, classFileTransformer, throwable);
-        verify(listener).onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, false);
+        verify(listener).onAfterWarmUp(Collections.<Class<?>, byte[]>singletonMap(Object.class, null), classFileTransformer, false);
         verifyNoMoreInteractions(listener);
     }
 

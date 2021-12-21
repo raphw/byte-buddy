@@ -4835,11 +4835,12 @@ public interface AgentBuilder {
         /**
          * Invoked after a warump is executed.
          *
-         * @param types                The types that are used for the warmup.
+         * @param types                The types that are used for the warmup mapped to their transformed byte code
+         *                             or {@code null} if the type was not transformed or failed to transform.
          * @param classFileTransformer The class file transformer that is warmed up.
          * @param transformed          {@code true} if at least one class caused an actual transformation.
          */
-        void onAfterWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer, boolean transformed);
+        void onAfterWarmUp(Map<Class<?>, byte[]> types, ResettableClassFileTransformer classFileTransformer, boolean transformed);
 
         /**
          * A non-operational listener that does not do anything.
@@ -4896,7 +4897,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onAfterWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
+            public void onAfterWarmUp(Map<Class<?>, byte[]> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
                 /* do nothing */
             }
         }
@@ -4957,7 +4958,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onAfterWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
+            public void onAfterWarmUp(Map<Class<?>, byte[]> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
                 /* do nothing */
             }
         }
@@ -5012,7 +5013,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onAfterWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
+            public void onAfterWarmUp(Map<Class<?>, byte[]> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
                 /* do nothing */
             }
         }
@@ -5112,8 +5113,8 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onAfterWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
-                printStream.printf(PREFIX + " AFTER_WARMUP %s %s on %s%n", transformed ? "transformed" : "not transformed", classFileTransformer, types);
+            public void onAfterWarmUp(Map<Class<?>, byte[]> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
+                printStream.printf(PREFIX + " AFTER_WARMUP %s %s on %s%n", transformed ? "transformed" : "not transformed", classFileTransformer, types.keySet());
             }
         }
 
@@ -5215,7 +5216,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void onAfterWarmUp(Set<Class<?>> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
+            public void onAfterWarmUp(Map<Class<?>, byte[]> types, ResettableClassFileTransformer classFileTransformer, boolean transformed) {
                 for (InstallationListener installationListener : installationListeners) {
                     installationListener.onAfterWarmUp(types, classFileTransformer, transformed);
                 }
@@ -11029,6 +11030,7 @@ public interface AgentBuilder {
                                   InstallationListener listener) {
                     listener.onBeforeWarmUp(types, classFileTransformer);
                     boolean transformed = false;
+                    Map<Class<?>, byte[]> results = new LinkedHashMap<Class<?>, byte[]>();
                     for (Class<?> type : types) {
                         try {
                             JavaModule module = JavaModule.ofType(type);
@@ -11037,45 +11039,52 @@ public interface AgentBuilder {
                                     .resolve();
                             circularityLock.release();
                             try {
+                                byte[] result;
                                 if (module == null) {
-                                    transformed |= classFileTransformer.transform(type.getClassLoader(),
+                                    result = classFileTransformer.transform(type.getClassLoader(),
                                             Type.getInternalName(type),
                                             NOT_PREVIOUSLY_DEFINED,
                                             type.getProtectionDomain(),
-                                            binaryRepresentation) != null;
+                                            binaryRepresentation);
+                                    transformed |= result != null;
                                     if (redefinitionStrategy.isEnabled()) {
-                                        transformed |= classFileTransformer.transform(type.getClassLoader(),
+                                        result = classFileTransformer.transform(type.getClassLoader(),
                                                 Type.getInternalName(type),
                                                 type,
                                                 type.getProtectionDomain(),
-                                                binaryRepresentation) != null;
+                                                binaryRepresentation);
+                                        transformed |= result != null;
                                     }
                                 } else {
-                                    transformed |= DISPATCHER.transform(classFileTransformer,
+                                    result = DISPATCHER.transform(classFileTransformer,
                                             module.unwrap(),
                                             type.getClassLoader(),
                                             Type.getInternalName(type),
                                             NOT_PREVIOUSLY_DEFINED,
                                             type.getProtectionDomain(),
-                                            binaryRepresentation) != null;
+                                            binaryRepresentation);
+                                    transformed |= result != null;
                                     if (redefinitionStrategy.isEnabled()) {
-                                        transformed |= DISPATCHER.transform(classFileTransformer,
+                                        result = DISPATCHER.transform(classFileTransformer,
                                                 module.unwrap(),
                                                 type.getClassLoader(),
                                                 Type.getInternalName(type),
                                                 type,
                                                 type.getProtectionDomain(),
-                                                binaryRepresentation) != null;
+                                                binaryRepresentation);
+                                        transformed |= result != null;
                                     }
                                 }
+                                results.put(type, result);
                             } finally {
                                 circularityLock.acquire();
                             }
                         } catch (Throwable throwable) {
                             listener.onWarmUpError(type, classFileTransformer, throwable);
+                            results.put(type, NO_TRANSFORMATION);
                         }
                     }
-                    listener.onAfterWarmUp(types, classFileTransformer, transformed);
+                    listener.onAfterWarmUp(results, classFileTransformer, transformed);
                 }
 
                 /**
@@ -11106,6 +11115,7 @@ public interface AgentBuilder {
                      * @return The transformed class file or {@code null} if untransformed.
                      * @throws IllegalClassFormatException If the class file cannot be generated.
                      */
+                    @MaybeNull
                     byte[] transform(ClassFileTransformer target,
                                      @MaybeNull @JavaDispatcher.Proxied("java.lang.Module") Object module,
                                      @MaybeNull ClassLoader classLoader,

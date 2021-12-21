@@ -38,7 +38,7 @@ public class AgentBuilderInstallationListenerTest {
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onReset(instrumentation, classFileTransformer);
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onWarmUpError(Object.class, classFileTransformer, throwable);
-        AgentBuilder.InstallationListener.NoOp.INSTANCE.onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, false);
+        AgentBuilder.InstallationListener.NoOp.INSTANCE.onAfterWarmUp(Collections.<Class<?>, byte[]>singletonMap(Object.class, null), classFileTransformer, false);
         verifyZeroInteractions(instrumentation, classFileTransformer, throwable);
     }
 
@@ -51,7 +51,7 @@ public class AgentBuilderInstallationListenerTest {
         pseudoAdapter.onReset(instrumentation, classFileTransformer);
         pseudoAdapter.onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
         pseudoAdapter.onWarmUpError(Object.class, classFileTransformer, throwable);
-        pseudoAdapter.onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, false);
+        pseudoAdapter.onAfterWarmUp(Collections.<Class<?>, byte[]>singletonMap(Object.class, null), classFileTransformer, false);
         verifyZeroInteractions(instrumentation, classFileTransformer, throwable);
     }
 
@@ -62,7 +62,7 @@ public class AgentBuilderInstallationListenerTest {
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onReset(instrumentation, classFileTransformer);
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onWarmUpError(Object.class, classFileTransformer, throwable);
-        AgentBuilder.InstallationListener.NoOp.INSTANCE.onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, false);
+        AgentBuilder.InstallationListener.NoOp.INSTANCE.onAfterWarmUp(Collections.<Class<?>, byte[]>singletonMap(Object.class, null), classFileTransformer, false);
         verifyZeroInteractions(instrumentation, classFileTransformer, throwable);
     }
 
@@ -134,7 +134,7 @@ public class AgentBuilderInstallationListenerTest {
     public void testStreamWritingListenerAfterWarmUp() throws Exception {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.InstallationListener installationListener = new AgentBuilder.InstallationListener.StreamWriting(printStream);
-        installationListener.onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, true);
+        installationListener.onAfterWarmUp(Collections.<Class<?>, byte[]>singletonMap(Object.class, null), classFileTransformer, true);
         verify(printStream).printf("[Byte Buddy] AFTER_WARMUP %s %s on %s%n", "transformed", classFileTransformer, Collections.singleton(Object.class));
         verifyNoMoreInteractions(printStream);
     }
@@ -216,9 +216,9 @@ public class AgentBuilderInstallationListenerTest {
     public void testCompoundListenerAfterWarmUp() throws Exception {
         AgentBuilder.InstallationListener first = mock(AgentBuilder.InstallationListener.class), second = mock(AgentBuilder.InstallationListener.class);
         AgentBuilder.InstallationListener installationListener = new AgentBuilder.InstallationListener.Compound(first, second);
-        installationListener.onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, true);
-        verify(first).onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, true);
-        verify(second).onAfterWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer, true);
+        installationListener.onAfterWarmUp(Collections.<Class<?>, byte[]>singletonMap(Object.class, null), classFileTransformer, true);
+        verify(first).onAfterWarmUp(Collections.<Class<?>, byte[]>singletonMap(Object.class, null), classFileTransformer, true);
+        verify(second).onAfterWarmUp(Collections.<Class<?>, byte[]>singletonMap(Object.class, null), classFileTransformer, true);
         verifyNoMoreInteractions(first, second);
     }
 
