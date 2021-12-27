@@ -436,29 +436,31 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     }
 
     /**
-     * Makes a best effort of locating the configured Java target version.
+     * Makes a best effort of locating the configured Java target/release version.
      *
      * @param project The relevant Maven project.
-     * @return The Java version string of the configured build target version or {@code null} if no explicit configuration was detected.
+     * @return The Java version string of the configured build target/release version or {@code null} if no explicit configuration was detected.
      */
     @MaybeNull
     private static String findJavaVersionString(MavenProject project) {
-        while (project != null) {
-            String target = project.getProperties().getProperty("maven.compiler.target");
-            if (target != null) {
-                return target;
-            }
-            for (org.apache.maven.model.Plugin plugin : CompoundList.of(project.getBuildPlugins(), project.getPluginManagement().getPlugins())) {
-                if ("maven-compiler-plugin".equals(plugin.getArtifactId())) {
-                    if (plugin.getConfiguration() instanceof Xpp3Dom) {
-                        Xpp3Dom node = ((Xpp3Dom) plugin.getConfiguration()).getChild("target");
-                        if (node != null) {
-                            return node.getValue();
+        for (String propertyName : Arrays.asList("target", "release")) {
+            while (project != null) {
+                String propertyValue = project.getProperties().getProperty("maven.compiler." + propertyName);
+                if (propertyValue != null) {
+                    return propertyValue;
+                }
+                for (org.apache.maven.model.Plugin plugin : CompoundList.of(project.getBuildPlugins(), project.getPluginManagement().getPlugins())) {
+                    if ("maven-compiler-plugin".equals(plugin.getArtifactId())) {
+                        if (plugin.getConfiguration() instanceof Xpp3Dom) {
+                            Xpp3Dom node = ((Xpp3Dom) plugin.getConfiguration()).getChild(propertyName);
+                            if (node != null) {
+                                return node.getValue();
+                            }
                         }
                     }
                 }
+                project = project.getParent();
             }
-            project = project.getParent();
         }
         return null;
     }
