@@ -53,12 +53,6 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-utils</artifactId>
-            <version>${version.maven.plexus}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>org.eclipse.aether</groupId>
             <artifactId>aether-util</artifactId>
             <version>${version.maven.aether}</version>
@@ -103,6 +97,16 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-utils</artifactId>
+                <version>${version.maven.plexus}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <resources>
