@@ -448,7 +448,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      */
     @MaybeNull
     private static String findJavaVersionString(MavenProject project, String property) {
-        while (project != null) {
+        do {
             String value = project.getProperties().getProperty("maven.compiler." + property);
             if (value != null) {
                 return value;
@@ -467,7 +467,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 }
             }
             project = project.getParent();
-        }
+        } while (project != null);
         return null;
     }
 
