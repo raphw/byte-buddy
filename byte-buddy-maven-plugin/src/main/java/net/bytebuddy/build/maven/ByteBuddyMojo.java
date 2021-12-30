@@ -385,7 +385,10 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 getLog().info("Processing class files located in in: " + root);
                 Plugin.Engine pluginEngine;
                 try {
-                    String javaVersionString = findJavaVersionString(project);
+                    String javaVersionString = findJavaVersionString(project, "release");
+                    if (javaVersionString == null) {
+                        javaVersionString = findJavaVersionString(project, "target");
+                    }
                     ClassFileVersion classFileVersion;
                     if (javaVersionString == null) {
                         classFileVersion = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5);
@@ -436,31 +439,30 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     }
 
     /**
-     * Makes a best effort of locating the configured Java target/release version.
+     * Makes a best effort of locating the configured Java version.
      *
-     * @param project The relevant Maven project.
-     * @return The Java version string of the configured build target/release version or {@code null} if no explicit configuration was detected.
+     * @param project  The relevant Maven project.
+     * @param property The targeted Maven property.
+     * @return The Java version string of the configured build Java version or {@code null} if no explicit configuration was detected.
      */
     @MaybeNull
-    private static String findJavaVersionString(MavenProject project) {
-        for (String propertyName : Arrays.asList("target", "release")) {
-            while (project != null) {
-                String propertyValue = project.getProperties().getProperty("maven.compiler." + propertyName);
-                if (propertyValue != null) {
-                    return propertyValue;
-                }
-                for (org.apache.maven.model.Plugin plugin : CompoundList.of(project.getBuildPlugins(), project.getPluginManagement().getPlugins())) {
-                    if ("maven-compiler-plugin".equals(plugin.getArtifactId())) {
-                        if (plugin.getConfiguration() instanceof Xpp3Dom) {
-                            Xpp3Dom node = ((Xpp3Dom) plugin.getConfiguration()).getChild(propertyName);
-                            if (node != null) {
-                                return node.getValue();
-                            }
+    private static String findJavaVersionString(MavenProject project, String property) {
+        while (project != null) {
+            String propertyValue = project.getProperties().getProperty("maven.compiler." + property);
+            if (propertyValue != null) {
+                return propertyValue;
+            }
+            for (org.apache.maven.model.Plugin plugin : CompoundList.of(project.getBuildPlugins(), project.getPluginManagement().getPlugins())) {
+                if ("maven-compiler-plugin".equals(plugin.getArtifactId())) {
+                    if (plugin.getConfiguration() instanceof Xpp3Dom) {
+                        Xpp3Dom node = ((Xpp3Dom) plugin.getConfiguration()).getChild(property);
+                        if (node != null) {
+                            return node.getValue();
                         }
                     }
                 }
-                project = project.getParent();
             }
+            project = project.getParent();
         }
         return null;
     }
