@@ -27,6 +27,7 @@ import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
+import org.apache.maven.model.PluginManagement;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -448,11 +449,14 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     @MaybeNull
     private static String findJavaVersionString(MavenProject project, String property) {
         while (project != null) {
-            String propertyValue = project.getProperties().getProperty("maven.compiler." + property);
-            if (propertyValue != null) {
-                return propertyValue;
+            String value = project.getProperties().getProperty("maven.compiler." + property);
+            if (value != null) {
+                return value;
             }
-            for (org.apache.maven.model.Plugin plugin : CompoundList.of(project.getBuildPlugins(), project.getPluginManagement().getPlugins())) {
+            PluginManagement management = project.getPluginManagement();
+            for (org.apache.maven.model.Plugin plugin : management == null
+                    ? project.getBuildPlugins()
+                    : CompoundList.of(project.getBuildPlugins(), management.getPlugins())) {
                 if ("maven-compiler-plugin".equals(plugin.getArtifactId())) {
                     if (plugin.getConfiguration() instanceof Xpp3Dom) {
                         Xpp3Dom node = ((Xpp3Dom) plugin.getConfiguration()).getChild(property);
