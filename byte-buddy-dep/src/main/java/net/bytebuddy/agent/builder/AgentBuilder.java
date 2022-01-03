@@ -11609,8 +11609,6 @@ public interface AgentBuilder {
                                 classBeingRedefined,
                                 protectionDomain,
                                 binaryRepresentation), accessControlContext);
-                    } catch (Throwable ignored) {
-                        return NO_TRANSFORMATION;
                     } finally {
                         circularityLock.release();
                     }
@@ -11646,8 +11644,6 @@ public interface AgentBuilder {
                                 classBeingRedefined,
                                 protectionDomain,
                                 binaryRepresentation), accessControlContext);
-                    } catch (Throwable ignored) {
-                        return NO_TRANSFORMATION;
                     } finally {
                         circularityLock.release();
                     }
@@ -11688,7 +11684,7 @@ public interface AgentBuilder {
                     } finally {
                         listener.onError(name, classLoader, module, classBeingRedefined != null, throwable);
                     }
-                    return NO_TRANSFORMATION;
+                    throw new IllegalStateException("Failed transformation of " + name, throwable);
                 }
                 try {
                     listener.onDiscovery(name, classLoader, module, classBeingRedefined != null);
@@ -11709,7 +11705,7 @@ public interface AgentBuilder {
                     }
                 } catch (Throwable throwable) {
                     listener.onError(name, classLoader, module, classBeingRedefined != null, throwable);
-                    return NO_TRANSFORMATION;
+                    throw new IllegalStateException("Failed transformation of " + name, throwable);
                 } finally {
                     listener.onComplete(name, classLoader, module, classBeingRedefined != null);
                 }

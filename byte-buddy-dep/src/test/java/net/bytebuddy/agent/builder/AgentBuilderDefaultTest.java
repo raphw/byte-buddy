@@ -17,6 +17,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.JavaModule;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,6 +34,7 @@ import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
+import java.lang.reflect.InvocationTargetException;
 import java.security.ProtectionDomain;
 import java.util.*;
 
@@ -40,6 +42,7 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
@@ -2034,8 +2037,12 @@ public class AgentBuilderDefaultTest {
                 .disableNativeMethodPrefix()
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX),
-                nullValue(byte[].class));
+        try {
+            transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX);
+            fail();
+        } catch (IllegalStateException catched) {
+            assertThat(catched.getMessage(), containsString(REDEFINED.getName()));
+        }
         verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false);
         verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false, exception);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false);
@@ -2348,8 +2355,7 @@ public class AgentBuilderDefaultTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    public void testExecutingTransformerReturnsNullValue() throws Exception {
+    public void testInactiveExecutingTransformerReturnsNullValue() throws Exception {
         assertThat(new AgentBuilder.Default.ExecutingTransformer(byteBuddy,
                 listener,
                 poolStrategy,
@@ -2365,9 +2371,8 @@ public class AgentBuilderDefaultTest {
                 mock(AgentBuilder.InstallationListener.class),
                 mock(AgentBuilder.RawMatcher.class),
                 mock(AgentBuilder.RedefinitionStrategy.ResubmissionEnforcer.class),
-                mock(List.class),
-                new AgentBuilder.CircularityLock.Default())
-                .transform(mock(ClassLoader.class),
+                Collections.<AgentBuilder.Default.Transformation>emptyList(),
+                new AgentBuilder.CircularityLock.Default()).transform(mock(ClassLoader.class),
                         FOO,
                         Object.class,
                         mock(ProtectionDomain.class),
@@ -2588,6 +2593,8 @@ public class AgentBuilderDefaultTest {
         try {
             return (byte[]) ClassFileTransformer.class.getDeclaredMethod("transform", Class.forName("java.lang.Module"), ClassLoader.class, String.class, Class.class, ProtectionDomain.class, byte[].class)
                     .invoke(classFileTransformer, javaModule.unwrap(), classLoader, typeName, type, protectionDomain, binaryRepresentation);
+        } catch (InvocationTargetException exception) {
+            throw (Exception) exception.getTargetException();
         } catch (Exception ignored) {
             return classFileTransformer.transform(classLoader, typeName, type, protectionDomain, binaryRepresentation);
         }
