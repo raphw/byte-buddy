@@ -785,7 +785,6 @@ public abstract class AbstractAnnotationDescriptionTest {
         for (ElementType elementType : ElementType.values()) {
             assertThat(describe(first).isSupportedOn(elementType), is(!elementType.name().equals("TYPE_PARAMETER")));
         }
-        assertThat(describe(explicitTarget).isSupportedOn((ElementType) null), is(true));
         assertThat(describe(explicitTarget).isSupportedOn(ElementType.TYPE), is(true));
         assertThat(describe(explicitTarget).isSupportedOn(ElementType.ANNOTATION_TYPE), is(false));
         assertThat(describe(explicitTarget).isSupportedOn(ElementType.TYPE.name()), is(true));
