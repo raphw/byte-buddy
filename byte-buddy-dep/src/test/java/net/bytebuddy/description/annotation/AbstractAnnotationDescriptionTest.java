@@ -781,6 +781,18 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test
+    public void testIsSupportedOn() throws Exception {
+        for (ElementType elementType : ElementType.values()) {
+            assertThat(describe(first).isSupportedOn(elementType), is(!elementType.name().equals("TYPE_PARAMETER")));
+        }
+        assertThat(describe(explicitTarget).isSupportedOn((ElementType) null), is(true));
+        assertThat(describe(explicitTarget).isSupportedOn(ElementType.TYPE), is(true));
+        assertThat(describe(explicitTarget).isSupportedOn(ElementType.ANNOTATION_TYPE), is(false));
+        assertThat(describe(explicitTarget).isSupportedOn(ElementType.TYPE.name()), is(true));
+        assertThat(describe(explicitTarget).isSupportedOn(ElementType.ANNOTATION_TYPE.name()), is(false));
+    }
+
+    @Test
     public void testInheritance() throws Exception {
         assertThat(describe(first).isInherited(), is(false));
         assertThat(describe(defaultFirst).isInherited(), is(true));

@@ -1587,7 +1587,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     public static boolean ofFormalTypeVariable(Generic typeVariable) {
                         Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>();
                         for (AnnotationDescription annotationDescription : typeVariable.getDeclaredAnnotations()) {
-                            if (!annotationDescription.getElementTypes().contains(INSTANCE.typeParameter) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
+                            if (!annotationDescription.isSupportedOn(INSTANCE.typeParameter) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
                                 return false;
                             }
                         }
@@ -1658,7 +1658,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     private boolean isValid(Generic typeDescription) {
                         Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>();
                         for (AnnotationDescription annotationDescription : typeDescription.getDeclaredAnnotations()) {
-                            if (!annotationDescription.getElementTypes().contains(typeUse) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
+                            if (!annotationDescription.isSupportedOn(typeUse) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
                                 return false;
                             }
                         }

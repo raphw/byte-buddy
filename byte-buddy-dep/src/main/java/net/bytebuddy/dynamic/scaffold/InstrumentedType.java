@@ -1658,9 +1658,9 @@ public interface InstrumentedType extends TypeDescription {
             }
             Set<TypeDescription> typeAnnotationTypes = new HashSet<TypeDescription>();
             for (AnnotationDescription annotationDescription : getDeclaredAnnotations()) {
-                if (!annotationDescription.getElementTypes().contains(ElementType.TYPE)
-                        && !(isAnnotation() && annotationDescription.getElementTypes().contains(ElementType.ANNOTATION_TYPE))
-                        && !(isPackageType() && annotationDescription.getElementTypes().contains(ElementType.PACKAGE))) {
+                if (!annotationDescription.isSupportedOn(ElementType.TYPE)
+                        && !(isAnnotation() && annotationDescription.isSupportedOn(ElementType.ANNOTATION_TYPE))
+                        && !(isPackageType() && annotationDescription.isSupportedOn(ElementType.PACKAGE))) {
                     throw new IllegalStateException("Cannot add " + annotationDescription + " on " + this);
                 } else if (!typeAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                     throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + this);
@@ -1686,7 +1686,7 @@ public interface InstrumentedType extends TypeDescription {
                 }
                 Set<TypeDescription> fieldAnnotationTypes = new HashSet<TypeDescription>();
                 for (AnnotationDescription annotationDescription : fieldDescription.getDeclaredAnnotations()) {
-                    if (!annotationDescription.getElementTypes().contains(ElementType.FIELD)) {
+                    if (!annotationDescription.isSupportedOn(ElementType.FIELD)) {
                         throw new IllegalStateException("Cannot add " + annotationDescription + " on " + fieldDescription);
                     } else if (!fieldAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                         throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + fieldDescription);
@@ -1771,7 +1771,7 @@ public interface InstrumentedType extends TypeDescription {
                     }
                     Set<TypeDescription> parameterAnnotationTypes = new HashSet<TypeDescription>();
                     for (AnnotationDescription annotationDescription : parameterDescription.getDeclaredAnnotations()) {
-                        if (!annotationDescription.getElementTypes().contains(ElementType.PARAMETER)) {
+                        if (!annotationDescription.isSupportedOn(ElementType.PARAMETER)) {
                             throw new IllegalStateException("Cannot add " + annotationDescription + " on " + parameterDescription);
                         } else if (!parameterAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                             throw new IllegalStateException("Duplicate annotation " + annotationDescription + " of " + parameterDescription + " for " + methodDescription);
@@ -1789,7 +1789,7 @@ public interface InstrumentedType extends TypeDescription {
                 }
                 Set<TypeDescription> methodAnnotationTypes = new HashSet<TypeDescription>();
                 for (AnnotationDescription annotationDescription : methodDescription.getDeclaredAnnotations()) {
-                    if (!annotationDescription.getElementTypes().contains(methodDescription.isMethod() ? ElementType.METHOD : ElementType.CONSTRUCTOR)) {
+                    if (!annotationDescription.isSupportedOn(methodDescription.isMethod() ? ElementType.METHOD : ElementType.CONSTRUCTOR)) {
                         throw new IllegalStateException("Cannot add " + annotationDescription + " on " + methodDescription);
                     } else if (!methodAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                         throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + methodDescription);

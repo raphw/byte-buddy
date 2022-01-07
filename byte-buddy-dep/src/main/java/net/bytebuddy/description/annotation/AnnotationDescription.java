@@ -110,6 +110,25 @@ public interface AnnotationDescription {
     Set<ElementType> getElementTypes();
 
     /**
+     * Checks if this annotation is supported on the supplied element type or returns {@code true}
+     * if {@code null} is supplied.
+     *
+     * @param elementType The element type to check or {@code null} to return {@code true}. This can be helpful
+     *                    to make this method robust for VMs that do not define {@link ElementType}s that are
+     *                    available on newer VMs.
+     * @return {@code true} if the supplied element type is supported by this annotation or is {@code null}
+     */
+    boolean isSupportedOn(@MaybeNull ElementType elementType);
+
+    /**
+     * Checks if this annotation is supported on the supplied element type.
+     *
+     * @param elementType The element type to check.
+     * @return {@code true} if the supplied element type is supported by this annotation.
+     */
+    boolean isSupportedOn(String elementType);
+
+    /**
      * Checks if this annotation is inherited.
      *
      * @return {@code true} if this annotation is inherited.
@@ -478,6 +497,39 @@ public interface AnnotationDescription {
             return target == null
                     ? Collections.unmodifiableSet(DEFAULT_TARGET)
                     : new HashSet<ElementType>(Arrays.asList(target.getValue(TARGET_VALUE).load(ClassLoadingStrategy.BOOTSTRAP_LOADER).resolve(ElementType[].class)));
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isSupportedOn(@MaybeNull ElementType elementType) {
+            return elementType == null
+                    ? true
+                    : isSupportedOn(elementType.name());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isSupportedOn(String elementType) {
+            AnnotationDescription.Loadable<Target> target = getAnnotationType().getDeclaredAnnotations().ofType(Target.class);
+            if (target == null) {
+                if (elementType.equals("TYPE_USE")) {
+                    return true;
+                }
+                for (ElementType candidate : DEFAULT_TARGET) {
+                    if (candidate.name().equals(elementType)) {
+                        return true;
+                    }
+                }
+            } else {
+                for (EnumerationDescription enumerationDescription : target.getValue(TARGET_VALUE).resolve(EnumerationDescription[].class)) {
+                    if (enumerationDescription.getValue().equals(elementType)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         /**

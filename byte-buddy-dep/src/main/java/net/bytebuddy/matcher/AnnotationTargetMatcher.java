@@ -46,7 +46,7 @@ public class AnnotationTargetMatcher<T extends AnnotationDescription> extends El
      * {@inheritDoc}
      */
     protected boolean doMatch(T target) {
-        return target.getElementTypes().contains(elementType);
+        return target.isSupportedOn(elementType);
     }
 
     @Override
