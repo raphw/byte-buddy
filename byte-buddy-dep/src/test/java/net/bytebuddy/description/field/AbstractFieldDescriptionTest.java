@@ -268,7 +268,11 @@ public abstract class AbstractFieldDescriptionTest {
     }
 
     private class SyntheticField {
-        /* empty */
+
+        @SuppressWarnings("unused")
+        Object m() { // Since Java 18, a reference to the outer class is required to retain the synthetic field.
+            return AbstractFieldDescriptionTest.this;
+        }
     }
 
     private static class TransientSample {
