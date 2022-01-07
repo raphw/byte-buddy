@@ -110,15 +110,12 @@ public interface AnnotationDescription {
     Set<ElementType> getElementTypes();
 
     /**
-     * Checks if this annotation is supported on the supplied element type or returns {@code true}
-     * if {@code null} is supplied.
+     * Checks if this annotation is supported on the supplied element type.
      *
-     * @param elementType The element type to check or {@code null} to return {@code true}. This can be helpful
-     *                    to make this method robust for VMs that do not define {@link ElementType}s that are
-     *                    available on newer VMs.
-     * @return {@code true} if the supplied element type is supported by this annotation or is {@code null}
+     * @param elementType The element type to check.
+     * @return {@code true} if the supplied element type is supported by this annotation.
      */
-    boolean isSupportedOn(@MaybeNull ElementType elementType);
+    boolean isSupportedOn(ElementType elementType);
 
     /**
      * Checks if this annotation is supported on the supplied element type.
@@ -502,10 +499,8 @@ public interface AnnotationDescription {
         /**
          * {@inheritDoc}
          */
-        public boolean isSupportedOn(@MaybeNull ElementType elementType) {
-            return elementType == null
-                    ? true
-                    : isSupportedOn(elementType.name());
+        public boolean isSupportedOn(ElementType elementType) {
+            return isSupportedOn(elementType.name());
         }
 
         /**

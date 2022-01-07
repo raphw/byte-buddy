@@ -1550,33 +1550,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     INSTANCE;
 
                     /**
-                     * The {@link ElementType}'s {@code TYPE_USE} constant.
+                     * The name of the {@code ElementType#TYPE_USE} element.
                      */
-                    @MaybeNull
-                    private final ElementType typeUse;
+                    private static final String TYPE_USE = "TYPE_USE";
 
                     /**
-                     * The {@link ElementType}'s {@code TYPE_PARAMETER} constant.
+                     * The name of the {@code ElementType#TYPE_PARAMETER} element.
                      */
-                    @MaybeNull
-                    private final ElementType typeParameter;
-
-                    /**
-                     * Creates a new type annotation validator.
-                     */
-                    ForTypeAnnotations() {
-                        ElementType typeUse, typeParameter;
-                        try {
-                            typeUse = Enum.valueOf(ElementType.class, "TYPE_USE");
-                            typeParameter = Enum.valueOf(ElementType.class, "TYPE_PARAMETER");
-                        } catch (IllegalArgumentException ignored) {
-                            // Setting these values null results in this validator always failing for pre Java-8 VMs.
-                            typeUse = null;
-                            typeParameter = null;
-                        }
-                        this.typeUse = typeUse;
-                        this.typeParameter = typeParameter;
-                    }
+                    private static final String TYPE_PARAMETER = "TYPE_PARAMETER";
 
                     /**
                      * Validates the type annotations on a formal type variable but not on its bounds..
@@ -1587,7 +1568,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     public static boolean ofFormalTypeVariable(Generic typeVariable) {
                         Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>();
                         for (AnnotationDescription annotationDescription : typeVariable.getDeclaredAnnotations()) {
-                            if (!annotationDescription.isSupportedOn(INSTANCE.typeParameter) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
+                            if (!annotationDescription.isSupportedOn(TYPE_PARAMETER) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
                                 return false;
                             }
                         }
@@ -1658,7 +1639,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     private boolean isValid(Generic typeDescription) {
                         Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>();
                         for (AnnotationDescription annotationDescription : typeDescription.getDeclaredAnnotations()) {
-                            if (!annotationDescription.isSupportedOn(typeUse) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
+                            if (!annotationDescription.isSupportedOn(TYPE_USE) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
                                 return false;
                             }
                         }
