@@ -6368,7 +6368,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                @SuppressFBWarnings(value = "RC_REF_COMPARISON_BAD_PRACTICE", justification = "ASM models frames by reference comparison.")
+                @SuppressFBWarnings(value = "RC_REF_COMPARISON_BAD_PRACTICE", justification = "ASM models frames by reference identity.")
                 protected void translateFrame(MethodVisitor methodVisitor,
                                               TranslationMode translationMode,
                                               MethodDescription methodDescription,
@@ -6628,7 +6628,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * {@inheritDoc}
                      */
-                    @SuppressFBWarnings(value = "RC_REF_COMPARISON_BAD_PRACTICE", justification = "Reference equality is required by ASM.")
+                    @SuppressFBWarnings(value = "RC_REF_COMPARISON_BAD_PRACTICE", justification = "ASM models frames by reference identity.")
                     public void translateFrame(MethodVisitor methodVisitor,
                                                int type,
                                                int localVariableLength,

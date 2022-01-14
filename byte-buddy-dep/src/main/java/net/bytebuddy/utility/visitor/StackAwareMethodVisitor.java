@@ -445,6 +445,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     }
 
     @Override
+    @SuppressFBWarnings(value = "RC_REF_COMPARISON_BAD_PRACTICE", justification = "ASM models frames by reference identity.")
     public void visitFrame(int type, int localVariableLength, @MaybeNull Object[] localVariable, int stackSize, @MaybeNull Object[] stack) {
         switch (type) {
             case Opcodes.F_SAME:
