@@ -64,6 +64,13 @@ public class StackAwareMethodVisitorTest {
     }
 
     @Test
+    public void testDrainStackWithUnderflow() {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        assertThat(methodVisitor.drainStack(Opcodes.ISTORE, Opcodes.ILOAD, StackSize.SINGLE), is(0));
+        verifyZeroInteractions(this.methodVisitor);
+    }
+
+    @Test
     public void testDrainRetainTopSingle() throws Exception {
         when(methodDescription.getStackSize()).thenReturn(42);
         StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
