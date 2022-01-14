@@ -149,4 +149,121 @@ public class StackAwareMethodVisitorTest {
         verify(this.methodVisitor).visitInsn(Opcodes.POP);
         verifyNoMoreInteractions(this.methodVisitor);
     }
+
+    @Test
+    public void testStackFrameSame() {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+        methodVisitor.drainStack();
+        verify(this.methodVisitor).visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+        verifyNoMoreInteractions(this.methodVisitor);
+    }
+
+    @Test
+    public void testStackFrameChop() {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        methodVisitor.visitFrame(Opcodes.F_CHOP, 0, null, 0, null);
+        methodVisitor.drainStack();
+        verify(this.methodVisitor).visitFrame(Opcodes.F_CHOP, 0, null, 0, null);
+        verifyNoMoreInteractions(this.methodVisitor);
+    }
+
+    @Test
+    public void testStackFrameAppend() {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        methodVisitor.visitFrame(Opcodes.F_APPEND, 0, null, 0, null);
+        methodVisitor.drainStack();
+        verify(this.methodVisitor).visitFrame(Opcodes.F_APPEND, 0, null, 0, null);
+        verifyNoMoreInteractions(this.methodVisitor);
+    }
+
+    @Test
+    public void testStackFrameSame1OnInteger() {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        methodVisitor.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[] {Opcodes.INTEGER});
+        methodVisitor.drainStack();
+        verify(this.methodVisitor).visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[] {Opcodes.INTEGER});
+        verify(this.methodVisitor).visitInsn(Opcodes.POP);
+        verifyNoMoreInteractions(this.methodVisitor);
+    }
+
+    @Test
+    public void testStackFrameSame1OnLong() {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        methodVisitor.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[] {Opcodes.LONG});
+        methodVisitor.drainStack();
+        verify(this.methodVisitor).visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[] {Opcodes.LONG});
+        verify(this.methodVisitor).visitInsn(Opcodes.POP2);
+        verifyNoMoreInteractions(this.methodVisitor);
+    }
+
+    @Test
+    public void testStackFrameSame1OnDouble() {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        methodVisitor.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[] {Opcodes.DOUBLE});
+        methodVisitor.drainStack();
+        verify(this.methodVisitor).visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[] {Opcodes.DOUBLE});
+        verify(this.methodVisitor).visitInsn(Opcodes.POP2);
+        verifyNoMoreInteractions(this.methodVisitor);
+    }
+
+    @Test
+    public void testStackFrameFullOnInteger() {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        methodVisitor.visitFrame(Opcodes.F_FULL, 0, null, 1, new Object[] {Opcodes.INTEGER});
+        methodVisitor.drainStack();
+        verify(this.methodVisitor).visitFrame(Opcodes.F_FULL, 0, null, 1, new Object[] {Opcodes.INTEGER});
+        verify(this.methodVisitor).visitInsn(Opcodes.POP);
+        verifyNoMoreInteractions(this.methodVisitor);
+    }
+
+    @Test
+    public void testStackFrameFullOnLong() {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        methodVisitor.visitFrame(Opcodes.F_FULL, 0, null, 1, new Object[] {Opcodes.LONG});
+        methodVisitor.drainStack();
+        verify(this.methodVisitor).visitFrame(Opcodes.F_FULL, 0, null, 1, new Object[] {Opcodes.LONG});
+        verify(this.methodVisitor).visitInsn(Opcodes.POP2);
+        verifyNoMoreInteractions(this.methodVisitor);
+    }
+
+    @Test
+    public void testStackFrameFullOnDouble() {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        methodVisitor.visitFrame(Opcodes.F_FULL, 0, null, 1, new Object[] {Opcodes.DOUBLE});
+        methodVisitor.drainStack();
+        verify(this.methodVisitor).visitFrame(Opcodes.F_FULL, 0, null, 1, new Object[] {Opcodes.DOUBLE});
+        verify(this.methodVisitor).visitInsn(Opcodes.POP2);
+        verifyNoMoreInteractions(this.methodVisitor);
+    }
+
+    @Test
+    public void testStackFrameNewOnInteger() {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        methodVisitor.visitFrame(Opcodes.F_NEW, 0, null, 1, new Object[] {Opcodes.INTEGER});
+        methodVisitor.drainStack();
+        verify(this.methodVisitor).visitFrame(Opcodes.F_NEW, 0, null, 1, new Object[] {Opcodes.INTEGER});
+        verify(this.methodVisitor).visitInsn(Opcodes.POP);
+        verifyNoMoreInteractions(this.methodVisitor);
+    }
+
+    @Test
+    public void testStackFrameNewOnLong() {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        methodVisitor.visitFrame(Opcodes.F_NEW, 0, null, 1, new Object[] {Opcodes.LONG});
+        methodVisitor.drainStack();
+        verify(this.methodVisitor).visitFrame(Opcodes.F_NEW, 0, null, 1, new Object[] {Opcodes.LONG});
+        verify(this.methodVisitor).visitInsn(Opcodes.POP2);
+        verifyNoMoreInteractions(this.methodVisitor);
+    }
+
+    @Test
+    public void testStackFrameNewOnDouble() {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        methodVisitor.visitFrame(Opcodes.F_NEW, 0, null, 1, new Object[] {Opcodes.DOUBLE});
+        methodVisitor.drainStack();
+        verify(this.methodVisitor).visitFrame(Opcodes.F_NEW, 0, null, 1, new Object[] {Opcodes.DOUBLE});
+        verify(this.methodVisitor).visitInsn(Opcodes.POP2);
+        verifyNoMoreInteractions(this.methodVisitor);
+    }
 }

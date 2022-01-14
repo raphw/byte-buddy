@@ -16,20 +16,59 @@
 package net.bytebuddy.utility.visitor;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.*;
 
+import java.security.PrivilegedAction;
 import java.util.*;
 
 /**
+ * <p>
  * A method visitor that is aware of the current size of the operand stack at all times. Additionally, this method takes
  * care of maintaining an index for the next currently unused index of the local variable array.
+ * </p>
+ * <p>
+ * <b>Important</b>: It is not always possible to apply this method visitor if it is applied to a class file compiled
+ * for Java 5 or earlier, or if frames are computed by ASM and not passed to this visitor, if a method also contains
+ * {@link Opcodes#GOTO} instructions. In the latter case, the stack is assumed empty after the instruction. If this
+ * is a problem, stack adjustment can be disabled by setting {@link StackAwareMethodVisitor#UNADJUSTED_PROPERTY} to
+ * {@code true}. With this setting, Byte Buddy does no longer attempt draining non-empty stacks and skips this visitor
+ * in all cases. This might however lead to verification problems if stacks are left non-empty. As the latter happens
+ * more common and since this visitor is applied defensively, using this wrapper is considered the more sensible default.
+ * </p>
  */
 public class StackAwareMethodVisitor extends MethodVisitor {
+
+    /**
+     * A property to disable stack adjustment. Stack adjustment is typically needed when instrumenting other
+     * generated code that leaves excess values on the stack. This is also often the case when byte code
+     * obfuscation is used.
+     */
+    public static final String UNADJUSTED_PROPERTY = "net.bytebuddy.unadjusted";
+
+    /**
+     * {@code true} if stack adjustment is disabled.
+     */
+    public static final boolean UNADJUSTED;
+
+    /*
+     * Reads the raw type property.
+     */
+    static {
+        boolean disabled;
+        try {
+            disabled = Boolean.parseBoolean(doPrivileged(new GetSystemPropertyAction(UNADJUSTED_PROPERTY)));
+        } catch (Exception ignored) {
+            disabled = false;
+        }
+        UNADJUSTED = disabled;
+    }
 
     /**
      * An array mapping any opcode to its size impact onto the operand stack. This mapping is taken from
@@ -74,11 +113,36 @@ public class StackAwareMethodVisitor extends MethodVisitor {
      * @param methodVisitor      The method visitor to delegate operations to.
      * @param instrumentedMethod The method description for which this method visitor is applied.
      */
-    public StackAwareMethodVisitor(MethodVisitor methodVisitor, MethodDescription instrumentedMethod) {
+    protected StackAwareMethodVisitor(MethodVisitor methodVisitor, MethodDescription instrumentedMethod) {
         super(OpenedClassReader.ASM_API, methodVisitor);
         current = new ArrayList<StackSize>();
         sizes = new HashMap<Label, List<StackSize>>();
         freeIndex = instrumentedMethod.getStackSize();
+    }
+
+    /**
+     * Wraps the provided method visitor within a stack aware method visitor.
+     *
+     * @param methodVisitor      The method visitor to delegate operations to.
+     * @param instrumentedMethod The method description for which this method visitor is applied.
+     * @return An appropriate
+     */
+    public static MethodVisitor of(MethodVisitor methodVisitor, MethodDescription instrumentedMethod) {
+        return UNADJUSTED
+                ? methodVisitor
+                : new StackAwareMethodVisitor(methodVisitor, instrumentedMethod);
+    }
+
+    /**
+     * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+     *
+     * @param action The action to execute from a privileged context.
+     * @param <T>    The type of the action's resolved value.
+     * @return The action's resolved value.
+     */
+    @AccessControllerPlugin.Enhance
+    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+        return action.run();
     }
 
     /**
@@ -146,6 +210,9 @@ public class StackAwareMethodVisitor extends MethodVisitor {
      * @return The minimal size of the local variable array that is required to perform the operation.
      */
     public int drainStack(int store, int load, StackSize size) {
+        if (current.isEmpty()) {
+            return 0;
+        }
         int difference = current.get(current.size() - 1).getSize() - size.getSize();
         if (current.size() == 1 && difference == 0) {
             return 0;
@@ -375,5 +442,38 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     public void visitTryCatchBlock(Label start, Label end, Label handler, @MaybeNull String type) {
         sizes.put(handler, Collections.singletonList(StackSize.SINGLE));
         super.visitTryCatchBlock(start, end, handler, type);
+    }
+
+    @Override
+    public void visitFrame(int type, int localVariableLength, @MaybeNull Object[] localVariable, int stackSize, @MaybeNull Object[] stack) {
+        switch (type) {
+            case Opcodes.F_SAME:
+            case Opcodes.F_CHOP:
+            case Opcodes.F_APPEND:
+                current.clear();
+                break;
+            case Opcodes.F_SAME1:
+                current.clear();
+                if (stack[0] == Opcodes.LONG || stack[0] == Opcodes.DOUBLE) {
+                    current.add(StackSize.DOUBLE);
+                } else {
+                    current.add(StackSize.SINGLE);
+                }
+                break;
+            case Opcodes.F_NEW:
+            case Opcodes.F_FULL:
+                current.clear();
+                for (int index = 0; index < stackSize; index++) {
+                    if (stack[index] == Opcodes.LONG || stack[index] == Opcodes.DOUBLE) {
+                        current.add(StackSize.DOUBLE);
+                    } else {
+                        current.add(StackSize.SINGLE);
+                    }
+                }
+                break;
+            default:
+                throw new IllegalStateException("Unknown frame type: " + type);
+        }
+        super.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
     }
 }

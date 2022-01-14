@@ -9223,7 +9223,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  StackManipulation exceptionHandler,
                                                  PostProcessor postProcessor,
                                                  boolean exit) {
-                    super(OpenedClassReader.ASM_API, new StackAwareMethodVisitor(methodVisitor, instrumentedMethod));
+                    super(OpenedClassReader.ASM_API, StackAwareMethodVisitor.of(methodVisitor, instrumentedMethod));
                     this.methodVisitor = methodVisitor;
                     this.implementationContext = implementationContext;
                     this.argumentHandler = argumentHandler;
@@ -10763,7 +10763,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                      List<? extends TypeDescription> postMethodTypes,
                                      int writerFlags,
                                      int readerFlags) {
-                super(new StackAwareMethodVisitor(methodVisitor, instrumentedMethod),
+                super(StackAwareMethodVisitor.of(methodVisitor, instrumentedMethod),
                         implementationContext,
                         assigner,
                         exceptionHandler,
