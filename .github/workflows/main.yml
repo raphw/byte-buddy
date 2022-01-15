@@ -131,7 +131,7 @@ jobs:
           architecture: x64
           cache: maven
       - name: Build project
-        run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pintegration -Pextras
+        run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pintegration -Pextras -Pchecks
   release:
     name: Release new version
     runs-on: ubuntu-18.04

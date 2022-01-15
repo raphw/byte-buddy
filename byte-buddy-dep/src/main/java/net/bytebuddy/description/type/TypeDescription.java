@@ -48,7 +48,6 @@ import org.objectweb.asm.signature.SignatureWriter;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
-import java.lang.annotation.ElementType;
 import java.lang.reflect.*;
 import java.security.PrivilegedAction;
 import java.util.*;
