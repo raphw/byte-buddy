@@ -1,6 +1,15 @@
 Byte Buddy release notes
 ------------------------
 
+### 15. January 2022: version 1.12.7
+
+- Adjust warm-up API to return warmed-up byte code.
+- Check *release* property in Byte Buddy Maven plugin.
+- Propagate exception from Byte Buddy's class file transformer to improve wrapping behavior.
+- Avoid loading of `ElementType` when checking compatibility as the current VM might not provide all constants.
+- Allow for disabling stack adjustment as it might not always be possible.
+- Make stack adjustment more robust when *goto* targets contain stack values.
+
 ### 20. December 2021: version 1.12.6
 
 - Mark argument for `equals` method as `@MaybeNull`.
