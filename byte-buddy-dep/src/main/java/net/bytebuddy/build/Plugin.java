@@ -2922,9 +2922,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 protected class FolderIterator implements Iterator<Element> {
 
                     /**
-                     * A list of files and folders to process.
+                     * A list of files and folders to process with the next processed file at the end of the list.
                      */
-                    private final LinkedList<File> files;
+                    private final List<File> files;
 
                     /**
                      * Creates a new iterator representation for all files within a folder.
@@ -2932,15 +2932,15 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      * @param folder The root folder.
                      */
                     protected FolderIterator(File folder) {
-                        files = new LinkedList<File>(Collections.singleton(folder));
+                        files = new ArrayList<File>(Collections.singleton(folder));
                         File candidate;
                         do {
-                            candidate = files.removeFirst();
+                            candidate = files.remove(files.size() - 1);
                             File[] file = candidate.listFiles();
                             if (file != null) {
-                                files.addAll(0, Arrays.asList(file));
+                                files.addAll(Arrays.asList(file));
                             }
-                        } while (!files.isEmpty() && (files.peek().isDirectory() || files.peek().equals(new File(folder, JarFile.MANIFEST_NAME))));
+                        } while (!files.isEmpty() && (files.get(files.size() - 1).isDirectory() || files.get(files.size() - 1).equals(new File(folder, JarFile.MANIFEST_NAME))));
                     }
 
                     /**
@@ -2956,13 +2956,13 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     @SuppressFBWarnings(value = "IT_NO_SUCH_ELEMENT", justification = "Exception is thrown by invoking removeFirst on an empty list.")
                     public Element next() {
                         try {
-                            return new Element.ForFile(folder, files.removeFirst());
+                            return new Element.ForFile(folder, files.remove(files.size() - 1));
                         } finally {
-                            while (!files.isEmpty() && (files.peek().isDirectory() || files.peek().equals(new File(folder, JarFile.MANIFEST_NAME)))) {
-                                File folder = files.removeFirst();
+                            while (!files.isEmpty() && (files.get(files.size() - 1).isDirectory() || files.get(files.size() - 1).equals(new File(folder, JarFile.MANIFEST_NAME)))) {
+                                File folder = files.remove(files.size() - 1);
                                 File[] file = folder.listFiles();
                                 if (file != null) {
-                                    files.addAll(0, Arrays.asList(file));
+                                    files.addAll(Arrays.asList(file));
                                 }
                             }
                         }

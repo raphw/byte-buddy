@@ -22,6 +22,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
+import net.bytebuddy.utility.QueueFactory;
 
 import java.util.*;
 
@@ -125,7 +126,7 @@ public enum GenericTypeAwareAssigner implements Assigner {
             } else if (typeVariable.equals(typeDescription)) {
                 return true;
             } else if (polymorphic) {
-                Queue<TypeDescription.Generic> candidates = new LinkedList<TypeDescription.Generic>(typeVariable.getUpperBounds());
+                Queue<TypeDescription.Generic> candidates = QueueFactory.make(typeVariable.getUpperBounds());
                 while (!candidates.isEmpty()) {
                     TypeDescription.Generic candidate = candidates.remove();
                     if (candidate.accept(new IsAssignableToVisitor(typeDescription))) {
@@ -222,7 +223,7 @@ public enum GenericTypeAwareAssigner implements Assigner {
              * {@inheritDoc}
              */
             public Boolean onParameterizedType(TypeDescription.Generic parameterizedType) {
-                Queue<TypeDescription.Generic> candidates = new LinkedList<TypeDescription.Generic>(Collections.singleton(typeDescription));
+                Queue<TypeDescription.Generic> candidates = QueueFactory.make(Collections.singleton(typeDescription));
                 Set<TypeDescription> previous = new HashSet<TypeDescription>(Collections.singleton(typeDescription.asErasure()));
                 do {
                     TypeDescription.Generic candidate = candidates.remove();

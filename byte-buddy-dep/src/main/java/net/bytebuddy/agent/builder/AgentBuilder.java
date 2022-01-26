@@ -7846,7 +7846,7 @@ public interface AgentBuilder {
                 /**
                  * The backlog of iterators to apply.
                  */
-                private final LinkedList<Iterator<? extends List<Class<?>>>> backlog;
+                private final List<Iterator<? extends List<Class<?>>>> backlog;
 
                 /**
                  * Creates a new prependable iterator.
@@ -7855,7 +7855,7 @@ public interface AgentBuilder {
                  */
                 protected PrependableIterator(Iterable<? extends List<Class<?>>> origin) {
                     current = origin.iterator();
-                    backlog = new LinkedList<Iterator<? extends List<Class<?>>>>();
+                    backlog = new ArrayList<Iterator<? extends List<Class<?>>>>();
                 }
 
                 /**
@@ -7867,7 +7867,7 @@ public interface AgentBuilder {
                     Iterator<? extends List<Class<?>>> iterator = iterable.iterator();
                     if (iterator.hasNext()) {
                         if (current.hasNext()) {
-                            backlog.addLast(current);
+                            backlog.add(current);
                         }
                         current = iterator;
                     }
@@ -7888,7 +7888,7 @@ public interface AgentBuilder {
                         return current.next();
                     } finally {
                         while (!current.hasNext() && !backlog.isEmpty()) {
-                            current = backlog.removeLast();
+                            current = backlog.remove(backlog.size() - 1);
                         }
                     }
                 }

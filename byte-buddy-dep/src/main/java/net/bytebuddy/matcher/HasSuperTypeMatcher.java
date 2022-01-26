@@ -18,9 +18,11 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.utility.QueueFactory;
 
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Set;
 
 /**
@@ -56,9 +58,9 @@ public class HasSuperTypeMatcher<T extends TypeDescription> extends ElementMatch
             } else if (matcher.matches(typeDefinition.asGenericType())) {
                 return true;
             }
-            LinkedList<TypeDefinition> interfaceTypes = new LinkedList<TypeDefinition>(typeDefinition.getInterfaces());
+            Queue<TypeDefinition> interfaceTypes = QueueFactory.<TypeDefinition>make(typeDefinition.getInterfaces());
             while (!interfaceTypes.isEmpty()) {
-                TypeDefinition interfaceType = interfaceTypes.removeFirst();
+                TypeDefinition interfaceType = interfaceTypes.remove();
                 if (previous.add(interfaceType.asErasure())) {
                     if (matcher.matches(interfaceType.asGenericType())) {
                         return true;
