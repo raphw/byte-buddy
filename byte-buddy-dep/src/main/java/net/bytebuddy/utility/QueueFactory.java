@@ -56,7 +56,7 @@ public class QueueFactory {
      * @return An appropriate queue.
      */
     public static <T> Queue<T> make() {
-        Queue<T> queue = INSTANCE.dispatcher.make();
+        Queue<T> queue = INSTANCE.dispatcher.arrayDeque();
         return queue == null
                 ? new LinkedList<T>()
                 : queue;
@@ -70,7 +70,7 @@ public class QueueFactory {
      * @return An appropriate queue.
      */
     public static <T> Queue<T> make(Collection<? extends T> elements) {
-        Queue<T> queue = INSTANCE.dispatcher.make(elements);
+        Queue<T> queue = INSTANCE.dispatcher.arrayDeque(elements);
         return queue == null
                 ? new LinkedList<T>(elements)
                 : queue;
@@ -103,7 +103,7 @@ public class QueueFactory {
          */
         @MaybeNull
         @JavaDispatcher.IsConstructor
-        <T> Queue<T> make();
+        <T> Queue<T> arrayDeque();
 
         /**
          * Creates a new array deque.
@@ -114,6 +114,6 @@ public class QueueFactory {
          */
         @MaybeNull
         @JavaDispatcher.IsConstructor
-        <T> Queue<T> make(Collection<? extends T> elements);
+        <T> Queue<T> arrayDeque(Collection<? extends T> elements);
     }
 }

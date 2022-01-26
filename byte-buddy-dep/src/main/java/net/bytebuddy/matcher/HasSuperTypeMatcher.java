@@ -21,7 +21,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.QueueFactory;
 
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
