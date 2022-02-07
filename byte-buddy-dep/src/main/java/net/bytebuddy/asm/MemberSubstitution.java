@@ -1415,7 +1415,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * Represents a step of a substitution chain.
              */
-            protected interface Step {
+            public interface Step {
 
                 /**
                  * Resolves this step of a substitution chain.
