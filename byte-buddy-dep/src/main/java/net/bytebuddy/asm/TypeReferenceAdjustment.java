@@ -364,13 +364,14 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         /**
-         * Resolves an internal name to its element type.
+         * Observes an internal name of an object type that might be an array type.
          *
          * @param internalName The internal name to resolve.
          */
-        protected void resolveInternalName(String internalName) {
-            while (internalName.startsWith("[")) {
-                internalName = internalName.substring(1);
+        private void observeInternalName(String internalName) {
+            int index = internalName.lastIndexOf('[');
+            if (index != -1) {
+                internalName = internalName.substring(index + 2, internalName.length() - 1);
             }
             observedTypes.add(internalName);
         }
@@ -572,20 +573,20 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
 
             @Override
             public void visitTypeInsn(int opcode, String internalName) {
-                resolveInternalName(internalName);
+                observeInternalName(internalName);
                 super.visitTypeInsn(opcode, internalName);
             }
 
             @Override
             public void visitFieldInsn(int opcode, String ownerInternalName, String name, String descriptor) {
-                resolveInternalName(ownerInternalName);
+                observeInternalName(ownerInternalName);
                 resolve(Type.getType(descriptor));
                 super.visitFieldInsn(opcode, ownerInternalName, name, descriptor);
             }
 
             @Override
             public void visitMethodInsn(int opcode, String ownerInternalName, String name, String descriptor, boolean isInterface) {
-                resolveInternalName(ownerInternalName);
+                observeInternalName(ownerInternalName);
                 resolve(Type.getType(descriptor));
                 super.visitMethodInsn(opcode, ownerInternalName, name, descriptor, isInterface);
             }
