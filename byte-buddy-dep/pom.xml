@@ -177,7 +177,7 @@
 
     <profiles>
         <profile>
-            <id>legacy-build</id>
+            <id>build-java-7</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
                 <jdk>1.7</jdk>
@@ -192,6 +192,27 @@
                             <excludes>
                                 <exclude>net.bytebuddy.agent.builder.AgentBuilderDefaultApplicationTest</exclude>
                                 <exclude>net.bytebuddy.pool.TypePoolDefaultAnnotationDescriptionTest</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>build-java-11</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>11</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- On recent Java 11, this test sometimes crashes the JIT compiler. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>net.bytebuddy.description.type.TypeDescriptionArrayProjectionTest</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
