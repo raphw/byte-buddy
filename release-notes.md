@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 10. February 2022: version 1.12.8
+
+- Make `Step` type in `MemberSubstitution` public as intended.
+- Add factory that uses `ArrayDeque` instead of `LinkedList` if the used JVM supports it (Java 6+).
+- Fix resolution of internal names for arrays in `TypeReferenceAdjustment`.
+
 ### 15. January 2022: version 1.12.7
 
 - Adjust warm-up API to return warmed-up byte code.
