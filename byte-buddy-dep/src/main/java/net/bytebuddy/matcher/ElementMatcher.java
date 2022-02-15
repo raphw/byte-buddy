@@ -167,7 +167,7 @@ public interface ElementMatcher<T> {
         }
 
         /**
-         * A disjunction matcher which only matches an element if both represented matchers constitute a match.
+         * A disjunction matcher which matches an element against matchers in order to constitute a successful match.
          *
          * @param <W> The type of the object that is being matched.
          */
