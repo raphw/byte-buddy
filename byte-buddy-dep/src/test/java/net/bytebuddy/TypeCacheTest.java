@@ -200,4 +200,10 @@ public class TypeCacheTest {
         assertThat(new TypeCache.SimpleKey(Object.class).hashCode(), not(new TypeCache.SimpleKey(Void.class).hashCode()));
         assertThat(new TypeCache.SimpleKey(Object.class), not(new TypeCache.SimpleKey(Void.class)));
     }
+
+    @Test
+    public void testDefaultStrongReferences() {
+        assertThat(new TypeCache<Object>().sort, is(TypeCache.Sort.STRONG));
+        assertThat(new TypeCache.WithInlineExpunction<Object>().sort, is(TypeCache.Sort.STRONG));
+    }
 }

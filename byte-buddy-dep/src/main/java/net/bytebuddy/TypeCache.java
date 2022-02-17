@@ -73,6 +73,13 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     protected final ConcurrentMap<StorageKey, ConcurrentMap<T, Object>> cache;
 
     /**
+     * Creates a new type cache with strong references to the stored types.
+     */
+    public TypeCache() {
+        this(Sort.STRONG);
+    }
+
+    /**
      * Creates a new type cache.
      *
      * @param sort The reference type to use for stored types.
@@ -345,6 +352,13 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @see TypeCache
      */
     public static class WithInlineExpunction<S> extends TypeCache<S> {
+
+        /**
+         * Creates a new type cache with inlined expunction and strong references to the stored types.
+         */
+        public WithInlineExpunction() {
+            this(Sort.STRONG);
+        }
 
         /**
          * Creates a new type cache with inlined expunction.
