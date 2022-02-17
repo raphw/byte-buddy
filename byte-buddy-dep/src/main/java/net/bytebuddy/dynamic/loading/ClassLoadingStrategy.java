@@ -483,6 +483,22 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * @return An appropriate class loading strategy for the current JVM that uses a method handles lookup if available.
          */
         public static ClassLoadingStrategy<ClassLoader> withFallback(Callable<?> lookup) {
+            return withFallback(lookup, false);
+        }
+
+        /**
+         * Resolves a class loading strategy using a lookup if available on the current JVM. If the current JVM supports method handles
+         * lookups, a lookup instance will be used. Alternatively, unsafe class definition is used, if supported. If neither strategy is
+         * supported, an exception is thrown. A common use case would be calling this method as in
+         * {@code ClassLoadingStrategy.UsingLookup.withFallback(MethodHandles::lookup)}. Note that the invocation of
+         * {@code MethodHandles.lookup()} is call site sensitive such that it cannot be invoked within Byte Buddy what requires this
+         * external invocation.
+         *
+         * @param lookup  A resolver for a lookup instance if the current JVM allows for lookup-based class injection.
+         * @param wrapper {@code true} if a {@link Default#WRAPPER} strategy should be used as a fallback in case that no injection strategy is available.
+         * @return An appropriate class loading strategy for the current JVM that uses a method handles lookup if available.
+         */
+        public static ClassLoadingStrategy<ClassLoader> withFallback(Callable<?> lookup, boolean wrapper) {
             if (GraalImageCode.getCurrent().isNativeImageExecution()) {
                 return ForPreloadedTypes.INSTANCE;
             } else if (ClassInjector.UsingLookup.isAvailable()) {
@@ -493,6 +509,8 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
                 }
             } else if (ClassInjector.UsingUnsafe.isAvailable()) {
                 return new ClassLoadingStrategy.ForUnsafeInjection();
+            } else if (wrapper) {
+                return Default.WRAPPER;
             } else {
                 throw new IllegalStateException("Neither lookup or unsafe class injection is available");
             }
