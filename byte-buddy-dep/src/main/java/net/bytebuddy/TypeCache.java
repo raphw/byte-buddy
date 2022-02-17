@@ -70,7 +70,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     /**
      * The underlying map containing cached objects.
      */
-    protected final ConcurrentMap<StorageKey, ConcurrentMap<T, Reference<Class<?>>>> cache;
+    protected final ConcurrentMap<StorageKey, ConcurrentMap<T, Object>> cache;
 
     /**
      * Creates a new type cache.
@@ -79,7 +79,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      */
     public TypeCache(Sort sort) {
         this.sort = sort;
-        cache = new ConcurrentHashMap<StorageKey, ConcurrentMap<T, Reference<Class<?>>>>();
+        cache = new ConcurrentHashMap<StorageKey, ConcurrentMap<T, Object>>();
     }
 
     /**
@@ -92,15 +92,17 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     @MaybeNull
     @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended.")
     public Class<?> find(@MaybeNull ClassLoader classLoader, T key) {
-        ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(new LookupKey(classLoader));
+        ConcurrentMap<T, Object> storage = cache.get(new LookupKey(classLoader));
         if (storage == null) {
             return NOT_FOUND;
         } else {
-            Reference<Class<?>> reference = storage.get(key);
-            if (reference == null) {
+            Object value = storage.get(key);
+            if (value == null) {
                 return NOT_FOUND;
+            } else if (value instanceof Reference<?>) {
+                return (Class<?>) ((Reference<?>) value).get();
             } else {
-                return reference.get();
+                return (Class<?>) value;
             }
         }
     }
@@ -115,25 +117,27 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      */
     @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended.")
     public Class<?> insert(@MaybeNull ClassLoader classLoader, T key, Class<?> type) {
-        ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(new LookupKey(classLoader));
+        ConcurrentMap<T, Object> storage = cache.get(new LookupKey(classLoader));
         if (storage == null) {
-            storage = new ConcurrentHashMap<T, Reference<Class<?>>>();
-            ConcurrentMap<T, Reference<Class<?>>> previous = cache.putIfAbsent(new StorageKey(classLoader, this), storage);
+            storage = new ConcurrentHashMap<T, Object>();
+            ConcurrentMap<T, Object> previous = cache.putIfAbsent(new StorageKey(classLoader, this), storage);
             if (previous != null) {
                 storage = previous;
             }
         }
-        Reference<Class<?>> reference = sort.wrap(type), previous = storage.putIfAbsent(key, reference);
+        Object value = sort.wrap(type), previous = storage.putIfAbsent(key, value);
         while (previous != null) {
-            Class<?> previousType = previous.get();
+            Class<?> previousType = (Class<?>) (previous instanceof Reference<?>
+                    ? ((Reference<?>) previous).get()
+                    : previous);
             if (previousType != null) {
                 return previousType;
             } else if (storage.remove(key, previous)) {
-                previous = storage.putIfAbsent(key, reference);
+                previous = storage.putIfAbsent(key, value);
             } else {
                 previous = storage.get(key);
                 if (previous == null) {
-                    previous = storage.putIfAbsent(key, reference);
+                    previous = storage.putIfAbsent(key, value);
                 }
             }
         }
@@ -221,6 +225,16 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
             protected Reference<Class<?>> wrap(Class<?> type) {
                 return new SoftReference<Class<?>>(type);
             }
+        },
+
+        /**
+         * Creates a cache where cached types are strongly referenced.
+         */
+        STRONG {
+            @Override
+            protected Class<?> wrap(Class<?> type) {
+                return type;
+            }
         };
 
         /**
@@ -229,7 +243,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
          * @param type The type to wrap.
          * @return The reference that represents the type.
          */
-        protected abstract Reference<Class<?>> wrap(Class<?> type);
+        protected abstract Object wrap(Class<?> type);
     }
 
     /**

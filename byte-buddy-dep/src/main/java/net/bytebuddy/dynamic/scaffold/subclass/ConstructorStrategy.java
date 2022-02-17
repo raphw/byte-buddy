@@ -86,7 +86,7 @@ public interface ConstructorStrategy {
         },
 
         /**
-         * This strategy is adding a default constructor that calls it's super types default constructor. If no such
+         * This strategy is adding a default constructor that calls its super types default constructor. If no such
          * constructor is defined by the super class, an {@link IllegalArgumentException} is thrown. Note that the default
          * constructor needs to be visible to its sub type for this strategy to work. The declared default constructor of
          * the created class is declared public and without annotations.
