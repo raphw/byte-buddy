@@ -6718,6 +6718,127 @@ public interface AgentBuilder {
                         throw new UnsupportedOperationException("remove");
                     }
                 }
+
+                /**
+                 * <p>
+                 * A discovery strategy that simplifies the application of {@link Reiterating} by assuming that the
+                 * loaded classes that are returned by {@link Instrumentation#getAllLoadedClasses()} are always
+                 * returned in the same order.
+                 * </p>
+                 * <p>
+                 * <b>Important</b>: While this increases the performance of reiteration, it relies on an implementation
+                 * detail of the JVM. Also, this strategy does not consider the possibility of classes being unloaded
+                 * during reiteration. For these reasons, this strategy has to be used with care!
+                 * </p>
+                 */
+                enum WithSortOrderAssumption implements DiscoveryStrategy {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Iterable<Iterable<Class<?>>> resolve(Instrumentation instrumentation) {
+                        return new OrderedReiteratingIterable(instrumentation);
+                    }
+
+                    /**
+                     * An iterable that reiterates over an array of loaded classes by the previously observed length.
+                     */
+                    @HashCodeAndEqualsPlugin.Enhance
+                    protected static class OrderedReiteratingIterable implements Iterable<Iterable<Class<?>>> {
+
+                        /**
+                         * The instrumentation instance to use.
+                         */
+                        private final Instrumentation instrumentation;
+
+                        /**
+                         * Creates a new reiterating iterable.
+                         *
+                         * @param instrumentation The instrumentation instance to use.
+                         */
+                        protected OrderedReiteratingIterable(Instrumentation instrumentation) {
+                            this.instrumentation = instrumentation;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Iterator<Iterable<Class<?>>> iterator() {
+                            return new OrderedReiteratingIterator(instrumentation);
+                        }
+                    }
+
+                    /**
+                     * An iterator that reiterates over an array of loaded classes by the previously observed length.
+                     */
+                    protected static class OrderedReiteratingIterator implements Iterator<Iterable<Class<?>>> {
+
+                        /**
+                         * The instrumentation instance to use.
+                         */
+                        private final Instrumentation instrumentation;
+
+                        /**
+                         * The length of the last known array of known classes.
+                         */
+                        private int index;
+
+                        /**
+                         * The current list of types or {@code null} if the current list of types is not prepared.
+                         */
+                        @MaybeNull
+                        private List<Class<?>> types;
+
+                        /**
+                         * Creates a new reiterating iterator.
+                         *
+                         * @param instrumentation The instrumentation instance to use.
+                         */
+                        protected OrderedReiteratingIterator(Instrumentation instrumentation) {
+                            this.instrumentation = instrumentation;
+                            index = 0;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public boolean hasNext() {
+                            if (types == null) {
+                                Class<?>[] type = instrumentation.getAllLoadedClasses();
+                                types = new ArrayList<Class<?>>(Arrays.asList(type).subList(index, type.length));
+                                index = type.length;
+                            }
+                            return !types.isEmpty();
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Iterable<Class<?>> next() {
+                            if (hasNext()) {
+                                try {
+                                    return types;
+                                } finally {
+                                    types = null;
+                                }
+                            } else {
+                                throw new NoSuchElementException();
+                            }
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public void remove() {
+                            throw new UnsupportedOperationException("remove");
+                        }
+                    }
+                }
             }
 
             /**
