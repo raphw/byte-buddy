@@ -6141,9 +6141,7 @@ public interface DynamicType {
              * {@inheritDoc}
              */
             public DynamicType.Loaded<T> load(@MaybeNull ClassLoader classLoader) {
-                if (GraalImageCode.getCurrent().isNativeImageExecution()) {
-                    return load(classLoader, ClassLoadingStrategy.ForPreloadedTypes.INSTANCE);
-                } else if (classLoader instanceof InjectionClassLoader && !((InjectionClassLoader) classLoader).isSealed()) {
+                if (classLoader instanceof InjectionClassLoader && !((InjectionClassLoader) classLoader).isSealed()) {
                     return load((InjectionClassLoader) classLoader, InjectionClassLoader.Strategy.INSTANCE);
                 } else {
                     return load(classLoader, ClassLoadingStrategy.Default.WRAPPER);

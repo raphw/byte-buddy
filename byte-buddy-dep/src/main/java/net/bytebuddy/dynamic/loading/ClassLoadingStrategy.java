@@ -17,14 +17,12 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.utility.GraalImageCode;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 
 import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -499,9 +497,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * @return An appropriate class loading strategy for the current JVM that uses a method handles lookup if available.
          */
         public static ClassLoadingStrategy<ClassLoader> withFallback(Callable<?> lookup, boolean wrapper) {
-            if (GraalImageCode.getCurrent().isNativeImageExecution()) {
-                return ForPreloadedTypes.INSTANCE;
-            } else if (ClassInjector.UsingLookup.isAvailable()) {
+            if (ClassInjector.UsingLookup.isAvailable()) {
                 try {
                     return of(lookup.call());
                 } catch (Exception exception) {
@@ -635,34 +631,6 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          */
         public Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             return new ClassInjector.UsingUnsafe(classLoader, protectionDomain).inject(types);
-        }
-    }
-
-    /**
-     * A class loading strategy that expects classes to already be available on the provided class loader.
-     * This strategy is mainly intended to work with Graal native images where classes cannot be loaded
-     * dynamically.
-     */
-    enum ForPreloadedTypes implements ClassLoadingStrategy<ClassLoader> {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        /**
-         * {@inheritDoc}
-         */
-        public Map<TypeDescription, Class<?>> load(@MaybeNull ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-            Map<TypeDescription, Class<?>> result = new LinkedHashMap<TypeDescription, Class<?>>();
-            for (TypeDescription typeDescription : types.keySet()) {
-                try {
-                    result.put(typeDescription, Class.forName(typeDescription.getName(), false, classLoader));
-                } catch (ClassNotFoundException exception) {
-                    throw new IllegalStateException("Cannot find preexisting class " + typeDescription, exception);
-                }
-            }
-            return result;
         }
     }
 }
