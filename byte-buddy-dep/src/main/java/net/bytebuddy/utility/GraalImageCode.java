@@ -21,6 +21,8 @@ import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 
 import java.security.PrivilegedAction;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * A utility that resolves Graal VM native image properties.
@@ -83,6 +85,21 @@ public enum GraalImageCode {
             GraalImageCode.current = current;
         }
         return current;
+    }
+
+    /**
+     * Sorts the provided values only if an active Graal image code is set.
+     *
+     * @param value      The values to sort.
+     * @param comparator the comparator to use.
+     * @param <T>        The array component type.
+     * @return The supplied array, potentially sorted.
+     */
+    public <T> T[] sorted(T[] value, Comparator<? super T> comparator) {
+        if (defined) {
+            Arrays.sort(value, comparator);
+        }
+        return value;
     }
 
     /**

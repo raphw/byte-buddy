@@ -19,6 +19,9 @@ import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
+import net.bytebuddy.utility.ConstructorComparator;
+import net.bytebuddy.utility.GraalImageCode;
+import net.bytebuddy.utility.MethodComparator;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -145,7 +148,8 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
          * @param type The type to be represented by this method list.
          */
         public ForLoadedMethods(Class<?> type) {
-            this(type.getDeclaredConstructors(), type.getDeclaredMethods());
+            this(GraalImageCode.getCurrent().sorted(type.getDeclaredConstructors(), ConstructorComparator.INSTANCE),
+                    GraalImageCode.getCurrent().sorted(type.getDeclaredMethods(), MethodComparator.INSTANCE));
         }
 
         /**

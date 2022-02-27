@@ -20,7 +20,9 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.utility.GraalImageCode;
 import net.bytebuddy.utility.Invoker;
+import net.bytebuddy.utility.MethodComparator;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.ClassWriter;
@@ -33,6 +35,7 @@ import java.lang.reflect.*;
 import java.security.Permission;
 import java.security.PrivilegedAction;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -191,14 +194,18 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         } catch (IllegalAccessException exception) {
             throw new IllegalStateException("Failed to access security manager", exception);
         }
-        Map<Method, Dispatcher> dispatchers = new HashMap<Method, Dispatcher>();
+        Map<Method, Dispatcher> dispatchers = generate
+                ? new LinkedHashMap<Method, Dispatcher>()
+                : new HashMap<Method, Dispatcher>();
         boolean defaults = proxy.isAnnotationPresent(Defaults.class);
         String name = proxy.getAnnotation(Proxied.class).value();
         Class<?> target;
         try {
             target = Class.forName(name, false, classLoader);
         } catch (ClassNotFoundException exception) {
-            for (Method method : proxy.getMethods()) {
+            for (Method method : generate
+                    ? GraalImageCode.getCurrent().sorted(proxy.getMethods(), MethodComparator.INSTANCE)
+                    : proxy.getMethods()) {
                 if (method.getDeclaringClass() == Object.class) {
                     continue;
                 }
@@ -225,7 +232,9 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             }
         }
         boolean generate = this.generate;
-        for (Method method : proxy.getMethods()) {
+        for (Method method : generate
+                ? GraalImageCode.getCurrent().sorted(proxy.getMethods(), MethodComparator.INSTANCE)
+                : proxy.getMethods()) {
             if (method.getDeclaringClass() == Object.class) {
                 continue;
             }
@@ -1271,7 +1280,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                     null,
                     Type.getInternalName(Object.class),
                     new String[]{Type.getInternalName(Invoker.class)});
-            for (Method method : Invoker.class.getMethods()) {
+            for (Method method : GraalImageCode.getCurrent().sorted(Invoker.class.getMethods(), MethodComparator.INSTANCE)) {
                 Class<?>[] exceptionType = method.getExceptionTypes();
                 String[] exceptionTypeName = new String[exceptionType.length];
                 for (int index = 0; index < exceptionType.length; index++) {

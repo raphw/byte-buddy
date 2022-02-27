@@ -36,6 +36,8 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.FieldComparator;
+import net.bytebuddy.utility.GraalImageCode;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.AlwaysNull;
@@ -8790,7 +8792,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         @CachedReturnPlugin.Enhance("declaredFields")
         public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
-            return new FieldList.ForLoadedFields(type.getDeclaredFields());
+            return new FieldList.ForLoadedFields(GraalImageCode.getCurrent().sorted(type.getDeclaredFields(), FieldComparator.INSTANCE));
         }
 
         /**
