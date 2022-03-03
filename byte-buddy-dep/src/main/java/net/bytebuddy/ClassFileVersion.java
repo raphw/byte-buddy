@@ -135,7 +135,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
     public static final ClassFileVersion JAVA_V18 = new ClassFileVersion(Opcodes.V18);
 
     /**
-     * The class file version of Java 18.
+     * The class file version of Java 19.
      */
     public static final ClassFileVersion JAVA_V19 = new ClassFileVersion(Opcodes.V19);
 

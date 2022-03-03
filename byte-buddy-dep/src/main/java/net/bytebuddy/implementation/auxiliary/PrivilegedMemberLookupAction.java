@@ -28,6 +28,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.RandomString;
 
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
@@ -139,6 +140,13 @@ public enum PrivilegedMemberLookupAction implements AuxiliaryType {
         } else {
             throw new IllegalStateException("Cannot load constant for type initializer: " + methodDescription);
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String getSuffix() {
+        return RandomString.hashOf(name().hashCode());
     }
 
     /**

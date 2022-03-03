@@ -16,6 +16,7 @@ import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -78,6 +79,15 @@ public class TypeProxyCreationTest {
         when(proxyMethod.getDescriptor()).thenReturn(FOO);
         when(proxyMethod.getReturnType()).thenReturn(TypeDescription.Generic.OBJECT);
         when(proxyMethod.asDefined()).thenReturn(proxyMethod);
+    }
+
+    @Test
+    public void testSuffix() {
+        assertThat(new TypeProxy(foo,
+                implementationTarget,
+                invocationFactory,
+                true,
+                false).getSuffix(), is("4b944o3I0"));
     }
 
     @Test

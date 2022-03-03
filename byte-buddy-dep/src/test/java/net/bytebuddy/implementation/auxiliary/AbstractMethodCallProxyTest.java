@@ -30,7 +30,7 @@ public class AbstractMethodCallProxyTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private Implementation.SpecialMethodInvocation specialMethodInvocation;
+    protected Implementation.SpecialMethodInvocation specialMethodInvocation;
 
     @Mock
     private MethodAccessorFactory methodAccessorFactory;

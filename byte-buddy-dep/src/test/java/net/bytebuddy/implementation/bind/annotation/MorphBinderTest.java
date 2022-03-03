@@ -146,6 +146,15 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         verify(specialMethodInvocation).isValid();
     }
 
+    @Test
+    public void testRedirectionProxySuffix() throws Exception {
+        assertThat(new Morph.Binder.RedirectionProxy(new TypeDescription.ForLoadedType(Foo.class),
+                mock(TypeDescription.class),
+                mock(Implementation.SpecialMethodInvocation.class),
+                mock(Assigner.class),
+                false).getSuffix(), is("tki4sc10"));
+    }
+
     private interface Foo {
         /* empty */
     }

@@ -15,6 +15,8 @@
  */
 package net.bytebuddy.utility;
 
+import net.bytebuddy.utility.nullability.MaybeNull;
+
 import java.util.Random;
 
 /**
@@ -120,10 +122,10 @@ public class RandomString {
      * Represents a object value as a string hash. This string is not technically random but generates a fixed character
      * sequence based on the hash provided.
      *
-     * @param value The value to represent as a string.
+     * @param value The value to represent as a string or {@code null}.
      * @return A string representing the supplied value as a string.
      */
-    public static String hashOf(Object value) {
+    public static String hashOf(@MaybeNull Object value) {
         return hashOf(value == null
                 ? 0
                 : value.getClass().hashCode() ^ System.identityHashCode(value));

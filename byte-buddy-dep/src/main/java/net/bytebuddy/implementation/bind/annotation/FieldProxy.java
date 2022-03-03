@@ -42,6 +42,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -993,6 +994,13 @@ public @interface FieldProxy {
                 this.fieldResolver = fieldResolver;
                 this.assigner = assigner;
                 this.serializableProxy = serializableProxy;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public String getSuffix() {
+                return RandomString.hashOf(fieldDescription.hashCode()) + (serializableProxy ? "S" : "0");
             }
 
             /**

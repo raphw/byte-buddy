@@ -56,6 +56,13 @@ public interface AuxiliaryType {
     DynamicType make(String auxiliaryTypeName, ClassFileVersion classFileVersion, MethodAccessorFactory methodAccessorFactory);
 
     /**
+     * Produces a suffix that gives this auxiliary type a stable name. A best effort is made that this suffix is unique.
+     *
+     * @return The suffix for this auxiliary type.
+     */
+    String getSuffix();
+
+    /**
      * Representation of a naming strategy for an auxiliary type.
      */
     interface NamingStrategy {
@@ -93,7 +100,34 @@ public interface AuxiliaryType {
              * {@inheritDoc}
              */
             public String name(TypeDescription instrumentedType, AuxiliaryType auxiliaryType) {
-                return instrumentedType.getName() + "$" + suffix + "$" + RandomString.hashOf(auxiliaryType.hashCode());
+                return instrumentedType.getName() + "$" + suffix + "$" + RandomString.hashOf(auxiliaryType);
+            }
+        }
+
+        /**
+         * Creates a naming strategy that uses stable suffixes that are provided by the auxiliary types themselves.
+         */
+        class Suffixing implements NamingStrategy {
+
+            /**
+             * The suffix to append to the instrumented type for creating names for the auxiliary types.
+             */
+            private final String suffix;
+
+            /**
+             * Creates a new suffixing random naming strategy.
+             *
+             * @param suffix The suffix to extend to the instrumented type.
+             */
+            public Suffixing(String suffix) {
+                this.suffix = suffix;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public String name(TypeDescription instrumentedType, AuxiliaryType auxiliaryType) {
+                return instrumentedType.getName() + "$" + suffix + "$" + auxiliaryType.getSuffix();
             }
         }
 

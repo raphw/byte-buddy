@@ -138,7 +138,7 @@ public abstract class InvocationHandlerAdapter implements Implementation.Composa
      * @return An implementation that delegates all method interceptions to the given invocation handler.
      */
     public static InvocationHandlerAdapter of(InvocationHandler invocationHandler) {
-        return of(invocationHandler, ForInstance.PREFIX + "$" + RandomString.hashOf(invocationHandler.getClass().hashCode() ^ invocationHandler.hashCode()));
+        return of(invocationHandler, ForInstance.PREFIX + "$" + RandomString.hashOf(invocationHandler));
     }
 
     /**

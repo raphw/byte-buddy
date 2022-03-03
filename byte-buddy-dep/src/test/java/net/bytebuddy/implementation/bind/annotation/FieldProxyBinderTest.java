@@ -292,6 +292,15 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
                 mock(MethodAccessorFactory.class));
     }
 
+    @Test
+    public void testFieldProxyBinderAccessorProxySuffix() throws Exception {
+        assertThat(new FieldProxy.Binder.AccessorProxy(new FieldDescription.ForLoadedField(Foo.class.getField(FOO)),
+                mock(TypeDescription.class),
+                mock(FieldProxy.Binder.FieldResolver.class),
+                mock(Assigner.class),
+                false).getSuffix(), is("4joghh30"));
+    }
+
     public static class Foo {
 
         public Foo foo;

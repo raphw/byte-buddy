@@ -797,7 +797,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             private final Set<FieldDescription.InDefinedShape> registeredFieldCacheFields;
 
             /**
-             * A random suffix to append to the names of accessor methods.
+             * The suffix to append to the names of accessor methods.
              */
             private final String suffix;
 
@@ -814,23 +814,25 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type.
              * @param typeInitializer             The type initializer of the created instrumented type.
              * @param auxiliaryClassFileVersion   The class file version to use for auxiliary classes.
+             * @param suffix                      The suffix to append to the names of accessor methods.
              */
             protected Default(TypeDescription instrumentedType,
                               ClassFileVersion classFileVersion,
                               AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                               TypeInitializer typeInitializer,
-                              ClassFileVersion auxiliaryClassFileVersion) {
+                              ClassFileVersion auxiliaryClassFileVersion,
+                              String suffix) {
                 super(instrumentedType, classFileVersion);
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.typeInitializer = typeInitializer;
                 this.auxiliaryClassFileVersion = auxiliaryClassFileVersion;
+                this.suffix = suffix;
                 registeredAccessorMethods = new HashMap<SpecialMethodInvocation, DelegationRecord>();
                 registeredGetters = new HashMap<FieldDescription, DelegationRecord>();
                 registeredSetters = new HashMap<FieldDescription, DelegationRecord>();
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription.InDefinedShape>();
                 registeredFieldCacheFields = new HashSet<FieldDescription.InDefinedShape>();
-                suffix = RandomString.make();
                 fieldCacheCanAppendEntries = true;
             }
 
@@ -1709,7 +1711,46 @@ public interface Implementation extends InstrumentedType.Prepareable {
                                             TypeInitializer typeInitializer,
                                             ClassFileVersion classFileVersion,
                                             ClassFileVersion auxiliaryClassFileVersion) {
-                    return new Default(instrumentedType, classFileVersion, auxiliaryTypeNamingStrategy, typeInitializer, auxiliaryClassFileVersion);
+                    return new Default(instrumentedType,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            typeInitializer,
+                            auxiliaryClassFileVersion,
+                            RandomString.make());
+                }
+
+                @HashCodeAndEqualsPlugin.Enhance
+                public static class WithFixedSuffix implements ExtractableView.Factory {
+
+                    /**
+                     * The suffix to use.
+                     */
+                    private final String suffix;
+
+                    /**
+                     * Creates a factory for an implementation context with a fixed suffix.
+                     *
+                     * @param suffix The suffix to use.
+                     */
+                    public WithFixedSuffix(String suffix) {
+                        this.suffix = suffix;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ExtractableView make(TypeDescription instrumentedType,
+                                                AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                                TypeInitializer typeInitializer,
+                                                ClassFileVersion classFileVersion,
+                                                ClassFileVersion auxiliaryClassFileVersion) {
+                        return new Default(instrumentedType,
+                                classFileVersion,
+                                auxiliaryTypeNamingStrategy,
+                                typeInitializer,
+                                auxiliaryClassFileVersion,
+                                suffix);
+                    }
                 }
             }
         }

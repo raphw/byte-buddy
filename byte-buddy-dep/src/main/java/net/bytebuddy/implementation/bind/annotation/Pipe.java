@@ -45,6 +45,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 
 import java.io.Serializable;
@@ -196,7 +197,7 @@ public @interface Pipe {
             } else if (source.isStatic()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            return new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType().asErasure(),
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(new RedirectionProxy(forwardingMethod.getDeclaringType().asErasure(),
                     source,
                     assigner,
                     annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class)));
@@ -207,7 +208,7 @@ public @interface Pipe {
          * {@link net.bytebuddy.implementation.bind.annotation.Pipe} annotation.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        protected static class Redirection extends StackManipulation.AbstractBase implements AuxiliaryType {
+        protected static class RedirectionProxy extends StackManipulation.AbstractBase implements AuxiliaryType {
 
             /**
              * The prefix for naming fields to store method arguments.
@@ -242,10 +243,10 @@ public @interface Pipe {
              * @param assigner          The assigner to use.
              * @param serializableProxy Determines if the generated proxy should be {@link java.io.Serializable}.
              */
-            protected Redirection(TypeDescription forwardingType,
-                                  MethodDescription sourceMethod,
-                                  Assigner assigner,
-                                  boolean serializableProxy) {
+            protected RedirectionProxy(TypeDescription forwardingType,
+                                       MethodDescription sourceMethod,
+                                       Assigner assigner,
+                                       boolean serializableProxy) {
                 this.forwardingType = forwardingType;
                 this.sourceMethod = sourceMethod;
                 this.assigner = assigner;
@@ -277,6 +278,15 @@ public @interface Pipe {
              */
             private static String fieldName(int index) {
                 return FIELD_NAME_PREFIX + index;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public String getSuffix() {
+                return RandomString.hashOf(forwardingType.hashCode())
+                        + RandomString.hashOf(sourceMethod.hashCode())
+                        + (serializableProxy ? "S" : "0");
             }
 
             /**
@@ -316,9 +326,7 @@ public @interface Pipe {
             }
 
             /**
-             * The implementation to implement a
-             * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection}'s
-             * constructor.
+             * The implementation to implement a {@link RedirectionProxy}'s constructor.
              */
             protected enum ConstructorCall implements Implementation {
 
@@ -354,8 +362,7 @@ public @interface Pipe {
                 }
 
                 /**
-                 * The appender for implementing the
-                 * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection.ConstructorCall}.
+                 * The appender for implementing the {@link RedirectionProxy.ConstructorCall}.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
                 private static class Appender implements ByteCodeAppender {
@@ -401,9 +408,7 @@ public @interface Pipe {
             }
 
             /**
-             * The implementation to implement a
-             * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection}'s
-             * forwarding method.
+             * The implementation to implement a {@link RedirectionProxy}'s forwarding method.
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class MethodCall implements Implementation {
@@ -447,8 +452,7 @@ public @interface Pipe {
                 }
 
                 /**
-                 * The appender for implementing the
-                 * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection.MethodCall}.
+                 * The appender for implementing the {@link RedirectionProxy.MethodCall}.
                  */
                 @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 private class Appender implements ByteCodeAppender {

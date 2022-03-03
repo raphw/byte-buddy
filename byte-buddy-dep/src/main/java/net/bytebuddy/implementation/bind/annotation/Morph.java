@@ -44,6 +44,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -358,6 +359,13 @@ public @interface Morph {
                 this.specialMethodInvocation = specialMethodInvocation;
                 this.assigner = assigner;
                 this.serializableProxy = serializableProxy;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public String getSuffix() {
+                return RandomString.hashOf(morphingType.hashCode()) + (serializableProxy ? "S" : "0");
             }
 
             /**

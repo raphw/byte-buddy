@@ -30,6 +30,7 @@ import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.utility.GraalImageCode;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
@@ -903,7 +904,7 @@ public interface ClassInjector {
                  */
                 @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
                 protected static Initializable make() throws Exception {
-                    if (Boolean.getBoolean(UsingUnsafe.SAFE_PROPERTY)) {
+                    if (Boolean.parseBoolean(java.lang.System.getProperty(UsingUnsafe.SAFE_PROPERTY, Boolean.toString(GraalImageCode.getCurrent().isDefined())))) {
                         return new Initializable.Unavailable("Use of Unsafe was disabled by system property");
                     }
                     Class<?> unsafe = Class.forName("sun.misc.Unsafe");
@@ -923,7 +924,7 @@ public interface ClassInjector {
                     DynamicType.Builder<?> builder = new ByteBuddy()
                             .with(TypeValidation.DISABLED)
                             .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                            .name(ClassLoader.class.getName() + "$ByteBuddyAccessor$" + RandomString.make())
+                            .name(ClassLoader.class.getName() + "$ByteBuddyAccessor$V1")
                             .defineMethod("findLoadedClass", Class.class, Visibility.PUBLIC)
                             .withParameters(ClassLoader.class, String.class)
                             .intercept(MethodCall.invoke(ClassLoader.class
@@ -1167,7 +1168,7 @@ public interface ClassInjector {
                  */
                 @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
                 protected static Initializable make() throws Exception {
-                    if (Boolean.getBoolean(UsingUnsafe.SAFE_PROPERTY)) {
+                    if (Boolean.parseBoolean(java.lang.System.getProperty(UsingUnsafe.SAFE_PROPERTY, Boolean.toString(GraalImageCode.getCurrent().isDefined())))) {
                         return new Initializable.Unavailable("Use of Unsafe was disabled by system property");
                     }
                     Class<?> unsafeType = Class.forName("sun.misc.Unsafe");
@@ -1917,7 +1918,7 @@ public interface ClassInjector {
                  */
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
                 public Initializable run() {
-                    if (Boolean.getBoolean(SAFE_PROPERTY)) {
+                    if (Boolean.parseBoolean(java.lang.System.getProperty(SAFE_PROPERTY, Boolean.toString(GraalImageCode.getCurrent().isDefined())))) {
                         return new Unavailable("Use of Unsafe was disabled by system property");
                     }
                     try {

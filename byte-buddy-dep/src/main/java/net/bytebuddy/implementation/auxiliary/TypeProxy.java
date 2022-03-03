@@ -35,6 +35,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -106,6 +107,15 @@ public class TypeProxy implements AuxiliaryType {
         this.invocationFactory = invocationFactory;
         this.ignoreFinalizer = ignoreFinalizer;
         this.serializableProxy = serializableProxy;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String getSuffix() {
+        return RandomString.hashOf(proxiedType.hashCode())
+                + (ignoreFinalizer ? "I" : "0")
+                + (serializableProxy ? "S" : "0");
     }
 
     /**

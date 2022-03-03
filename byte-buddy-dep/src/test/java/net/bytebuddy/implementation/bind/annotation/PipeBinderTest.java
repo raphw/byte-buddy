@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import org.junit.Before;
@@ -80,5 +81,14 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
                 implementationTarget,
                 assigner,
                 Assigner.Typing.STATIC);
+    }
+
+    @Test
+    public void testRedirectionSuffix() {
+        assertThat(new Morph.Binder.RedirectionProxy(new TypeDescription.ForLoadedType(Object.class),
+                mock(TypeDescription.class),
+                mock(Implementation.SpecialMethodInvocation.class),
+                mock(Assigner.class),
+                false).getSuffix(), is("jcuimv00"));
     }
 }

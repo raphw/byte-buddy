@@ -5,6 +5,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.MethodAccessorFactory;
+import net.bytebuddy.utility.RandomString;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,6 +47,11 @@ public class PrivilegedMemberLookupActionTest {
         this.member = member;
         this.type = type;
         this.name = name;
+    }
+
+    @Test
+    public void testSuffix() {
+        assertThat(auxiliaryType.getSuffix(), is(RandomString.hashOf(((Enum<?>) auxiliaryType).name().hashCode())));
     }
 
     @Test

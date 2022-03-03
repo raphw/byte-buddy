@@ -1,6 +1,8 @@
 package net.bytebuddy.implementation.auxiliary;
 
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.CallTraceable;
+import net.bytebuddy.utility.RandomString;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
@@ -10,6 +12,7 @@ import java.util.concurrent.Callable;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.when;
 
 public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
 
@@ -20,6 +23,13 @@ public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
     private static final int INT_VALUE = 21;
 
     private static final boolean BOOLEAN_VALUE = true;
+
+    @Test
+    public void testSignature() throws Exception {
+        MethodDescription methodDescription = new MethodDescription.ForLoadedMethod(Object.class.getMethod("toString"));
+        when(specialMethodInvocation.getMethodDescription()).thenReturn(methodDescription);
+        assertThat(new MethodCallProxy(specialMethodInvocation, true).getSuffix(), is(RandomString.hashOf(methodDescription.hashCode()) + "S"));
+    }
 
     @Test
     public void testNoParameterMethod() throws Exception {
@@ -73,6 +83,13 @@ public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
         assertThat(auxiliaryType.getDeclaredMethod("call").getGenericReturnType(), is((Type) Object.class));
         assertThat(auxiliaryType.getDeclaredFields()[1].getGenericType(), is((Type) Object.class));
         assertThat(auxiliaryType.getDeclaredFields()[2].getGenericType(), is((Type) Number.class));
+    }
+
+    @Test
+    public void testSuffix() throws Exception {
+        MethodDescription methodDescription = new MethodDescription.ForLoadedMethod(Object.class.getMethod("toString"));
+        when(specialMethodInvocation.getMethodDescription()).thenReturn(methodDescription);
+        assertThat(new MethodCallProxy(specialMethodInvocation, false).getSuffix(), is("4cscpe10"));
     }
 
     @SuppressWarnings("unused")

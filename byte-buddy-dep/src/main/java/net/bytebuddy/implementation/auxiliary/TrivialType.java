@@ -23,6 +23,7 @@ import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.MethodAccessorFactory;
+import net.bytebuddy.utility.RandomString;
 
 import java.util.Collections;
 
@@ -54,6 +55,13 @@ public enum TrivialType implements AuxiliaryType {
      */
     TrivialType(boolean eager) {
         this.eager = eager;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String getSuffix() {
+        return RandomString.hashOf(name().hashCode());
     }
 
     /**

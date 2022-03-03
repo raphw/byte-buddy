@@ -124,6 +124,11 @@ public class ByteBuddy {
     private static final String BYTE_BUDDY_DEFAULT_SUFFIX = "auxiliary";
 
     /**
+     * The default name of a fixed context name for synthetic fields and methods.
+     */
+    private static final String BYTE_BUDDY_DEFAULT_CONTEXT_NAME = "synthetic";
+
+    /**
      * The default naming strategy or {@code null} if no such strategy is set.
      */
     @MaybeNull
@@ -135,6 +140,12 @@ public class ByteBuddy {
     @MaybeNull
     private static final AuxiliaryType.NamingStrategy DEFAULT_AUXILIARY_NAMING_STRATEGY;
 
+    /**
+     * The default implementation context factory or {@code null} if no such factory is set.
+     */
+    @MaybeNull
+    private static final Implementation.Context.Factory DEFAULT_IMPLEMENTATION_CONTEXT_FACTORY;
+
     /*
      * Resolves the default naming strategy.
      */
@@ -142,26 +153,31 @@ public class ByteBuddy {
         String value = doPrivileged(new GetSystemPropertyAction(DEFAULT_NAMING_PROPERTY));
         NamingStrategy namingStrategy;
         AuxiliaryType.NamingStrategy auxiliaryNamingStrategy;
+        Implementation.Context.Factory implementationContextFactory;
         if (value == null) {
             if (GraalImageCode.getCurrent().isDefined()) {
                 namingStrategy = new NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_PREFIX,
                         new NamingStrategy.Suffixing.BaseNameResolver.WithCallerSuffix(NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE),
                         NamingStrategy.BYTE_BUDDY_RENAME_PACKAGE);
-                auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Enumerating(BYTE_BUDDY_DEFAULT_SUFFIX);
+                auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_SUFFIX);
+                implementationContextFactory = new Implementation.Context.Default.Factory.WithFixedSuffix(BYTE_BUDDY_DEFAULT_CONTEXT_NAME);
             } else {
                 namingStrategy = null;
                 auxiliaryNamingStrategy = null;
+                implementationContextFactory = null;
             }
         } else if (value.equalsIgnoreCase("fixed")) {
             namingStrategy = new NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_PREFIX,
                     NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE,
                     NamingStrategy.BYTE_BUDDY_RENAME_PACKAGE);
-            auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Enumerating(BYTE_BUDDY_DEFAULT_SUFFIX);
+            auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_SUFFIX);
+            implementationContextFactory = new Implementation.Context.Default.Factory.WithFixedSuffix(BYTE_BUDDY_DEFAULT_CONTEXT_NAME);
         } else if (value.equalsIgnoreCase("caller")) {
             namingStrategy = new NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_PREFIX,
                     new NamingStrategy.Suffixing.BaseNameResolver.WithCallerSuffix(NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE),
                     NamingStrategy.BYTE_BUDDY_RENAME_PACKAGE);
-            auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Enumerating(BYTE_BUDDY_DEFAULT_SUFFIX);
+            auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_SUFFIX);
+            implementationContextFactory = new Implementation.Context.Default.Factory.WithFixedSuffix(BYTE_BUDDY_DEFAULT_CONTEXT_NAME);
         } else {
             long seed;
             try {
@@ -173,10 +189,12 @@ public class ByteBuddy {
                     NamingStrategy.Suffixing.BaseNameResolver.ForUnnamedType.INSTANCE,
                     NamingStrategy.BYTE_BUDDY_RENAME_PACKAGE,
                     new RandomString(RandomString.DEFAULT_LENGTH, new Random(seed)));
-            auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Enumerating(BYTE_BUDDY_DEFAULT_SUFFIX);
+            auxiliaryNamingStrategy = new AuxiliaryType.NamingStrategy.Suffixing(BYTE_BUDDY_DEFAULT_SUFFIX);
+            implementationContextFactory = new Implementation.Context.Default.Factory.WithFixedSuffix(BYTE_BUDDY_DEFAULT_CONTEXT_NAME);
         }
         DEFAULT_NAMING_STRATEGY = namingStrategy;
         DEFAULT_AUXILIARY_NAMING_STRATEGY = auxiliaryNamingStrategy;
+        DEFAULT_IMPLEMENTATION_CONTEXT_FACTORY = implementationContextFactory;
     }
 
     /**
@@ -282,7 +300,9 @@ public class ByteBuddy {
                         : DEFAULT_AUXILIARY_NAMING_STRATEGY,
                 AnnotationValueFilter.Default.APPEND_DEFAULTS,
                 AnnotationRetention.ENABLED,
-                Implementation.Context.Default.Factory.INSTANCE,
+                DEFAULT_IMPLEMENTATION_CONTEXT_FACTORY == null
+                        ? Implementation.Context.Default.Factory.INSTANCE
+                        : DEFAULT_IMPLEMENTATION_CONTEXT_FACTORY,
                 MethodGraph.Compiler.DEFAULT,
                 InstrumentedType.Factory.Default.MODIFIABLE,
                 TypeValidation.ENABLED,
