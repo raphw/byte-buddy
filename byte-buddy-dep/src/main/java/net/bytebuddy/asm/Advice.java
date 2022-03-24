@@ -2559,7 +2559,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                     if (!fieldDescription.isStatic() && !fieldDescription.getDeclaringType().asErasure().isAssignableFrom(instrumentedType)) {
                         throw new IllegalStateException(fieldDescription + " is no member of " + instrumentedType);
-                    } else if (!fieldDescription.isAccessibleTo(instrumentedType)) {
+                    } else if (!fieldDescription.isVisibleTo(instrumentedType)) {
                         throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
                     }
                     return fieldDescription;
