@@ -40,7 +40,6 @@ import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.FileSystem;
-import net.bytebuddy.utility.GraalImageCode;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.Opcodes;
 

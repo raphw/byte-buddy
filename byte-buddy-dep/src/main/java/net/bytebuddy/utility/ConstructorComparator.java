@@ -16,7 +16,6 @@
 package net.bytebuddy.utility;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.util.Comparator;
 
 /**
