@@ -223,7 +223,9 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     private void assertToString(String toString, Annotation actual) throws Exception {
-        String prefix = "@" + actual.annotationType().getName() + "(";
+        String prefix = "@" + (ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V19)
+                ? actual.annotationType().getCanonicalName()
+                : actual.annotationType().getName()) + "(";
         assertThat(toString, startsWith(prefix));
         assertThat(toString, endsWith(")"));
         String actualString = actual.toString();

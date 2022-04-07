@@ -201,7 +201,7 @@ public interface AnnotationValue<T, S> {
         /**
          * A rendering dispatcher for Java 14 onward.
          */
-        JAVA_14_CAPABLE_VM('{', '}', ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).isLessThan(ClassFileVersion.JAVA_V17)) {
+        JAVA_14_CAPABLE_VM('{', '}', true) {
             @Override
             public String toSourceString(byte value) {
                 return "(byte)0x" + Integer.toHexString(value & 0xFF);
@@ -253,7 +253,7 @@ public interface AnnotationValue<T, S> {
         /**
          * A rendering dispatcher for Java 17 onward.
          */
-        JAVA_17_CAPABLE_VM('{', '}', ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).isLessThan(ClassFileVersion.JAVA_V17)) {
+        JAVA_17_CAPABLE_VM('{', '}', false) {
             @Override
             public String toSourceString(byte value) {
                 return "(byte)0x" + Integer.toHexString(value & 0xFF);
@@ -305,6 +305,63 @@ public interface AnnotationValue<T, S> {
             public String toTypeErrorString(Class<?> type) {
                 return type.getName();
             }
+        },
+
+        /**
+         * A rendering dispatcher for Java 19 onward.
+         */
+        JAVA_19_CAPABLE_VM('{', '}', ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).isLessThan(ClassFileVersion.JAVA_V17)) {
+            @Override
+            public String toSourceString(byte value) {
+                return "(byte)0x" + Integer.toHexString(value & 0xFF);
+            }
+
+            @Override
+            public String toSourceString(char value) {
+                StringBuilder stringBuilder = new StringBuilder().append('\'');
+                if (value == '\'') {
+                    stringBuilder.append("\\'");
+                } else {
+                    stringBuilder.append(value);
+                }
+                return stringBuilder.append('\'').toString();
+            }
+
+            @Override
+            public String toSourceString(long value) {
+                return value + "L";
+            }
+
+            @Override
+            public String toSourceString(float value) {
+                return Math.abs(value) <= Float.MAX_VALUE // Float.isFinite(value)
+                        ? value + "f"
+                        : (Float.isInfinite(value) ? (value < 0.0f ? "-1.0f/0.0f" : "1.0f/0.0f") : "0.0f/0.0f");
+            }
+
+            @Override
+            public String toSourceString(double value) {
+                return Math.abs(value) <= Double.MAX_VALUE // Double.isFinite(value)
+                        ? Double.toString(value)
+                        : (Double.isInfinite(value) ? (value < 0.0d ? "-1.0/0.0" : "1.0/0.0") : "0.0/0.0");
+            }
+
+            @Override
+            public String toSourceString(String value) {
+                return "\"" + (value.indexOf('"') == -1
+                        ? value
+                        : value.replace("\"", "\\\"")) + "\"";
+            }
+
+            @Override
+            public String toSourceString(TypeDescription value) {
+                return value.getCanonicalName() + ".class";
+            }
+
+            @Override
+            public String toTypeErrorString(Class<?> type) {
+                return type.getName();
+            }
         };
 
         /**
@@ -317,9 +374,14 @@ public interface AnnotationValue<T, S> {
          */
         public static final RenderingDispatcher CURRENT;
 
+        /*
+         * Resolves the rendering dispatcher to use.
+         */
         static {
             ClassFileVersion classFileVersion = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5);
-            if (classFileVersion.isAtLeast(ClassFileVersion.JAVA_V17)) {
+            if (classFileVersion.isAtLeast(ClassFileVersion.JAVA_V19)) {
+                CURRENT = RenderingDispatcher.JAVA_19_CAPABLE_VM;
+            } else if (classFileVersion.isAtLeast(ClassFileVersion.JAVA_V17)) {
                 CURRENT = RenderingDispatcher.JAVA_17_CAPABLE_VM;
             } else if (classFileVersion.isAtLeast(ClassFileVersion.JAVA_V14)) {
                 CURRENT = RenderingDispatcher.JAVA_14_CAPABLE_VM;
