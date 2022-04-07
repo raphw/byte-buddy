@@ -82,6 +82,7 @@ public class TypeDescriptionGenericVisitorValidatorForTypeAnnotations {
     @JavaVersionRule.Enforce(8)
     public void testLegalGenericArray() throws Exception {
         when(legal.getComponentType()).thenReturn(otherLegal);
+        when(legalAnnotation.isSupportedOn("TYPE_USE")).thenReturn(true);
         assertThat(TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE.onGenericArray(legal), is(true));
         verify(otherLegal).accept(TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE);
     }
@@ -108,6 +109,7 @@ public class TypeDescriptionGenericVisitorValidatorForTypeAnnotations {
     public void testLegalNonGenericArray() throws Exception {
         when(legal.isArray()).thenReturn(true);
         when(legal.getComponentType()).thenReturn(otherLegal);
+        when(legalAnnotation.isSupportedOn("TYPE_USE")).thenReturn(true);
         assertThat(TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE.onNonGenericType(legal), is(true));
         verify(otherLegal).accept(TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE);
     }
@@ -125,6 +127,7 @@ public class TypeDescriptionGenericVisitorValidatorForTypeAnnotations {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testLegalNonGeneric() throws Exception {
+        when(legalAnnotation.isSupportedOn("TYPE_USE")).thenReturn(true);
         assertThat(TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE.onNonGenericType(legal), is(true));
     }
 
@@ -141,6 +144,7 @@ public class TypeDescriptionGenericVisitorValidatorForTypeAnnotations {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testLegalTypeVariable() throws Exception {
+        when(legalAnnotation.isSupportedOn("TYPE_USE")).thenReturn(true);
         assertThat(TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE.onTypeVariable(legal), is(true));
     }
 
@@ -177,6 +181,7 @@ public class TypeDescriptionGenericVisitorValidatorForTypeAnnotations {
         when(legal.isArray()).thenReturn(true);
         when(legal.getTypeArguments()).thenReturn(new TypeList.Generic.Explicit(otherLegal));
         when(legal.getOwnerType()).thenReturn(otherLegal);
+        when(legalAnnotation.isSupportedOn("TYPE_USE")).thenReturn(true);
         assertThat(TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE.onParameterizedType(legal), is(true));
         verify(otherLegal, times(2)).accept(TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE);
     }
@@ -210,6 +215,7 @@ public class TypeDescriptionGenericVisitorValidatorForTypeAnnotations {
     public void testWildcardLegal() throws Exception {
         when(legal.getUpperBounds()).thenReturn(new TypeList.Generic.Explicit(TypeDescription.Generic.OBJECT));
         when(legal.getLowerBounds()).thenReturn(new TypeList.Generic.Explicit(otherLegal));
+        when(legalAnnotation.isSupportedOn("TYPE_USE")).thenReturn(true);
         assertThat(TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE.onWildcard(legal), is(true));
     }
 }
