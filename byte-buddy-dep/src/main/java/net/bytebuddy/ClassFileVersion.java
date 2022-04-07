@@ -150,7 +150,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
     private final int versionNumber;
 
     /**
-     * Creates a wrapper for a given minor-major release of the Java class file file.
+     * Creates a wrapper for a given minor-major release of the Java class file format.
      *
      * @param versionNumber The minor-major release number.
      */
@@ -171,7 +171,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
     }
 
     /**
-     * Creates a wrapper for a given minor-major release of the Java class file file.
+     * Creates a wrapper for a given minor-major release of the Java class file format.
      *
      * @param versionNumber The minor-major release number.
      * @return A representation of the version number.
