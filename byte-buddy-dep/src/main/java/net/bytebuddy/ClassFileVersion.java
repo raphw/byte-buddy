@@ -135,6 +135,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
     public static final ClassFileVersion JAVA_V18 = new ClassFileVersion(Opcodes.V18);
 
     /**
+     * The class file version of Java 18.
+     */
+    public static final ClassFileVersion JAVA_V19 = new ClassFileVersion(Opcodes.V19);
+
+    /**
      * A version locator for the executing JVM.
      */
     private static final VersionLocator VERSION_LOCATOR = doPrivileged(VersionLocator.Resolver.INSTANCE);
@@ -222,6 +227,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
             return JAVA_V17;
         } else if (javaVersionString.equals("1.18") || javaVersionString.equals("18")) {
             return JAVA_V18;
+        } else if (javaVersionString.equals("1.19") || javaVersionString.equals("19")) {
+            return JAVA_V19;
         } else {
             if (OpenedClassReader.EXPERIMENTAL) {
                 try {
@@ -283,6 +290,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
                 return JAVA_V17;
             case 18:
                 return JAVA_V18;
+            case 19:
+                return JAVA_V19;
             default:
                 if (OpenedClassReader.EXPERIMENTAL && javaVersion > 0) {
                     return new ClassFileVersion(BASE_VERSION + javaVersion);
@@ -298,7 +307,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
      * @return The latest officially supported Java version.
      */
     public static ClassFileVersion latest() {
-        return ClassFileVersion.JAVA_V18;
+        return ClassFileVersion.JAVA_V19;
     }
 
     /**

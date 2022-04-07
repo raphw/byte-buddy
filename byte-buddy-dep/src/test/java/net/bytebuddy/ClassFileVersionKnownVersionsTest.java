@@ -75,7 +75,8 @@ public class ClassFileVersionKnownVersionsTest {
                 {15, 15, Arrays.asList("1.15", "15"), Opcodes.V15, (short) 59, (short) 0, true, true, true},
                 {16, 16, Arrays.asList("1.16", "16"), Opcodes.V16, (short) 60, (short) 0, true, true, true},
                 {17, 17, Arrays.asList("1.17", "17"), Opcodes.V17, (short) 61, (short) 0, true, true, true},
-                {18, 18, Arrays.asList("1.18", "18"), Opcodes.V18, (short) 62, (short) 0, true, true, true}
+                {18, 18, Arrays.asList("1.18", "18"), Opcodes.V18, (short) 62, (short) 0, true, true, true},
+                {19, 19, Arrays.asList("1.19", "19"), Opcodes.V19, (short) 63, (short) 0, true, true, true}
         });
     }
 
