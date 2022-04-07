@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 7. April 2022: version 1.12.9
+
+- Add support for Java 19.
+- Add basic support for Graal native image.
+- Add option for strongly referenced cache keys.
+- Reduce access requirements for fields from `Advice`.
+
 ### 10. February 2022: version 1.12.8
 
 - Make `Step` type in `MemberSubstitution` public as intended.

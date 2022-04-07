@@ -23,7 +23,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Install JDK and build project
-        run: ./mvnw verify -Pjava19 -Dnet.bytebuddy.experimental=true
+        run: ./mvnw verify -Pjava19
         continue-on-error: false
   hotspot-supported:
     name: Any (supported)
