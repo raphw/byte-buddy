@@ -1694,7 +1694,8 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             /**
-             * A factory for creating a {@link net.bytebuddy.implementation.Implementation.Context.Default}.
+             * A factory for creating a {@link net.bytebuddy.implementation.Implementation.Context.Default}
+             * that uses a random suffix for accessors.
              */
             public enum Factory implements ExtractableView.Factory {
 
@@ -1719,6 +1720,10 @@ public interface Implementation extends InstrumentedType.Prepareable {
                             RandomString.make());
                 }
 
+                /**
+                 * A factory for creating a {@link net.bytebuddy.implementation.Implementation.Context.Default}
+                 * that uses a given suffix for accessors.
+                 */
                 @HashCodeAndEqualsPlugin.Enhance
                 public static class WithFixedSuffix implements ExtractableView.Factory {
 
