@@ -971,6 +971,7 @@ public interface DynamicType {
          * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
          * @return A builder that allows for changing a field's definition.
          */
+        @SuppressWarnings("overloads")
         FieldDefinition.Valuable<T> field(ElementMatcher<? super FieldDescription> matcher);
 
         /**
@@ -993,6 +994,7 @@ public interface DynamicType {
          * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
          * @return A builder that allows for changing a field's definition.
          */
+        @SuppressWarnings("overloads")
         FieldDefinition.Valuable<T> field(LatentMatcher<? super FieldDescription> matcher);
 
         /**
@@ -1009,6 +1011,7 @@ public interface DynamicType {
          * @return A new builder that is equal to this builder but that is excluding any method that is matched by the supplied matcher from
          * instrumentation.
          */
+        @SuppressWarnings("overloads")
         Builder<T> ignoreAlso(ElementMatcher<? super MethodDescription> ignoredMethods);
 
         /**
@@ -1027,6 +1030,7 @@ public interface DynamicType {
          * @return A new builder that is equal to this builder but that is excluding any method that is matched by the supplied matcher from
          * instrumentation.
          */
+        @SuppressWarnings("overloads")
         Builder<T> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods);
 
         /**
@@ -1270,6 +1274,7 @@ public interface DynamicType {
          * @param matcher The matcher that determines what methods or constructors are affected by the subsequent specification.
          * @return A builder that allows for changing a method's or constructor's definition.
          */
+        @SuppressWarnings("overloads")
         MethodDefinition.ImplementationDefinition<T> invokable(ElementMatcher<? super MethodDescription> matcher);
 
         /**
@@ -1302,6 +1307,7 @@ public interface DynamicType {
          * @param matcher The matcher that determines what declared methods or constructors are affected by the subsequent specification.
          * @return A builder that allows for changing a method's or constructor's definition.
          */
+        @SuppressWarnings("overloads")
         MethodDefinition.ImplementationDefinition<T> invokable(LatentMatcher<? super MethodDescription> matcher);
 
         /**
@@ -1370,6 +1376,7 @@ public interface DynamicType {
          * @param matcher The matcher that determines what declared record components are affected by the subsequent specification.
          * @return A builder that allows for changing a record component's definition.
          */
+        @SuppressWarnings("overloads")
         RecordComponentDefinition<T> recordComponent(ElementMatcher<? super RecordComponentDescription> matcher);
 
         /**
@@ -1391,6 +1398,7 @@ public interface DynamicType {
          * @param matcher The matcher that determines what declared record components are affected by the subsequent specification.
          * @return A builder that allows for changing a record component's definition.
          */
+        @SuppressWarnings("overloads")
         RecordComponentDefinition<T> recordComponent(LatentMatcher<? super RecordComponentDescription> matcher);
 
         /**

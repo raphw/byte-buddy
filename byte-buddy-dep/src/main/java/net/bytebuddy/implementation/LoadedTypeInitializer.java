@@ -98,6 +98,7 @@ public interface LoadedTypeInitializer {
         /**
          * The value of the field.
          */
+        @SuppressWarnings("serial")
         private final Object value;
 
         /**
@@ -197,6 +198,7 @@ public interface LoadedTypeInitializer {
         /**
          * The loaded type initializers that are represented by this compound type initializer.
          */
+        @SuppressWarnings("serial")
         private final List<LoadedTypeInitializer> loadedTypeInitializers;
 
         /**

@@ -91,6 +91,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
      * @param redefinitionBatchAllocator The batch allocator to use.
      * @return {@code true} if a reset was applied and this transformer was not previously removed.
      */
+    @SuppressWarnings("overloads")
     boolean reset(Instrumentation instrumentation,
                   AgentBuilder.RedefinitionStrategy redefinitionStrategy,
                   AgentBuilder.RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator);
@@ -117,6 +118,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
      * @param redefinitionDiscoveryStrategy The discovery strategy for the types to reset.
      * @return {@code true} if a reset was applied and this transformer was not previously removed.
      */
+    @SuppressWarnings("overloads")
     boolean reset(Instrumentation instrumentation,
                   AgentBuilder.RedefinitionStrategy redefinitionStrategy,
                   AgentBuilder.RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy);
@@ -172,6 +174,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
      * @param redefinitionListener          The redefinition listener to apply.
      * @return {@code true} if a reset was applied and this transformer was not previously removed.
      */
+    @SuppressWarnings("overloads")
     boolean reset(Instrumentation instrumentation,
                   AgentBuilder.RedefinitionStrategy redefinitionStrategy,
                   AgentBuilder.RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
@@ -200,6 +203,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
      * @param redefinitionListener       The redefinition listener to apply.
      * @return {@code true} if a reset was applied and this transformer was not previously removed.
      */
+    @SuppressWarnings("overloads")
     boolean reset(Instrumentation instrumentation,
                   AgentBuilder.RedefinitionStrategy redefinitionStrategy,
                   AgentBuilder.RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,

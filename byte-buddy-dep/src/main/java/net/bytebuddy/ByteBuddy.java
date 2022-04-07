@@ -1382,6 +1382,7 @@ public class ByteBuddy {
      * @param ignoredMethods A matcher for identifying methods to be excluded from instrumentation.
      * @return A new Byte Buddy instance that excludes any method from instrumentation if it is matched by the supplied matcher.
      */
+    @SuppressWarnings("overloads")
     public ByteBuddy ignore(ElementMatcher<? super MethodDescription> ignoredMethods) {
         return ignore(new LatentMatcher.Resolved<MethodDescription>(ignoredMethods));
     }
@@ -1397,6 +1398,7 @@ public class ByteBuddy {
      * @param ignoredMethods A matcher for identifying methods to be excluded from instrumentation.
      * @return A new Byte Buddy instance that excludes any method from instrumentation if it is matched by the supplied matcher.
      */
+    @SuppressWarnings("overloads")
     public ByteBuddy ignore(LatentMatcher<? super MethodDescription> ignoredMethods) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,

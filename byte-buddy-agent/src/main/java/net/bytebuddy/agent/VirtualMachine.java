@@ -2058,8 +2058,10 @@ public interface VirtualMachine {
                     try {
                         // The binding for 'stat' is very platform dependant. To avoid the complexity of binding the correct method,
                         // stat is called as a separate command. This is less efficient but more portable.
-                        String statUserSwitch = Platform.isMac() ? "-f" : "-c";
-                        Process process = Runtime.getRuntime().exec("stat " + statUserSwitch + " %u " + file.getAbsolutePath());
+                        Process process = Runtime.getRuntime().exec(new String[]{"stat",
+                                Platform.isMac() ? "-f" : "-c",
+                                "%u",
+                                file.getAbsolutePath()});
                         int attempts = this.attempts;
                         boolean exited = false;
                         String line = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8")).readLine();

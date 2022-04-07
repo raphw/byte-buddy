@@ -1416,8 +1416,8 @@ public class ElementMatchersTest {
             return super.toString();
         }
 
-        @Override
-        @SuppressWarnings("deprecation")
+        //@Override
+        @SuppressWarnings({"deprecation", "removal"})
         protected void finalize() throws Throwable {
             super.finalize();
         }

@@ -187,10 +187,14 @@ public abstract class AbstractAnnotationDescriptionTest {
                         ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V17),
                         ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V17)))
                 .make()
+                .include(new ByteBuddy().decorate(AbstractAnnotationDescriptionTest.class).make())
+                .include(new ByteBuddy().decorate(IncompatibleAnnotationProperty.class).make())
+                .include(new ByteBuddy().decorate(IncompatibleEnumerationProperty.class).make())
+                .include(new ByteBuddy().decorate(SampleEnumeration.class).make())
                 .include(new ByteBuddy().decorate(DefectiveAnnotation.class).make())
                 .include(new ByteBuddy().subclass(Object.class).name(BrokenAnnotationProperty.class.getName()).make())
                 .include(new ByteBuddy().subclass(Object.class).name(BrokenEnumerationProperty.class.getName()).make())
-                .load(getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST_PERSISTENT)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
                 .getLoaded();
         broken = brokenCarrier.getAnnotations()[0];
     }

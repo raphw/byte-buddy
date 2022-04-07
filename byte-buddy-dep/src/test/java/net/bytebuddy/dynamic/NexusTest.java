@@ -11,6 +11,7 @@ import org.mockito.Mock;
 
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -194,7 +195,7 @@ public class NexusTest {
     @Test(expected = UnsupportedOperationException.class)
     @SuppressWarnings("unchecked")
     public void testUnavailableDispatcherCleanThrowsException() throws Exception {
-        new NexusAccessor.Dispatcher.Unavailable("unavailable").clean(mock(Reference.class));
+        new NexusAccessor.Dispatcher.Unavailable("unavailable").clean(new SoftReference<ClassLoader>(ClassLoader.getSystemClassLoader()));
     }
 
     @Test

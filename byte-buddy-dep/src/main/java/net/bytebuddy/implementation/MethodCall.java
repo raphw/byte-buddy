@@ -176,6 +176,7 @@ public class MethodCall implements Implementation.Composable {
      * @param matcher The matcher to identify the method to invoke.
      * @return A method call for the uniquely identified method.
      */
+    @SuppressWarnings("overloads")
     public static WithoutSpecifiedTarget invoke(ElementMatcher<? super MethodDescription> matcher) {
         return invoke(matcher, MethodGraph.Compiler.DEFAULT);
     }
@@ -199,6 +200,7 @@ public class MethodCall implements Implementation.Composable {
      * @return A method call implementation that uses the provided method locator for resolving the method
      * to be invoked.
      */
+    @SuppressWarnings("overloads")
     public static WithoutSpecifiedTarget invoke(MethodLocator.Factory methodLocator) {
         return new WithoutSpecifiedTarget(methodLocator);
     }
