@@ -19,11 +19,11 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v2
         with:
-          java-version: 18-ea
+          java-version: 19-ea
           distribution: zulu
           cache: maven
       - name: Install JDK and build project
-        run: ./mvnw verify -Pjava18
+        run: ./mvnw verify -Pjava19
         continue-on-error: false
   hotspot-supported:
     name: Any (supported)
@@ -31,7 +31,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-18.04, macOS-10.15, windows-2019 ]
-        java: [ 8, 11, 17 ]
+        java: [ 8, 11, 17, 18 ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -146,7 +146,7 @@ jobs:
           gpg-private-key: ${{ secrets.gpg_secret }}
       - name: Publish new version
         run: |
-          git clone ${{ github.repositoryUrl }} .
+          git clone git@github.com:${{ github.repository }}.git .
           git config user.name "${{ github.event.head_commit.committer.name }}"
           git config user.email "${{ github.event.head_commit.committer.email }}"
           ./mvnw -B -s .mvn/release.settings.xml release:prepare release:perform -Drepository.url=https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git -Dcentral.username=raphw -Dcentral.password=${{ secrets.central_password }} -Dgpg.passphrase=${{ secrets.gpg_passphrase }} -Dgpg.keyname=B4AC8CDC141AF0AE468D16921DA784CCB5C46DD5 -Dgradle.key=${{ secrets.gradle_key }} -Dgradle.secret=${{ secrets.gradle_secret }}
