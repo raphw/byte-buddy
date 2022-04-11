@@ -105,88 +105,6 @@
             </resource>
         </resources>
         <plugins>
-            <!-- Shade the ASM dependency. -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>${version.plugin.shade}</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
-                            <createDependencyReducedPom>true</createDependencyReducedPom>
-                            <createSourcesJar>${bytebuddy.extras}</createSourcesJar>
-                            <shadeSourcesContent>true</shadeSourcesContent>
-                            <relocations>
-                                <relocation>
-                                    <pattern>${shade.source}</pattern>
-                                    <shadedPattern>${shade.target}</shadedPattern>
-                                </relocation>
-                            </relocations>
-                            <filters>
-                                <filter>
-                                    <artifact>net.bytebuddy:byte-buddy-dep:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/MANIFEST.MF</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                    <artifact>org.ow2.asm:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/MANIFEST.MF</exclude>
-                                        <exclude>**/module-info.class</exclude>
-                                        <exclude>**/LICENSE</exclude>
-                                        <exclude>**/NOTICE</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
-                                    <artifact>org.ow2.asm:asm-commons</artifact>
-                                    <includes>
-                                        <include>org/objectweb/asm/commons/AnnotationRemapper.**</include>
-                                        <include>org/objectweb/asm/commons/ClassRemapper.**</include>
-                                        <include>org/objectweb/asm/commons/FieldRemapper.**</include>
-                                        <include>org/objectweb/asm/commons/MethodRemapper.**</include>
-                                        <include>org/objectweb/asm/commons/ModuleHashesAttribute.**</include>
-                                        <include>org/objectweb/asm/commons/ModuleRemapper.**</include>
-                                        <include>org/objectweb/asm/commons/RecordComponentRemapper.**</include>
-                                        <include>org/objectweb/asm/commons/Remapper.**</include>
-                                        <include>org/objectweb/asm/commons/SignatureRemapper.**</include>
-                                        <include>org/objectweb/asm/commons/SimpleRemapper.**</include>
-                                    </includes>
-                                </filter>
-                            </filters>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>net.bytebuddy.build.Plugin$Engine$Default</mainClass>
-                                </transformer>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <forShade>sources-jar</forShade>
-                                    <manifestEntries/>
-                                </transformer>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-                                    <resource>META-INF/LICENSE</resource>
-                                </transformer>
-                            </transformers>
-                        </configuration>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.ow2.asm</groupId>
-                        <artifactId>asm</artifactId>
-                        <version>${version.asm}</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.ow2.asm</groupId>
-                        <artifactId>asm-commons</artifactId>
-                        <version>${version.asm}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
             <!-- Disable pitest as it fails for empty modules -->
             <plugin>
                 <groupId>org.pitest</groupId>
@@ -308,12 +226,105 @@
             </build>
         </profile>
         <profile>
-            <id>shade-legacy</id>
+            <id>shade-current</id>
             <activation>
-                <jdk>(,1.8]</jdk>
+                <jdk>[1.8,)</jdk>
             </activation>
             <build>
                 <plugins>
+                    <!-- Shade the ASM dependency. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <version>${version.plugin.shade}</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>shade</goal>
+                                </goals>
+                                <configuration>
+                                    <shadedArtifactAttached>false</shadedArtifactAttached>
+                                    <createDependencyReducedPom>true</createDependencyReducedPom>
+                                    <createSourcesJar>${bytebuddy.extras}</createSourcesJar>
+                                    <shadeSourcesContent>true</shadeSourcesContent>
+                                    <relocations>
+                                        <relocation>
+                                            <pattern>${shade.source}</pattern>
+                                            <shadedPattern>${shade.target}</shadedPattern>
+                                        </relocation>
+                                    </relocations>
+                                    <filters>
+                                        <filter>
+                                            <artifact>net.bytebuddy:byte-buddy-dep:*</artifact>
+                                            <excludes>
+                                                <exclude>META-INF/MANIFEST.MF</exclude>
+                                            </excludes>
+                                        </filter>
+                                        <filter>
+                                            <artifact>org.ow2.asm:*</artifact>
+                                            <excludes>
+                                                <exclude>META-INF/MANIFEST.MF</exclude>
+                                                <exclude>**/module-info.class</exclude>
+                                                <exclude>**/LICENSE</exclude>
+                                                <exclude>**/NOTICE</exclude>
+                                            </excludes>
+                                        </filter>
+                                        <filter>
+                                            <artifact>org.ow2.asm:asm-commons</artifact>
+                                            <includes>
+                                                <include>org/objectweb/asm/commons/AnnotationRemapper.**</include>
+                                                <include>org/objectweb/asm/commons/ClassRemapper.**</include>
+                                                <include>org/objectweb/asm/commons/FieldRemapper.**</include>
+                                                <include>org/objectweb/asm/commons/MethodRemapper.**</include>
+                                                <include>org/objectweb/asm/commons/ModuleHashesAttribute.**</include>
+                                                <include>org/objectweb/asm/commons/ModuleRemapper.**</include>
+                                                <include>org/objectweb/asm/commons/RecordComponentRemapper.**</include>
+                                                <include>org/objectweb/asm/commons/Remapper.**</include>
+                                                <include>org/objectweb/asm/commons/SignatureRemapper.**</include>
+                                                <include>org/objectweb/asm/commons/SimpleRemapper.**</include>
+                                            </includes>
+                                        </filter>
+                                    </filters>
+                                    <transformers>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                            <mainClass>net.bytebuddy.build.Plugin$Engine$Default</mainClass>
+                                        </transformer>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                            <forShade>sources-jar</forShade>
+                                            <manifestEntries/>
+                                        </transformer>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                            <resource>META-INF/LICENSE</resource>
+                                        </transformer>
+                                    </transformers>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.ow2.asm</groupId>
+                                <artifactId>asm</artifactId>
+                                <version>${version.asm}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.ow2.asm</groupId>
+                                <artifactId>asm-commons</artifactId>
+                                <version>${version.asm}</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>shade-legacy</id>
+            <activation>
+                <jdk>(,1.7]</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- Shade the ASM dependency. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-shade-plugin</artifactId>
