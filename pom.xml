@@ -410,7 +410,6 @@
                 <version.plugin.shade>3.1.1</version.plugin.shade>
                 <version.plugin.surefire>2.22.1</version.plugin.surefire>
                 <version.plugin.javadoc>2.10.4</version.plugin.javadoc>
-                <version.plugin.shade>3.2.4</version.plugin.shade>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
             <modules>
