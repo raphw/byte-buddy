@@ -25,6 +25,7 @@ import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A utility that resolves Graal VM native image properties.
@@ -68,14 +69,14 @@ public enum GraalImageCode {
      *
      * @return The status of the Graal image code.
      */
-    @SuppressFBWarnings(value = "LI_LAZY_INIT_STATIC", justification = "This behaviour is intended to avoid early binding in native images.")
+    @SuppressFBWarnings(value = {"LI_LAZY_INIT_STATIC", "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"}, justification = "This behaviour is intended to avoid early binding in native images.")
     public static GraalImageCode getCurrent() {
         GraalImageCode current = GraalImageCode.current;
         if (current == null) {
             String value = doPrivileged(new GetSystemPropertyAction("org.graalvm.nativeimage.imagecode"));
             if (value == null) {
                 String vendor = doPrivileged(new GetSystemPropertyAction("java.vm.vendor"));
-                current = vendor != null && vendor.toLowerCase().contains("graalvm")
+                current = vendor != null && vendor.toLowerCase(Locale.US).contains("graalvm")
                         ? doPrivileged(ImageCodeContextAction.INSTANCE)
                         : GraalImageCode.NONE;
             } else if (value.equalsIgnoreCase("agent")) {
