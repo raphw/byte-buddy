@@ -1336,6 +1336,7 @@ public class ByteBuddyAgent {
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
                 public String resolve() {
                     String runtimeName;
                     try {
