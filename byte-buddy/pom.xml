@@ -183,6 +183,7 @@
                     <exports>${packages.list.external}</exports>
                     <static-requires>
                         java.instrument,
+                        java.management,
                         jdk.unsupported,
                         net.bytebuddy.agent,
                         com.sun.jna,

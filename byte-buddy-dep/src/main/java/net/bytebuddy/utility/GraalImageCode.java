@@ -20,9 +20,11 @@ import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 
+import java.lang.reflect.Method;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * A utility that resolves Graal VM native image properties.
@@ -72,7 +74,10 @@ public enum GraalImageCode {
         if (current == null) {
             String value = doPrivileged(new GetSystemPropertyAction("org.graalvm.nativeimage.imagecode"));
             if (value == null) {
-                current = GraalImageCode.NONE;
+                String vendor = doPrivileged(new GetSystemPropertyAction("java.vm.vendor"));
+                current = vendor != null && vendor.toLowerCase().contains("graalvm")
+                        ? doPrivileged(ImageCodeContextAction.INSTANCE)
+                        : GraalImageCode.NONE;
             } else if (value.equalsIgnoreCase("agent")) {
                 current = GraalImageCode.AGENT;
             } else if (value.equalsIgnoreCase("runtime")) {
@@ -152,5 +157,33 @@ public enum GraalImageCode {
      */
     public boolean isNativeImageExecution() {
         return nativeImageExecution;
+    }
+
+    /**
+     * A privileged action to resolve the image code via
+     */
+    protected enum ImageCodeContextAction implements PrivilegedAction<GraalImageCode> {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public GraalImageCode run() {
+            try {
+                Method method = Class.forName("java.lang.management.ManagementFactory").getMethod("getRuntimeMXBean");
+                @SuppressWarnings("unchecked")
+                List<String> arguments = (List<String>) method.getReturnType().getMethod("getInputArguments").invoke(method.invoke(null));
+                for (String argument : arguments) {
+                    if (argument.startsWith("-agentlib:native-image-agent")) {
+                        return GraalImageCode.AGENT;
+                    }
+                }
+            } catch (Throwable ignored) {
+                /* do nothing */
+            }
+            return GraalImageCode.NONE;
+        }
     }
 }

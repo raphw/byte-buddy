@@ -158,6 +158,7 @@
                     <requires>java.instrument</requires>
                     <static-requires>
                         jdk.attach,
+                        java.management,
                         com.sun.jna,
                         com.sun.jna.platform
                     </static-requires>

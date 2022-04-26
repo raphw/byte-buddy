@@ -21,7 +21,6 @@ import net.bytebuddy.agent.utility.nullability.MaybeNull;
 
 import java.io.*;
 import java.lang.instrument.Instrumentation;
-import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -1338,7 +1337,13 @@ public class ByteBuddyAgent {
                  * {@inheritDoc}
                  */
                 public String resolve() {
-                    String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
+                    String runtimeName;
+                    try {
+                        Method method = Class.forName("java.lang.management.ManagementFactory").getMethod("getRuntimeMXBean");
+                        runtimeName = (String) method.getReturnType().getMethod("getName").invoke(method.invoke(null));
+                    } catch (Exception exception) {
+                        throw new IllegalStateException("Failed to access VM name via management factory", exception);
+                    }
                     int processIdIndex = runtimeName.indexOf('@');
                     if (processIdIndex == -1) {
                         throw new IllegalStateException("Cannot extract process id from runtime management bean");
