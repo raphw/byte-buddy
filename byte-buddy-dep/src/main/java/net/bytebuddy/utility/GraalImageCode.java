@@ -161,7 +161,7 @@ public enum GraalImageCode {
     }
 
     /**
-     * A privileged action to resolve the image code via
+     * A privileged action to resolve the image code via the current JVM processes input arguments, if available.
      */
     protected enum ImageCodeContextAction implements PrivilegedAction<GraalImageCode> {
 

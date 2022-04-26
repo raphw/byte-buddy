@@ -157,7 +157,6 @@
                     <exports>${packages.list}</exports>
                     <requires>java.instrument</requires>
                     <static-requires>
-                        java.management,
                         jdk.attach,
                         com.sun.jna,
                         com.sun.jna.platform

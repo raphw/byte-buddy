@@ -1324,7 +1324,9 @@ public class ByteBuddyAgent {
             }
 
             /**
-             * A process provider for a legacy VM that reads the process id from its JMX properties.
+             * A process provider for a legacy VM that reads the process id from its JMX properties. This strategy
+             * is only used prior to Java 9 such that the <i>java.management</i> module never is resolved, even if
+             * the module system is used, as the module system was not available in any relevant JVM version.
              */
             protected enum ForLegacyVm implements ProcessProvider {
 
