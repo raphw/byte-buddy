@@ -62,7 +62,7 @@ public class VirtualMachineForOpenJ9Test {
     public void testAttachment() throws Throwable {
         final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
         VirtualMachine.ForOpenJ9.Dispatcher dispatcher = mock(VirtualMachine.ForOpenJ9.Dispatcher.class);
-        when(dispatcher.getTemporaryFolder()).thenReturn(temporaryFolder.getAbsolutePath());
+        when(dispatcher.getTemporaryFolder(Integer.toString(PROCESS_ID))).thenReturn(temporaryFolder.getAbsolutePath());
         File targetFolder = new File(attachFolder, Integer.toString(PROCESS_ID));
         assertThat(targetFolder.mkdir(), is(true));
         try {

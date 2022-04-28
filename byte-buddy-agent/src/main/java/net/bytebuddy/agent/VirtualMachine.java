@@ -1610,7 +1610,7 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId, int timeout, Dispatcher dispatcher) throws IOException {
-            File directory = new File(System.getProperty(IBM_TEMPORARY_FOLDER, dispatcher.getTemporaryFolder()), ".com_ibm_tools_attach");
+            File directory = new File(System.getProperty(IBM_TEMPORARY_FOLDER, dispatcher.getTemporaryFolder(processId)), ".com_ibm_tools_attach");
             RandomAccessFile attachLock = new RandomAccessFile(new File(directory, "_attachlock"), "rw");
             try {
                 FileLock attachLockLock = attachLock.getChannel().lock();
@@ -1919,9 +1919,10 @@ public interface VirtualMachine {
             /**
              * Returns this machine's temporary folder.
              *
+             * @param processId The target process's id.
              * @return The temporary folder.
              */
-            String getTemporaryFolder();
+            String getTemporaryFolder(String processId);
 
             /**
              * Returns the process id of this process.
@@ -2024,7 +2025,13 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                public String getTemporaryFolder() {
+                public String getTemporaryFolder(String processId) {
+                    if (Platform.isLinux()) {
+                        File file = new File("/proc/" + processId + "/root/tmp");
+                        if (file.isDirectory() && file.canRead()) {
+                            return file.getAbsolutePath();
+                        }
+                    }
                     String temporaryFolder = System.getenv("TMPDIR");
                     return temporaryFolder == null ? "/tmp" : temporaryFolder;
                 }
@@ -2249,6 +2256,8 @@ public interface VirtualMachine {
                      */
                     int semop(int id, SemaphoreOperation operation, int flags) throws LastErrorException;
 
+                    String gettmpDir();
+
                     /**
                      * A structure to represent a semaphore operation for {@code semop}.
                      */
@@ -2309,7 +2318,7 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                public String getTemporaryFolder() {
+                public String getTemporaryFolder(String processId) {
                     WinDef.DWORD length = new WinDef.DWORD(WinDef.MAX_PATH);
                     char[] path = new char[length.intValue()];
                     if (Kernel32.INSTANCE.GetTempPath(length, path).intValue() == 0) {
