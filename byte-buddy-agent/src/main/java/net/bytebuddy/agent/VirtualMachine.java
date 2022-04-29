@@ -2256,8 +2256,6 @@ public interface VirtualMachine {
                      */
                     int semop(int id, SemaphoreOperation operation, int flags) throws LastErrorException;
 
-                    String gettmpDir();
-
                     /**
                      * A structure to represent a semaphore operation for {@code semop}.
                      */
