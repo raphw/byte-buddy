@@ -30,7 +30,7 @@ import org.objectweb.asm.Type;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * A plugin that adds an {@link net.bytebuddy.build.HashCodeAndEqualsPlugin.Enhance} annotation to any method of an
+ * A plugin that adds a {@link net.bytebuddy.utility.dispatcher.JavaDispatcher.Proxied} annotation to any method of an
  * enhanced type where the annotation is not set. This aids in supporting obfuscators that rename methods which
  * makes reflection-based lookup by the proxy interface's name impossible.
  */

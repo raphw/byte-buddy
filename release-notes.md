@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 1. May 2022: version 1.12.10
+
+- Correctly resolve temporary folder, if custom folder is set, on Linux during emulated attach.
+- Attempt guessing if Graal automatic configuration agent for native image is run.
+- Avoid hard-coded dependencies to classes of *java.management* module.
+- Do not include OSGi info in Byte Buddy source module.
+
 ### 7. April 2022: version 1.12.9
 
 - Add support for Java 19.
