@@ -260,6 +260,7 @@
                                             <artifact>net.bytebuddy:byte-buddy-dep:*</artifact>
                                             <excludes>
                                                 <exclude>META-INF/MANIFEST.MF</exclude>
+                                                <exclude>META-INF/maven/**</exclude>
                                             </excludes>
                                         </filter>
                                         <filter>
