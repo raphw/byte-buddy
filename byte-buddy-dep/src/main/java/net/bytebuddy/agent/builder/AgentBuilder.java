@@ -2434,31 +2434,37 @@ public interface AgentBuilder {
          * A default implementation of a circularity lock. Since class loading already synchronizes on a class loader,
          * it suffices to apply a thread-local lock.
          */
-        class Default extends ThreadLocal<Boolean> implements CircularityLock {
+        class Default implements CircularityLock {
 
             /**
-             * Indicates that the circularity lock is not currently acquired.
+             * A map of threads to an unused boolean to emulate a thread-local state without using
+             * thread locals. This avoids using thread-local maps and does not interfere with Java
+             * fibers in case that an instrumentation is executed from a virtual thread where thread
+             * locals are not permitted.
              */
-            @AlwaysNull
-            private static final Boolean NOT_ACQUIRED = null;
+            private final ConcurrentMap<Thread, Boolean> threads = new ConcurrentHashMap<Thread, Boolean>();
 
             /**
              * {@inheritDoc}
              */
             public boolean acquire() {
-                if (get() == NOT_ACQUIRED) {
-                    set(true);
-                    return true;
-                } else {
-                    return false;
-                }
+                return threads.putIfAbsent(Thread.currentThread(), true) == null;
             }
 
             /**
              * {@inheritDoc}
              */
             public void release() {
-                set(NOT_ACQUIRED);
+                threads.remove(Thread.currentThread());
+            }
+
+            /**
+             * Returns {@code true} if the current thread is currently locked.
+             *
+             * @return {@code true} if the current thread is currently locked.
+             */
+            protected boolean isLocked() {
+                return threads.containsKey(Thread.currentThread());
             }
         }
 

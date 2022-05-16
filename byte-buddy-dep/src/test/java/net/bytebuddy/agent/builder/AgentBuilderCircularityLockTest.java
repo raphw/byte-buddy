@@ -19,7 +19,7 @@ public class AgentBuilderCircularityLockTest {
         assertThat(circularityLock.acquire(), is(true));
         assertThat(circularityLock.acquire(), is(false));
         circularityLock.release();
-        assertThat(circularityLock.get(), nullValue(Boolean.class));
+        assertThat(circularityLock.isLocked(), is(false));
     }
 
     @Test
