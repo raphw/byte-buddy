@@ -1399,14 +1399,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 stackManipulations.add(DefaultValue.of(result));
                 TypeDescription.Generic current = result;
                 for (Step step : steps) {
-                    Step.Resolution resulution = step.resolve(targetType,
+                    Step.Resolution resolution = step.resolve(targetType,
                             target,
                             parameters,
                             current,
                             offsets,
                             freeOffset);
-                    stackManipulations.add(resulution.getStackManipulation());
-                    current = resulution.getResultType();
+                    stackManipulations.add(resolution.getStackManipulation());
+                    current = resolution.getResultType();
                 }
                 stackManipulations.add(assigner.assign(current, result, typing));
                 return new StackManipulation.Compound(stackManipulations);
