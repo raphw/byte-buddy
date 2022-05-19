@@ -64,7 +64,8 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
             {location: 'https://www.scienta.no', target: './logos/scienta.png'},
             {location: 'https://www.instana.com', target: './logos/instana.png'},
             {location: 'https://www.sqreen.com', target: './logos/sqreen.png'},
-            {location: 'https://www.elastic.co', target: './logos/elastic.png'}
+            {location: 'https://www.elastic.co', target: './logos/elastic.png'},
+            {location: 'https://www.spotify.com', target: './logos/spotify.png'}
         ];
     })
 
