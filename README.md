@@ -340,3 +340,6 @@ attention to the project. Please take your time to have a look at those supporte
 <a href="https://www.elastic.co">
 <img src="https://bytebuddy.net/logos/elastic.png" height="50" alt="Elastic"/>
 </a>
+<a href="https://www.spotify.com">
+<img src="https://bytebuddy.net/logos/spotify.png" height="50" alt="Spotify"/>
+</a>
