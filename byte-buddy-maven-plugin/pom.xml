@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>byte-buddy-parent</artifactId>
         <groupId>net.bytebuddy</groupId>
+        <artifactId>byte-buddy-parent</artifactId>
         <version>1.12.11-SNAPSHOT</version>
     </parent>
 
@@ -26,9 +26,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>net.bytebuddy</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>byte-buddy</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>

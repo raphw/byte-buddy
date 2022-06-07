@@ -34,7 +34,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>byte-buddy-android</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.android</groupId>

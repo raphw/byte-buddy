@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>byte-buddy-parent</artifactId>
         <groupId>net.bytebuddy</groupId>
+        <artifactId>byte-buddy-parent</artifactId>
         <version>1.12.11-SNAPSHOT</version>
     </parent>
 
@@ -150,7 +150,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <name>net.bytebuddy.agent</name>
+                    <name>${project.groupId}.agent</name>
                     <version>${project.version}</version>
                     <multirelease>true</multirelease>
                     <packages>${packages.list}</packages>

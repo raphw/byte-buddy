@@ -81,7 +81,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>byte-buddy-dep</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
@@ -176,7 +175,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <name>net.bytebuddy</name>
+                    <name>${project.groupId}</name>
                     <version>${project.version}</version>
                     <multirelease>true</multirelease>
                     <packages>${packages.list.external},${packages.list.internal}</packages>

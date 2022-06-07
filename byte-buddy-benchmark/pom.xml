@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>byte-buddy-parent</artifactId>
         <groupId>net.bytebuddy</groupId>
+        <artifactId>byte-buddy-parent</artifactId>
         <version>1.12.11-SNAPSHOT</version>
     </parent>
 
@@ -35,7 +35,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>byte-buddy-dep</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>cglib</groupId>
