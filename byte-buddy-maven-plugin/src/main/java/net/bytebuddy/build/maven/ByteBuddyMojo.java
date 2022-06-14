@@ -367,7 +367,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     throw new MojoExecutionException("Cannot resolve plugin: " + plugin, throwable);
                 }
             }
-            EntryPoint entryPoint = (initialization == null ? Initialization.makeDefault() : initialization).getEntryPoint(classLoaderResolver,
+            EntryPoint entryPoint = (initialization == null ? new Initialization() : initialization).getEntryPoint(classLoaderResolver,
                     project.getGroupId(),
                     project.getArtifactId(),
                     project.getVersion(),

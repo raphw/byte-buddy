@@ -35,17 +35,14 @@ public class Initialization extends CoordinateConfiguration {
     /**
      * If validation should be disabled for the entry point.
      */
-    public boolean unvalidated;
+    public boolean validated;
 
     /**
-     * Creates a default initialization instance.
-     *
-     * @return A default initialization instance.
+     * Creates a new initialization configuration.
      */
-    public static Initialization makeDefault() {
-        Initialization initialization = new Initialization();
-        initialization.entryPoint = EntryPoint.Default.REBASE.name();
-        return initialization;
+    public Initialization() {
+        entryPoint = EntryPoint.Default.REBASE.name();
+        validated = true;
     }
 
     /**
@@ -66,18 +63,18 @@ public class Initialization extends CoordinateConfiguration {
         }
         for (EntryPoint.Default entryPoint : EntryPoint.Default.values()) {
             if (this.entryPoint.equals(entryPoint.name())) {
-                return unvalidated
-                        ? new EntryPoint.Unvalidated(entryPoint)
-                        : entryPoint;
+                return validated
+                        ? entryPoint
+                        : new EntryPoint.Unvalidated(entryPoint);
             }
         }
         try {
             EntryPoint entryPoint = (EntryPoint) Class.forName(this.entryPoint, false, classLoaderResolver.resolve(asCoordinate(groupId, artifactId, version, packaging)))
                     .getDeclaredConstructor()
                     .newInstance();
-            return unvalidated
-                    ? new EntryPoint.Unvalidated(entryPoint)
-                    : entryPoint;
+            return validated
+                    ? entryPoint
+                    : new EntryPoint.Unvalidated(entryPoint);
         } catch (Exception exception) {
             throw new MojoExecutionException("Cannot create entry point: " + entryPoint, exception);
         }

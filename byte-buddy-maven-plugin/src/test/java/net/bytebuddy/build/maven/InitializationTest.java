@@ -92,21 +92,24 @@ public class InitializationTest {
     }
 
     @Test(expected = MojoExecutionException.class)
+    public void testNull() throws Exception {
+        Initialization initialization = new Initialization();
+        initialization.entryPoint = null;
+        initialization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR);
+    }
+
+    @Test(expected = MojoExecutionException.class)
     public void testEmpty() throws Exception {
         Initialization initialization = new Initialization();
         initialization.entryPoint = "";
         initialization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR);
     }
 
-    @Test(expected = MojoExecutionException.class)
-    public void testNull() throws Exception {
-        new Initialization().getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR);
-    }
-
     @Test
     public void testDefault() throws Exception {
-        Initialization initialization = Initialization.makeDefault();
+        Initialization initialization = new Initialization();
         assertThat(initialization.entryPoint, is(EntryPoint.Default.REBASE.name()));
+        assertThat(initialization.validated, is(true));
         assertThat(initialization.groupId, nullValue(String.class));
         assertThat(initialization.artifactId, nullValue(String.class));
         assertThat(initialization.version, nullValue(String.class));
