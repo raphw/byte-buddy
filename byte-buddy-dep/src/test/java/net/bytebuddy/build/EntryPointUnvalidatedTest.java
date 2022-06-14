@@ -68,6 +68,6 @@ public class EntryPointUnvalidatedTest {
         assertThat(new EntryPoint.Unvalidated(entryPoint).transform(typeDescription,
                 byteBuddy,
                 classFileLocator,
-                methodNameTransformer), is(builder));
+                methodNameTransformer), is((DynamicType.Builder) builder));
     }
 }
