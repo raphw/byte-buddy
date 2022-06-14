@@ -21,6 +21,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.Implementation;
 
@@ -149,6 +150,44 @@ public interface EntryPoint {
                                                     MethodNameTransformer methodNameTransformer) {
                 return byteBuddy.decorate(typeDescription, classFileLocator);
             }
+        }
+    }
+
+    /**
+     * An entry point that wraps another entry point but disables validation.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    class Unvalidated implements EntryPoint {
+
+        /**
+         * The entry point to use.
+         */
+        private final EntryPoint delegate;
+
+        /**
+         * Creates a new entry point with disabled validation.
+         *
+         * @param delegate The entry point to use.
+         */
+        public Unvalidated(EntryPoint delegate) {
+            this.delegate = delegate;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
+            return delegate.byteBuddy(classFileVersion).with(TypeValidation.DISABLED);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public DynamicType.Builder<?> transform(TypeDescription typeDescription,
+                                                ByteBuddy byteBuddy,
+                                                ClassFileLocator classFileLocator,
+                                                MethodNameTransformer methodNameTransformer) {
+            return delegate.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer);
         }
     }
 }

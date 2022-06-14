@@ -33,6 +33,11 @@ public class Initialization extends CoordinateConfiguration {
     public String entryPoint;
 
     /**
+     * If validation should be disabled for the entry point.
+     */
+    public boolean unvalidated;
+
+    /**
      * Creates a default initialization instance.
      *
      * @return A default initialization instance.
@@ -61,13 +66,18 @@ public class Initialization extends CoordinateConfiguration {
         }
         for (EntryPoint.Default entryPoint : EntryPoint.Default.values()) {
             if (this.entryPoint.equals(entryPoint.name())) {
-                return entryPoint;
+                return unvalidated
+                        ? new EntryPoint.Unvalidated(entryPoint)
+                        : entryPoint;
             }
         }
         try {
-            return (EntryPoint) Class.forName(entryPoint, false, classLoaderResolver.resolve(asCoordinate(groupId, artifactId, version, packaging)))
+            EntryPoint entryPoint = (EntryPoint) Class.forName(this.entryPoint, false, classLoaderResolver.resolve(asCoordinate(groupId, artifactId, version, packaging)))
                     .getDeclaredConstructor()
                     .newInstance();
+            return unvalidated
+                    ? new EntryPoint.Unvalidated(entryPoint)
+                    : entryPoint;
         } catch (Exception exception) {
             throw new MojoExecutionException("Cannot create entry point: " + entryPoint, exception);
         }
