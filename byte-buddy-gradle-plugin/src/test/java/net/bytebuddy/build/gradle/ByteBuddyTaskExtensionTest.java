@@ -5,6 +5,7 @@ import net.bytebuddy.build.EntryPoint;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.file.FileCollection;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -52,6 +53,11 @@ public class ByteBuddyTaskExtensionTest {
         assertThat(extension.getClassFileVersion(), nullValue(ClassFileVersion.class));
         if (extension instanceof ByteBuddyTaskExtension) {
             assertThat(((ByteBuddyTaskExtension) extension).getIncrementalResolver(), is((IncrementalResolver) IncrementalResolver.ForChangedFiles.INSTANCE));
+            assertThat(((ByteBuddyTaskExtension) extension).getDiscoverySet(), nullValue(FileCollection.class));
+        } else if (extension instanceof ByteBuddySimpleTaskExtension) {
+            assertThat(((ByteBuddySimpleTaskExtension) extension).getDiscoverySet(), nullValue());
+        } else if (extension instanceof ByteBuddyJarTaskExtension) {
+            assertThat(((ByteBuddyJarTaskExtension) extension).getDiscoverySet(), nullValue());
         }
     }
 }

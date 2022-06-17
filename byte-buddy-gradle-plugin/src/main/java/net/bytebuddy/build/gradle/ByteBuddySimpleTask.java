@@ -15,7 +15,6 @@
  */
 package net.bytebuddy.build.gradle;
 
-import groovyjarjarantlr4.v4.runtime.misc.NotNull;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.build.gradle.api.CompileClasspath;
 import net.bytebuddy.build.gradle.api.PathSensitive;

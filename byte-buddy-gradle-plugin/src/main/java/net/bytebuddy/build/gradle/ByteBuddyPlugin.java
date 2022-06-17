@@ -225,7 +225,13 @@ public class ByteBuddyPlugin implements Plugin<Project> {
          * The {@code org.gradle.api.plugins.JavaPluginConvention#getSourceSets()} method or {@code null} if not available.
          */
         @MaybeNull
-        private static final Method GET_SOURCE_SETS;
+        private static final Method GET_SOURCE_SETS_CONVENTION;
+
+        /**
+         * The {@code org.gradle.api.plugins.JavaPluginExtension#getSourceSets()} method or {@code null} if not available.
+         */
+        @MaybeNull
+        private static final Method GET_SOURCE_SETS_EXTENSION;
 
         /**
          * The {@code org.gradle.api.plugins.JavaPluginConvention#getTargetCompatibility()} method or {@code null} if not available.
@@ -238,21 +244,27 @@ public class ByteBuddyPlugin implements Plugin<Project> {
          */
         static {
             Class<?> javaPluginConvention;
-            Method getConvention, getSourceSets, getTargetCompatibility;
+            Method getConvention, getSourceSetsConvention, getSourceSetsExtension, getTargetCompatibility;
             try {
                 javaPluginConvention = Class.forName("org.gradle.api.plugins.JavaPluginConvention");
                 getConvention = Project.class.getMethod("getConvention");
-                getSourceSets = javaPluginConvention.getMethod("getSourceSets");
+                getSourceSetsConvention = javaPluginConvention.getMethod("getSourceSets");
                 getTargetCompatibility = javaPluginConvention.getMethod("getTargetCompatibility");
             } catch (Throwable ignored) {
                 javaPluginConvention = null;
                 getConvention = null;
-                getSourceSets = null;
+                getSourceSetsConvention = null;
                 getTargetCompatibility = null;
+            }
+            try {
+                getSourceSetsExtension = JavaPluginExtension.class.getMethod("getSourceSets");
+            } catch (Throwable ignored) {
+                getSourceSetsExtension = null;
             }
             JAVA_PLUGIN_CONVENTION = javaPluginConvention;
             GET_CONVENTION = getConvention;
-            GET_SOURCE_SETS = getSourceSets;
+            GET_SOURCE_SETS_CONVENTION = getSourceSetsConvention;
+            GET_SOURCE_SETS_EXTENSION = getSourceSetsExtension;
             GET_TARGET_COMPATIBILITY = getTargetCompatibility;
         }
 
@@ -285,16 +297,24 @@ public class ByteBuddyPlugin implements Plugin<Project> {
          */
         @MaybeNull
         protected static ConventionConfiguration of(Project project) {
-            JavaPluginExtension extension = project.getExtensions().findByType(JavaPluginExtension.class);
-            if (extension != null) {
-                return new ConventionConfiguration(extension.getSourceSets(), extension.getTargetCompatibility());
+            if (GET_SOURCE_SETS_EXTENSION != null) {
+                try {
+                    JavaPluginExtension extension = project.getExtensions().findByType(JavaPluginExtension.class);
+                    if (extension != null) {
+                        return new ConventionConfiguration(
+                                (SourceSetContainer) GET_SOURCE_SETS_EXTENSION.invoke(extension),
+                                extension.getTargetCompatibility());
+                    }
+                } catch (Throwable ignored) {
+                    /* do nothing */
+                }
             }
-            if (JAVA_PLUGIN_CONVENTION != null && GET_CONVENTION != null && GET_SOURCE_SETS != null && GET_TARGET_COMPATIBILITY != null) {
+            if (JAVA_PLUGIN_CONVENTION != null && GET_CONVENTION != null && GET_SOURCE_SETS_CONVENTION != null && GET_TARGET_COMPATIBILITY != null) {
                 try {
                     Object convention = ((Convention) GET_CONVENTION.invoke(project)).findPlugin(JAVA_PLUGIN_CONVENTION);
                     if (convention != null) {
                         return new ConventionConfiguration(
-                                (SourceSetContainer) GET_SOURCE_SETS.invoke(convention),
+                                (SourceSetContainer) GET_SOURCE_SETS_CONVENTION.invoke(convention),
                                 (JavaVersion) GET_TARGET_COMPATIBILITY.invoke(convention));
                     }
                 } catch (Throwable ignored) {
