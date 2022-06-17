@@ -22,6 +22,7 @@ import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Optional;
 import org.gradle.util.ConfigureUtil;
 
 import javax.inject.Inject;
@@ -117,6 +118,7 @@ public class Transformation {
      */
     @Input
     @MaybeNull
+    @Optional
     public Class<? extends Plugin> getPlugin() {
         return plugin;
     }
@@ -130,7 +132,9 @@ public class Transformation {
         this.plugin = plugin;
     }
 
+    @Input
     @MaybeNull
+    @Optional
     public String getPluginName() {
         return pluginName;
     }
