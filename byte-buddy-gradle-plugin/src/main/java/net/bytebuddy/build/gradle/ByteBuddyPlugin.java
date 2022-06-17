@@ -15,13 +15,17 @@
  */
 package net.bytebuddy.build.gradle;
 
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.SourceDirectorySet;
+import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.compile.AbstractCompile;
 
 import java.lang.reflect.Method;
@@ -92,16 +96,16 @@ public class ByteBuddyPlugin implements Plugin<Project> {
          */
         public void execute(JavaPlugin plugin) {
             project.getLogger().debug("Java plugin was discovered for modification: {}", plugin);
-            JavaPluginConvention convention = project.getConvention().findPlugin(JavaPluginConvention.class);
-            if (convention == null) {
-                project.getLogger().warn("Skipping implicit Byte Buddy task configuration since Java plugin did not register Java plugin convention");
+            ConventionConfiguration configuration = ConventionConfiguration.of(project);
+            if (configuration == null) {
+                project.getLogger().warn("Skipping implicit Byte Buddy task configuration since Java plugin did not register Java plugin convention or extension");
             } else {
-                for (SourceSet sourceSet : convention.getSourceSets()) {
+                for (SourceSet sourceSet : configuration.getSourceSets()) {
                     String name = sourceSet.getName().equals(SourceSet.MAIN_SOURCE_SET_NAME)
                             ? "byteBuddy"
                             : (sourceSet.getName() + "ByteBuddy");
-                    AbstractByteBuddyTaskExtension<?> extension = DISPATCHER.toExtension();
-                    extension.resolve(convention);
+                    AbstractByteBuddyTaskExtension<?> extension = project.getObjects().newInstance(DISPATCHER.toExtension());
+                    extension.resolve(configuration.getTargetCompatibility());
                     project.getExtensions().add(name, extension);
                     project.afterEvaluate(DISPATCHER.toAction(name, sourceSet));
                 }
@@ -122,7 +126,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
          *
          * @return An appropriate Byte Buddy extension instance.
          */
-        S toExtension();
+        Class<S> toExtension();
 
         /**
          * Creates a Byte Buddy task configuration.
@@ -146,8 +150,8 @@ public class ByteBuddyPlugin implements Plugin<Project> {
             /**
              * {@inheritDoc}
              */
-            public ByteBuddySimpleTaskExtension toExtension() {
-                return new ByteBuddySimpleTaskExtension();
+            public Class<ByteBuddySimpleTaskExtension> toExtension() {
+                return ByteBuddySimpleTaskExtension.class;
             }
 
             /**
@@ -187,8 +191,8 @@ public class ByteBuddyPlugin implements Plugin<Project> {
             /**
              * {@inheritDoc}
              */
-            public ByteBuddyTaskExtension toExtension() {
-                return new ByteBuddyTaskExtension();
+            public Class<ByteBuddyTaskExtension> toExtension() {
+                return ByteBuddyTaskExtension.class;
             }
 
             /**
@@ -197,6 +201,125 @@ public class ByteBuddyPlugin implements Plugin<Project> {
             public ByteBuddyTaskConfiguration toAction(String name, SourceSet sourceSet) {
                 return new ByteBuddyTaskConfiguration(name, sourceSet, getDestinationDirectory, setDestinationDir);
             }
+        }
+    }
+
+    /**
+     * Resolves the contextual configuration based on the project's Java plugin, if any.
+     */
+    protected static class ConventionConfiguration {
+
+        /**
+         * The {@code org.gradle.api.plugins.JavaPluginConvention} class or {@code null} if not available.
+         */
+        @MaybeNull
+        private static final Class<?> JAVA_PLUGIN_CONVENTION;
+
+        /**
+         * The {@code org.gradle.api.Project#getConvention()} method or {@code null} if not available.
+         */
+        @MaybeNull
+        private static final Method GET_CONVENTION;
+
+        /**
+         * The {@code org.gradle.api.plugins.JavaPluginConvention#getSourceSets()} method or {@code null} if not available.
+         */
+        @MaybeNull
+        private static final Method GET_SOURCE_SETS;
+
+        /**
+         * The {@code org.gradle.api.plugins.JavaPluginConvention#getTargetCompatibility()} method or {@code null} if not available.
+         */
+        @MaybeNull
+        private static final Method GET_TARGET_COMPATIBILITY;
+
+        /*
+         * Resolves the convention methods which might no longer be supported.
+         */
+        static {
+            Class<?> javaPluginConvention;
+            Method getConvention, getSourceSets, getTargetCompatibility;
+            try {
+                javaPluginConvention = Class.forName("org.gradle.api.plugins.JavaPluginConvention");
+                getConvention = Project.class.getMethod("getConvention");
+                getSourceSets = javaPluginConvention.getMethod("getSourceSets");
+                getTargetCompatibility = javaPluginConvention.getMethod("getTargetCompatibility");
+            } catch (Throwable ignored) {
+                javaPluginConvention = null;
+                getConvention = null;
+                getSourceSets = null;
+                getTargetCompatibility = null;
+            }
+            JAVA_PLUGIN_CONVENTION = javaPluginConvention;
+            GET_CONVENTION = getConvention;
+            GET_SOURCE_SETS = getSourceSets;
+            GET_TARGET_COMPATIBILITY = getTargetCompatibility;
+        }
+
+        /**
+         * The resolved source set container.
+         */
+        private final SourceSetContainer sourceSets;
+
+        /**
+         * The target Java version.
+         */
+        private final JavaVersion targetCompatibility;
+
+        /**
+         * Creates a new convention configuration.
+         *
+         * @param sourceSets          The resolved source set container.
+         * @param targetCompatibility The target Java version.
+         */
+        protected ConventionConfiguration(SourceSetContainer sourceSets, JavaVersion targetCompatibility) {
+            this.sourceSets = sourceSets;
+            this.targetCompatibility = targetCompatibility;
+        }
+
+        /**
+         * Resolves a convention configuration of the current project.
+         *
+         * @param project The current Gradle project.
+         * @return The resolved convention configuration or {@code null} if not configured.
+         */
+        @MaybeNull
+        protected static ConventionConfiguration of(Project project) {
+            JavaPluginExtension extension = project.getExtensions().findByType(JavaPluginExtension.class);
+            if (extension != null) {
+                return new ConventionConfiguration(extension.getSourceSets(), extension.getTargetCompatibility());
+            }
+            if (JAVA_PLUGIN_CONVENTION != null && GET_CONVENTION != null && GET_SOURCE_SETS != null && GET_TARGET_COMPATIBILITY != null) {
+                try {
+                    Object convention = ((Convention) GET_CONVENTION.invoke(project)).findPlugin(JAVA_PLUGIN_CONVENTION);
+                    if (convention != null) {
+                        return new ConventionConfiguration(
+                                (SourceSetContainer) GET_SOURCE_SETS.invoke(convention),
+                                (JavaVersion) GET_TARGET_COMPATIBILITY.invoke(convention));
+                    }
+                } catch (Throwable ignored) {
+                    /* do nothing */
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Returns the resolved source set container.
+         *
+         * @return The resolved source set container.
+         */
+        protected SourceSetContainer getSourceSets() {
+            return sourceSets;
+        }
+
+        /**
+         * Returns the target Java version.
+         *
+         * @return The target Java version.
+         */
+        protected JavaVersion getTargetCompatibility() {
+            return targetCompatibility;
         }
     }
 }

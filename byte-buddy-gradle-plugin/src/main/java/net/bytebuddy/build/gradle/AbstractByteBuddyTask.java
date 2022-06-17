@@ -24,16 +24,21 @@ import net.bytebuddy.build.gradle.api.Internal;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
+import net.bytebuddy.utility.nullability.MaybeNull;
+import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
-import org.gradle.util.ConfigureUtil;
 
-import net.bytebuddy.utility.nullability.MaybeNull;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 
 /**
@@ -90,9 +95,10 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     private int threads;
 
     /**
-     * Returns the class file version to use for creating auxiliary types or {@code null} if the
+     * The class file version to use for creating auxiliary types or {@code null} if the
      * version is determined implicitly.
      */
+    @MaybeNull
     private ClassFileVersion classFileVersion;
 
     /**
@@ -118,7 +124,18 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      * @param closure The closure to configure the transformation.
      */
     public void transformation(Closure<Transformation> closure) {
-        transformations.add(ConfigureUtil.configure(closure, new Transformation()));
+        transformations.add((Transformation) getProject().configure(getProject().getObjects().newInstance(Transformation.class), closure));
+    }
+
+    /**
+     * Adds an additional transformation.
+     *
+     * @param action The action to configure the transformation.
+     */
+    public void transformation(Action<Transformation> action) {
+        Transformation transformation = getProject().getObjects().newInstance(Transformation.class);
+        action.execute(transformation);
+        transformations.add(transformation);
     }
 
     /**
@@ -319,6 +336,14 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     protected abstract Iterable<File> classPath();
 
     /**
+     * Returns the discovery class path or {@code null} if not specified.
+     *
+     * @return The discovery class path or {@code null} if not specified.
+     */
+    @MaybeNull
+    protected abstract Iterable<File> discoverySet();
+
+    /**
      * Applies the transformation from a source to a target.
      *
      * @param source The plugin engine's source.
@@ -330,14 +355,15 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
             throw new IllegalStateException("Source and target cannot be equal: " + source());
         }
         List<Transformation> transformations = new ArrayList<Transformation>(getTransformations());
+        ClassLoader classLoader = ByteBuddySkippingUrlClassLoader.of(getClass().getClassLoader(), discoverySet(), classPath());
         if (discovery.isDiscover(transformations)) {
             Set<String> undiscoverable = new HashSet<String>();
             if (discovery.isRecordConfiguration()) {
                 for (Transformation transformation : transformations) {
-                    undiscoverable.add(transformation.getPlugin().getName());
+                    undiscoverable.add(transformation.toPluginName());
                 }
             }
-            Enumeration<URL> plugins = getClass().getClassLoader().getResources("META-INF/net.bytebuddy/build.plugins");
+            Enumeration<URL> plugins = classLoader.getResources("META-INF/net.bytebuddy/build.plugins");
             while (plugins.hasMoreElements()) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(plugins.nextElement().openStream(), "UTF-8"));
                 try {
@@ -347,7 +373,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                             try {
                                 @SuppressWarnings("unchecked")
                                 Class<? extends Plugin> plugin = (Class<? extends Plugin>) Class.forName(line);
-                                Transformation transformation = new Transformation();
+                                Transformation transformation = getProject().getObjects().newInstance(Transformation.class);
                                 transformation.setPlugin(plugin);
                                 transformations.add(transformation);
                             } catch (ClassNotFoundException exception) {
@@ -371,14 +397,14 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
         List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>(transformations.size());
         for (Transformation transformation : transformations) {
             try {
-                factories.add(new Plugin.Factory.UsingReflection(transformation.getPlugin())
+                factories.add(new Plugin.Factory.UsingReflection(transformation.toPlugin(classLoader))
                         .with(transformation.makeArgumentResolvers())
                         .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File.class, source()),
                                 Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, getLogger()),
                                 Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new GradleBuildLogger(getLogger()))));
-                getLogger().info("Resolved plugin: {}", transformation.getPlugin().getName());
+                getLogger().info("Resolved plugin: {}", transformation.toPluginName());
             } catch (Throwable throwable) {
-                throw new IllegalStateException("Cannot resolve plugin: " + transformation.getPlugin().getName(), throwable);
+                throw new IllegalStateException("Cannot resolve plugin: " + transformation.toPluginName(), throwable);
             }
         }
         List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
@@ -584,6 +610,57 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
         @Override
         public void onLiveInitializer(TypeDescription typeDescription, TypeDescription definingType) {
             logger.debug("Discovered live initializer for {} as a result of transforming {}", definingType, typeDescription);
+        }
+    }
+
+    /**
+     * A class loader that resolves a source set while still loading Byte Buddy classes from the Gradle plugin.
+     */
+    protected static class ByteBuddySkippingUrlClassLoader extends URLClassLoader {
+
+        /**
+         * Creates a new class loader that skips Byte Buddy classes.
+         *
+         * @param parent The parent class loader.
+         * @param url    The URLs of the source set.
+         */
+        protected ByteBuddySkippingUrlClassLoader(ClassLoader parent, URL[] url) {
+            super(url, parent);
+        }
+
+        /**
+         * Resolves a class loader.
+         *
+         * @param classLoader  The class loader of the Byte Buddy plugin.
+         * @param discoverySet The source set to discover plugins from or {@code null} if no source set is used.
+         * @param classPath    The configured class path.
+         * @return The resolved class loader.
+         */
+        protected static ClassLoader of(ClassLoader classLoader, @MaybeNull Iterable<File> discoverySet, Iterable<File> classPath) {
+            List<URL> urls = new ArrayList<>();
+            for (File file : discoverySet == null
+                    ? classPath
+                    : discoverySet) {
+                try {
+                    urls.add(file.toURI().toURL());
+                } catch (MalformedURLException e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+            return new ByteBuddySkippingUrlClassLoader(classLoader, urls.toArray(new URL[0]));
+        }
+
+        @Override
+        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            if (name.startsWith("net.bytebuddy.")) {
+                Class<?> type = getParent().loadClass(name);
+                if (resolve) {
+                    resolveClass(type);
+                }
+                return type;
+            } else {
+                return super.loadClass(name, resolve);
+            }
         }
     }
 }

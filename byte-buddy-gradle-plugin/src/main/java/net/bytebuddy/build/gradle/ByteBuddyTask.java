@@ -16,13 +16,17 @@
 package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.Plugin;
+import net.bytebuddy.build.gradle.api.CompileClasspath;
+import net.bytebuddy.build.gradle.api.Internal;
+import net.bytebuddy.build.gradle.api.PathSensitive;
+import net.bytebuddy.build.gradle.api.PathSensitivity;
 import net.bytebuddy.build.gradle.api.*;
-import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.OutputDirectory;
-import org.gradle.api.tasks.TaskAction;
-
 import net.bytebuddy.utility.nullability.MaybeNull;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.tasks.*;
+
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
@@ -41,11 +45,19 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
     private IncrementalResolver incrementalResolver;
 
     /**
+     * A set of classes that is used for discovery of plugins.
+     */
+    @MaybeNull
+    private FileCollection discoverySet;
+
+    /**
      * Creates a new Byte Buddy task.
+     *
+     * @param objectFactory The object factory to use.
      */
     @Inject
-    public ByteBuddyTask() {
-        new ByteBuddyTaskExtension().configure(this);
+    public ByteBuddyTask(ObjectFactory objectFactory) {
+        objectFactory.newInstance(ByteBuddyTaskExtension.class).configure(this);
     }
 
     /**
@@ -95,6 +107,27 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
         this.incrementalResolver = incrementalResolver;
     }
 
+    /**
+     * Returns the source set to resolve plugin names from or {@code null} if no such source set is used.
+     *
+     * @return The source set to resolve plugin names from or {@code null} if no such source set is used.
+     */
+    @MaybeNull
+    @Input
+    @Optional
+    public FileCollection getDiscoverySet() {
+        return discoverySet;
+    }
+
+    /**
+     * Defines the source set to resolve plugin names from or {@code null} if no such source set is used.
+     *
+     * @param discoverySet The source set to resolve plugin names from or {@code null} if no such source set is used.
+     */
+    public void setDiscoverySet(@MaybeNull FileCollection discoverySet) {
+        this.discoverySet = discoverySet;
+    }
+
     @Override
     protected File source() {
         return getSource().getAsFile().get();
@@ -108,6 +141,12 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
     @Override
     protected Iterable<File> classPath() {
         return getClassPath();
+    }
+
+    @Override
+    @MaybeNull
+    protected Iterable<File> discoverySet() {
+        return discoverySet;
     }
 
     /**
@@ -234,9 +273,12 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
 
         /**
          * Creates a new Byte Buddy task with an incremental class path.
+         *
+         * @param objectFactory The object factory to use.
          */
         @Inject
-        public WithIncrementalClassPath() {
+        public WithIncrementalClassPath(ObjectFactory objectFactory) {
+            super(objectFactory);
         }
     }
 }

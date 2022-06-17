@@ -3,6 +3,7 @@ package net.bytebuddy.build.gradle;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.EntryPoint;
 import org.gradle.api.Action;
+import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,6 +15,7 @@ import java.util.Collection;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 
 @RunWith(Parameterized.class)
 public class ByteBuddyTaskExtensionTest {
@@ -27,8 +29,8 @@ public class ByteBuddyTaskExtensionTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {new ByteBuddyTaskExtension()},
-                {new ByteBuddySimpleTaskExtension()}
+                {new ByteBuddyTaskExtension(mock(Project.class))},
+                {new ByteBuddySimpleTaskExtension(mock(Project.class))}
         });
     }
 

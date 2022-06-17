@@ -18,12 +18,12 @@ package net.bytebuddy.build.gradle;
 import groovy.lang.Closure;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.EntryPoint;
-import org.gradle.api.Action;
-import org.gradle.api.Task;
-import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.util.ConfigureUtil;
-
 import net.bytebuddy.utility.nullability.MaybeNull;
+import org.gradle.api.Action;
+import org.gradle.api.JavaVersion;
+import org.gradle.api.Project;
+import org.gradle.api.Task;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +33,11 @@ import java.util.List;
  * @param <T> The type of the task this extension represents.
  */
 public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddyTask> {
+
+    /**
+     * The current Gradle project.
+     */
+    private final Project project;
 
     /**
      * The transformations to apply.
@@ -113,8 +118,11 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
 
     /**
      * Creates a new abstract Byte Buddy task extension.
+     *
+     * @param project The current Gradle project.
      */
-    protected AbstractByteBuddyTaskExtension() {
+    protected AbstractByteBuddyTaskExtension(Project project) {
+        this.project = project;
         transformations = new ArrayList<Transformation>();
         entryPoint = EntryPoint.Default.REBASE;
         suffix = "";
@@ -142,7 +150,18 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      * @param closure The closure to configure the transformation.
      */
     public void transformation(Closure<Transformation> closure) {
-        transformations.add(ConfigureUtil.configure(closure, new Transformation()));
+        transformations.add((Transformation) project.configure(project.getObjects().newInstance(Transformation.class), closure));
+    }
+
+    /**
+     * Adds an additional transformation.
+     *
+     * @param action The action to configure the transformation.
+     */
+    public void transformation(Action<Transformation> action) {
+        Transformation transformation = project.getObjects().newInstance(Transformation.class);
+        action.execute(transformation);
+        transformations.add(transformation);
     }
 
     /**
@@ -383,15 +402,13 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     }
 
     /**
-     * Resolves default properties from the Java plugin convention.
+     * Resolves default properties and considers the contextual Java version.
      *
-     * @param convention The convention to resolve.
+     * @param version The Java version to resolve as a fallback if no explicit version is set.
      */
-    protected void resolve(JavaPluginConvention convention) {
+    protected void resolve(JavaVersion version) {
         if (classFileVersion == null) {
-            classFileVersion = ClassFileVersion.ofJavaVersion(Integer.parseInt(convention
-                    .getTargetCompatibility()
-                    .getMajorVersion()));
+            classFileVersion = ClassFileVersion.ofJavaVersion(Integer.parseInt(version.getMajorVersion()));
         }
     }
 

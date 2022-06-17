@@ -19,6 +19,8 @@ import net.bytebuddy.build.Plugin;
 import net.bytebuddy.build.gradle.api.CompileClasspath;
 import net.bytebuddy.build.gradle.api.PathSensitive;
 import net.bytebuddy.build.gradle.api.PathSensitivity;
+import net.bytebuddy.utility.nullability.MaybeNull;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.*;
 
 import javax.inject.Inject;
@@ -46,11 +48,19 @@ public class ByteBuddyJarTask extends AbstractByteBuddyTask {
     private Iterable<File> classPath;
 
     /**
+     * A set of classes that is used for discovery of plugins.
+     */
+    @MaybeNull
+    private Iterable<File> discoverySet;
+
+    /**
      * Creates a new simple Byte Buddy task.
+     *
+     * @param objectFactory The object factory to use.
      */
     @Inject
-    public ByteBuddyJarTask() {
-        new ByteBuddyJarTaskExtension().configure(this);
+    public ByteBuddyJarTask(ObjectFactory objectFactory) {
+        objectFactory.newInstance(ByteBuddyJarTaskExtension.class).configure(this);
     }
 
     /**
@@ -113,6 +123,27 @@ public class ByteBuddyJarTask extends AbstractByteBuddyTask {
         this.classPath = classPath;
     }
 
+    /**
+     * Returns the source set to resolve plugin names from or {@code null} if no such source set is used.
+     *
+     * @return The source set to resolve plugin names from or {@code null} if no such source set is used.
+     */
+    @MaybeNull
+    @InputFiles
+    @Optional
+    public Iterable<File> getDiscoverySet() {
+        return discoverySet;
+    }
+
+    /**
+     * Defines the source set to resolve plugin names from or {@code null} if no such source set is used.
+     *
+     * @param discoverySet The source set to resolve plugin names from or {@code null} if no such source set is used.
+     */
+    public void setDiscoverySet(@MaybeNull Iterable<File> discoverySet) {
+        this.discoverySet = discoverySet;
+    }
+
     @Override
     protected File source() {
         return getSource();
@@ -126,6 +157,12 @@ public class ByteBuddyJarTask extends AbstractByteBuddyTask {
     @Override
     protected Iterable<File> classPath() {
         return getClassPath();
+    }
+
+    @Override
+    @MaybeNull
+    protected Iterable<File> discoverySet() {
+        return discoverySet;
     }
 
     /**

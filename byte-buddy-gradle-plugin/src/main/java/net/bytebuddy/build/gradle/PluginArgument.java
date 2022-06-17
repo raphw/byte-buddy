@@ -16,6 +16,7 @@
 package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.Plugin;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
@@ -44,19 +45,11 @@ public class PluginArgument implements Serializable {
     private Object value;
 
     /**
-     * Creates a new plugin argument with default initialization.
-     */
-    @SuppressWarnings("unused")
-    public PluginArgument() {
-        /* empty */
-    }
-
-    /**
      * Creates a new plugin argument assignment.
      *
      * @param index The argument index.
      */
-    protected PluginArgument(int index) {
+    public PluginArgument(int index) {
         this.index = index;
     }
 
@@ -66,7 +59,7 @@ public class PluginArgument implements Serializable {
      * @param index The argument index.
      * @param value The argument value.
      */
-    protected PluginArgument(int index, @MaybeNull Object value) {
+    public PluginArgument(int index, @MaybeNull Object value) {
         this.index = index;
         this.value = value;
     }

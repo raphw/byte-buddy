@@ -17,10 +17,15 @@ package net.bytebuddy.build.gradle;
 
 import groovy.lang.Closure;
 import net.bytebuddy.build.Plugin;
+import net.bytebuddy.utility.nullability.MaybeNull;
+import org.gradle.api.Action;
+import org.gradle.api.GradleException;
+import org.gradle.api.Project;
 import org.gradle.api.tasks.Input;
 import org.gradle.util.ConfigureUtil;
 
-import net.bytebuddy.utility.nullability.MaybeNull;
+import javax.inject.Inject;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,20 +35,35 @@ import java.util.List;
 public class Transformation {
 
     /**
+     * The current project to use.
+     */
+    private final Project project;
+
+    /**
      * A list of arguments that are provided to the plugin for construction.
      */
     private final List<PluginArgument> arguments;
 
     /**
-     * The fully-qualified name of the plugin type.
+     * The plugin type.
      */
     @MaybeNull
     private Class<? extends Plugin> plugin;
 
     /**
-     * Creates a new transformation.
+     * The fully-qualified name of the plugin type.
      */
-    public Transformation() {
+    @MaybeNull
+    private String pluginName;
+
+    /**
+     * Creates a new transformation.
+     *
+     * @param project The object factory to use.
+     */
+    @Inject
+    public Transformation(Project project) {
+        this.project = project;
         arguments = new ArrayList<PluginArgument>();
     }
 
@@ -63,7 +83,18 @@ public class Transformation {
      * @param closure The closure for configuring the argument.
      */
     public void argument(Closure<?> closure) {
-        getArguments().add(ConfigureUtil.configure(closure, new PluginArgument(getArguments().size())));
+        getArguments().add((PluginArgument) project.configure(project.getObjects().newInstance(PluginArgument.class, getArguments().size()), closure));
+    }
+
+    /**
+     * Adds a plugin argument to consider during instantiation.
+     *
+     * @param action The action for configuring the argument.
+     */
+    public void argument(Action<PluginArgument> action) {
+        PluginArgument argument = project.getObjects().newInstance(PluginArgument.class, getArguments().size());
+        action.execute(argument);
+        getArguments().add(argument);
     }
 
     /**
@@ -97,5 +128,49 @@ public class Transformation {
      */
     public void setPlugin(@MaybeNull Class<? extends Plugin> plugin) {
         this.plugin = plugin;
+    }
+
+    @MaybeNull
+    public String getPluginName() {
+        return pluginName;
+    }
+
+    public void setPluginName(@MaybeNull String pluginName) {
+        this.pluginName = pluginName;
+    }
+
+    protected Class<? extends Plugin> toPlugin(ClassLoader classLoader) {
+        if (plugin != null) {
+            if (pluginName != null && !plugin.getName().equals(pluginName)) {
+                throw new GradleException("Defined both plugin (" + plugin + ") and plugin name (" + pluginName + ") but they are not equal");
+            }
+            return plugin;
+        } else if (pluginName != null) {
+            try {
+                @SuppressWarnings("unchecked")
+                Class<? extends Plugin> type = (Class<? extends Plugin>) classLoader.loadClass(pluginName);
+                if (!Plugin.class.isAssignableFrom(type)) {
+                    throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
+                }
+                return type;
+            } catch (ClassNotFoundException e) {
+                throw new GradleException("Cannot find plugin class " + pluginName + " by its name", e);
+            }
+        } else {
+            throw new GradleException("No plugin or plugin name defined for transformation");
+        }
+    }
+
+    protected String toPluginName() {
+        if (plugin != null) {
+            if (pluginName != null && !plugin.getName().equals(pluginName)) {
+                throw new GradleException("Defined both plugin (" + plugin + ") and plugin name (" + pluginName + ") but they are not equal");
+            }
+            return plugin.getName();
+        } else if (pluginName != null) {
+            return pluginName;
+        } else {
+            throw new GradleException("No plugin or plugin name defined for transformation");
+        }
     }
 }

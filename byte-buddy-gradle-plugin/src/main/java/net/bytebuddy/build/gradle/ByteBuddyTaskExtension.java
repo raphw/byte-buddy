@@ -16,6 +16,8 @@
 package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.utility.nullability.MaybeNull;
+import org.gradle.api.Project;
+import org.gradle.api.file.FileCollection;
 
 /**
  * A Byte Buddy task extension.
@@ -34,9 +36,18 @@ public class ByteBuddyTaskExtension extends AbstractByteBuddyTaskExtension<ByteB
     private boolean incrementalClassPath;
 
     /**
-     * Creates a new Byte Buddy task extension.
+     * A set of classes that is used for discovery of plugins.
      */
-    public ByteBuddyTaskExtension() {
+    @MaybeNull
+    private FileCollection discoverySet;
+
+    /**
+     * Creates a new Byte Buddy task extension.
+     *
+     * @param project The current Gradle project.
+     */
+    public ByteBuddyTaskExtension(Project project) {
+        super(project);
         incrementalResolver = IncrementalResolver.ForChangedFiles.INSTANCE;
     }
 
@@ -78,9 +89,29 @@ public class ByteBuddyTaskExtension extends AbstractByteBuddyTaskExtension<ByteB
         this.incrementalClassPath = incrementalClassPath;
     }
 
+    /**
+     * Returns the source set to resolve plugin names from or {@code null} if no such source set is used.
+     *
+     * @return The source set to resolve plugin names from or {@code null} if no such source set is used.
+     */
+    @MaybeNull
+    public FileCollection getDiscoverySet() {
+        return discoverySet;
+    }
+
+    /**
+     * Defines the source set to resolve plugin names from or {@code null} if no such source set is used.
+     *
+     * @param discoverySet The source set to resolve plugin names from or {@code null} if no such source set is used.
+     */
+    public void setDiscoverySet(@MaybeNull FileCollection discoverySet) {
+        this.discoverySet = discoverySet;
+    }
+
     @Override
     protected void doConfigure(ByteBuddyTask task) {
         task.setIncrementalResolver(getIncrementalResolver());
+        task.setDiscoverySet(discoverySet);
     }
 
     @Override

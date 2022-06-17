@@ -15,18 +15,63 @@
  */
 package net.bytebuddy.build.gradle;
 
+import net.bytebuddy.utility.nullability.MaybeNull;
+import org.gradle.api.Project;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Optional;
+
+import javax.inject.Inject;
+import java.io.File;
+
 /**
  * A Byte Buddy jar task extension.
  */
 public class ByteBuddyJarTaskExtension extends AbstractByteBuddyTaskExtension<ByteBuddyJarTask> {
 
+    /**
+     * A set of classes that is used for discovery of plugins.
+     */
+    @MaybeNull
+    private Iterable<File> discoverySet;
+
+    /**
+     * Creates a new Byte Buddy jar extension
+     *
+     * @param project The current Gradle project.
+     */
+    @Inject
+    public ByteBuddyJarTaskExtension(Project project) {
+        super(project);
+    }
+
     @Override
     protected void doConfigure(ByteBuddyJarTask task) {
-        /* do nothing */
+        task.setDiscoverySet(discoverySet);
     }
 
     @Override
     protected Class<ByteBuddyJarTask> toType() {
         return ByteBuddyJarTask.class;
+    }
+
+    /**
+     * Returns the source set to resolve plugin names from or {@code null} if no such source set is used.
+     *
+     * @return The source set to resolve plugin names from or {@code null} if no such source set is used.
+     */
+    @MaybeNull
+    @InputFiles
+    @Optional
+    public Iterable<File> getDiscoverySet() {
+        return discoverySet;
+    }
+
+    /**
+     * Defines the source set to resolve plugin names from or {@code null} if no such source set is used.
+     *
+     * @param discoverySet The source set to resolve plugin names from or {@code null} if no such source set is used.
+     */
+    public void setDiscoverySet(@MaybeNull Iterable<File> discoverySet) {
+        this.discoverySet = discoverySet;
     }
 }
