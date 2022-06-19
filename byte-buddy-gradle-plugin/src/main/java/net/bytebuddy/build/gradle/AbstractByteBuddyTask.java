@@ -637,7 +637,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
          * @return The resolved class loader.
          */
         protected static ClassLoader of(ClassLoader classLoader, @MaybeNull Iterable<File> discoverySet, Iterable<File> classPath) {
-            List<URL> urls = new ArrayList<>();
+            List<URL> urls = new ArrayList<URL>();
             for (File file : discoverySet == null
                     ? classPath
                     : discoverySet) {
