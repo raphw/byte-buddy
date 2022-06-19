@@ -20,6 +20,8 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
 import net.bytebuddy.utility.nullability.MaybeNull;
+
+import javax.inject.Inject;
 import java.io.Serializable;
 
 /**
@@ -48,6 +50,7 @@ public class PluginArgument implements Serializable {
      *
      * @param index The argument index.
      */
+    @Inject
     public PluginArgument(int index) {
         this.index = index;
     }
