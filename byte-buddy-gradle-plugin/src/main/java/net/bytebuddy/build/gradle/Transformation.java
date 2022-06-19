@@ -23,10 +23,8 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
-import org.gradle.util.ConfigureUtil;
 
 import javax.inject.Inject;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
