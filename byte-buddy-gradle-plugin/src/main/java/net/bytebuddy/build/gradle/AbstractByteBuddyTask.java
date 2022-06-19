@@ -124,7 +124,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      * @param closure The closure to configure the transformation.
      */
     public void transformation(Closure<Transformation> closure) {
-        transformations.add((Transformation) getProject().configure(getProject().getObjects().newInstance(Transformation.class), closure));
+        transformations.add((Transformation) getProject().configure(getProject().getObjects().newInstance(Transformation.class, getProject()), closure));
     }
 
     /**
@@ -133,7 +133,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      * @param action The action to configure the transformation.
      */
     public void transformation(Action<Transformation> action) {
-        Transformation transformation = getProject().getObjects().newInstance(Transformation.class);
+        Transformation transformation = getProject().getObjects().newInstance(Transformation.class, getProject());
         action.execute(transformation);
         transformations.add(transformation);
     }
@@ -373,7 +373,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                             try {
                                 @SuppressWarnings("unchecked")
                                 Class<? extends Plugin> plugin = (Class<? extends Plugin>) Class.forName(line);
-                                Transformation transformation = getProject().getObjects().newInstance(Transformation.class);
+                                Transformation transformation = getProject().getObjects().newInstance(Transformation.class, getProject());
                                 transformation.setPlugin(plugin);
                                 transformations.add(transformation);
                             } catch (ClassNotFoundException exception) {

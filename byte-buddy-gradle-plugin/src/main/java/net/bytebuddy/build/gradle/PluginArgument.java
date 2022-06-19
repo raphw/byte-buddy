@@ -16,7 +16,6 @@
 package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.Plugin;
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 

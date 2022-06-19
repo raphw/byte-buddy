@@ -104,7 +104,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
                     String name = sourceSet.getName().equals(SourceSet.MAIN_SOURCE_SET_NAME)
                             ? "byteBuddy"
                             : (sourceSet.getName() + "ByteBuddy");
-                    AbstractByteBuddyTaskExtension<?> extension = project.getObjects().newInstance(DISPATCHER.toExtension());
+                    AbstractByteBuddyTaskExtension<?> extension = project.getObjects().newInstance(DISPATCHER.toExtension(), project);
                     extension.resolve(configuration.getTargetCompatibility());
                     project.getExtensions().add(name, extension);
                     project.afterEvaluate(DISPATCHER.toAction(name, sourceSet));

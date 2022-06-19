@@ -150,7 +150,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      * @param closure The closure to configure the transformation.
      */
     public void transformation(Closure<Transformation> closure) {
-        transformations.add((Transformation) project.configure(project.getObjects().newInstance(Transformation.class), closure));
+        transformations.add((Transformation) project.configure(project.getObjects().newInstance(Transformation.class, project), closure));
     }
 
     /**
@@ -159,7 +159,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      * @param action The action to configure the transformation.
      */
     public void transformation(Action<Transformation> action) {
-        Transformation transformation = project.getObjects().newInstance(Transformation.class);
+        Transformation transformation = project.getObjects().newInstance(Transformation.class, project);
         action.execute(transformation);
         transformations.add(transformation);
     }
