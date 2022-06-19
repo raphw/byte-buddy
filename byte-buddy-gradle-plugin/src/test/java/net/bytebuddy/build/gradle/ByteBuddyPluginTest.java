@@ -16,9 +16,7 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;

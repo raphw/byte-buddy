@@ -156,7 +156,7 @@ public class Transformation {
                 }
                 return type;
             } catch (ClassNotFoundException e) {
-                throw new GradleException("Cannot find plugin class " + pluginName + " by its name", e);
+                throw new GradleException("Cannot locate plugin class " + pluginName + " by its name", e);
             }
         } else {
             throw new GradleException("No plugin or plugin name defined for transformation");

@@ -39,6 +39,7 @@ public class ByteBuddySimpleTaskConfiguration extends AbstractByteBuddyTaskConfi
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     protected void configureDirectories(SourceDirectorySet source, JavaCompile compileTask, ByteBuddySimpleTask byteBuddyTask) {
         try {
             File raw = new File(compileTask.getDestinationDir(), RAW_FOLDER).getCanonicalFile(), processed = compileTask.getDestinationDir();
