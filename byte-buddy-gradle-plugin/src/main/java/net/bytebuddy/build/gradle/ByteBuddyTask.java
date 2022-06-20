@@ -22,7 +22,6 @@ import net.bytebuddy.build.gradle.api.PathSensitive;
 import net.bytebuddy.build.gradle.api.PathSensitivity;
 import net.bytebuddy.build.gradle.api.*;
 import net.bytebuddy.utility.nullability.MaybeNull;
-import org.gradle.api.Project;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.*;
@@ -52,16 +51,10 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
 
     /**
      * Creates a new Byte Buddy task.
-     *
-     * @param project The current Gradle project.
      */
     @Inject
-    public ByteBuddyTask(Project project) {
-        ByteBuddyTaskExtension extension = ObjectFactory.newInstance(project, ByteBuddyTaskExtension.class, project);
-        if (extension == null) {
-            extension = new ByteBuddyTaskExtension(project);
-        }
-        extension.configure(this);
+    public ByteBuddyTask() {
+        new ByteBuddyTaskExtension(null).configure(this);
     }
 
     /**
@@ -277,12 +270,10 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
 
         /**
          * Creates a new Byte Buddy task with an incremental class path.
-         *
-         * @param project The current Gradle project.
          */
         @Inject
-        public WithIncrementalClassPath(Project project) {
-            super(project);
+        public WithIncrementalClassPath() {
+            /* empty */
         }
     }
 }

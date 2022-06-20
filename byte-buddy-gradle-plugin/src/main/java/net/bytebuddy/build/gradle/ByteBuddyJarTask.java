@@ -20,7 +20,6 @@ import net.bytebuddy.build.gradle.api.CompileClasspath;
 import net.bytebuddy.build.gradle.api.PathSensitive;
 import net.bytebuddy.build.gradle.api.PathSensitivity;
 import net.bytebuddy.utility.nullability.MaybeNull;
-import org.gradle.api.Project;
 import org.gradle.api.tasks.*;
 
 import javax.inject.Inject;
@@ -55,16 +54,10 @@ public class ByteBuddyJarTask extends AbstractByteBuddyTask {
 
     /**
      * Creates a new simple Byte Buddy task.
-     *
-     * @param project The current Gradle project.
      */
     @Inject
-    public ByteBuddyJarTask(Project project) {
-        ByteBuddyJarTaskExtension extension = ObjectFactory.newInstance(project, ByteBuddyJarTaskExtension.class, project);
-        if (extension == null) {
-            extension = new ByteBuddyJarTaskExtension(project);
-        }
-        extension.configure(this);
+    public ByteBuddyJarTask() {
+        new ByteBuddyJarTaskExtension(null).configure(this);
     }
 
     /**

@@ -16,6 +16,7 @@
 package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.utility.nullability.MaybeNull;
+import net.bytebuddy.utility.nullability.UnknownNull;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 
@@ -49,7 +50,7 @@ public class ByteBuddyTaskExtension extends AbstractByteBuddyTaskExtension<ByteB
      * @param project The current Gradle project.
      */
     @Inject
-    public ByteBuddyTaskExtension(Project project) {
+    public ByteBuddyTaskExtension(@UnknownNull Project project) {
         super(project);
         incrementalResolver = IncrementalResolver.ForChangedFiles.INSTANCE;
     }

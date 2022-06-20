@@ -19,6 +19,7 @@ import groovy.lang.Closure;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import net.bytebuddy.utility.nullability.UnknownNull;
 import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
@@ -121,7 +122,7 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      *
      * @param project The current Gradle project.
      */
-    protected AbstractByteBuddyTaskExtension(Project project) {
+    protected AbstractByteBuddyTaskExtension(@UnknownNull Project project) {
         this.project = project;
         transformations = new ArrayList<Transformation>();
         entryPoint = EntryPoint.Default.REBASE;

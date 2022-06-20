@@ -16,6 +16,7 @@
 package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.utility.nullability.MaybeNull;
+import net.bytebuddy.utility.nullability.UnknownNull;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
@@ -40,7 +41,7 @@ public class ByteBuddySimpleTaskExtension extends AbstractByteBuddyTaskExtension
      * @param project The current Gradle project.
      */
     @Inject
-    public ByteBuddySimpleTaskExtension(Project project) {
+    public ByteBuddySimpleTaskExtension(@UnknownNull Project project) {
         super(project);
     }
 
