@@ -136,7 +136,7 @@ public class ObjectFactory {
              */
             public Object newInstance(Project project, Class<?> type, Object... argument) {
                 try {
-                    return newInstance.invoke(getObjects.invoke(project), argument);
+                    return newInstance.invoke(getObjects.invoke(project), type, argument);
                 } catch (IllegalAccessException e) {
                     throw new IllegalStateException(e);
                 } catch (InvocationTargetException e) {
