@@ -82,7 +82,7 @@ public class Transformation {
      * @param closure The closure for configuring the argument.
      */
     public void argument(Closure<?> closure) {
-        getArguments().add((PluginArgument) project.configure(project.getObjects().newInstance(PluginArgument.class, getArguments().size()), closure));
+        getArguments().add((PluginArgument) project.configure(new PluginArgument(getArguments().size()), closure));
     }
 
     /**
@@ -91,7 +91,7 @@ public class Transformation {
      * @param action The action for configuring the argument.
      */
     public void argument(Action<PluginArgument> action) {
-        PluginArgument argument = project.getObjects().newInstance(PluginArgument.class, getArguments().size());
+        PluginArgument argument = new PluginArgument(getArguments().size());
         action.execute(argument);
         getArguments().add(argument);
     }
