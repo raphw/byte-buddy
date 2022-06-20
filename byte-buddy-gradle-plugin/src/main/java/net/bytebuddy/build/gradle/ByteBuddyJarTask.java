@@ -60,7 +60,11 @@ public class ByteBuddyJarTask extends AbstractByteBuddyTask {
      */
     @Inject
     public ByteBuddyJarTask(Project project) {
-        project.getObjects().newInstance(ByteBuddyJarTaskExtension.class, project).configure(this);
+        ByteBuddyJarTaskExtension extension = ObjectFactory.newInstance(project, ByteBuddyJarTaskExtension.class, project);
+        if (extension == null) {
+            extension = new ByteBuddyJarTaskExtension(project);
+        }
+        extension.configure(this);
     }
 
     /**

@@ -104,7 +104,13 @@ public class ByteBuddyPlugin implements Plugin<Project> {
                     String name = sourceSet.getName().equals(SourceSet.MAIN_SOURCE_SET_NAME)
                             ? "byteBuddy"
                             : (sourceSet.getName() + "ByteBuddy");
-                    AbstractByteBuddyTaskExtension<?> extension = project.getObjects().newInstance(DISPATCHER.toExtension(), project);
+
+                    AbstractByteBuddyTaskExtension<?> extension = ObjectFactory.newInstance(project,
+                            DISPATCHER.getExtensionType(),
+                            project);
+                    if (extension == null) {
+                        extension = DISPATCHER.toExtension(project);
+                    }
                     extension.resolve(configuration.getTargetCompatibility());
                     project.getExtensions().add(name, extension);
                     project.afterEvaluate(DISPATCHER.toAction(name, sourceSet));
@@ -122,11 +128,19 @@ public class ByteBuddyPlugin implements Plugin<Project> {
     protected interface Dispatcher<T extends AbstractByteBuddyTask, S extends AbstractByteBuddyTaskExtension<T>> {
 
         /**
+         * Returns the Byte Buddy extension type.
+         *
+         * @return The Byte Buddy extension type.
+         */
+        Class<S> getExtensionType();
+
+        /**
          * Creates a Byte Buddy extension instance.
          *
+         * @param project The current Gradle project.
          * @return An appropriate Byte Buddy extension instance.
          */
-        Class<S> toExtension();
+        S toExtension(Project project);
 
         /**
          * Creates a Byte Buddy task configuration.
@@ -150,8 +164,15 @@ public class ByteBuddyPlugin implements Plugin<Project> {
             /**
              * {@inheritDoc}
              */
-            public Class<ByteBuddySimpleTaskExtension> toExtension() {
+            public Class<ByteBuddySimpleTaskExtension> getExtensionType() {
                 return ByteBuddySimpleTaskExtension.class;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ByteBuddySimpleTaskExtension toExtension(Project project) {
+                return new ByteBuddySimpleTaskExtension(project);
             }
 
             /**
@@ -191,8 +212,15 @@ public class ByteBuddyPlugin implements Plugin<Project> {
             /**
              * {@inheritDoc}
              */
-            public Class<ByteBuddyTaskExtension> toExtension() {
+            public Class<ByteBuddyTaskExtension> getExtensionType() {
                 return ByteBuddyTaskExtension.class;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ByteBuddyTaskExtension toExtension(Project project) {
+                return new ByteBuddyTaskExtension(project);
             }
 
             /**

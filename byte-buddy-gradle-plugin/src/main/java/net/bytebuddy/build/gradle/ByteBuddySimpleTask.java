@@ -60,7 +60,11 @@ public class ByteBuddySimpleTask extends AbstractByteBuddyTask {
      */
     @Inject
     public ByteBuddySimpleTask(Project project) {
-        project.getObjects().newInstance(ByteBuddySimpleTaskExtension.class, project).configure(this);
+        ByteBuddySimpleTaskExtension extension = ObjectFactory.newInstance(project, ByteBuddySimpleTaskExtension.class, project);
+        if (extension == null) {
+            extension = new ByteBuddySimpleTaskExtension(project);
+        }
+        extension.configure(this);
     }
 
     /**
