@@ -379,7 +379,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                             try {
                                 @SuppressWarnings("unchecked")
                                 Class<? extends Plugin> plugin = (Class<? extends Plugin>) Class.forName(line);
-                                Transformation transformation = ObjectFactory.newInstance(getProject(), Transformation.class, getProject());;
+                                Transformation transformation = ObjectFactory.newInstance(getProject(), Transformation.class, getProject());
                                 if (transformation == null) {
                                     transformation = new Transformation(getProject());
                                 }

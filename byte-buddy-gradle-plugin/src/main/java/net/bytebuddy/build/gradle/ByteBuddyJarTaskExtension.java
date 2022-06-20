@@ -36,7 +36,7 @@ public class ByteBuddyJarTaskExtension extends AbstractByteBuddyTaskExtension<By
     private Iterable<File> discoverySet;
 
     /**
-     * Creates a new Byte Buddy jar extension
+     * Creates a new Byte Buddy jar extension.
      *
      * @param project The current Gradle project.
      */

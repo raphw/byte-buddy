@@ -130,6 +130,11 @@ public class Transformation {
         this.plugin = plugin;
     }
 
+    /**
+     * Returns the fully-qualified name of the plugin type to apply.
+     *
+     * @return The fully-qualified name of the plugin type to apply.
+     */
     @Input
     @MaybeNull
     @Optional
@@ -137,11 +142,22 @@ public class Transformation {
         return pluginName;
     }
 
+    /**
+     * Sets the fully-qualified name of the plugin type to apply.
+     *
+     * @param pluginName The fully-qualified name of the plugin type to apply.
+     */
     public void setPluginName(@MaybeNull String pluginName) {
         this.pluginName = pluginName;
     }
 
-    protected Class<? extends Plugin> toPlugin(ClassLoader classLoader) {
+    /**
+     * Resolves the plugin type.
+     *
+     * @param classLoader The class loader to load a plugin from, if appropriate.
+     * @return The loaded plugin type.
+     */
+    protected Class<? extends Plugin> toPlugin(@MaybeNull ClassLoader classLoader) {
         if (plugin != null) {
             if (pluginName != null && !plugin.getName().equals(pluginName)) {
                 throw new GradleException("Defined both plugin (" + plugin + ") and plugin name (" + pluginName + ") but they are not equal");
@@ -150,7 +166,7 @@ public class Transformation {
         } else if (pluginName != null) {
             try {
                 @SuppressWarnings("unchecked")
-                Class<? extends Plugin> type = (Class<? extends Plugin>) classLoader.loadClass(pluginName);
+                Class<? extends Plugin> type = (Class<? extends Plugin>) Class.forName(pluginName, false, classLoader);
                 if (!Plugin.class.isAssignableFrom(type)) {
                     throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
                 }
@@ -163,6 +179,11 @@ public class Transformation {
         }
     }
 
+    /**
+     * Resolves the name of the plugin.
+     *
+     * @return The name of the plugin.
+     */
     protected String toPluginName() {
         if (plugin != null) {
             if (pluginName != null && !plugin.getName().equals(pluginName)) {
