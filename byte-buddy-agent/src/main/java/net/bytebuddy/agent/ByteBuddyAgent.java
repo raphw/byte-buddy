@@ -680,11 +680,11 @@ public class ByteBuddyAgent {
                     inputStream.close();
                 }
             }
-            StringBuilder classPath = new StringBuilder().append(quote((selfResolvedJar == null
+            StringBuilder classPath = new StringBuilder().append((selfResolvedJar == null
                     ? attachmentJar
-                    : selfResolvedJar).getCanonicalPath()));
+                    : selfResolvedJar).getCanonicalPath());
             for (File jar : externalAttachment.getClassPath()) {
-                classPath.append(File.pathSeparatorChar).append(quote(jar.getCanonicalPath()));
+                classPath.append(File.pathSeparatorChar).append(jar.getCanonicalPath());
             }
             if (new ProcessBuilder(System.getProperty(JAVA_HOME)
                     + File.separatorChar + "bin"
@@ -694,7 +694,7 @@ public class ByteBuddyAgent {
                     Attacher.class.getName(),
                     externalAttachment.getVirtualMachineType(),
                     processId,
-                    quote(agent.getAbsolutePath()),
+                    agent.getAbsolutePath(),
                     Boolean.toString(isNative),
                     argument == null ? "" : ("=" + argument)).start().waitFor() != SUCCESSFUL_ATTACH) {
                 throw new IllegalStateException("Could not self-attach to current VM using external process");
@@ -740,18 +740,6 @@ public class ByteBuddyAgent {
         } catch (Exception ignored) {
             return CANNOT_SELF_RESOLVE;
         }
-    }
-
-    /**
-     * Quotes a value if it contains a white space.
-     *
-     * @param value The value to quote.
-     * @return The value being quoted if necessary.
-     */
-    private static String quote(String value) {
-        return value.contains(" ")
-                ? '"' + value + '"'
-                : value;
     }
 
     /**
