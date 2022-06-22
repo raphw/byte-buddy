@@ -8060,7 +8060,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 return false;
             }
             TypeDescription declaringType = getDeclaringType();
-            return declaringType != null && declaringType.isGenerified();
+            if (declaringType != null && declaringType.isGenerified()) {
+                return true;
+            }
+            MethodDescription.InDefinedShape enclosingMethod = getEnclosingMethod();
+            return enclosingMethod != null && enclosingMethod.isGenerified();
         }
 
         /**

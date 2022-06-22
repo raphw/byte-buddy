@@ -88,6 +88,7 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
      * <ul>
      * <li>A type declares type variables or is an inner class of a type with a generic declaration.</li>
      * <li>A method declares at least one type variable.</li>
+     * <li>A type is an inner anonymous class of a method with a generic declaration</li>
      * </ul>
      *
      * @return {@code true} if this type code element has a generic declaration.
