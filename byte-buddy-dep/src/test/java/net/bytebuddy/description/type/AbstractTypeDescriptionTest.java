@@ -666,7 +666,8 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(GenericSample.Nested.class).isGenerified(), is(false));
         assertThat(describe(GenericSample.NestedInterface.class).isGenerified(), is(false));
         assertThat(describe(Object.class).isGenerified(), is(false));
-        assertThat(describe(getAnonymousGenericSample().getClass()).isGenerified(), is(true));
+        assertThat(describe(anonymousGenericSample().getClass()).isGenerified(), is(true));
+        assertThat(describe(innerGenericSample().getClass()).isGenerified(), is(true));
     }
 
     @Test
@@ -1035,10 +1036,17 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         }
     }
 
-    private <T> GenericSample<T> getAnonymousGenericSample() {
+    private static  <T> GenericSample<T> anonymousGenericSample() {
         return new GenericSample<T>() {
             /* empty */
         };
+    }
+
+    private static  <T> GenericSample<T> innerGenericSample() {
+        class ExtendedGenericSample<T> extends GenericSample<T> {
+            /* empty */
+        };
+        return new ExtendedGenericSample<T>();
     }
 
     private static class Type$With$Dollar {

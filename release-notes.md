@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 22. June 2022: version 1.12.11
+
+- Remove use of thread-local to guarantee Loom compatibility.
+- Allow usage of *byte-buddy-parent* as BOM for imports.
+- Add convenience for Maven to disable type validation on entry point.
+- Allow Gradle plugin to consume *pluginName* property and *discoverySet* to only load plugins in the plugin class loader.
+
 ### 1. May 2022: version 1.12.10
 
 - Correctly resolve temporary folder, if custom folder is set, on Linux during emulated attach.
