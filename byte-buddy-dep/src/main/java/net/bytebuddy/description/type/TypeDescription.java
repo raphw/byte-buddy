@@ -8056,12 +8056,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public boolean isGenerified() {
             if (!getTypeVariables().isEmpty()) {
                 return true;
-            } else if (isStatic()) {
-                return false;
             }
-            TypeDescription declaringType = getDeclaringType();
-            if (declaringType != null && declaringType.isGenerified()) {
-                return true;
+            if (!isStatic()) {
+                TypeDescription declaringType = getDeclaringType();
+                if (declaringType != null && declaringType.isGenerified()) {
+                    return true;
+                }
             }
             MethodDescription.InDefinedShape enclosingMethod = getEnclosingMethod();
             return enclosingMethod != null && enclosingMethod.isGenerified();
