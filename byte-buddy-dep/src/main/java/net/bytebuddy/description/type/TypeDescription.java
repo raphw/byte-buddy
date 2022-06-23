@@ -8056,8 +8056,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public boolean isGenerified() {
             if (!getTypeVariables().isEmpty()) {
                 return true;
-            }
-            if (!isStatic()) {
+            } else if (!isStatic()) {
                 TypeDescription declaringType = getDeclaringType();
                 if (declaringType != null && declaringType.isGenerified()) {
                     return true;
