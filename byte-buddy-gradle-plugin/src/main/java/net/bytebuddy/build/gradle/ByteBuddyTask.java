@@ -110,7 +110,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
      * @return The source set to resolve plugin names from or {@code null} if no such source set is used.
      */
     @MaybeNull
-    @Input
+    @InputFiles
     @Optional
     public FileCollection getDiscoverySet() {
         return discoverySet;
