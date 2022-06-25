@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 25. June 2022: version 1.12.12
+
+- Use correct annotation in Byte Buddy Gradle plugin.
+- Correctly resolve generified anonymous/local types that are declared within a method.
+
 ### 22. June 2022: version 1.12.11
 
 - Remove use of thread-local to guarantee Loom compatibility.
