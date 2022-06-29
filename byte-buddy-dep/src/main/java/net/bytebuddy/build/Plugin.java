@@ -748,6 +748,16 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         String CLASS_FILE_EXTENSION = ".class";
 
         /**
+         * The module info class file.
+         */
+        String MODULE_INFO = "module-info" + CLASS_FILE_EXTENSION;
+
+        /**
+         * The package info class file.
+         */
+        String PACKAGE_INFO = "package-info" + CLASS_FILE_EXTENSION;
+
+        /**
          * Defines a new Byte Buddy instance for usage for type creation.
          *
          * @param byteBuddy The Byte Buddy instance to use.
@@ -4464,7 +4474,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                     while (name.startsWith("/")) {
                                         name = name.substring(1);
                                     }
-                                    if (name.endsWith(CLASS_FILE_EXTENSION)) {
+                                    if (name.endsWith(CLASS_FILE_EXTENSION) && !name.endsWith(PACKAGE_INFO) && !name.equals(MODULE_INFO)) {
                                         dispatcher.accept(new Preprocessor(element,
                                                 name.substring(0, name.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.'),
                                                 classFileLocator,
