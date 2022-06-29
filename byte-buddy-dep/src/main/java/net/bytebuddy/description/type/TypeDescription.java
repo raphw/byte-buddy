@@ -8062,8 +8062,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return true;
                 }
             }
-            MethodDescription.InDefinedShape enclosingMethod = getEnclosingMethod();
-            return enclosingMethod != null && enclosingMethod.isGenerified();
+            try {
+                MethodDescription.InDefinedShape enclosingMethod = getEnclosingMethod();
+                return enclosingMethod != null && enclosingMethod.isGenerified();
+            } catch (Throwable ignored) { // Avoid exception in case of an illegal generic declaration.
+                return false;
+            }
         }
 
         /**
