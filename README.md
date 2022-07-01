@@ -289,6 +289,8 @@ own namespace. If you want to use ASM directly, the `byte-buddy-dep` artifact of
 explicit dependency to ASM. When doing so, you **must** repackage *both* Byte Buddy and ASM into your namespace to avoid
 version conflicts.
 
+Please note the [security policy](https://github.com/raphw/byte-buddy/blob/master/SECURITY.md) of this project.
+
 License and development
 -----------------------
 
