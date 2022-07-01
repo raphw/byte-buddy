@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Only the latest version is guaranteed to be secure. For this purpose, Byte Buddy maintains backwards compatibility. Please note the [readme of the project](https://github.com/raphw/byte-buddy/README.md) for further information.
+Only the latest version is guaranteed to be secure. For this purpose, Byte Buddy maintains backwards compatibility. Please note the [readme of the project](https://github.com/raphw/byte-buddy/blob/master/README.md) for further information.
 
 ## Reporting a Vulnerability
 
