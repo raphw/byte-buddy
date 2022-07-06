@@ -276,6 +276,7 @@
                                             <includes>
                                                 <include>org/objectweb/asm/commons/AnnotationRemapper.**</include>
                                                 <include>org/objectweb/asm/commons/ClassRemapper.**</include>
+                                                <include>org/objectweb/asm/commons/CodeSizeEvaluator.**</include>
                                                 <include>org/objectweb/asm/commons/FieldRemapper.**</include>
                                                 <include>org/objectweb/asm/commons/MethodRemapper.**</include>
                                                 <include>org/objectweb/asm/commons/ModuleHashesAttribute.**</include>
@@ -368,6 +369,7 @@
                                             <includes>
                                                 <include>org/objectweb/asm/commons/AnnotationRemapper.**</include>
                                                 <include>org/objectweb/asm/commons/ClassRemapper.**</include>
+                                                <include>org/objectweb/asm/commons/CodeSizeEvaluator.**</include>
                                                 <include>org/objectweb/asm/commons/FieldRemapper.**</include>
                                                 <include>org/objectweb/asm/commons/MethodRemapper.**</include>
                                                 <include>org/objectweb/asm/commons/ModuleHashesAttribute.**</include>
