@@ -20,6 +20,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import net.bytebuddy.utility.GraalImageCode;
 import net.bytebuddy.utility.Invoker;
 import net.bytebuddy.utility.MethodComparator;
@@ -30,6 +31,9 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.security.Permission;
@@ -1181,6 +1185,12 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
     protected static class DynamicClassLoader extends ClassLoader {
 
         /**
+         * The dump folder that is defined by the {@link TypeWriter#DUMP_PROPERTY} property or {@code null} if not set.
+         */
+        @MaybeNull
+        private static final String DUMP_FOLDER;
+
+        /**
          * Indicates that a constructor does not declare any parameters.
          */
         private static final Class<?>[] NO_PARAMETER = new Class<?>[0];
@@ -1189,6 +1199,19 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
          * Indicates that a constructor does not require any arguments.
          */
         private static final Object[] NO_ARGUMENT = new Object[0];
+
+        /*
+         * Resolves the currently set dump folder.
+         */
+        static {
+            String dumpFolder;
+            try {
+                dumpFolder = doPrivileged(new GetSystemPropertyAction(TypeWriter.DUMP_PROPERTY));
+            } catch (Throwable ignored) {
+                dumpFolder = null;
+            }
+            DUMP_FOLDER = dumpFolder;
+        }
 
         /**
          * Creates a new dynamic class loader.
@@ -1252,6 +1275,18 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             methodVisitor.visitEnd();
             classWriter.visitEnd();
             byte[] binaryRepresentation = classWriter.toByteArray();
+            if (DUMP_FOLDER != null) {
+                try {
+                    OutputStream outputStream = new FileOutputStream(new File(DUMP_FOLDER, proxy.getName() + "$Proxy.class"));
+                    try {
+                        outputStream.write(binaryRepresentation);
+                    } finally {
+                        outputStream.close();
+                    }
+                } catch (Throwable ignored) {
+                    /* do nothing */
+                }
+            }
             try {
                 return new DynamicClassLoader(proxy)
                         .defineClass(proxy.getName() + "$Proxy",
@@ -1328,6 +1363,19 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
             methodVisitor.visitEnd();
             classWriter.visitEnd();
             byte[] binaryRepresentation = classWriter.toByteArray();
+            try {
+                String dumpFolder = System.getProperty(TypeWriter.DUMP_PROPERTY);
+                if (dumpFolder != null) {
+                    OutputStream outputStream = new FileOutputStream(new File(dumpFolder, Invoker.class.getName() + "$Dispatcher.class"));
+                    try {
+                        outputStream.write(binaryRepresentation);
+                    } finally {
+                        outputStream.close();
+                    }
+                }
+            } catch (Throwable ignored) {
+                /* do nothing */
+            }
             try {
                 return (Invoker) new DynamicClassLoader(Invoker.class)
                         .defineClass(Invoker.class.getName() + "$Dispatcher",
