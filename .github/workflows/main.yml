@@ -1,5 +1,4 @@
 name: CI
-
 on:
   push:
     branches:
@@ -9,7 +8,7 @@ on:
       - master
   schedule:
     - cron: "0 0 * * 1"
-
+permissions: read-all
 jobs:
   hotspot-ea:
     name: HotSpot (EA)
