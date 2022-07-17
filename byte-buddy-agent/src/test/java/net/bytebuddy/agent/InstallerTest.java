@@ -1,12 +1,12 @@
 package net.bytebuddy.agent;
 
-import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
+import org.junit.rules.MethodRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.*;
@@ -20,12 +20,8 @@ public class InstallerTest {
 
     private static final String FOO = "foo";
 
-    private static final String INSTRUMENTATION = "instrumentation";
-
-    private static final Object STATIC_FIELD = null;
-
     @Rule
-    public final TestRule mockitoRule = new MockitoRule(this);
+    public final MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     private Instrumentation instrumentation;
@@ -34,16 +30,16 @@ public class InstallerTest {
 
     @Before
     public void setUp() throws Exception {
-        Field field = Installer.class.getDeclaredField(INSTRUMENTATION);
+        Field field = Installer.class.getDeclaredField("instrumentation");
         field.setAccessible(true);
-        actualInstrumentation = (Instrumentation) field.get(STATIC_FIELD);
+        actualInstrumentation = (Instrumentation) field.get(null);
     }
 
     @After
     public void tearDown() throws Exception {
-        Field field = Installer.class.getDeclaredField(INSTRUMENTATION);
+        Field field = Installer.class.getDeclaredField("instrumentation");
         field.setAccessible(true);
-        field.set(STATIC_FIELD, actualInstrumentation);
+        field.set(null, actualInstrumentation);
     }
 
     @Test

@@ -2,14 +2,13 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.test.utility.IntegrationRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
-import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
 import org.mockito.stubbing.Answer;
 
 import java.io.ByteArrayInputStream;
@@ -36,7 +35,7 @@ public class PackageTypeStrategyManifestReadingTest {
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     private PackageDefinitionStrategy.ManifestReading.SealBaseLocator sealBaseLocator;

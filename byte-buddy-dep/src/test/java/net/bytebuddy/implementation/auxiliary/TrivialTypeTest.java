@@ -3,12 +3,12 @@ package net.bytebuddy.implementation.auxiliary;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.MethodAccessorFactory;
-import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
+import org.junit.rules.MethodRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 import org.objectweb.asm.Opcodes;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -20,7 +20,7 @@ public class TrivialTypeTest {
     private static final String FOO = "foo";
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     private ClassFileVersion classFileVersion;

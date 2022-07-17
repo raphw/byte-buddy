@@ -5,12 +5,11 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.ClassJnaInjectionAvailableRule;
 import net.bytebuddy.test.utility.ClassReflectionInjectionAvailableRule;
 import net.bytebuddy.test.utility.ClassUnsafeInjectionAvailableRule;
-import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
-import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 
 import java.io.File;
 import java.lang.instrument.Instrumentation;
@@ -26,7 +25,7 @@ import static org.mockito.Mockito.when;
 public class AgentBuilderInjectionStrategyTest {
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Rule
     public MethodRule classInjectionAvailableRule = new ClassReflectionInjectionAvailableRule();

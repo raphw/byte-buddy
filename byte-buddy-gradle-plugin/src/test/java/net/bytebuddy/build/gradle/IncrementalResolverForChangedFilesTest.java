@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 public class IncrementalResolverForChangedFilesTest {
 
     @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
+    public MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     private Project project;

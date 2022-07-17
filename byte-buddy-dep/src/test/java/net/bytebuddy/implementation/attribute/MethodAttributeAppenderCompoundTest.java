@@ -3,7 +3,8 @@ package net.bytebuddy.implementation.attribute;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class MethodAttributeAppenderCompoundTest extends AbstractMethodAttributeAppenderTest {
 

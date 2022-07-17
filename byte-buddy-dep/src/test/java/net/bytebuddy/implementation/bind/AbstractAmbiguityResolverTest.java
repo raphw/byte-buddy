@@ -1,18 +1,18 @@
 package net.bytebuddy.implementation.bind;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.rules.TestRule;
+import org.junit.rules.MethodRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 
 import static org.mockito.Mockito.when;
 
 public abstract class AbstractAmbiguityResolverTest {
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     protected MethodDescription source;

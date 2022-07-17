@@ -16,40 +16,36 @@ import static org.mockito.Mockito.mock;
 
 public class ByteBuddyAgentTest {
 
-    private static final String INSTRUMENTATION = "instrumentation";
-
-    private static final Object STATIC_FIELD = null;
-
     private Instrumentation actualInstrumentation;
 
     @Before
     public void setUp() throws Exception {
-        Field field = Installer.class.getDeclaredField(INSTRUMENTATION);
+        Field field = Installer.class.getDeclaredField("instrumentation");
         field.setAccessible(true);
-        actualInstrumentation = (Instrumentation) field.get(STATIC_FIELD);
+        actualInstrumentation = (Instrumentation) field.get(null);
     }
 
     @After
     public void tearDown() throws Exception {
-        Field field = Installer.class.getDeclaredField(INSTRUMENTATION);
+        Field field = Installer.class.getDeclaredField("instrumentation");
         field.setAccessible(true);
-        field.set(STATIC_FIELD, actualInstrumentation);
+        field.set(null, actualInstrumentation);
     }
 
     @Test
     public void testInstrumentationExtraction() throws Exception {
-        Field field = Installer.class.getDeclaredField(INSTRUMENTATION);
+        Field field = Installer.class.getDeclaredField("instrumentation");
         field.setAccessible(true);
         Instrumentation instrumentation = mock(Instrumentation.class);
-        field.set(STATIC_FIELD, instrumentation);
+        field.set(null, instrumentation);
         assertThat(ByteBuddyAgent.getInstrumentation(), is(instrumentation));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testMissingInstrumentationThrowsException() throws Exception {
-        Field field = Installer.class.getDeclaredField(INSTRUMENTATION);
+        Field field = Installer.class.getDeclaredField("instrumentation");
         field.setAccessible(true);
-        field.set(STATIC_FIELD, null);
+        field.set(null, null);
         ByteBuddyAgent.getInstrumentation();
     }
 

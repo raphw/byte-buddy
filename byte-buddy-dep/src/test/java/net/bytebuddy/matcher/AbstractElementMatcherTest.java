@@ -1,9 +1,9 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
+import org.junit.rules.MethodRule;
+import org.mockito.junit.MockitoJUnit;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ public abstract class AbstractElementMatcherTest<T extends ElementMatcher<?>> {
     protected final String startsWith;
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     protected AbstractElementMatcherTest(Class<? extends T> type, String startsWith) {
         this.type = type;

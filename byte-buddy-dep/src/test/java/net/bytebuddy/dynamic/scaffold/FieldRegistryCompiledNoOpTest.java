@@ -2,11 +2,11 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
-import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
+import org.junit.rules.MethodRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 import org.objectweb.asm.FieldVisitor;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -16,7 +16,7 @@ import static org.mockito.Mockito.mock;
 public class FieldRegistryCompiledNoOpTest {
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     private FieldDescription fieldDescription;

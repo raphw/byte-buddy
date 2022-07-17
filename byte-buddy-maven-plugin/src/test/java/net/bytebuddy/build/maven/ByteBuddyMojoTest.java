@@ -3,7 +3,6 @@ package net.bytebuddy.build.maven;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.implementation.FixedValue;
-import net.bytebuddy.test.utility.MockitoRule;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.testing.MojoRule;
@@ -18,9 +17,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
+import org.junit.rules.MethodRule;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnit;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -45,7 +45,7 @@ public class ByteBuddyMojoTest {
     public MojoRule mojoRule = new MojoRule();
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     private RepositorySystem repositorySystem;

@@ -1,10 +1,10 @@
 package net.bytebuddy.agent.builder;
 
-import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
+import org.junit.rules.MethodRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
@@ -16,7 +16,7 @@ import static org.mockito.Mockito.*;
 public class ResettableClassFileTransformerWithDelegationTest {
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     private ResettableClassFileTransformer delegate;

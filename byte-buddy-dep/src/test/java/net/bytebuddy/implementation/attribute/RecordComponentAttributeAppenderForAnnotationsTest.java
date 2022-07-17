@@ -6,7 +6,8 @@ import org.objectweb.asm.Type;
 
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class RecordComponentAttributeAppenderForAnnotationsTest extends AbstractRecordComponentAttributeAppenderTest {
 

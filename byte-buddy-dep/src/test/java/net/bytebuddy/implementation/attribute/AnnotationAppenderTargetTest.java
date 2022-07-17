@@ -1,10 +1,10 @@
 package net.bytebuddy.implementation.attribute;
 
-import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
+import org.junit.rules.MethodRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 import org.objectweb.asm.*;
 
 import static org.mockito.Mockito.*;
@@ -18,7 +18,7 @@ public class AnnotationAppenderTargetTest {
     private static final String TYPE_PATH = "*";
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     private ClassVisitor classVisitor;

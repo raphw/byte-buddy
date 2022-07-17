@@ -2,13 +2,13 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.StreamDrainer;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
+import org.junit.rules.MethodRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -27,7 +27,7 @@ public class ClassFileLocatorForClassLoaderTest {
     private static final String FOOBAR = "foo/bar";
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     private ClosableClassLoader classLoader;

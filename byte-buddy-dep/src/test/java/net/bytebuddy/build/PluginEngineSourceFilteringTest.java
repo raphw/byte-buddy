@@ -2,10 +2,11 @@ package net.bytebuddy.build;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -19,7 +20,7 @@ import static org.mockito.Mockito.*;
 public class PluginEngineSourceFilteringTest {
 
     @Rule
-    public MockitoRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     private Plugin.Engine.Source source;

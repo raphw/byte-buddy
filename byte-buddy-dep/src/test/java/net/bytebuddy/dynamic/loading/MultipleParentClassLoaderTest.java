@@ -1,14 +1,13 @@
 package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.test.utility.IntegrationRule;
-import net.bytebuddy.test.utility.MockitoRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
-import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 
 import java.net.URL;
 import java.util.Enumeration;
@@ -25,7 +24,7 @@ public class MultipleParentClassLoaderTest {
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz", SCHEME = "http://";
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Rule
     public MethodRule integrationRule = new IntegrationRule();

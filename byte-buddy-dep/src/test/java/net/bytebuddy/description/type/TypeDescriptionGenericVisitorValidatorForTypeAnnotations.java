@@ -3,13 +3,12 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
-import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 
 import java.lang.annotation.ElementType;
 import java.util.Arrays;
@@ -26,7 +25,7 @@ public class TypeDescriptionGenericVisitorValidatorForTypeAnnotations {
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     private AnnotationDescription legalAnnotation, illegalAnnotation, duplicateAnnotation;

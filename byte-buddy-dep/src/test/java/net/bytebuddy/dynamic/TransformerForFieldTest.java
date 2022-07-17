@@ -6,12 +6,12 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
+import org.junit.rules.MethodRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 
 import java.util.Collections;
 
@@ -30,7 +30,7 @@ public class TransformerForFieldTest {
     private static final int MODIFIERS = 42, RANGE = 3, MASK = 1;
 
     @Rule
-    public TestRule mocktioRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     private TypeDescription instrumentedType;

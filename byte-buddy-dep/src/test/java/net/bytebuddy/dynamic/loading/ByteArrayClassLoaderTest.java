@@ -2,18 +2,17 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.test.utility.IntegrationRule;
-import net.bytebuddy.test.utility.MockitoRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
-import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnit;
 import org.mockito.stubbing.Answer;
 
 import java.io.InputStream;
@@ -42,7 +41,7 @@ public class ByteArrayClassLoaderTest {
     private final boolean expectedResourceLookup;
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Rule
     public MethodRule integrationRule = new IntegrationRule();

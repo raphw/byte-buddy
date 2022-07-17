@@ -3,13 +3,12 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.test.utility.ClassReflectionInjectionAvailableRule;
-import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
-import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -26,7 +25,7 @@ import static org.mockito.Mockito.*;
 public class ClassLoadingStrategyDefaultTest {
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Rule
     public MethodRule classInjectionAvailableRule = new ClassReflectionInjectionAvailableRule();

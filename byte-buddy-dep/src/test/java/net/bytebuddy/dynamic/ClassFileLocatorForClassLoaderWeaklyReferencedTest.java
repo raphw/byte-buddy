@@ -1,10 +1,10 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
+import org.junit.rules.MethodRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -20,7 +20,7 @@ public class ClassFileLocatorForClassLoaderWeaklyReferencedTest {
     private static final String FOOBAR = "foo/bar";
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     private ClosableClassLoader classLoader;

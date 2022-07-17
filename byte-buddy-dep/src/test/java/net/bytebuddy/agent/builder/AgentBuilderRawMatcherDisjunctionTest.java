@@ -1,12 +1,12 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
+import org.junit.rules.MethodRule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
 
 import java.security.ProtectionDomain;
 
@@ -17,7 +17,7 @@ import static org.mockito.Mockito.*;
 public class AgentBuilderRawMatcherDisjunctionTest {
 
     @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
+    public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
     private AgentBuilder.RawMatcher left, right;
