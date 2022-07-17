@@ -23,7 +23,7 @@ public class FieldAttributeAppenderForInstrumentedFieldTest extends AbstractFiel
         when(fieldDescription.getType()).thenReturn(TypeDescription.Generic.OBJECT);
         when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
         FieldAttributeAppender.ForInstrumentedField.INSTANCE.apply(fieldVisitor, fieldDescription, annotationValueFilter);
-        verifyZeroInteractions(fieldVisitor);
+        verifyNoMoreInteractions(fieldVisitor);
         verify(fieldDescription).getDeclaredAnnotations();
         verify(fieldDescription).getType();
         verifyNoMoreInteractions(fieldDescription);
@@ -59,7 +59,7 @@ public class FieldAttributeAppenderForInstrumentedFieldTest extends AbstractFiel
         when(simpleAnnotatedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
         when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         FieldAttributeAppender.ForInstrumentedField.INSTANCE.apply(fieldVisitor, fieldDescription, annotationValueFilter);
-        verifyZeroInteractions(fieldVisitor);
+        verifyNoMoreInteractions(fieldVisitor);
         verify(fieldDescription).getDeclaredAnnotations();
         verify(fieldDescription).getType();
         verifyNoMoreInteractions(fieldDescription);

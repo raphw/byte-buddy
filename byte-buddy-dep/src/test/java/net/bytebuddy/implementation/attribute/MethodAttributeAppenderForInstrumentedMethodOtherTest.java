@@ -26,7 +26,7 @@ public class MethodAttributeAppenderForInstrumentedMethodOtherTest extends Abstr
         when(methodDescription.getReceiverType()).thenReturn(simpleAnnotatedType);
         when(simpleAnnotatedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new QuxBaz.Instance()));
         MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER.apply(methodVisitor, methodDescription, annotationValueFilter);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
         verify(methodDescription).getDeclaredAnnotations();
         verify(methodDescription).getParameters();
         verify(methodDescription).getReturnType();
@@ -46,7 +46,7 @@ public class MethodAttributeAppenderForInstrumentedMethodOtherTest extends Abstr
         when(methodDescription.getReceiverType()).thenReturn(simpleAnnotatedType);
         when(simpleAnnotatedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
         MethodAttributeAppender.ForInstrumentedMethod.INCLUDING_RECEIVER.apply(methodVisitor, methodDescription, annotationValueFilter);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
         verify(methodDescription).getDeclaredAnnotations();
         verify(methodDescription).getParameters();
         verify(methodDescription).getReturnType();

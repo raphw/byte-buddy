@@ -59,8 +59,8 @@ public class AnnotationAppenderForTypeAnnotationsTest {
     @After
     @SuppressWarnings("unchecked")
     public void tearDown() throws Exception {
-        verifyZeroInteractions(annotationDescription);
-        verifyZeroInteractions(annotationValueFilter);
+        verifyNoMoreInteractions(annotationDescription);
+        verifyNoMoreInteractions(annotationValueFilter);
     }
 
     @Test

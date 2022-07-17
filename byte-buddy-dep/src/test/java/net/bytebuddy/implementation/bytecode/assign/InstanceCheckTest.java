@@ -44,7 +44,7 @@ public class InstanceCheckTest {
         verifyNoMoreInteractions(typeDescription);
         verify(methodVisitor).visitTypeInsn(Opcodes.INSTANCEOF, FOO);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test(expected = IllegalArgumentException.class)

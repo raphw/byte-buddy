@@ -31,7 +31,7 @@ public class ThrowTest {
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitInsn(Opcodes.ATHROW);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test

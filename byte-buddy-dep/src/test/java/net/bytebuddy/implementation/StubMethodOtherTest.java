@@ -9,7 +9,7 @@ import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class StubMethodOtherTest {
 
@@ -25,7 +25,7 @@ public class StubMethodOtherTest {
     @Test
     public void testPreparation() throws Exception {
         assertThat(StubMethod.INSTANCE.prepare(instrumentedType), is(instrumentedType));
-        verifyZeroInteractions(instrumentedType);
+        verifyNoMoreInteractions(instrumentedType);
     }
 
     @Test

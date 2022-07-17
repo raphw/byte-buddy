@@ -35,8 +35,8 @@ public class VoidAwareAssignerTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(implementationContext);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(implementationContext);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test
@@ -49,7 +49,7 @@ public class VoidAwareAssignerTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
-        verifyZeroInteractions(chainedAssigner);
+        verifyNoMoreInteractions(chainedAssigner);
     }
 
     @Test

@@ -11,7 +11,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class StackManipulationTest {
 
@@ -26,8 +26,8 @@ public class StackManipulationTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test

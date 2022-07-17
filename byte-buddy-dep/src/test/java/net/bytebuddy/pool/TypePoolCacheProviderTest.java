@@ -76,7 +76,7 @@ public class TypePoolCacheProviderTest {
         TypePool.CacheProvider discriminating = new TypePool.CacheProvider.Discriminating(ElementMatchers.<String>is(FOO), matched, unmatched);
         when(matched.register(FOO, resolution)).thenReturn(resolution);
         assertThat(discriminating.register(FOO, resolution), sameInstance(resolution));
-        verifyZeroInteractions(unmatched);
+        verifyNoMoreInteractions(unmatched);
         discriminating.clear();
         verify(matched).clear();
         verify(unmatched).clear();
@@ -88,7 +88,7 @@ public class TypePoolCacheProviderTest {
         TypePool.CacheProvider discriminating = new TypePool.CacheProvider.Discriminating(ElementMatchers.<String>is(BAR), matched, unmatched);
         when(unmatched.register(FOO, resolution)).thenReturn(resolution);
         assertThat(discriminating.register(FOO, resolution), sameInstance(resolution));
-        verifyZeroInteractions(matched);
+        verifyNoMoreInteractions(matched);
         discriminating.clear();
         verify(matched).clear();
         verify(unmatched).clear();

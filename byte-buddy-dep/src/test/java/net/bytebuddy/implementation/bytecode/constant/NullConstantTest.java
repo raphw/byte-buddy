@@ -32,6 +32,6 @@ public class NullConstantTest {
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitInsn(Opcodes.ACONST_NULL);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

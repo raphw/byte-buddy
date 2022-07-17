@@ -82,7 +82,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         StackManipulation.Size size = specialMethodInvocation.apply(methodVisitor, implementationContext);
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, BAZ, FOO, QUX, false);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
     }
@@ -103,7 +103,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         StackManipulation.Size size = specialMethodInvocation.apply(methodVisitor, implementationContext);
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, BAZ, QUX, FOO, false);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
     }
@@ -126,7 +126,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         verify(methodVisitor).visitInsn(Opcodes.ACONST_NULL);
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, BAZ, QUX, FOO, false);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
     }
@@ -154,7 +154,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         StackManipulation.Size size = specialMethodInvocation.apply(methodVisitor, implementationContext);
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, BAR, FOO, QUX, false);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
     }

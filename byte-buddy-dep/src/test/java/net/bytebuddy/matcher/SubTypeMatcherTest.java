@@ -24,7 +24,7 @@ public class SubTypeMatcherTest extends AbstractElementMatcherTest<SubTypeMatche
         assertThat(new SubTypeMatcher<TypeDescription>(typeDescription).matches(otherType), is(true));
         verify(otherType).isAssignableTo(typeDescription);
         verifyNoMoreInteractions(otherType);
-        verifyZeroInteractions(typeDescription);
+        verifyNoMoreInteractions(typeDescription);
     }
 
     @Test
@@ -33,6 +33,6 @@ public class SubTypeMatcherTest extends AbstractElementMatcherTest<SubTypeMatche
         assertThat(new SubTypeMatcher<TypeDescription>(typeDescription).matches(otherType), is(false));
         verify(otherType).isAssignableTo(typeDescription);
         verifyNoMoreInteractions(otherType);
-        verifyZeroInteractions(typeDescription);
+        verifyNoMoreInteractions(typeDescription);
     }
 }

@@ -82,6 +82,6 @@ public class PrimitiveTypeAwareAssignerUnboxingTest {
         verify(targetTypeDescription).represents(targetType);
         verify(targetTypeDescription, atLeast(1)).isPrimitive();
         verifyNoMoreInteractions(targetTypeDescription);
-        verifyZeroInteractions(chainedAssigner);
+        verifyNoMoreInteractions(chainedAssigner);
     }
 }

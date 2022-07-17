@@ -71,7 +71,7 @@ public class DefaultValueTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test
@@ -82,7 +82,7 @@ public class DefaultValueTest {
         assertThat(size.getSizeImpact(), is(StackSize.of(type).getSize()));
         assertThat(size.getMaximalSize(), is(StackSize.of(type).getSize()));
         if (opcode == -1) {
-            verifyZeroInteractions(methodVisitor);
+            verifyNoMoreInteractions(methodVisitor);
         } else {
             verify(methodVisitor).visitInsn(opcode);
             verifyNoMoreInteractions(methodVisitor);

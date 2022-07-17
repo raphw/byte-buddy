@@ -115,7 +115,7 @@ public class PluginEngineDispatcherForSerialTransformationTest {
         }
         assertThat(preprocessing, is(true));
         assertThat(processing, is(false));
-        verifyZeroInteractions(materializable);
+        verifyNoMoreInteractions(materializable);
     }
 
     @Test
@@ -132,7 +132,7 @@ public class PluginEngineDispatcherForSerialTransformationTest {
             assertThat(exception, instanceOf(IllegalStateException.class));
         }
         assertThat(processing, is(true));
-        verifyZeroInteractions(materializable);
+        verifyNoMoreInteractions(materializable);
     }
 
     @Test
@@ -171,7 +171,7 @@ public class PluginEngineDispatcherForSerialTransformationTest {
         }
         assertThat(preprocessing, is(true));
         assertThat(processing, is(false));
-        verifyZeroInteractions(materializable);
+        verifyNoMoreInteractions(materializable);
     }
 
     @Test
@@ -188,6 +188,6 @@ public class PluginEngineDispatcherForSerialTransformationTest {
             assertThat(exception, instanceOf(IllegalStateException.class));
         }
         assertThat(processing, is(true));
-        verifyZeroInteractions(materializable);
+        verifyNoMoreInteractions(materializable);
     }
 }

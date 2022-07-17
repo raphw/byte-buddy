@@ -137,7 +137,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         verify(methodVisitor).visitInsn(Opcodes.ICONST_0);
         verify(methodVisitor).visitTypeInsn(Opcodes.ANEWARRAY, FOO);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         assertThat(parameterBinding.isValid(), is(true));
         verify(source, atLeast(1)).getParameters();
         verify(source, atLeast(1)).isStatic();

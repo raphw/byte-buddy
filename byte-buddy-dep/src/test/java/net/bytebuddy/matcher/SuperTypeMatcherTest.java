@@ -24,7 +24,7 @@ public class SuperTypeMatcherTest extends AbstractElementMatcherTest<SuperTypeMa
         assertThat(new SuperTypeMatcher<TypeDescription>(typeDescription).matches(otherType), is(true));
         verify(otherType).isAssignableFrom(typeDescription);
         verifyNoMoreInteractions(otherType);
-        verifyZeroInteractions(typeDescription);
+        verifyNoMoreInteractions(typeDescription);
     }
 
     @Test
@@ -33,6 +33,6 @@ public class SuperTypeMatcherTest extends AbstractElementMatcherTest<SuperTypeMa
         assertThat(new SuperTypeMatcher<TypeDescription>(typeDescription).matches(otherType), is(false));
         verify(otherType).isAssignableFrom(typeDescription);
         verifyNoMoreInteractions(otherType);
-        verifyZeroInteractions(typeDescription);
+        verifyNoMoreInteractions(typeDescription);
     }
 }

@@ -168,9 +168,9 @@
                 </dependencies>
                 <executions>
                     <execution>
-                        <phase>package</phase>
+                        <phase>compile</phase>
                         <goals>
-                            <goal>inject-module</goal>
+                            <goal>make-module</goal>
                         </goals>
                     </execution>
                 </executions>

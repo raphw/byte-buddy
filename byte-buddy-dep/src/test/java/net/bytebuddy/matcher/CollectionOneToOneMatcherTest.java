@@ -51,7 +51,7 @@ public class CollectionOneToOneMatcherTest extends AbstractElementMatcherTest<Co
         assertThat(new CollectionOneToOneMatcher<Object>(Arrays.asList(firstMatcher, secondMatcher)).matches(iterable), is(false));
         verify(firstMatcher).matches(first);
         verifyNoMoreInteractions(firstMatcher);
-        verifyZeroInteractions(secondMatcher);
+        verifyNoMoreInteractions(secondMatcher);
     }
 
     @Test
@@ -70,8 +70,8 @@ public class CollectionOneToOneMatcherTest extends AbstractElementMatcherTest<Co
     @SuppressWarnings("unchecked")
     public void testNoMatchSize() throws Exception {
         assertThat(new CollectionOneToOneMatcher<Object>(Arrays.asList(firstMatcher, secondMatcher)).matches(Collections.singletonList(firstMatcher)), is(false));
-        verifyZeroInteractions(firstMatcher);
-        verifyZeroInteractions(secondMatcher);
+        verifyNoMoreInteractions(firstMatcher);
+        verifyNoMoreInteractions(secondMatcher);
     }
 
     @Test

@@ -16,7 +16,7 @@ public class TypeAttributeAppenderForInstrumentedTypeTest extends AbstractTypeAt
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Empty());
         when(instrumentedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
         TypeAttributeAppender.ForInstrumentedType.INSTANCE.apply(classVisitor, instrumentedType, annotationValueFilter);
-        verifyZeroInteractions(classVisitor);
+        verifyNoMoreInteractions(classVisitor);
         verify(instrumentedType).getDeclaredAnnotations();
         verify(instrumentedType).getSuperClass();
         verify(instrumentedType).getInterfaces();
@@ -31,7 +31,7 @@ public class TypeAttributeAppenderForInstrumentedTypeTest extends AbstractTypeAt
         when(instrumentedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
         TypeAttributeAppender.ForInstrumentedType.INSTANCE.apply(classVisitor, instrumentedType, annotationValueFilter);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
-        verifyZeroInteractions(classVisitor);
+        verifyNoMoreInteractions(classVisitor);
         verify(instrumentedType).getDeclaredAnnotations();
         verify(instrumentedType).getSuperClass();
         verify(instrumentedType).getInterfaces();
@@ -46,7 +46,7 @@ public class TypeAttributeAppenderForInstrumentedTypeTest extends AbstractTypeAt
         when(instrumentedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new QuxBaz.Instance()));
         TypeAttributeAppender.ForInstrumentedType.INSTANCE.apply(classVisitor, instrumentedType, annotationValueFilter);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
-        verifyZeroInteractions(classVisitor);
+        verifyNoMoreInteractions(classVisitor);
         verify(instrumentedType).getDeclaredAnnotations();
         verify(instrumentedType).getSuperClass();
         verify(instrumentedType).getInterfaces();
@@ -62,7 +62,7 @@ public class TypeAttributeAppenderForInstrumentedTypeTest extends AbstractTypeAt
         when(instrumentedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(instrumentedType.getSuperClass()).thenReturn(simpleAnnotatedType);
         TypeAttributeAppender.ForInstrumentedType.INSTANCE.apply(classVisitor, instrumentedType, annotationValueFilter);
-        verifyZeroInteractions(classVisitor);
+        verifyNoMoreInteractions(classVisitor);
         verify(instrumentedType).getDeclaredAnnotations();
         verify(instrumentedType).getSuperClass();
         verify(instrumentedType).getInterfaces();
@@ -111,7 +111,7 @@ public class TypeAttributeAppenderForInstrumentedTypeTest extends AbstractTypeAt
         when(simpleAnnotatedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
         when(instrumentedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         TypeAttributeAppender.ForInstrumentedType.INSTANCE.apply(classVisitor, instrumentedType, annotationValueFilter);
-        verifyZeroInteractions(classVisitor);
+        verifyNoMoreInteractions(classVisitor);
         verify(instrumentedType).getDeclaredAnnotations();
         verify(instrumentedType).getSuperClass();
         verify(instrumentedType).getInterfaces();
@@ -159,7 +159,7 @@ public class TypeAttributeAppenderForInstrumentedTypeTest extends AbstractTypeAt
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Empty());
         when(instrumentedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         TypeAttributeAppender.ForInstrumentedType.INSTANCE.apply(classVisitor, instrumentedType, annotationValueFilter);
-        verifyZeroInteractions(classVisitor);
+        verifyNoMoreInteractions(classVisitor);
         verify(instrumentedType).getDeclaredAnnotations();
         verify(instrumentedType).getSuperClass();
         verify(instrumentedType).getInterfaces();

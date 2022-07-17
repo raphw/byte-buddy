@@ -247,7 +247,7 @@ public class MethodRegistryDefaultTest {
         verify(firstHandler).prepare(firstType);
         verify(secondHandler).prepare(secondType);
         verify(firstFactory).make(typeDescription);
-        verifyZeroInteractions(secondFactory);
+        verifyNoMoreInteractions(secondFactory);
         assertThat(methodRegistry.target(instrumentedMethod), is(firstRecord));
     }
 
@@ -270,7 +270,7 @@ public class MethodRegistryDefaultTest {
         verify(firstHandler).prepare(firstType);
         verify(secondHandler).prepare(secondType);
         verify(firstFactory).make(typeDescription);
-        verifyZeroInteractions(secondFactory);
+        verifyNoMoreInteractions(secondFactory);
         assertThat(methodRegistry.target(instrumentedMethod), is(firstRecord));
     }
 
@@ -292,7 +292,7 @@ public class MethodRegistryDefaultTest {
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
         verify(firstHandler).prepare(firstType);
         verify(secondHandler).prepare(secondType);
-        verifyZeroInteractions(firstFactory);
+        verifyNoMoreInteractions(firstFactory);
         verify(secondFactory).make(typeDescription);
         assertThat(methodRegistry.target(instrumentedMethod), is(secondRecord));
     }
@@ -317,8 +317,8 @@ public class MethodRegistryDefaultTest {
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
         verify(firstHandler).prepare(firstType);
         verify(secondHandler).prepare(secondType);
-        verifyZeroInteractions(firstFactory);
-        verifyZeroInteractions(secondFactory);
+        verifyNoMoreInteractions(firstFactory);
+        verifyNoMoreInteractions(secondFactory);
         assertThat(methodRegistry.target(instrumentedMethod), instanceOf(TypeWriter.MethodPool.Record.ForNonImplementedMethod.class));
     }
 
@@ -356,8 +356,8 @@ public class MethodRegistryDefaultTest {
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
         verify(firstHandler).prepare(firstType);
         verify(secondHandler).prepare(secondType);
-        verifyZeroInteractions(firstFactory);
-        verifyZeroInteractions(secondFactory);
+        verifyNoMoreInteractions(firstFactory);
+        verifyNoMoreInteractions(secondFactory);
         assertThat(methodRegistry.target(instrumentedMethod), instanceOf(TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.class));
     }
 
@@ -395,8 +395,8 @@ public class MethodRegistryDefaultTest {
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
         verify(firstHandler).prepare(firstType);
         verify(secondHandler).prepare(secondType);
-        verifyZeroInteractions(firstFactory);
-        verifyZeroInteractions(secondFactory);
+        verifyNoMoreInteractions(firstFactory);
+        verifyNoMoreInteractions(secondFactory);
         assertThat(methodRegistry.target(instrumentedMethod), instanceOf(TypeWriter.MethodPool.Record.ForDefinedMethod.ForNonImplementedMethod.class));
     }
 }

@@ -59,6 +59,6 @@ public class AdditionTest {
         assertThat(size.getSizeImpact(), is(-stackSize.getSize()));
         verify(methodVisitor).visitInsn(opcodes);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

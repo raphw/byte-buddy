@@ -64,7 +64,7 @@ public class PackageTypeStrategyManifestReadingTest {
         assertThat(definition.getSpecificationVendor(), nullValue(String.class));
         assertThat(definition.getSealBase(), nullValue(URL.class));
         assertThat(definition.isCompatibleTo(getClass().getPackage()), is(true));
-        verifyZeroInteractions(sealBaseLocator);
+        verifyNoMoreInteractions(sealBaseLocator);
     }
 
     @Test
@@ -96,7 +96,7 @@ public class PackageTypeStrategyManifestReadingTest {
         assertThat(definition.getImplementationVendor(), is(QUX + BAZ));
         assertThat(definition.getSealBase(), nullValue(URL.class));
         assertThat(definition.isCompatibleTo(getClass().getPackage()), is(true));
-        verifyZeroInteractions(sealBaseLocator);
+        verifyNoMoreInteractions(sealBaseLocator);
     }
 
     @Test
@@ -136,7 +136,7 @@ public class PackageTypeStrategyManifestReadingTest {
         assertThat(definition.getImplementationVendor(), is(QUX + BAZ));
         assertThat(definition.getSealBase(), nullValue(URL.class));
         assertThat(definition.isCompatibleTo(getClass().getPackage()), is(true));
-        verifyZeroInteractions(sealBaseLocator);
+        verifyNoMoreInteractions(sealBaseLocator);
     }
 
     @Test
@@ -212,7 +212,7 @@ public class PackageTypeStrategyManifestReadingTest {
         when(classLoader.getResource(FOO + "/" + BAR + ".class")).thenReturn(url);
         assertThat(new PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForTypeResourceUrl(sealBaseLocator)
                 .findSealBase(classLoader, FOO + "." + BAR), is(url));
-        verifyZeroInteractions(sealBaseLocator);
+        verifyNoMoreInteractions(sealBaseLocator);
     }
 
     @Test
@@ -222,7 +222,7 @@ public class PackageTypeStrategyManifestReadingTest {
         when(classLoader.getResource(FOO + "/" + BAR + ".class")).thenReturn(url);
         assertThat(new PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForTypeResourceUrl(sealBaseLocator)
                 .findSealBase(classLoader, FOO + "." + BAR), is(new URL("file:/foo.jar")));
-        verifyZeroInteractions(sealBaseLocator);
+        verifyNoMoreInteractions(sealBaseLocator);
     }
 
     @Test
@@ -233,7 +233,7 @@ public class PackageTypeStrategyManifestReadingTest {
         when(classLoader.getResource(FOO + "/" + BAR + ".class")).thenReturn(url);
         assertThat(new PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForTypeResourceUrl(sealBaseLocator)
                 .findSealBase(classLoader, FOO + "." + BAR), is(new URL("jrt:/foo")));
-        verifyZeroInteractions(sealBaseLocator);
+        verifyNoMoreInteractions(sealBaseLocator);
     }
 
     @Test
@@ -244,6 +244,6 @@ public class PackageTypeStrategyManifestReadingTest {
         when(classLoader.getResource(FOO + "/" + BAR + ".class")).thenReturn(url);
         assertThat(new PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForTypeResourceUrl(sealBaseLocator)
                 .findSealBase(classLoader, FOO + "." + BAR), is(new URL("jrt:/foo")));
-        verifyZeroInteractions(sealBaseLocator);
+        verifyNoMoreInteractions(sealBaseLocator);
     }
 }

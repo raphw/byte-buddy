@@ -39,7 +39,7 @@ public class TypeCastingTest {
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitTypeInsn(Opcodes.CHECKCAST, FOO);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test(expected = IllegalArgumentException.class)

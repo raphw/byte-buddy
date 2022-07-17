@@ -269,7 +269,7 @@ public class ImplementationContextDefaultTest {
                 FOO);
         assertThat(implementationContext.getAuxiliaryTypes().size(), is(0));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
-        verifyZeroInteractions(classVisitor);
+        verifyNoMoreInteractions(classVisitor);
         verify(drain).apply(classVisitor, typeInitializer, implementationContext);
         verifyNoMoreInteractions(drain);
     }
@@ -305,7 +305,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryClassFileVersion,
                 FOO);
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
-        verifyZeroInteractions(classVisitor);
+        verifyNoMoreInteractions(classVisitor);
         verify(drain).apply(classVisitor, typeInitializer, implementationContext);
         verifyNoMoreInteractions(drain);
     }
@@ -319,8 +319,8 @@ public class ImplementationContextDefaultTest {
                 auxiliaryClassFileVersion,
                 FOO);
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
-        verifyZeroInteractions(classVisitor);
-        verifyZeroInteractions(typeInitializer);
+        verifyNoMoreInteractions(classVisitor);
+        verifyNoMoreInteractions(typeInitializer);
         verify(drain).apply(classVisitor, typeInitializer, implementationContext);
         verifyNoMoreInteractions(drain);
     }
@@ -334,8 +334,8 @@ public class ImplementationContextDefaultTest {
                 auxiliaryClassFileVersion,
                 FOO);
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
-        verifyZeroInteractions(classVisitor);
-        verifyZeroInteractions(typeInitializer);
+        verifyNoMoreInteractions(classVisitor);
+        verifyNoMoreInteractions(typeInitializer);
         verify(drain).apply(classVisitor, typeInitializer, implementationContext);
         verifyNoMoreInteractions(drain);
     }
@@ -380,7 +380,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryClassFileVersion,
                 FOO);
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
-        verifyZeroInteractions(classVisitor);
+        verifyNoMoreInteractions(classVisitor);
         verify(drain).apply(classVisitor, typeInitializer, implementationContext);
         verifyNoMoreInteractions(drain);
         implementationContext.cache(firstFieldValue, firstRawFieldType);

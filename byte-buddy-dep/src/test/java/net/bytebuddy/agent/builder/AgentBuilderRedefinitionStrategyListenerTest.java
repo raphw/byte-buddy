@@ -128,7 +128,7 @@ public class AgentBuilderRedefinitionStrategyListenerTest {
         AgentBuilder.RedefinitionStrategy.BatchAllocator delegate = mock(AgentBuilder.RedefinitionStrategy.BatchAllocator.class);
         AgentBuilder.RedefinitionStrategy.Listener listener = new AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator(delegate);
         assertThat(listener.onError(0, Collections.<Class<?>>singletonList(Object.class), new Throwable(), Collections.<Class<?>>emptyList()), is((Iterable) Collections.emptyList()));
-        verifyZeroInteractions(delegate);
+        verifyNoMoreInteractions(delegate);
     }
 
     @Test

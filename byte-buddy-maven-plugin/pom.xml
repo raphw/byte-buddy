@@ -16,10 +16,10 @@
 
     <properties>
         <!-- Newer Maven versions require Java 1.7. -->
-        <version.maven>3.2.5</version.maven>
+        <version.maven>3.8.6</version.maven>
         <!-- Avoids using a vulnerable version of the Plexus utilities during build. -->
-        <version.maven.plexus>3.0.24</version.maven.plexus>
-        <version.maven.annotation>3.4</version.maven.annotation>
+        <version.maven.plexus>3.4.2</version.maven.plexus>
+        <version.maven.annotation>3.6.4</version.maven.annotation>
         <version.maven.aether>1.1.0</version.maven.aether>
         <version.maven.test>3.3.0</version.maven.test>
     </properties>
@@ -33,6 +33,7 @@
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
             <version>${version.maven}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>

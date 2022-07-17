@@ -33,6 +33,6 @@ public class ArrayLengthTest {
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitInsn(Opcodes.ARRAYLENGTH);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

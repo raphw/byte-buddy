@@ -39,7 +39,7 @@ public class ElementMatcherJunctionDisjunctionTest extends AbstractElementMatche
         assertThat(new ElementMatcher.Junction.Disjunction<Object>(first, second).matches(target), is(true));
         verify(first).matches(target);
         verifyNoMoreInteractions(first);
-        verifyZeroInteractions(second);
+        verifyNoMoreInteractions(second);
     }
 
     @Test

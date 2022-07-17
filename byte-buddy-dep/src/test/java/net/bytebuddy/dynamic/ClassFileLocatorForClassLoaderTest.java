@@ -138,7 +138,7 @@ public class ClassFileLocatorForClassLoaderTest {
     @Test
     public void testClose() throws Exception {
         ClassFileLocator.ForClassLoader.of(classLoader).close();
-        verifyZeroInteractions(classLoader);
+        verifyNoMoreInteractions(classLoader);
     }
 
     @Test

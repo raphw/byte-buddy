@@ -12,7 +12,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class ByteCodeAppenderCompoundTest {
@@ -48,7 +48,7 @@ public class ByteCodeAppenderCompoundTest {
         ByteCodeAppender.Size size = compound.apply(methodVisitor, implementationContext, methodDescription);
         assertThat(size.getLocalVariableSize(), is(MAXIMUM));
         assertThat(size.getOperandStackSize(), is(MAXIMUM));
-        verifyZeroInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

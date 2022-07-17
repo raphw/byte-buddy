@@ -47,10 +47,10 @@ public class AgentBuilderDefaultWarmupStrategyTest {
                 AgentBuilder.RedefinitionStrategy.DISABLED,
                 circularityLock,
                 listener);
-        verifyZeroInteractions(classFileTransformer);
-        verifyZeroInteractions(locationStrategy);
-        verifyZeroInteractions(circularityLock);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(classFileTransformer);
+        verifyNoMoreInteractions(locationStrategy);
+        verifyNoMoreInteractions(circularityLock);
+        verifyNoMoreInteractions(listener);
     }
 
     @Test

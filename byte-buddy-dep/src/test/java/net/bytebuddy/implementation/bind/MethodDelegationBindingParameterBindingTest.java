@@ -62,8 +62,8 @@ public class MethodDelegationBindingParameterBindingTest {
         verify(stackManipulation).isValid();
         verify(stackManipulation).apply(methodVisitor, implementationContext);
         verifyNoMoreInteractions(stackManipulation);
-        verifyZeroInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test
@@ -76,7 +76,7 @@ public class MethodDelegationBindingParameterBindingTest {
         verify(stackManipulation).isValid();
         verify(stackManipulation).apply(methodVisitor, implementationContext);
         verifyNoMoreInteractions(stackManipulation);
-        verifyZeroInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

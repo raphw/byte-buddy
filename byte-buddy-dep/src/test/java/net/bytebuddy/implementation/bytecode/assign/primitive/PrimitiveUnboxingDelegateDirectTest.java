@@ -102,7 +102,7 @@ public class PrimitiveUnboxingDelegateDirectTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test
@@ -119,8 +119,8 @@ public class PrimitiveUnboxingDelegateDirectTest {
                 unboxingMethodDescriptor,
                 false);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(chainedAssigner);
-        verifyZeroInteractions(this.stackManipulation);
+        verifyNoMoreInteractions(chainedAssigner);
+        verifyNoMoreInteractions(this.stackManipulation);
     }
 
     @Test

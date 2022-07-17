@@ -73,7 +73,7 @@ public class MethodBindingBuilderTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test
@@ -94,7 +94,7 @@ public class MethodBindingBuilderTest {
         assertThat(methodBinding.getTarget(), is(methodDescription));
         methodBinding.apply(methodVisitor, implementationContext);
         verify(legalStackManipulation, times(2)).apply(methodVisitor, implementationContext);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test
@@ -121,7 +121,7 @@ public class MethodBindingBuilderTest {
         assertThat(methodBinding.getTarget(), is(methodDescription));
         methodBinding.apply(methodVisitor, implementationContext);
         verify(legalStackManipulation, times(4)).apply(methodVisitor, implementationContext);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test

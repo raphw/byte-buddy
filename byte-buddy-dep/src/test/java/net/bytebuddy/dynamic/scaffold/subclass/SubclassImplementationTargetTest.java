@@ -85,7 +85,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         StackManipulation.Size size = specialMethodInvocation.apply(methodVisitor, implementationContext);
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, BAR, FOO, QUX, false);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
     }
@@ -110,7 +110,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         StackManipulation.Size size = specialMethodInvocation.apply(methodVisitor, implementationContext);
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, BAR, QUX, BAZ, false);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
     }

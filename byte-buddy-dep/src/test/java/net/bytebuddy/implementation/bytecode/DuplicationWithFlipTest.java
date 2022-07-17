@@ -70,6 +70,6 @@ public class DuplicationWithFlipTest {
         assertThat(size.getSizeImpact(), is(topSize.getSize()));
         verify(methodVisitor).visitInsn(opcode);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

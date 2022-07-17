@@ -99,7 +99,7 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
                 .visitField(MODIFIERS, BAR, QUX, BAZ, QUX + BAZ), is(fieldVisitor));
         verify(matcher).matches(bar);
         verifyNoMoreInteractions(matcher);
-        verifyZeroInteractions(fieldVisitorWrapper);
+        verifyNoMoreInteractions(fieldVisitorWrapper);
     }
 
     @Test
@@ -115,7 +115,7 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
                         IRRELEVANT,
                         IRRELEVANT)
                 .visitField(MODIFIERS, FOO + BAR, QUX, BAZ, QUX + BAZ), is(fieldVisitor));
-        verifyZeroInteractions(matcher);
-        verifyZeroInteractions(fieldVisitorWrapper);
+        verifyNoMoreInteractions(matcher);
+        verifyNoMoreInteractions(fieldVisitorWrapper);
     }
 }

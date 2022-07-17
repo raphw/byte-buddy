@@ -63,7 +63,7 @@ public class AgentBuilderTypeStrategyTest {
                 protectionDomain), is((DynamicType.Builder) dynamicTypeBuilder));
         verify(byteBuddy).rebase(typeDescription, classFileLocator, methodNameTransformer);
         verifyNoMoreInteractions(byteBuddy);
-        verifyZeroInteractions(dynamicTypeBuilder);
+        verifyNoMoreInteractions(dynamicTypeBuilder);
     }
 
     @Test
@@ -79,7 +79,7 @@ public class AgentBuilderTypeStrategyTest {
                 protectionDomain), is((DynamicType.Builder) dynamicTypeBuilder));
         verify(byteBuddy).redefine(typeDescription, classFileLocator);
         verifyNoMoreInteractions(byteBuddy);
-        verifyZeroInteractions(dynamicTypeBuilder);
+        verifyNoMoreInteractions(dynamicTypeBuilder);
     }
 
     @Test

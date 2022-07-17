@@ -9,7 +9,7 @@ import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class LatentMatcherAccessorTest {
 
@@ -27,7 +27,7 @@ public class LatentMatcherAccessorTest {
     public void testManifestation() throws Exception {
         LatentMatcher<Object> matcher = new LatentMatcher.Resolved<Object>(this.matcher);
         assertThat(matcher.resolve(typeDescription), is((ElementMatcher) this.matcher));
-        verifyZeroInteractions(this.matcher);
-        verifyZeroInteractions(typeDescription);
+        verifyNoMoreInteractions(this.matcher);
+        verifyNoMoreInteractions(typeDescription);
     }
 }

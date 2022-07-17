@@ -86,7 +86,7 @@ public class SuperMethodCallOtherTest {
     @Test
     public void testPreparation() throws Exception {
         assertThat(SuperMethodCall.INSTANCE.prepare(instrumentedType), is(instrumentedType));
-        verifyZeroInteractions(instrumentedType);
+        verifyNoMoreInteractions(instrumentedType);
     }
 
     @Test(expected = IllegalStateException.class)

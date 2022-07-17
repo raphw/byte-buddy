@@ -33,6 +33,6 @@ public class TextConstantTest {
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitLdcInsn(FOO);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

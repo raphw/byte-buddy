@@ -108,7 +108,7 @@ public class TypeProxyCreationTest {
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
         assertThat(dynamicType.isAssignableTo(Serializable.class), is(false));
-        verifyZeroInteractions(methodAccessorFactory);
+        verifyNoMoreInteractions(methodAccessorFactory);
         for (MethodDescription methodDescription : fooMethods) {
             verify(invocationFactory).invoke(implementationTarget, foo, methodDescription);
         }

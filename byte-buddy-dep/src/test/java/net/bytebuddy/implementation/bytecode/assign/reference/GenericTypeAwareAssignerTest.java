@@ -233,8 +233,8 @@ public class GenericTypeAwareAssignerTest {
         StackManipulation.Size size = assignment.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
-        verifyZeroInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test
@@ -250,7 +250,7 @@ public class GenericTypeAwareAssignerTest {
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(SubSample[].class));
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test

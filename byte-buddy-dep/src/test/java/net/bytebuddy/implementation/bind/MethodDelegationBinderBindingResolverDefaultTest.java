@@ -46,7 +46,7 @@ public class MethodDelegationBinderBindingResolverDefaultTest {
                 source,
                 Collections.singletonList(boundDelegation));
         MatcherAssert.assertThat(result, is(boundDelegation));
-        verifyZeroInteractions(ambiguityResolver);
+        verifyNoMoreInteractions(ambiguityResolver);
     }
 
     @Test

@@ -52,7 +52,7 @@ public class TypeInitializerTest {
         ByteCodeAppender.Size size = TypeInitializer.None.INSTANCE.apply(methodVisitor, implementationContext, methodDescription);
         assertThat(size.getOperandStackSize(), is(0));
         assertThat(size.getLocalVariableSize(), is(0));
-        verifyZeroInteractions(methodDescription);
+        verifyNoMoreInteractions(methodDescription);
     }
 
     @Test
@@ -72,8 +72,8 @@ public class TypeInitializerTest {
         assertThat(typeInitializer.isDefined(), is(true));
         typeInitializer.apply(methodVisitor, implementationContext, methodDescription);
         verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
-        verifyZeroInteractions(byteCodeAppender);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(byteCodeAppender);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test

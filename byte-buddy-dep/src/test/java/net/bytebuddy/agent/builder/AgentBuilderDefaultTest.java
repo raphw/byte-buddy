@@ -334,7 +334,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         when(instrumentation.removeTransformer(classFileTransformer)).thenReturn(true);
         classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.DISABLED);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).removeTransformer(classFileTransformer);
         verifyNoMoreInteractions(instrumentation);
@@ -354,7 +354,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         when(instrumentation.removeTransformer(classFileTransformer)).thenReturn(false);
         assertThat(classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.DISABLED), is(false));
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).removeTransformer(classFileTransformer);
         verifyNoMoreInteractions(instrumentation);
@@ -412,7 +412,7 @@ public class AgentBuilderDefaultTest {
         when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(throwable);
         assertThat(classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.REDEFINITION), is(true));
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRedefineClassesSupported();
@@ -443,7 +443,7 @@ public class AgentBuilderDefaultTest {
         when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(throwable);
         assertThat(classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.RETRANSFORMATION), is(true));
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).isRetransformClassesSupported();
         verify(instrumentation).getAllLoadedClasses();
@@ -478,7 +478,7 @@ public class AgentBuilderDefaultTest {
         when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
                 .thenThrow(throwable);
         assertThat(classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.REDEFINITION), is(true));
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRedefineClassesSupported();
@@ -514,7 +514,7 @@ public class AgentBuilderDefaultTest {
         when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
                 .thenThrow(throwable);
         assertThat(classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.RETRANSFORMATION), is(true));
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRetransformClassesSupported();
@@ -542,7 +542,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -551,7 +551,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -579,7 +579,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -589,7 +589,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -613,7 +613,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         when(instrumentation.removeTransformer(classFileTransformer)).thenReturn(true);
         assertThat(classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.RETRANSFORMATION), is(true));
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).removeTransformer(classFileTransformer);
         verify(instrumentation, times(2)).getAllLoadedClasses();
@@ -623,7 +623,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher, times(2)).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verify(installationListener).onReset(instrumentation, classFileTransformer);
@@ -653,7 +653,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         when(instrumentation.removeTransformer(classFileTransformer)).thenReturn(true);
         assertThat(classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.RETRANSFORMATION), is(true));
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).removeTransformer(classFileTransformer);
         verify(instrumentation, times(2)).getAllLoadedClasses();
@@ -664,7 +664,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher, times(2)).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verify(typeMatcher, times(2)).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verify(installationListener).onReset(instrumentation, classFileTransformer);
@@ -698,8 +698,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verifyZeroInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(typeMatcher);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -735,7 +735,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -774,7 +774,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -811,7 +811,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -843,7 +843,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -855,7 +855,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -896,7 +896,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -908,7 +908,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -953,7 +953,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -965,7 +965,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -1004,7 +1004,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -1015,7 +1015,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onError(eq(instrumentation), eq(classFileTransformer), argThat(new CauseMatcher(throwable, 1)));
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1041,7 +1041,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .patchOn(instrumentation, previous);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -1050,7 +1050,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1089,7 +1089,7 @@ public class AgentBuilderDefaultTest {
         //verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1117,12 +1117,12 @@ public class AgentBuilderDefaultTest {
                 .disableNativeMethodPrefix()
                 .ignore(none())
                 .patchOn(instrumentation, previous);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRetransformClassesSupported();
         //verifyNoMoreInteractions(instrumentation);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1151,14 +1151,14 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .patchOn(instrumentation, previous);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRetransformClassesSupported();
         //verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1213,7 +1213,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -1222,7 +1222,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(dispatcher);
+        verifyNoMoreInteractions(dispatcher);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -1249,7 +1249,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -1259,7 +1259,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -1284,7 +1284,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         when(instrumentation.removeTransformer(classFileTransformer)).thenReturn(true);
         assertThat(classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.REDEFINITION), is(true));
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).removeTransformer(classFileTransformer);
         verify(instrumentation, times(2)).getAllLoadedClasses();
@@ -1294,7 +1294,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher, times(2)).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(dispatcher);
+        verifyNoMoreInteractions(dispatcher);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verify(installationListener).onReset(instrumentation, classFileTransformer);
@@ -1324,7 +1324,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         when(instrumentation.removeTransformer(classFileTransformer)).thenReturn(true);
         assertThat(classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.REDEFINITION), is(true));
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).removeTransformer(classFileTransformer);
         verify(instrumentation, times(2)).getAllLoadedClasses();
@@ -1369,8 +1369,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verifyZeroInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(typeMatcher);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -1406,7 +1406,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -1441,8 +1441,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verifyZeroInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(typeMatcher);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(ignoredTypes).matches(TypeDescription.ForLoadedType.of(REDEFINED));
         verifyNoMoreInteractions(ignoredTypes);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -1482,8 +1482,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verifyZeroInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(typeMatcher);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(ignoredClassLoaders).matches(REDEFINED.getClassLoader());
         verifyNoMoreInteractions(ignoredClassLoaders);
         verify(ignoredTypes).matches(TypeDescription.ForLoadedType.of(REDEFINED));
@@ -1522,8 +1522,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verifyZeroInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(typeMatcher);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(ignoredTypes).matches(TypeDescription.ForLoadedType.of(REDEFINED));
         verifyNoMoreInteractions(ignoredTypes);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -1560,8 +1560,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verifyZeroInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(typeMatcher);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(ignoredTypes).matches(TypeDescription.ForLoadedType.of(REDEFINED));
         verifyNoMoreInteractions(ignoredTypes);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -1602,7 +1602,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -1639,7 +1639,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -1671,7 +1671,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -1682,7 +1682,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -1723,7 +1723,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -1735,7 +1735,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -1780,7 +1780,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -1795,7 +1795,7 @@ public class AgentBuilderDefaultTest {
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
-        verifyZeroInteractions(installationListener);
+        verifyNoMoreInteractions(installationListener);
         verify(redefinitionBatchAllocator).batch(Arrays.asList(REDEFINED, OTHER));
         verifyNoMoreInteractions(redefinitionBatchAllocator);
         verify(redefinitionListener).onBatch(0, Collections.<Class<?>>singletonList(REDEFINED), Arrays.asList(REDEFINED, OTHER));
@@ -1831,7 +1831,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -1842,7 +1842,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verify(installationListener).onError(eq(instrumentation), eq(classFileTransformer), argThat(new CauseMatcher(throwable, 1)));
@@ -1868,7 +1868,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .patchOn(instrumentation, previous);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -1877,7 +1877,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1916,7 +1916,7 @@ public class AgentBuilderDefaultTest {
         //verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1944,12 +1944,12 @@ public class AgentBuilderDefaultTest {
                 .disableNativeMethodPrefix()
                 .ignore(none())
                 .patchOn(instrumentation, previous);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRedefineClassesSupported();
         //verifyNoMoreInteractions(instrumentation);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1978,14 +1978,14 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .patchOn(instrumentation, previous);
-        verifyZeroInteractions(listener);
+        verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRedefineClassesSupported();
         //verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -2049,7 +2049,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verifyNoMoreInteractions(instrumentation);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
@@ -2078,7 +2078,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer);
         verifyNoMoreInteractions(instrumentation);
-        verifyZeroInteractions(initializationStrategy);
+        verifyNoMoreInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);

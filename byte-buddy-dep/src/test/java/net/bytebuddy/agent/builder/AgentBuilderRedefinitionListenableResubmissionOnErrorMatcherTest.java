@@ -89,6 +89,6 @@ public class AgentBuilderRedefinitionListenableResubmissionOnErrorMatcherTest {
 
         verify(left).matches(throwable, FOO, classLoader, module);
         verifyNoMoreInteractions(left);
-        verifyZeroInteractions(right);
+        verifyNoMoreInteractions(right);
     }
 }

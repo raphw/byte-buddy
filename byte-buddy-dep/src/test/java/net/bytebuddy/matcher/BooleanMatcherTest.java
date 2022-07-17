@@ -6,7 +6,7 @@ import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class BooleanMatcherTest extends AbstractElementMatcherTest<BooleanMatcher<?>> {
 
@@ -19,14 +19,14 @@ public class BooleanMatcherTest extends AbstractElementMatcherTest<BooleanMatche
     public void testMatch() throws Exception {
         Object target = mock(Object.class);
         assertThat(new BooleanMatcher<Object>(true).matches(target), is(true));
-        verifyZeroInteractions(target);
+        verifyNoMoreInteractions(target);
     }
 
     @Test
     public void testNoMatch() throws Exception {
         Object target = mock(Object.class);
         assertThat(new BooleanMatcher<Object>(false).matches(target), is(false));
-        verifyZeroInteractions(target);
+        verifyNoMoreInteractions(target);
     }
 
     @Test

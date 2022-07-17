@@ -114,7 +114,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         assertThat(parameterBinding.isValid(), is(false));
         verify(annotation, atLeast(1)).value();
         verify(source, atLeast(1)).getParameters();
-        verifyZeroInteractions(assigner);
+        verifyNoMoreInteractions(assigner);
     }
 
     @Test(expected = IllegalArgumentException.class)

@@ -39,7 +39,7 @@ public class AgentBuilderInstallationListenerTest {
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onWarmUpError(Object.class, classFileTransformer, throwable);
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onAfterWarmUp(Collections.<Class<?>, byte[]>singletonMap(Object.class, null), classFileTransformer, false);
-        verifyZeroInteractions(instrumentation, classFileTransformer, throwable);
+        verifyNoMoreInteractions(instrumentation, classFileTransformer, throwable);
     }
 
     @Test
@@ -52,7 +52,7 @@ public class AgentBuilderInstallationListenerTest {
         pseudoAdapter.onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
         pseudoAdapter.onWarmUpError(Object.class, classFileTransformer, throwable);
         pseudoAdapter.onAfterWarmUp(Collections.<Class<?>, byte[]>singletonMap(Object.class, null), classFileTransformer, false);
-        verifyZeroInteractions(instrumentation, classFileTransformer, throwable);
+        verifyNoMoreInteractions(instrumentation, classFileTransformer, throwable);
     }
 
     @Test
@@ -63,7 +63,7 @@ public class AgentBuilderInstallationListenerTest {
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onBeforeWarmUp(Collections.<Class<?>>singleton(Object.class), classFileTransformer);
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onWarmUpError(Object.class, classFileTransformer, throwable);
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onAfterWarmUp(Collections.<Class<?>, byte[]>singletonMap(Object.class, null), classFileTransformer, false);
-        verifyZeroInteractions(instrumentation, classFileTransformer, throwable);
+        verifyNoMoreInteractions(instrumentation, classFileTransformer, throwable);
     }
 
     @Test
@@ -179,7 +179,7 @@ public class AgentBuilderInstallationListenerTest {
         assertThat(installationListener.onError(instrumentation, classFileTransformer, throwable), nullValue(Throwable.class));
         verify(first).onError(instrumentation, classFileTransformer, throwable);
         verifyNoMoreInteractions(first);
-        verifyZeroInteractions(second);
+        verifyNoMoreInteractions(second);
     }
 
     @Test

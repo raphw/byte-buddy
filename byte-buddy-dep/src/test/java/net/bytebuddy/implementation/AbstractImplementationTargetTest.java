@@ -97,7 +97,7 @@ public abstract class AbstractImplementationTargetTest {
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, BAZBAR, QUXBAZ, FOOBAZ, true);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test

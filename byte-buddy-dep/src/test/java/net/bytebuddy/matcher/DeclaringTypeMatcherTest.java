@@ -56,7 +56,7 @@ public class DeclaringTypeMatcherTest extends AbstractElementMatcherTest<Declari
     @Test
     public void testNoMatchWhenNull() throws Exception {
         assertThat(new DeclaringTypeMatcher<DeclaredByType>(typeMatcher).matches(declaredByType), is(false));
-        verifyZeroInteractions(typeMatcher);
+        verifyNoMoreInteractions(typeMatcher);
         verify(declaredByType).getDeclaringType();
         verifyNoMoreInteractions(declaredByType);
     }

@@ -55,6 +55,6 @@ public class CollectionElementMatcherTest extends AbstractElementMatcherTest<Col
     @Test
     public void testNoMatchIndex() throws Exception {
         assertThat(new CollectionElementMatcher<Object>(2, elementMatcher).matches(iterable), is(false));
-        verifyZeroInteractions(elementMatcher);
+        verifyNoMoreInteractions(elementMatcher);
     }
 }

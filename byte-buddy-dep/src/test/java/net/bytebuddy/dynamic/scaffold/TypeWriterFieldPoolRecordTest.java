@@ -108,7 +108,7 @@ public class TypeWriterFieldPoolRecordTest {
         record.apply(fieldVisitor, annotationValueFilterFactory);
         verify(fieldAttributeAppender).apply(fieldVisitor, fieldDescription, valueFilter);
         verifyNoMoreInteractions(fieldAttributeAppender);
-        verifyZeroInteractions(fieldVisitor);
+        verifyNoMoreInteractions(fieldVisitor);
     }
 
     @Test

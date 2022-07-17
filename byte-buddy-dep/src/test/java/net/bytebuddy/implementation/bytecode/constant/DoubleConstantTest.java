@@ -61,6 +61,6 @@ public class DoubleConstantTest {
         assertThat(size.getMaximalSize(), is(2));
         verify(methodVisitor).visitLdcInsn(value);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

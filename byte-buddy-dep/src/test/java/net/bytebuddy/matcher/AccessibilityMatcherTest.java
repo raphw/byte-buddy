@@ -28,7 +28,7 @@ public class AccessibilityMatcherTest extends AbstractElementMatcherTest<Accessi
         assertThat(new AccessibilityMatcher<ByteCodeElement>(typeDescription).matches(byteCodeElement), is(true));
         verify(byteCodeElement).isAccessibleTo(typeDescription);
         verifyNoMoreInteractions(byteCodeElement);
-        verifyZeroInteractions(typeDescription);
+        verifyNoMoreInteractions(typeDescription);
     }
 
     @Test
@@ -37,6 +37,6 @@ public class AccessibilityMatcherTest extends AbstractElementMatcherTest<Accessi
         assertThat(new AccessibilityMatcher<ByteCodeElement>(typeDescription).matches(byteCodeElement), is(false));
         verify(byteCodeElement).isAccessibleTo(typeDescription);
         verifyNoMoreInteractions(byteCodeElement);
-        verifyZeroInteractions(typeDescription);
+        verifyNoMoreInteractions(typeDescription);
     }
 }

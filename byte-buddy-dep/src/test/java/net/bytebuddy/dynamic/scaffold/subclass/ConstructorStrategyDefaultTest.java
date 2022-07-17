@@ -97,8 +97,8 @@ public class ConstructorStrategyDefaultTest {
     public void testNoConstructorsStrategy() throws Exception {
         assertThat(ConstructorStrategy.Default.NO_CONSTRUCTORS.extractConstructors(instrumentedType).size(), is(0));
         assertThat(ConstructorStrategy.Default.NO_CONSTRUCTORS.inject(instrumentedType, methodRegistry), is(methodRegistry));
-        verifyZeroInteractions(methodRegistry);
-        verifyZeroInteractions(instrumentedType);
+        verifyNoMoreInteractions(methodRegistry);
+        verifyNoMoreInteractions(instrumentedType);
     }
 
     @Test
@@ -107,8 +107,8 @@ public class ConstructorStrategyDefaultTest {
         ConstructorStrategy constructorStrategy = ConstructorStrategy.Default.NO_CONSTRUCTORS.with(methodAttributeAppenderFactory);
         assertThat(constructorStrategy.extractConstructors(instrumentedType).size(), is(0));
         assertThat(constructorStrategy.inject(instrumentedType, methodRegistry), is(methodRegistry));
-        verifyZeroInteractions(methodRegistry);
-        verifyZeroInteractions(instrumentedType);
+        verifyNoMoreInteractions(methodRegistry);
+        verifyNoMoreInteractions(instrumentedType);
     }
 
     @Test
@@ -116,8 +116,8 @@ public class ConstructorStrategyDefaultTest {
         ConstructorStrategy constructorStrategy = ConstructorStrategy.Default.NO_CONSTRUCTORS.withInheritedAnnotations();
         assertThat(constructorStrategy.extractConstructors(instrumentedType).size(), is(0));
         assertThat(constructorStrategy.inject(instrumentedType, methodRegistry), is(methodRegistry));
-        verifyZeroInteractions(methodRegistry);
-        verifyZeroInteractions(instrumentedType);
+        verifyNoMoreInteractions(methodRegistry);
+        verifyNoMoreInteractions(instrumentedType);
     }
 
     @Test

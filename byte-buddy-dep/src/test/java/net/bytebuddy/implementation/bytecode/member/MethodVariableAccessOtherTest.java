@@ -33,7 +33,7 @@ public class MethodVariableAccessOtherTest {
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitIincInsn(4, 1);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test

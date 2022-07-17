@@ -23,7 +23,7 @@ public class RecordComponentAttributeAppenderForInstrumentedFieldTest extends Ab
         when(recordComponentDescription.getType()).thenReturn(TypeDescription.Generic.OBJECT);
         when(recordComponentDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
         RecordComponentAttributeAppender.ForInstrumentedRecordComponent.INSTANCE.apply(recordComponentVisitor, recordComponentDescription, annotationValueFilter);
-        verifyZeroInteractions(recordComponentVisitor);
+        verifyNoMoreInteractions(recordComponentVisitor);
         verify(recordComponentDescription).getDeclaredAnnotations();
         verify(recordComponentDescription).getType();
         verifyNoMoreInteractions(recordComponentDescription);
@@ -59,7 +59,7 @@ public class RecordComponentAttributeAppenderForInstrumentedFieldTest extends Ab
         when(simpleAnnotatedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
         when(recordComponentDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         RecordComponentAttributeAppender.ForInstrumentedRecordComponent.INSTANCE.apply(recordComponentVisitor, recordComponentDescription, annotationValueFilter);
-        verifyZeroInteractions(recordComponentVisitor);
+        verifyNoMoreInteractions(recordComponentVisitor);
         verify(recordComponentDescription).getDeclaredAnnotations();
         verify(recordComponentDescription).getType();
         verifyNoMoreInteractions(recordComponentDescription);

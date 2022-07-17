@@ -18,6 +18,6 @@ public class TypeAttributeAppenderCompoundTest extends AbstractTypeAttributeAppe
         verifyNoMoreInteractions(first);
         verify(second).apply(classVisitor, instrumentedType, annotationValueFilter);
         verifyNoMoreInteractions(second);
-        verifyZeroInteractions(instrumentedType);
+        verifyNoMoreInteractions(instrumentedType);
     }
 }

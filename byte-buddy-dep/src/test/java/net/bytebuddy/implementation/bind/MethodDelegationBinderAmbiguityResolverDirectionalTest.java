@@ -10,7 +10,7 @@ import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class MethodDelegationBinderAmbiguityResolverDirectionalTest {
 
@@ -25,9 +25,9 @@ public class MethodDelegationBinderAmbiguityResolverDirectionalTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(source);
-        verifyZeroInteractions(left);
-        verifyZeroInteractions(right);
+        verifyNoMoreInteractions(source);
+        verifyNoMoreInteractions(left);
+        verifyNoMoreInteractions(right);
     }
 
     @Test

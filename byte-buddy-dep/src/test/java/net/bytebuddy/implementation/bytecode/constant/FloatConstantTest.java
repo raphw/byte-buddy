@@ -59,6 +59,6 @@ public class FloatConstantTest {
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitLdcInsn(value);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

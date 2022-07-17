@@ -66,7 +66,7 @@ public class AgentBuilderRawMatcherConjunctionTest {
         assertThat(rawMatcher.matches(typeDescription, classLoader, module, Foo.class, protectionDomain), is(false));
         verify(left).matches(typeDescription, classLoader, module, Foo.class, protectionDomain);
         verifyNoMoreInteractions(left);
-        verifyZeroInteractions(right);
+        verifyNoMoreInteractions(right);
     }
 
     @Test
@@ -77,7 +77,7 @@ public class AgentBuilderRawMatcherConjunctionTest {
         assertThat(rawMatcher.matches(typeDescription, classLoader, module, Foo.class, protectionDomain), is(false));
         verify(left).matches(typeDescription, classLoader, module, Foo.class, protectionDomain);
         verifyNoMoreInteractions(left);
-        verifyZeroInteractions(right);
+        verifyNoMoreInteractions(right);
     }
 
     private static class Foo {

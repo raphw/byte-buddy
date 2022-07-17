@@ -246,7 +246,7 @@ public class ClassReloadingStrategyTest {
         ClassReloadingStrategy.of(instrumentation).reset(classFileLocator);
         verify(instrumentation, times(2)).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verifyZeroInteractions(classFileLocator);
+        verifyNoMoreInteractions(classFileLocator);
     }
 
     @Test

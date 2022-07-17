@@ -72,6 +72,6 @@ public class EmptyBinderTest extends AbstractAnnotationBinderTest<Empty> {
         assertThat(size.getMaximalSize(), is(typeDescription.getStackSize().getSize()));
         verify(methodVisitor).visitInsn(opcode);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

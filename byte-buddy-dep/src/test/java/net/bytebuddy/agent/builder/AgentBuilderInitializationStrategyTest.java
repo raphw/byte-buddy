@@ -58,9 +58,9 @@ public class AgentBuilderInitializationStrategyTest {
     @Test
     public void testNoOpRegistration() throws Exception {
         AgentBuilder.Default.InitializationStrategy.NoOp.INSTANCE.register(dynamicType, classLoader, protectionDomain, injectionStrategy);
-        verifyZeroInteractions(dynamicType);
-        verifyZeroInteractions(classLoader);
-        verifyZeroInteractions(injectionStrategy);
+        verifyNoMoreInteractions(dynamicType);
+        verifyNoMoreInteractions(classLoader);
+        verifyNoMoreInteractions(injectionStrategy);
     }
 
     @Test
@@ -105,7 +105,7 @@ public class AgentBuilderInitializationStrategyTest {
         when(dependent.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(dynamicType.getAuxiliaryTypes()).thenReturn(Collections.singletonMap(dependent, BAZ));
         AgentBuilder.InitializationStrategy.Minimal.INSTANCE.register(dynamicType, classLoader, protectionDomain, injectionStrategy);
-        verifyZeroInteractions(injectionStrategy);
+        verifyNoMoreInteractions(injectionStrategy);
     }
 
     private static class Foo {

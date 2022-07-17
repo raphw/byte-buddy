@@ -91,7 +91,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         when(source.isConstructor()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
-        verifyZeroInteractions(implementationTarget);
+        verifyNoMoreInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(false));
     }
 
@@ -102,7 +102,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         when(annotation.nullIfImpossible()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
-        verifyZeroInteractions(implementationTarget);
+        verifyNoMoreInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(true));
     }
 }

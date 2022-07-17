@@ -63,6 +63,6 @@ public class ClassConstantPrimitiveTest {
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitFieldInsn(Opcodes.GETSTATIC, wrapperType.getInternalName(), "TYPE", "Ljava/lang/Class;");
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

@@ -40,7 +40,7 @@ public class ErasureMatcherTest extends AbstractElementMatcherTest<ErasureMatche
         verifyNoMoreInteractions(typeDefinition);
         verify(elementMatcher).matches(typeDescription);
         verifyNoMoreInteractions(elementMatcher);
-        verifyZeroInteractions(typeDescription);
+        verifyNoMoreInteractions(typeDescription);
     }
 
     @Test
@@ -52,6 +52,6 @@ public class ErasureMatcherTest extends AbstractElementMatcherTest<ErasureMatche
         verifyNoMoreInteractions(typeDefinition);
         verify(elementMatcher).matches(typeDescription);
         verifyNoMoreInteractions(elementMatcher);
-        verifyZeroInteractions(typeDescription);
+        verifyNoMoreInteractions(typeDescription);
     }
 }

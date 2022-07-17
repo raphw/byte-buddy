@@ -49,6 +49,6 @@ public class JavaConstantValueTest {
         verifyNoMoreInteractions(javaConstant);
         verify(methodVisitor).visitLdcInsn(FOO);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

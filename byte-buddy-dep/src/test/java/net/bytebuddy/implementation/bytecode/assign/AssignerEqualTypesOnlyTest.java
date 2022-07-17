@@ -58,8 +58,8 @@ public class AssignerEqualTypesOnlyTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test
@@ -69,15 +69,15 @@ public class AssignerEqualTypesOnlyTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
-        verifyZeroInteractions(first);
+        verifyNoMoreInteractions(first);
     }
 
     @Test
     public void testAssignmentGenericNotEqual() throws Exception {
         StackManipulation stackManipulation = Assigner.EqualTypesOnly.GENERIC.assign(first, second, Assigner.Typing.of(dynamicallyTyped));
         assertThat(stackManipulation.isValid(), is(false));
-        verifyZeroInteractions(first);
-        verifyZeroInteractions(second);
+        verifyNoMoreInteractions(first);
+        verifyNoMoreInteractions(second);
     }
 
     @Test

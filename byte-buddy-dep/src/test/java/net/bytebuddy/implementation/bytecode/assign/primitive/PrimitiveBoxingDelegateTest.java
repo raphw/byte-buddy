@@ -95,8 +95,8 @@ public class PrimitiveBoxingDelegateTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(targetType);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(targetType);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test

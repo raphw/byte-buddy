@@ -70,7 +70,7 @@ public class TypeConstantAdjustmentTest {
         verify(this.classVisitor).visit(ClassFileVersion.JAVA_V5.getMinorMajorVersion(), FOOBAR, FOO, BAR, QUX, new String[]{BAZ});
         verify(this.classVisitor).visitMethod(FOOBAR, FOO, BAR, QUX, new String[]{BAZ});
         verifyNoMoreInteractions(this.classVisitor);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test

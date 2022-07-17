@@ -18,6 +18,6 @@ public class MethodAttributeAppenderCompoundTest extends AbstractMethodAttribute
         verifyNoMoreInteractions(first);
         verify(second).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(second);
-        verifyZeroInteractions(instrumentedType);
+        verifyNoMoreInteractions(instrumentedType);
     }
 }

@@ -9,7 +9,7 @@ import java.util.jar.Manifest;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class PluginEngineTargetDiscardingTest {
 
@@ -19,7 +19,7 @@ public class PluginEngineTargetDiscardingTest {
         assertThat(Plugin.Engine.Target.Discarding.INSTANCE.write(new Manifest()), is((Plugin.Engine.Target.Sink) Plugin.Engine.Target.Discarding.INSTANCE));
         Plugin.Engine.Source.Element eleement = mock(Plugin.Engine.Source.Element.class);
         Plugin.Engine.Target.Discarding.INSTANCE.write(Plugin.Engine.Source.Origin.NO_MANIFEST).retain(eleement);
-        verifyZeroInteractions(eleement);
+        verifyNoMoreInteractions(eleement);
         Plugin.Engine.Target.Discarding.INSTANCE.write(Plugin.Engine.Source.Origin.NO_MANIFEST).store(Collections.singletonMap(TypeDescription.OBJECT, new byte[]{1, 2, 3}));
     }
 }

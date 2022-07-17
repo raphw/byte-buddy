@@ -60,7 +60,7 @@ public class ShiftRightTest {
         assertThat(size.getSizeImpact(), is(-stackSize.getSize()));
         verify(methodVisitor).visitInsn(signed);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test
@@ -70,6 +70,6 @@ public class ShiftRightTest {
         assertThat(size.getSizeImpact(), is(-stackSize.getSize()));
         verify(methodVisitor).visitInsn(unsigned);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

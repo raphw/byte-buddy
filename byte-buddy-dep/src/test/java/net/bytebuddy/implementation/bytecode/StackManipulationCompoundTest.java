@@ -55,7 +55,7 @@ public class StackManipulationCompoundTest {
         verifyNoMoreInteractions(first);
         verify(second).apply(methodVisitor, implementationContext);
         verifyNoMoreInteractions(second);
-        verifyZeroInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

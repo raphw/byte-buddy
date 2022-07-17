@@ -77,8 +77,8 @@ public class VoidAwareAssignerVoidToNonVoidTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(chainedAssigner);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(chainedAssigner);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test

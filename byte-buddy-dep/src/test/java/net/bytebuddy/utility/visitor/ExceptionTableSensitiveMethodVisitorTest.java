@@ -89,7 +89,7 @@ public class ExceptionTableSensitiveMethodVisitorTest {
                 throw new AssertionError();
             }
             called = true;
-            verifyZeroInteractions(mv);
+            verifyNoMoreInteractions(mv);
         }
 
         @Override

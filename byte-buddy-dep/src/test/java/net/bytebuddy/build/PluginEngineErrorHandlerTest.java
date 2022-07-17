@@ -171,10 +171,10 @@ public class PluginEngineErrorHandlerTest {
         errorHandler.onLiveInitializer(typeDescription, definingType);
         errorHandler.onManifest(manifest);
         errorHandler.onUnresolved(FOO);
-        verifyZeroInteractions(typeDescription);
-        verifyZeroInteractions(definingType);
-        verifyZeroInteractions(plugin);
-        verifyZeroInteractions(throwable);
+        verifyNoMoreInteractions(typeDescription);
+        verifyNoMoreInteractions(definingType);
+        verifyNoMoreInteractions(plugin);
+        verifyNoMoreInteractions(throwable);
         verify(delegate).onError(typeDescription, plugin, throwable);
         verify(delegate).onError(typeDescription, Collections.singletonList(throwable));
         verify(delegate).onError(Collections.singletonMap(typeDescription, Collections.singletonList(throwable)));

@@ -28,7 +28,7 @@ public class MethodDelegationBinderAmbiguityResolverChainTest extends AbstractAm
         assertThat(chain.resolve(source, left, right), is(MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT));
         verify(first).resolve(source, left, right);
         verifyNoMoreInteractions(first);
-        verifyZeroInteractions(second);
+        verifyNoMoreInteractions(second);
     }
 
     @Test

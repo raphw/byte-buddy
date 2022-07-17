@@ -48,7 +48,7 @@ public class AbstractMethodCallProxyTest {
         assertThat(auxiliaryType.getName(), is(auxiliaryTypeName));
         verify(methodAccessorFactory).registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT);
         verifyNoMoreInteractions(methodAccessorFactory);
-        verifyZeroInteractions(specialMethodInvocation);
+        verifyNoMoreInteractions(specialMethodInvocation);
         assertThat(auxiliaryType.getModifiers(), is(Opcodes.ACC_SYNTHETIC));
         assertThat(Callable.class.isAssignableFrom(auxiliaryType), is(true));
         assertThat(Runnable.class.isAssignableFrom(auxiliaryType), is(true));

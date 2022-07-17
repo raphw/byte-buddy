@@ -80,6 +80,6 @@ public class AgentBuilderRedefinitionListenableResubmissionImmediateMatcherTest 
 
         verify(left).matches(FOO, classLoader, module);
         verifyNoMoreInteractions(left);
-        verifyZeroInteractions(right);
+        verifyNoMoreInteractions(right);
     }
 }

@@ -13,8 +13,8 @@ public class RecordComponentAttributeAppenderForAnnotationsTest extends Abstract
     @Test
     public void testAnnotationAppenderNoRetention() throws Exception {
         new RecordComponentAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new Qux.Instance())).apply(recordComponentVisitor, recordComponentDescription, annotationValueFilter);
-        verifyZeroInteractions(recordComponentVisitor);
-        verifyZeroInteractions(recordComponentDescription);
+        verifyNoMoreInteractions(recordComponentVisitor);
+        verifyNoMoreInteractions(recordComponentDescription);
     }
 
     @Test
@@ -22,7 +22,7 @@ public class RecordComponentAttributeAppenderForAnnotationsTest extends Abstract
         new RecordComponentAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new Baz.Instance())).apply(recordComponentVisitor, recordComponentDescription, annotationValueFilter);
         verify(recordComponentVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(recordComponentVisitor);
-        verifyZeroInteractions(recordComponentDescription);
+        verifyNoMoreInteractions(recordComponentDescription);
     }
 
     @Test
@@ -30,7 +30,7 @@ public class RecordComponentAttributeAppenderForAnnotationsTest extends Abstract
         new RecordComponentAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new QuxBaz.Instance())).apply(recordComponentVisitor, recordComponentDescription, annotationValueFilter);
         verify(recordComponentVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(recordComponentVisitor);
-        verifyZeroInteractions(recordComponentDescription);
+        verifyNoMoreInteractions(recordComponentDescription);
     }
 
     @Test

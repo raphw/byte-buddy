@@ -24,6 +24,6 @@ public class SerializedConstantTest {
         Implementation.Context implementationContext = mock(Implementation.Context.class);
         SerializedConstant.of(FOO).apply(methodVisitor, implementationContext);
         verify(methodVisitor).visitLdcInsn(contains(FOO));
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

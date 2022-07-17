@@ -45,8 +45,8 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
                 ArgumentTypeResolver.INSTANCE.resolve(source, left, right);
         assertThat(resolution.isUnresolved(), is(true));
         verify(source, atLeast(1)).getParameters();
-        verifyZeroInteractions(left);
-        verifyZeroInteractions(right);
+        verifyNoMoreInteractions(left);
+        verifyNoMoreInteractions(right);
     }
 
     @Test

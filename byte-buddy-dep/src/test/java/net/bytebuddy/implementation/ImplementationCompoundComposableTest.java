@@ -50,7 +50,7 @@ public class ImplementationCompoundComposableTest {
         verifyNoMoreInteractions(forth);
         verify(second).andThen(third);
         verifyNoMoreInteractions(second);
-        verifyZeroInteractions(third);
+        verifyNoMoreInteractions(third);
     }
 
     @Test
@@ -65,6 +65,6 @@ public class ImplementationCompoundComposableTest {
         verifyNoMoreInteractions(forth);
         verify(second).andThen(third);
         verifyNoMoreInteractions(second);
-        verifyZeroInteractions(third);
+        verifyNoMoreInteractions(third);
     }
 }

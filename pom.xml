@@ -54,6 +54,7 @@
         <bytebuddy.integration>false</bytebuddy.integration>
         <bytebuddy.experimental>false</bytebuddy.experimental>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.outputTimestamp>10</project.build.outputTimestamp>
         <sourcecode.main.version>1.5</sourcecode.main.version>
         <sourcecode.test.version>1.6</sourcecode.test.version>
         <bytecode.main.version>1.5</bytecode.main.version>
@@ -62,40 +63,41 @@
         <asm.url>https://asm.ow2.io</asm.url>
         <nexus.url>https://s01.oss.sonatype.org</nexus.url>
         <version.asm>9.3</version.asm>
-        <jna.version>5.8.0</jna.version>
+        <jna.version>5.12.1</jna.version>
         <version.junit>4.13.2</version.junit>
-        <version.mockito>2.23.0</version.mockito>
-        <version.plugin.clean>3.0.0</version.plugin.clean>
-        <version.plugin.bundle>3.5.0</version.plugin.bundle>
-        <version.plugin.compiler>3.8.0</version.plugin.compiler>
-        <version.plugin.install>2.5.2</version.plugin.install>
-        <version.plugin.deploy>2.8.2</version.plugin.deploy>
-        <version.plugin.staging>1.6.8</version.plugin.staging>
+        <version.mockito>4.6.1</version.mockito>
+        <version.plugin.clean>3.2.0</version.plugin.clean>
+        <version.plugin.bundle>5.1.7</version.plugin.bundle>
+        <version.plugin.compiler>3.10.1</version.plugin.compiler>
+        <version.plugin.install>3.0.0-M1</version.plugin.install>
+        <version.plugin.deploy>3.0.0-M2</version.plugin.deploy>
+        <version.plugin.staging>1.6.13</version.plugin.staging>
         <version.plugin.javadoc>3.3.1</version.plugin.javadoc>
         <version.plugin.source>3.0.1</version.plugin.source>
         <version.plugin.shade>3.3.0</version.plugin.shade>
         <version.plugin.gpg>1.6</version.plugin.gpg>
-        <version.plugin.jxr>2.5</version.plugin.jxr>
+        <version.plugin.jxr>3.2.0</version.plugin.jxr>
         <version.plugin.buildhelp>1.12</version.plugin.buildhelp>
-        <version.plugin.jar>3.0.2</version.plugin.jar>
-        <version.plugin.site>3.8.2</version.plugin.site>
+        <version.plugin.jar>3.2.2</version.plugin.jar>
+        <version.plugin.site>4.0.0-M2</version.plugin.site>
         <version.plugin.exec>1.6.0</version.plugin.exec>
-        <version.plugin.plugin>3.6.0</version.plugin.plugin>
-        <version.plugin.release>2.5.3</version.plugin.release>
-        <version.plugin.resources>3.0.2</version.plugin.resources>
-        <version.plugin.surefire>3.0.0-M5</version.plugin.surefire>
-        <version.plugin.pitest>1.2.0</version.plugin.pitest>
-        <version.plugin.animal-sniffer>1.16</version.plugin.animal-sniffer>
-        <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
-        <version.plugin.jacoco>0.8.6</version.plugin.jacoco>
+        <version.plugin.plugin>3.6.4</version.plugin.plugin>
+        <version.plugin.release>3.0.0-M6</version.plugin.release>
+        <version.plugin.resources>3.2.0</version.plugin.resources>
+        <version.plugin.surefire>3.0.0-M7</version.plugin.surefire>
+        <version.plugin.pitest>1.9.2</version.plugin.pitest>
+        <version.plugin.animal-sniffer>1.21</version.plugin.animal-sniffer>
+        <version.plugin.enforcer>3.1.0</version.plugin.enforcer>
+        <version.plugin.jacoco>0.8.8</version.plugin.jacoco>
         <version.plugin.coveralls>4.3.0</version.plugin.coveralls>
-        <version.plugin.checkstyle>2.17</version.plugin.checkstyle>
-        <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
+        <version.plugin.checkstyle>3.1.2</version.plugin.checkstyle>
+        <version.plugin.jitwatch>1.1</version.plugin.jitwatch>
         <version.plugin.clirr>2.8</version.plugin.clirr>
-        <version.plugin.spotbugs>4.2.0</version.plugin.spotbugs>
-        <version.plugin.modulemaker>1.7</version.plugin.modulemaker>
-        <version.plugin.license>3.0</version.plugin.license>
+        <version.plugin.spotbugs>4.7.1.0</version.plugin.spotbugs>
+        <version.plugin.modulemaker>1.8-SNAPSHOT</version.plugin.modulemaker>
+        <version.plugin.license>4.2.rc3</version.plugin.license>
         <version.plugin.japicmp>0.15.3</version.plugin.japicmp>
+        <version.checkstyle>9.3</version.checkstyle>
         <version.android.sdk>4.1.1.4</version.android.sdk>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
         <version.utility.jsr305>3.0.2</version.utility.jsr305>
@@ -135,7 +137,6 @@
         <connection>scm:git:${repository.url}</connection>
         <developerConnection>scm:git:${repository.url}</developerConnection>
         <url>${repository.url}</url>
-        <tag>HEAD</tag>
     </scm>
 
     <dependencies>
@@ -401,6 +402,7 @@
             </activation>
             <properties>
                 <version.asm.deprecated>7.1</version.asm.deprecated>
+                <version.plugin.clean>3.0.0</version.plugin.clean>
                 <version.plugin.bundle>2.5.4</version.plugin.bundle>
                 <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
                 <version.plugin.compiler>3.6.2</version.plugin.compiler>
@@ -458,6 +460,7 @@
                 <jdk>1.7</jdk>
             </activation>
             <properties>
+                <version.plugin.clean>3.1.0</version.plugin.clean>
                 <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
                 <version.plugin.javadoc>3.2.0</version.plugin.javadoc>
                 <version.plugin.japicmp>0.13.1</version.plugin.japicmp>
@@ -896,6 +899,13 @@
                                 </configuration>
                             </execution>
                         </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.puppycrawl.tools</groupId>
+                                <artifactId>checkstyle</artifactId>
+                                <version>${version.checkstyle}</version>
+                            </dependency>
+                        </dependencies>
                     </plugin>
                     <!-- Check API compatibility. -->
                     <plugin>
@@ -917,6 +927,13 @@
                                 </configuration>
                             </execution>
                         </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.ow2.asm</groupId>
+                                <artifactId>asm</artifactId>
+                                <version>${version.asm}</version>
+                            </dependency>
+                        </dependencies>
                     </plugin>
                     <!-- Make sure that Byte Buddy does never depend on ASM's tree API. -->
                     <plugin>

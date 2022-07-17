@@ -101,7 +101,7 @@ public class TypeWriterRecordComponentPoolRecordTest {
         record.apply(recordComponentVisitor, annotationValueFilterFactory);
         verify(recordComponentAttributeAppender).apply(recordComponentVisitor, recordComponentDescription, valueFilter);
         verifyNoMoreInteractions(recordComponentAttributeAppender);
-        verifyZeroInteractions(recordComponentVisitor);
+        verifyNoMoreInteractions(recordComponentVisitor);
     }
 
     @Test

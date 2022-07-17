@@ -71,8 +71,8 @@ public class PrimitiveWideningDelegateTrivialTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(implementationContext);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(implementationContext);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test

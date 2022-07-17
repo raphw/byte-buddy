@@ -84,7 +84,7 @@ public class PrimitiveWideningDelegateNontrivialTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test

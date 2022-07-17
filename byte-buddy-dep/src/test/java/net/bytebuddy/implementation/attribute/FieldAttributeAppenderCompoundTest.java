@@ -18,6 +18,6 @@ public class FieldAttributeAppenderCompoundTest extends AbstractFieldAttributeAp
         verifyNoMoreInteractions(first);
         verify(second).apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verifyNoMoreInteractions(second);
-        verifyZeroInteractions(instrumentedType);
+        verifyNoMoreInteractions(instrumentedType);
     }
 }

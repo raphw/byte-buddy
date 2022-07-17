@@ -30,6 +30,6 @@ public class MethodAttributeAppenderFactoryCompoundTest extends AbstractMethodAt
         verifyNoMoreInteractions(first);
         verify(second).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(second);
-        verifyZeroInteractions(instrumentedType);
+        verifyNoMoreInteractions(instrumentedType);
     }
 }

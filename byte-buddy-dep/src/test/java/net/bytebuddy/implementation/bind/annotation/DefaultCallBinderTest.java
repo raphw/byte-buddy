@@ -116,7 +116,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(source.isConstructor()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
-        verifyZeroInteractions(implementationTarget);
+        verifyNoMoreInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(false));
     }
 
@@ -127,7 +127,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(annotation.nullIfImpossible()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
-        verifyZeroInteractions(implementationTarget);
+        verifyNoMoreInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(true));
     }
 }

@@ -117,9 +117,9 @@ public class TypeWriterMethodPoolRecordTest {
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.SKIPPED));
         assertThat(record.getMethod(), is(methodDescription));
         record.apply(classVisitor, implementationContext, annotationValueFilterFactory);
-        verifyZeroInteractions(classVisitor);
-        verifyZeroInteractions(implementationContext);
-        verifyZeroInteractions(methodAttributeAppender);
+        verifyNoMoreInteractions(classVisitor);
+        verifyNoMoreInteractions(implementationContext);
+        verifyNoMoreInteractions(methodAttributeAppender);
     }
 
     @Test
@@ -151,7 +151,7 @@ public class TypeWriterMethodPoolRecordTest {
         verifyNoMoreInteractions(classVisitor);
         verify(methodVisitor).visitEnd();
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
     }
@@ -164,9 +164,9 @@ public class TypeWriterMethodPoolRecordTest {
                 methodAttributeAppender,
                 Visibility.PUBLIC);
         record.applyHead(methodVisitor);
-        verifyZeroInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
-        verifyZeroInteractions(methodAttributeAppender);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyNoMoreInteractions(implementationContext);
+        verifyNoMoreInteractions(methodAttributeAppender);
     }
 
     @Test
@@ -177,8 +177,8 @@ public class TypeWriterMethodPoolRecordTest {
                 methodAttributeAppender,
                 Visibility.PUBLIC);
         record.applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
-        verifyZeroInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyNoMoreInteractions(implementationContext);
         verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
     }
 
@@ -196,7 +196,7 @@ public class TypeWriterMethodPoolRecordTest {
         verify(methodVisitor).visitParameter(FOO, MODIFIERS);
         verify(methodVisitor).visitEnd();
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
     }
@@ -206,7 +206,7 @@ public class TypeWriterMethodPoolRecordTest {
         new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription,
                 methodAttributeAppender,
                 Visibility.PUBLIC).applyAttributes(methodVisitor, annotationValueFilterFactory);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
         verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
     }
 
@@ -241,7 +241,7 @@ public class TypeWriterMethodPoolRecordTest {
         verify(annotationVisitor).visit(null, FOO);
         verify(annotationVisitor).visitEnd();
         verifyNoMoreInteractions(annotationVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
     }
@@ -261,8 +261,8 @@ public class TypeWriterMethodPoolRecordTest {
         verify(annotationVisitor).visit(null, FOO);
         verify(annotationVisitor).visitEnd();
         verifyNoMoreInteractions(annotationVisitor);
-        verifyZeroInteractions(implementationContext);
-        verifyZeroInteractions(methodAttributeAppender);
+        verifyNoMoreInteractions(implementationContext);
+        verifyNoMoreInteractions(methodAttributeAppender);
     }
 
     @Test
@@ -273,8 +273,8 @@ public class TypeWriterMethodPoolRecordTest {
                 AnnotationValue.ForConstant.of(FOO),
                 methodAttributeAppender);
         record.applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
-        verifyZeroInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyNoMoreInteractions(implementationContext);
         verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
     }
@@ -299,7 +299,7 @@ public class TypeWriterMethodPoolRecordTest {
         verify(annotationVisitor).visit(null, FOO);
         verify(annotationVisitor).visitEnd();
         verifyNoMoreInteractions(annotationVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
     }
@@ -347,7 +347,7 @@ public class TypeWriterMethodPoolRecordTest {
         verify(methodVisitor).visitMaxs(ONE, TWO);
         verify(methodVisitor).visitEnd();
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
         verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
@@ -364,9 +364,9 @@ public class TypeWriterMethodPoolRecordTest {
                 Visibility.PUBLIC);
         record.applyHead(methodVisitor);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
-        verifyZeroInteractions(methodAttributeAppender);
-        verifyZeroInteractions(byteCodeAppender);
+        verifyNoMoreInteractions(implementationContext);
+        verifyNoMoreInteractions(methodAttributeAppender);
+        verifyNoMoreInteractions(byteCodeAppender);
     }
 
     @Test
@@ -380,7 +380,7 @@ public class TypeWriterMethodPoolRecordTest {
         record.applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitMaxs(ONE, TWO);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
         verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
@@ -404,7 +404,7 @@ public class TypeWriterMethodPoolRecordTest {
         verify(methodVisitor).visitMaxs(ONE, TWO);
         verify(methodVisitor).visitEnd();
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
         verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
@@ -426,7 +426,7 @@ public class TypeWriterMethodPoolRecordTest {
         verify(methodVisitor).visitMaxs(ONE * MULTIPLIER, TWO * MULTIPLIER);
         verify(methodVisitor).visitEnd();
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
         verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
         verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
@@ -472,7 +472,7 @@ public class TypeWriterMethodPoolRecordTest {
                 methodAttributeAppender).applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
         verify(delegate).applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
         verifyNoMoreInteractions(delegate);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test
@@ -484,7 +484,7 @@ public class TypeWriterMethodPoolRecordTest {
                 methodAttributeAppender).applyHead(methodVisitor);
         verify(delegate).applyHead(methodVisitor);
         verifyNoMoreInteractions(delegate);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test
@@ -496,8 +496,8 @@ public class TypeWriterMethodPoolRecordTest {
                 methodAttributeAppender).applyAttributes(methodVisitor, annotationValueFilterFactory);
         verify(delegate).applyAttributes(methodVisitor, annotationValueFilterFactory);
         verifyNoMoreInteractions(delegate);
-        verifyZeroInteractions(methodVisitor);
-        verifyZeroInteractions(annotationValueFilterFactory);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyNoMoreInteractions(annotationValueFilterFactory);
     }
 
     @Test
@@ -509,8 +509,8 @@ public class TypeWriterMethodPoolRecordTest {
                 methodAttributeAppender).applyCode(methodVisitor, implementationContext);
         verify(delegate).applyCode(methodVisitor, implementationContext);
         verifyNoMoreInteractions(delegate);
-        verifyZeroInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test

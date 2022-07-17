@@ -111,6 +111,6 @@ public class MethodOverrideMatcherTest extends AbstractElementMatcherTest<Method
         when(superTypeMethod.asSignatureToken()).thenReturn(otherToken);
         when(interfaceTypeMethod.asSignatureToken()).thenReturn(otherToken);
         assertThat(new MethodOverrideMatcher<MethodDescription>(typeMatcher).matches(methodDescription), is(false));
-        verifyZeroInteractions(typeMatcher);
+        verifyNoMoreInteractions(typeMatcher);
     }
 }

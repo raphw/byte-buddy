@@ -205,8 +205,8 @@ public class AnnotationAppenderDefaultTest {
         AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
         when(annotationDescription.getRetention()).thenReturn(RetentionPolicy.SOURCE);
         annotationAppender.append(annotationDescription, valueFilter);
-        verifyZeroInteractions(valueFilter);
-        verifyZeroInteractions(annotationVisitor);
+        verifyNoMoreInteractions(valueFilter);
+        verifyNoMoreInteractions(annotationVisitor);
     }
 
     @Test
@@ -216,8 +216,8 @@ public class AnnotationAppenderDefaultTest {
         AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
         when(annotationDescription.getRetention()).thenReturn(RetentionPolicy.SOURCE);
         annotationAppender.append(annotationDescription, valueFilter, 0, null);
-        verifyZeroInteractions(valueFilter);
-        verifyZeroInteractions(annotationVisitor);
+        verifyNoMoreInteractions(valueFilter);
+        verifyNoMoreInteractions(annotationVisitor);
     }
 
     @Retention(RetentionPolicy.RUNTIME)

@@ -66,9 +66,9 @@ public class AgentBuilderListenerTest {
     public void testNoOp() throws Exception {
         AgentBuilder.Listener.NoOp.INSTANCE.onDiscovery(FOO, classLoader, module, LOADED);
         AgentBuilder.Listener.NoOp.INSTANCE.onTransformation(typeDescription, classLoader, module, LOADED, dynamicType);
-        verifyZeroInteractions(dynamicType);
+        verifyNoMoreInteractions(dynamicType);
         AgentBuilder.Listener.NoOp.INSTANCE.onError(FOO, classLoader, module, LOADED, throwable);
-        verifyZeroInteractions(throwable);
+        verifyNoMoreInteractions(throwable);
         AgentBuilder.Listener.NoOp.INSTANCE.onIgnored(typeDescription, classLoader, module, LOADED);
         AgentBuilder.Listener.NoOp.INSTANCE.onComplete(FOO, classLoader, module, LOADED);
     }
@@ -78,9 +78,9 @@ public class AgentBuilderListenerTest {
         AgentBuilder.Listener listener = new PseudoAdapter();
         listener.onDiscovery(FOO, classLoader, module, LOADED);
         listener.onTransformation(typeDescription, classLoader, module, LOADED, dynamicType);
-        verifyZeroInteractions(dynamicType);
+        verifyNoMoreInteractions(dynamicType);
         listener.onError(FOO, classLoader, module, LOADED, throwable);
-        verifyZeroInteractions(throwable);
+        verifyNoMoreInteractions(throwable);
         listener.onIgnored(typeDescription, classLoader, module, LOADED);
         listener.onComplete(FOO, classLoader, module, LOADED);
     }
@@ -237,7 +237,7 @@ public class AgentBuilderListenerTest {
         listener.onError(FOO, classLoader, module, LOADED, throwable);
         listener.onIgnored(typeDescription, classLoader, module, LOADED);
         listener.onComplete(FOO, classLoader, module, LOADED);
-        verifyZeroInteractions(delegate);
+        verifyNoMoreInteractions(delegate);
     }
 
     @Test
@@ -272,7 +272,7 @@ public class AgentBuilderListenerTest {
         listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, LOADED, mock(DynamicType.class));
         verify(source).isNamed();
         verifyNoMoreInteractions(source);
-        verifyZeroInteractions(target);
+        verifyNoMoreInteractions(target);
     }
 
     @Test
@@ -286,7 +286,7 @@ public class AgentBuilderListenerTest {
         verify(source).isNamed();
         verify(source).canRead(target);
         verifyNoMoreInteractions(source);
-        verifyZeroInteractions(target);
+        verifyNoMoreInteractions(target);
     }
 
     @Test
@@ -335,7 +335,7 @@ public class AgentBuilderListenerTest {
         listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, LOADED, mock(DynamicType.class));
         verify(source).isNamed();
         verifyNoMoreInteractions(source);
-        verifyZeroInteractions(target);
+        verifyNoMoreInteractions(target);
     }
 
     @Test

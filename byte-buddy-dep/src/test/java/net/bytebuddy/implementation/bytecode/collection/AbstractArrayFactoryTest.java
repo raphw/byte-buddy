@@ -48,7 +48,7 @@ public abstract class AbstractArrayFactoryTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     protected void testCreationUsing(Class<?> componentType, int storageOpcode) throws Exception {

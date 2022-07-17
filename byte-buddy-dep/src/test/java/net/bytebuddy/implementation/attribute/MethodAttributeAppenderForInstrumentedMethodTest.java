@@ -61,7 +61,7 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
         when(methodDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
         when(methodDescription.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
         methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test
@@ -105,7 +105,7 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
         when(methodDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
         when(methodDescription.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
         methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test
@@ -153,7 +153,7 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
         when(methodDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
         when(methodDescription.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
         methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test
@@ -203,7 +203,7 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
         when(methodDescription.getExceptionTypes()).thenReturn(new TypeList.Generic.Explicit(simpleAnnotatedType));
         when(simpleAnnotatedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
         methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test
@@ -256,7 +256,7 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
         when(methodDescription.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
         when(simpleAnnotatedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
         methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test
@@ -312,7 +312,7 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
         when(methodDescription.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test
@@ -334,7 +334,7 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
                 null,
                 Type.getDescriptor(Baz.class),
                 true);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test
@@ -375,6 +375,6 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
         when(methodDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
         when(methodDescription.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
         methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
     }
 }

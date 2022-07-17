@@ -24,7 +24,7 @@ public class FailSafeMatcherTest extends AbstractElementMatcherTest<FailSafeMatc
     public void testMatch() throws Exception {
         when(elementMatcher.matches(target)).thenReturn(true);
         assertThat(new FailSafeMatcher<Object>(elementMatcher, false).matches(target), is(true));
-        verifyZeroInteractions(target);
+        verifyNoMoreInteractions(target);
         verify(elementMatcher).matches(target);
         verifyNoMoreInteractions(elementMatcher);
     }
@@ -33,7 +33,7 @@ public class FailSafeMatcherTest extends AbstractElementMatcherTest<FailSafeMatc
     public void testNoMatch() throws Exception {
         when(elementMatcher.matches(target)).thenReturn(false);
         assertThat(new FailSafeMatcher<Object>(elementMatcher, false).matches(target), is(false));
-        verifyZeroInteractions(target);
+        verifyNoMoreInteractions(target);
         verify(elementMatcher).matches(target);
         verifyNoMoreInteractions(elementMatcher);
     }
@@ -43,7 +43,7 @@ public class FailSafeMatcherTest extends AbstractElementMatcherTest<FailSafeMatc
     public void testMatchOnFailure() throws Exception {
         when(elementMatcher.matches(target)).thenThrow(RuntimeException.class);
         assertThat(new FailSafeMatcher<Object>(elementMatcher, true).matches(target), is(true));
-        verifyZeroInteractions(target);
+        verifyNoMoreInteractions(target);
         verify(elementMatcher).matches(target);
         verifyNoMoreInteractions(elementMatcher);
     }
@@ -53,7 +53,7 @@ public class FailSafeMatcherTest extends AbstractElementMatcherTest<FailSafeMatc
     public void testNoMatchOnFailure() throws Exception {
         when(elementMatcher.matches(target)).thenThrow(RuntimeException.class);
         assertThat(new FailSafeMatcher<Object>(elementMatcher, false).matches(target), is(false));
-        verifyZeroInteractions(target);
+        verifyNoMoreInteractions(target);
         verify(elementMatcher).matches(target);
         verifyNoMoreInteractions(elementMatcher);
     }

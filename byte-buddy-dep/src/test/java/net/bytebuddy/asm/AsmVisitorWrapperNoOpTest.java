@@ -13,7 +13,7 @@ import org.objectweb.asm.ClassVisitor;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class AsmVisitorWrapperNoOpTest {
 
@@ -30,7 +30,7 @@ public class AsmVisitorWrapperNoOpTest {
                 new MethodList.Empty<MethodDescription>(),
                 IGNORED,
                 IGNORED), is(classVisitor));
-        verifyZeroInteractions(classVisitor);
+        verifyNoMoreInteractions(classVisitor);
     }
 
     @Test

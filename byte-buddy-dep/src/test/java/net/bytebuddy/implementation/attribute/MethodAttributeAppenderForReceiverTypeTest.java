@@ -14,9 +14,9 @@ public class MethodAttributeAppenderForReceiverTypeTest extends AbstractMethodAt
     public void testReceiverTypeAnnotationNoRetention() throws Exception {
         when(simpleAnnotatedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
         new MethodAttributeAppender.ForReceiverType(simpleAnnotatedType).apply(methodVisitor, methodDescription, annotationValueFilter);
-        verifyZeroInteractions(methodVisitor);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(methodDescription);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodDescription);
     }
 
     @Test
@@ -29,7 +29,7 @@ public class MethodAttributeAppenderForReceiverTypeTest extends AbstractMethodAt
                 Type.getDescriptor(Baz.class),
                 true);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(methodDescription);
+        verifyNoMoreInteractions(methodDescription);
     }
 
     @Test
@@ -42,6 +42,6 @@ public class MethodAttributeAppenderForReceiverTypeTest extends AbstractMethodAt
                 Type.getDescriptor(QuxBaz.class),
                 false);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(methodDescription);
+        verifyNoMoreInteractions(methodDescription);
     }
 }

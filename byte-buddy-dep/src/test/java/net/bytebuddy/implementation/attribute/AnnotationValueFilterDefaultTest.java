@@ -31,14 +31,14 @@ public class AnnotationValueFilterDefaultTest {
         AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
         MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         assertThat(AnnotationValueFilter.Default.APPEND_DEFAULTS.isRelevant(annotationDescription, methodDescription), is(true));
-        verifyZeroInteractions(annotationDescription);
-        verifyZeroInteractions(methodDescription);
+        verifyNoMoreInteractions(annotationDescription);
+        verifyNoMoreInteractions(methodDescription);
     }
 
     @Test
     public void testSkipDefaultsNoDefault() throws Exception {
         assertThat(AnnotationValueFilter.Default.SKIP_DEFAULTS.isRelevant(annotationDescription, methodDescription), is(true));
-        verifyZeroInteractions(annotationDescription);
+        verifyNoMoreInteractions(annotationDescription);
         verify(methodDescription).getDefaultValue();
         verifyNoMoreInteractions(methodDescription);
     }

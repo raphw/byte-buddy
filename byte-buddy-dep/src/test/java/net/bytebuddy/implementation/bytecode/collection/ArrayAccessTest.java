@@ -66,7 +66,7 @@ public class ArrayAccessTest {
         assertThat(size.getMaximalSize(), is(typeDescription.getStackSize().getSize()));
         verify(methodVisitor).visitInsn(loadOpcode);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test
@@ -78,6 +78,6 @@ public class ArrayAccessTest {
         assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitInsn(storeOpcode);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 }

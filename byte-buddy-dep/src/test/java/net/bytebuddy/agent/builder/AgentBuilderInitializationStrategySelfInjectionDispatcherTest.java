@@ -103,7 +103,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
         verify(builder).initializer(matchesPrototype(new NexusAccessor.InitializationAppender(IDENTIFIER)));
         verifyNoMoreInteractions(builder);
-        verifyZeroInteractions(appendedBuilder);
+        verifyNoMoreInteractions(appendedBuilder);
     }
 
     @Test
@@ -113,7 +113,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
         verify(builder).initializer(matchesPrototype(new NexusAccessor.InitializationAppender(IDENTIFIER)));
         verifyNoMoreInteractions(builder);
-        verifyZeroInteractions(appendedBuilder);
+        verifyNoMoreInteractions(appendedBuilder);
     }
 
     @Test
@@ -123,7 +123,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
         verify(builder).initializer(matchesPrototype(new NexusAccessor.InitializationAppender(IDENTIFIER)));
         verifyNoMoreInteractions(builder);
-        verifyZeroInteractions(appendedBuilder);
+        verifyNoMoreInteractions(appendedBuilder);
     }
 
     @Test
@@ -169,7 +169,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     public void testLazy() throws Exception {
         AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Lazy.Dispatcher(nexusAccessor, IDENTIFIER);
         dispatcher.register(dynamicType, Qux.class.getClassLoader(), Qux.class.getProtectionDomain(), injectionStrategy);
-        verifyZeroInteractions(classInjector, dependentInitializer, independentInitializer);
+        verifyNoMoreInteractions(classInjector, dependentInitializer, independentInitializer);
         Nexus.initialize(Qux.class, IDENTIFIER);
         Map<TypeDescription, byte[]> injected = new HashMap<TypeDescription, byte[]>();
         injected.put(independent, BAR);

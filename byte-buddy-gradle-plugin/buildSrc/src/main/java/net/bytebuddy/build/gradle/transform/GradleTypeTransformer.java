@@ -95,8 +95,12 @@ public class GradleTypeTransformer {
                             ClassReader reader = new ClassReader(jarInputStream);
                             ClassWriter writer = new ClassWriter(0);
                             reader.accept(new ClassRemapper(writer, new SimpleRemapper(names)), 0);
-                            jarOutputStream.putNextEntry(new JarEntry(entry.getName()));
-                            jarOutputStream.write(writer.toByteArray());
+                            JarEntry transformed = new JarEntry(entry);
+                            byte[] classFile = writer.toByteArray();
+                            transformed.setSize(classFile.length);
+                            transformed.setCompressedSize(-1);
+                            jarOutputStream.putNextEntry(transformed);
+                            jarOutputStream.write(classFile);
                         } else {
                             jarOutputStream.putNextEntry(entry);
                             byte[] buffer = new byte[1024];

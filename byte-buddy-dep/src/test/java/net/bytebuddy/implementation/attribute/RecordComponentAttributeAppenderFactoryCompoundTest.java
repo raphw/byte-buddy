@@ -30,6 +30,6 @@ public class RecordComponentAttributeAppenderFactoryCompoundTest extends Abstrac
         verifyNoMoreInteractions(first);
         verify(second).apply(recordComponentVisitor, recordComponentDescription, annotationValueFilter);
         verifyNoMoreInteractions(second);
-        verifyZeroInteractions(instrumentedType);
+        verifyNoMoreInteractions(instrumentedType);
     }
 }

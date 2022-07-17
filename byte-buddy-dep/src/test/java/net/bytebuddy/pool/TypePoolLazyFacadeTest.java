@@ -42,7 +42,7 @@ public class TypePoolLazyFacadeTest {
     public void testDoesNotQueryActualTypePoolForName() throws Exception {
         TypePool typePool = new TypePool.LazyFacade(this.typePool);
         assertThat(typePool.describe(FOO).resolve().getName(), is(FOO));
-        verifyZeroInteractions(this.typePool);
+        verifyNoMoreInteractions(this.typePool);
     }
 
     @Test

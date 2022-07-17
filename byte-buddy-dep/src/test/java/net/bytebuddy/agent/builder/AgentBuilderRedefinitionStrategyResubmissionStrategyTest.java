@@ -257,7 +257,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verifyNoMoreInteractions(instrumentation);
-        verifyZeroInteractions(rawMatcher);
+        verifyNoMoreInteractions(rawMatcher);
         verify(redefinitionBatchAllocator).batch(Collections.<Class<?>>emptyList());
         verifyNoMoreInteractions(redefinitionBatchAllocator);
         verify(listener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
@@ -310,7 +310,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verifyNoMoreInteractions(instrumentation);
-        verifyZeroInteractions(rawMatcher);
+        verifyNoMoreInteractions(rawMatcher);
         verify(redefinitionBatchAllocator).batch(Collections.<Class<?>>emptyList());
         verifyNoMoreInteractions(redefinitionBatchAllocator);
         verify(listener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
@@ -475,13 +475,13 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
         verifyNoMoreInteractions(resubmissionScheduler);
-        verifyZeroInteractions(instrumentation);
-        verifyZeroInteractions(rawMatcher);
+        verifyNoMoreInteractions(instrumentation);
+        verifyNoMoreInteractions(rawMatcher);
         verify(redefinitionBatchAllocator).batch(Collections.<Class<?>>emptyList());
         verifyNoMoreInteractions(redefinitionBatchAllocator);
         verify(listener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), true, error);
         verifyNoMoreInteractions(listener);
-        verifyZeroInteractions(resubmissionOnErrorMatcher);
+        verifyNoMoreInteractions(resubmissionOnErrorMatcher);
     }
 
     @Test
@@ -523,13 +523,13 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
         verifyNoMoreInteractions(resubmissionScheduler);
-        verifyZeroInteractions(instrumentation);
-        verifyZeroInteractions(rawMatcher);
+        verifyNoMoreInteractions(instrumentation);
+        verifyNoMoreInteractions(rawMatcher);
         verify(redefinitionBatchAllocator).batch(Collections.<Class<?>>emptyList());
         verifyNoMoreInteractions(redefinitionBatchAllocator);
         verify(listener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), true, error);
         verifyNoMoreInteractions(listener);
-        verifyZeroInteractions(resubmissionOnErrorMatcher);
+        verifyNoMoreInteractions(resubmissionOnErrorMatcher);
     }
 
     @Test
@@ -570,8 +570,8 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
         verifyNoMoreInteractions(resubmissionScheduler);
-        verifyZeroInteractions(instrumentation);
-        verifyZeroInteractions(rawMatcher);
+        verifyNoMoreInteractions(instrumentation);
+        verifyNoMoreInteractions(rawMatcher);
         verify(redefinitionBatchAllocator).batch(Collections.<Class<?>>emptyList());
         verifyNoMoreInteractions(redefinitionBatchAllocator);
         verify(listener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
@@ -619,8 +619,8 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
         verifyNoMoreInteractions(resubmissionScheduler);
-        verifyZeroInteractions(instrumentation);
-        verifyZeroInteractions(rawMatcher);
+        verifyNoMoreInteractions(instrumentation);
+        verifyNoMoreInteractions(rawMatcher);
         verify(redefinitionBatchAllocator).batch(Collections.<Class<?>>emptyList());
         verifyNoMoreInteractions(redefinitionBatchAllocator);
         verify(listener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
@@ -843,7 +843,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testSchedulerNoOp() throws Exception {
         Runnable runnable = mock(Runnable.class);
         AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.NoOp.INSTANCE.schedule(runnable);
-        verifyZeroInteractions(runnable);
+        verifyNoMoreInteractions(runnable);
         assertThat(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.NoOp.INSTANCE.isAlive(), is(false));
     }
 

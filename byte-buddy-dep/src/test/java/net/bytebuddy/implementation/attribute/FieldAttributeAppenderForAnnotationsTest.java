@@ -13,8 +13,8 @@ public class FieldAttributeAppenderForAnnotationsTest extends AbstractFieldAttri
     @Test
     public void testAnnotationAppenderNoRetention() throws Exception {
         new FieldAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new Qux.Instance())).apply(fieldVisitor, fieldDescription, annotationValueFilter);
-        verifyZeroInteractions(fieldVisitor);
-        verifyZeroInteractions(fieldDescription);
+        verifyNoMoreInteractions(fieldVisitor);
+        verifyNoMoreInteractions(fieldDescription);
     }
 
     @Test
@@ -22,7 +22,7 @@ public class FieldAttributeAppenderForAnnotationsTest extends AbstractFieldAttri
         new FieldAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new Baz.Instance())).apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(fieldVisitor);
-        verifyZeroInteractions(fieldDescription);
+        verifyNoMoreInteractions(fieldDescription);
     }
 
     @Test
@@ -30,7 +30,7 @@ public class FieldAttributeAppenderForAnnotationsTest extends AbstractFieldAttri
         new FieldAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new QuxBaz.Instance())).apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(fieldVisitor);
-        verifyZeroInteractions(fieldDescription);
+        verifyNoMoreInteractions(fieldDescription);
     }
 
     @Test

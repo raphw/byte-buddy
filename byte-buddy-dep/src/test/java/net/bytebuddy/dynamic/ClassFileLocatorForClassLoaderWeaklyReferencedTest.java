@@ -57,7 +57,7 @@ public class ClassFileLocatorForClassLoaderWeaklyReferencedTest {
     @Test
     public void testClose() throws Exception {
         ClassFileLocator.ForClassLoader.WeaklyReferenced.of(classLoader).close();
-        verifyZeroInteractions(classLoader);
+        verifyNoMoreInteractions(classLoader);
     }
 
     private abstract static class ClosableClassLoader extends ClassLoader implements Closeable {

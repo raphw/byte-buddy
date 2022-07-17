@@ -86,6 +86,6 @@ public class ClassFileLocatorForModuleTest {
     @Test
     public void testClose() throws Exception {
         new ClassFileLocator.ForModule(module).close();
-        verifyZeroInteractions(module);
+        verifyNoMoreInteractions(module);
     }
 }

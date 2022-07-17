@@ -13,7 +13,7 @@ import org.mockito.Mock;
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class ClassFileLocatorForModuleWeaklyReferencedTest {
@@ -106,6 +106,6 @@ public class ClassFileLocatorForModuleWeaklyReferencedTest {
     @Test
     public void testClose() throws Exception {
         new ClassFileLocator.ForModule.WeaklyReferenced(module).close();
-        verifyZeroInteractions(module);
+        verifyNoMoreInteractions(module);
     }
 }

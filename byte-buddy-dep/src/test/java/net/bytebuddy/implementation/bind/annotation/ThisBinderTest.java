@@ -89,7 +89,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
         assertThat(parameterBinding.isValid(), is(true));
         verify(annotation).optional();
         verify(source, atLeast(1)).isStatic();
-        verifyZeroInteractions(assigner);
+        verifyNoMoreInteractions(assigner);
     }
 
     @Test

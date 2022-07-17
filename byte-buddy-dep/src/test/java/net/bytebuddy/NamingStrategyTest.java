@@ -53,7 +53,7 @@ public class NamingStrategyTest {
         assertThat(namingStrategy.subclass(typeDescription), equalTo(BAR + "." + JAVA_QUX + "$" + FOO));
         verify(typeDescription).asErasure();
         verifyNoMoreInteractions(typeDescription);
-        verifyZeroInteractions(rawTypeDescription);
+        verifyNoMoreInteractions(rawTypeDescription);
         verify(baseNameResolver).resolve(rawTypeDescription);
         verifyNoMoreInteractions(baseNameResolver);
     }
@@ -65,7 +65,7 @@ public class NamingStrategyTest {
         assertThat(namingStrategy.subclass(typeDescription), equalTo(JAVA_QUX + "$" + FOO));
         verify(typeDescription).asErasure();
         verifyNoMoreInteractions(typeDescription);
-        verifyZeroInteractions(rawTypeDescription);
+        verifyNoMoreInteractions(rawTypeDescription);
         verify(baseNameResolver).resolve(rawTypeDescription);
         verifyNoMoreInteractions(baseNameResolver);
     }
@@ -106,7 +106,7 @@ public class NamingStrategyTest {
         assertThat(namingStrategy.subclass(typeDescription), startsWith(BAR + "." + JAVA_QUX + "$" + FOO + "$"));
         verify(typeDescription).asErasure();
         verifyNoMoreInteractions(typeDescription);
-        verifyZeroInteractions(rawTypeDescription);
+        verifyNoMoreInteractions(rawTypeDescription);
         verify(baseNameResolver).resolve(rawTypeDescription);
         verifyNoMoreInteractions(baseNameResolver);
     }
@@ -118,7 +118,7 @@ public class NamingStrategyTest {
         assertThat(namingStrategy.subclass(typeDescription), startsWith(JAVA_QUX + "$" + FOO + "$"));
         verify(typeDescription).asErasure();
         verifyNoMoreInteractions(typeDescription);
-        verifyZeroInteractions(rawTypeDescription);
+        verifyNoMoreInteractions(rawTypeDescription);
         verify(baseNameResolver).resolve(rawTypeDescription);
         verifyNoMoreInteractions(baseNameResolver);
     }

@@ -49,7 +49,7 @@ public class ClassFileLocatorCompoundTest {
         assertThat(new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).locate(FOO), is(legal));
         verify(classFileLocator).locate(FOO);
         verifyNoMoreInteractions(classFileLocator);
-        verifyZeroInteractions(otherClassFileLocator);
+        verifyNoMoreInteractions(otherClassFileLocator);
     }
 
     @Test

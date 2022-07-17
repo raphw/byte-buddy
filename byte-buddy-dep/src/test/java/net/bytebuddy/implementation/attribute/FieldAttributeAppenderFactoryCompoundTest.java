@@ -30,6 +30,6 @@ public class FieldAttributeAppenderFactoryCompoundTest extends AbstractFieldAttr
         verifyNoMoreInteractions(first);
         verify(second).apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verifyNoMoreInteractions(second);
-        verifyZeroInteractions(instrumentedType);
+        verifyNoMoreInteractions(instrumentedType);
     }
 }

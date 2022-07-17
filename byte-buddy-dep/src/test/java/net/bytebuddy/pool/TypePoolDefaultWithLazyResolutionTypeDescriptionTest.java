@@ -59,7 +59,7 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
         TypePool typePool = TypePool.Default.WithLazyResolution.of(classFileLocator);
         TypePool.Resolution resolution = typePool.describe(Object.class.getName());
         assertThat(resolution.resolve().getName(), CoreMatchers.is(TypeDescription.OBJECT.getName()));
-        verifyZeroInteractions(classFileLocator);
+        verifyNoMoreInteractions(classFileLocator);
     }
 
     @Test

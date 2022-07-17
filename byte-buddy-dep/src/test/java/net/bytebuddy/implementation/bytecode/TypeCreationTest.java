@@ -45,7 +45,7 @@ public class TypeCreationTest {
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitTypeInsn(Opcodes.NEW, FOO);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test(expected = IllegalArgumentException.class)

@@ -42,7 +42,7 @@ public class AgentBuilderRawMatcherDisjunctionTest {
         assertThat(rawMatcher.matches(typeDescription, classLoader, module, Foo.class, protectionDomain), is(true));
         verify(left).matches(typeDescription, classLoader, module, Foo.class, protectionDomain);
         verifyNoMoreInteractions(left);
-        verifyZeroInteractions(right);
+        verifyNoMoreInteractions(right);
     }
 
     @Test
@@ -53,7 +53,7 @@ public class AgentBuilderRawMatcherDisjunctionTest {
         assertThat(rawMatcher.matches(typeDescription, classLoader, module, Foo.class, protectionDomain), is(true));
         verify(left).matches(typeDescription, classLoader, module, Foo.class, protectionDomain);
         verifyNoMoreInteractions(left);
-        verifyZeroInteractions(right);
+        verifyNoMoreInteractions(right);
     }
 
     @Test

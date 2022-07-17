@@ -48,7 +48,7 @@ public class AgentBuilderRawMatcherForElementMatchersTest {
         verify(moduleMatcher).matches(module);
         verifyNoMoreInteractions(moduleMatcher);
         verifyNoMoreInteractions(classLoaderMatcher);
-        verifyZeroInteractions(typeMatcher);
+        verifyNoMoreInteractions(typeMatcher);
     }
 
     @Test
@@ -60,7 +60,7 @@ public class AgentBuilderRawMatcherForElementMatchersTest {
         verifyNoMoreInteractions(moduleMatcher);
         verify(classLoaderMatcher).matches(classLoader);
         verifyNoMoreInteractions(classLoaderMatcher);
-        verifyZeroInteractions(typeMatcher);
+        verifyNoMoreInteractions(typeMatcher);
     }
 
     @Test
@@ -70,7 +70,7 @@ public class AgentBuilderRawMatcherForElementMatchersTest {
                 .matches(typeDescription, classLoader, module, Object.class, protectionDomain), is(false));
         verify(moduleMatcher).matches(module);
         verifyNoMoreInteractions(moduleMatcher);
-        verifyZeroInteractions(classLoaderMatcher);
+        verifyNoMoreInteractions(classLoaderMatcher);
         verifyNoMoreInteractions(typeMatcher);
     }
 
@@ -98,7 +98,7 @@ public class AgentBuilderRawMatcherForElementMatchersTest {
         verifyNoMoreInteractions(moduleMatcher);
         verify(classLoaderMatcher).matches(classLoader);
         verifyNoMoreInteractions(classLoaderMatcher);
-        verifyZeroInteractions(typeMatcher);
+        verifyNoMoreInteractions(typeMatcher);
     }
 
     @Test
@@ -109,8 +109,8 @@ public class AgentBuilderRawMatcherForElementMatchersTest {
                 .matches(typeDescription, classLoader, module, Object.class, protectionDomain), is(false));
         verify(moduleMatcher).matches(module);
         verifyNoMoreInteractions(moduleMatcher);
-        verifyZeroInteractions(classLoaderMatcher);
-        verifyZeroInteractions(typeMatcher);
+        verifyNoMoreInteractions(classLoaderMatcher);
+        verifyNoMoreInteractions(typeMatcher);
     }
 
     @Test
@@ -120,8 +120,8 @@ public class AgentBuilderRawMatcherForElementMatchersTest {
                 .matches(typeDescription, classLoader, module, Object.class, protectionDomain), is(false));
         verify(moduleMatcher).matches(module);
         verifyNoMoreInteractions(moduleMatcher);
-        verifyZeroInteractions(classLoaderMatcher);
-        verifyZeroInteractions(typeMatcher);
+        verifyNoMoreInteractions(classLoaderMatcher);
+        verifyNoMoreInteractions(typeMatcher);
     }
 
     @Test

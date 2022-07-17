@@ -28,7 +28,7 @@ public class VisibilityMatcherTest extends AbstractElementMatcherTest<Visibility
         assertThat(new VisibilityMatcher<ByteCodeElement>(typeDescription).matches(byteCodeElement), is(true));
         verify(byteCodeElement).isVisibleTo(typeDescription);
         verifyNoMoreInteractions(byteCodeElement);
-        verifyZeroInteractions(typeDescription);
+        verifyNoMoreInteractions(typeDescription);
     }
 
     @Test
@@ -37,6 +37,6 @@ public class VisibilityMatcherTest extends AbstractElementMatcherTest<Visibility
         assertThat(new VisibilityMatcher<ByteCodeElement>(typeDescription).matches(byteCodeElement), is(false));
         verify(byteCodeElement).isVisibleTo(typeDescription);
         verifyNoMoreInteractions(byteCodeElement);
-        verifyZeroInteractions(typeDescription);
+        verifyNoMoreInteractions(typeDescription);
     }
 }

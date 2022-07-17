@@ -70,7 +70,7 @@ public class IntegerConstantTest {
         assertThat(size.getMaximalSize(), is(1));
         pushType.verifyInstruction(methodVisitor, value);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     private enum PushType {

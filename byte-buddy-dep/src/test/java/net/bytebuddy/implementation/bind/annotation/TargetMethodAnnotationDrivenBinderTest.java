@@ -142,7 +142,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -165,9 +165,9 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 terminationHandler,
                 methodInvoker,
                 assigner).isValid(), is(false));
-        verifyZeroInteractions(assigner);
-        verifyZeroInteractions(implementationTarget);
-        verifyZeroInteractions(sourceMethod);
+        verifyNoMoreInteractions(assigner);
+        verifyNoMoreInteractions(implementationTarget);
+        verifyNoMoreInteractions(sourceMethod);
     }
 
     @Test
@@ -185,9 +185,9 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 terminationHandler,
                 methodInvoker,
                 assigner).isValid(), is(false));
-        verifyZeroInteractions(terminationHandler);
-        verifyZeroInteractions(assigner);
-        verifyZeroInteractions(methodInvoker);
+        verifyNoMoreInteractions(terminationHandler);
+        verifyNoMoreInteractions(assigner);
+        verifyNoMoreInteractions(methodInvoker);
     }
 
     @Test
@@ -207,8 +207,8 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 assigner).isValid(), is(false));
         verify(terminationHandler).resolve(assigner, typing, sourceMethod, targetMethod);
         verifyNoMoreInteractions(terminationHandler);
-        verifyZeroInteractions(assigner);
-        verifyZeroInteractions(methodInvoker);
+        verifyNoMoreInteractions(assigner);
+        verifyNoMoreInteractions(methodInvoker);
     }
 
     @Test
@@ -306,7 +306,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         StackManipulation.Size size = methodBinding.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
-        verifyZeroInteractions(methodVisitor);
+        verifyNoMoreInteractions(methodVisitor);
         verify(targetMethod, atLeast(1)).getDeclaredAnnotations();
         verify(firstParameter, atLeast(1)).getDeclaredAnnotations();
         verify(secondParameter, atLeast(1)).getDeclaredAnnotations();

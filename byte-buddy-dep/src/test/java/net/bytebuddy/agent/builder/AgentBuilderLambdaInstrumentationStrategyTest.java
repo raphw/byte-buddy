@@ -56,9 +56,9 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
         Instrumentation instrumentation = mock(Instrumentation.class);
         ClassFileTransformer classFileTransformer = mock(ClassFileTransformer.class);
         AgentBuilder.Default.LambdaInstrumentationStrategy.DISABLED.apply(byteBuddy, instrumentation, classFileTransformer);
-        verifyZeroInteractions(byteBuddy);
-        verifyZeroInteractions(instrumentation);
-        verifyZeroInteractions(classFileTransformer);
+        verifyNoMoreInteractions(byteBuddy);
+        verifyNoMoreInteractions(instrumentation);
+        verifyNoMoreInteractions(classFileTransformer);
     }
 
     @Test

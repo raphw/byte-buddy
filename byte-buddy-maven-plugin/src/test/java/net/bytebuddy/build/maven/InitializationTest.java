@@ -46,7 +46,7 @@ public class InitializationTest {
         Initialization initialization = new Initialization();
         initialization.entryPoint = EntryPoint.Default.REBASE.name();
         assertThat(initialization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR), is((EntryPoint) EntryPoint.Default.REBASE));
-        verifyZeroInteractions(classLoaderResolver);
+        verifyNoMoreInteractions(classLoaderResolver);
     }
 
     @Test
@@ -54,7 +54,7 @@ public class InitializationTest {
         Initialization initialization = new Initialization();
         initialization.entryPoint = EntryPoint.Default.REDEFINE.name();
         assertThat(initialization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR), is((EntryPoint) EntryPoint.Default.REDEFINE));
-        verifyZeroInteractions(classLoaderResolver);
+        verifyNoMoreInteractions(classLoaderResolver);
     }
 
     @Test
@@ -62,7 +62,7 @@ public class InitializationTest {
         Initialization initialization = new Initialization();
         initialization.entryPoint = EntryPoint.Default.REDEFINE_LOCAL.name();
         assertThat(initialization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR), is((EntryPoint) EntryPoint.Default.REDEFINE_LOCAL));
-        verifyZeroInteractions(classLoaderResolver);
+        verifyNoMoreInteractions(classLoaderResolver);
     }
 
     @Test
@@ -70,7 +70,7 @@ public class InitializationTest {
         Initialization initialization = new Initialization();
         initialization.entryPoint = EntryPoint.Default.DECORATE.name();
         assertThat(initialization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR), is((EntryPoint) EntryPoint.Default.DECORATE));
-        verifyZeroInteractions(classLoaderResolver);
+        verifyNoMoreInteractions(classLoaderResolver);
     }
 
     @Test
