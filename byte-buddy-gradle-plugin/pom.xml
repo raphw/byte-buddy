@@ -28,7 +28,6 @@
     -->
 
     <properties>
-        <version.plugin.antrun>3.1.0</version.plugin.antrun>
         <gradle.exec>gradlew</gradle.exec>
         <gradle.disabled>false</gradle.disabled>
         <!-- Actual values must be set via settings.xml or using command line arguments since they cannot be published. -->

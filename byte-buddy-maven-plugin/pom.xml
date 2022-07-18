@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -17,11 +18,16 @@
     <properties>
         <!-- Newer Maven versions require Java 1.7. -->
         <version.maven>3.8.6</version.maven>
-        <!-- Avoids using a vulnerable version of the Plexus utilities during build. -->
-        <version.maven.plexus>3.4.2</version.maven.plexus>
         <version.maven.annotation>3.6.4</version.maven.annotation>
         <version.maven.aether>1.1.0</version.maven.aether>
         <version.maven.test>3.3.0</version.maven.test>
+        <version.slf4j>1.7.36</version.slf4j>
+        <!-- Avoids vulnerable versions of different transitive dependencies. -->
+        <version.maven.plexus-utils>3.4.2</version.maven.plexus-utils>
+        <version.maven.plexus-archiver>3.7.0</version.maven.plexus-archiver>
+        <version.commons-io>2.11.0</version.commons-io>
+        <version.commons-compress>1.21</version.commons-compress>
+        <version.guava>31.1-jre</version.guava>
     </properties>
 
     <dependencies>
@@ -96,6 +102,12 @@
             <version>${version.maven.test}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-nop</artifactId>
+            <version>${version.slf4j}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
@@ -103,7 +115,27 @@
             <dependency>
                 <groupId>org.codehaus.plexus</groupId>
                 <artifactId>plexus-utils</artifactId>
-                <version>${version.maven.plexus}</version>
+                <version>${version.maven.plexus-utils}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-archiver</artifactId>
+                <version>${version.maven.plexus-archiver}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${version.commons-io}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>${version.commons-compress}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${version.guava}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -124,5 +156,36 @@
             </resource>
         </resources>
     </build>
+
+    <profiles>
+        <!-- Runs the build with compatibility for Java 6 JVMs. -->
+        <profile>
+            <id>java6-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>1.6</jdk>
+            </activation>
+            <properties>
+                <version.maven.plexus-archiver>2.1.1</version.maven.plexus-archiver>
+                <version.commons-io>2.5</version.commons-io>
+                <version.commons-compress>1.12</version.commons-compress>
+                <version.guava>25.1-android</version.guava>
+            </properties>
+        </profile>
+        <!-- Runs the build with compatibility for Java 7 JVMs. -->
+        <profile>
+            <id>java7-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>1.7</jdk>
+            </activation>
+            <properties>
+                <version.maven.plexus-archiver>2.11</version.maven.plexus-archiver>
+                <version.commons-io>2.6</version.commons-io>
+                <version.commons-compress>1.20</version.commons-compress>
+                <version.guava>25.1-android</version.guava>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>
