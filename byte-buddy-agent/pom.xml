@@ -150,6 +150,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <skip>${modulemaker.skip}</skip>
                     <name>${project.groupId}.agent</name>
                     <version>${project.version}</version>
                     <multirelease>true</multirelease>

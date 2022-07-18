@@ -22,8 +22,7 @@
         <version.maven.aether>1.1.0</version.maven.aether>
         <version.maven.test>3.3.0</version.maven.test>
         <version.slf4j>1.7.36</version.slf4j>
-        <!-- Avoids vulnerable versions of different transitive dependencies. -->
-        <version.maven.plexus-utils>3.4.2</version.maven.plexus-utils>
+        <!-- Avoids vulnerable versions of different transitive dependencies during build. -->
         <version.maven.plexus-archiver>3.7.0</version.maven.plexus-archiver>
         <version.commons-io>2.11.0</version.commons-io>
         <version.commons-compress>1.21</version.commons-compress>
@@ -112,11 +111,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>org.codehaus.plexus</groupId>
-                <artifactId>plexus-utils</artifactId>
-                <version>${version.maven.plexus-utils}</version>
-            </dependency>
             <dependency>
                 <groupId>org.codehaus.plexus</groupId>
                 <artifactId>plexus-archiver</artifactId>

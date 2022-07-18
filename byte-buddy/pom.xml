@@ -175,6 +175,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <skip>${modulemaker.skip}</skip>
                     <name>${project.groupId}</name>
                     <version>${project.version}</version>
                     <multirelease>true</multirelease>

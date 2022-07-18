@@ -94,7 +94,7 @@
         <version.plugin.jitwatch>1.1</version.plugin.jitwatch>
         <version.plugin.clirr>2.8</version.plugin.clirr>
         <version.plugin.spotbugs>4.7.1.0</version.plugin.spotbugs>
-        <version.plugin.modulemaker>1.8-SNAPSHOT</version.plugin.modulemaker>
+        <version.plugin.modulemaker>1.9</version.plugin.modulemaker>
         <version.plugin.license>3.0</version.plugin.license>
         <version.plugin.japicmp>0.15.7</version.plugin.japicmp>
         <version.plugin.antrun>3.1.0</version.plugin.antrun>
@@ -102,8 +102,12 @@
         <version.android.sdk>4.1.1.4</version.android.sdk>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
         <version.utility.jsr305>3.0.2</version.utility.jsr305>
+        <version.jmh>1.35</version.jmh>
+        <version.cglib>3.3.0</version.cglib>
+        <version.javassist>3.29.0-GA</version.javassist>
         <spotbugs.skip>false</spotbugs.skip>
         <jacoco.skip>false</jacoco.skip>
+        <modulemaker.skip>false</modulemaker.skip>
         <repository.url>git@github.com:raphw/byte-buddy.git</repository.url>
     </properties>
 
@@ -406,6 +410,7 @@
                 <version.plugin.clean>3.0.0</version.plugin.clean>
                 <version.plugin.bundle>2.5.4</version.plugin.bundle>
                 <version.plugin.compiler>3.6.2</version.plugin.compiler>
+                <version.plugin.staging>1.6.8</version.plugin.staging>
                 <version.plugin.source>2.4</version.plugin.source>
                 <version.plugin.gpg>1.6</version.plugin.gpg>
                 <version.plugin.jxr>2.5</version.plugin.jxr>
@@ -427,6 +432,9 @@
                 <version.plugin.javadoc>2.10.4</version.plugin.javadoc>
                 <version.plugin.antrun>1.8</version.plugin.antrun>
                 <version.checkstyle>6.2</version.checkstyle>
+                <version.jmh>1.16</version.jmh>
+                <version.javassist>3.22.0-GA</version.javassist>
+                <modulemaker.skip>true</modulemaker.skip>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
             <modules>
@@ -478,9 +486,11 @@
                 <version.plugin.clean>3.1.0</version.plugin.clean>
                 <version.plugin.bundle>3.5.1</version.plugin.bundle>
                 <version.plugin.compiler>3.8.1</version.plugin.compiler>
+                <version.plugin.staging>1.6.8</version.plugin.staging>
                 <version.plugin.jxr>3.1.1</version.plugin.jxr>
                 <version.plugin.buildhelp>3.2.0</version.plugin.buildhelp>
                 <version.plugin.site>3.11.0</version.plugin.site>
+                <version.plugin.exec>3.0.0</version.plugin.exec>
                 <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
                 <version.plugin.javadoc>3.2.0</version.plugin.javadoc>
                 <version.plugin.animal-sniffer>1.19</version.plugin.animal-sniffer>
