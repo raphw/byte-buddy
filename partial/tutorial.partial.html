@@ -469,7 +469,7 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
 <pre class="prettyprint">DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .with(new NamingStrategy.AbstractBase() {
     @Override
-    public String subclass(TypeDescription superClass) {
+    protected String name(TypeDescription superClass) {
         return "i.love.ByteBuddy." + superClass.getSimpleName();
     }
   })
