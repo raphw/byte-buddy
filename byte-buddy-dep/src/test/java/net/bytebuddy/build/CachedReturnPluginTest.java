@@ -93,7 +93,7 @@ public class CachedReturnPluginTest {
 
     @Test
     public void testJavaVersion() throws Exception {
-        Class<?> type = Class.forName(CachedReturnPlugin.class.getName() + "$$" + adviceArgument.getSimpleName());
+        Class<?> type = Class.forName(CachedReturnPlugin.class.getName() + "$Advice$" + adviceArgument.getSimpleName());
         assertThat(ClassFileVersion.of(type), is(ClassFileVersion.JAVA_V6));
     }
 

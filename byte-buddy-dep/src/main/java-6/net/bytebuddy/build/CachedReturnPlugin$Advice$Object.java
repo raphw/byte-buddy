@@ -22,12 +22,12 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 /**
  * An advice class for caching a reference value.
  */
-class CachedReturnPlugin$$Object {
+class CachedReturnPlugin$Advice$Object {
 
     /**
      * A constructor that prohibits the instantiation of the class.
      */
-    private CachedReturnPlugin$$Object() {
+    private CachedReturnPlugin$Advice$Object() {
         throw new UnsupportedOperationException("This class is merely an advice template and should not be instantiated");
     }
 

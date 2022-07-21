@@ -54,7 +54,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
     /**
      * The infix symbol for advice classes.
      */
-    private static final String ADVICE_INFIX = "$$";
+    private static final String ADVICE_INFIX = "$Advice$";
 
     /**
      * A description of the {@link Enhance#value()} method.

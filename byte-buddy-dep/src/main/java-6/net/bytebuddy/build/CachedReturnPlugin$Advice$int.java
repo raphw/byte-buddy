@@ -22,12 +22,12 @@ import net.bytebuddy.asm.Advice;
  * An advice class for caching a {@code int} value.
  */
 @SuppressFBWarnings(value = "NM_CLASS_NAMING_CONVENTION", justification = "Name is chosen to optimize for simple lookup")
-class CachedReturnPlugin$$int {
+class CachedReturnPlugin$Advice$int {
 
     /**
      * A constructor that prohibits the instantiation of the class.
      */
-    private CachedReturnPlugin$$int() {
+    private CachedReturnPlugin$Advice$int() {
         throw new UnsupportedOperationException("This class is merely an advice template and should not be instantiated");
     }
 

@@ -309,7 +309,7 @@
                                 <configuration>
                                     <target>
                                         <copy todir="${project.basedir}/src/main/precompiled-6">
-                                            <fileset dir="${project.build.outputDirectory}" includes="net/bytebuddy/build/CachedReturnPlugin\$\$*.class"/>
+                                            <fileset dir="${project.build.outputDirectory}" includes="net/bytebuddy/build/CachedReturnPlugin$Advice$*.class"/>
                                         </copy>
                                     </target>
 
