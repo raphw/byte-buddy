@@ -70,9 +70,10 @@
         <version.plugin.clean>3.2.0</version.plugin.clean>
         <version.plugin.bundle>5.1.7</version.plugin.bundle>
         <version.plugin.compiler>3.10.1</version.plugin.compiler>
-        <version.plugin.install>2.5.2</version.plugin.install>
-        <version.plugin.deploy>2.8.2</version.plugin.deploy>
+        <version.plugin.install>3.0.0-M1</version.plugin.install>
+        <version.plugin.deploy>3.0.0-M2</version.plugin.deploy>
         <version.plugin.staging>1.6.13</version.plugin.staging>
+        <version.plugin.versions>2.11.0</version.plugin.versions>
         <version.plugin.javadoc>3.3.1</version.plugin.javadoc>
         <version.plugin.source>3.0.1</version.plugin.source>
         <version.plugin.shade>3.3.0</version.plugin.shade>
@@ -293,6 +294,15 @@
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
+            <!-- Allow for automated version updates. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>${version.plugin.versions}</version>
+                <configuration>
+                    <rulesUri>file://${session.executionRootDirectory}/version-rules.xml</rulesUri>
+                </configuration>
+            </plugin>
         </plugins>
 
         <pluginManagement>
@@ -421,6 +431,7 @@
                 <version.plugin.bundle>2.5.4</version.plugin.bundle>
                 <version.plugin.compiler>3.6.2</version.plugin.compiler>
                 <version.plugin.staging>1.6.8</version.plugin.staging>
+                <version.plugin.versions>2.4</version.plugin.versions>
                 <version.plugin.source>2.4</version.plugin.source>
                 <version.plugin.gpg>1.6</version.plugin.gpg>
                 <version.plugin.jxr>2.5</version.plugin.jxr>
@@ -498,6 +509,7 @@
                 <version.plugin.bundle>3.5.1</version.plugin.bundle>
                 <version.plugin.compiler>3.8.1</version.plugin.compiler>
                 <version.plugin.staging>1.6.8</version.plugin.staging>
+                <version.plugin.versions>2.8.1</version.plugin.versions>
                 <version.plugin.jxr>3.1.1</version.plugin.jxr>
                 <version.plugin.buildhelp>3.2.0</version.plugin.buildhelp>
                 <version.plugin.site>3.11.0</version.plugin.site>
