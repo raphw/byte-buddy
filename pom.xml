@@ -93,8 +93,7 @@
         <version.plugin.checkstyle>3.1.2</version.plugin.checkstyle>
         <version.plugin.jitwatch>1.1</version.plugin.jitwatch>
         <version.plugin.clirr>2.8</version.plugin.clirr>
-        <!-- Later versions of Spotbugs require a newer Maven release. -->
-        <version.plugin.spotbugs>4.4.2</version.plugin.spotbugs>
+        <version.plugin.spotbugs>4.2.0</version.plugin.spotbugs>
         <version.plugin.modulemaker>1.9</version.plugin.modulemaker>
         <version.plugin.license>3.0</version.plugin.license>
         <version.plugin.japicmp>0.15.7</version.plugin.japicmp>
@@ -309,6 +308,10 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
                     <version>${version.plugin.resources}</version>
+                    <configuration>
+                        <!-- Setting this property suppresses a warning on implicit setting the filter encoding. -->
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
