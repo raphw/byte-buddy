@@ -2707,10 +2707,11 @@ public interface AgentBuilder {
         /**
          * Allows for a transformation of a {@link net.bytebuddy.dynamic.DynamicType.Builder}.
          *
-         * @param builder         The dynamic builder to transform.
-         * @param typeDescription The description of the type currently being instrumented.
-         * @param classLoader     The class loader of the instrumented class. Might be {@code null} to represent the bootstrap class loader.
-         * @param module          The class's module or {@code null} if the current VM does not support modules.
+         * @param builder          The dynamic builder to transform.
+         * @param typeDescription  The description of the type currently being instrumented.
+         * @param classLoader      The class loader of the instrumented class. Might be {@code null} to represent the bootstrap class loader.
+         * @param module           The class's module or {@code null} if the current VM does not support modules.
+         * @param protectionDomain The protection domain of the transformed type.
          * @return A transformed version of the supplied {@code builder}.
          */
         DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
