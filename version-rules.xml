@@ -5,7 +5,26 @@
         <ignoreVersion type="regex">[0-9]+\.[0-9]+\.[0-9]+-M[1-9]+</ignoreVersion>
     </ignoreVersions>
     <rules>
+        <rule groupId="org.slf4j">
+            <ignoreVersions>
+                <ignoreVersion type="regex">.*-alpha[0-9]?</ignoreVersion>
+                <ignoreVersion type="regex">.*-beta[0-9]?</ignoreVersion>
+            </ignoreVersions>
+        </rule>
+        <!-- Spotbugs after version 4.2.3 is not compatible with Maven version 3.2.5. -->
         <rule groupId="com.github.spotbugs" artifactId="spotbugs-maven-plugin" comparisonMethod="maven">
+            <ignoreVersions>
+                <ignoreVersion type="regex">.*</ignoreVersion>
+            </ignoreVersions>
+        </rule>
+        <!-- The license plugin after version 3.0 is not compatible with Maven version 3.2.5. -->
+        <rule groupId="com.mycila" artifactId="license-maven-plugin" comparisonMethod="maven">
+            <ignoreVersions>
+                <ignoreVersion type="regex">.*</ignoreVersion>
+            </ignoreVersions>
+        </rule>
+        <!-- The Plexus archiver is pinned to a secure version that is compatible to the plugin version. -->
+        <rule groupId="org.codehaus.plexus" artifactId="plexus-archiver" comparisonMethod="maven">
             <ignoreVersions>
                 <ignoreVersion type="regex">.*</ignoreVersion>
             </ignoreVersions>

@@ -36,6 +36,7 @@
       - spotbugs:spotbugs spotbugs:gui - Runs spotbugs and shows a report in a graphical interface (module specific)
       - com.github.ferstl:jitwatch-jarscan-maven-plugin:scan - Finds all methods above HotSpot's inlining threshold
       - clirr:check - Checks for binary changes in the API
+      - versions:update-properties - Automated dependency version update.
     -->
 
     <modules>
@@ -95,7 +96,6 @@
         <version.plugin.checkstyle>3.1.2</version.plugin.checkstyle>
         <version.plugin.jitwatch>1.1</version.plugin.jitwatch>
         <version.plugin.clirr>2.8</version.plugin.clirr>
-        <!-- Spotbugs after version 4.2.3 is not compatible with Maven version 3.2.5. -->
         <version.plugin.spotbugs>4.2.3</version.plugin.spotbugs>
         <version.plugin.modulemaker>1.9</version.plugin.modulemaker>
         <version.plugin.license>3.0</version.plugin.license>
