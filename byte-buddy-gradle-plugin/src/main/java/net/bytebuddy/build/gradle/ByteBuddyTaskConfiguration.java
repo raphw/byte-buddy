@@ -21,7 +21,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Transformer;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.api.tasks.compile.AbstractCompile;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -56,7 +56,7 @@ public class ByteBuddyTaskConfiguration extends AbstractByteBuddyTaskConfigurati
     }
 
     @Override
-    protected void configureDirectories(SourceDirectorySet source, JavaCompile compileTask, ByteBuddyTask byteBuddyTask) {
+    protected void configureDirectories(SourceDirectorySet source, AbstractCompile compileTask, ByteBuddyTask byteBuddyTask) {
         try {
             DirectoryProperty directory = (DirectoryProperty) getDestinationDirectory.invoke(source);
             setDestinationDir.invoke(compileTask, directory.dir(RAW_FOLDER).map(ToFileMapper.INSTANCE));

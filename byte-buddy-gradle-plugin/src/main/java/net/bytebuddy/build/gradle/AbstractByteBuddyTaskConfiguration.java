@@ -22,7 +22,7 @@ import org.gradle.api.Task;
 import org.gradle.api.execution.TaskExecutionGraph;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.api.tasks.compile.AbstractCompile;
 
 import net.bytebuddy.utility.nullability.MaybeNull;
 
@@ -71,7 +71,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
             project.getLogger().debug("Not configuring task for source set '{}' as no transformations are defined", sourceSet.getName());
         } else {
             project.getLogger().debug("Configuring Byte Buddy task for source set '{}' as '{}'", sourceSet.getName(), name);
-            final JavaCompile compileTask = (JavaCompile) project.getTasks().getByName(sourceSet.getCompileJavaTaskName());
+            final AbstractCompile compileTask = (AbstractCompile) project.getTasks().getByName(sourceSet.getCompileJavaTaskName());
             final T byteBuddyTask = project.getTasks().create(name, extension.toType());
             byteBuddyTask.setGroup("Byte Buddy");
             byteBuddyTask.setDescription("Transforms the classes compiled by " + compileTask.getName());
@@ -100,7 +100,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
      * @param compileTask   The compile task.
      * @param byteBuddyTask The Byte Buddy task.
      */
-    protected abstract void configureDirectories(SourceDirectorySet source, JavaCompile compileTask, T byteBuddyTask);
+    protected abstract void configureDirectories(SourceDirectorySet source, AbstractCompile compileTask, T byteBuddyTask);
 
     /**
      * An action to adjust the task execution graph to depend on the injected Byte Buddy task if a task

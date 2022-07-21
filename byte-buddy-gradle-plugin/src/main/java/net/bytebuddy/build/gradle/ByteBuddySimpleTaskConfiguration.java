@@ -18,7 +18,7 @@ package net.bytebuddy.build.gradle;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.api.tasks.compile.AbstractCompile;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +40,7 @@ public class ByteBuddySimpleTaskConfiguration extends AbstractByteBuddyTaskConfi
 
     @Override
     @SuppressWarnings("deprecation")
-    protected void configureDirectories(SourceDirectorySet source, JavaCompile compileTask, ByteBuddySimpleTask byteBuddyTask) {
+    protected void configureDirectories(SourceDirectorySet source, AbstractCompile compileTask, ByteBuddySimpleTask byteBuddyTask) {
         try {
             File raw = new File(compileTask.getDestinationDir(), RAW_FOLDER).getCanonicalFile(), processed = compileTask.getDestinationDir();
             compileTask.setDestinationDir(raw);
