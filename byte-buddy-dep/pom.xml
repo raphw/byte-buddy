@@ -8,6 +8,14 @@
         <version>1.12.13-SNAPSHOT</version>
     </parent>
 
+    <!--
+        About precompilation:
+        This module contains compiled class files which require a given Java version to meet all properties. To avoid
+        that the build target Java version conflicts with this required version, precompiled files are used unless
+        those files are supposed to be built from source which can be activated by a given profile. This functionality
+        is mainly required for tests but is also used for adding some Advice templates.
+    -->
+
     <artifactId>byte-buddy-dep</artifactId>
     <packaging>jar</packaging>
 
@@ -247,6 +255,55 @@
                         </executions>
                     </plugin>
                 </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>java-6-precompile</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <java-6-precompile>true</java-6-precompile>
+                <bytecode.main.version>1.6</bytecode.main.version>
+            </properties>
+            <build>
+                <!-- TODO: copy back to precompilation folder? -->
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>${version.plugin.buildhelp}</version>
+                        <executions>
+                            <execution>
+                                <id>java-6-precompile</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>add-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>src/main/java-6</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>java-6-no-precompile</id>
+            <activation>
+                <property>
+                    <name>!java-6-precompile</name>
+                </property>
+            </activation>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/precompiled-6</directory>
+                    </resource>
+                </resources>
             </build>
         </profile>
     </profiles>
