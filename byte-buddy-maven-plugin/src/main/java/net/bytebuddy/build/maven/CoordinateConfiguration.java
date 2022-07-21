@@ -105,7 +105,7 @@ public class CoordinateConfiguration {
      * @param packaging  The current project's packaging
      * @return The resolved Maven coordinate.
      */
-    public MavenCoordinate asCoordinate(String groupId, String artifactId, String version, String packaging) {
+    protected MavenCoordinate asCoordinate(String groupId, String artifactId, String version, String packaging) {
         return new MavenCoordinate(getGroupId(groupId), getArtifactId(artifactId), getVersion(version), getPackaging(packaging));
     }
 }

@@ -27,6 +27,7 @@ import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.PluginManagement;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -342,6 +343,12 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         } else if (!root.isDirectory()) {
             throw new MojoExecutionException("Not a directory: " + root);
         }
+        Map<Coordinate, String> coordinates = new HashMap<Coordinate, String>();
+        if (project.getDependencyManagement() != null) {
+            for (Dependency dependency : project.getDependencyManagement().getDependencies()) {
+                coordinates.put(new Coordinate(dependency.getGroupId(), dependency.getArtifactId()), dependency.getVersion());
+            }
+        }
         ClassLoaderResolver classLoaderResolver = new ClassLoaderResolver(getLog(),
                 repositorySystem,
                 repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : repositorySystemSession,
@@ -354,6 +361,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     factories.add(new Plugin.Factory.UsingReflection((Class<? extends Plugin>) Class.forName(plugin,
                             false,
                             transformer.toClassLoader(classLoaderResolver,
+                                    coordinates,
                                     project.getGroupId(),
                                     project.getArtifactId(),
                                     project.getVersion(),
@@ -367,10 +375,11 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     throw new MojoExecutionException("Cannot resolve plugin: " + plugin, throwable);
                 }
             }
+            String managed = coordinates.get(new Coordinate(project.getGroupId(), project.getArtifactId()));
             EntryPoint entryPoint = (initialization == null ? new Initialization() : initialization).getEntryPoint(classLoaderResolver,
                     project.getGroupId(),
                     project.getArtifactId(),
-                    project.getVersion(),
+                    managed == null ? project.getVersion() : managed,
                     project.getPackaging());
             getLog().info("Resolved entry point: " + entryPoint);
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(classPath.size());
@@ -769,6 +778,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
          * Resolves the class loader to use for resolving the plugin.
          *
          * @param classLoaderResolver The class loader resolver to use.
+         * @param coordinates         The managed coordinates of this project.
          * @param groupId             The group id of this project.
          * @param artifactId          The artifact id of this project.
          * @param version             The version of this project.
@@ -778,6 +788,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
          * @throws MojoExecutionException The the class loader resolution is incorrect.
          */
         protected abstract ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver,
+                                                     Map<Coordinate, String> coordinates,
                                                      String groupId,
                                                      String artifactId,
                                                      String version,
@@ -814,13 +825,16 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
 
             @Override
             protected ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver,
+                                                Map<Coordinate, String> coordinates,
                                                 String groupId,
                                                 String artifactId,
                                                 String version,
                                                 String packaging) throws MojoFailureException, MojoExecutionException {
+                String managed = coordinates.get(new Coordinate(transformation.getGroupId(groupId),
+                        transformation.getArtifactId(artifactId)));
                 return classLoaderResolver.resolve(transformation.asCoordinate(groupId,
                         artifactId,
-                        version,
+                        managed == null ? version : managed,
                         packaging));
             }
         }
@@ -856,12 +870,58 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
 
             @Override
             protected ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver,
+                                                Map<Coordinate, String> coordinates,
                                                 String groupId,
                                                 String artifactId,
                                                 String version,
                                                 String packaging) {
                 return ByteBuddyMojo.class.getClassLoader();
             }
+        }
+    }
+
+    /**
+     * A coordinate to locate a managed dependency.
+     */
+    protected static class Coordinate {
+
+        /**
+         * The managed depencency's group id.
+         */
+        private final String groupId;
+
+        /**
+         * The managed depencency's artifact id.
+         */
+        private final String artifactId;
+
+        /**
+         * Creates a new coordinate for a managed dependency.
+         *
+         * @param groupId    The managed depencency's group id.
+         * @param artifactId The managed depencency's artifact id.
+         */
+        protected Coordinate(String groupId, String artifactId) {
+            this.groupId = groupId;
+            this.artifactId = artifactId;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = groupId.hashCode();
+            result = 31 * result + artifactId.hashCode();
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+
+            Coordinate that = (Coordinate) other;
+
+            if (!groupId.equals(that.groupId)) return false;
+            return artifactId.equals(that.artifactId);
         }
     }
 }
