@@ -21,7 +21,8 @@
       - extras: Creates additional artifacts containing source files and javadoc. (activated on release)
       - gpg: Sign all artifacts using gpg. (activated on release)
       - checks: Applies style checks to the source files. (activated by default, activated on release)
-      - integration: Runs additional unit tests and executes static code analysis (activated on CI server)
+      - integration: Runs additional unit tests that are long-running (activated on CI server)
+      - analysis: Executes static code analysis (activated on CI server)
       - android: Builds an Android test application. An Android SDK is required for doing so. (excluded from release)
       - native-compile: Compiles the native extensions required by Byte Buddy agent.
 
@@ -93,7 +94,8 @@
         <version.plugin.checkstyle>3.1.2</version.plugin.checkstyle>
         <version.plugin.jitwatch>1.1</version.plugin.jitwatch>
         <version.plugin.clirr>2.8</version.plugin.clirr>
-        <version.plugin.spotbugs>4.2.0</version.plugin.spotbugs>
+        <!-- Spotbugs after version 4.2.3 is not compatible with Maven version 3.2.5. -->
+        <version.plugin.spotbugs>4.2.3</version.plugin.spotbugs>
         <version.plugin.modulemaker>1.9</version.plugin.modulemaker>
         <version.plugin.license>3.0</version.plugin.license>
         <version.plugin.japicmp>0.15.7</version.plugin.japicmp>
@@ -230,6 +232,7 @@
                     <xmlOutput>true</xmlOutput>
                     <failOnError>false</failOnError>
                     <spotbugsXmlOutputDirectory>${project.build.directory}/spotbugs</spotbugsXmlOutputDirectory>
+                    <excludeFilterFile>${project.basedir}/../spotbugs-exclude.xml</excludeFilterFile>
                 </configuration>
             </plugin>
             <!-- Enable scanning for methods above the inlining threshold (JDK 7+) -->
@@ -1003,7 +1006,7 @@
                 </plugins>
             </build>
         </profile>
-        <!-- Integration profile that executes long-running tasks and additional static code analysis. -->
+        <!-- Integration profile that executes long-running tasks. -->
         <profile>
             <id>integration</id>
             <activation>
@@ -1012,6 +1015,13 @@
             <properties>
                 <bytebuddy.integration>true</bytebuddy.integration>
             </properties>
+        </profile>
+        <!-- Integration profile that executes static code analysis. -->
+        <profile>
+            <id>analysis</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
             <build>
                 <plugins>
                     <!-- Run spotbugs if not specified differently in a module.-->
@@ -1034,9 +1044,6 @@
                                 </configuration>
                             </execution>
                         </executions>
-                        <configuration>
-                            <excludeFilterFile>${project.basedir}/../spotbugs-exclude.xml</excludeFilterFile>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>

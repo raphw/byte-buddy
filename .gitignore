@@ -26,5 +26,8 @@ byte-buddy-gradle-plugin/gradle/wrapper/
 # Shade plugin
 dependency-reduced-pom.xml
 
+# Versions plugin
+pom.xml.versionsBackup
+
 # Android
 */gen/*
