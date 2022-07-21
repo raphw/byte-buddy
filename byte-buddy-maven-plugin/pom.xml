@@ -16,13 +16,11 @@
     <description>A plugin for post-processing class files via Byte Buddy in a Maven build.</description>
 
     <properties>
-        <!-- Newer Maven versions require Java 1.7. -->
-        <version.maven>3.8.6</version.maven>
-        <version.maven.annotation>3.6.4</version.maven.annotation>
+        <version.maven>3.2.5</version.maven>
+        <version.maven.annotation>3.5.2</version.maven.annotation>
         <version.maven.aether>1.1.0</version.maven.aether>
         <version.maven.test>3.3.0</version.maven.test>
         <version.slf4j>1.7.36</version.slf4j>
-        <!-- Avoids vulnerable versions of different transitive dependencies during build. -->
         <version.maven.plexus-archiver>3.7.0</version.maven.plexus-archiver>
         <version.commons-io>2.11.0</version.commons-io>
         <version.commons-compress>1.21</version.commons-compress>
@@ -163,7 +161,7 @@
                 <version.maven.plexus-archiver>2.1.1</version.maven.plexus-archiver>
                 <version.commons-io>2.5</version.commons-io>
                 <version.commons-compress>1.12</version.commons-compress>
-                <version.guava>25.1-android</version.guava>
+                <version.guava>20.0</version.guava>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 7 JVMs. -->
@@ -177,7 +175,8 @@
                 <version.maven.plexus-archiver>2.11</version.maven.plexus-archiver>
                 <version.commons-io>2.6</version.commons-io>
                 <version.commons-compress>1.20</version.commons-compress>
-                <version.guava>25.1-android</version.guava>
+                <version.guava>16.0.1</version.guava>
+                <version.guava>20.0</version.guava>
             </properties>
         </profile>
     </profiles>

@@ -1,6 +1,7 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,6 +25,9 @@ public class AgentBuilderDefaultWarmupStrategyTest {
 
     @Rule
     public MethodRule mockitoRule = MockitoJUnit.rule().silent();
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Mock
     private ResettableClassFileTransformer classFileTransformer;
@@ -81,6 +85,7 @@ public class AgentBuilderDefaultWarmupStrategyTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(7) // Error in generic processing on Java 6
     public void testEnabledEffect() throws Exception {
         when(locationStrategy.classFileLocator(null, JavaModule.ofType(Object.class)))
                 .thenReturn(new ClassFileLocator.Simple(Collections.singletonMap(Object.class.getName(), new byte[0])));
