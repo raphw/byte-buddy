@@ -40,6 +40,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
+import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -164,7 +165,11 @@ public class ByteBuddyTutorialExamplesTest {
     @Test
     public void testTutorialGettingStartedJavaAgent() throws Exception {
         new AgentBuilder.Default().type(isAnnotatedWith(Rebase.class)).transform(new AgentBuilder.Transformer() {
-            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                    TypeDescription typeDescription,
+                                                    ClassLoader classLoader,
+                                                    JavaModule module,
+                                                    ProtectionDomain protectionDomain) {
                 return builder.method(named("toString")).intercept(FixedValue.value("transformed"));
             }
         }).installOn(mock(Instrumentation.class));

@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<FindBugsFilter>
+    <!-- Byte Buddy requires its users to respect Byte Buddy's general assumption on immutability. -->
+    <Match>
+        <Bug pattern="MS_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_STATIC_REP"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_STATIC_REP2"/>
+    </Match>
+</FindBugsFilter>

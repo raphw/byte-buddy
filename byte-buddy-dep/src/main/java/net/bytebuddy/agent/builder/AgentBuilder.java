@@ -2716,7 +2716,8 @@ public interface AgentBuilder {
         DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                          TypeDescription typeDescription,
                                          @MaybeNull ClassLoader classLoader,
-                                         @MaybeNull JavaModule module);
+                                         @MaybeNull JavaModule module,
+                                         ProtectionDomain protectionDomain);
 
         /**
          * A transformer that applies a build {@link Plugin}. Note that a transformer is never completed as class loading
@@ -2745,7 +2746,8 @@ public interface AgentBuilder {
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                     TypeDescription typeDescription,
                                                     @MaybeNull ClassLoader classLoader,
-                                                    @MaybeNull JavaModule module) {
+                                                    @MaybeNull JavaModule module,
+                                                    ProtectionDomain protectionDomain) {
                 return plugin.apply(builder, typeDescription, ClassFileLocator.ForClassLoader.of(classLoader));
             }
         }
@@ -2850,7 +2852,8 @@ public interface AgentBuilder {
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                     TypeDescription typeDescription,
                                                     @MaybeNull ClassLoader classLoader,
-                                                    @MaybeNull JavaModule module) {
+                                                    @MaybeNull JavaModule module,
+                                                    ProtectionDomain protectionDomain) {
                 ClassFileLocator classFileLocator = new ClassFileLocator.Compound(this.classFileLocator, locationStrategy.classFileLocator(classLoader, module));
                 TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
                 AsmVisitorWrapper.ForDeclaredMethods asmVisitorWrapper = new AsmVisitorWrapper.ForDeclaredMethods();
@@ -11894,7 +11897,7 @@ public interface AgentBuilder {
                         protectionDomain);
                 InitializationStrategy.Dispatcher dispatcher = initializationStrategy.dispatcher();
                 for (Transformer transformer : transformers) {
-                    builder = transformer.transform(builder, typeDescription, classLoader, module);
+                    builder = transformer.transform(builder, typeDescription, classLoader, module, protectionDomain);
                 }
                 DynamicType.Unloaded<?> dynamicType = dispatcher.apply(builder).make(TypeResolutionStrategy.Disabled.INSTANCE, typePool);
                 dispatcher.register(dynamicType, classLoader, protectionDomain, injectionStrategy);

@@ -122,7 +122,7 @@ public class AgentBuilderDefaultTest {
         loadedTypeInitializers.put(TypeDescription.ForLoadedType.of(REDEFINED), loadedTypeInitializer);
         when(dynamicType.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(transformer.transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED)))
+        when(transformer.transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED.getProtectionDomain()))
                 .thenReturn((DynamicType.Builder) builder);
         when(poolStrategy.typePool(any(ClassFileLocator.class), any(ClassLoader.class))).thenReturn(typePool);
         when(poolStrategy.typePool(any(ClassFileLocator.class), any(ClassLoader.class), any(String.class))).thenReturn(typePool);
@@ -165,7 +165,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(dispatcher);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verify(transformer).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
+        verify(transformer).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(transformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -2120,7 +2120,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(dispatcher);
         verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verify(transformer).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
+        verify(transformer).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(transformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onBeforeWarmUp(Collections.<Class<?>>singleton(REDEFINED), classFileTransformer);
@@ -2345,7 +2345,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(dispatcher);
         verify(typeMatcher, times(2)).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verify(transformer, times(2)).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
+        verify(transformer, times(2)).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(transformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -2495,9 +2495,9 @@ public class AgentBuilderDefaultTest {
     public void testTransformerApplicationOrder() throws Exception {
         AgentBuilder.RawMatcher ignored = mock(AgentBuilder.RawMatcher.class);
         AgentBuilder.Transformer first = mock(AgentBuilder.Transformer.class), second = mock(AgentBuilder.Transformer.class);
-        when(first.transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED)))
+        when(first.transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED.getProtectionDomain()))
                 .thenReturn((DynamicType.Builder) builder);
-        when(second.transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED)))
+        when(second.transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED.getProtectionDomain()))
                 .thenReturn((DynamicType.Builder) builder);
         when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
@@ -2514,8 +2514,8 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX), equalTo(new byte[]{4, 5, 6}));
         InOrder inOrder = inOrder(first, second);
-        inOrder.verify(first).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
-        inOrder.verify(second).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
+        inOrder.verify(first).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED.getProtectionDomain());
+        inOrder.verify(second).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED.getProtectionDomain());
         inOrder.verifyNoMoreInteractions();
     }
 

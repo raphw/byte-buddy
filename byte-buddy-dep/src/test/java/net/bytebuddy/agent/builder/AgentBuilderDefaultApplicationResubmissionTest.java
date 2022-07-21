@@ -21,6 +21,7 @@ import org.junit.rules.MethodRule;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.security.ProtectionDomain;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -142,7 +143,11 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
 
     private static class SampleTransformer implements AgentBuilder.Transformer {
 
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                TypeDescription typeDescription,
+                                                ClassLoader classLoader,
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
             return builder.method(named(FOO)).intercept(FixedValue.value(BAR));
         }
     }

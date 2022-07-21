@@ -19,6 +19,7 @@ import org.junit.rules.MethodRule;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.security.ProtectionDomain;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -113,7 +114,8 @@ public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
-                                                JavaModule module) {
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
             return builder
                     .method(isDeclaredBy(typeDescription).and(named(FOO))).intercept(FixedValue.value(FOO))
                     .method(isDeclaredBy(typeDescription).and(named(BAR))).intercept(FixedValue.value(BAR));

@@ -1574,6 +1574,11 @@ public interface VirtualMachine {
         private static final String IBM_TEMPORARY_FOLDER = "com.ibm.tools.attach.directory";
 
         /**
+         * A secure random for generating randomized ids.
+         */
+        private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+        /**
          * The socket on which this VM and the target VM communicate.
          */
         private final Socket socket;
@@ -1685,7 +1690,10 @@ public interface VirtualMachine {
                     try {
                         serverSocket.setSoTimeout(timeout);
                         File receiver = new File(directory, target.getProperty("vmId"));
-                        String key = Long.toHexString(new SecureRandom().nextLong());
+                        String key;
+                        synchronized (SECURE_RANDOM) {
+                            key = Long.toHexString(SECURE_RANDOM.nextLong());
+                        }
                         File reply = new File(receiver, "replyInfo");
                         try {
                             if (reply.createNewFile()) {

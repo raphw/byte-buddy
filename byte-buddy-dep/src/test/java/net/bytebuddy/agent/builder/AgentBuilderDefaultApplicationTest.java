@@ -36,6 +36,7 @@ import java.io.ObjectOutputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
+import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
@@ -842,7 +843,8 @@ public class AgentBuilderDefaultApplicationTest {
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
-                                                JavaModule module) {
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
             return builder.method(named(FOO)).intercept(FixedValue.value(BAR));
         }
     }
@@ -866,7 +868,8 @@ public class AgentBuilderDefaultApplicationTest {
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
-                                                JavaModule module) {
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
             try {
                 return builder.method(named(FOO)).intercept(MethodDelegation.to(new Interceptor()));
             } catch (Exception exception) {
@@ -894,7 +897,8 @@ public class AgentBuilderDefaultApplicationTest {
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
-                                                JavaModule module) {
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
             try {
                 return builder.method(named(FOO)).intercept(MethodDelegation.to(new Interceptor()));
             } catch (Exception exception) {
@@ -922,7 +926,8 @@ public class AgentBuilderDefaultApplicationTest {
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
-                                                JavaModule module) {
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
             try {
                 return builder.method(named(FOO)).intercept(MethodDelegation.to(new Interceptor()));
             } catch (Exception exception) {
@@ -951,7 +956,8 @@ public class AgentBuilderDefaultApplicationTest {
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
-                                                JavaModule module) {
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
             return builder.constructor(ElementMatchers.any()).intercept(SuperMethodCall.INSTANCE);
         }
     }
@@ -967,7 +973,8 @@ public class AgentBuilderDefaultApplicationTest {
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
-                                                JavaModule module) {
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
             return builder.method(named(methodName)).intercept(FixedValue.value(BAR));
         }
     }
@@ -977,7 +984,8 @@ public class AgentBuilderDefaultApplicationTest {
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
-                                                JavaModule module) {
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
             return builder.visit(Advice.to(BarAdvice.class).on(named(FOO)));
         }
     }
@@ -987,7 +995,8 @@ public class AgentBuilderDefaultApplicationTest {
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
-                                                JavaModule module) {
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
             return builder.visit(Advice.to(QuxAdvice.class).on(named(FOO)));
         }
     }

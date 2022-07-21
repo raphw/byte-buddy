@@ -353,6 +353,8 @@
                         <showWarnings>true</showWarnings>
                         <showDeprecation>true</showDeprecation>
                         <compilerArgument>-Xlint:all,-options,-processing</compilerArgument>
+                        <!-- Avoid Byte Buddy plugin being applied multiple times. -->
+                        <useIncrementalCompilation>false</useIncrementalCompilation>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -720,7 +722,6 @@
             <properties>
                 <bytecode.main.version>10</bytecode.main.version>
                 <bytecode.test.version>10</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 11. -->
@@ -732,7 +733,6 @@
             <properties>
                 <bytecode.main.version>11</bytecode.main.version>
                 <bytecode.test.version>11</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 12. -->
@@ -744,7 +744,6 @@
             <properties>
                 <bytecode.main.version>12</bytecode.main.version>
                 <bytecode.test.version>12</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 13. -->
@@ -756,7 +755,6 @@
             <properties>
                 <bytecode.main.version>13</bytecode.main.version>
                 <bytecode.test.version>13</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 14. -->
@@ -768,7 +766,6 @@
             <properties>
                 <bytecode.main.version>14</bytecode.main.version>
                 <bytecode.test.version>14</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 15. -->
@@ -780,7 +777,6 @@
             <properties>
                 <bytecode.main.version>15</bytecode.main.version>
                 <bytecode.test.version>15</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 16. -->
@@ -792,7 +788,6 @@
             <properties>
                 <bytecode.main.version>16</bytecode.main.version>
                 <bytecode.test.version>16</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 17. -->
@@ -804,7 +799,6 @@
             <properties>
                 <bytecode.main.version>17</bytecode.main.version>
                 <bytecode.test.version>17</bytecode.test.version>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 18. -->
@@ -1037,6 +1031,9 @@
                                 </configuration>
                             </execution>
                         </executions>
+                        <configuration>
+                            <excludeFilterFile>${project.basedir}/../spotbugs-exclude.xml</excludeFilterFile>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>

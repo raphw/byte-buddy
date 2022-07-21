@@ -20,6 +20,7 @@ import org.junit.rules.MethodRule;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.security.ProtectionDomain;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.none;
@@ -100,7 +101,8 @@ public class AgentBuilderDefaultNativeApplicationTest {
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
-                                                JavaModule module) {
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
             return builder.method(named(FOO)).intercept(MethodCall.invokeSuper().withArgument(0).with(2));
         }
     }

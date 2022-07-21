@@ -11,6 +11,8 @@ import org.junit.rules.MethodRule;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 
+import java.security.ProtectionDomain;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -35,11 +37,14 @@ public class AgentBuilderTransformerForBuildPluginTest {
     @Mock
     private JavaModule module;
 
+    @Mock
+    private ProtectionDomain protectionDomain;
+
     @Test
     @SuppressWarnings("unchecked")
     public void testApplication() throws Exception {
         when(plugin.apply(eq(builder), eq(typeDescription), any(ClassFileLocator.ForClassLoader.class))).thenReturn((DynamicType.Builder) result);
-        assertThat(new AgentBuilder.Transformer.ForBuildPlugin(plugin).transform(builder, typeDescription, classLoader, module), is((DynamicType.Builder) result));
+        assertThat(new AgentBuilder.Transformer.ForBuildPlugin(plugin).transform(builder, typeDescription, classLoader, module, protectionDomain), is((DynamicType.Builder) result));
         verify(plugin).apply(eq(builder), eq(typeDescription), any(ClassFileLocator.ForClassLoader.class));
         verifyNoMoreInteractions(plugin);
     }

@@ -26,6 +26,7 @@ import org.junit.runners.Parameterized;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -297,7 +298,8 @@ public class AgentBuilderDefaultApplicationRedefineTest {
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
-                                                JavaModule module) {
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
             return builder.method(named(FOO)).intercept(FixedValue.value(value));
         }
     }
@@ -307,7 +309,8 @@ public class AgentBuilderDefaultApplicationRedefineTest {
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
-                                                JavaModule module) {
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
             return builder.visit(Advice.to(ReturnTransformer.class).on(named(FOO)));
         }
 
