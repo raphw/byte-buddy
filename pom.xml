@@ -524,6 +524,7 @@
                 <version.plugin.shade>3.2.4</version.plugin.shade>
                 <version.plugin.antrun>3.0.0</version.plugin.antrun>
                 <version.checkstyle>6.19</version.checkstyle>
+                <version.javassist>3.23.2-GA</version.javassist>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
