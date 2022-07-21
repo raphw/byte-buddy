@@ -67,7 +67,7 @@
         <version.asm>9.3</version.asm>
         <jna.version>5.12.1</jna.version>
         <version.junit>4.13.2</version.junit>
-        <version.mockito>4.6.1</version.mockito>
+        <version.mockito>2.28.2</version.mockito>
         <version.plugin.clean>3.2.0</version.plugin.clean>
         <version.plugin.bundle>5.1.7</version.plugin.bundle>
         <version.plugin.compiler>3.10.1</version.plugin.compiler>
@@ -425,7 +425,6 @@
                 <jdk>1.6</jdk>
             </activation>
             <properties>
-                <version.mockito>2.28.2</version.mockito>
                 <version.asm.deprecated>7.1</version.asm.deprecated>
                 <version.plugin.clean>3.0.0</version.plugin.clean>
                 <version.plugin.bundle>2.5.4</version.plugin.bundle>
@@ -454,6 +453,7 @@
                 <version.plugin.antrun>1.8</version.plugin.antrun>
                 <version.checkstyle>6.2</version.checkstyle>
                 <version.jmh>1.16</version.jmh>
+                <version.cglib>3.2.12</version.cglib>
                 <version.javassist>3.22.0-GA</version.javassist>
                 <modulemaker.skip>true</modulemaker.skip>
                 <spotbugs.skip>true</spotbugs.skip>
@@ -504,7 +504,6 @@
                 <jdk>1.7</jdk>
             </activation>
             <properties>
-                <version.mockito>2.28.2</version.mockito>
                 <version.plugin.clean>3.1.0</version.plugin.clean>
                 <version.plugin.bundle>3.5.1</version.plugin.bundle>
                 <version.plugin.compiler>3.8.1</version.plugin.compiler>
@@ -524,6 +523,7 @@
                 <version.plugin.shade>3.2.4</version.plugin.shade>
                 <version.plugin.antrun>3.0.0</version.plugin.antrun>
                 <version.checkstyle>6.19</version.checkstyle>
+                <version.cglib>3.2.12</version.cglib>
                 <version.javassist>3.23.2-GA</version.javassist>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
