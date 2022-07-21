@@ -19,15 +19,15 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.asm.Advice;
 
 /**
- * An advice class for caching a {@code long} value.
+ * An advice class for caching a {@code int} value.
  */
 @SuppressFBWarnings(value = "NM_CLASS_NAMING_CONVENTION", justification = "Name is chosen to optimize for simple lookup")
-class CachedReturnPlugin$long {
+class CachedReturnPlugin$$int {
 
     /**
      * A constructor that prohibits the instantiation of the class.
      */
-    private CachedReturnPlugin$long() {
+    private CachedReturnPlugin$$int() {
         throw new UnsupportedOperationException("This class is merely an advice template and should not be instantiated");
     }
 
@@ -38,7 +38,7 @@ class CachedReturnPlugin$long {
      * @return {@code true} if a cached value exists.
      */
     @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
-    protected static long enter(@CachedReturnPlugin.CacheField long cached) {
+    protected static int enter(@CachedReturnPlugin.CacheField int cached) {
         return cached;
     }
 
@@ -50,8 +50,8 @@ class CachedReturnPlugin$long {
      */
     @Advice.OnMethodExit
     @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
-    protected static void exit(@Advice.Return(readOnly = false) long returned, @CachedReturnPlugin.CacheField long cached) {
-        if (returned == 0L) {
+    protected static void exit(@Advice.Return(readOnly = false) int returned, @CachedReturnPlugin.CacheField int cached) {
+        if (returned == 0) {
             returned = cached;
         } else {
             cached = returned;

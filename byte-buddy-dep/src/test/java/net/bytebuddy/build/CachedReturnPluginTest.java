@@ -1,6 +1,7 @@
 package net.bytebuddy.build;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -88,6 +89,12 @@ public class CachedReturnPluginTest {
         } catch (InvocationTargetException exception) {
             throw (Exception) exception.getTargetException();
         }
+    }
+
+    @Test
+    public void testJavaVersion() throws Exception {
+        Class<?> type = Class.forName(CachedReturnPlugin.class.getName() + "$$" + adviceArgument.getSimpleName());
+        assertThat(ClassFileVersion.of(type), is(ClassFileVersion.JAVA_V6));
     }
 
     public static class BooleanSample {

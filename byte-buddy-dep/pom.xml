@@ -10,10 +10,15 @@
 
     <!--
         About precompilation:
+
         This module contains compiled class files which require a given Java version to meet all properties. To avoid
         that the build target Java version conflicts with this required version, precompiled files are used unless
         those files are supposed to be built from source which can be activated by a given profile. This functionality
         is mainly required for tests but is also used for adding some Advice templates.
+
+        Unfortunately, it is not possible in Maven to disable a profile from another profile. Therefore, profiles must be
+        activated by setting properties with the same name as the profiles for precompilation. This requires a minimal
+        change in syntax by substituting a 'P' with a 'D'.
     -->
 
     <artifactId>byte-buddy-dep</artifactId>
@@ -261,13 +266,15 @@
             <id>java-6-precompile</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>java-6-precompile</name>
+                </property>
             </activation>
             <properties>
                 <java-6-precompile>true</java-6-precompile>
                 <bytecode.main.version>1.6</bytecode.main.version>
             </properties>
             <build>
-                <!-- TODO: copy back to precompilation folder? -->
                 <plugins>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
@@ -288,12 +295,35 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>${version.plugin.antrun}</version>
+                        <executions>
+                            <execution>
+                                <id>java-6-precompile-copy</id>
+                                <phase>process-classes</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <copy todir="${project.basedir}/src/main/precompiled-6">
+                                            <fileset dir="${project.build.outputDirectory}" includes="net/bytebuddy/build/CachedReturnPlugin\$\$*.class"/>
+                                        </copy>
+                                    </target>
+
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
         <profile>
             <id>java-6-no-precompile</id>
             <activation>
+                <activeByDefault>true</activeByDefault>
                 <property>
                     <name>!java-6-precompile</name>
                 </property>

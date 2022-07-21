@@ -19,15 +19,15 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.asm.Advice;
 
 /**
- * An advice class for caching a {@code float} value.
+ * An advice class for caching a {@code boolean} value.
  */
 @SuppressFBWarnings(value = "NM_CLASS_NAMING_CONVENTION", justification = "Name is chosen to optimize for simple lookup")
-class CachedReturnPlugin$float {
+class CachedReturnPlugin$$boolean {
 
     /**
      * A constructor that prohibits the instantiation of the class.
      */
-    private CachedReturnPlugin$float() {
+    private CachedReturnPlugin$$boolean() {
         throw new UnsupportedOperationException("This class is merely an advice template and should not be instantiated");
     }
 
@@ -38,7 +38,7 @@ class CachedReturnPlugin$float {
      * @return {@code true} if a cached value exists.
      */
     @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
-    protected static float enter(@CachedReturnPlugin.CacheField float cached) {
+    protected static boolean enter(@CachedReturnPlugin.CacheField boolean cached) {
         return cached;
     }
 
@@ -49,12 +49,12 @@ class CachedReturnPlugin$float {
      * @param cached   The previously cached value or {@code 0} if no previous value exists.
      */
     @Advice.OnMethodExit
-    @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
-    protected static void exit(@Advice.Return(readOnly = false) float returned, @CachedReturnPlugin.CacheField float cached) {
-        if (returned == 0f) {
-            returned = cached;
+    @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "IP_PARAMETER_IS_DEAD_BUT_OVERWRITTEN"}, justification = "Advice method serves as a template")
+    protected static void exit(@Advice.Return(readOnly = false) boolean returned, @CachedReturnPlugin.CacheField boolean cached) {
+        if (returned) {
+            cached = true;
         } else {
-            cached = returned;
+            returned = true;
         }
     }
 }
