@@ -16,13 +16,13 @@ public class MethodDelegationDefaultTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private static final String DEFAULT_INTERFACE = "net.bytebuddy.test.precompiled.DelegationDefaultInterface";
+    private static final String DEFAULT_INTERFACE = "net.bytebuddy.test.precompiled.v8.DelegationDefaultInterface";
 
-    private static final String DELEGATION_TARGET = "net.bytebuddy.test.precompiled.DelegationDefaultTarget";
+    private static final String DELEGATION_TARGET = "net.bytebuddy.test.precompiled.v8.DelegationDefaultTarget";
 
-    private static final String DELEGATION_TARGET_SERIALIZABLE = "net.bytebuddy.test.precompiled.DelegationDefaultTargetSerializable";
+    private static final String DELEGATION_TARGET_SERIALIZABLE = "net.bytebuddy.test.precompiled.v8.DelegationDefaultTargetSerializable";
 
-    private static final String DELEGATION_TARGET_EXPLICIT = "net.bytebuddy.test.precompiled.DelegationDefaultTargetExplicit";
+    private static final String DELEGATION_TARGET_EXPLICIT = "net.bytebuddy.test.precompiled.v8.DelegationDefaultTargetExplicit";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();

@@ -22,9 +22,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MethodDelegationSuperMethodTest {
 
-    private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
+    private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.v8.SingleDefaultMethodInterface";
 
-    private static final String CONFLICTING_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodConflictingInterface";
+    private static final String CONFLICTING_INTERFACE = "net.bytebuddy.test.precompiled.v8.SingleDefaultMethodConflictingInterface";
 
     private static final String FOO = "foo", BAR = "bar";
 

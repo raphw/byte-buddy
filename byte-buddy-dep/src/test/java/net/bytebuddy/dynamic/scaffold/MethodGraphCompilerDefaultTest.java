@@ -29,9 +29,9 @@ import static org.mockito.Mockito.mock;
 
 public class MethodGraphCompilerDefaultTest {
 
-    private static final String TYPE_VARIABLE_INTERFACE_BRIDGE = "net.bytebuddy.test.precompiled.TypeVariableInterfaceBridge";
+    private static final String TYPE_VARIABLE_INTERFACE_BRIDGE = "net.bytebuddy.test.precompiled.v8.TypeVariableInterfaceBridge";
 
-    private static final String RETURN_TYPE_INTERFACE_BRIDGE = "net.bytebuddy.test.precompiled.ReturnTypeInterfaceBridge";
+    private static final String RETURN_TYPE_INTERFACE_BRIDGE = "net.bytebuddy.test.precompiled.v8.ReturnTypeInterfaceBridge";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();

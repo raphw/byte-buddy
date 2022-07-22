@@ -24,11 +24,11 @@ public class MethodDelegationMorphTest {
 
     private static final int BAZ = 42;
 
-    private static final String DEFAULT_INTERFACE = "net.bytebuddy.test.precompiled.MorphDefaultInterface";
+    private static final String DEFAULT_INTERFACE = "net.bytebuddy.test.precompiled.v8.MorphDefaultInterface";
 
-    private static final String DEFAULT_INTERFACE_TARGET_EXPLICIT = "net.bytebuddy.test.precompiled.MorphDefaultDelegationTargetExplicit";
+    private static final String DEFAULT_INTERFACE_TARGET_EXPLICIT = "net.bytebuddy.test.precompiled.v8.MorphDefaultDelegationTargetExplicit";
 
-    private static final String DEFAULT_INTERFACE_TARGET_IMPLICIT = "net.bytebuddy.test.precompiled.MorphDefaultDelegationTargetImplicit";
+    private static final String DEFAULT_INTERFACE_TARGET_IMPLICIT = "net.bytebuddy.test.precompiled.v8.MorphDefaultDelegationTargetImplicit";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();

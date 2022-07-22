@@ -46,13 +46,13 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     private static final String T = "T", S = "S", U = "U", V = "V";
 
-    private static final String TYPE_ANNOTATION = "net.bytebuddy.test.precompiled.TypeAnnotation";
+    private static final String TYPE_ANNOTATION = "net.bytebuddy.test.precompiled.v8.TypeAnnotation";
 
-    private static final String OTHER_TYPE_ANNOTATION = "net.bytebuddy.test.precompiled.OtherTypeAnnotation";
+    private static final String OTHER_TYPE_ANNOTATION = "net.bytebuddy.test.precompiled.v8.OtherTypeAnnotation";
 
-    private static final String TYPE_ANNOTATION_SAMPLES = "net.bytebuddy.test.precompiled.TypeAnnotationSamples";
+    private static final String TYPE_ANNOTATION_SAMPLES = "net.bytebuddy.test.precompiled.v8.TypeAnnotationSamples";
 
-    private static final String TYPE_ANNOTATION_OTHER_SAMPLES = "net.bytebuddy.test.precompiled.TypeAnnotationOtherSamples";
+    private static final String TYPE_ANNOTATION_OTHER_SAMPLES = "net.bytebuddy.test.precompiled.v8.TypeAnnotationOtherSamples";
 
     protected abstract TypeDescription.Generic describeType(Field field);
 

@@ -43,9 +43,9 @@ public class TypeWriterDefaultTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private static final String LEGACY_INTERFACE = "net.bytebuddy.test.precompiled.LegacyInterface";
+    private static final String LEGACY_INTERFACE = "net.bytebuddy.test.precompiled.v6.LegacyInterface";
 
-    private static final String JAVA_8_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
+    private static final String JAVA_8_INTERFACE = "net.bytebuddy.test.precompiled.v8.SingleDefaultMethodInterface";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
@@ -525,7 +525,7 @@ public class TypeWriterDefaultTest {
     @JavaVersionRule.Enforce(8)
     public void testDefaultMethodCallFromLegacyType() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V7)
-                .subclass(Class.forName("net.bytebuddy.test.precompiled.SingleDefaultMethodInterface"))
+                .subclass(Class.forName("net.bytebuddy.test.precompiled.v8.SingleDefaultMethodInterface"))
                 .method(isDefaultMethod())
                 .intercept(SuperMethodCall.INSTANCE)
                 .make();

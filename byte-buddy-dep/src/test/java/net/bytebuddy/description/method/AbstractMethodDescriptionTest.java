@@ -333,7 +333,7 @@ public abstract class AbstractMethodDescriptionTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testParameterNameAndModifiers() throws Exception {
-        Class<?> type = Class.forName("net.bytebuddy.test.precompiled.ParameterNames");
+        Class<?> type = Class.forName("net.bytebuddy.test.precompiled.v8.ParameterNames");
         assertThat(describe(type.getDeclaredMethod("foo", String.class, long.class, int.class)).getParameters().get(0).isNamed(), is(true));
         assertThat(describe(type.getDeclaredMethod("foo", String.class, long.class, int.class)).getParameters().get(1).isNamed(), is(true));
         assertThat(describe(type.getDeclaredMethod("foo", String.class, long.class, int.class)).getParameters().get(2).isNamed(), is(true));

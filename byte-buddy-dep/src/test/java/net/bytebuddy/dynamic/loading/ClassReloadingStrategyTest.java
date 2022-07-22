@@ -29,7 +29,7 @@ public class ClassReloadingStrategyTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private static final String LAMBDA_SAMPLE_FACTORY = "net.bytebuddy.test.precompiled.LambdaSampleFactory";
+    private static final String LAMBDA_SAMPLE_FACTORY = "net.bytebuddy.test.precompiled.v8.LambdaSampleFactory";
 
     @Rule
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();

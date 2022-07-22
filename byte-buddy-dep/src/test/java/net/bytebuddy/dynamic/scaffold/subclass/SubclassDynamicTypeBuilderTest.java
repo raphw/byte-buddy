@@ -42,15 +42,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTest {
 
-    private static final String TYPE_VARIABLE_NAME = "net.bytebuddy.test.precompiled.TypeAnnotation", VALUE = "value";
+    private static final String TYPE_VARIABLE_NAME = "net.bytebuddy.test.precompiled.v8.TypeAnnotation", VALUE = "value";
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     private static final int BAZ = 42;
 
-    private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
+    private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.v8.SingleDefaultMethodInterface";
 
-    private static final String PARAMETER_NAME_CLASS = "net.bytebuddy.test.precompiled.ParameterNames";
+    private static final String PARAMETER_NAME_CLASS = "net.bytebuddy.test.precompiled.v8.ParameterNames";
 
     private static final Object STATIC_FIELD = null;
 

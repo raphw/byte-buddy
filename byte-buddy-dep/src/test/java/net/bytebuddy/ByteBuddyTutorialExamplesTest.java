@@ -54,9 +54,9 @@ import static org.mockito.Mockito.mock;
 
 public class ByteBuddyTutorialExamplesTest {
 
-    private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
+    private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.v8.SingleDefaultMethodInterface";
 
-    private static final String CONFLICTING_DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodConflictingInterface";
+    private static final String CONFLICTING_DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.v8.SingleDefaultMethodConflictingInterface";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();

@@ -231,7 +231,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
-                        <version>${version.plugin.buildhelp}</version>
+                        <version>${version.plugin.buildhelper}</version>
                         <executions>
                             <execution>
                                 <phase>package</phase>

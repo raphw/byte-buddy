@@ -773,7 +773,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     @JavaVersionRule.Enforce(17)
     public void testSealed() throws Exception {
-        Class<?> sealed = Class.forName("net.bytebuddy.test.precompiled.Sealed");
+        Class<?> sealed = Class.forName("net.bytebuddy.test.precompiled.v17.Sealed");
         assertThat(describe(sealed).isSealed(), is(true));
         assertThat(describe(sealed).getPermittedSubtypes().size(), is(3));
         assertThat(describe(sealed).getPermittedSubtypes().get(0), is(describe(Class.forName(sealed.getName() + "$SubNonSealed"))));
@@ -790,10 +790,10 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     @JavaVersionRule.Enforce(16)
     public void testRecordComponents() throws Exception {
-        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.SampleRecord");
+        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.v16.SampleRecord");
         assertThat(describe(sampleRecord).isRecord(), is(true));
         @SuppressWarnings("unchecked")
-        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.TypeAnnotation");
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.v8.TypeAnnotation");
         MethodDescription.InDefinedShape value = new MethodDescription.ForLoadedMethod(typeAnnotation.getMethod("value"));
         RecordComponentList<RecordComponentDescription.InDefinedShape> recordComponents = describe(sampleRecord).getRecordComponents();
         assertThat(recordComponents.size(), is(1));
@@ -818,9 +818,9 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     @JavaVersionRule.Enforce(16)
     public void testRecordComponentsField() throws Exception {
-        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.SampleRecord");
+        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.v16.RecordSample");
         @SuppressWarnings("unchecked")
-        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.TypeAnnotation");
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.v8.TypeAnnotation");
         MethodDescription.InDefinedShape value = new MethodDescription.ForLoadedMethod(typeAnnotation.getMethod("value"));
         FieldDescription fieldDescription = describe(sampleRecord).getDeclaredFields().filter(named(FOO)).getOnly();
         assertThat(fieldDescription.getDeclaredAnnotations().size(), is(1));
@@ -841,9 +841,9 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     @JavaVersionRule.Enforce(16)
     public void testRecordComponentsAccessor() throws Exception {
-        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.SampleRecord");
+        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.v8.RecordSample");
         @SuppressWarnings("unchecked")
-        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.TypeAnnotation");
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.v8.TypeAnnotation");
         MethodDescription.InDefinedShape value = new MethodDescription.ForLoadedMethod(typeAnnotation.getMethod("value"));
         MethodDescription methodDescription = describe(sampleRecord).getDeclaredMethods().filter(named(FOO)).getOnly();
         assertThat(methodDescription.getDeclaredAnnotations().size(), is(1));
@@ -864,9 +864,9 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     @JavaVersionRule.Enforce(16)
     public void testRecordComponentsConstructorParameter() throws Exception {
-        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.SampleRecord");
+        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.v16.RecordSample");
         @SuppressWarnings("unchecked")
-        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.TypeAnnotation");
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.v8.TypeAnnotation");
         MethodDescription.InDefinedShape value = new MethodDescription.ForLoadedMethod(typeAnnotation.getMethod("value"));
         ParameterDescription parameterDescription = describe(sampleRecord).getDeclaredMethods().filter(isConstructor()).getOnly().getParameters().getOnly();
         assertThat(parameterDescription.getDeclaredAnnotations().size(), is(1));

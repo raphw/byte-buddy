@@ -81,7 +81,7 @@
         <version.plugin.shade>3.3.0</version.plugin.shade>
         <version.plugin.gpg>3.0.1</version.plugin.gpg>
         <version.plugin.jxr>3.2.0</version.plugin.jxr>
-        <version.plugin.buildhelp>3.3.0</version.plugin.buildhelp>
+        <version.plugin.buildhelper>3.3.0</version.plugin.buildhelper>
         <version.plugin.jar>3.2.2</version.plugin.jar>
         <version.plugin.site>3.12.0</version.plugin.site>
         <version.plugin.exec>3.1.0</version.plugin.exec>
@@ -435,7 +435,7 @@
                 <version.plugin.source>2.4</version.plugin.source>
                 <version.plugin.gpg>1.6</version.plugin.gpg>
                 <version.plugin.jxr>2.5</version.plugin.jxr>
-                <version.plugin.buildhelp>3.2.0</version.plugin.buildhelp>
+                <version.plugin.buildhelper>1.12</version.plugin.buildhelper>
                 <version.plugin.jar>3.0.2</version.plugin.jar>
                 <version.plugin.site>3.7.1</version.plugin.site>
                 <version.plugin.exec>1.5.0</version.plugin.exec>
@@ -511,7 +511,7 @@
                 <version.plugin.staging>1.6.8</version.plugin.staging>
                 <version.plugin.versions>2.8.1</version.plugin.versions>
                 <version.plugin.jxr>3.1.1</version.plugin.jxr>
-                <version.plugin.buildhelp>3.2.0</version.plugin.buildhelp>
+                <version.plugin.buildhelper>3.2.0</version.plugin.buildhelper>
                 <version.plugin.site>3.11.0</version.plugin.site>
                 <version.plugin.exec>3.0.0</version.plugin.exec>
                 <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>

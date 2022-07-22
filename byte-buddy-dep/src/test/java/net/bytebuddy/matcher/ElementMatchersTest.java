@@ -43,7 +43,7 @@ public class ElementMatchersTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
-    private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
+    private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.v8.SingleDefaultMethodInterface";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();

@@ -51,7 +51,7 @@ public class InvokeDynamicTest {
 
     private static final Class<?> CLASS = Object.class;
 
-    private static final String BOOTSTRAP_CLASS = "net.bytebuddy.test.precompiled.DynamicInvokeBootstrap";
+    private static final String BOOTSTRAP_CLASS = "net.bytebuddy.test.precompiled.v7.DynamicInvokeBootstrap";
 
     private static final String SAMPLE_ENUM = BOOTSTRAP_CLASS + "$SampleEnum";
 

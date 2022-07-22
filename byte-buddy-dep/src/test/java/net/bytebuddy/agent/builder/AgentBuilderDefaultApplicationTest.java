@@ -53,7 +53,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
-    private static final String LAMBDA_SAMPLE_FACTORY = "net.bytebuddy.test.precompiled.LambdaSampleFactory";
+    private static final String LAMBDA_SAMPLE_FACTORY = "net.bytebuddy.test.precompiled.v8.LambdaSampleFactory";
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {

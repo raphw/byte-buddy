@@ -250,7 +250,7 @@ public class AdviceTest {
     @Test
     @JavaVersionRule.Enforce(value = 7, target = TrivialAdviceDelegation.class)
     public void testTrivialAdviceWithDelegationBootstrapped() throws Exception {
-        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.AdviceBootstrap");
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v7.AdviceBootstrap");
         Class<?> type = new ByteBuddy()
                 .redefine(TrivialAdviceDelegation.class)
                 .visit(Advice.withCustomMapping().bootstrap(bootstrap.getMethod("bootstrap",
@@ -1569,7 +1569,7 @@ public class AdviceTest {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(Advice.withCustomMapping().bindDynamic(Custom.class,
-                        Class.forName("net.bytebuddy.test.precompiled.DynamicSampleBootstrap").getMethod("callable",
+                        Class.forName("net.bytebuddy.test.precompiled.v7.DynamicSampleBootstrap").getMethod("callable",
                                 JavaType.METHOD_HANDLES_LOOKUP.load(),
                                 String.class,
                                 JavaType.METHOD_TYPE.load(),

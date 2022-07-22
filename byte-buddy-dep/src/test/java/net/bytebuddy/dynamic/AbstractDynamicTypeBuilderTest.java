@@ -64,7 +64,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", TO_STRING = "toString";
 
-    private static final String TYPE_VARIABLE_NAME = "net.bytebuddy.test.precompiled.TypeAnnotation", VALUE = "value";
+    private static final String TYPE_VARIABLE_NAME = "net.bytebuddy.test.precompiled.v8.TypeAnnotation", VALUE = "value";
 
     private static final int MODIFIERS = Opcodes.ACC_PUBLIC;
 

@@ -17,13 +17,13 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
 
     private static final String T = "T", S = "S", U = "U", V = "V", W = "W", X = "X";
 
-    private static final String TYPE_ANNOTATION = "net.bytebuddy.test.precompiled.TypeAnnotation";
+    private static final String TYPE_ANNOTATION = "net.bytebuddy.test.precompiled.v8.TypeAnnotation";
 
-    private static final String TYPE_ANNOTATION_SAMPLES = "net.bytebuddy.test.precompiled.TypeAnnotationSamples";
+    private static final String TYPE_ANNOTATION_SAMPLES = "net.bytebuddy.test.precompiled.v8.TypeAnnotationSamples";
 
-    private static final String RECEIVER_TYPE_SAMPLE = "net.bytebuddy.test.precompiled.ReceiverTypeSample", INNER = "Inner", NESTED = "Nested", GENERIC = "Generic";
+    private static final String RECEIVER_TYPE_SAMPLE = "net.bytebuddy.test.precompiled.v8.ReceiverTypeSample", INNER = "Inner", NESTED = "Nested", GENERIC = "Generic";
 
-    private static final String RECORD_SAMPLE = "net.bytebuddy.test.precompiled.GenericRecordSample";
+    private static final String RECORD_SAMPLE = "net.bytebuddy.test.precompiled.v16.GenericRecordSample";
 
     protected abstract TypeDescription describe(Class<?> type);
 

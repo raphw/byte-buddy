@@ -36,7 +36,7 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
+    private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.v8.SingleDefaultMethodInterface";
 
     protected DynamicType.Builder<?> createPlain() {
         return create(Foo.class);
