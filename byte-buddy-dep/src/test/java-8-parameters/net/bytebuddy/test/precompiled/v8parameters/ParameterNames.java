@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.test.precompiled.v8;
+package net.bytebuddy.test.precompiled.v8parameters;
 
-/**
- * This class must be compiled with enabling {@code -parameters} for the related tests to work!
- */
 public abstract class ParameterNames {
 
     public ParameterNames(String first, final int second) {

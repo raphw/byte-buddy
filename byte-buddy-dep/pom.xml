@@ -400,6 +400,7 @@
                                     <goal>testCompile</goal>
                                 </goals>
                                 <configuration>
+                                    <target>${bytecode.test.version}</target>
                                     <testIncludes>
                                         <include>net/bytebuddy/test/precompiled/v4jsr14/**</include>
                                     </testIncludes>
@@ -692,6 +693,99 @@
                 <testResources>
                     <testResource>
                         <directory>src/test/precompiled-8</directory>
+                    </testResource>
+                </testResources>
+            </build>
+        </profile>
+        <profile>
+            <id>java-8-parameters-precompile</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>java-8-parameters-precompile</name>
+                </property>
+            </activation>
+            <properties>
+                <sourcecode.test.version>1.8</sourcecode.test.version>
+                <bytecode.test.version>1.8</bytecode.test.version>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>${version.plugin.buildhelper}</version>
+                        <executions>
+                            <execution>
+                                <id>java-8-parameters-precompile-test</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>add-test-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>src/test/java-8-parameters</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${version.plugin.compiler}</version>
+                        <executions>
+                            <execution>
+                                <id>default-testCompile</id>
+                                <phase>test-compile</phase>
+                                <goals>
+                                    <goal>testCompile</goal>
+                                </goals>
+                                <configuration>
+                                    <parameters>true</parameters>
+                                    <testIncludes>
+                                        <include>net/bytebuddy/test/precompiled/v8parameters/**</include>
+                                    </testIncludes>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>${version.plugin.antrun}</version>
+                        <executions>
+                            <execution>
+                                <id>java-8-parameters-precompile-test-copy</id>
+                                <phase>process-test-classes</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <copy todir="${project.basedir}/src/test/precompiled-8-parameters">
+                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v8parameters/*.class"/>
+                                        </copy>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>java-8-parameters-no-precompile</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>!java-8-parameters-precompile</name>
+                </property>
+            </activation>
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/precompiled-8-parameters</directory>
                     </testResource>
                 </testResources>
             </build>

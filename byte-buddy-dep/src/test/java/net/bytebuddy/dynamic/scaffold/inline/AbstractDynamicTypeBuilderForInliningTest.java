@@ -62,7 +62,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     private static final int QUX = 42;
 
-    private static final String PARAMETER_NAME_CLASS = "net.bytebuddy.test.precompiled.v8.ParameterNames";
+    private static final String PARAMETER_NAME_CLASS = "net.bytebuddy.test.precompiled.v8parameters.ParameterNames";
 
     private static final String SIMPLE_TYPE_ANNOTATED = "net.bytebuddy.test.precompiled.v8.SimpleTypeAnnotatedType";
 
