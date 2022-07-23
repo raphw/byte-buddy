@@ -301,6 +301,7 @@
                 </plugins>
             </build>
         </profile>
+        <!-- Precompilation configuration for Java 1.4 class files. -->
         <profile>
             <id>java-4-precompile</id>
             <activation>
@@ -393,6 +394,7 @@
                 </testResources>
             </build>
         </profile>
+        <!-- Precompilation configuration for Java 1.4 (JSR 14) class files. -->
         <profile>
             <id>java-4-jsr14-precompile</id>
             <activation>
@@ -487,6 +489,7 @@
                 </testResources>
             </build>
         </profile>
+        <!-- Precompilation configuration for Java 1.6 class files. -->
         <profile>
             <id>java-6-precompile</id>
             <activation>
@@ -591,6 +594,7 @@
                 </testResources>
             </build>
         </profile>
+        <!-- Precompilation configuration for Java 1.7 class files. -->
         <profile>
             <id>java-7-precompile</id>
             <activation>
@@ -663,6 +667,7 @@
                 </testResources>
             </build>
         </profile>
+        <!-- Precompilation configuration for Java 1.8 class files. -->
         <profile>
             <id>java-8-precompile</id>
             <activation>
@@ -736,6 +741,7 @@
                 </testResources>
             </build>
         </profile>
+        <!-- Precompilation configuration for Java 1.8 (with parameter names) class files. -->
         <profile>
             <id>java-8-parameters-precompile</id>
             <activation>
@@ -829,6 +835,7 @@
                 </testResources>
             </build>
         </profile>
+        <!-- Precompilation configuration for Java 11 class files. -->
         <profile>
             <id>java-11-precompile</id>
             <activation>
@@ -902,6 +909,7 @@
                 </testResources>
             </build>
         </profile>
+        <!-- Precompilation configuration for Java 16 class files. -->
         <profile>
             <id>java-16-precompile</id>
             <activation>
@@ -975,6 +983,7 @@
                 </testResources>
             </build>
         </profile>
+        <!-- Precompilation configuration for Java 17 class files. -->
         <profile>
             <id>java-17-precompile</id>
             <activation>

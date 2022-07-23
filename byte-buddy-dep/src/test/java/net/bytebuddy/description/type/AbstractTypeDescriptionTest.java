@@ -841,7 +841,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     @JavaVersionRule.Enforce(16)
     public void testRecordComponentsAccessor() throws Exception {
-        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.v8.RecordSample");
+        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.v16.RecordSample");
         @SuppressWarnings("unchecked")
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.v8.TypeAnnotation");
         MethodDescription.InDefinedShape value = new MethodDescription.ForLoadedMethod(typeAnnotation.getMethod("value"));
