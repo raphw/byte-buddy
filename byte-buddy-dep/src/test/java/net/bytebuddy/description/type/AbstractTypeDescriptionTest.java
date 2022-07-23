@@ -790,7 +790,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     @JavaVersionRule.Enforce(16)
     public void testRecordComponents() throws Exception {
-        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.v16.SampleRecord");
+        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.v16.RecordSample");
         assertThat(describe(sampleRecord).isRecord(), is(true));
         @SuppressWarnings("unchecked")
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.v8.TypeAnnotation");
