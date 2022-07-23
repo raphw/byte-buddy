@@ -19,6 +19,8 @@
         Unfortunately, it is not possible in Maven to disable a profile from another profile. Therefore, profiles must be
         activated by setting properties with the same name as the profiles for precompilation. This requires a minimal
         change in syntax by substituting a 'P' with a 'D'.
+
+        It is also possible to compile the native method sample by using the 'native-compile' profile on Linux.
     -->
 
     <artifactId>byte-buddy-dep</artifactId>
@@ -256,6 +258,43 @@
                                 <goals>
                                     <goal>cmp</goal>
                                 </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>native-compile</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>${version.plugin.exec}</version>
+                        <executions>
+                            <execution>
+                                <id>compile-test</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>gcc</executable>
+                                    <arguments>
+                                        <argument>-fPIC</argument>
+                                        <argument>-I${java.home}/../include</argument>
+                                        <argument>-I${java.home}/../include/linux</argument>
+                                        <argument>-I${project.basedir}/src/test/c</argument>
+                                        <argument>-shared</argument>
+                                        <argument>-o</argument>
+                                        <argument>${project.basedir}/src/test/resources/net_bytebuddy_test_c_NativeSample.so</argument>
+                                        <argument>${project.basedir}/src/test/c/net_bytebuddy_test_c_NativeSample.c</argument>
+                                    </arguments>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
