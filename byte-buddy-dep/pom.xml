@@ -363,8 +363,9 @@
                 </property>
             </activation>
             <properties>
+                <version.plugin.compiler>2.0.1</version.plugin.compiler>
                 <sourcecode.test.version>1.4</sourcecode.test.version>
-                <bytecode.test.version>1.4</bytecode.test.version>
+                <bytecode.test.version>jsr14</bytecode.test.version>
             </properties>
             <build>
                 <plugins>
@@ -399,7 +400,6 @@
                                     <goal>testCompile</goal>
                                 </goals>
                                 <configuration>
-                                    <testCompilerArgument>-target jsr14</testCompilerArgument>
                                     <testIncludes>
                                         <include>net/bytebuddy/test/precompiled/v4jsr14/**</include>
                                     </testIncludes>
@@ -421,7 +421,7 @@
                                 <configuration>
                                     <target>
                                         <copy todir="${project.basedir}/src/test/precompiled-4-jsr14">
-                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v4/*.class"/>
+                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v4jsr14/*.class"/>
                                         </copy>
                                     </target>
                                 </configuration>

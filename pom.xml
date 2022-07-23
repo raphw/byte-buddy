@@ -371,8 +371,6 @@
                         <showWarnings>true</showWarnings>
                         <showDeprecation>true</showDeprecation>
                         <compilerArgument>-Xlint:all,-options,-processing</compilerArgument>
-                        <!-- Avoid Byte Buddy plugin being applied multiple times. -->
-                        <useIncrementalCompilation>false</useIncrementalCompilation>
                     </configuration>
                 </plugin>
                 <plugin>
