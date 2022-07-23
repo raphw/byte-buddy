@@ -116,8 +116,8 @@ jobs:
           architecture: x64
       - name: Build project
         run: ./mvnw -s .mvn/nossl.settings.xml -U verify -Pintegration -Pjava${{ matrix.java }}
-  coverage:
-    name: Coverage
+  extended:
+    name: Runs an extended build including code inspection
     runs-on: ubuntu-18.04
     needs: [ hotspot-ea, hotspot-supported, j9-supported, hotspot-unsupported, hotspot-32, hotspot-legacy ]
     if: github.event_name == 'push'
@@ -130,11 +130,11 @@ jobs:
           architecture: x64
           cache: maven
       - name: Build project
-        run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pintegration -Pextras -Pchecks -Panalysis
+        run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pextras -Pchecks -Panalysis -Pintegration
   release:
     name: Release new version
     runs-on: ubuntu-18.04
-    needs: [ coverage ]
+    needs: [ extended ]
     if: github.event_name == 'push' && startsWith(github.event.head_commit.message, '[release]')
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
