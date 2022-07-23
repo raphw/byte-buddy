@@ -485,7 +485,7 @@ public class TypeWriterDefaultTest {
     public void testLegacyTypeRedefinitionIsDiscovered() throws Exception {
         Class<?> dynamicType = new ByteBuddy()
                 .with(TypeValidation.DISABLED)
-                .redefine(Class.forName("net.bytebuddy.test.precompiled.TypeConstantSample"))
+                .redefine(Class.forName("net.bytebuddy.test.precompiled.v4.TypeConstantSample"))
                 .method(named(BAR))
                 .intercept(FixedValue.value(int.class))
                 .make()

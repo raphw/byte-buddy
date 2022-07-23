@@ -177,7 +177,7 @@ public class ByteBuddyTest {
     @Test
     public void testClassCompiledToJsr14() throws Exception {
         assertThat(new ByteBuddy()
-                .redefine(Class.forName("net.bytebuddy.test.precompiled.Jsr14Sample"))
+                .redefine(Class.forName("net.bytebuddy.test.precompiled.v4jsr14.Jsr14Sample"))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()

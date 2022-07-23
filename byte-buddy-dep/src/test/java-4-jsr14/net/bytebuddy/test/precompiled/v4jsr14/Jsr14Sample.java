@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.test.precompiled.v4;
+package net.bytebuddy.test.precompiled.v4jsr14;
 
 public class Jsr14Sample<TYPE> {
 

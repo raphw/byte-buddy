@@ -79,7 +79,7 @@ public class CachedReturnPluginTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testCannotConstructAdvice() throws Exception {
-        Constructor<?> constructor = Class.forName(CachedReturnPlugin.class.getName() + "$" + adviceArgument.getSimpleName(),
+        Constructor<?> constructor = Class.forName(CachedReturnPlugin.class.getName() + "$Advice$" + adviceArgument.getSimpleName(),
                 true,
                 CachedReturnPlugin.class.getClassLoader()).getDeclaredConstructor();
         constructor.setAccessible(true);

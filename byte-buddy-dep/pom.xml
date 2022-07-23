@@ -271,7 +271,7 @@
                 </property>
             </activation>
             <properties>
-                <sourecode.test.version>1.4</sourecode.test.version>
+                <sourcecode.test.version>1.4</sourcecode.test.version>
                 <bytecode.test.version>1.4</bytecode.test.version>
             </properties>
             <build>
@@ -282,18 +282,6 @@
                         <version>${version.plugin.buildhelper}</version>
                         <executions>
                             <execution>
-                                <id>java-4-precompile</id>
-                                <phase>generate-sources</phase>
-                                <goals>
-                                    <goal>add-source</goal>
-                                </goals>
-                                <configuration>
-                                    <sources>
-                                        <source>src/main/java-4</source>
-                                    </sources>
-                                </configuration>
-                            </execution>
-                            <execution>
                                 <id>java-4-precompile-test</id>
                                 <phase>generate-sources</phase>
                                 <goals>
@@ -303,6 +291,25 @@
                                     <sources>
                                         <source>src/test/java-4</source>
                                     </sources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${version.plugin.compiler}</version>
+                        <executions>
+                            <execution>
+                                <id>default-testCompile</id>
+                                <phase>test-compile</phase>
+                                <goals>
+                                    <goal>testCompile</goal>
+                                </goals>
+                                <configuration>
+                                    <testIncludes>
+                                        <include>net/bytebuddy/test/precompiled/v4/**</include>
+                                    </testIncludes>
                                 </configuration>
                             </execution>
                         </executions>
@@ -343,6 +350,99 @@
                 <testResources>
                     <testResource>
                         <directory>src/test/precompiled-4</directory>
+                    </testResource>
+                </testResources>
+            </build>
+        </profile>
+        <profile>
+            <id>java-4-jsr14-precompile</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>java-4-jsr14-precompile</name>
+                </property>
+            </activation>
+            <properties>
+                <sourcecode.test.version>1.4</sourcecode.test.version>
+                <bytecode.test.version>1.4</bytecode.test.version>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>${version.plugin.buildhelper}</version>
+                        <executions>
+                            <execution>
+                                <id>java-4-jsr14-precompile-test</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>add-test-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>src/test/java-4-jsr14</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${version.plugin.compiler}</version>
+                        <executions>
+                            <execution>
+                                <id>default-testCompile</id>
+                                <phase>test-compile</phase>
+                                <goals>
+                                    <goal>testCompile</goal>
+                                </goals>
+                                <configuration>
+                                    <testCompilerArgument>-target jsr14</testCompilerArgument>
+                                    <testIncludes>
+                                        <include>net/bytebuddy/test/precompiled/v4jsr14/**</include>
+                                    </testIncludes>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>${version.plugin.antrun}</version>
+                        <executions>
+                            <execution>
+                                <id>java-4-precompile-test-copy</id>
+                                <phase>process-test-classes</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <copy todir="${project.basedir}/src/test/precompiled-4-jsr14">
+                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v4/*.class"/>
+                                        </copy>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>java-4-jsr14-no-precompile</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>!java-4-jsr14-precompile</name>
+                </property>
+            </activation>
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/precompiled-4-jsr14</directory>
                     </testResource>
                 </testResources>
             </build>

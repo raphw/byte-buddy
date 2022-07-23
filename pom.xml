@@ -72,7 +72,7 @@
         <version.plugin.clean>3.2.0</version.plugin.clean>
         <version.plugin.bundle>5.1.7</version.plugin.bundle>
         <version.plugin.compiler>3.10.1</version.plugin.compiler>
-        <version.plugin.install>3.0.0-M1</version.plugin.install>
+        <version.plugin.install>3.0.0</version.plugin.install>
         <version.plugin.deploy>3.0.0-M2</version.plugin.deploy>
         <version.plugin.staging>1.6.13</version.plugin.staging>
         <version.plugin.versions>2.11.0</version.plugin.versions>
@@ -111,6 +111,7 @@
         <version.javassist>3.29.0-GA</version.javassist>
         <spotbugs.skip>false</spotbugs.skip>
         <jacoco.skip>false</jacoco.skip>
+        <japicmp.skip>false</japicmp.skip>
         <modulemaker.skip>false</modulemaker.skip>
         <repository.url>git@github.com:raphw/byte-buddy.git</repository.url>
     </properties>
