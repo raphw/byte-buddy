@@ -22,7 +22,7 @@ maven-wrapper.jar
 byte-buddy-gradle-plugin/build/
 byte-buddy-gradle-plugin/buildSrc/build/
 byte-buddy-gradle-plugin/gradle/build/
-byte-buddy-gradle-plugin/gradle/wrapper/
+byte-buddy-gradle-plugin/gradle/2.14.1/
 
 # Shade plugin
 dependency-reduced-pom.xml

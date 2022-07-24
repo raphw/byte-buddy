@@ -120,14 +120,14 @@ SET MAVEN_JAVA_EXE="%JAVA_HOME%\bin\java.exe"
 set WRAPPER_JAR="%MAVEN_PROJECTBASEDIR%\.mvn\3.2.5\maven-wrapper.jar"
 set WRAPPER_LAUNCHER=org.apache.maven.wrapper.MavenWrapperMain
 
-@REM Use HTTP endpoints if Java 6 or 7 is used which do not support current SSL protocols.
-set REPO_URL="http://insecure.repo1.maven.org"
-set PROPERTIES_FILE="maven-wrapper-nossl.properties"
+@REM Use HTTP endpoints if Java 6 or 7 is used which do not support current SSL protocols (custom to Byte Buddy build)
+set REPO_URL=http://insecure.repo1.maven.org
+set PROPERTIES_FILE=maven-wrapper-nossl.properties
 for /f tokens^=2-5^ delims^=.-_^" %%j in ('%JAVA_HOME%\bin\java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j%%k%%l%%m"
 IF NOT "%JAVA_VERSION_STRING:~0,3%"=="160" (
   IF NOT "%JAVA_VERSION_STRING:~0,3%"=="170" (
-    set REPO_URL="https://repo.maven.apache.org"
-    set PROPERTIES_FILE="maven-wrapper.properties"
+    set REPO_URL=https://repo.maven.apache.org
+    set PROPERTIES_FILE=maven-wrapper.properties
   )
 )
 
