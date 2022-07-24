@@ -15,6 +15,7 @@
 log/
 target/
 site/
+maven-wrapper.jar
 
 # Gradle
 .gradle/
