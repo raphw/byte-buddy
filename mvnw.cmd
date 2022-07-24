@@ -165,6 +165,12 @@ if exist %WRAPPER_JAR% (
 )
 @REM End of extension
 
+@REM Validating hash of maven-wrapper.jar (custom to Byte Buddy build)
+IF NOT ((Get-FileHash %MAVEN_PROJECTBASEDIR%/.mvn/3.2.5/maven-wrapper.jar).hash -eq "0f37e00f4a503f19cfb1b8100b1f251f241cd1981524761bb9454037cb97589d" (
+  echo Could not validate hash of maven-wrapper.jar
+  goto end
+)
+
 @REM Provide a "standardized" way to retrieve the CLI args that will
 @REM work with both Windows and non-Windows executions.
 set MAVEN_CMD_LINE_ARGS=%*

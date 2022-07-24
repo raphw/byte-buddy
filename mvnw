@@ -282,6 +282,12 @@ else
         fi
     fi
 fi
+
+# Validating hash of maven-wrapper.jar (custom to Byte Buddy build)
+if ! `echo "0f37e00f4a503f19cfb1b8100b1f251f241cd1981524761bb9454037cb97589d  $BASE_DIR/.mvn/3.2.5/maven-wrapper.jar" | shasum -a 256 -q -c`; then
+  echo "Could not validate hash of maven-wrapper.jar"
+  return 1;
+fi
 ##########################################################################################
 # End of extension
 ##########################################################################################
