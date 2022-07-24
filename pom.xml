@@ -219,7 +219,7 @@
                 <version>${version.plugin.coveralls}</version>
                 <configuration>
                     <sourceDirectories>
-                        <sourceDirectory>${project.basedir}/byte-buddy-dep/src/precompiled/java</sourceDirectory>
+                        <sourceDirectory>${project.basedir}/byte-buddy-dep/src/main/java-6</sourceDirectory>
                     </sourceDirectories>
                 </configuration>
             </plugin>
