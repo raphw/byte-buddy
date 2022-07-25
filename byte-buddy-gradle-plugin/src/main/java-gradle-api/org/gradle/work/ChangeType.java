@@ -13,8 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.gradle.work;
+
 /**
- * A package containing placeholder types that represent Gradle API types that
- * are not contained by all Gradle versions.
+ * A placeholder representation of Gradle's {@code org.gradle.work.ChangeType} type.
  */
-package net.bytebuddy.build.gradle.api;
+public enum ChangeType {
+
+    /**
+     * A placeholder representation of Gradle's {@code org.gradle.work.ChangeType#REMOVED} value.
+     */
+    REMOVED
+}

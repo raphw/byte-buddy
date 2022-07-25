@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.api;
+package org.gradle.api.tasks;
+
+import java.lang.annotation.*;
 
 /**
- * A placeholder representation of Gradle's {@code org.gradle.work.InputChanges} type.
+ * A placeholder representation of Gradle's {@code org.gradle.api.tasks.PathSensitive} type.
  */
-@GradleType("org.gradle.work.InputChanges")
-public interface InputChanges {
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.FIELD})
+public @interface PathSensitive {
 
     /**
-     * A placeholder representation of Gradle's {@code org.gradle.work.InputChanges#isIncremental} method.
+     * A placeholder representation of Gradle's {@code org.gradle.api.tasks.PathSensitive#value} method.
      *
      * @return The method's return value.
      */
-    boolean isIncremental();
-
-    /**
-     * A placeholder representation of Gradle's {@code org.gradle.work.InputChanges#getFileChanges} method.
-     *
-     * @param provider The method's argument.
-     * @return The method's return value.
-     */
-    Iterable<FileChange> getFileChanges(Provider<? extends Directory> provider);
+    PathSensitivity value();
 }

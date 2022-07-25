@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.api;
+package org.gradle.work;
 
 import java.lang.annotation.*;
 
 /**
- * A placeholder representation of Gradle's {@code org.gradle.api.tasks.CompileClasspath} type.
+ * A placeholder representation of Gradle's {@code org.gradle.work.Incremental} type.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD})
-@GradleType("org.gradle.api.tasks.CompileClasspath")
-public @interface CompileClasspath {
+public @interface Incremental {
     /* empty */
 }
-

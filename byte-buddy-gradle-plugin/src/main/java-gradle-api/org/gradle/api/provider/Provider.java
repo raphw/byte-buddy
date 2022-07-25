@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.api;
+package org.gradle.api.provider;
 
 import org.gradle.api.Transformer;
 
@@ -22,7 +22,6 @@ import org.gradle.api.Transformer;
  *
  * @param <T> The type's type parameter.
  */
-@GradleType("org.gradle.api.provider.Provider")
 public interface Provider<T> {
 
     /**

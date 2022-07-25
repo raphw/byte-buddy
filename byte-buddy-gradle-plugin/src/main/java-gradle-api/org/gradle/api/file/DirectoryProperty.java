@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.api;
+package org.gradle.api.file;
 
-import org.gradle.api.file.FileTree;
+import org.gradle.api.provider.Provider;
 
 import java.io.File;
 
 /**
  * A placeholder representation of Gradle's {@code org.gradle.api.file.DirectoryProperty} type.
  */
-@GradleType("org.gradle.api.file.DirectoryProperty")
 public interface DirectoryProperty extends Provider<Directory> {
 
     /**

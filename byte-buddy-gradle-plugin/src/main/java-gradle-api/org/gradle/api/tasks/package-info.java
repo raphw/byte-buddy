@@ -13,17 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.api;
-
-import java.lang.annotation.*;
-
 /**
- * A placeholder representation of Gradle's {@code org.gradle.api.tasks.Internal} type.
+ * A substitution package for {@code org.gradle.api.tasks} used for legacy compilation.
  */
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.FIELD})
-@GradleType("org.gradle.api.tasks.Internal")
-public @interface Internal {
-    /* empty */
-}
+package org.gradle.api.tasks;

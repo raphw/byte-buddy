@@ -16,15 +16,15 @@
 package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.Plugin;
-import net.bytebuddy.build.gradle.api.CompileClasspath;
-import net.bytebuddy.build.gradle.api.Internal;
-import net.bytebuddy.build.gradle.api.PathSensitive;
-import net.bytebuddy.build.gradle.api.PathSensitivity;
-import net.bytebuddy.build.gradle.api.*;
+import org.gradle.api.file.DirectoryProperty;
+import org.gradle.work.*;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.*;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 
 import javax.inject.Inject;
 import java.io.File;

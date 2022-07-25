@@ -13,23 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.api;
+package org.gradle.work;
 
-import java.lang.annotation.*;
+import java.io.File;
 
 /**
- * A placeholder representation of Gradle's {@code org.gradle.api.tasks.PathSensitive} type.
+ * A placeholder representation of Gradle's {@code org.gradle.work.FileChange} type.
  */
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.FIELD})
-@GradleType("org.gradle.api.tasks.PathSensitive")
-public @interface PathSensitive {
+public interface FileChange {
 
     /**
-     * A placeholder representation of Gradle's {@code org.gradle.api.tasks.PathSensitive#value} method.
+     * A placeholder representation of Gradle's {@code org.gradle.work.FileChange#getFile} method.
      *
      * @return The method's return value.
      */
-    PathSensitivity value();
+    File getFile();
+
+    /**
+     * A placeholder representation of Gradle's {@code org.gradle.work.FileChange#getChangeType} method.
+     *
+     * @return The method's return value.
+     */
+    ChangeType getChangeType();
 }

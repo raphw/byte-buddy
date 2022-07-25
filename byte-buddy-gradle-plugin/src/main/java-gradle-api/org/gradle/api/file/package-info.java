@@ -13,16 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.api;
-
 /**
- * A placeholder representation of Gradle's {@code org.gradle.work.ChangeType} type.
+ * A substitution package for {@code org.gradle.api.file} used for legacy compilation.
  */
-@GradleType("org.gradle.work.ChangeType")
-public enum ChangeType {
-
-    /**
-     * A placeholder representation of Gradle's {@code org.gradle.work.ChangeType#REMOVED} value.
-     */
-    REMOVED
-}
+package org.gradle.api.file;

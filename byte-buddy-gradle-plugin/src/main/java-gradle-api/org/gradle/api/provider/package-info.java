@@ -13,27 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.api;
-
-import java.io.File;
-
 /**
- * A placeholder representation of Gradle's {@code org.gradle.work.FileChange} type.
+ * A substitution package for {@code org.gradle.api.provider} used for legacy compilation.
  */
-@GradleType("org.gradle.work.FileChange")
-public interface FileChange {
-
-    /**
-     * A placeholder representation of Gradle's {@code org.gradle.work.FileChange#getFile} method.
-     *
-     * @return The method's return value.
-     */
-    File getFile();
-
-    /**
-     * A placeholder representation of Gradle's {@code org.gradle.work.FileChange#getChangeType} method.
-     *
-     * @return The method's return value.
-     */
-    ChangeType getChangeType();
-}
+package org.gradle.api.provider;

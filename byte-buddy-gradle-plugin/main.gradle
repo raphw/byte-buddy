@@ -1,5 +1,3 @@
-import net.bytebuddy.build.gradle.transform.GradleTypeTransformer
-
 import java.util.regex.Pattern
 
 ext.pom = new XmlSlurper().parse(file('./pom.xml'))
@@ -108,21 +106,17 @@ task copyLicense(type: Copy) {
 compileJava.dependsOn copyLicense
 compileTestJava.dependsOn copyLicense
 
-def transformer = new GradleTypeTransformer();
-if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
-    jar.doLast {
-        transformer.transform(jar.archivePath)
-    }
-} else {
+if (!gradle.gradleVersion.startsWith("2.")) { // support legacy version
     validatePlugins {
         enabled = false
-    }
-    jar.doLast {
-        transformer.transform(jar.archiveFile.get().asFile)
     }
 }
 
 if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
+    sourceSets.main.java.srcDirs += ['src/main/java-gradle-api']
+    jar {
+        exclude('org/gradle/**')
+    }
     gradlePlugin {
         plugins {
             byteBuddyPlugin {

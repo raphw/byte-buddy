@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.api;
+package org.gradle.api.tasks;
 
 /**
  * A placeholder representation of Gradle's {@code org.gradle.api.tasks.PathSensitivity} type.
  */
-@GradleType("org.gradle.api.tasks.PathSensitivity")
 public enum PathSensitivity {
 
     /**

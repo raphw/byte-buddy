@@ -13,7 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.gradle.api.file;
+
+import java.io.File;
+
 /**
- * A package containing transformation tools.
+ * A placeholder representation of Gradle's {@code org.gradle.api.file.Directory} type.
  */
-package net.bytebuddy.build.gradle.transform;
+public interface Directory {
+
+    /**
+     * A placeholder representation of Gradle's {@code org.gradle.api.file.Directory#getAsFile} method.
+     *
+     * @return The method's return value.
+     */
+    File getAsFile();
+
+    /**
+     * A placeholder representation of Gradle's {@code org.gradle.api.file.Directory#dir} method.
+     *
+     * @param path The method's argument.
+     * @return The method's return value.
+     */
+    Directory dir(String path);
+}

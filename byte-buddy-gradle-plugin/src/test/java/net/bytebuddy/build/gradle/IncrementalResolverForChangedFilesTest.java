@@ -1,7 +1,7 @@
 package net.bytebuddy.build.gradle;
 
-import net.bytebuddy.build.gradle.api.ChangeType;
-import net.bytebuddy.build.gradle.api.FileChange;
+import org.gradle.work.ChangeType;
+import org.gradle.work.FileChange;
 import org.gradle.api.Project;
 import org.junit.Rule;
 import org.junit.Test;

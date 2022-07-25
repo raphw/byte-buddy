@@ -16,9 +16,8 @@
 package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.Plugin;
-import net.bytebuddy.build.gradle.api.CompileClasspath;
-import net.bytebuddy.build.gradle.api.PathSensitive;
-import net.bytebuddy.build.gradle.api.PathSensitivity;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.tasks.*;
 

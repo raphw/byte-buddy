@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.api;
+package org.gradle.work;
 
-import java.io.File;
+import org.gradle.api.file.Directory;
+import org.gradle.api.provider.Provider;
 
 /**
- * A placeholder representation of Gradle's {@code org.gradle.api.file.Directory} type.
+ * A placeholder representation of Gradle's {@code org.gradle.work.InputChanges} type.
  */
-@GradleType("org.gradle.api.file.Directory")
-public interface Directory {
+public interface InputChanges {
 
     /**
-     * A placeholder representation of Gradle's {@code org.gradle.api.file.Directory#getAsFile} method.
+     * A placeholder representation of Gradle's {@code org.gradle.work.InputChanges#isIncremental} method.
      *
      * @return The method's return value.
      */
-    File getAsFile();
+    boolean isIncremental();
 
     /**
-     * A placeholder representation of Gradle's {@code org.gradle.api.file.Directory#dir} method.
+     * A placeholder representation of Gradle's {@code org.gradle.work.InputChanges#getFileChanges} method.
      *
-     * @param path The method's argument.
+     * @param provider The method's argument.
      * @return The method's return value.
      */
-    Directory dir(String path);
+    Iterable<FileChange> getFileChanges(Provider<? extends Directory> provider);
 }

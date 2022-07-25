@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.api;
+package org.gradle.api.tasks;
 
 import java.lang.annotation.*;
 
 /**
- * Indicates the actual Gradle type of a placeholder type.
+ * A placeholder representation of Gradle's {@code org.gradle.api.tasks.CompileClasspath} type.
  */
 @Documented
-@Retention(RetentionPolicy.CLASS)
-@Target(ElementType.TYPE)
-public @interface GradleType {
-
-    /**
-     * Returns the fully-qualified binary name of the Gradle type.
-     *
-     * @return The fully-qualified binary name of the Gradle type.
-     */
-    String value();
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.FIELD})
+public @interface CompileClasspath {
+    /* empty */
 }
+
