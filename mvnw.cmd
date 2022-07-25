@@ -173,9 +173,11 @@ FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\%WRAP
     IF "%%A"=="wrapperHash" SET FILE_HASH=%%B
 )
 IF NOT %FILE_HASH%=="" (
-    IF NOT (Get-FileHash %MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.jar -Algorithm SHA256).hash=="%FILE_HASH%".toUpper() (
-      echo Could not validate hash of maven-wrapper.jar
-      goto error
+    FOR /F "usebackq tokens=*" %%A in (certUtil -hashfile "%MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.properties" SHA256 | findstr /v "hash") do (
+        IF NOT %%A=="%FILE_HASH%" (
+            echo Could not validate hash of maven-wrapper.jar
+            goto error
+        )
     )
 )
 

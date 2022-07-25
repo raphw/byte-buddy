@@ -76,8 +76,8 @@ IF NOT "%JAVA_VERSION_STRING:~0,3%"=="160" (
   )
 )
 
-@rem Extension to allow automatically downloading the maven-wrapper.jar from Maven-central
-@rem This allows using the maven wrapper in projects that prohibit checking in binary data.
+@rem Extension to allow automatically downloading the Gradle binary from Gradle's repository
+@rem This is implemented similarly to the Maven Wrapper's download routine.
 DISTRIBUTION_LOCATION=""
 DISTRIBUTION_URL=""
 for /f "usebackq tokens=1,2 delims==" %%A in ("%APP_HOME%\gradle\%WRAPPER_LOCATION%\maven-wrapper.properties") do (
@@ -120,16 +120,18 @@ FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\gradle\%WR
     IF "%%A"=="wrapperHash" SET FILE_HASH=%%B
 )
 IF NOT %FILE_HASH%=="" (
-    IF NOT (Get-FileHash %APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar -Algorithm SHA256).hash=="%FILE_HASH%".toUpper() (
-      echo Could not validate hash of gradle-wrapper.jar
-      goto error
+    FOR /F "usebackq tokens=*" %%A in (certUtil -hashfile "%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.properties" SHA256 | findstr /v "hash") do (
+        IF NOT %%A=="%FILE_HASH%" (
+            echo Could not validate hash of gradle-wrapper.jar
+            goto error
+        )
     )
 )
 
 @rem Execute Gradle
 "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %*
 
-:endWRAPPER_LOCA
+:end
 @rem End local scope for the variables with windows NT shell
 if "%ERRORLEVEL%"=="0" goto mainEnd
 
