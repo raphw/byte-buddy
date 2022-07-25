@@ -111,7 +111,7 @@
         <version.javassist>3.29.0-GA</version.javassist>
         <spotbugs.skip>false</spotbugs.skip>
         <jacoco.skip>false</jacoco.skip>
-        <japicmp.skip>false</japicmp.skip>
+        <japicmp.skip>true</japicmp.skip>
         <modulemaker.skip>false</modulemaker.skip>
         <repository.url>git@github.com:raphw/byte-buddy.git</repository.url>
     </properties>
@@ -932,6 +932,9 @@
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
+            <properties>
+                <japicmp.skip>false</japicmp.skip>
+            </properties>
             <build>
                 <plugins>
                     <!-- Check style on build. -->

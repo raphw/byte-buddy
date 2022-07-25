@@ -176,7 +176,7 @@ IF NOT %FILE_HASH%=="" (
     FOR /F "usebackq tokens=*" %%A in ('certUtil -hashfile "%MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.jar" SHA256') do (
         echo %%A | findstr /C:"hash" 1>nul || (
             IF NOT %%A==%FILE_HASH% (
-                echo Could not validate hash of maven-wrapper.jar
+                echo Could not validate hash of maven-wrapper.jar, was %%A
                 goto error
             )
         )

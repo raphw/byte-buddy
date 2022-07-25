@@ -218,7 +218,7 @@
             </build>
         </profile>
         <profile>
-            <id>checks</id>
+            <id>japicmp-check</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
                 <jdk>[1.7,)</jdk>

@@ -14,7 +14,7 @@
 @rem limitations under the License.
 @rem
 
-@echo on
+@if "%DEBUG%" == "" @echo off
 @rem ##########################################################################
 @rem
 @rem  Gradle startup script for Windows
@@ -123,7 +123,7 @@ IF NOT %FILE_HASH%=="" (
     FOR /F "usebackq tokens=*" %%A in ('certUtil -hashfile "%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar" SHA256') do (
         echo %%A | findstr /C:"hash" 1>nul || (
             IF NOT %%A==%FILE_HASH% (
-                echo Could not validate hash of gradle-wrapper.jar
+                echo Could not validate hash of gradle-wrapper.jar, was %%A
                 goto error
             )
         )
