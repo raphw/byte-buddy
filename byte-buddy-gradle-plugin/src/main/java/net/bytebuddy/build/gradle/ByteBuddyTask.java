@@ -16,21 +16,19 @@
 package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.Plugin;
-import org.gradle.api.file.DirectoryProperty;
-import org.gradle.work.*;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.*;
-import org.gradle.api.tasks.Internal;
-import org.gradle.api.tasks.PathSensitive;
-import org.gradle.api.tasks.PathSensitivity;
+import org.gradle.work.Incremental;
+import org.gradle.work.InputChanges;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * A Byte Buddy task implementation that supports incremental compilation.
@@ -157,7 +155,7 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
         Plugin.Engine.Source source;
         if (inputChanges.isIncremental() && getIncrementalResolver() != null) {
             getLogger().debug("Applying incremental build");
-            List<File> files = getIncrementalResolver().apply(getProject(),
+            List<File> files = getIncrementalResolver().apply(getLogger(),
                     inputChanges.getFileChanges(getSource()),
                     source(),
                     target(),
@@ -167,8 +165,8 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
                     : new IncrementalSource(source(), files);
         } else {
             getLogger().debug("Applying non-incremental build");
-            if (getProject().delete(getTarget().getAsFileTree())) {
-                getLogger().debug("Deleted all target files in {}", getTarget());
+            if (deleteRecursively(getTarget().getAsFileTree().getFiles())) {
+                getLogger().debug("Deleted target {} to prepare new non-incremental build", getTarget());
             }
             source = source().exists()
                     ? new Plugin.Engine.Source.ForFolder(source())

@@ -474,6 +474,43 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     }
 
     /**
+     * Deletes a collection of files or a folders recursively.
+     *
+     * @param files The files or folders to delete.
+     * @return {@code true} if any of the files or folders were deleted.
+     */
+    protected static boolean deleteRecursively(Iterable<File> files) {
+        boolean deleted = false;
+        for (File file : files) {
+            deleted = deleteRecursively(file) || deleted;
+        }
+        return deleted;
+    }
+
+    /**
+     * Deletes a file or a folder recursively.
+     *
+     * @param file The file or folder to delete.
+     * @return {@code true} if the file or folders were deleted.
+     */
+    protected static boolean deleteRecursively(File file) {
+        boolean deleted = false;
+        Queue<File> queue = new LinkedList<>();
+        queue.add(file);
+        while (!queue.isEmpty()) {
+            File current = queue.remove();
+            File[] child = current.listFiles();
+            if (child == null || child.length == 0) {
+                deleted = current.delete() || deleted;
+            } else {
+                queue.addAll(Arrays.asList(child));
+                queue.add(current);
+            }
+        }
+        return deleted;
+    }
+
+    /**
      * A {@link BuildLogger} implementation for a Gradle {@link Logger}.
      */
     protected static class GradleBuildLogger implements BuildLogger {

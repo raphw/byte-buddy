@@ -168,7 +168,7 @@ public class ByteBuddyJarTask extends AbstractByteBuddyTask {
      */
     @TaskAction
     public void apply() throws IOException {
-        if (!getSource().equals(getTarget()) && getProject().delete(getTarget())) {
+        if (!getSource().equals(getTarget()) && deleteRecursively(getTarget())) {
             getLogger().debug("Deleted target jar {}", getTarget());
         }
         doApply(new Plugin.Engine.Source.ForJarFile(getSource()), new Plugin.Engine.Target.ForJarFile(getTarget()));
