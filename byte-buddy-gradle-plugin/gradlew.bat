@@ -80,11 +80,11 @@ IF NOT "%JAVA_VERSION_STRING:~0,3%"=="160" (
 @rem This is implemented similarly to the Maven Wrapper's download routine.
 SET DISTRIBUTION_LOCATION=""
 SET DISTRIBUTION_URL=""
-for /f "usebackq tokens=1,2 delims==" %%A in ("%APP_HOME%\gradle\%WRAPPER_LOCATION%\maven-wrapper.properties") do (
+for /f "usebackq tokens=1,2 delims==" %%A in ("%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.properties") do (
     if "%%A"=="distributionRepo" SET DISTRIBUTION_LOCATION=%%B
     if "%%A"=="distributionUrl" SET DISTRIBUTION_URL=%%B
 )
-if %DISTRIBUTION_LOCATION% (
+if not %DISTRIBUTION_LOCATION%="" (
     SET DISTRIBUTION_SOURCE=%DISTRIBUTION_LOCATION%/%DISTRIBUTION_URL%
     SET DISTRIBUTION_TARGET=%APP_HOME%\gradle\%WRAPPER_LOCATION%\%DISTRIBUTION_URL%
     if exist %DISTRIBUTION_TARGET% (
