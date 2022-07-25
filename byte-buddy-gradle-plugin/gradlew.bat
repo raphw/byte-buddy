@@ -78,8 +78,8 @@ IF NOT "%JAVA_VERSION_STRING:~0,3%"=="160" (
 
 @rem Extension to allow automatically downloading the Gradle binary from Gradle's repository
 @rem This is implemented similarly to the Maven Wrapper's download routine.
-DISTRIBUTION_LOCATION=""
-DISTRIBUTION_URL=""
+SET DISTRIBUTION_LOCATION=""
+SET DISTRIBUTION_URL=""
 for /f "usebackq tokens=1,2 delims==" %%A in ("%APP_HOME%\gradle\%WRAPPER_LOCATION%\maven-wrapper.properties") do (
     if "%%A"=="distributionRepo" SET DISTRIBUTION_LOCATION=%%B
     if "%%A"=="distributionUrl" SET DISTRIBUTION_URL=%%B
