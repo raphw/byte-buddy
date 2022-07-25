@@ -147,7 +147,7 @@ if exist %WRAPPER_JAR% (
     )
 ) else (
     if not "%MVNW_REPOURL%" == "" (
-        SET WRAPPER_URL="%MVNW_REPOURL%/io/takari/maven-wrapper/0.5.6/maven-wrapper-0.5.6.jar"
+        SET WRAPPER_URL="%MVNW_REPOURL%/%WRAPPER_PATH%"
     )
     if "%MVNW_VERBOSE%" == "true" (
         echo Couldn't find %WRAPPER_JAR%, downloading it ...
@@ -167,13 +167,13 @@ if exist %WRAPPER_JAR% (
 )
 @REM End of extension
 
-@REM Validating hash of maven-wrapper.jar (Byte Buddy edit)
+@REM Validate the Gradle wrapper's hash (Byte Buddy edit)
 SET FILE_HASH=""
 FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.properties") DO (
     IF "%%A"=="wrapperHash" SET FILE_HASH=%%B
 )
 IF $FILE_HASH (
-    IF NOT (Get-FileHash %MAVEN_PROJECTBASEDIR%/.mvn/%WRAPPER_LOCATION%/maven-wrapper.jar).hash=="%FILE_HASH%".toUpper() (
+    IF NOT (Get-FileHash %MAVEN_PROJECTBASEDIR%/.mvn/%WRAPPER_LOCATION%/maven-wrapper.jar -Algorithm SHA256).hash=="%FILE_HASH%".toUpper() (
       echo Could not validate hash of maven-wrapper.jar
       goto error
     )

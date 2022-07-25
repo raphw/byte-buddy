@@ -18,6 +18,7 @@
 @rem ##########################################################################
 @rem
 @rem  Gradle startup script for Windows
+@rem  (Modified for the purposes of building Byte Buddy)
 @rem
 @rem ##########################################################################
 
@@ -29,6 +30,9 @@ if "%DIRNAME%" == "" set DIRNAME=.
 set APP_BASE_NAME=%~n0
 set APP_HOME=%DIRNAME%
 
+@rem Resolve any "." and ".." in APP_HOME to make it shorter.
+for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
+
 @rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
 set DEFAULT_JVM_OPTS="-Xmx64m" "-Xms64m"
 
@@ -37,7 +41,7 @@ if defined JAVA_HOME goto findJavaFromJavaHome
 
 set JAVA_EXE=java.exe
 %JAVA_EXE% -version >NUL 2>&1
-if "%ERRORLEVEL%" == "0" goto init
+if "%ERRORLEVEL%" == "0" goto execute
 
 echo.
 echo ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
@@ -51,7 +55,7 @@ goto fail
 set JAVA_HOME=%JAVA_HOME:"=%
 set JAVA_EXE=%JAVA_HOME%/bin/java.exe
 
-if exist "%JAVA_EXE%" goto init
+if exist "%JAVA_EXE%" goto execute
 
 echo.
 echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
@@ -61,40 +65,71 @@ echo location of your Java installation.
 
 goto fail
 
-:init
-@rem Get command-line arguments, handling Windows variants
-
-if not "%OS%" == "Windows_NT" goto win9xME_args
-
-:win9xME_args
-@rem Slurp the command line arguments.
-set CMD_LINE_ARGS=
-set _SKIP=2
-
-:win9xME_args_slurp
-if "x%~1" == "x" goto execute
-
-set CMD_LINE_ARGS=%*
-
 :execute
-@rem Setup the command line
 
-@rem Java 6 and 7 are no longer supported by Gradle 5 which is why we are using an old version of Gradle if those are detected.
+@rem Use legacy Gradle if Java 6 or 7 is used to build (Byte Buddy edit)
+set WRAPPER_LOCATION=wrapper-legacy
 for /f tokens^=2-5^ delims^=.-_^" %%j in ('%JAVA_HOME%\bin\java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j%%k%%l%%m"
-IF "%JAVA_VERSION_STRING:~0,3%"=="160" (
-  set "GRADLE_VERSION=2.14.1"
-) ELSE (IF "%JAVA_VERSION_STRING:~0,3%"=="170" (
-  set "GRADLE_VERSION=2.14.1"
-) ELSE (
-  set "GRADLE_VERSION=6.0.1"
-))
+IF NOT "%JAVA_VERSION_STRING:~0,3%"=="160" (
+  IF NOT "%JAVA_VERSION_STRING:~0,3%"=="170" (
+    set WRAPPER_LOCATION=wrapper
+  )
+)
 
-set CLASSPATH=%APP_HOME%\gradle\%GRADLE_VERSION%\gradle-wrapper.jar
+@rem Extension to allow automatically downloading the maven-wrapper.jar from Maven-central
+@rem This allows using the maven wrapper in projects that prohibit checking in binary data.
+DISTRIBUTION_LOCATION=""
+DISTRIBUTION_URL=""
+for /f "usebackq tokens=1,2 delims==" %%A in ("%APP_HOME%\gradle\%WRAPPER_LOCATION%\maven-wrapper.properties") do (
+    if "%%A"=="distributionRepo" SET DISTRIBUTION_LOCATION=%%B
+    if "%%A"=="distributionUrl" SET DISTRIBUTION_URL=%%B
+)
+if %DISTRIBUTION_LOCATION% (
+    SET DISTRIBUTION_SOURCE=%DISTRIBUTION_LOCATION%/%DISTRIBUTION_URL%
+    SET DISTRIBUTION_TARGET=%APP_HOME%\gradle\%WRAPPER_LOCATION%\%DISTRIBUTION_URL%
+    if exist %DISTRIBUTION_TARGET% (
+        if "%GRADLEW_VERBOSE%" == "true" (
+            echo Found %DISTRIBUTION_TARGET%
+        )
+    ) else (
+        if "%GRADLEW_VERBOSE%" == "true" (
+            echo Couldn't find %DISTRIBUTION_TARGET%, downloading it ...
+            echo Downloading from: %DISTRIBUTION_SOURCE%
+        )
+    
+        powershell -Command "&{"^
+            "$webclient = new-object System.Net.WebClient;"^
+            "if (-not ([string]::IsNullOrEmpty('%GRADLEW_USERNAME%') -and [string]::IsNullOrEmpty('%GRADLEW_PASSWORD%'))) {"^
+            "$webclient.Credentials = new-object System.Net.NetworkCredential('%GRADLEW_USERNAME%', '%GRADLEW_PASSWORD%');"^
+            "}"^
+            "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $webclient.DownloadFile('%DISTRIBUTION_SOURCE%', '%DISTRIBUTION_TARGET%')"^
+            "}"
+        if "%GRADLEW_VERBOSE%" == "true" (
+            echo Finished downloading %DISTRIBUTION_TARGET%
+        )
+    )
+)
+@rem End of extension
+
+@rem Setup the command line
+set CLASSPATH=%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar
+
+@REM Validate the Gradle wrapper's hash (Byte Buddy edit)
+SET FILE_HASH=""
+FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.properties") DO (
+    IF "%%A"=="wrapperHash" SET FILE_HASH=%%B
+)
+IF $FILE_HASH (
+    IF NOT (Get-FileHash %APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar -Algorithm SHA256).hash=="%FILE_HASH%".toUpper() (
+      echo Could not validate hash of gradle-wrapper.jar
+      goto error
+    )
+)
 
 @rem Execute Gradle
-"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %CMD_LINE_ARGS%
+"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %*
 
-:end
+:endWRAPPER_LOCA
 @rem End local scope for the variables with windows NT shell
 if "%ERRORLEVEL%"=="0" goto mainEnd
 

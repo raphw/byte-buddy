@@ -236,6 +236,7 @@
         <profile>
             <id>checks</id>
             <activation>
+                <activeByDefault>false</activeByDefault>
                 <jdk>[1.7,)</jdk>
             </activation>
             <build>
