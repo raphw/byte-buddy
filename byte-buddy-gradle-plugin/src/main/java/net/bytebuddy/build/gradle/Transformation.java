@@ -36,7 +36,7 @@ public class Transformation {
     /**
      * The current project to use.
      */
-    private final Project project;
+    private final transient Project project;
 
     /**
      * A list of arguments that are provided to the plugin for construction.
