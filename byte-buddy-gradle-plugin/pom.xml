@@ -54,6 +54,15 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+            <!-- Without compilation, no jar is created which would be empty. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${version.plugin.jar}</version>
+                <configuration>
+                    <skipIfEmpty>true</skipIfEmpty>
+                </configuration>
+            </plugin>
             <!-- Gradle is also responsible for creating javadoc such that this task is skipped here. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
