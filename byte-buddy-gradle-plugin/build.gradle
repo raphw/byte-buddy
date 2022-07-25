@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'java-gradle-plugin'
-    id 'com.gradle.plugin-publish' version '0.11.0'
+    id 'com.gradle.plugin-publish' version '1.0.0'
 }
 
 apply from: './main.gradle'
@@ -62,3 +62,13 @@ pluginBundle {
     tags = ['Byte Buddy', 'bytecode', 'enhancement']
 }
 
+gradlePlugin {
+    plugins {
+        byteBuddyPlugin {
+            id = 'net.bytebuddy.byte-buddy-gradle-plugin'
+            implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
+            displayName = 'Byte Buddy Gradle plugin'
+            description = 'The Byte Buddy plugin allows for post processing Java classes with byte code transformation.'
+        }
+    }
+}

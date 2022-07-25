@@ -115,7 +115,7 @@ if (!gradle.gradleVersion.startsWith("2.")) { // support legacy version
 if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
     sourceSets.main.java.srcDirs += ['src/main/java-gradle-api']
     jar {
-        exclude('org/gradle/**')
+        exclude('org/**')
     }
     gradlePlugin {
         plugins {
