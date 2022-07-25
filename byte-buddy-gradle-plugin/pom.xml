@@ -181,7 +181,7 @@
             <id>gradle-disabled</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
-                <jdk>[14,)</jdk>
+                <jdk>[19,)</jdk>
             </activation>
             <properties>
                 <gradle.disabled>true</gradle.disabled>
