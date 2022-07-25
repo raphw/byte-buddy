@@ -1168,6 +1168,8 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
                 }
             } catch (RuntimeException exception) {
                 throw exception;
+            } catch (Error error) {
+                throw error;
             } catch (Throwable throwable) {
                 for (Class<?> type : method.getExceptionTypes()) {
                     if (type.isInstance(throwable)) {
