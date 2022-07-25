@@ -495,7 +495,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      */
     protected static boolean deleteRecursively(File file) {
         boolean deleted = false;
-        Queue<File> queue = new LinkedList<>();
+        Queue<File> queue = new LinkedList<File>();
         queue.add(file);
         while (!queue.isEmpty()) {
             File current = queue.remove();
