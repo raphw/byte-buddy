@@ -105,8 +105,8 @@ task copyLicense(type: Copy) {
     }
 }
 
-jar.dependsOn copyLicense
-
+compileJava.dependsOn copyLicense
+compileTestJava.dependsOn copyLicense
 
 def transformer = new GradleTypeTransformer();
 if (gradle.gradleVersion.startsWith("2.")) { // support legacy version

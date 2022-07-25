@@ -95,9 +95,7 @@ public class ByteBuddyPluginTest {
         write("src/main/java/sample/SampleClass.java", "public class SampleClass { }");
         BuildResult result = GradleRunner.create()
                 .withProjectDir(folder)
-                .withArguments("build",
-                        "-D" + ByteBuddyPlugin.LEGACY + "=true",
-                        "-Dorg.gradle.unsafe.configuration-cache=true")
+                .withArguments("build", "-Dorg.gradle.unsafe.configuration-cache=true")
                 .withPluginClasspath()
                 .build();
         BuildTask task = result.task(":byteBuddy");
@@ -146,9 +144,7 @@ public class ByteBuddyPluginTest {
         write("src/main/java/sample/SampleClass.java", "public class SampleClass { }");
         BuildResult result = GradleRunner.create()
                 .withProjectDir(folder)
-                .withArguments("build",
-                        "-D" + ByteBuddyPlugin.LEGACY + "=true",
-                        "-Dorg.gradle.unsafe.configuration-cache=true")
+                .withArguments("build", "-Dorg.gradle.unsafe.configuration-cache=true")
                 .withPluginClasspath()
                 .build();
         BuildTask task = result.task(":byteBuddy");

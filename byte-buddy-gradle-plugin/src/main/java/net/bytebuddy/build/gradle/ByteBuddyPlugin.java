@@ -35,11 +35,6 @@ import java.lang.reflect.Method;
 public class ByteBuddyPlugin implements Plugin<Project> {
 
     /**
-     * If set to {@code true}, the Byte Buddy plugin will be configured as if running on a legacy version of Gradle.
-     */
-    public static final String LEGACY = "net.bytebuddy.build.gradle.legacy";
-
-    /**
      * The dispatcher to use.
      */
     private static final Dispatcher<?, ?> DISPATCHER;
@@ -49,16 +44,12 @@ public class ByteBuddyPlugin implements Plugin<Project> {
      */
     static {
         Dispatcher<?, ?> dispatcher;
-        if (Boolean.getBoolean(LEGACY)) {
+        try {
+            Class.forName("org.gradle.work.InputChanges"); // Make sure that at least Gradle 6 is available.
+            dispatcher = new Dispatcher.ForApi6CapableGradle(SourceDirectorySet.class.getMethod("getDestinationDirectory"),
+                    AbstractCompile.class.getMethod("setDestinationDir", Class.forName("org.gradle.api.provider.Provider")));
+        } catch (Exception ignored) {
             dispatcher = Dispatcher.ForLegacyGradle.INSTANCE;
-        } else {
-            try {
-                Class.forName("org.gradle.work.InputChanges"); // Make sure Gradle 6 is available.
-                dispatcher = new Dispatcher.ForApi6CapableGradle(SourceDirectorySet.class.getMethod("getDestinationDirectory"),
-                        AbstractCompile.class.getMethod("setDestinationDir", Class.forName("org.gradle.api.provider.Provider")));
-            } catch (Exception ignored) {
-                dispatcher = Dispatcher.ForLegacyGradle.INSTANCE;
-            }
         }
         DISPATCHER = dispatcher;
     }
