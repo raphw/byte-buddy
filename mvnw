@@ -179,35 +179,37 @@ fi
 # Extension to allow automatically downloading the maven-wrapper.jar from Maven-central
 # This allows using the maven wrapper in projects that prohibit checking in binary data.
 ##########################################################################################
-# Use HTTP endpoints if Java 6 or 7 is used which do not support current SSL protocols (Byte Buddy edit)
+# Use HTTP endpoints and legacy Maven if Java 6 or 7 is used to build (Byte Buddy edit)
 if `$JAVA_HOME/bin/java -fullversion 2>&1 >/dev/null | awk '{print $4}' | grep -Eq "^\"1\.[67]\."`; then
   repoUrl="http://insecure.repo1.maven.org"
-  propertiesFile="maven-wrapper-nossl.properties"
+  wrapperLocation="wrapper-legacy"
+  wrapperPath="io/takari/maven-wrapper/0.5.6/maven-wrapper-0.5.6.jar"
 else
   repoUrl="https://repo.maven.apache.org"
-  propertiesFile="maven-wrapper.properties"
+  wrapperLocation="wrapper"
+  wrapperPath="org/apache/maven/wrapper/maven-wrapper/3.1.1/maven-wrapper-3.1.1.jar"
 fi
-if [ -r "$BASE_DIR/.mvn/3.2.5/maven-wrapper.jar" ]; then
+if [ -r "$BASE_DIR/.mvn/$wrapperLocation/maven-wrapper.jar" ]; then
     if [ "$MVNW_VERBOSE" = true ]; then
-      echo "Found .mvn/3.2.5/maven-wrapper.jar"
+      echo "Found .mvn/$wrapperLocation/maven-wrapper.jar"
     fi
 else
     if [ "$MVNW_VERBOSE" = true ]; then
-      echo "Couldn't find .mvn/3.2.5/maven-wrapper.jar, downloading it ..."
+      echo "Couldn't find .mvn/$wrapperLocation/maven-wrapper.jar, downloading it ..."
     fi
     if [ -n "$MVNW_REPOURL" ]; then
-      wrapperUrl="$MVNW_REPOURL/org/apache/maven/wrapper/maven-wrapper/3.1.1/maven-wrapper-3.1.1.jar"
+      wrapperUrl="$MVNW_REPOURL/$wrapperPath"
     else
-      wrapperUrl="$repoUrl/maven2/org/apache/maven/wrapper/maven-wrapper/3.1.1/maven-wrapper-3.1.1.jar"
+      wrapperUrl="$repoUrl/maven2/$wrapperPath"
     fi
     while IFS="=" read key value; do
       case "$key" in (wrapperUrl) wrapperUrl="$value"; break ;;
       esac
-    done < "$BASE_DIR/.mvn/3.2.5/$propertiesFile"
+    done < "$BASE_DIR/.mvn/$wrapperLocation/maven-wrapper.properties"
     if [ "$MVNW_VERBOSE" = true ]; then
       echo "Downloading from: $wrapperUrl"
     fi
-    wrapperJarPath="$BASE_DIR/.mvn/3.2.5/maven-wrapper.jar"
+    wrapperJarPath="$BASE_DIR/.mvn/$wrapperLocation/maven-wrapper.jar"
     if $cygwin; then
       wrapperJarPath=`cygpath --path --windows "$wrapperJarPath"`
     fi
@@ -240,8 +242,8 @@ else
         if [ "$MVNW_VERBOSE" = true ]; then
           echo "Falling back to using Java to download"
         fi
-        javaSource="$BASE_DIR/.mvn/3.2.5/MavenWrapperDownloader.java"
-        javaClass="$BASE_DIR/.mvn/3.2.5/MavenWrapperDownloader.class"
+        javaSource="$BASE_DIR/.mvn/$wrapperLocation/MavenWrapperDownloader.java"
+        javaClass="$BASE_DIR/.mvn/$wrapperLocation/MavenWrapperDownloader.class"
         # For Cygwin, switch paths to Windows format before running javac
         if $cygwin; then
           javaSource=`cygpath --path --windows "$javaSource"`
@@ -271,9 +273,9 @@ wrapperHash=""
 while IFS="=" read key value; do
   case "$key" in (wrapperHash) wrapperHash=$value; break ;;
   esac
-done < "$BASE_DIR/.mvn/3.2.5/$propertiesFile"
+done < "$BASE_DIR/.mvn/$wrapperLocation/maven-wrapper.properties"
 if [ -n "$wrapperHash" ]; then
-  if ! `echo "$wrapperHash  $BASE_DIR/.mvn/3.2.5/maven-wrapper.jar" | shasum -a 256 -q -c`; then
+  if ! `echo "$wrapperHash  $BASE_DIR/.mvn/$wrapperLocation/maven-wrapper.jar" | shasum -a 256 -q -c`; then
     echo "Could not validate hash of maven-wrapper.jar";
     exit 1
   fi
@@ -294,11 +296,6 @@ if $cygwin; then
     MAVEN_PROJECTBASEDIR=`cygpath --path --windows "$MAVEN_PROJECTBASEDIR"`
 fi
 
-# Open Java base module on Java 9 and later to avoid Maven build failure (Byte Buddy edit)
-if ! `$JAVA_HOME/bin/java -fullversion 2>&1 >/dev/null | awk '{print $4}' | grep -Eq "^\"1\.[678]\."`; then
-  MAVEN_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED $MAVEN_OPTS"
-fi
-
 # Provide a "standardized" way to retrieve the CLI args that will
 # work with both Windows and non-Windows executions.
 MAVEN_CMD_LINE_ARGS="$MAVEN_CONFIG $@"
@@ -309,6 +306,6 @@ WRAPPER_LAUNCHER=org.apache.maven.wrapper.MavenWrapperMain
 exec "$JAVACMD" \
   $MAVEN_OPTS \
   $MAVEN_DEBUG_OPTS \
-  -classpath "$MAVEN_PROJECTBASEDIR/.mvn/3.2.5/maven-wrapper.jar" \
+  -classpath "$MAVEN_PROJECTBASEDIR/.mvn/$wrapperLocation/maven-wrapper.jar" \
   "-Dmaven.multiModuleProjectDirectory=${MAVEN_PROJECTBASEDIR}" \
   ${WRAPPER_LAUNCHER} $MAVEN_CONFIG "$@"

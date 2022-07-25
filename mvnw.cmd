@@ -116,24 +116,26 @@ for /F "usebackq delims=" %%a in ("%MAVEN_PROJECTBASEDIR%\.mvn\jvm.config") do s
 
 :endReadAdditionalConfig
 
-SET MAVEN_JAVA_EXE="%JAVA_HOME%\bin\java.exe"
-set WRAPPER_JAR="%MAVEN_PROJECTBASEDIR%\.mvn\3.2.5\maven-wrapper.jar"
-set WRAPPER_LAUNCHER=org.apache.maven.wrapper.MavenWrapperMain
-
-@REM Use HTTP endpoints if Java 6 or 7 is used which do not support current SSL protocols (Byte Buddy edit)
+@REM Use HTTP endpoints and legacy Maven if Java 6 or 7 is used to build (Byte Buddy edit)
 set REPO_URL=http://insecure.repo1.maven.org
-set PROPERTIES_FILE=maven-wrapper-nossl.properties
+set WRAPPER_LOCATION=wrapper-legacy
+set WRAPPER_PATH=io/takari/maven-wrapper/0.5.6/maven-wrapper-0.5.6.jar
 for /f tokens^=2-5^ delims^=.-_^" %%j in ('%JAVA_HOME%\bin\java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j%%k%%l%%m"
 IF NOT "%JAVA_VERSION_STRING:~0,3%"=="160" (
   IF NOT "%JAVA_VERSION_STRING:~0,3%"=="170" (
     set REPO_URL=https://repo.maven.apache.org
-    set PROPERTIES_FILE=maven-wrapper.properties
+    set WRAPPER_LOCATION=wrapper
+    set WRAPPER_PATH=org/apache/maven/wrapper/maven-wrapper/3.1.1/maven-wrapper-3.1.1.jar
   )
 )
 
-set WRAPPER_URL="%REPO_URL%/maven2/io/takari/maven-wrapper/0.5.6/maven-wrapper-0.5.6.jar"
+SET MAVEN_JAVA_EXE="%JAVA_HOME%\bin\java.exe"
+set WRAPPER_JAR="%MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.jar"
+set WRAPPER_LAUNCHER=org.apache.maven.wrapper.MavenWrapperMain
 
-FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\3.2.5\%PROPERTIES_FILE%") DO (
+set WRAPPER_URL="%REPO_URL%/maven2/%WRAPPER_PATH%"
+
+FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.properties") DO (
     IF "%%A"=="wrapperUrl" SET WRAPPER_URL=%%B
 )
 
@@ -167,11 +169,11 @@ if exist %WRAPPER_JAR% (
 
 @REM Validating hash of maven-wrapper.jar (Byte Buddy edit)
 SET FILE_HASH=""
-FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\3.2.5\%PROPERTIES_FILE%") DO (
+FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.properties") DO (
     IF "%%A"=="wrapperHash" SET FILE_HASH=%%B
 )
 IF $FILE_HASH (
-    IF NOT (Get-FileHash %MAVEN_PROJECTBASEDIR%/.mvn/3.2.5/maven-wrapper.jar).hash=="%FILE_HASH%".toUpper() (
+    IF NOT (Get-FileHash %MAVEN_PROJECTBASEDIR%/.mvn/%WRAPPER_LOCATION%/maven-wrapper.jar).hash=="%FILE_HASH%".toUpper() (
       echo Could not validate hash of maven-wrapper.jar
       goto error
     )
@@ -180,16 +182,6 @@ IF $FILE_HASH (
 @REM Provide a "standardized" way to retrieve the CLI args that will
 @REM work with both Windows and non-Windows executions.
 set MAVEN_CMD_LINE_ARGS=%*
-
-@REM Open Java base module on Java 9 and later to avoid Maven build failure (Byte Buddy edit)
-FOR /F tokens^=2-5^ delims^=.-_^" %%j in ('%JAVA_HOME%\bin\java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j%%k%%l%%m"
-IF NOT "%JAVA_VERSION_STRING:~0,3%"=="160" (
-  IF NOT "%JAVA_VERSION_STRING:~0,3%"=="170" (
-    IF NOT "%JAVA_VERSION_STRING:~0,3%"=="180" (
-      set MAVEN_OPTS="--add-opens=java.base/java.lang=ALL-UNNAMED %MAVEN_OPTS%"
-    )
-  )
-)
 
 %MAVEN_JAVA_EXE% ^
   %JVM_CONFIG_MAVEN_PROPS% ^
