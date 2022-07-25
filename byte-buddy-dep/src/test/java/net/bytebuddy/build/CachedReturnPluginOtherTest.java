@@ -3,9 +3,23 @@ package net.bytebuddy.build;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.DynamicType;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.sameInstance;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 public class CachedReturnPluginOtherTest {
+
+    @Test
+    @SuppressWarnings("rawtypes")
+    public void testIgnoreExistingField() {
+        DynamicType.Builder<ExistingField> builder = new ByteBuddy().redefine(ExistingField.class);
+        assertThat(new CachedReturnPlugin(true).apply(builder,
+                TypeDescription.ForLoadedType.of(ExistingField.class),
+                ClassFileLocator.ForClassLoader.of(ExistingField.class.getClassLoader())), sameInstance((DynamicType.Builder) builder));
+    }
 
     @Test(expected = IllegalStateException.class)
     public void testCacheVoid() {
@@ -47,6 +61,16 @@ public class CachedReturnPluginOtherTest {
         @CachedReturnPlugin.Enhance
         private void foo(Void argument) {
             /* do nothing */
+        }
+    }
+
+    private static class ExistingField {
+
+        private String foo;
+
+        @CachedReturnPlugin.Enhance("foo")
+        private String foo() {
+            return null;
         }
     }
 }

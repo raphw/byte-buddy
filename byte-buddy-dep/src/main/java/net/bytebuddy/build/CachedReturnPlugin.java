@@ -65,6 +65,11 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
             .getOnly();
 
     /**
+     * {@code true} if existing fields should be ignored if the field name was explicitly given.
+     */
+    private final boolean ignoreExistingFields;
+
+    /**
      * A random string to use for avoid field name collisions.
      */
     @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
@@ -86,10 +91,20 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
     private final Map<TypeDescription, TypeDescription> adviceByType;
 
     /**
-     * Creates a plugin for caching method return values.
+     * Creates a plugin for caching method return values. If a field name exists before applying this plugin, an exception is raised.
      */
     public CachedReturnPlugin() {
+        this(false);
+    }
+
+    /**
+     * Creates a plugin for caching method return values.
+     *
+     * @param ignoreExistingFields {@code true} if existing fields should be ignored if the field name was explicitly given.
+     */
+    public CachedReturnPlugin(boolean ignoreExistingFields) {
         super(declaresMethod(isAnnotatedWith(Enhance.class)));
+        this.ignoreExistingFields = ignoreExistingFields;
         randomString = new RandomString();
         classFileLocator = ClassFileLocator.ForClassLoader.of(CachedReturnPlugin.class.getClassLoader());
         TypePool typePool = TypePool.Default.of(classFileLocator);
@@ -137,6 +152,8 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
                     .resolve(String.class);
             if (name.length() == 0) {
                 name = methodDescription.getName() + NAME_INFIX + randomString.nextString();
+            } else if (ignoreExistingFields && !typeDescription.getDeclaredFields().filter(named(name)).isEmpty()) {
+                return builder;
             }
             builder = builder
                     .defineField(name, methodDescription.getReturnType().asErasure(), methodDescription.isStatic()

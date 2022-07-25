@@ -27,6 +27,8 @@ import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
+import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.PluginManagement;
 import org.apache.maven.plugin.AbstractMojo;
@@ -78,6 +80,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     @UnknownNull
     @Parameter(defaultValue = "${project}", readonly = true)
     public MavenProject project;
+
+    /**
+     * The current Maven session.
+     */
+    @MaybeNull
+    @Parameter(defaultValue = "${session}", readonly = true, required = true)
+    public MavenSession session;
 
     /**
      * The currently used repository system.
@@ -221,6 +230,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     public boolean incremental;
 
     /**
+     * Determines the tolerance of many milliseconds between this plugin run and the last edit are permitted
+     * for considering a file as stale if the plugin was executed before. Can be set to {@code -1} to disable.
+     */
+    @Parameter(defaultValue = "0", required = true)
+    public int staleMilliseconds;
+
+    /**
      * {@inheritDoc}
      */
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -357,6 +373,32 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         } else if (!root.isDirectory()) {
             throw new MojoExecutionException("Not a directory: " + root);
         }
+        StalenessFilter stalenessFilter;
+        if (staleMilliseconds >= 0) {
+            if (session == null) {
+                stalenessFilter = null;
+                getLog().warn("Stale file detection is disabled but Maven session is not available");
+            } else {
+                MavenExecutionRequest mavenExecutionRequest = session.getRequest();
+                if (mavenExecutionRequest == null) {
+                    stalenessFilter = null;
+                    getLog().warn("Stale file detection is disabled but Maven execution request is not available");
+                } else {
+                    Date startTime = mavenExecutionRequest.getStartTime();
+                    if (startTime != null) {
+                        stalenessFilter = new StalenessFilter(getLog(), startTime.getTime() + staleMilliseconds);
+                        source = new Plugin.Engine.Source.Filtering(source, stalenessFilter);
+                        getLog().debug("Using stale file detection with a margin of " + staleMilliseconds + " milliseconds");
+                    } else {
+                        stalenessFilter = null;
+                        getLog().warn("Stale file detection is disabled but Maven build start time is not available");
+                    }
+                }
+            }
+        } else {
+            stalenessFilter = null;
+            getLog().debug("Stale file detection is disabled");
+        }
         Map<Coordinate, String> coordinates = new HashMap<Coordinate, String>();
         if (project.getDependencyManagement() != null) {
             for (Dependency dependency : project.getDependencyManagement().getDependencies()) {
@@ -416,7 +458,11 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             if (!summary.getFailed().isEmpty()) {
                 throw new MojoExecutionException(summary.getFailed() + " type transformations have failed");
             } else if (warnOnEmptyTypeSet && summary.getTransformed().isEmpty()) {
-                getLog().warn("No types were transformed during plugin execution");
+                if (stalenessFilter != null && stalenessFilter.getFiltered() > 0) {
+                    getLog().info("No types were transformed during plugin execution but " + stalenessFilter.getFiltered() + " class files were considered stale");
+                } else {
+                    getLog().warn("No types were transformed during plugin execution");
+                }
             } else {
                 getLog().info("Transformed " + summary.getTransformed().size() + " types");
             }
@@ -865,7 +911,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 /**
                  * Creates a new transformer for a discovered plugin from the class path.
                  *
-                 * @param plugin The name of the discovered plugin.
+                 * @param plugin    The name of the discovered plugin.
                  * @param classPath The class path elements for loading this plugin.
                  */
                 protected FromClassLoader(String plugin, List<String> classPath) {
@@ -931,6 +977,64 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
 
             if (!groupId.equals(that.groupId)) return false;
             return artifactId.equals(that.artifactId);
+        }
+    }
+
+    /**
+     * A filter for files that were written before a given timestamp, to avoid duplicate application.
+     */
+    protected static class StalenessFilter implements ElementMatcher<Plugin.Engine.Source.Element> {
+
+        /**
+         * The logger to use.
+         */
+        private final Log log;
+
+        /**
+         * The timestamp for files to be filtered if they were created before it.
+         */
+        private final long latestTimestamp;
+
+        /**
+         * A count of class files that were filtered.
+         */
+        private int filtered;
+
+        /**
+         * Creates a new staleness filter.
+         *
+         * @param log             The logger to use.
+         * @param latestTimestamp The timestamp for files to be filtered if they were created before it.
+         */
+        protected StalenessFilter(Log log, long latestTimestamp) {
+            this.log = log;
+            this.latestTimestamp = latestTimestamp;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean matches(Plugin.Engine.Source.Element target) {
+            File file = target.resolveAs(File.class);
+            if (file == null) {
+                throw new IllegalStateException();
+            }
+            if (file.lastModified() < latestTimestamp) {
+                filtered += 1;
+                log.debug("Filtering " + file + " due to staleness: " + file.lastModified());
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        /**
+         * Returns a count of class files that were filtered as they were created prior to the last build.
+         *
+         * @return The amount of filtered classes.
+         */
+        protected int getFiltered() {
+            return filtered;
         }
     }
 }
