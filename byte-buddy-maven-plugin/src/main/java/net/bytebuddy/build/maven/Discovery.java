@@ -18,7 +18,7 @@ package net.bytebuddy.build.maven;
 import java.util.List;
 
 /**
- * Determines how and if plugins are discovered from the class path.
+ * Determines how and if plugins are discovered.
  */
 public enum Discovery {
 
