@@ -18,13 +18,13 @@
 @REM ----------------------------------------------------------------------------
 
 @REM ----------------------------------------------------------------------------
-@REM Maven Start Up Batch script
+@REM Apache Maven Wrapper startup batch script, version 3.1.1
+@REM (Modified for the purposes of building Byte Buddy)
 @REM
 @REM Required ENV vars:
 @REM JAVA_HOME - location of a JDK home dir
 @REM
 @REM Optional ENV vars
-@REM M2_HOME - location of maven2's installed home dir
 @REM MAVEN_BATCH_ECHO - set to 'on' to enable the echoing of the batch commands
 @REM MAVEN_BATCH_PAUSE - set to 'on' to wait for a keystroke before ending
 @REM MAVEN_OPTS - parameters passed to the Java VM when running Maven
@@ -46,8 +46,8 @@ if "%HOME%" == "" (set "HOME=%HOMEDRIVE%%HOMEPATH%")
 @REM Execute a user defined script before this one
 if not "%MAVEN_SKIP_RC%" == "" goto skipRcPre
 @REM check for pre script, once with legacy .bat ending and once with .cmd ending
-if exist "%HOME%\mavenrc_pre.bat" call "%HOME%\mavenrc_pre.bat"
-if exist "%HOME%\mavenrc_pre.cmd" call "%HOME%\mavenrc_pre.cmd"
+if exist "%USERPROFILE%\mavenrc_pre.bat" call "%USERPROFILE%\mavenrc_pre.bat" %*
+if exist "%USERPROFILE%\mavenrc_pre.cmd" call "%USERPROFILE%\mavenrc_pre.cmd" %*
 :skipRcPre
 
 @setlocal
@@ -120,7 +120,7 @@ SET MAVEN_JAVA_EXE="%JAVA_HOME%\bin\java.exe"
 set WRAPPER_JAR="%MAVEN_PROJECTBASEDIR%\.mvn\3.2.5\maven-wrapper.jar"
 set WRAPPER_LAUNCHER=org.apache.maven.wrapper.MavenWrapperMain
 
-@REM Use HTTP endpoints if Java 6 or 7 is used which do not support current SSL protocols (custom to Byte Buddy build)
+@REM Use HTTP endpoints if Java 6 or 7 is used which do not support current SSL protocols (Byte Buddy edit)
 set REPO_URL=http://insecure.repo1.maven.org
 set PROPERTIES_FILE=maven-wrapper-nossl.properties
 for /f tokens^=2-5^ delims^=.-_^" %%j in ('%JAVA_HOME%\bin\java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j%%k%%l%%m"
@@ -131,10 +131,10 @@ IF NOT "%JAVA_VERSION_STRING:~0,3%"=="160" (
   )
 )
 
-set DOWNLOAD_URL="%REPO_URL%/maven2/io/takari/maven-wrapper/0.5.6/maven-wrapper-0.5.6.jar"
+set WRAPPER_URL="%REPO_URL%/maven2/io/takari/maven-wrapper/0.5.6/maven-wrapper-0.5.6.jar"
 
-FOR /F "tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\3.2.5\%PROPERTIES_FILE%") DO (
-    IF "%%A"=="wrapperUrl" SET DOWNLOAD_URL=%%B
+FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\3.2.5\%PROPERTIES_FILE%") DO (
+    IF "%%A"=="wrapperUrl" SET WRAPPER_URL=%%B
 )
 
 @REM Extension to allow automatically downloading the maven-wrapper.jar from Maven-central
@@ -145,11 +145,11 @@ if exist %WRAPPER_JAR% (
     )
 ) else (
     if not "%MVNW_REPOURL%" == "" (
-        SET DOWNLOAD_URL="%MVNW_REPOURL%/io/takari/maven-wrapper/0.5.6/maven-wrapper-0.5.6.jar"
+        SET WRAPPER_URL="%MVNW_REPOURL%/io/takari/maven-wrapper/0.5.6/maven-wrapper-0.5.6.jar"
     )
     if "%MVNW_VERBOSE%" == "true" (
         echo Couldn't find %WRAPPER_JAR%, downloading it ...
-        echo Downloading from: %DOWNLOAD_URL%
+        echo Downloading from: %WRAPPER_URL%
     )
 
     powershell -Command "&{"^
@@ -157,7 +157,7 @@ if exist %WRAPPER_JAR% (
 		"if (-not ([string]::IsNullOrEmpty('%MVNW_USERNAME%') -and [string]::IsNullOrEmpty('%MVNW_PASSWORD%'))) {"^
 		"$webclient.Credentials = new-object System.Net.NetworkCredential('%MVNW_USERNAME%', '%MVNW_PASSWORD%');"^
 		"}"^
-		"[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $webclient.DownloadFile('%DOWNLOAD_URL%', '%WRAPPER_JAR%')"^
+		"[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $webclient.DownloadFile('%WRAPPER_URL%', '%WRAPPER_JAR%')"^
 		"}"
     if "%MVNW_VERBOSE%" == "true" (
         echo Finished downloading %WRAPPER_JAR%
@@ -165,18 +165,24 @@ if exist %WRAPPER_JAR% (
 )
 @REM End of extension
 
-@REM Validating hash of maven-wrapper.jar (custom to Byte Buddy build)
-IF NOT ((Get-FileHash %MAVEN_PROJECTBASEDIR%/.mvn/3.2.5/maven-wrapper.jar).hash -eq "0f37e00f4a503f19cfb1b8100b1f251f241cd1981524761bb9454037cb97589d" (
-  echo Could not validate hash of maven-wrapper.jar
-  goto end
+@REM Validating hash of maven-wrapper.jar (Byte Buddy edit)
+SET FILE_HASH=""
+FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\3.2.5\%PROPERTIES_FILE%") DO (
+    IF "%%A"=="wrapperHash" SET FILE_HASH=%%B
+)
+IF $FILE_HASH (
+    IF NOT (Get-FileHash %MAVEN_PROJECTBASEDIR%/.mvn/3.2.5/maven-wrapper.jar).hash=="%FILE_HASH%".toUpper() (
+      echo Could not validate hash of maven-wrapper.jar
+      goto error
+    )
 )
 
 @REM Provide a "standardized" way to retrieve the CLI args that will
 @REM work with both Windows and non-Windows executions.
 set MAVEN_CMD_LINE_ARGS=%*
 
-@REM Open Java base module on Java 9 and later to avoid Maven build failure (custom to Byte Buddy build)
-for /f tokens^=2-5^ delims^=.-_^" %%j in ('%JAVA_HOME%\bin\java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j%%k%%l%%m"
+@REM Open Java base module on Java 9 and later to avoid Maven build failure (Byte Buddy edit)
+FOR /F tokens^=2-5^ delims^=.-_^" %%j in ('%JAVA_HOME%\bin\java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j%%k%%l%%m"
 IF NOT "%JAVA_VERSION_STRING:~0,3%"=="160" (
   IF NOT "%JAVA_VERSION_STRING:~0,3%"=="170" (
     IF NOT "%JAVA_VERSION_STRING:~0,3%"=="180" (
@@ -185,7 +191,13 @@ IF NOT "%JAVA_VERSION_STRING:~0,3%"=="160" (
   )
 )
 
-%MAVEN_JAVA_EXE% %JVM_CONFIG_MAVEN_PROPS% %MAVEN_OPTS% %MAVEN_DEBUG_OPTS% -classpath %WRAPPER_JAR% "-Dmaven.multiModuleProjectDirectory=%MAVEN_PROJECTBASEDIR%" %WRAPPER_LAUNCHER% %MAVEN_CONFIG% %*
+%MAVEN_JAVA_EXE% ^
+  %JVM_CONFIG_MAVEN_PROPS% ^
+  %MAVEN_OPTS% ^
+  %MAVEN_DEBUG_OPTS% ^
+  -classpath %WRAPPER_JAR% ^
+  "-Dmaven.multiModuleProjectDirectory=%MAVEN_PROJECTBASEDIR%" ^
+  %WRAPPER_LAUNCHER% %MAVEN_CONFIG% %*
 if ERRORLEVEL 1 goto error
 goto end
 
@@ -195,15 +207,15 @@ set ERROR_CODE=1
 :end
 @endlocal & set ERROR_CODE=%ERROR_CODE%
 
-if not "%MAVEN_SKIP_RC%" == "" goto skipRcPost
+if not "%MAVEN_SKIP_RC%"=="" goto skipRcPost
 @REM check for post script, once with legacy .bat ending and once with .cmd ending
-if exist "%HOME%\mavenrc_post.bat" call "%HOME%\mavenrc_post.bat"
-if exist "%HOME%\mavenrc_post.cmd" call "%HOME%\mavenrc_post.cmd"
+if exist "%USERPROFILE%\mavenrc_post.bat" call "%USERPROFILE%\mavenrc_post.bat"
+if exist "%USERPROFILE%\mavenrc_post.cmd" call "%USERPROFILE%\mavenrc_post.cmd"
 :skipRcPost
 
 @REM pause the script if MAVEN_BATCH_PAUSE is set to 'on'
-if "%MAVEN_BATCH_PAUSE%" == "on" pause
+if "%MAVEN_BATCH_PAUSE%"=="on" pause
 
-if "%MAVEN_TERMINATE_CMD%" == "on" exit %ERROR_CODE%
+if "%MAVEN_TERMINATE_CMD%"=="on" exit %ERROR_CODE%
 
-exit /B %ERROR_CODE%
+cmd /C exit /B %ERROR_CODE%

@@ -316,7 +316,10 @@ mvn package
 ```
 
 On these commands, Byte Buddy is cloned from GitHub and built on your machine. Further build options are listed in the
-root POM file. Byte Buddy is currently tested for versions 6 and upwards of the JDK on CI servers.
+root POM file. Byte Buddy can be built with any JDK of at least version 6. It is however recommended to use a JDK of 
+at least version 8 as the builds for version 6 and 7 require the usage of unencrypted HTTP. Its support is only meant
+for running tests against this JDK version and can expose you to man-in-the-middle attacks. Therefore, these builds 
+should be avoided. Byte Buddy is currently tested for versions 6 and upwards of the JDK on CI servers.
 
 Please use GitHub's [issue tracker](https://github.com/raphw/byte-buddy/issues) for reporting bugs. When committing
 code, please provide test cases that prove the functionality of your features or that demonstrate a bug fix.
