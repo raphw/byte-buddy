@@ -186,7 +186,7 @@ while IFS="=" read key value; do
   esac
 done < "$APP_HOME/gradle/$WRAPPER_LOCATION/gradle-wrapper.properties"
 if [ -n "$wrapperHash" ]; then
-  if ! `echo "$wrapperHash  $APP_HOME/gradle/$WRAPPER_LOCATION/gradle-wrapper.jar" | shasum -a 256 -q -c`; then
+  if ! `echo "$wrapperHash  $APP_HOME/gradle/$WRAPPER_LOCATION/gradle-wrapper.jar" | shasum -a 256 --quiet -c`; then
     echo "Could not validate hash of gradle-wrapper.jar";
     exit 1
   fi
