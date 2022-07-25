@@ -42,12 +42,13 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * A Maven plugin for applying Byte Buddy transformations during a build.
@@ -199,6 +200,15 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     public Discovery discovery;
 
     /**
+     * Scans the class path (or test class path) for Byte Buddy plugins to apply. This is not normally recommended as
+     * it might cause a spurious application of plugins that are accidentally configured on the class path. It can
+     * however serve as a convenience in projects with few dependencies where this allows for the use of Maven's
+     * dependency version management.
+     */
+    @Parameter(defaultValue = "false", required = true)
+    public boolean classPathDiscovery;
+
+    /**
      * Indicates the amount of threads used for parallel type processing or {@code 0} for serial processing.
      */
     @Parameter(defaultValue = "0", required = true)
@@ -234,19 +244,28 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             try {
                 Enumeration<URL> plugins = ByteBuddyMojo.class.getClassLoader().getResources("META-INF/net.bytebuddy/build.plugins");
                 while (plugins.hasMoreElements()) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(plugins.nextElement().openStream(), "UTF-8"));
-                    try {
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            if (undiscoverable.add(line)) {
-                                transformers.add(new Transformer.ForDiscoveredPlugin(line));
-                                getLog().debug("Registered discovered plugin: " + line);
-                            } else {
-                                getLog().info("Skipping discovered plugin " + line + " which was previously discovered or registered");
+                    discover(plugins.nextElement().openStream(), undiscoverable, transformers, null);
+                }
+                if (classPathDiscovery) {
+                    List<String> elements = getClassPathElements();
+                    for (String element : elements) {
+                        File artifact = new File(element);
+                        if (artifact.isFile()) {
+                            JarFile file = new JarFile(artifact);
+                            try {
+                                JarEntry entry = file.getJarEntry("META-INF/net.bytebuddy/build.plugins");
+                                if (entry != null) {
+                                    discover(file.getInputStream(entry), undiscoverable, transformers, elements);
+                                }
+                            } finally {
+                                file.close();
+                            }
+                        } else {
+                            File file = new File(artifact, "META-INF/net.bytebuddy/build.plugins");
+                            if (file.exists()) {
+                                discover(new FileInputStream(file), undiscoverable, transformers, elements);
                             }
                         }
-                    } finally {
-                        reader.close();
                     }
                 }
             } catch (IOException exception) {
@@ -327,19 +346,14 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @throws IOException            If an I/O exception occurs.
      */
     @SuppressWarnings("unchecked")
-    private Plugin.Engine.Summary apply(File root,
-                                        List<? extends String> classPath,
-                                        List<Transformer> transformers,
-                                        Plugin.Engine.Source source) throws MojoExecutionException, IOException {
+    private Plugin.Engine.Summary apply(File root, List<? extends String> classPath, List<Transformer> transformers, Plugin.Engine.Source source) throws MojoExecutionException, IOException {
         if (!root.exists()) {
             if (warnOnMissingOutputDirectory) {
                 getLog().warn("Skipping instrumentation due to missing directory: " + root);
             } else {
                 getLog().info("Skipping instrumentation due to missing directory: " + root);
             }
-            return new Plugin.Engine.Summary(Collections.<TypeDescription>emptyList(),
-                    Collections.<TypeDescription, List<Throwable>>emptyMap(),
-                    Collections.<String>emptyList());
+            return new Plugin.Engine.Summary(Collections.<TypeDescription>emptyList(), Collections.<TypeDescription, List<Throwable>>emptyMap(), Collections.<String>emptyList());
         } else if (!root.isDirectory()) {
             throw new MojoExecutionException("Not a directory: " + root);
         }
@@ -349,45 +363,25 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 coordinates.put(new Coordinate(dependency.getGroupId(), dependency.getArtifactId()), dependency.getVersion());
             }
         }
-        ClassLoaderResolver classLoaderResolver = new ClassLoaderResolver(getLog(),
-                repositorySystem,
-                repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : repositorySystemSession,
-                project.getRemotePluginRepositories());
+        ClassLoaderResolver classLoaderResolver = new ClassLoaderResolver(getLog(), repositorySystem, repositorySystemSession == null ? MavenRepositorySystemUtils.newSession() : repositorySystemSession, project.getRemotePluginRepositories());
         try {
             List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>(transformers.size());
             for (Transformer transformer : transformers) {
                 String plugin = transformer.getPlugin();
                 try {
-                    factories.add(new Plugin.Factory.UsingReflection((Class<? extends Plugin>) Class.forName(plugin,
-                            false,
-                            transformer.toClassLoader(classLoaderResolver,
-                                    coordinates,
-                                    project.getGroupId(),
-                                    project.getArtifactId(),
-                                    project.getVersion(),
-                                    project.getPackaging())))
-                            .with(transformer.toArgumentResolvers())
-                            .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File.class, root),
-                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Log.class, getLog()),
-                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new MavenBuildLogger(getLog()))));
+                    factories.add(new Plugin.Factory.UsingReflection((Class<? extends Plugin>) Class.forName(plugin, false, transformer.toClassLoader(classLoaderResolver, coordinates, project.getGroupId(), project.getArtifactId(), project.getVersion(), project.getPackaging()))).with(transformer.toArgumentResolvers()).with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File.class, root), Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Log.class, getLog()), Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new MavenBuildLogger(getLog()))));
                     getLog().info("Resolved plugin: " + plugin);
                 } catch (Throwable throwable) {
                     throw new MojoExecutionException("Cannot resolve plugin: " + plugin, throwable);
                 }
             }
             String managed = coordinates.get(new Coordinate(project.getGroupId(), project.getArtifactId()));
-            EntryPoint entryPoint = (initialization == null ? new Initialization() : initialization).getEntryPoint(classLoaderResolver,
-                    project.getGroupId(),
-                    project.getArtifactId(),
-                    managed == null ? project.getVersion() : managed,
-                    project.getPackaging());
+            EntryPoint entryPoint = (initialization == null ? new Initialization() : initialization).getEntryPoint(classLoaderResolver, project.getGroupId(), project.getArtifactId(), managed == null ? project.getVersion() : managed, project.getPackaging());
             getLog().info("Resolved entry point: " + entryPoint);
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(classPath.size());
             for (String target : classPath) {
                 File artifact = new File(target);
-                classFileLocators.add(artifact.isFile()
-                        ? ClassFileLocator.ForJarFile.of(artifact)
-                        : new ClassFileLocator.ForFolder(artifact));
+                classFileLocators.add(artifact.isFile() ? ClassFileLocator.ForJarFile.of(artifact) : new ClassFileLocator.ForFolder(artifact));
             }
             ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
             Plugin.Engine.Summary summary;
@@ -407,28 +401,12 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                         classFileVersion = ClassFileVersion.ofJavaVersionString(javaVersionString);
                         getLog().debug("Java version detected: " + javaVersionString);
                     }
-                    pluginEngine = Plugin.Engine.Default.of(entryPoint, classFileVersion, suffix == null || suffix.length() == 0
-                            ? MethodNameTransformer.Suffixing.withRandomSuffix()
-                            : new MethodNameTransformer.Suffixing(suffix));
+                    pluginEngine = Plugin.Engine.Default.of(entryPoint, classFileVersion, suffix == null || suffix.length() == 0 ? MethodNameTransformer.Suffixing.withRandomSuffix() : new MethodNameTransformer.Suffixing(suffix));
                 } catch (Throwable throwable) {
                     throw new MojoExecutionException("Cannot create plugin engine", throwable);
                 }
                 try {
-                    summary = pluginEngine
-                            .with(extendedParsing
-                                    ? Plugin.Engine.PoolStrategy.Default.EXTENDED
-                                    : Plugin.Engine.PoolStrategy.Default.FAST)
-                            .with(classFileLocator)
-                            .with(new TransformationLogger(getLog()))
-                            .withErrorHandlers(Plugin.Engine.ErrorHandler.Enforcing.ALL_TYPES_RESOLVED, failOnLiveInitializer
-                                    ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS
-                                    : Plugin.Engine.Listener.NoOp.INSTANCE, failFast
-                                    ? Plugin.Engine.ErrorHandler.Failing.FAIL_FAST
-                                    : Plugin.Engine.ErrorHandler.Failing.FAIL_LAST)
-                            .with(threads == 0
-                                    ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE
-                                    : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(threads))
-                            .apply(source, new Plugin.Engine.Target.ForFolder(root), factories);
+                    summary = pluginEngine.with(extendedParsing ? Plugin.Engine.PoolStrategy.Default.EXTENDED : Plugin.Engine.PoolStrategy.Default.FAST).with(classFileLocator).with(new TransformationLogger(getLog())).withErrorHandlers(Plugin.Engine.ErrorHandler.Enforcing.ALL_TYPES_RESOLVED, failOnLiveInitializer ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS : Plugin.Engine.Listener.NoOp.INSTANCE, failFast ? Plugin.Engine.ErrorHandler.Failing.FAIL_FAST : Plugin.Engine.ErrorHandler.Failing.FAIL_LAST).with(threads == 0 ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(threads)).apply(source, new Plugin.Engine.Target.ForFolder(root), factories);
                 } catch (Throwable throwable) {
                     throw new MojoExecutionException("Failed to transform class files in " + root, throwable);
                 }
@@ -449,6 +427,34 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     }
 
     /**
+     * Discovers plugins from an input stream representing a <i>META-INF/net.bytebuddy/build.plugins</i> file.
+     *
+     * @param inputStream    The input stream to read from.
+     * @param undiscoverable A set of undiscoverable plugins.
+     * @param transformers   The list of transformers to add discovered plugins to.
+     * @param classPath      The class path elements to add if a plugin is loaded from the class path or {@code null} if the plugin is discovered as a dependency
+     * @throws IOException If an I/O exception occurs.
+     */
+    private void discover(InputStream inputStream, Set<String> undiscoverable, List<Transformer> transformers, @MaybeNull List<String> classPath) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+        try {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (undiscoverable.add(line)) {
+                    transformers.add(classPath == null
+                            ? new Transformer.ForDiscoveredPlugin(line)
+                            : new Transformer.ForDiscoveredPlugin.FromClassLoader(line, classPath));
+                    getLog().debug("Registered discovered plugin: " + line);
+                } else {
+                    getLog().info("Skipping discovered plugin " + line + " which was previously discovered or registered");
+                }
+            }
+        } finally {
+            reader.close();
+        }
+    }
+
+    /**
      * Makes a best effort of locating the configured Java version.
      *
      * @param project  The relevant Maven project.
@@ -463,9 +469,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 return value;
             }
             PluginManagement management = project.getPluginManagement();
-            for (org.apache.maven.model.Plugin plugin : management == null
-                    ? project.getBuildPlugins()
-                    : CompoundList.of(project.getBuildPlugins(), management.getPlugins())) {
+            for (org.apache.maven.model.Plugin plugin : management == null ? project.getBuildPlugins() : CompoundList.of(project.getBuildPlugins(), management.getPlugins())) {
                 if ("maven-compiler-plugin".equals(plugin.getArtifactId())) {
                     if (plugin.getConfiguration() instanceof Xpp3Dom) {
                         Xpp3Dom node = ((Xpp3Dom) plugin.getConfiguration()).getChild(property);
@@ -507,9 +511,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 return false;
             }
             for (String name : names) {
-                if (target.getName().equals(name + JAVA_CLASS_EXTENSION)
-                        || target.getName().startsWith(name + "$")
-                        && target.getName().endsWith(JAVA_CLASS_EXTENSION)) {
+                if (target.getName().equals(name + JAVA_CLASS_EXTENSION) || target.getName().startsWith(name + "$") && target.getName().endsWith(JAVA_CLASS_EXTENSION)) {
                     return true;
                 }
             }
@@ -537,10 +539,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
          * A Byte Buddy plugin that transforms a project's production class files where runtime class
          * path elements are not included.
          */
-        @Mojo(name = "transform",
-                defaultPhase = LifecyclePhase.PROCESS_CLASSES,
-                threadSafe = true,
-                requiresDependencyResolution = ResolutionScope.COMPILE)
+        @Mojo(name = "transform", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
         public static class WithoutRuntimeDependencies extends ForProductionTypes {
 
             @Override
@@ -558,10 +557,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
          * A Byte Buddy plugin that transforms a project's production class files where runtime class
          * path elements are included.
          */
-        @Mojo(name = "transform-runtime",
-                defaultPhase = LifecyclePhase.PROCESS_CLASSES,
-                threadSafe = true,
-                requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+        @Mojo(name = "transform-runtime", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
         public static class WithRuntimeDependencies extends ForProductionTypes {
 
             @Override
@@ -578,10 +574,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * A Byte Buddy plugin that transforms a project's test class files.
      */
-    @Mojo(name = "transform-test",
-            defaultPhase = LifecyclePhase.PROCESS_TEST_CLASSES,
-            threadSafe = true,
-            requiresDependencyResolution = ResolutionScope.TEST)
+    @Mojo(name = "transform-test", defaultPhase = LifecyclePhase.PROCESS_TEST_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.TEST)
     public static class ForTestTypes extends ByteBuddyMojo {
 
         @Override
@@ -787,12 +780,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
          * @throws MojoFailureException   If the class loader resolution yields a failure.
          * @throws MojoExecutionException The the class loader resolution is incorrect.
          */
-        protected abstract ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver,
-                                                     Map<Coordinate, String> coordinates,
-                                                     String groupId,
-                                                     String artifactId,
-                                                     String version,
-                                                     String packaging) throws MojoFailureException, MojoExecutionException;
+        protected abstract ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver, Map<Coordinate, String> coordinates, String groupId, String artifactId, String version, String packaging) throws MojoFailureException, MojoExecutionException;
 
         /**
          * A transformer for an explicitly configured plugin.
@@ -824,18 +812,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             }
 
             @Override
-            protected ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver,
-                                                Map<Coordinate, String> coordinates,
-                                                String groupId,
-                                                String artifactId,
-                                                String version,
-                                                String packaging) throws MojoFailureException, MojoExecutionException {
-                String managed = coordinates.get(new Coordinate(transformation.getGroupId(groupId),
-                        transformation.getArtifactId(artifactId)));
-                return classLoaderResolver.resolve(transformation.asCoordinate(groupId,
-                        artifactId,
-                        managed == null ? version : managed,
-                        packaging));
+            protected ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver, Map<Coordinate, String> coordinates, String groupId, String artifactId, String version, String packaging) throws MojoFailureException, MojoExecutionException {
+                String managed = coordinates.get(new Coordinate(transformation.getGroupId(groupId), transformation.getArtifactId(artifactId)));
+                return classLoaderResolver.resolve(transformation.asCoordinate(groupId, artifactId, managed == null ? version : managed, packaging));
             }
         }
 
@@ -869,13 +848,43 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             }
 
             @Override
-            protected ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver,
-                                                Map<Coordinate, String> coordinates,
-                                                String groupId,
-                                                String artifactId,
-                                                String version,
-                                                String packaging) {
+            protected ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver, Map<Coordinate, String> coordinates, String groupId, String artifactId, String version, String packaging) {
                 return ByteBuddyMojo.class.getClassLoader();
+            }
+
+            /**
+             * A transformer for a discovered plugin from the class path.
+             */
+            protected static class FromClassLoader extends ForDiscoveredPlugin {
+
+                /**
+                 * The class path elements for loading this plugin.
+                 */
+                private final List<String> classPath;
+
+                /**
+                 * Creates a new transformer for a discovered plugin from the class path.
+                 *
+                 * @param plugin The name of the discovered plugin.
+                 * @param classPath The class path elements for loading this plugin.
+                 */
+                protected FromClassLoader(String plugin, List<String> classPath) {
+                    super(plugin);
+                    this.classPath = classPath;
+                }
+
+                @Override
+                protected ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver, Map<Coordinate, String> coordinates, String groupId, String artifactId, String version, String packaging) {
+                    URL[] url = new URL[classPath.size()];
+                    for (int index = 0; index < classPath.size(); index++) {
+                        try {
+                            url[index] = new URL(classPath.get(index));
+                        } catch (MalformedURLException exception) {
+                            throw new IllegalStateException("Failed to resolve class path element: " + classPath.get(index), exception);
+                        }
+                    }
+                    return new URLClassLoader(url, ClassLoader.getSystemClassLoader().getParent());
+                }
             }
         }
     }
