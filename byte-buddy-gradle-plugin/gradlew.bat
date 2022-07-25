@@ -119,7 +119,7 @@ SET FILE_HASH=""
 FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.properties") DO (
     IF "%%A"=="wrapperHash" SET FILE_HASH=%%B
 )
-IF $FILE_HASH (
+IF NOT %FILE_HASH%=="" (
     IF NOT (Get-FileHash %APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar -Algorithm SHA256).hash=="%FILE_HASH%".toUpper() (
       echo Could not validate hash of gradle-wrapper.jar
       goto error

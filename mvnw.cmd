@@ -172,7 +172,7 @@ SET FILE_HASH=""
 FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.properties") DO (
     IF "%%A"=="wrapperHash" SET FILE_HASH=%%B
 )
-IF $FILE_HASH (
+IF NOT %FILE_HASH%=="" (
     IF NOT (Get-FileHash %MAVEN_PROJECTBASEDIR%/.mvn/%WRAPPER_LOCATION%/maven-wrapper.jar -Algorithm SHA256).hash=="%FILE_HASH%".toUpper() (
       echo Could not validate hash of maven-wrapper.jar
       goto error
