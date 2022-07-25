@@ -87,7 +87,7 @@ for /f "usebackq tokens=1,2 delims==" %%A in ("%APP_HOME%\gradle\%WRAPPER_LOCATI
 if not %DISTRIBUTION_LOCATION%=="" (
     SET DISTRIBUTION_SOURCE=%DISTRIBUTION_LOCATION%/%DISTRIBUTION_URL%
     SET DISTRIBUTION_TARGET=%APP_HOME%\gradle\%WRAPPER_LOCATION%\%DISTRIBUTION_URL%
-    if exist %DISTRIBUTION_TARGET% (
+    if exist "%DISTRIBUTION_TARGET%" (
         if "%GRADLEW_VERBOSE%" == "true" (
             echo Found %DISTRIBUTION_TARGET%
         )
