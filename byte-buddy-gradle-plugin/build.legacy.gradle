@@ -1,0 +1,56 @@
+plugins {
+    id 'java'
+    id 'java-gradle-plugin'
+}
+
+apply from: './build.common.gradle'
+
+if (!gradle.gradleVersion.startsWith("2.")) {
+    throw new GradleException("Use build.gradle for executing build with modern Gradle")
+} else if (release) {
+    throw new GradleException("Cannot apply release using legacy build");
+}
+
+repositories {
+    maven {
+        url 'http://insecure.repo1.maven.org/maven2/'
+    }
+}
+
+version = pom.parent.version.text().toString()
+
+dependencies {
+    compile gradleApi()
+    // At this point, it is not given that any artifact from the Maven build can be found in a repository.
+    def location = new File(project.buildscript.sourceFile.getParentFile(), "../byte-buddy/target/byte-buddy-${version}.jar").canonicalFile
+    logger.info("Relying on ${location.absolutePath} as Byte Buddy dependency")
+    if (location.exists()) {
+        compile files(location.absolutePath)
+    } else {
+        logger.warn("${location.absolutePath} does not exist, can clean but not build project")
+    }
+    compileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
+    compileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
+    testCompile gradleTestKit()
+    testCompile group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
+    testCompile(group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
+        exclude group: 'net.bytebuddy'
+    }
+    testCompileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
+    testCompileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
+}
+
+gradlePlugin {
+    plugins {
+        byteBuddyPlugin {
+            id = pom.parent.groupId.text().toString() + '.' + pom.artifactId.text().toString()
+            description = pom.description.text().toString()
+            implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
+        }
+    }
+}
+
+sourceSets.main.java.srcDirs += ['src/main/java-gradle-api']
+jar {
+    exclude('org/**')
+}

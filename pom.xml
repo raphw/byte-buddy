@@ -175,7 +175,7 @@
                 <version>${version.plugin.release}</version>
                 <configuration>
                     <useReleaseProfile>false</useReleaseProfile>
-                    <releaseProfiles>extras,gpg</releaseProfiles>
+                    <releaseProfiles>extras,gpg,gradle-release</releaseProfiles>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <tagNameFormat>byte-buddy-@{project.version}</tagNameFormat>
                 </configuration>

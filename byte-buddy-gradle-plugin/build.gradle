@@ -1,74 +1,79 @@
 plugins {
     id 'java'
     id 'java-gradle-plugin'
-    id 'com.gradle.plugin-publish' version '1.0.0'
+    id 'com.gradle.plugin-publish' version '1.0.0' apply false
 }
 
-apply from: './main.gradle'
+if (gradle.gradleVersion.startsWith("2.")) {
+    throw new GradleException("Use build.legacy.gradle for executing build with Gradle 2")
+} else if (Boolean.getBoolean('net.bytebuddy.gradle.release')) {
+    apply plugin: 'com.gradle.plugin-publish'
+}
+
+apply from: './build.common.gradle'
+
+repositories {
+    mavenCentral()
+}
 
 version = pom.parent.version.text().toString()
 
-if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
-    repositories {
-        maven {
-            url 'http://insecure.repo1.maven.org/maven2/'
-        }
-    }
-    dependencies {
-        compile gradleApi()
-        compile group: 'net.bytebuddy', name: 'byte-buddy', version: version
-        compileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
-        compileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
-        testCompile gradleTestKit()
-        testCompile group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
-        testCompile(group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
-            exclude group: 'net.bytebuddy'
-        }
-        testCompileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
-        testCompileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
-    }
-} else {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        implementation gradleApi()
+dependencies {
+    implementation gradleApi()
+    if (release) {
         implementation group: 'net.bytebuddy', name: 'byte-buddy', version: version
-        compileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
-        compileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
-        testImplementation gradleTestKit()
-        testImplementation group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
-        testImplementation(group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
-            exclude group: 'net.bytebuddy'
+    } else {
+        // At this point, it is not given that any artifact from the Maven build can be found in a repository.
+        def location = new File(project.buildscript.sourceFile.getParentFile(), "../byte-buddy/target/byte-buddy-${version}.jar").canonicalFile
+        logger.info("Relying on ${location.absolutePath} as Byte Buddy dependency")
+        if (location.exists()) {
+            implementation files(location.absolutePath)
+        } else {
+            logger.warn("${location.absolutePath} does not exist, can clean but not build project")
         }
-        testCompileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
-        testCompileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
     }
-    tasks.withType(AbstractArchiveTask).configureEach {
-        preserveFileTimestamps = false
-        reproducibleFileOrder = true
+    compileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
+    compileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
+    testImplementation gradleTestKit()
+    testImplementation group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
+    testImplementation(group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
+        exclude group: 'net.bytebuddy'
+    }
+    testCompileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
+    testCompileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
+}
+
+if (release) {
+    configurations.all {
+        resolutionStrategy.dependencySubstitution {
+            substitute module("net.bytebuddy:byte-buddy:${version}") with project(":mavenBridge")
+        }
     }
 }
 
-configurations.all {
-    resolutionStrategy.dependencySubstitution {
-        substitute module("net.bytebuddy:byte-buddy:${version}") with project(":mavenBridge")
+validatePlugins {
+    enabled = false
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+if (release) {
+    pluginBundle {
+        website = 'https://bytebuddy.net'
+        vcsUrl = 'https://github.com/raphw/byte-buddy'
+        tags = ['Byte Buddy', 'bytecode', 'enhancement']
     }
-}
-
-pluginBundle {
-    website = 'https://bytebuddy.net'
-    vcsUrl = 'https://github.com/raphw/byte-buddy'
-    tags = ['Byte Buddy', 'bytecode', 'enhancement']
-}
-
-gradlePlugin {
-    plugins {
-        byteBuddyPlugin {
-            id = 'net.bytebuddy.byte-buddy-gradle-plugin'
-            implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
-            displayName = 'Byte Buddy Gradle plugin'
-            description = 'The Byte Buddy plugin allows for post processing Java classes with byte code transformation.'
+    gradlePlugin {
+        plugins {
+            byteBuddyPlugin {
+                id = 'net.bytebuddy.byte-buddy-gradle-plugin'
+                implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
+                displayName = 'Byte Buddy Gradle plugin'
+                description = 'The Byte Buddy plugin allows for post processing Java classes with byte code transformation.'
+            }
         }
     }
 }

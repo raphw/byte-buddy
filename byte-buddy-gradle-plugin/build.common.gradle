@@ -2,6 +2,7 @@ import java.util.regex.Pattern
 
 ext.pom = new XmlSlurper().parse(file('./pom.xml'))
 ext.outerPom = new XmlSlurper().parse(file('../pom.xml'))
+ext.release = Boolean.getBoolean('net.bytebuddy.gradle.release')
 
 group = pom.parent.groupId.text().toString()
 version = pom.parent.version.text().toString()
@@ -67,6 +68,7 @@ if (Boolean.getBoolean('net.bytebuddy.misc.extras')) {
 } else {
     task javadocJar {
         logger.info('javadoc is only generated if net.bytebuddy.misc.extras is set to true')
+        enabled = false
     }
 }
 
@@ -105,36 +107,3 @@ task copyLicense(type: Copy) {
 
 compileJava.dependsOn copyLicense
 compileTestJava.dependsOn copyLicense
-
-if (!gradle.gradleVersion.startsWith("2.")) { // support legacy version
-    validatePlugins {
-        enabled = false
-    }
-}
-
-if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
-    sourceSets.main.java.srcDirs += ['src/main/java-gradle-api']
-    jar {
-        exclude('org/**')
-    }
-    gradlePlugin {
-        plugins {
-            byteBuddyPlugin {
-                id = pom.parent.groupId.text().toString() + '.' + pom.artifactId.text().toString()
-                description = pom.description.text().toString()
-                implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
-            }
-        }
-    }
-} else {
-    gradlePlugin {
-        plugins {
-            byteBuddyPlugin {
-                id = pom.parent.groupId.text().toString() + '.' + pom.artifactId.text().toString()
-                displayName = pom.name.text().toString()
-                description = pom.description.text().toString()
-                implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
-            }
-        }
-    }
-}
