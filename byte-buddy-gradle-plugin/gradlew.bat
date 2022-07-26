@@ -113,9 +113,6 @@ if not %DISTRIBUTION_LOCATION%=="" (
 )
 @rem End of extension
 
-@rem Setup the command line
-set CLASSPATH=%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar
-
 @REM Download and validate the Gradle wrapper (Byte Buddy edit)
 SET WRAPPER_URL=""
 SET WRAPPER_HASH=""
@@ -125,6 +122,7 @@ FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%APP_HOME%\gradle\%WRAPPER_LOCATI
 )
 if not %WRAPPER_URL%=="" (
     SET WRAPPER_TARGET=%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar
+    echo "Target: %WRAPPER_TARGET%"
     if exist "%WRAPPER_URL%" (
         if "%GRADLEW_VERBOSE%" == "true" (
             echo Found %WRAPPER_URL%
@@ -157,6 +155,9 @@ IF NOT %WRAPPER_HASH%=="" (
         )
     )
 )
+
+@rem Setup the command line
+set CLASSPATH=%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar
 
 @rem Execute Gradle
 "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %GRADLE_ADDITIONAL_OPTS% *
