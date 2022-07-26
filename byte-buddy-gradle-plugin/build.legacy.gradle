@@ -3,7 +3,7 @@ plugins {
     id 'java-gradle-plugin'
 }
 
-apply from: './build.common.gradle'
+apply from: 'common.gradle'
 
 if (!gradle.gradleVersion.startsWith("2.")) {
     throw new GradleException("Use build.gradle for executing build with modern Gradle")

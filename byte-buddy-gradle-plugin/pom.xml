@@ -104,7 +104,7 @@
                             <arguments>
                                 <argument>build</argument>
                                 <argument>javadocJar</argument>
-                                <argument>--debug</argument>
+                                <argument>--info</argument>
                                 <argument>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</argument>
                                 <argument>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</argument>
                                 <argument>-Dnet.bytebuddy.gradle.release=${gradle.release}</argument>
