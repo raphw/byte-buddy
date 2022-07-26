@@ -58,20 +58,19 @@ tasks.withType(AbstractArchiveTask).configureEach {
     reproducibleFileOrder = true
 }
 
-if (release) {
-    pluginBundle {
-        website = 'https://bytebuddy.net'
-        vcsUrl = 'https://github.com/raphw/byte-buddy'
-        tags = ['Byte Buddy', 'bytecode', 'enhancement']
-    }
-    gradlePlugin {
-        plugins {
-            byteBuddyPlugin {
-                id = 'net.bytebuddy.byte-buddy-gradle-plugin'
-                implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
-                displayName = 'Byte Buddy Gradle plugin'
-                description = 'The Byte Buddy plugin allows for post processing Java classes with byte code transformation.'
-            }
+pluginBundle {
+    website = 'https://bytebuddy.net'
+    vcsUrl = 'https://github.com/raphw/byte-buddy'
+    tags = ['Byte Buddy', 'bytecode', 'enhancement']
+}
+
+gradlePlugin {
+    plugins {
+        byteBuddyPlugin {
+            id = 'net.bytebuddy.byte-buddy-gradle-plugin'
+            implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
+            displayName = 'Byte Buddy Gradle plugin'
+            description = 'The Byte Buddy plugin allows for post processing Java classes with byte code transformation.'
         }
     }
 }

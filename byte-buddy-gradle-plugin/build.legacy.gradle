@@ -40,6 +40,11 @@ dependencies {
     testCompileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
 }
 
+sourceSets.main.java.srcDirs += ['src/main/java-gradle-api']
+jar {
+    exclude('org/**')
+}
+
 gradlePlugin {
     plugins {
         byteBuddyPlugin {
@@ -48,9 +53,4 @@ gradlePlugin {
             implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
         }
     }
-}
-
-sourceSets.main.java.srcDirs += ['src/main/java-gradle-api']
-jar {
-    exclude('org/**')
 }

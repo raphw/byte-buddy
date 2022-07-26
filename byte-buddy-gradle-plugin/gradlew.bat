@@ -69,12 +69,12 @@ goto fail
 
 @rem Use legacy Gradle if Java 6 or 7 is used to build (Byte Buddy edit)
 set WRAPPER_LOCATION=wrapper-legacy
-set BUILD_FILE="--build-file=build.legacy.gradle"
+set GRADLE_ADDITIONAL_OPTS="--build-file=build.legacy.gradle"
 for /f tokens^=2-5^ delims^=.-_^" %%j in ('%JAVA_HOME%\bin\java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j.%%k"
 IF NOT "%JAVA_VERSION_STRING:~0,3%"=="1.6" (
   IF NOT "%JAVA_VERSION_STRING:~0,3%"=="1.7" (
     set WRAPPER_LOCATION=wrapper
-    set BUILD_FILE=""
+    set GRADLE_ADDITIONAL_OPTS=""
   )
 )
 
@@ -133,7 +133,7 @@ IF NOT %FILE_HASH%=="" (
 )
 
 @rem Execute Gradle
-"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %BUILD_FILE% *
+"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %GRADLE_ADDITIONAL_OPTS% *
 
 :end
 @rem End local scope for the variables with windows NT shell
