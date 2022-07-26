@@ -69,12 +69,12 @@ goto fail
 
 @rem Use legacy Gradle if Java 6 or 7 is used to build (Byte Buddy edit)
 set WRAPPER_LOCATION=wrapper-legacy
-set GRADLE_ADDITIONAL_OPTS=--build-file=build.legacy.gradle
+set GRADLE_LEGACY="true"
 for /f tokens^=2-5^ delims^=.-_^" %%j in ('%JAVA_HOME%\bin\java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j.%%k"
 IF NOT "%JAVA_VERSION_STRING:~0,3%"=="1.6" (
   IF NOT "%JAVA_VERSION_STRING:~0,3%"=="1.7" (
     set WRAPPER_LOCATION=wrapper
-    set GRADLE_ADDITIONAL_OPTS=
+    set GRADLE_LEGACY="false"
   )
 )
 
@@ -159,7 +159,11 @@ IF NOT %WRAPPER_HASH%=="" (
 set CLASSPATH=%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar
 
 @rem Execute Gradle
-"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %GRADLE_ADDITIONAL_OPTS% *
+if %GRADLE_LEGACY%=="true" (
+  "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain --build-file=build.legacy.gradle *
+) else (
+  "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain *
+)
 
 :end
 @rem End local scope for the variables with windows NT shell
