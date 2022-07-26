@@ -8,7 +8,7 @@ if (gradle.gradleVersion.startsWith("2.")) {
     throw new GradleException("Use build.legacy.gradle for executing build with Gradle 2")
 }
 
-apply from: './build.common.gradle'
+apply from: 'build.common.gradle'
 
 repositories {
     mavenCentral()
