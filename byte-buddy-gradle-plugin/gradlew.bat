@@ -86,9 +86,9 @@ for /f "usebackq tokens=1,2 delims==" %%A in ("%APP_HOME%\gradle\%WRAPPER_LOCATI
     if "%%A"=="distributionRepo" SET DISTRIBUTION_LOCATION=%%B
     if "%%A"=="distributionUrl" SET DISTRIBUTION_URL=%%B
 )
+SET DISTRIBUTION_SOURCE=%DISTRIBUTION_LOCATION%/%DISTRIBUTION_URL%
+SET DISTRIBUTION_TARGET=%APP_HOME%\gradle\%WRAPPER_LOCATION%\%DISTRIBUTION_URL%
 if not %DISTRIBUTION_LOCATION%=="" (
-    SET DISTRIBUTION_SOURCE=%DISTRIBUTION_LOCATION%/%DISTRIBUTION_URL%
-    SET DISTRIBUTION_TARGET=%APP_HOME%\gradle\%WRAPPER_LOCATION%\%DISTRIBUTION_URL%
     if exist "%DISTRIBUTION_TARGET%" (
         if "%GRADLEW_VERBOSE%" == "true" (
             echo Found %DISTRIBUTION_TARGET%
@@ -120,9 +120,8 @@ FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%APP_HOME%\gradle\%WRAPPER_LOCATI
     IF "%%A"=="wrapperUrl" SET WRAPPER_URL=%%B
     IF "%%A"=="wrapperHash" SET WRAPPER_HASH=%%B
 )
+SET WRAPPER_TARGET="%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar"
 if not %WRAPPER_URL%=="" (
-    SET WRAPPER_TARGET="%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar"
-    echo "Target: %WRAPPER_TARGET%"
     if exist "%WRAPPER_URL%" (
         if "%GRADLEW_VERBOSE%" == "true" (
             echo Found %WRAPPER_URL%
