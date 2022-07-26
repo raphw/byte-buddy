@@ -929,7 +929,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                             throw new IllegalStateException("Failed to resolve class path element to URL: " + classPath.get(index), exception);
                         }
                     }
-                    return new URLClassLoader(url, ClassLoader.getSystemClassLoader().getParent());
+                    return new URLClassLoader(url, ByteBuddyMojo.class.getClassLoader());
                 }
             }
         }
