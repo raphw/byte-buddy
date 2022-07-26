@@ -14,7 +14,7 @@
 @rem limitations under the License.
 @rem
 
-@if "%DEBUG%" == "" @echo off
+@echo on
 @rem ##########################################################################
 @rem
 @rem  Gradle startup script for Windows
@@ -131,7 +131,7 @@ if not %WRAPPER_URL%=="" (
         )
     ) else (
         if "%GRADLEW_VERBOSE%" == "true" (
-            echo Couldn't find %WRAPPER_URL%, downloading it ...
+            echo Couldn't find %WRAPPER_TARGET%, downloading it ...
             echo Downloading from: %WRAPPER_URL%
         )
 
