@@ -53,7 +53,8 @@ if (targetVersion != null) {
 logger.info("Compiling class files from version ${sourceCompatibility} to ${targetCompatibility}.")
 
 // Without the extras property, creating a javadoc artifact is not necessary.
-if (Boolean.getBoolean('net.bytebuddy.misc.extras')) {
+// TODO: With the release plugin configured, it is no longer possible to disable javadoc creation
+if (true || Boolean.getBoolean('net.bytebuddy.misc.extras')) {
     if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
         task javadocJar(type: Jar, dependsOn: javadoc) {
             classifier = 'javadoc'

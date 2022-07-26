@@ -1,13 +1,11 @@
 plugins {
     id 'java'
     id 'java-gradle-plugin'
-    id 'com.gradle.plugin-publish' version '1.0.0' apply false
+    id 'com.gradle.plugin-publish' version '1.0.0'
 }
 
 if (gradle.gradleVersion.startsWith("2.")) {
     throw new GradleException("Use build.legacy.gradle for executing build with Gradle 2")
-} else if (Boolean.getBoolean('net.bytebuddy.gradle.release')) {
-    apply plugin: 'com.gradle.plugin-publish'
 }
 
 apply from: './build.common.gradle'
