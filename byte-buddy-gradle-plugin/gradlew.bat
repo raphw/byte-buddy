@@ -121,7 +121,7 @@ FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%APP_HOME%\gradle\%WRAPPER_LOCATI
     IF "%%A"=="wrapperHash" SET WRAPPER_HASH=%%B
 )
 if not %WRAPPER_URL%=="" (
-    SET WRAPPER_TARGET=%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar
+    SET WRAPPER_TARGET="%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar"
     echo "Target: %WRAPPER_TARGET%"
     if exist "%WRAPPER_URL%" (
         if "%GRADLEW_VERBOSE%" == "true" (
