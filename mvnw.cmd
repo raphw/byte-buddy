@@ -120,9 +120,9 @@ for /F "usebackq delims=" %%a in ("%MAVEN_PROJECTBASEDIR%\.mvn\jvm.config") do s
 set REPO_URL=http://insecure.repo1.maven.org
 set WRAPPER_LOCATION=wrapper-legacy
 set WRAPPER_PATH=io/takari/maven-wrapper/0.5.6/maven-wrapper-0.5.6.jar
-for /f tokens^=2-5^ delims^=.-_^" %%j in ('%JAVA_HOME%\bin\java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j%%k%%l%%m"
-IF NOT "%JAVA_VERSION_STRING:~0,3%"=="160" (
-  IF NOT "%JAVA_VERSION_STRING:~0,3%"=="170" (
+for /f tokens^=2-5^ delims^=.-_^" %%j in ('%JAVA_HOME%\bin\java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j.%%k"
+IF NOT "%JAVA_VERSION_STRING:~0,3%"=="1.6" (
+  IF NOT "%JAVA_VERSION_STRING:~0,3%"=="1.7" (
     set REPO_URL=https://repo.maven.apache.org
     set WRAPPER_LOCATION=wrapper
     set WRAPPER_PATH=org/apache/maven/wrapper/maven-wrapper/3.1.1/maven-wrapper-3.1.1.jar
