@@ -116,15 +116,41 @@ if not %DISTRIBUTION_LOCATION%=="" (
 @rem Setup the command line
 set CLASSPATH=%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar
 
-@REM Validate the Gradle wrapper's hash (Byte Buddy edit)
-SET FILE_HASH=""
+@REM Download and validate the Gradle wrapper (Byte Buddy edit)
+SET WRAPPER_URL=""
+SET WRAPPER_HASH=""
 FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.properties") DO (
-    IF "%%A"=="wrapperHash" SET FILE_HASH=%%B
+    IF "%%A"=="wrapperUrl" SET WRAPPER_URL=%%B
+    IF "%%A"=="wrapperHash" SET WRAPPER_HASH=%%B
 )
-IF NOT %FILE_HASH%=="" (
+if not %WRAPPER_URL%=="" (
+    SET WRAPPER_TARGET=%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar
+    if exist "%WRAPPER_URL%" (
+        if "%GRADLEW_VERBOSE%" == "true" (
+            echo Found %WRAPPER_URL%
+        )
+    ) else (
+        if "%GRADLEW_VERBOSE%" == "true" (
+            echo Couldn't find %WRAPPER_URL%, downloading it ...
+            echo Downloading from: %WRAPPER_URL%
+        )
+
+        powershell -Command "&{"^
+            "$webclient = new-object System.Net.WebClient;"^
+            "if (-not ([string]::IsNullOrEmpty('%GRADLEW_USERNAME%') -and [string]::IsNullOrEmpty('%GRADLEW_PASSWORD%'))) {"^
+            "$webclient.Credentials = new-object System.Net.NetworkCredential('%GRADLEW_USERNAME%', '%GRADLEW_PASSWORD%');"^
+            "}"^
+            "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $webclient.DownloadFile('%WRAPPER_URL%', '%WRAPPER_TARGET%')"^
+            "}"
+        if "%GRADLEW_VERBOSE%" == "true" (
+            echo Finished downloading %WRAPPER_TARGET%
+        )
+    )
+)
+IF NOT %WRAPPER_HASH%=="" (
     FOR /F "usebackq tokens=*" %%A in ('certUtil -hashfile "%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar" SHA256') do (
         echo %%A | findstr /C:"hash" 1>nul || (
-            IF NOT %%A==%FILE_HASH% (
+            IF NOT %%A==%WRAPPER_HASH% (
                 echo Could not validate hash of gradle-wrapper.jar, was %%A
                 goto error
             )

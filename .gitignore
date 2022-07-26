@@ -23,6 +23,7 @@ byte-buddy-gradle-plugin/build/
 byte-buddy-gradle-plugin/buildSrc/build/
 byte-buddy-gradle-plugin/gradle/build/
 gradle-*-bin.zip
+gradle-wrapper.jar
 
 # Shade plugin
 dependency-reduced-pom.xml

@@ -116,7 +116,7 @@ case "$( uname )" in                #(
 esac
 
 # Use legacy Gradle if Java 6 or 7 is used to build (Byte Buddy edit)
-if `$JAVA_HOME/bin/java -fullversion 2>&1 >/dev/null | awk '{print $4}' | grep -Eq "^\"1\.[67]\."`; then
+if $JAVA_HOME/bin/java -fullversion 2>&1 >/dev/null | awk '{print $4}' | grep -Eq "^\"1\.[67]\."; then
   WRAPPER_LOCATION="wrapper-legacy"
   GRADLE_ADDITIONAL_OPTS="--build-file=build.legacy.gradle"
 else
@@ -145,7 +145,7 @@ if [ -n "$DISTRIBUTION_LOCATION" ]; then
       fi
       GRADLE_BIN_PATH="$APP_HOME/gradle/$WRAPPER_LOCATION/$DISTRIBUTION_URL"
       if $cygwin; then
-        GRADLE_BIN_PATH=`cygpath --path --windows "$GRADLE_BIN_PATH"`
+        GRADLE_BIN_PATH=$(cygpath --path --windows "$GRADLE_BIN_PATH")
       fi
       GRADLE_REMOTE_URL=$DISTRIBUTION_LOCATION/$DISTRIBUTION_URL
       if command -v wget > /dev/null; then
@@ -157,7 +157,7 @@ if [ -n "$DISTRIBUTION_LOCATION" ]; then
           if [ -z "$GRADLEW_USERNAME" ] || [ -z "$GRADLEW_PASSWORD" ]; then
               wget $QUIET "$GRADLE_REMOTE_URL" -O "$GRADLE_BIN_PATH"
           else
-              wget $QUIET --http-user="$MVNW_USERNAME" --http-password="$MVNW_PASSWORD" "$GRADLE_REMOTE_URL" -O "$GRADLE_BIN_PATH"
+              wget $QUIET --http-user="$GRADLEW_USERNAME" --http-password="$GRADLEW_PASSWORD" "$GRADLE_REMOTE_URL" -O "$GRADLE_BIN_PATH"
           fi
           [ $? -eq 0 ] || rm -f "$GRADLE_BIN_PATH"
       elif command -v curl > /dev/null; then
@@ -179,20 +179,67 @@ if [ -n "$DISTRIBUTION_LOCATION" ]; then
   fi
 fi
 
-CLASSPATH=$APP_HOME/gradle/$WRAPPER_LOCATION/gradle-wrapper.jar
-
-# Validate the Gradle wrapper's hash (Byte Buddy edit)
-wrapperHash=""
+# Download and validate the Gradle wrapper (Byte Buddy edit)
+WRAPPER_URL=""
+WRAPPER_HASH=""
 while IFS="=" read key value; do
-  case "$key" in (wrapperHash) wrapperHash=$value; break ;;
+  case "$key" in
+              wrapperUrl) WRAPPER_URL="$value";;
+              wrapperHash) WRAPPER_HASH="$value";;
   esac
 done < "$APP_HOME/gradle/$WRAPPER_LOCATION/gradle-wrapper.properties"
-if [ -n "$wrapperHash" ]; then
-  if ! `echo "$wrapperHash  $APP_HOME/gradle/$WRAPPER_LOCATION/gradle-wrapper.jar" | shasum -a 256 -c > /dev/null`; then
+if [ -n "$WRAPPER_URL" ]; then
+    if [ -r "$APP_HOME/gradle/$WRAPPER_LOCATION/gradle-wrapper.jar" ]; then
+        if [ "$GRADLEW_VERBOSE" = true ]; then
+          echo "Found gradle/$WRAPPER_LOCATION/gradle-wrapper.jar"
+        fi
+    else
+        echo "Couldn't find gradle/$WRAPPER_LOCATION/gradle-wrapper.jar, downloading it ..."
+        if [ "$GRADLEW_VERBOSE" = true ]; then
+          echo "Downloading from: $WRAPPER_URL"
+        fi
+        GRADLE_WRAPPER_PATH="$APP_HOME/gradle/$WRAPPER_LOCATION/gradle-wrapper.jar"
+        if $cygwin; then
+          GRADLE_WRAPPER_PATH=$(cygpath --path --windows "$GRADLE_WRAPPER_PATH")
+        fi
+        if command -v wget > /dev/null; then
+            QUIET="--quiet"
+            if [ "$GRADLEW_VERBOSE" = true ]; then
+              echo "Found wget ... using wget"
+              QUIET=""
+            fi
+            if [ -z "$GRADLEW_USERNAME" ] || [ -z "$GRADLEW_PASSWORD" ]; then
+                wget $QUIET "$WRAPPER_URL" -O "$GRADLE_WRAPPER_PATH"
+            else
+                wget $QUIET --http-user="$GRADLEW_USERNAME" --http-password="$GRADLEW_PASSWORD" "$WRAPPER_URL" -O "$GRADLE_WRAPPER_PATH"
+            fi
+            [ $? -eq 0 ] || rm -f "$GRADLE_WRAPPER_PATH"
+        elif command -v curl > /dev/null; then
+            QUIET="--silent"
+            if [ "$GRADLEW_VERBOSE" = true ]; then
+              echo "Found curl ... using curl"
+              QUIET=""
+            fi
+            if [ -z "$GRADLEW_USERNAME" ] || [ -z "$GRADLEW_PASSWORD" ]; then
+                curl $QUIET -o "$GRADLE_WRAPPER_PATH" "$WRAPPER_URL" -f -L
+            else
+                curl $QUIET --user "$GRADLEW_USERNAME:$GRADLEW_PASSWORD" -o "$GRADLE_WRAPPER_PATH" "$WRAPPER_URL" -f -L
+            fi
+            [ $? -eq 0 ] || rm -f "$GRADLE_WRAPPER_PATH"
+        else
+          echo "Failed to download Gradle wrapper from $WRAPPER_URL"
+          exit 1
+        fi
+    fi
+fi
+if [ -n "$WRAPPER_HASH" ]; then
+  if ! echo "$WRAPPER_HASH  $APP_HOME/gradle/$WRAPPER_LOCATION/gradle-wrapper.jar" | shasum -a 256 -c > /dev/null; then
     echo "Could not validate hash of gradle-wrapper.jar";
     exit 1
   fi
 fi
+
+CLASSPATH=$APP_HOME/gradle/$WRAPPER_LOCATION/gradle-wrapper.jar
 
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then
