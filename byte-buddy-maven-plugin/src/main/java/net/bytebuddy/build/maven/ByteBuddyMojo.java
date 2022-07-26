@@ -924,9 +924,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     URL[] url = new URL[classPath.size()];
                     for (int index = 0; index < classPath.size(); index++) {
                         try {
-                            url[index] = new URL(classPath.get(index));
+                            url[index] = new File(classPath.get(index)).toURI().toURL();
                         } catch (MalformedURLException exception) {
-                            throw new IllegalStateException("Failed to resolve class path element: " + classPath.get(index), exception);
+                            throw new IllegalStateException("Failed to resolve class path element to URL: " + classPath.get(index), exception);
                         }
                     }
                     return new URLClassLoader(url, ClassLoader.getSystemClassLoader().getParent());
