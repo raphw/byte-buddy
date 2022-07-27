@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.build.maven;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.BuildLogger;
 import net.bytebuddy.build.EntryPoint;
@@ -533,7 +534,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * Matches elements which represent a Java class that is represented in the list or an inner class of the classes represented in the list.
      */
-    private static class FilePrefixMatcher implements ElementMatcher<Plugin.Engine.Source.Element> {
+    private static class FilePrefixMatcher extends ElementMatcher.Junction.ForNonNullValues<Plugin.Engine.Source.Element> {
 
         /**
          * A list of names to match.
@@ -552,10 +553,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@MaybeNull Plugin.Engine.Source.Element target) {
-            if (target == null) {
-                return false;
-            }
+        protected boolean doMatch(Plugin.Engine.Source.Element target) {
             for (String name : names) {
                 if (target.getName().equals(name + JAVA_CLASS_EXTENSION) || target.getName().startsWith(name + "$") && target.getName().endsWith(JAVA_CLASS_EXTENSION)) {
                     return true;
@@ -920,6 +918,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 }
 
                 @Override
+                @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "The security manager is not normally used within Maven")
                 protected ClassLoader toClassLoader(ClassLoaderResolver classLoaderResolver, Map<Coordinate, String> coordinates, String groupId, String artifactId, String version, String packaging) {
                     URL[] url = new URL[classPath.size()];
                     for (int index = 0; index < classPath.size(); index++) {
@@ -983,7 +982,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     /**
      * A filter for files that were written before a given timestamp, to avoid duplicate application.
      */
-    protected static class StalenessFilter implements ElementMatcher<Plugin.Engine.Source.Element> {
+    protected static class StalenessFilter extends ElementMatcher.Junction.ForNonNullValues<Plugin.Engine.Source.Element> {
 
         /**
          * The logger to use.
@@ -1014,10 +1013,10 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(Plugin.Engine.Source.Element target) {
+        protected boolean doMatch(Plugin.Engine.Source.Element target) {
             File file = target.resolveAs(File.class);
             if (file == null) {
-                throw new IllegalStateException();
+                throw new IllegalStateException("Expected " + target + " to resolve to a file");
             }
             if (file.lastModified() < latestTimestamp) {
                 filtered += 1;

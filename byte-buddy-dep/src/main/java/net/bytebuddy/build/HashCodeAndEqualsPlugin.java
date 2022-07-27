@@ -497,7 +497,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
      * An element matcher for a {@link ValueHandling} annotation.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class ValueMatcher implements ElementMatcher<FieldDescription> {
+    protected static class ValueMatcher extends ElementMatcher.Junction.ForNonNullValues<FieldDescription> {
 
         /**
          * The matched value.
@@ -516,10 +516,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory, MethodAt
         /**
          * {@inheritDoc}
          */
-        public boolean matches(@MaybeNull FieldDescription target) {
-            if (target == null) {
-                return false;
-            }
+        protected boolean doMatch(FieldDescription target) {
             AnnotationDescription.Loadable<ValueHandling> annotation = target.getDeclaredAnnotations().ofType(ValueHandling.class);
             return annotation != null && annotation.getValue(VALUE_HANDLING_VALUE).load(ValueHandling.class.getClassLoader()).resolve(ValueHandling.Sort.class) == sort;
         }
