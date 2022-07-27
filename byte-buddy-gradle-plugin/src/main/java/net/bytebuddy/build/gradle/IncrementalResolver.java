@@ -18,7 +18,6 @@ package net.bytebuddy.build.gradle;
 import org.gradle.api.logging.Logger;
 import org.gradle.work.ChangeType;
 import org.gradle.work.FileChange;
-import org.gradle.api.Project;
 
 import java.io.File;
 import java.util.ArrayList;

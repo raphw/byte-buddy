@@ -63,10 +63,9 @@
         <bytecode.main.version>1.5</bytecode.main.version>
         <bytecode.test.version>1.6</bytecode.test.version>
         <pitest.target>net.bytebuddy</pitest.target>
-        <asm.url>https://asm.ow2.io</asm.url>
         <nexus.url>https://s01.oss.sonatype.org</nexus.url>
         <version.asm>9.3</version.asm>
-        <jna.version>5.12.1</jna.version>
+        <version.jna>5.12.1</version.jna>
         <version.junit>4.13.2</version.junit>
         <version.mockito>2.28.2</version.mockito>
         <version.plugin.clean>3.2.0</version.plugin.clean>
@@ -887,8 +886,8 @@
                             <source>${sourcecode.main.version}</source>
                             <detectJavaApiLink>true</detectJavaApiLink>
                             <links>
-                                <link>${asm.url}/javadoc</link>
-                                <link>https://javadoc.io/doc/net.java.dev.jna/jna/latest</link>
+                                <link>https://javadoc.io/doc/org.ow2.asm/asm/${version.asm}</link>
+                                <link>https://javadoc.io/doc/net.java.dev.jna/jna/${version.jna}</link>
                             </links>
                         </configuration>
                     </plugin>
