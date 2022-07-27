@@ -20,7 +20,6 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.utility.nullability.MaybeNull;
 
 import java.util.Arrays;
 import java.util.List;
