@@ -117,7 +117,7 @@ jobs:
       - name: Build project
         run: ./mvnw -s .mvn/nossl.settings.xml verify -Pintegration -Pjava${{ matrix.java }}
   extended:
-    name: Runs an extended build including code inspection
+    name: Extended build
     runs-on: ubuntu-20.04
     needs: [ hotspot-ea, hotspot-supported, j9-supported, hotspot-unsupported, hotspot-32, hotspot-legacy ]
     if: github.event_name == 'push'
