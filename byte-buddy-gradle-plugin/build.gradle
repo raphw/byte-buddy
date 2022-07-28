@@ -18,6 +18,7 @@ version = pom.parent.version.text().toString()
 
 dependencies {
     implementation gradleApi()
+    implementation project(':common')
     if (release) {
         implementation group: 'net.bytebuddy', name: 'byte-buddy', version: version
     } else {

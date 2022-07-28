@@ -1,1 +1,4 @@
 include "mavenBridge"
+include "android-plugin"
+include "android-plugin-test"
+include "common"
