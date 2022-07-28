@@ -369,32 +369,20 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                     undiscoverable.add(transformation.toPluginName());
                 }
             }
-            Enumeration<URL> plugins = classLoader.getResources("META-INF/net.bytebuddy/build.plugins");
-            while (plugins.hasMoreElements()) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(plugins.nextElement().openStream(), "UTF-8"));
-                try {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        if (undiscoverable.add(line)) {
-                            try {
-                                @SuppressWarnings("unchecked")
-                                Class<? extends Plugin> plugin = (Class<? extends Plugin>) Class.forName(line);
-                                Transformation transformation = ObjectFactory.newInstance(getProject(), Transformation.class, getProject());
-                                if (transformation == null) {
-                                    transformation = new Transformation(getProject());
-                                }
-                                transformation.setPlugin(plugin);
-                                transformations.add(transformation);
-                            } catch (ClassNotFoundException exception) {
-                                throw new IllegalStateException("Discovered plugin is not available: " + line, exception);
-                            }
-                            getLogger().debug("Registered discovered plugin: {}", line);
-                        } else {
-                            getLogger().info("Skipping discovered plugin {} which was previously discovered or registered", line);
-                        }
+            for (String name : Plugin.Engine.Default.scan(classLoader)) {
+                if (undiscoverable.add(name)) {
+                    try {
+                        @SuppressWarnings("unchecked")
+                        Class<? extends Plugin> plugin = (Class<? extends Plugin>) Class.forName(name);
+                        Transformation transformation = new Transformation();
+                        transformation.setPlugin(plugin);
+                        transformations.add(transformation);
+                    } catch (ClassNotFoundException exception) {
+                        throw new IllegalStateException("Discovered plugin is not available: " + name, exception);
                     }
-                } finally {
-                    reader.close();
+                    getLogger().debug("Registered discovered plugin: {}", name);
+                } else {
+                    getLogger().info("Skipping discovered plugin {} which was previously discovered or registered", name);
                 }
             }
         }

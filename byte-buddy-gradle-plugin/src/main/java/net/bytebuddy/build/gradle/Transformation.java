@@ -18,6 +18,7 @@ package net.bytebuddy.build.gradle;
 import groovy.lang.Closure;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import net.bytebuddy.utility.nullability.UnknownNull;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -36,6 +37,7 @@ public class Transformation {
     /**
      * The current project to use.
      */
+    @UnknownNull
     private final transient Project project;
 
     /**
@@ -54,6 +56,15 @@ public class Transformation {
      */
     @MaybeNull
     private String pluginName;
+
+    /**
+     * Creates a new transformation without configuring a project. This constructor is for
+     * internal use only as closures cannot be resolved.
+     */
+    public Transformation() {
+        project = null;
+        arguments = new ArrayList<PluginArgument>();
+    }
 
     /**
      * Creates a new transformation.

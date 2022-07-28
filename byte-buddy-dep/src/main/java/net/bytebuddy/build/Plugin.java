@@ -37,6 +37,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.jar.JarEntry;
@@ -58,7 +59,7 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
  * {@link Plugin.Engine.Dispatcher}.
  * </p>
  * <p>
- * For discoverability, plugin class names can be stored in a file named <i>/META-INF/net.bytebuddy/build.plugins</i> with the fully
+ * For discoverability, plugin class names can be stored in a file named <i>META-INF/net.bytebuddy/build.plugins</i> with the fully
  * qualified class name of the plugin per line.
  * </p>
  */
@@ -756,6 +757,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
          * The package info class file.
          */
         String PACKAGE_INFO = "package-info" + CLASS_FILE_EXTENSION;
+
+        /**
+         * The name of the file that contains declares Byte Buddy plugins for discovery.
+         */
+        String PLUGIN_FILE = "META-INF/net.bytebuddy/build.plugins";
 
         /**
          * Defines a new Byte Buddy instance for usage for type creation.
@@ -4288,6 +4294,30 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
              */
             public static Engine of(EntryPoint entryPoint, ClassFileVersion classFileVersion, MethodNameTransformer methodNameTransformer) {
                 return new Default(entryPoint.byteBuddy(classFileVersion), new TypeStrategy.ForEntryPoint(entryPoint, methodNameTransformer));
+            }
+
+            /**
+             * Scans a class loader for plugins declared in a <i>META-INF/net.bytebuddy/build.plugins</i> file.
+             *
+             * @param classLoader The class loader to scan.
+             * @return A set containing all plugins that were found.
+             * @throws IOException If an I/O exception occurred.
+             */
+            public static Set<String> scan(ClassLoader classLoader) throws IOException {
+                Set<String> plugins = new HashSet<String>();
+                Enumeration<URL> enumeration = classLoader.getResources(PLUGIN_FILE);
+                while (enumeration.hasMoreElements()) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(enumeration.nextElement().openStream(), "UTF-8"));
+                    try {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            plugins.add(line);
+                        }
+                    } finally {
+                        reader.close();
+                    }
+                }
+                return plugins;
             }
 
             /**

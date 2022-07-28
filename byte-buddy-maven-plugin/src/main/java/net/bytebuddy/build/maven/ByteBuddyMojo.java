@@ -259,7 +259,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         }
         if (discovery.isDiscover(transformers)) {
             try {
-                Enumeration<URL> plugins = ByteBuddyMojo.class.getClassLoader().getResources("META-INF/net.bytebuddy/build.plugins");
+                Enumeration<URL> plugins = ByteBuddyMojo.class.getClassLoader().getResources(Plugin.Engine.Default.PLUGIN_FILE);
                 while (plugins.hasMoreElements()) {
                     discover(plugins.nextElement().openStream(), undiscoverable, transformers, null);
                 }
@@ -270,7 +270,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                         if (artifact.isFile()) {
                             JarFile file = new JarFile(artifact);
                             try {
-                                JarEntry entry = file.getJarEntry("META-INF/net.bytebuddy/build.plugins");
+                                JarEntry entry = file.getJarEntry(Plugin.Engine.Default.PLUGIN_FILE);
                                 if (entry != null) {
                                     discover(file.getInputStream(entry), undiscoverable, transformers, elements);
                                 }
@@ -278,7 +278,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                                 file.close();
                             }
                         } else {
-                            File file = new File(artifact, "META-INF/net.bytebuddy/build.plugins");
+                            File file = new File(artifact, Plugin.Engine.Default.PLUGIN_FILE);
                             if (file.exists()) {
                                 discover(new FileInputStream(file), undiscoverable, transformers, elements);
                             }
