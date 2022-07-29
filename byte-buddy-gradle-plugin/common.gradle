@@ -3,7 +3,6 @@ import java.util.regex.Pattern
 apply from: "${rootDir}/versioning.gradle"
 
 ext.outerPom = new XmlSlurper().parse(file('../pom.xml'))
-ext.release = Boolean.getBoolean('net.bytebuddy.gradle.release')
 
 compileJava {
     options.warnings = true

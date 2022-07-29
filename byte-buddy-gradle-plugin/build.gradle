@@ -19,18 +19,6 @@ version = pom.parent.version.text().toString()
 dependencies {
     implementation gradleApi()
     implementation project(':common')
-    if (release) {
-        implementation group: 'net.bytebuddy', name: 'byte-buddy', version: version
-    } else {
-        // At this point, it is not given that any artifact from the Maven build can be found in a repository.
-        def location = new File(project.buildscript.sourceFile.getParentFile(), "../byte-buddy/target/byte-buddy-${version}.jar").canonicalFile
-        logger.info("Relying on ${location.absolutePath} as Byte Buddy dependency")
-        if (location.exists()) {
-            implementation files(location.absolutePath)
-        } else {
-            logger.warn("${location.absolutePath} does not exist, can clean but not build project")
-        }
-    }
     compileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
     compileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
     testImplementation gradleTestKit()
@@ -40,14 +28,6 @@ dependencies {
     }
     testCompileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
     testCompileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
-}
-
-if (release) {
-    configurations.all {
-        resolutionStrategy.dependencySubstitution {
-            substitute module("net.bytebuddy:byte-buddy:${version}") with project(":mavenBridge")
-        }
-    }
 }
 
 validatePlugins {

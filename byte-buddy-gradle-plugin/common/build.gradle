@@ -9,5 +9,4 @@ targetCompatibility = JavaVersion.VERSION_1_7
 
 dependencies {
     api gradleApi()
-    implementation "net.bytebuddy:byte-buddy:$version"
 }
