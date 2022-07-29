@@ -14,12 +14,26 @@ repositories {
     mavenCentral()
 }
 
+configurations {
+    fatJar {
+        canBeConsumed(false)
+        canBeResolved(false)
+    }
+    fatJarClasspath {
+        canBeConsumed(false)
+        canBeResolved(true)
+        setTransitive(false)
+        extendsFrom(fatJar)
+    }
+    compileClasspath.extendsFrom(fatJarClasspath)
+}
+
 version = pom.parent.version.text().toString()
 
 dependencies {
     implementation gradleApi()
-    implementation project(':common')
-    implementation project(':android-plugin')
+    fatJar project(':common')
+    fatJar project(':android-plugin')
     compileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
     compileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
     testImplementation gradleTestKit()
@@ -38,6 +52,13 @@ validatePlugins {
 tasks.withType(AbstractArchiveTask).configureEach {
     preserveFileTimestamps = false
     reproducibleFileOrder = true
+}
+
+tasks.named("jar") {
+    dependsOn configurations.fatJarClasspath
+    from {
+        configurations.fatJarClasspath.collect { zipTree(it) }
+    }
 }
 
 pluginBundle {
