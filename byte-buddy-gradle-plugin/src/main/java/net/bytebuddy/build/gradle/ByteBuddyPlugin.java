@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.build.gradle;
 
+import net.bytebuddy.build.gradle.android.ByteBuddyAndroidPlugin;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
@@ -58,8 +59,14 @@ public class ByteBuddyPlugin implements Plugin<Project> {
      * {@inheritDoc}
      */
     public void apply(final Project project) {
-        project.getLogger().debug("Applying Byte Buddy Gradle plugin (legacy mode: {})", DISPATCHER instanceof Dispatcher.ForLegacyGradle);
-        project.getPlugins().withType(JavaPlugin.class, new JavaPluginConfigurationAction(project));
+        Object androidExtension = project.getExtensions().findByName("android");
+        if (androidExtension != null) {
+            project.getLogger().debug("Applying Byte Buddy Android plugin");
+            project.getPlugins().apply(ByteBuddyAndroidPlugin.class);
+        } else {
+            project.getLogger().debug("Applying Byte Buddy Gradle plugin (legacy mode: {})", DISPATCHER instanceof Dispatcher.ForLegacyGradle);
+            project.getPlugins().withType(JavaPlugin.class, new JavaPluginConfigurationAction(project));
+        }
     }
 
     /**

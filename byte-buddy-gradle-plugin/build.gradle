@@ -19,6 +19,7 @@ version = pom.parent.version.text().toString()
 dependencies {
     implementation gradleApi()
     implementation project(':common')
+    implementation project(':android-plugin')
     compileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
     compileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
     testImplementation gradleTestKit()

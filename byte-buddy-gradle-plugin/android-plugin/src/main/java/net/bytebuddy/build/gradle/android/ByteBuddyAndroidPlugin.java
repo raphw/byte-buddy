@@ -27,7 +27,7 @@ import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.internal.artifacts.ArtifactAttributes;
 
-class ByteBuddyAndroidPlugin implements Plugin<Project> {
+public class ByteBuddyAndroidPlugin implements Plugin<Project> {
 
     private static final Attribute<String> ARTIFACT_TYPE_ATTR = getArtifactTypeAttr();
 

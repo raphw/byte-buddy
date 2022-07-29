@@ -4,6 +4,9 @@ plugins {
 
 apply from: "$rootDir/versioning.gradle"
 
+targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_1_8
+
 repositories {
     mavenCentral()
     google()
