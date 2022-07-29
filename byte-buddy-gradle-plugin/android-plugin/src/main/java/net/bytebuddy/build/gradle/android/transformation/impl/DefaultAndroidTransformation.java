@@ -20,7 +20,6 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.build.gradle.android.transformation.AndroidTransformation;
 import net.bytebuddy.build.gradle.android.transformation.impl.source.CompoundSourceOrigin;
-import net.bytebuddy.build.gradle.common.PluginNamesFinder;
 import net.bytebuddy.build.gradle.common.TransformationLogger;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
@@ -79,10 +78,10 @@ public class DefaultAndroidTransformation implements AndroidTransformation {
         URLClassLoader pluginLoader = new URLClassLoader(toUrlArray(input.bytebuddyDiscoveryClasspath), androidLoader);
         ArrayList<Plugin.Factory> factories = new ArrayList<>();
 
-        new PluginNamesFinder().find(pluginLoader, className -> {
+        for (String className : Plugin.Engine.Default.scan(pluginLoader)) {
             factories.add(createFactoryFromClassName(className, pluginLoader));
             logger.info("Resolved plugin: {}", className);
-        });
+        }
 
         return factories;
     }
