@@ -891,6 +891,9 @@
                                 <link>https://javadoc.io/doc/org.ow2.asm/asm/${version.asm}</link>
                                 <link>https://javadoc.io/doc/net.java.dev.jna/jna/${version.jna}</link>
                             </links>
+                            <excludePackageNames>
+                                net.bytebuddy.benchmark.generated,net.bytebuddy.benchmark.jmh_generated
+                            </excludePackageNames>
                         </configuration>
                     </plugin>
                 </plugins>
