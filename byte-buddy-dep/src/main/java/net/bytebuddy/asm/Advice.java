@@ -11880,7 +11880,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * </p>
      * <p>
      * <b>Important</b>: This post processor is not registered by default but requires explicit registration via
-     * {@link WithCustomMapping#with(PostProcessor.Factory)}.
+     * {@link Advice.WithCustomMapping#with(Advice.PostProcessor.Factory)}.
      * </p>
      * <p>
      * <b>Important</b>: Assignment exceptions will not be handled by a suppression handler but will be propagated.

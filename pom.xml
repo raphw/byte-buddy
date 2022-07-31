@@ -68,6 +68,10 @@
         <version.jna>5.12.1</version.jna>
         <version.junit>4.13.2</version.junit>
         <version.mockito>2.28.2</version.mockito>
+        <version.maven>3.2.5</version.maven>
+        <version.maven.annotation>3.5.2</version.maven.annotation>
+        <version.maven.aether>1.1.0</version.maven.aether>
+        <version.maven.plexus-build-api>0.0.7</version.maven.plexus-build-api>
         <version.plugin.clean>3.2.0</version.plugin.clean>
         <version.plugin.bundle>5.1.7</version.plugin.bundle>
         <version.plugin.compiler>3.10.1</version.plugin.compiler>
@@ -909,6 +913,7 @@
                         </executions>
                         <configuration>
                             <source>${sourcecode.main.version}</source>
+                            <failOnWarnings>true</failOnWarnings>
                             <detectJavaApiLink>true</detectJavaApiLink>
                             <!-- Use previously downloaded 'package-list' file as substitute for published 'element-list' file. -->
                             <offlineLinks>
@@ -919,6 +924,10 @@
                             </offlineLinks>
                             <links>
                                 <link>https://javadoc.io/doc/net.java.dev.jna/jna/${version.jna}</link>
+                                <link>https://javadoc.io/doc/org.apache.maven/maven-core/${version.maven}</link>
+                                <link>https://javadoc.io/doc/org.apache.maven.plugin-tools/maven-plugin-annotations/${version.maven.annotation}</link>
+                                <link>https://javadoc.io/doc/org.eclipse.aether/aether-api/${version.maven.aether}</link>
+                                <link>https://javadoc.io/doc/org.sonatype.plexus/plexus-build-api/${version.maven.plexus-build-api}</link>
                             </links>
                             <excludePackageNames>
                                 net.bytebuddy.benchmark.generated,net.bytebuddy.benchmark.jmh_generated
