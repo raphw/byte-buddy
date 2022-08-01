@@ -73,6 +73,23 @@
                 </includes>
             </resource>
         </resources>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${version.plugin.javadoc}</version>
+                    <configuration>
+                        <offlineLinks>
+                            <link>
+                                <url>https://javadoc.io/doc/net.bytebuddy/byte-buddy/${project.version}</url>
+                                <location>${project.basedir}/../byte-buddy/target/apidocs</location>
+                            </link>
+                        </offlineLinks>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
     <profiles>

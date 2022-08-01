@@ -144,15 +144,15 @@
                         <goals>
                             <goal>manifest</goal>
                         </goals>
+                        <configuration>
+                            <instructions>
+                                <Multi-Release>true</Multi-Release>
+                                <!-- Cannot use wildcards because of use of the shade plugin which imports from 'byte-buddy-dep'. -->
+                                <Export-Package>${packages.list.external}</Export-Package>
+                            </instructions>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <instructions>
-                        <Multi-Release>true</Multi-Release>
-                        <!-- Cannot use wildcards because of use of the shade plugin which imports from 'byte-buddy-dep'. -->
-                        <Export-Package>${packages.list.external}</Export-Package>
-                    </instructions>
-                </configuration>
             </plugin>
             <!-- Inject a module-info.class file into the shaded jar. -->
             <plugin>
@@ -168,30 +168,45 @@
                 </dependencies>
                 <executions>
                     <execution>
-                        <phase>compile</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>make-module</goal>
                         </goals>
+                        <configuration>
+                            <skip>${modulemaker.skip}</skip>
+                            <name>${project.groupId}</name>
+                            <version>${project.version}</version>
+                            <multirelease>true</multirelease>
+                            <packages>${packages.list.external},${packages.list.internal}</packages>
+                            <exports>${packages.list.external}</exports>
+                            <static-requires>
+                                java.instrument,
+                                java.management,
+                                jdk.unsupported,
+                                net.bytebuddy.agent,
+                                com.sun.jna,
+                                com.sun.jna.platform
+                            </static-requires>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <skip>${modulemaker.skip}</skip>
-                    <name>${project.groupId}</name>
-                    <version>${project.version}</version>
-                    <multirelease>true</multirelease>
-                    <packages>${packages.list.external},${packages.list.internal}</packages>
-                    <exports>${packages.list.external}</exports>
-                    <static-requires>
-                        java.instrument,
-                        java.management,
-                        jdk.unsupported,
-                        net.bytebuddy.agent,
-                        com.sun.jna,
-                        com.sun.jna.platform
-                    </static-requires>
-                </configuration>
             </plugin>
         </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${version.plugin.javadoc}</version>
+                    <configuration>
+                        <includeDependencySources>true</includeDependencySources>
+                        <dependencySourceIncludes>
+                            <dependencySourceInclude>${project.groupId}:byte-buddy-dep</dependencySourceInclude>
+                        </dependencySourceIncludes>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
     <profiles>
@@ -209,18 +224,6 @@
                         <version>${version.plugin.source}</version>
                         <configuration>
                             <skipSource>true</skipSource>
-                        </configuration>
-                    </plugin>
-                    <!-- The shadowed source files of this module need to be included explicitly to create a javadoc artifact.-->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>${version.plugin.javadoc}</version>
-                        <configuration combine.children="append">
-                            <includeDependencySources>true</includeDependencySources>
-                            <dependencySourceIncludes>
-                                <dependencySourceInclude>${project.groupId}:byte-buddy-dep</dependencySourceInclude>
-                            </dependencySourceIncludes>
                         </configuration>
                     </plugin>
                 </plugins>

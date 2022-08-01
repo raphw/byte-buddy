@@ -16,6 +16,10 @@
     <description>A plugin for post-processing class files via Byte Buddy in a Maven build.</description>
 
     <properties>
+        <version.maven>3.2.5</version.maven>
+        <version.maven.annotation>3.5.2</version.maven.annotation>
+        <version.maven.aether>1.1.0</version.maven.aether>
+        <version.maven.plexus-build-api>0.0.7</version.maven.plexus-build-api>
         <version.maven.test>3.3.0</version.maven.test>
         <version.slf4j>1.7.36</version.slf4j>
         <version.maven.plexus-archiver>3.7.0</version.maven.plexus-archiver>
@@ -144,6 +148,29 @@
                 </includes>
             </resource>
         </resources>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${version.plugin.javadoc}</version>
+                    <configuration>
+                        <offlineLinks>
+                            <link>
+                                <url>https://javadoc.io/doc/net.bytebuddy/byte-buddy/${project.version}</url>
+                                <location>${project.basedir}/../byte-buddy/target/apidocs</location>
+                            </link>
+                        </offlineLinks>
+                        <links>
+                            <link>https://javadoc.io/doc/org.apache.maven/maven-core/${version.maven}</link>
+                            <link>https://javadoc.io/doc/org.apache.maven.plugin-tools/maven-plugin-annotations/${version.maven.annotation}</link>
+                            <link>https://javadoc.io/doc/org.eclipse.aether/aether-api/${version.maven.aether}</link>
+                            <link>https://javadoc.io/doc/org.sonatype.plexus/plexus-build-api/${version.maven.plexus-build-api}</link>
+                        </links>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
     <profiles>

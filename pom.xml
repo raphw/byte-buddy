@@ -68,10 +68,6 @@
         <version.jna>5.12.1</version.jna>
         <version.junit>4.13.2</version.junit>
         <version.mockito>2.28.2</version.mockito>
-        <version.maven>3.2.5</version.maven>
-        <version.maven.annotation>3.5.2</version.maven.annotation>
-        <version.maven.aether>1.1.0</version.maven.aether>
-        <version.maven.plexus-build-api>0.0.7</version.maven.plexus-build-api>
         <version.plugin.clean>3.2.0</version.plugin.clean>
         <version.plugin.bundle>5.1.7</version.plugin.bundle>
         <version.plugin.compiler>3.10.1</version.plugin.compiler>
@@ -208,9 +204,6 @@
                         <include>net/bytebuddy/**</include>
                     </includes>
                     <excludes>
-                        <!-- Do not include JMH generated classes (both modern and legacy JMH).-->
-                        <exclude>net/bytebuddy/benchmark/generated/*</exclude>
-                        <exclude>net/bytebuddy/benchmark/jmh_generated/*</exclude>
                         <!-- Avoid adding synthetic members to test classes as test assert class members. -->
                         <exclude>*Test*</exclude>
                         <exclude>*test*</exclude>
@@ -222,11 +215,6 @@
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>${version.plugin.coveralls}</version>
-                <configuration>
-                    <sourceDirectories>
-                        <sourceDirectory>${project.basedir}/byte-buddy-dep/src/main/java-6</sourceDirectory>
-                    </sourceDirectories>
-                </configuration>
             </plugin>
             <!-- Also allow for manual spotbugs execution. Note that the generated warnings do not always apply for Byte Buddy's use case. -->
             <plugin>
@@ -272,7 +260,7 @@
                     </properties>
                     <includes>
                         <include>**/main/java/**/*.java</include>
-                        <include>**/precompiled/java/**/*.java</include>
+                        <include>**/main/java-*/**/*.java</include>
                         <include>**/main/c/**/*.c</include>
                     </includes>
                     <strictCheck>true</strictCheck>
@@ -377,6 +365,11 @@
                         <showDeprecation>true</showDeprecation>
                         <compilerArgument>-Xlint:all,-options,-processing</compilerArgument>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${version.plugin.javadoc}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -876,29 +869,6 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- Download ASM 'element-list' file which is published by newer javadoc versions, store as 'package-list' file. -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>${version.plugin.antrun}</version>
-                        <executions>
-                            <execution>
-                                <id>download-javadoc-lists</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <target>
-                                        <mkdir dir="${project.basedir}/target/javadoc-lists/asm"/>
-                                        <get src="https://javadoc.io/doc/org.ow2.asm/asm/${version.asm}/element-list"
-                                             dest="${project.basedir}/target/javadoc-lists/asm/package-list"
-                                             skipexisting="true"/>
-                                    </target>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
                     <!-- Create javadoc artifact. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -909,30 +879,13 @@
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
+                                <configuration>
+                                    <source>${sourcecode.main.version}</source>
+                                    <failOnWarnings>true</failOnWarnings>
+                                    <detectJavaApiLink>true</detectJavaApiLink>
+                                </configuration>
                             </execution>
                         </executions>
-                        <configuration>
-                            <source>${sourcecode.main.version}</source>
-                            <failOnWarnings>true</failOnWarnings>
-                            <detectJavaApiLink>true</detectJavaApiLink>
-                            <!-- Use previously downloaded 'package-list' file as substitute for published 'element-list' file. -->
-                            <offlineLinks>
-                                <link>
-                                    <url>https://javadoc.io/doc/org.ow2.asm/asm/${version.asm}</url>
-                                    <location>${project.basedir}/target/javadoc-lists/asm</location>
-                                </link>
-                            </offlineLinks>
-                            <links>
-                                <link>https://javadoc.io/doc/net.java.dev.jna/jna/${version.jna}</link>
-                                <link>https://javadoc.io/doc/org.apache.maven/maven-core/${version.maven}</link>
-                                <link>https://javadoc.io/doc/org.apache.maven.plugin-tools/maven-plugin-annotations/${version.maven.annotation}</link>
-                                <link>https://javadoc.io/doc/org.eclipse.aether/aether-api/${version.maven.aether}</link>
-                                <link>https://javadoc.io/doc/org.sonatype.plexus/plexus-build-api/${version.maven.plexus-build-api}</link>
-                            </links>
-                            <excludePackageNames>
-                                net.bytebuddy.benchmark.generated,net.bytebuddy.benchmark.jmh_generated
-                            </excludePackageNames>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -1126,6 +1079,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>byte-buddy-agent</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>byte-buddy-benchmark</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

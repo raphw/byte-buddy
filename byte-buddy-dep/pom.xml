@@ -187,6 +187,37 @@
                 </executions>
             </plugin>
         </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${version.plugin.javadoc}</version>
+                    <configuration>
+                        <offlineLinks>
+                            <!-- Use previously downloaded 'package-list' file as substitute for published 'element-list' file. -->
+                            <link>
+                                <url>https://javadoc.io/doc/org.ow2.asm/asm/${version.asm}</url>
+                                <location>${project.basedir}/target/javadoc-lists/asm-${version.asm}</location>
+                            </link>
+                        </offlineLinks>
+                        <links>
+                            <link>https://javadoc.io/doc/net.java.dev.jna/jna/${version.jna}</link>
+                        </links>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.eluder.coveralls</groupId>
+                    <artifactId>coveralls-maven-plugin</artifactId>
+                    <version>${version.plugin.coveralls}</version>
+                    <configuration>
+                        <sourceDirectories>
+                            <sourceDirectory>${project.basedir}/byte-buddy-dep/src/main/java-6</sourceDirectory>
+                        </sourceDirectories>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
     <profiles>
@@ -229,6 +260,39 @@
                                 <exclude>net.bytebuddy.description.type.TypeDescriptionArrayProjectionTest</exclude>
                             </excludes>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>extras</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- Download 'element-list' file which is published by newer javadoc versions, store as 'package-list' file. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>${version.plugin.antrun}</version>
+                        <executions>
+                            <execution>
+                                <id>download-javadoc-lists</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <mkdir dir="${project.basedir}/target/javadoc-lists/asm-${version.asm}"/>
+                                        <get src="https://javadoc.io/doc/org.ow2.asm/asm/${version.asm}/element-list"
+                                             dest="${project.basedir}/target/javadoc-lists/asm-${version.asm}/package-list"
+                                             skipexisting="true"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
