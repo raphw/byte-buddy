@@ -9,7 +9,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnit;
+import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -108,6 +110,13 @@ public class DynamicTypeDefaultTest {
         when(auxiliaryTypeDescription.getInternalName()).thenReturn(QUXBAZ);
         when(auxiliaryType.getTypeDescription()).thenReturn(auxiliaryTypeDescription);
         when(auxiliaryType.getBytes()).thenReturn(BINARY_SECOND);
+        when(auxiliaryType.locate(anyString())).thenAnswer(new Answer<ClassFileLocator.Resolution>() {
+
+            public ClassFileLocator.Resolution answer(InvocationOnMock invocation) {
+                return new ClassFileLocator.Resolution.Illegal(invocation.getArgument(0, String.class));
+            }
+        });
+        when(auxiliaryType.locate(QUXBAZ.replace('/', '.'))).thenReturn(new ClassFileLocator.Resolution.Explicit(BINARY_SECOND));
         when(auxiliaryType.getLoadedTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
         when(auxiliaryType.getAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
         when(auxiliaryType.getAllTypes()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, BINARY_SECOND));
