@@ -250,7 +250,10 @@
                         <configuration>
                             <excludes>
                                 <exclude>net.bytebuddy.description.type.TypeDescriptionArrayProjectionTest</exclude>
+                                <exclude>net.bytebuddy.description.annotation.AnnotationDescriptionForLoadedAnnotationTest</exclude>
                                 <exclude>net.bytebuddy.description.annotation.AnnotationDescriptionForLoadedAnnotationDifferentClassLoaderTest</exclude>
+                                <exclude>net.bytebuddy.description.annotation.AnnotationDescriptionLatentTest</exclude>
+                                <exclude>net.bytebuddy.pool.TypePoolDefaultAnnotationDescriptionTest</exclude>
                             </excludes>
                         </configuration>
                     </plugin>

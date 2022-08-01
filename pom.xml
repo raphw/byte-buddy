@@ -206,8 +206,8 @@
                     </includes>
                     <excludes>
                         <!-- Do not include JMH generated classes (both modern and legacy JMH).-->
-                        <exclude>net/bytebuddy/*/generated/*</exclude>
-                        <exclude>net/bytebuddy/*/jmh_generated/*</exclude>
+                        <exclude>*/generated/*</exclude>
+                        <exclude>*/jmh_generated/*</exclude>
                         <!-- Avoid adding synthetic members to test classes as test assert class members. -->
                         <exclude>*Test*</exclude>
                         <exclude>*test*</exclude>
