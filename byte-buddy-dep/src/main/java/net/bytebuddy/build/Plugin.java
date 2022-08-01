@@ -98,6 +98,20 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
     }
 
     /**
+     * Allows for the generation of types before a plugin is applied.
+     */
+    interface WithInitialization extends Plugin {
+
+        /**
+         * Returns a mapping of classes that should be created before discovering any types.
+         *
+         * @param classFileLocator A class file locator that can locate other types in the scope of the project.
+         * @return A mapping of types to their binary representation.
+         */
+        Map<TypeDescription, byte[]> initialize(ClassFileLocator classFileLocator);
+    }
+
+    /**
      * A factory for providing a build plugin.
      */
     interface Factory {
@@ -110,7 +124,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         Plugin make();
 
         /**
-         * A simple factory that returns a preconstructed plugin instance..
+         * A simple factory that returns a preconstructed plugin instance.
          */
         @HashCodeAndEqualsPlugin.Enhance
         class Simple implements Factory {
@@ -4476,6 +4490,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 List<String> unresolved = new ArrayList<String>();
                 Throwable rethrown = null;
                 List<Plugin> plugins = new ArrayList<Plugin>(factories.size());
+                List<WithInitialization> initializers = new ArrayList<WithInitialization>();
                 List<WithPreprocessor> preprocessors = new ArrayList<WithPreprocessor>();
                 try {
                     for (Plugin.Factory factory : factories) {
@@ -4483,6 +4498,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         plugins.add(plugin);
                         if (plugin instanceof WithPreprocessor) {
                             preprocessors.add((WithPreprocessor) plugin);
+                        }
+                        if (plugin instanceof WithInitialization) {
+                            initializers.add((WithInitialization) plugin);
                         }
                     }
                     Source.Origin origin = source.read();
@@ -4493,6 +4511,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         listener.onManifest(manifest);
                         Target.Sink sink = target.write(manifest);
                         try {
+                            for (WithInitialization initializer : initializers) {
+                                sink.store(initializer.initialize(classFileLocator));
+                            }
                             Dispatcher dispatcher = dispatcherFactory.make(sink, transformed, failed, unresolved);
                             try {
                                 for (Source.Element element : origin) {

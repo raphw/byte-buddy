@@ -59,7 +59,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * Note that the {@link TypeDescription}s will represent their
  * unloaded forms and therefore differ from the loaded types, especially with regards to annotations.
  */
-public interface DynamicType {
+public interface DynamicType extends ClassFileLocator {
 
     /**
      * <p>
@@ -5920,6 +5920,26 @@ public interface DynamicType {
             this.binaryRepresentation = binaryRepresentation;
             this.loadedTypeInitializer = loadedTypeInitializer;
             this.auxiliaryTypes = auxiliaryTypes;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Resolution locate(String name) throws IOException {
+            if (typeDescription.getName().equals(name)) {
+                return new Resolution.Explicit(binaryRepresentation);
+            }
+            for (DynamicType auxiliaryType : auxiliaryTypes) {
+                Resolution resolution = auxiliaryType.locate(name);
+                if (resolution.isResolved()) {
+                    return resolution;
+                }
+            }
+            return new Resolution.Illegal(name);
+        }
+
+        public void close() {
+            /* do nothing */
         }
 
         /**

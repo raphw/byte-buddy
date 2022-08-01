@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.jar.*;
 
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
@@ -72,6 +73,35 @@ public class PluginEngineDefaultTest {
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, target.toTypeMap());
         Class<?> type = classLoader.loadClass(Sample.class.getName());
         assertThat(type.getDeclaredField(FOO).getType(), is((Object) Void.class));
+        assertThat(summary.getTransformed(), hasItems(TypeDescription.ForLoadedType.of(Sample.class)));
+        assertThat(summary.getFailed().size(), is(0));
+        assertThat(summary.getUnresolved().size(), is(0));
+        verify(listener).onManifest(Plugin.Engine.Source.Origin.NO_MANIFEST);
+        verify(listener).onDiscovery(Sample.class.getName());
+        verify(listener).onTransformation(TypeDescription.ForLoadedType.of(Sample.class), plugin);
+        verify(listener).onTransformation(TypeDescription.ForLoadedType.of(Sample.class), Collections.singletonList(plugin));
+        verify(listener).onComplete(TypeDescription.ForLoadedType.of(Sample.class));
+        verifyNoMoreInteractions(listener);
+    }
+
+    @Test
+    public void testSimpleTransformationWithInitialization() throws Exception {
+        Plugin.Engine.Listener listener = mock(Plugin.Engine.Listener.class);
+        Plugin plugin = eager
+                ? new InitializingPlugin(new SimplePlugin())
+                : new PreprocessingPlugin(new InitializingPlugin(new SimplePlugin()));
+        Plugin.Engine.Source source = Plugin.Engine.Source.InMemory.ofTypes(Sample.class);
+        Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
+        Plugin.Engine.Summary summary = new Plugin.Engine.Default()
+                .with(listener)
+                .with(ClassFileLocator.ForClassLoader.of(SimplePlugin.class.getClassLoader()))
+                .with(dispatcherFactory)
+                .apply(source, target, new Plugin.Factory.Simple(plugin));
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, target.toTypeMap());
+        Class<?> type = classLoader.loadClass(Sample.class.getName());
+        assertThat(type.getDeclaredField(FOO).getType(), is((Object) Void.class));
+        Class<?> otherType = classLoader.loadClass(OtherSample.class.getName());
+        assertThat(otherType.getDeclaredFields().length, is(0));
         assertThat(summary.getTransformed(), hasItems(TypeDescription.ForLoadedType.of(Sample.class)));
         assertThat(summary.getFailed().size(), is(0));
         assertThat(summary.getUnresolved().size(), is(0));
@@ -378,6 +408,10 @@ public class PluginEngineDefaultTest {
         /* empty */
     }
 
+    private static class OtherSample {
+        /* empty */
+    }
+
     private static class SimplePlugin implements Plugin {
 
         public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
@@ -452,7 +486,7 @@ public class PluginEngineDefaultTest {
         }
     }
 
-    private static class PreprocessingPlugin implements Plugin.WithPreprocessor {
+    private static class PreprocessingPlugin implements Plugin.WithPreprocessor, Plugin.WithInitialization {
 
         private final Plugin plugin;
 
@@ -462,6 +496,39 @@ public class PluginEngineDefaultTest {
 
         public void onPreprocess(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
             /* empty */
+        }
+
+        public Map<TypeDescription, byte[]> initialize(ClassFileLocator classFileLocator) {
+            if (plugin instanceof WithInitialization) {
+                return ((WithInitialization) plugin).initialize(classFileLocator);
+            } else {
+                return Collections.emptyMap();
+            }
+        }
+
+        public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+            return plugin.apply(builder, typeDescription, classFileLocator);
+        }
+
+        public boolean matches(TypeDescription target) {
+            return plugin.matches(target);
+        }
+
+        public void close() throws IOException {
+            plugin.close();
+        }
+    }
+
+    private static class InitializingPlugin implements Plugin.WithInitialization {
+
+        private final Plugin plugin;
+
+        private InitializingPlugin(Plugin plugin) {
+            this.plugin = plugin;
+        }
+
+        public Map<TypeDescription, byte[]> initialize(ClassFileLocator classFileLocator) {
+            return Collections.singletonMap(TypeDescription.ForLoadedType.of(OtherSample.class), ClassFileLocator.ForClassLoader.read(OtherSample.class));
         }
 
         public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {

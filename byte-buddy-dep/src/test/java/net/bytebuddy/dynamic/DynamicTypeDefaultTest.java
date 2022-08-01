@@ -324,4 +324,11 @@ public class DynamicTypeDefaultTest {
         assertThat(types.next(), is(auxiliaryTypeDescription));
         assertThat(types.hasNext(), is(false));
     }
+
+    @Test
+    public void testClassFileLocator() throws Exception {
+        assertThat(dynamicType.locate(FOOBAR.replace('/', '.')).isResolved(), is(true));
+        assertThat(dynamicType.locate(QUXBAZ.replace('/', '.')).isResolved(), is(true));
+        assertThat(dynamicType.locate(BARBAZ.replace('/', '.')).isResolved(), is(false));
+    }
 }
