@@ -21,7 +21,7 @@ jobs:
           java-version: 19-ea
           distribution: zulu
           cache: maven
-      - name: Install JDK and build project
+      - name: Build project
         run: ./mvnw verify -Pjava19
         continue-on-error: false
   hotspot-supported:
