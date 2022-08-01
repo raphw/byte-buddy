@@ -76,7 +76,7 @@
         <version.plugin.staging>1.6.13</version.plugin.staging>
         <version.plugin.versions>2.11.0</version.plugin.versions>
         <version.plugin.javadoc>3.4.0</version.plugin.javadoc>
-        <version.plugin.source>3.0.1</version.plugin.source>
+        <version.plugin.source>3.2.1</version.plugin.source>
         <version.plugin.shade>3.3.0</version.plugin.shade>
         <version.plugin.gpg>3.0.1</version.plugin.gpg>
         <version.plugin.jxr>3.2.0</version.plugin.jxr>
@@ -882,7 +882,10 @@
                                 <configuration>
                                     <source>${sourcecode.main.version}</source>
                                     <failOnWarnings>true</failOnWarnings>
-                                    <detectJavaApiLink>true</detectJavaApiLink>
+                                    <detectJavaApiLink>false</detectJavaApiLink>
+                                    <links>
+                                        <link>https://docs.oracle.com/javase/1.5.0/docs/api</link>
+                                    </links>
                                 </configuration>
                             </execution>
                         </executions>
