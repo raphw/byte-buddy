@@ -33,3 +33,6 @@ pom.xml.versionsBackup
 
 # Android
 */gen/*
+
+# JVM
+.attach*
