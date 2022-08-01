@@ -156,6 +156,7 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${javadoc.download.skip}</skip>
                                     <target>
                                         <mkdir dir="${project.basedir}/target/javadoc-lists/jmh-core-${version.jmh}"/>
                                         <get src="https://javadoc.io/doc/org.openjdk.jmh/jmh-core/${version.jmh}/element-list"

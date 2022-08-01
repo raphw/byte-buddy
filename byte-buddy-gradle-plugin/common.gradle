@@ -59,17 +59,22 @@ if (Boolean.getBoolean('net.bytebuddy.misc.extras')) {
             classifier = 'javadoc'
             from javadoc.destinationDir
         }
+        javadoc {
+            options {
+                linksOffline "https://javadoc.io/doc/net.bytebuddy/byte-buddy/${pom.parent.version.text().toString()}", '../byte-buddy/target/apidocs'
+            }
+        }
     } else {
         task copyJavadoc(type: Jar, dependsOn: javadoc) {
             archiveClassifier.set('javadoc')
             from javadoc.destinationDir
         }
-    }
-    javadoc {
-        options {
-            links 'https://docs.oracle.com/javase/1.5.0/docs/api'
-            links 'https://docs.gradle.org/7.5/javadoc'
-            linksOffline "https://javadoc.io/doc/net.bytebuddy/byte-buddy/${pom.parent.version.text().toString()}", '../byte-buddy/target/apidocs'
+        javadoc {
+            options {
+                links 'https://docs.oracle.com/javase/1.5.0/docs/api'
+                links 'https://docs.gradle.org/7.5/javadoc'
+                linksOffline "https://javadoc.io/doc/net.bytebuddy/byte-buddy/${pom.parent.version.text().toString()}", '../byte-buddy/target/apidocs'
+            }
         }
     }
 } else {
@@ -79,9 +84,11 @@ if (Boolean.getBoolean('net.bytebuddy.misc.extras')) {
     task copyJavadoc {
         logger.debug('javadoc jar is only generated if net.bytebuddy.misc.extras is set to true')
     }
-    gradle.taskGraph.whenReady {
-        tasks.getByPath('javadocJar').enabled = false
-        tasks.getByPath('sourcesJar').enabled = false
+    if (!gradle.gradleVersion.startsWith("2.")) { // support legacy version
+        gradle.taskGraph.whenReady {
+            tasks.getByPath('javadocJar').enabled = false
+            tasks.getByPath('sourcesJar').enabled = false
+        }
     }
 }
 

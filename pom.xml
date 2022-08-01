@@ -112,6 +112,7 @@
         <jacoco.skip>false</jacoco.skip>
         <japicmp.skip>true</japicmp.skip>
         <modulemaker.skip>false</modulemaker.skip>
+        <javadoc.download.skip>false</javadoc.download.skip>
         <repository.url>git@github.com:raphw/byte-buddy.git</repository.url>
     </properties>
 
@@ -375,6 +376,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>${version.plugin.javadoc}</version>
+                    <configuration>
+                        <source>${sourcecode.main.version}</source>
+                        <failOnWarnings>true</failOnWarnings>
+                        <detectOfflineLinks>false</detectOfflineLinks>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -462,6 +468,7 @@
                 <version.javassist>3.22.0-GA</version.javassist>
                 <modulemaker.skip>true</modulemaker.skip>
                 <spotbugs.skip>true</spotbugs.skip>
+                <javadoc.download.skip>true</javadoc.download.skip>
             </properties>
             <modules>
                 <module>byte-buddy</module>
@@ -531,6 +538,7 @@
                 <version.cglib>3.2.12</version.cglib>
                 <version.javassist>3.23.2-GA</version.javassist>
                 <spotbugs.skip>true</spotbugs.skip>
+                <javadoc.download.skip>true</javadoc.download.skip>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 9 JVMs. -->
@@ -884,14 +892,6 @@
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
-                                <configuration>
-                                    <source>${sourcecode.main.version}</source>
-                                    <failOnWarnings>true</failOnWarnings>
-                                    <detectJavaApiLink>false</detectJavaApiLink>
-                                    <links>
-                                        <link>https://docs.oracle.com/javase/1.5.0/docs/api</link>
-                                    </links>
-                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

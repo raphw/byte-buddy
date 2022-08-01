@@ -274,6 +274,7 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${javadoc.download.skip}</skip>
                                     <target>
                                         <mkdir dir="${project.basedir}/target/javadoc-lists/asm-${version.asm}"/>
                                         <get src="https://javadoc.io/doc/org.ow2.asm/asm/${version.asm}/element-list"
