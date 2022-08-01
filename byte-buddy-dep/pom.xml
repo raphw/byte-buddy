@@ -219,10 +219,11 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- Zulu sometimes yields a segfault when processing annotation descriptions on some OpenJDK 7. -->
+                    <!-- Avoids occasional segfault. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${version.plugin.surefire}</version>
                         <configuration>
                             <excludes>
                                 <exclude>net.bytebuddy.agent.builder.AgentBuilderDefaultApplicationTest</exclude>
@@ -241,13 +242,15 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- On recent Java 11, this test sometimes crashes the JIT compiler. -->
+                    <!-- Avoids occasional segfault. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${version.plugin.surefire}</version>
                         <configuration>
                             <excludes>
                                 <exclude>net.bytebuddy.description.type.TypeDescriptionArrayProjectionTest</exclude>
+                                <exclude>net.bytebuddy.description.annotation.AnnotationDescriptionForLoadedAnnotationDifferentClassLoaderTest</exclude>
                             </excludes>
                         </configuration>
                     </plugin>

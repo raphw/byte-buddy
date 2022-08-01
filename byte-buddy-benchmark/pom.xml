@@ -119,18 +119,6 @@
                         </excludePackageNames>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <groupId>org.jacoco</groupId>
-                    <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>${version.plugin.jacoco}</version>
-                    <configuration>
-                        <excludes>
-                            <!-- Do not include JMH generated classes (both modern and legacy JMH).-->
-                            <exclude>net/bytebuddy/benchmark/generated/*</exclude>
-                            <exclude>net/bytebuddy/benchmark/jmh_generated/*</exclude>
-                        </excludes>
-                    </configuration>
-                </plugin>
             </plugins>
         </pluginManagement>
     </build>

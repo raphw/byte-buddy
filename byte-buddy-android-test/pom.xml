@@ -129,6 +129,10 @@
                         <goals>
                             <goal>resources</goal>
                         </goals>
+                        <configuration>
+                            <!-- Setting this property suppresses a warning on implicit setting the filter encoding. -->
+                            <encoding>${project.build.sourceEncoding}</encoding>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
