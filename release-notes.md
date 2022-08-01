@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 1. August 2022: version 1.12.13
+
+- Avoid duplicate application of Byte Buddy Maven plugin.
+- Allow for class path discovery of `Plugin`s when using Maven.
+- Fix build cache when using Byte Buddy Gradle plugin.
+- Allow `Plugin`s to define new types prior to transformation.
+
 ### 25. June 2022: version 1.12.12
 
 - Use correct annotation in Byte Buddy Gradle plugin.

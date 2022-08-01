@@ -31,6 +31,10 @@ dependency-reduced-pom.xml
 # Versions plugin
 pom.xml.versionsBackup
 
+# Release plugin
+pom.xml.releaseBackup
+release.properties
+
 # Android
 */gen/*
 
