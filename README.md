@@ -185,10 +185,12 @@ an interceptor similar to the interceptors in the previous examples:
 public class TimingInterceptor {
   @RuntimeType
   public static Object intercept(@Origin Method method, 
-                                 @SuperCall Callable<?> callable) {
+                                 @SuperCall Callable<?> callable)  throws Exception {
     long start = System.currentTimeMillis();
     try {
       return callable.call();
+    } catch (Exception e) {
+      throw e;
     } finally {
       System.out.println(method + " took " + (System.currentTimeMillis() - start));
     }
@@ -208,7 +210,7 @@ public class TimerAgent {
                              Instrumentation instrumentation) {
     new AgentBuilder.Default()
       .type(ElementMatchers.nameEndsWith("Timed"))
-      .transform((builder, type, classLoader, module) -> 
+      .transform((builder, type, classLoader, module, protectionDomain) -> 
           builder.method(ElementMatchers.any())
                  .intercept(MethodDelegation.to(TimingInterceptor.class))
       ).installOn(instrumentation);
