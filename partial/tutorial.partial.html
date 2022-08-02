@@ -830,14 +830,15 @@ class Bar { }
 
 <pre class="prettyprint">
 class MyApplication {
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     TypePool typePool = TypePool.Default.ofSystemLoader();
     Class<?> bar = new ByteBuddy()
       .redefine(typePool.describe("foo.Bar").resolve(), // do not use 'Bar.class'
                 ClassFileLocator.ForClassLoader.ofSystemLoader())
       .defineField("qux", String.class) // we learn more about defining fields later
       .make()
-      .load(ClassLoader.getSystemClassLoader());
+      .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+      .getLoaded();
     assertThat(bar.getDeclaredField("qux"), notNullValue());
   }
 }
