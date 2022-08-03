@@ -145,12 +145,10 @@ if not %WRAPPER_URL%=="" (
     )
 )
 IF NOT %WRAPPER_HASH%=="" (
-    FOR /F "usebackq tokens=*" %%A in ('certUtil -hashfile "%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar" SHA256') do (
-        echo %%A | findstr /C:"hash" 1>nul || (
-            IF NOT %%A==%WRAPPER_HASH% (
-                echo Could not validate hash of gradle-wrapper.jar, was %%A
-                goto error
-            )
+    FOR /F "tokens=*" %%A in ('certUtil -hashfile "%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar" SHA256 ^| findstr /v "hash"') do (
+        IF NOT %%A==%WRAPPER_HASH% (
+            echo Could not validate hash of gradle-wrapper.jar, was %%A
+            goto error
         )
     )
 )
