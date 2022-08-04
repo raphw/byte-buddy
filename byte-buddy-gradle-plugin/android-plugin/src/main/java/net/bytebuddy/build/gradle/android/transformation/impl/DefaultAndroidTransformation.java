@@ -52,6 +52,8 @@ public class DefaultAndroidTransformation implements AndroidTransformation {
         contextClasspath.addAll(input.androidBootClasspath);
         contextClasspath.addAll(input.bytebuddyDiscoveryClasspath);
 
+        cleanDir(outputDir);
+
         try (ClassFileLocator contextClassFileLocator = createContextClassFileLocator(contextClasspath)) {
             makeEngine(input.jvmTargetVersion)
                     .with(contextClassFileLocator)
@@ -62,6 +64,19 @@ public class DefaultAndroidTransformation implements AndroidTransformation {
                     );
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void cleanDir(File dir) {
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return;
+        }
+        for (File item : files) {
+            if (item.isDirectory()) {
+                cleanDir(item);
+            }
+            item.delete();
         }
     }
 
