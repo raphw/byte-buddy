@@ -26,6 +26,7 @@
         <version.commons-io>2.11.0</version.commons-io>
         <version.commons-compress>1.21</version.commons-compress>
         <version.guava>31.1-jre</version.guava>
+        <japicmp.skip>true</japicmp.skip>
     </properties>
 
     <dependencies>

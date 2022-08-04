@@ -24,6 +24,7 @@
 
     <properties>
         <benchmark.mainClass>net.bytebuddy.benchmark.runner.BenchmarkRunner</benchmark.mainClass>
+        <japicmp.skip>true</japicmp.skip>
     </properties>
 
     <dependencies>

@@ -32,6 +32,7 @@
         <gradle.disabled>false</gradle.disabled>
         <gradle.release>false</gradle.release>
         <skipTests>false</skipTests>
+        <japicmp.skip>true</japicmp.skip>
         <!-- Actual values must be set via settings.xml or using command line arguments since they cannot be published. -->
         <gradle.publish.key />
         <gradle.publish.secret />

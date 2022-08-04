@@ -70,6 +70,7 @@
         <packages.list.internal>
             net.bytebuddy.utility.dispatcher
         </packages.list.internal>
+        <japicmp.skip>true</japicmp.skip>
     </properties>
 
     <!--

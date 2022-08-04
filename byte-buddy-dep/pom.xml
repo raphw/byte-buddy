@@ -293,38 +293,6 @@
             </build>
         </profile>
         <profile>
-            <id>japicmp-check</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <jdk>[1.7,)</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <!-- Check for semantic versioning. -->
-                    <plugin>
-                        <groupId>com.github.siom79.japicmp</groupId>
-                        <artifactId>japicmp-maven-plugin</artifactId>
-                        <version>${version.plugin.japicmp}</version>
-                        <configuration>
-                            <skip>${japicmp.skip}</skip>
-                            <parameter>
-                                <oldVersionPattern>\d+\.\d+\.\d+</oldVersionPattern>
-                                <ignoreMissingClasses>true</ignoreMissingClasses>
-                            </parameter>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>cmp</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
             <id>native-compile</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
