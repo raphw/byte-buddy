@@ -38,6 +38,12 @@
       - com.github.ferstl:jitwatch-jarscan-maven-plugin:scan - Finds all methods above HotSpot's inlining threshold
       - clirr:check - Checks for binary changes in the API
       - versions:update-properties - Automated dependency version update.
+
+      At last, two pseudo-profiles are available that allow for handling checksum data for all downloaded artifacts.
+      These profiles are only effective if the Maven wrapper is used, which is configured to install the Maven
+      checksum extension:
+      - checksum-collect: collects checksums for all used artifacts.
+      - checksum-enforce: enforces that all downloaded artifacts represent a known checksum
     -->
 
     <modules>
@@ -466,7 +472,7 @@
                 <version.plugin.surefire>2.22.1</version.plugin.surefire>
                 <version.plugin.javadoc>2.10.4</version.plugin.javadoc>
                 <version.plugin.antrun>1.8</version.plugin.antrun>
-                <version.checkstyle>6.2</version.checkstyle>
+                <version.checkstyle>6.1.1</version.checkstyle>
                 <version.jmh>1.16</version.jmh>
                 <version.cglib>3.2.12</version.cglib>
                 <version.javassist>3.22.0-GA</version.javassist>
@@ -531,7 +537,7 @@
                 <version.plugin.exec>3.0.0</version.plugin.exec>
                 <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
                 <version.plugin.javadoc>3.2.0</version.plugin.javadoc>
-                <version.plugin.animal-sniffer>1.19</version.plugin.animal-sniffer>
+                <version.plugin.animal-sniffer>1.17</version.plugin.animal-sniffer>
                 <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
                 <version.plugin.jacoco>0.7.9</version.plugin.jacoco>
                 <version.plugin.checkstyle>3.0.0</version.plugin.checkstyle>
@@ -1111,6 +1117,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
                         <version>${version.plugin.antrun}</version>
+                        <inherited>false</inherited>
                         <executions>
                             <execution>
                                 <id>checksum-collect</id>
@@ -1120,7 +1127,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <echo message="Checksum collection is enabled (only if using mvnw)."/>
+                                        <echo level="info" message="Checksum collection is enabled (only if using mvnw)."/>
                                     </target>
                                 </configuration>
                             </execution>
@@ -1141,6 +1148,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
                         <version>${version.plugin.antrun}</version>
+                        <inherited>false</inherited>
                         <executions>
                             <execution>
                                 <id>checksum-enforce</id>
@@ -1150,7 +1158,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <echo message="Checksum enforcement is enabled (only if using mvnw)."/>
+                                        <echo level="info" message="Checksum enforcement is enabled (only if using mvnw)."/>
                                     </target>
                                 </configuration>
                             </execution>

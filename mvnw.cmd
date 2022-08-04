@@ -182,21 +182,24 @@ IF NOT %FILE_HASH%=="" (
 )
 
 @REM If requested, add Maven checksum extension (Byte Buddy edit).
-SET MAVEN_CHECKSUM_EXTENSION=""
 @setlocal EnableDelayedExpansion
+set MAVEN_CHECKSUM_EXTENSION_TYPE=
 FOR %%a IN (%*) DO (
-    if %%a="-Pchecksum-collect" set MAVEN_CHECKSUM_EXTENSION="collect"
-    if %%a="-Pchecksum-enforce" set MAVEN_CHECKSUM_EXTENSION="enforce"
+    if "%%a"=="-Pchecksum-collect" set MAVEN_CHECKSUM_EXTENSION_TYPE=collect
+    if "%%a"=="-Pchecksum-enforce" set MAVEN_CHECKSUM_EXTENSION_TYPE=enforce
 )
-@endlocal
-if %MAVEN_CHECKSUM_EXTENSION%!="" (
+@endlocal & set MAVEN_CHECKSUM_EXTENSION_TYPE=%MAVEN_CHECKSUM_EXTENSION_TYPE%
+@setlocal EnableDelayedExpansion
+set MAVEN_CHECKSUM_EXTENSION_COMMAND=
+if not "%MAVEN_CHECKSUM_EXTENSION%"=="" (
   CALL %MAVEN_PROJECTBASEDIR%/.mvn/checksum/mvnc.cmd
   if ERRORLEVEL 1 goto error
-  SET MAVEN_CHECKSUM_EXTENSION="-Dcodes.rafael.mavenchecksumextension.mode=%MAVEN_CHECKSUM_EXTENSION%"
-  SET MAVEN_CHECKSUM_EXTENSION="-Dcodes.rafael.mavenchecksumextension.file=%MAVEN_PROJECTBASEDIR%\.mvn\checksums.sha256 %MAVEN_CHECKSUM_EXTENSION%"
-  SET MAVEN_CHECKSUM_EXTENSION="-Dcodes.rafael.mavenchecksumextension.append=true $MAVEN_CHECKSUM_EXTENSION"
-  SET MAVEN_CHECKSUM_EXTENSION="-Dmaven.ext.class.path=%MAVEN_PROJECTBASEDIR%\.mvn\checksum\maven-checksum-extension.jar %MAVEN_CHECKSUM_EXTENSION%"
+  SET MAVEN_CHECKSUM_EXTENSION_COMMAND=-Dcodes.rafael.mavenchecksumextension.mode=%MAVEN_CHECKSUM_EXTENSION_TYPE%^
+    -Dcodes.rafael.mavenchecksumextension.file=%MAVEN_PROJECTBASEDIR%\.mvn\checksums.sha256
+    -Dcodes.rafael.mavenchecksumextension.append=true
+    -Dmaven.ext.class.path=%MAVEN_PROJECTBASEDIR%\.mvn\checksum\maven-checksum-extension.jar
 )
+@endlocal & set MAVEN_CHECKSUM_EXTENSION_COMMAND=%MAVEN_CHECKSUM_EXTENSION_COMMAND%
 
 @REM Provide a "standardized" way to retrieve the CLI args that will
 @REM work with both Windows and non-Windows executions.
@@ -208,7 +211,7 @@ set MAVEN_CMD_LINE_ARGS=%*
   %MAVEN_DEBUG_OPTS% ^
   -classpath %WRAPPER_JAR% ^
   "-Dmaven.multiModuleProjectDirectory=%MAVEN_PROJECTBASEDIR%" ^
-  %WRAPPER_LAUNCHER% %MAVEN_CONFIG% %MAVEN_CHECKSUM_EXTENSION% %*
+  %WRAPPER_LAUNCHER% %MAVEN_CONFIG% %MAVEN_CHECKSUM_EXTENSION_COMMAND% %*
 if ERRORLEVEL 1 goto error
 goto end
 
