@@ -38,6 +38,6 @@ class DefaultEntryPoint implements EntryPoint {
             ClassFileLocator classFileLocator,
             MethodNameTransformer methodNameTransformer
     ) {
-        return byteBuddy.rebase(typeDescription, classFileLocator, methodNameTransformer);
+        return byteBuddy.decorate(typeDescription, classFileLocator);
     }
 }
