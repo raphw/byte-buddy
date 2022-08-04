@@ -275,7 +275,7 @@ while IFS="=" read key value; do
   esac
 done < "$BASE_DIR/.mvn/$wrapperLocation/maven-wrapper.properties"
 if [ -n "$wrapperHash" ]; then
-  if ! `echo "$wrapperHash  $BASE_DIR/.mvn/$wrapperLocation/maven-wrapper.jar" | shasum -a 256 -c > /dev/null`; then
+  if ! echo "$wrapperHash  $BASE_DIR/.mvn/$wrapperLocation/maven-wrapper.jar" | shasum -a 256 -c > /dev/null; then
     echo "Could not validate hash of maven-wrapper.jar";
     exit 1
   fi
