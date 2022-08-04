@@ -42,15 +42,14 @@ set ERROR_CODE=0
 @setlocal
 
 @REM Possible user configuration.
-SET checksumUrl="https://repo.maven.apache.org/maven2/codes/rafael/mavenchecksumextension/maven-checksum-extension/maven-checksum-extension-0.0.1.jar"
+SET checksumUrl="https://repo.maven.apache.org/maven2/codes/rafael/mavenchecksumextension/maven-checksum-extension/0.0.1/maven-checksum-extension-0.0.1.jar"
 SET checksumJar="maven-checksum-extension.jar"
 SET checksumSha256Sum="730cf75ef901f6a2cca57118b2ed7dfe01a369572b2719021cbb26b59f749876"
 
-@REM Find the project base dir, i.e. the directory that contains the folder ".mvn".
-@REM Fallback to current working directory if not found.
-
-set MAVEN_PROJECTBASEDIR=%MAVEN_BASEDIR%
-IF "%MAVEN_PROJECTBASEDIR%"=="" set MAVEN_PROJECTBASEDIR=%CD%
+@REM Setting artifact directory.
+SET SCRIPT=%~dp0
+SET SCRIPT_PATH=%SCRIPT:~0,-1%
+SET checksumJarPath=%SCRIPT_PATH%\%checksumJar%
 
 @REM Download checksum extension if not available.
 if exist %checksumJarPath% (

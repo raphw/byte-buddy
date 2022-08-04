@@ -16,6 +16,7 @@ log/
 target/
 site/
 maven-wrapper.jar
+maven-checksum-extension.jar
 
 # Gradle
 .gradle/

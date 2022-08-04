@@ -19,14 +19,21 @@
 # ----------------------------------------------------------------------------
 
 # Possible user configuration.
-checksumUrl="https://repo.maven.apache.org/maven2/codes/rafael/mavenchecksumextension/maven-checksum-extension/maven-checksum-extension-0.0.1.jar"
+checksumUrl="https://repo.maven.apache.org/maven2/codes/rafael/mavenchecksumextension/maven-checksum-extension/0.0.1/maven-checksum-extension-0.0.1.jar"
 checksumJar="maven-checksum-extension.jar"
 checksumSha256Sum="730cf75ef901f6a2cca57118b2ed7dfe01a369572b2719021cbb26b59f749876"
 
-# Setting base directory
-MAVEN_PROJECTBASEDIR=${MAVEN_BASEDIR:-"$BASE_DIR"}; export MAVEN_PROJECTBASEDIR
-log $MAVEN_PROJECTBASEDIR
-checksumJarPath=$MAVEN_PROJECTBASEDIR/$checksumJar
+# Define log function.
+log() {
+  if [ "$MVNC_VERBOSE" = true ]; then
+    printf '%s\n' "$1"
+  fi
+}
+
+# Setting artifact directory.
+SCRIPT=$(readlink -f "$0")
+SCRIPT_PATH=$(dirname "$SCRIPT")
+checksumJarPath=$SCRIPT_PATH/$checksumJar
 
 # Detecting if cygwin is executed.
 cygwin=false;
