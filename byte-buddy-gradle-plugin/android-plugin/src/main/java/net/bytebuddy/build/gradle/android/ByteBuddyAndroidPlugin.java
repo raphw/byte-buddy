@@ -59,7 +59,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             it.setCanBeResolved(true);
             it.extendsFrom(bucket);
             it.attributes(attrs -> {
-                attrs.attribute(ARTIFACT_TYPE_ATTR, "android-classes");
+                attrs.attribute(ARTIFACT_TYPE_ATTR, "android-java-res");
                 attrs.attribute(
                         Category.CATEGORY_ATTRIBUTE,
                         project.getObjects().named(Category.class, Category.LIBRARY)
