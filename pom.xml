@@ -1081,24 +1081,16 @@
                                 </goals>
                                 <configuration>
                                     <skip>${japicmp.skip}</skip>
-                                    <oldVersion>
-                                        <dependency>
-                                            <groupId>${project.groupId}</groupId>
-                                            <artifactId>${project.artifactId}</artifactId>
-                                            <version>1.12.13</version>
-                                            <type>${project.packaging}</type>
-                                        </dependency>
-                                    </oldVersion>
                                     <newVersion>
                                         <file>
                                             <path>${project.build.directory}/${project.artifactId}-${project.version}.jar</path>
                                         </file>
                                     </newVersion>
                                     <parameter>
+                                        <oldVersionPattern>\d+\.\d+\.\d+</oldVersionPattern>
                                         <ignoreMissingClasses>true</ignoreMissingClasses>
                                         <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
                                         <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
-                                        <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
                                     </parameter>
                                 </configuration>
                             </execution>
