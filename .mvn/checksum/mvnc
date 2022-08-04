@@ -19,7 +19,7 @@
 # ----------------------------------------------------------------------------
 
 # Possible user configuration.
-checksumUrl="https://repo.maven.apache.org/maven2/codes/rafael/mavenchecksumextension/maven-checksum-extension/0.0.1/maven-checksum-extension-0.0.1.jar"
+checksumUrl="https://repo.maven.apache.org/maven2/codes/rafael/mavenchecksumextension/maven-checksum-extension/0.0.2/maven-checksum-extension-0.0.2.jar"
 checksumJar="maven-checksum-extension.jar"
 checksumSha256Sum="730cf75ef901f6a2cca57118b2ed7dfe01a369572b2719021cbb26b59f749876"
 

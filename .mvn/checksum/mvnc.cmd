@@ -42,9 +42,9 @@ set ERROR_CODE=0
 @setlocal
 
 @REM Possible user configuration.
-SET checksumUrl="https://repo.maven.apache.org/maven2/codes/rafael/mavenchecksumextension/maven-checksum-extension/0.0.1/maven-checksum-extension-0.0.1.jar"
-SET checksumJar="maven-checksum-extension.jar"
-SET checksumSha256Sum="730cf75ef901f6a2cca57118b2ed7dfe01a369572b2719021cbb26b59f749876"
+SET checksumUrl="https://repo.maven.apache.org/maven2/codes/rafael/mavenchecksumextension/maven-checksum-extension/0.0.2/maven-checksum-extension-0.0.2.jar"
+SET checksumJar=maven-checksum-extension.jar
+SET checksumSha256Sum=730cf75ef901f6a2cca57118b2ed7dfe01a369572b2719021cbb26b59f749876
 
 @REM Setting artifact directory.
 SET SCRIPT=%~dp0
@@ -74,7 +74,6 @@ FOR /F "tokens=*" %%A in ('certUtil -hashfile "%checksumJarPath%" SHA256 ^| find
     IF NOT %%A==%checksumSha256Sum% (
         echo Error: Failed to validate Maven wrapper SHA-256, your Maven wrapper might be compromised. >&2
         echo Investigate or delete %checksumJarPath% to attempt a clean download. >&2
-        echo If you updated your Maven, you need to updated the specified 'wrapperSha256Sum' value. >&2
         goto error
     )
 )

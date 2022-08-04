@@ -180,7 +180,7 @@ fi
 # This allows using the maven wrapper in projects that prohibit checking in binary data.
 ##########################################################################################
 # Use HTTP endpoints and legacy Maven if Java 6 or 7 is used to build (Byte Buddy edit)
-if `$JAVA_HOME/bin/java -fullversion 2>&1 >/dev/null | awk '{print $4}' | grep -Eq "^\"1\.[67]\."`; then
+if $JAVA_HOME/bin/java -fullversion 2>&1 >/dev/null | awk '{print $4}' | grep -Eq "^\"1\.[67]\."; then
   repoUrl="http://insecure.repo1.maven.org"
   wrapperLocation="wrapper-legacy"
   wrapperPath="io/takari/maven-wrapper/0.5.6/maven-wrapper-0.5.6.jar"
@@ -296,6 +296,25 @@ if $cygwin; then
     MAVEN_PROJECTBASEDIR=`cygpath --path --windows "$MAVEN_PROJECTBASEDIR"`
 fi
 
+# If requested, add Maven checksum extension (Byte Buddy edit).
+MAVEN_CHECKSUM_EXTENSION=""
+for argument in "$@"; do
+    case "$argument" in
+        -Pchecksum-collect) MAVEN_CHECKSUM_EXTENSION="collect";;
+        -Pchecksum-enforce) MAVEN_CHECKSUM_EXTENSION="enforce";;
+    esac
+done
+if [ -n "$MAVEN_CHECKSUM_EXTENSION" ]; then
+  if ! /bin/sh $MAVEN_PROJECTBASEDIR/.mvn/checksum/mvnc; then
+    echo "Failed to download Maven checksum extension"
+    exit 1
+  fi
+  MAVEN_CHECKSUM_EXTENSION="-Dcodes.rafael.mavenchecksumextension.mode=$MAVEN_CHECKSUM_EXTENSION"
+  MAVEN_CHECKSUM_EXTENSION="-Dcodes.rafael.mavenchecksumextension.file=$MAVEN_PROJECTBASEDIR/.mvn/checksums.sha256 $MAVEN_CHECKSUM_EXTENSION"
+  MAVEN_CHECKSUM_EXTENSION="-Dcodes.rafael.mavenchecksumextension.append=true $MAVEN_CHECKSUM_EXTENSION"
+  MAVEN_CHECKSUM_EXTENSION="-Dmaven.ext.class.path=$MAVEN_PROJECTBASEDIR/.mvn/checksum/maven-checksum-extension.jar $MAVEN_CHECKSUM_EXTENSION"
+fi
+
 # Provide a "standardized" way to retrieve the CLI args that will
 # work with both Windows and non-Windows executions.
 MAVEN_CMD_LINE_ARGS="$MAVEN_CONFIG $@"
@@ -308,4 +327,4 @@ exec "$JAVACMD" \
   $MAVEN_DEBUG_OPTS \
   -classpath "$MAVEN_PROJECTBASEDIR/.mvn/$wrapperLocation/maven-wrapper.jar" \
   "-Dmaven.multiModuleProjectDirectory=${MAVEN_PROJECTBASEDIR}" \
-  ${WRAPPER_LAUNCHER} $MAVEN_CONFIG "$@"
+  ${WRAPPER_LAUNCHER} $MAVEN_CONFIG $MAVEN_CHECKSUM_EXTENSION "$@"
