@@ -44,7 +44,7 @@ set ERROR_CODE=0
 @REM Possible user configuration.
 SET checksumUrl="https://repo.maven.apache.org/maven2/codes/rafael/mavenchecksumextension/maven-checksum-extension/0.0.2/maven-checksum-extension-0.0.2.jar"
 SET checksumJar=maven-checksum-extension.jar
-SET checksumSha256Sum=730cf75ef901f6a2cca57118b2ed7dfe01a369572b2719021cbb26b59f749876
+SET checksumSha256Sum=3cfb53b1f9ac03a140e7f04f6083953cbcb7da3bfbedc5c9c53f9e1b5265e7d5
 
 @REM Setting artifact directory.
 SET SCRIPT=%~dp0
