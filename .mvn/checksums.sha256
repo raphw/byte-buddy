@@ -337,7 +337,6 @@ com.sun.xml.fastinfoset:FastInfoset:pom:1.2.12 52670795face986e710a1cd64f4d48bcd
 com.sun.xml.fastinfoset:FastInfoset:pom:1.2.16 e147d258ab6e6691f70599a952400e6e6c7558f8c9c028dbe1be23178308e830
 com.sun.xml.fastinfoset:fastinfoset-project:pom:1.2.12 9dadfc26c2d643fc4ab965d9049310b6427a406853b7bdf15e1afa8b306c6749
 com.sun.xml.fastinfoset:fastinfoset-project:pom:1.2.16 90582425adc1f40b41362dafb95173931225acaa5e79620d5e6bd52f646292ba
-com.sun:tools:jar:1.8.0 2569f87668425881e3db6f9e274809f540e3fe8af9acd0326e6d203cf464d0d9
 com.thoughtworks.qdox:qdox:jar:1.12.1 21fba22f830e9268f07cf4ab2d99e8181abbdcb0cb91ee0228eb3cb918dcdd1d
 com.thoughtworks.qdox:qdox:jar:2.0-M10 9e6142d64aa1d77597f9a6dde664688832b0a8a2ee4346a256fa693295b6365c
 com.thoughtworks.qdox:qdox:jar:2.0-M8 5de01a9b2c8c3600f8dd4524693ca511cc0973e5cd40116e0391fe8abc617b55
