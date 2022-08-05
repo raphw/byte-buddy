@@ -75,20 +75,20 @@ else
 fi
 
 # Validate the checksum of the checksum jar file.
-wrapperSha256Result=false
+checksumSha256Result=false
 if command -v sha256sum > /dev/null; then
   if echo "$checksumSha256Sum  $checksumJarPath" | sha256sum -c > /dev/null 2>&1; then
-    wrapperSha256Result=true
+    checksumSha256Result=true
   fi
 elif command -v shasum > /dev/null; then
   if echo "$checksumSha256Sum  $checksumJarPath" | shasum -a 256 -c > /dev/null 2>&1; then
-    wrapperSha256Result=true
+    checksumSha256Result=true
   fi
 else
   echo "Neither 'sha256sum' or 'shasum' are available. Please install either command."
   exit 1
 fi
-if [ $wrapperSha256Result = false ]; then
+if [ $checksumSha256Result = false ]; then
   echo "Error: Failed to validate Maven checksum extension SHA-256, it might be compromised." >&2
   echo "Investigate or delete $checksumJarPath to attempt a clean download." >&2
   exit 1

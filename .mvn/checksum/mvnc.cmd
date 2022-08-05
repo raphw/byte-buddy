@@ -72,7 +72,7 @@ if exist %checksumJarPath% (
 @REM Validate the checksum of the checksum jar file.
 FOR /F "tokens=*" %%A in ('certUtil -hashfile "%checksumJarPath%" SHA256 ^| findstr /v "hash"') do (
     IF NOT %%A==%checksumSha256Sum% (
-        echo Error: Failed to validate Maven wrapper SHA-256, your Maven wrapper might be compromised. >&2
+        echo Error: Failed to validate Maven extension checksum SHA-256, your Maven checksum extension might be compromised. >&2
         echo Investigate or delete %checksumJarPath% to attempt a clean download. >&2
         goto error
     )
