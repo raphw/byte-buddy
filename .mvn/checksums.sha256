@@ -154,6 +154,8 @@ com.fasterxml:oss-parent:pom:12 a67070d6da35edf7187aafa019cf51a011324df3962d0de8
 com.fasterxml:oss-parent:pom:27 b9b8f388fd628057b1249756468b86726c8fd5816ce14d313cb40003a509beeb
 com.fasterxml:oss-parent:pom:4 a30a3f89fbbea23deb5290e832eb0d12a8171ae8ba4461af2b936ed0245ee697
 com.fasterxml:oss-parent:pom:43 e5585cc1c37079b2e3817a8997945736f158831844d59d0e4d3a45b27611f926
+com.github.ferstl:jitwatch-jarscan-maven-plugin:jar:1.1 83ab254a01cdbd7cbe1b62e68427e2e41a52a4464345ff58bcf3f0a6ad6dccd9
+com.github.ferstl:jitwatch-jarscan-maven-plugin:pom:1.1 4daa86bc5ef5a24948bf1674e4fc858f2d2b245beb4e11d1df1a595b07f14e59
 com.github.hazendaz:base-parent:pom:28 3597358459bc9900450082e9a0e21564213b2fb0d1aef3f2ccafc30a8cab01ed
 com.github.javaparser:javaparser-core:jar:3.17.0 23f5c982e1c7771423d37d52c774e8d2e80fd7ea7305ebe448797a96f67e6fca
 com.github.javaparser:javaparser-core:pom:3.17.0 f92978e18bbbf07bbcf14c15ba0b94396eb9a6e5b9a7110c61afdd07a8715d98
@@ -1582,6 +1584,8 @@ org.codehaus.mojo:animal-sniffer:pom:1.19 56e7962d71988206b51aee398270bf96aaf7fd
 org.codehaus.mojo:animal-sniffer:pom:1.21 75a86781fa43465b7042118edb1cca09e7d366bb0752d0884959e08f4d4306d8
 org.codehaus.mojo:build-helper-maven-plugin:jar:3.3.0 f99b3f1a6cf4cbbac079057d4ce18fa9d6a9c7c0a3dfd8c4571223ebdd0e2458
 org.codehaus.mojo:build-helper-maven-plugin:pom:3.3.0 45136bd46a2db54fd1bb746938a77f48f211124c7bfeecae6cccaf7bcb17581b
+org.codehaus.mojo:clirr-maven-plugin:jar:2.8 fb6e65b9cca7fab0bccf2e5e1bc6710491a54f6b27775221d558f87aa5625d44
+org.codehaus.mojo:clirr-maven-plugin:pom:2.8 98978a49a10c3fc206778593fb83aa052d4003f9f8da7e4abcb0464ad123ead7
 org.codehaus.mojo:exec-maven-plugin:jar:3.1.0 9b066a301ec84948761f32950408210be6d29a9aea7a496724b51c0f38b946aa
 org.codehaus.mojo:exec-maven-plugin:pom:3.1.0 f14c2689d09299afeadf22bd0c841af1fa9314bf328a077c934536e8b71e6006
 org.codehaus.mojo:java-boot-classpath-detector:jar:1.16 fd6a7a41b18155ee7c61bad6359be54edb66489ded1eef1f6d0e10146b8df994
@@ -1595,10 +1599,14 @@ org.codehaus.mojo:java-boot-classpath-detector:pom:1.18 050f186df5ad0657d9eee91c
 org.codehaus.mojo:java-boot-classpath-detector:pom:1.19 7ebcd9ee42e3ddd079d9649f077e00f72d47ca636e89912b9fa870e7097e9f28
 org.codehaus.mojo:java-boot-classpath-detector:pom:1.21 a2f91900d0cad6a92672da8179040beaa9fc0ba85d0f133e4432da96e67e3267
 org.codehaus.mojo:mojo-parent:pom:36 65345809b1184f9ddd53fbec35812890f6bbf2dec5f6f6de14c2957c3646d886
+org.codehaus.mojo:mojo-parent:pom:38 85b74b774c9aa5f891f28d4aae0cf5f331268c7a2cdc876f3548f1f9ba0fe3a1
 org.codehaus.mojo:mojo-parent:pom:40 fc648dcdc404f8bf66e0583914ecf980176618201227bea114fae85043cb755e
 org.codehaus.mojo:mojo-parent:pom:50 f819cad1b15b6a7791c8b601e96bde33765e4681395807db4537d2f0dedd493b
 org.codehaus.mojo:mojo-parent:pom:65 c89fb440a597b83eecca108ac598519493688eb033e8542e51a2b0428da8a676
+org.codehaus.mojo:mojo-parent:pom:67 6b784778d21addfac890cf664a99feddab805b7ca8b2f0fe989bc4529a980c7b
 org.codehaus.mojo:mojo-parent:pom:69 f13b819fedef00470e2775f4620cdf5509dab3fd0761cb18573b56d4c0dbe574
+org.codehaus.mojo:versions-maven-plugin:jar:2.11.0 60d1fa9e36c4106ee40b270c745632331f73b1e5a93fa47e12f43352e022a64b
+org.codehaus.mojo:versions-maven-plugin:pom:2.11.0 f5fc4e77d339afd335c0d87782aaa4d5ea91969d256d99609be83dc2b0038500
 org.codehaus.plexus:plexus-archiver:jar:2.2 9154a5e6e1f95a1c74d4254670fec8d7aacd5692115710fe7e1381636c6be38c
 org.codehaus.plexus:plexus-archiver:jar:2.3 b0ff05132a3df96957b8de661dfa8af09b85dadffd067d3979dc7e7fa129219f
 org.codehaus.plexus:plexus-archiver:jar:2.6.3 0930b11f951a8c2a4fafc0def78a93ecbb6e28999a9338ab38e21d67f7eb6f21
