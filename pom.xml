@@ -36,7 +36,6 @@
       - org.pitest:pitest-maven:mutationCoverage - Runs mutation tests (all modules)
       - spotbugs:spotbugs spotbugs:gui - Runs spotbugs and shows a report in a graphical interface (module specific)
       - com.github.ferstl:jitwatch-jarscan-maven-plugin:scan - Finds all methods above HotSpot's inlining threshold
-      - clirr:check - Checks for binary changes in the API
       - versions:update-properties - Automated dependency version update.
 
       At last, two pseudo-profiles are available that allow for handling checksum data for all downloaded artifacts.
@@ -93,6 +92,9 @@
         <version.plugin.plugin>3.6.4</version.plugin.plugin>
         <version.plugin.release>2.5.3</version.plugin.release>
         <version.plugin.resources>3.2.0</version.plugin.resources>
+        <version.plugin.assembly>3.4.2</version.plugin.assembly>
+        <version.plugin.dependency>3.3.0</version.plugin.dependency>
+        <version.plugin.help>3.2.0</version.plugin.help>
         <version.plugin.surefire>2.22.2</version.plugin.surefire>
         <version.plugin.pitest>1.9.2</version.plugin.pitest>
         <version.plugin.animal-sniffer>1.21</version.plugin.animal-sniffer>
@@ -101,7 +103,6 @@
         <version.plugin.coveralls>4.3.0</version.plugin.coveralls>
         <version.plugin.checkstyle>3.1.2</version.plugin.checkstyle>
         <version.plugin.jitwatch>1.1</version.plugin.jitwatch>
-        <version.plugin.clirr>2.8</version.plugin.clirr>
         <version.plugin.spotbugs>4.2.3</version.plugin.spotbugs>
         <version.plugin.modulemaker>1.9</version.plugin.modulemaker>
         <version.plugin.license>3.0</version.plugin.license>
@@ -253,12 +254,6 @@
                 <artifactId>jitwatch-jarscan-maven-plugin</artifactId>
                 <version>${version.plugin.jitwatch}</version>
             </plugin>
-            <!-- Enable scanning for binary changes between releases -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>clirr-maven-plugin</artifactId>
-                <version>${version.plugin.clirr}</version>
-            </plugin>
             <!-- Add license headers to all files. -->
             <plugin>
                 <groupId>com.mycila</groupId>
@@ -409,6 +404,21 @@
                         </dependency>
                     </dependencies>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>${version.plugin.assembly}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>${version.plugin.dependency}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-help-plugin</artifactId>
+                    <version>${version.plugin.help}</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -461,12 +471,14 @@
                 <version.plugin.exec>1.5.0</version.plugin.exec>
                 <version.plugin.plugin>3.5.2</version.plugin.plugin>
                 <version.plugin.resources>3.0.2</version.plugin.resources>
+                <version.plugin.assembly>2.6</version.plugin.assembly>
+                <version.plugin.dependency>2.10</version.plugin.dependency>
+                <version.plugin.help>2.2</version.plugin.help>
                 <version.plugin.animal-sniffer>1.16</version.plugin.animal-sniffer>
                 <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
                 <version.plugin.jacoco>0.7.9</version.plugin.jacoco>
                 <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
                 <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
-                <version.plugin.clirr>2.7</version.plugin.clirr>
                 <version.plugin.license>3.0</version.plugin.license>
                 <version.plugin.shade>3.1.1</version.plugin.shade>
                 <version.plugin.surefire>2.22.1</version.plugin.surefire>
@@ -535,6 +547,7 @@
                 <version.plugin.buildhelper>3.2.0</version.plugin.buildhelper>
                 <version.plugin.site>3.11.0</version.plugin.site>
                 <version.plugin.exec>3.0.0</version.plugin.exec>
+                <version.plugin.assembly>3.3.0</version.plugin.assembly>
                 <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
                 <version.plugin.javadoc>3.2.0</version.plugin.javadoc>
                 <version.plugin.animal-sniffer>1.17</version.plugin.animal-sniffer>
