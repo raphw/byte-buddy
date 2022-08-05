@@ -185,12 +185,10 @@ an interceptor similar to the interceptors in the previous examples:
 public class TimingInterceptor {
   @RuntimeType
   public static Object intercept(@Origin Method method, 
-                                 @SuperCall Callable<?> callable)  throws Exception {
+                                 @SuperCall Callable<?> callable) {
     long start = System.currentTimeMillis();
     try {
       return callable.call();
-    } catch (Exception e) {
-      throw e;
     } finally {
       System.out.println(method + " took " + (System.currentTimeMillis() - start));
     }
