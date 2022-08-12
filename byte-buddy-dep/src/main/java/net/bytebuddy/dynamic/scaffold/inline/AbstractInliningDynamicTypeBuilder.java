@@ -32,6 +32,7 @@ import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
+import org.objectweb.asm.ClassVisitor;
 
 import java.util.List;
 
@@ -119,7 +120,36 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
     /**
      * {@inheritDoc}
      */
+    public ClassVisitor wrap(ClassVisitor classVisitor) {
+        return wrap(classVisitor, TypePool.Default.of(classFileLocator));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool) {
+        return toTypeWriter(typePool).wrap(classVisitor);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy) {
         return make(typeResolutionStrategy, TypePool.Default.of(classFileLocator));
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
+        return toTypeWriter(typePool).make(typeResolutionStrategy.resolve());
+    }
+
+    /**
+     * Resolves this dynamic type builder to a {@link TypeWriter}.
+     *
+     * @param typePool A type pool that is used for computing stack map frames by the underlying class writer, if required.
+     * @return A type writer for this dynamic type builder.
+     */
+    protected abstract TypeWriter<T> toTypeWriter(TypePool typePool);
 }
