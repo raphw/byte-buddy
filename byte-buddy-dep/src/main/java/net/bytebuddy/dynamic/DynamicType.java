@@ -41,6 +41,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.FileSystem;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.io.*;
@@ -1400,6 +1401,10 @@ public interface DynamicType extends ClassFileLocator {
          */
         @SuppressWarnings("overloads")
         RecordComponentDefinition<T> recordComponent(LatentMatcher<? super RecordComponentDescription> matcher);
+
+        ClassVisitor wrap(ClassVisitor classVisitor);
+
+        ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool);
 
         /**
          * <p>
@@ -3897,6 +3902,14 @@ public interface DynamicType extends ClassFileLocator {
                  */
                 public RecordComponentDefinition<U> recordComponent(LatentMatcher<? super RecordComponentDescription> matcher) {
                     return materialize().recordComponent(matcher);
+                }
+
+                public ClassVisitor wrap(ClassVisitor classVisitor) {
+                    return materialize().wrap(classVisitor);
+                }
+
+                public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool) {
+                    return materialize().wrap(classVisitor, typePool);
                 }
 
                 /**

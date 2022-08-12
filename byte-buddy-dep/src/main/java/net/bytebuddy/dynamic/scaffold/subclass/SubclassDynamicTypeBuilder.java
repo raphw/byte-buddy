@@ -32,6 +32,7 @@ import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
+import org.objectweb.asm.ClassVisitor;
 
 import java.util.Collections;
 import java.util.List;
@@ -195,6 +196,20 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 ignoredMethods,
                 auxiliaryTypes,
                 constructorStrategy);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public ClassVisitor wrap(ClassVisitor classVisitor) {
+        return wrap(classVisitor, TypePool.ClassLoading.ofSystemLoader()); // Mimics the default behavior of ASM for least surprise.
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool) {
+        throw new UnsupportedOperationException("A newly created type cannot be created via a wrapper");
     }
 
     /**

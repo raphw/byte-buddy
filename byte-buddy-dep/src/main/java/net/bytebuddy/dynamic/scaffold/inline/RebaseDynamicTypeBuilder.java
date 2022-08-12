@@ -217,7 +217,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
     /**
      * {@inheritDoc}
      */
-    public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
+    protected TypeWriter<T> toTypeWriter(TypePool typePool) {
         MethodRegistry.Prepared methodRegistry = this.methodRegistry.prepare(instrumentedType,
                 methodGraphCompiler,
                 typeValidation,
@@ -247,6 +247,6 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 typePool,
                 originalType,
                 classFileLocator,
-                methodRebaseResolver).make(typeResolutionStrategy.resolve());
+                methodRebaseResolver);
     }
 }

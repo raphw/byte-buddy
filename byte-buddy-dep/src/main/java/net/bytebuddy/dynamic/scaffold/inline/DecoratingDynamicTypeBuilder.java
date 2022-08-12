@@ -45,6 +45,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
+import org.objectweb.asm.ClassVisitor;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -476,6 +477,26 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                 ignoredMethods,
                 CompoundList.of(this.auxiliaryTypes, new ArrayList<DynamicType>(auxiliaryTypes)),
                 classFileLocator);
+    }
+
+    public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool) {
+        return TypeWriter.Default.<T>forDecoration(instrumentedType,
+                classFileVersion,
+                auxiliaryTypes,
+                CompoundList.of(methodGraphCompiler.compile((TypeDefinition) instrumentedType)
+                        .listNodes()
+                        .asMethodList()
+                        .filter(not(ignoredMethods.resolve(instrumentedType))), instrumentedType.getDeclaredMethods().filter(not(isVirtual()))),
+                typeAttributeAppender,
+                asmVisitorWrapper,
+                annotationValueFilterFactory,
+                annotationRetention,
+                auxiliaryTypeNamingStrategy,
+                implementationContextFactory,
+                typeValidation,
+                classWriterStrategy,
+                typePool,
+                classFileLocator).wrap(classVisitor);
     }
 
     /**

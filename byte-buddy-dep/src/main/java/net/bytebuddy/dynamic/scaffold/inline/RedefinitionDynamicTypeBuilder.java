@@ -200,12 +200,12 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
     /**
      * {@inheritDoc}
      */
-    public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
+    protected TypeWriter<T> toTypeWriter(TypePool typePool) {
         MethodRegistry.Prepared methodRegistry = this.methodRegistry.prepare(instrumentedType,
-                methodGraphCompiler,
-                typeValidation,
-                visibilityBridgeStrategy,
-                InliningImplementationMatcher.of(ignoredMethods, originalType));
+            methodGraphCompiler,
+            typeValidation,
+            visibilityBridgeStrategy,
+            InliningImplementationMatcher.of(ignoredMethods, originalType));
         return TypeWriter.Default.<T>forRedefinition(methodRegistry,
                 auxiliaryTypes,
                 fieldRegistry.compile(methodRegistry.getInstrumentedType()),
@@ -221,6 +221,6 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                 classWriterStrategy,
                 typePool,
                 originalType,
-                classFileLocator).make(typeResolutionStrategy.resolve());
+                classFileLocator);
     }
 }
