@@ -70,13 +70,14 @@ if exist %checksumJarPath% (
 )
 
 @REM Validate the checksum of the checksum jar file.
-FOR /F "tokens=*" %%A in ('certUtil -hashfile "%checksumJarPath%" SHA256 ^| findstr /v "hash"') do (
-    IF NOT %%A==%checksumSha256Sum% (
-        echo Error: Failed to validate Maven extension checksum SHA-256, your Maven checksum extension might be compromised. >&2
-        echo Investigate or delete %checksumJarPath% to attempt a clean download. >&2
-        goto error
-    )
-)
+powershell -Command "&{"^
+   "$hash = (Invoke-Expression \"certUtil -hashfile '%checksumJarPath%' SHA256\" | Select -Index 1);"^
+   "If('%checksumSha256Sum%' -ne $hash){"^
+   "  Write-Output 'Error: Failed to validate Maven checksum extension SHA-256, it might be compromised';"^
+   "  Write-Output 'Investigate or delete %checksumJarPath% to attempt a clean download.';"^
+   "  exit 1;"^
+   "}"^
+   "}"
 
 if ERRORLEVEL 1 goto error
 goto end

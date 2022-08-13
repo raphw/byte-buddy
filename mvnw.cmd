@@ -173,12 +173,14 @@ FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\%WRAP
     IF "%%A"=="wrapperHash" SET FILE_HASH=%%B
 )
 IF NOT %FILE_HASH%=="" (
-    FOR /F "tokens=*" %%A in ('certUtil -hashfile "%MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.jar" SHA256 ^| findstr /v "hash"') do (
-        IF NOT %%A==%FILE_HASH% (
-            echo Could not validate hash of maven-wrapper.jar, was %%A
-            goto error
-        )
-    )
+    powershell -Command "&{"^
+       "$CHECKSUM = (Invoke-Expression \"certUtil -hashfile '%MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.jar' SHA256\" | Select -Index 1);"^
+       "If('%FILE_HASH%' -ne $CHECKSUM){"^
+       "  Write-Output 'Error: Failed to validate Maven checksum extension SHA-256, it might be compromised';"^
+       "  Write-Output 'Investigate or delete %MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.jar to attempt a clean download.';"^
+       "  exit 1;"^
+       "}"^
+       "}"
 )
 
 @REM If requested, add Maven checksum extension (Byte Buddy edit).
