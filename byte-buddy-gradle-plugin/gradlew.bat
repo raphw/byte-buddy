@@ -145,12 +145,14 @@ if not %WRAPPER_URL%=="" (
     )
 )
 IF NOT %WRAPPER_HASH%=="" (
-    FOR /F "tokens=*" %%A in ('certUtil -hashfile "%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar" SHA256 ^| findstr /v "hash"') do (
-        IF NOT %%A==%WRAPPER_HASH% (
-            echo Could not validate hash of gradle-wrapper.jar, was %%A
-            goto fail
-        )
-    )
+    powershell -Command "&{"^
+       "$CHECKSUM = (Invoke-Expression \"certUtil -hashfile '%APP_HOME%\gradle\%WRAPPER_LOCATION%\gradle-wrapper.jar' SHA256\" | Select -Index 1);"^
+       "If('%WRAPPER_HASH%' -ne $CHECKSUM){"^
+       "  Write-Output 'Error: Failed to validate Maven checksum extension SHA-256, it might be compromised';"^
+       "  Write-Output 'Investigate or delete %MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.jar to attempt a clean download.';"^
+       "  exit 1;"^
+       "}"^
+       "}"
 )
 
 @rem Setup the command line
