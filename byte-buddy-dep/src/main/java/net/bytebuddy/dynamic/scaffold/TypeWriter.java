@@ -2286,6 +2286,46 @@ public interface TypeWriter<T> {
         }
 
         /**
+         * A key to represent a unique signature.
+         */
+        protected static class SignatureKey {
+
+            /**
+             * The represented internal name.
+             */
+            private final String internalName;
+
+            /**
+             * The represented descriptor.
+             */
+            private final String descriptor;
+
+            /**
+             * Creates a new signature key.
+             *
+             * @param internalName The represented internal name.
+             * @param descriptor   The represented descriptor.
+             */
+            public SignatureKey(String internalName, String descriptor) {
+                this.internalName = internalName;
+                this.descriptor = descriptor;
+            }
+
+            @Override
+            public boolean equals(@MaybeNull Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                SignatureKey that = (SignatureKey) other;
+                return internalName.equals(that.internalName) && descriptor.equals(that.descriptor);
+            }
+
+            @Override
+            public int hashCode() {
+                return 17 + internalName.hashCode() + 31 * descriptor.hashCode();
+            }
+        }
+
+        /**
          * A class validator that validates that a class only defines members that are appropriate for the sort of the generated class.
          */
         protected static class ValidatingClassVisitor extends ClassVisitor {
@@ -3952,11 +3992,9 @@ public interface TypeWriter<T> {
              * {@inheritDoc}
              */
             public ClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags) {
-                // TODO: context registry, disable? flags?
-                ContextRegistry contextRegistry = new ContextRegistry();
                 return writeTo(ValidatingClassVisitor.of(classVisitor, typeValidation),
                         typeInitializer,
-                        contextRegistry,
+                        new ContextRegistry(),
                         asmVisitorWrapper.mergeWriter(writerFlags),
                         asmVisitorWrapper.mergeReader(readerFlags));
             }
@@ -5560,46 +5598,6 @@ public interface TypeWriter<T> {
                         }
                     }
                 }
-
-                /**
-                 * A key to represent a unique signature.
-                 */
-                protected static class SignatureKey {
-
-                    /**
-                     * The represented internal name.
-                     */
-                    private final String internalName;
-
-                    /**
-                     * The represented descriptor.
-                     */
-                    private final String descriptor;
-
-                    /**
-                     * Creates a new signature key.
-                     *
-                     * @param internalName The represented internal name.
-                     * @param descriptor   The represented descriptor.
-                     */
-                    public SignatureKey(String internalName, String descriptor) {
-                        this.internalName = internalName;
-                        this.descriptor = descriptor;
-                    }
-
-                    @Override
-                    public boolean equals(@MaybeNull Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        SignatureKey that = (SignatureKey) other;
-                        return internalName.equals(that.internalName) && descriptor.equals(that.descriptor);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return 17 + internalName.hashCode() + 31 * descriptor.hashCode();
-                    }
-                }
             }
 
             /**
@@ -5908,14 +5906,14 @@ public interface TypeWriter<T> {
                         typeInitializer,
                         classFileVersion,
                         classFileVersion);
-                return asmVisitorWrapper.wrap(instrumentedType,
+                return new WrapperClassVisitor(asmVisitorWrapper.wrap(instrumentedType,
                         ValidatingClassVisitor.of(classVisitor, typeValidation),
                         implementationContext,
                         typePool,
                         fields,
                         methods,
                         asmVisitorWrapper.mergeWriter(writerFlags),
-                        asmVisitorWrapper.mergeReader(readerFlags)); // TODO: class visitor for elements.
+                        asmVisitorWrapper.mergeReader(readerFlags)), implementationContext);
             }
 
             @Override
@@ -6005,6 +6003,96 @@ public interface TypeWriter<T> {
                         annotationValueFilterFactory), classVisitor, annotationValueFilterFactory);
                 classVisitor.visitEnd();
                 return new UnresolvedType(classWriter.toByteArray(), implementationContext.getAuxiliaryTypes());
+            }
+
+            /**
+             * A class visitor that applies the subclass creation as a wrapper.
+             */
+            protected class WrapperClassVisitor extends MetadataAwareClassVisitor {
+
+                /**
+                 * The implementation context to apply.
+                 */
+                private final Implementation.Context.ExtractableView implementationContext;
+
+                /**
+                 * The declared types that have been visited.
+                 */
+                private final Set<String> declaredTypes = new HashSet<String>();
+
+                /**
+                 * The signatures of all fields that were explicitly visited.
+                 */
+                private final Set<SignatureKey> visitedFields = new HashSet<SignatureKey>();
+
+                /**
+                 * The signature of all methods that were explicitly visited.
+                 */
+                private final Set<SignatureKey> visitedMethods = new HashSet<SignatureKey>();
+
+                /**
+                 * Creates a new wrapper visitor.
+                 *
+                 * @param classVisitor          The class visitor being wrapped.
+                 * @param implementationContext The implementation context to apply.
+                 */
+                protected WrapperClassVisitor(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
+                    super(OpenedClassReader.ASM_API, classVisitor);
+                    this.implementationContext = implementationContext;
+                }
+
+                @Override
+                protected void onAfterAttributes() {
+                    typeAttributeAppender.apply(cv, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
+                }
+
+                @Override
+                protected void onVisitInnerClass(String internalName, @MaybeNull String outerName, @MaybeNull String innerName, int modifiers) {
+                    declaredTypes.add(internalName);
+                    super.onVisitInnerClass(internalName, outerName, innerName, modifiers);
+                }
+
+                @Override
+                protected FieldVisitor onVisitField(int modifiers, String name, String descriptor, @MaybeNull String signature, @MaybeNull Object value) {
+                    visitedFields.add(new SignatureKey(name, descriptor));
+                    return super.onVisitField(modifiers, name, descriptor, signature, value);
+                }
+
+                @Override
+                protected MethodVisitor onVisitMethod(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull String[] exception) {
+                    visitedMethods.add(new SignatureKey(internalName, descriptor));
+                    return super.onVisitMethod(modifiers, internalName, descriptor, signature, exception);
+                }
+
+                @Override
+                protected void onVisitEnd() {
+                    for (TypeDescription typeDescription : instrumentedType.getDeclaredTypes()) {
+                        if (!declaredTypes.contains(typeDescription.getInternalName())) {
+                            cv.visitInnerClass(typeDescription.getInternalName(),
+                                    typeDescription.isMemberType()
+                                            ? instrumentedType.getInternalName()
+                                            : NO_REFERENCE,
+                                    typeDescription.isAnonymousType()
+                                            ? NO_REFERENCE
+                                            : typeDescription.getSimpleName(),
+                                    typeDescription.getModifiers());
+                        }
+                    }
+                    for (FieldDescription fieldDescription : fields) {
+                        if (!visitedFields.contains(new SignatureKey(fieldDescription.getName(), fieldDescription.getDescriptor()))) {
+                            fieldPool.target(fieldDescription).apply(cv, annotationValueFilterFactory);
+                        }
+                    }
+                    for (MethodDescription methodDescription : instrumentedMethods) {
+                        if (!visitedMethods.contains(new SignatureKey(methodDescription.getInternalName(), methodDescription.getDescriptor()))) {
+                            methodPool.target(methodDescription).apply(cv, implementationContext, annotationValueFilterFactory);
+                        }
+                    }
+                    implementationContext.drain(new TypeInitializer.Drain.Default(instrumentedType,
+                            methodPool,
+                            annotationValueFilterFactory), cv, annotationValueFilterFactory);
+                    super.onVisitEnd();
+                }
             }
         }
 

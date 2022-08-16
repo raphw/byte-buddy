@@ -1404,7 +1404,9 @@ public interface DynamicType extends ClassFileLocator {
 
         /**
          * Wraps a class visitor with the configuration that is represented by this dynamic type builder, using a
-         * default {@link TypePool}.
+         * default {@link TypePool}. A wrapper might not apply all features that are normally applied by Byte
+         * Buddy, if those features require control of the class loading life cycle. Neither does a wrapper define
+         * auxiliary types. It is therefore recommended to use {@link Implementation.Context.Disabled}.
          *
          * @param classVisitor The class visitor to wrap.
          * @return A new class visitor that wraps a representation of this dynamic type.
@@ -1413,7 +1415,9 @@ public interface DynamicType extends ClassFileLocator {
 
         /**
          * Wraps a class visitor with the configuration that is represented by this dynamic type builder, using a
-         * default {@link TypePool}.
+         * default {@link TypePool}. A wrapper might not apply all features that are normally applied by Byte
+         * Buddy, if those features require control of the class loading life cycle. Neither does a wrapper define
+         * auxiliary types. It is therefore recommended to use {@link Implementation.Context.Disabled}.
          *
          * @param classVisitor The class visitor to wrap.
          * @param writerFlags  The ASM writer flags to apply.
@@ -1423,7 +1427,10 @@ public interface DynamicType extends ClassFileLocator {
         ClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags);
 
         /**
-         * Wraps a class visitor with the configuration that is represented by this dynamic type builder.
+         * Wraps a class visitor with the configuration that is represented by this dynamic type builder. A wrapper
+         * might not apply all features that are normally applied by Byte Buddy, if those features require control of
+         * the class loading life cycle. Neither does a wrapper define auxiliary types.  It is therefore recommended
+         * to use {@link Implementation.Context.Disabled}.
          *
          * @param classVisitor The class visitor to wrap.
          * @param typePool     A type pool that is used for computing stack map frames by the underlying class writer, if required.
@@ -1432,7 +1439,10 @@ public interface DynamicType extends ClassFileLocator {
         ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool);
 
         /**
-         * Wraps a class visitor with the configuration that is represented by this dynamic type builder.
+         * Wraps a class visitor with the configuration that is represented by this dynamic type builder. A wrapper
+         * might not apply all features that are normally applied by Byte Buddy, if those features require control
+         * of the class loading life cycle. Neither does a wrapper define auxiliary types.  It is therefore
+         * recommended to use {@link Implementation.Context.Disabled}.
          *
          * @param classVisitor The class visitor to wrap.
          * @param typePool     A type pool that is used for computing stack map frames by the underlying class writer, if required.

@@ -1513,6 +1513,37 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(auxiliaryTypes.get(TypeDescription.VOID).length, is(3));
     }
 
+    @Test
+    public void testWrapper() throws Exception {
+        TypeDescription typeDescription = createPlain()
+                .make()
+                .getTypeDescription();
+        ClassWriter classWriter = new ClassWriter(AsmVisitorWrapper.NO_FLAGS);
+        ClassVisitor classVisitor = createPlain()
+                .defineMethod(FOO, Object.class, Visibility.PUBLIC, Ownership.STATIC)
+                .throwing(Exception.class)
+                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .wrap(classWriter);
+        classVisitor.visit(Opcodes.V1_6,
+                Opcodes.ACC_PUBLIC,
+                typeDescription.getInternalName(),
+                typeDescription.getGenericSignature(),
+                typeDescription.getSuperClass().asErasure().getInternalName(),
+                typeDescription.getInterfaces().asErasures().toInternalNames());
+        classVisitor.visitEnd();
+        Class<?> type = new DynamicType.Default.Unloaded<Object>(typeDescription,
+                classWriter.toByteArray(),
+                LoadedTypeInitializer.NoOp.INSTANCE,
+                Collections.<DynamicType>emptyList(),
+                TypeResolutionStrategy.Passive.INSTANCE).load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        assertThat(type.getName(), is(typeDescription.getName()));
+        Method method = type.getDeclaredMethod(FOO);
+        assertThat(method.getReturnType(), CoreMatchers.<Class<?>>is(Object.class));
+        assertThat(method.getExceptionTypes(), is(new Class<?>[]{Exception.class}));
+        assertThat(method.getModifiers(), is(Modifier.PUBLIC | Modifier.STATIC));
+        assertThat(method.invoke(null), is((Object) FOO));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     public @interface SampleAnnotation {
 
