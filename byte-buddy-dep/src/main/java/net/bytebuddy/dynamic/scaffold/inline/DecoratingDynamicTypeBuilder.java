@@ -459,6 +459,11 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
         throw new UnsupportedOperationException("Cannot change record component for decorated type: " + instrumentedType);
     }
 
+    @Override
+    public ClassVisitor wrap(ClassVisitor classVisitor) {
+        return wrap(classVisitor, TypePool.ClassLoading.ofSystemLoader());
+    }
+
     /**
      * {@inheritDoc}
      */
