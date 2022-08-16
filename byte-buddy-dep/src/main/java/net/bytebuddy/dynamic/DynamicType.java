@@ -3956,12 +3956,63 @@ public interface DynamicType extends ClassFileLocator {
             }
 
             /**
+             * A dynamic type writer that uses a {@link TypeWriter} to create a dynamic type.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
+            public abstract static class UsingTypeWriter<U> extends AbstractBase<U> {
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ClassVisitor wrap(ClassVisitor classVisitor) {
+                    return toTypeWriter().wrap(classVisitor);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool) {
+                    return toTypeWriter(typePool).wrap(classVisitor);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public DynamicType.Unloaded<U> make(TypeResolutionStrategy typeResolutionStrategy) {
+                    return toTypeWriter().make(typeResolutionStrategy.resolve());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public DynamicType.Unloaded<U> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
+                    return toTypeWriter(typePool).make(typeResolutionStrategy.resolve());
+                }
+
+                /**
+                 * Creates a {@link TypeWriter} without an explicitly specified {@link TypePool}.
+                 *
+                 * @return An appropriate {@link TypeWriter}.
+                 */
+                protected abstract TypeWriter<U> toTypeWriter();
+
+                /**
+                 * Creates a {@link TypeWriter} given the specified {@link TypePool}.
+                 *
+                 * @param typePool The {@link TypePool} to use.
+                 * @return An appropriate {@link TypeWriter}.
+                 */
+                protected abstract TypeWriter<U> toTypeWriter(TypePool typePool);
+            }
+
+            /**
              * An adapter implementation of a dynamic type builder.
              *
              * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            public abstract static class Adapter<U> extends AbstractBase<U> {
+            public abstract static class Adapter<U> extends UsingTypeWriter<U> {
 
                 /**
                  * The instrumented type to be created.

@@ -61,7 +61,7 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
  * @param <T> A loaded type that the built type is guaranteed to be a subclass of.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
+public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase.UsingTypeWriter<T> {
 
     /**
      * The instrumented type to decorate.
@@ -454,7 +454,9 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
         throw new UnsupportedOperationException("Cannot define record component for decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public RecordComponentDefinition<T> recordComponent(LatentMatcher<? super RecordComponentDescription> matcher) {
         throw new UnsupportedOperationException("Cannot change record component for decorated type: " + instrumentedType);
     }
@@ -479,7 +481,17 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                 classFileLocator);
     }
 
-    public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool) {
+    /**
+     * {@inheritDoc}
+     */
+    protected TypeWriter<T> toTypeWriter() {
+        return toTypeWriter(TypePool.Empty.INSTANCE);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected TypeWriter<T> toTypeWriter(TypePool typePool) {
         return TypeWriter.Default.<T>forDecoration(instrumentedType,
                 classFileVersion,
                 auxiliaryTypes,
@@ -496,37 +508,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                 typeValidation,
                 classWriterStrategy,
                 typePool,
-                classFileLocator).wrap(classVisitor);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy) {
-        return make(typeResolutionStrategy, TypePool.Empty.INSTANCE);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
-        return TypeWriter.Default.<T>forDecoration(instrumentedType,
-                classFileVersion,
-                auxiliaryTypes,
-                CompoundList.of(methodGraphCompiler.compile((TypeDefinition) instrumentedType)
-                        .listNodes()
-                        .asMethodList()
-                        .filter(not(ignoredMethods.resolve(instrumentedType))), instrumentedType.getDeclaredMethods().filter(not(isVirtual()))),
-                typeAttributeAppender,
-                asmVisitorWrapper,
-                annotationValueFilterFactory,
-                annotationRetention,
-                auxiliaryTypeNamingStrategy,
-                implementationContextFactory,
-                typeValidation,
-                classWriterStrategy,
-                typePool,
-                classFileLocator).make(typeResolutionStrategy.resolve());
+                classFileLocator);
     }
 
     /**

@@ -201,28 +201,14 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     /**
      * {@inheritDoc}
      */
-    public ClassVisitor wrap(ClassVisitor classVisitor) {
-        return wrap(classVisitor, TypePool.ClassLoading.ofSystemLoader()); // Mimics the default behavior of ASM for least surprise.
+    protected TypeWriter<T> toTypeWriter() {
+        return toTypeWriter(TypePool.ClassLoading.ofSystemLoader()); // Mimics the default behavior of ASM for least surprise.
     }
 
     /**
      * {@inheritDoc}
      */
-    public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool) {
-        throw new UnsupportedOperationException("A newly created type cannot be created via a wrapper");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy) {
-        return make(typeResolutionStrategy, TypePool.ClassLoading.ofSystemLoader()); // Mimics the default behavior of ASM for least surprise.
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
+    protected TypeWriter<T> toTypeWriter(TypePool typePool) {
         MethodRegistry.Compiled methodRegistry = constructorStrategy
                 .inject(instrumentedType, this.methodRegistry)
                 .prepare(applyConstructorStrategy(instrumentedType),
@@ -244,7 +230,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 implementationContextFactory,
                 typeValidation,
                 classWriterStrategy,
-                typePool).make(typeResolutionStrategy.resolve());
+                typePool);
     }
 
     /**
