@@ -1402,9 +1402,45 @@ public interface DynamicType extends ClassFileLocator {
         @SuppressWarnings("overloads")
         RecordComponentDefinition<T> recordComponent(LatentMatcher<? super RecordComponentDescription> matcher);
 
+        /**
+         * Wraps a class visitor with the configuration that is represented by this dynamic type builder, using a
+         * default {@link TypePool}.
+         *
+         * @param classVisitor The class visitor to wrap.
+         * @return A new class visitor that wraps a representation of this dynamic type.
+         */
         ClassVisitor wrap(ClassVisitor classVisitor);
 
+        /**
+         * Wraps a class visitor with the configuration that is represented by this dynamic type builder, using a
+         * default {@link TypePool}.
+         *
+         * @param classVisitor The class visitor to wrap.
+         * @param writerFlags  The ASM writer flags to apply.
+         * @param readerFlags  The ASM reader flags to apply.
+         * @return A new class visitor that wraps a representation of this dynamic type.
+         */
+        ClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags);
+
+        /**
+         * Wraps a class visitor with the configuration that is represented by this dynamic type builder.
+         *
+         * @param classVisitor The class visitor to wrap.
+         * @param typePool     A type pool that is used for computing stack map frames by the underlying class writer, if required.
+         * @return A new class visitor that wraps a representation of this dynamic type.
+         */
         ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool);
+
+        /**
+         * Wraps a class visitor with the configuration that is represented by this dynamic type builder.
+         *
+         * @param classVisitor The class visitor to wrap.
+         * @param typePool     A type pool that is used for computing stack map frames by the underlying class writer, if required.
+         * @param writerFlags  The ASM writer flags to apply.
+         * @param readerFlags  The ASM reader flags to apply.
+         * @return A new class visitor that wraps a representation of this dynamic type.
+         */
+        ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags);
 
         /**
          * <p>
@@ -3662,6 +3698,20 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * {@inheritDoc}
              */
+            public ClassVisitor wrap(ClassVisitor classVisitor) {
+                return wrap(classVisitor, AsmVisitorWrapper.NO_FLAGS, AsmVisitorWrapper.NO_FLAGS);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool) {
+                return wrap(classVisitor, typePool, AsmVisitorWrapper.NO_FLAGS, AsmVisitorWrapper.NO_FLAGS);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public Unloaded<S> make(TypePool typePool) {
                 return make(TypeResolutionStrategy.Passive.INSTANCE, typePool);
             }
@@ -3904,12 +3954,18 @@ public interface DynamicType extends ClassFileLocator {
                     return materialize().recordComponent(matcher);
                 }
 
-                public ClassVisitor wrap(ClassVisitor classVisitor) {
-                    return materialize().wrap(classVisitor);
+                /**
+                 * {@inheritDoc}
+                 */
+                public ClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+                    return materialize().wrap(classVisitor, writerFlags, readerFlags);
                 }
 
-                public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool) {
-                    return materialize().wrap(classVisitor, typePool);
+                /**
+                 * {@inheritDoc}
+                 */
+                public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
+                    return materialize().wrap(classVisitor, typePool, writerFlags, readerFlags);
                 }
 
                 /**
@@ -3965,15 +4021,15 @@ public interface DynamicType extends ClassFileLocator {
                 /**
                  * {@inheritDoc}
                  */
-                public ClassVisitor wrap(ClassVisitor classVisitor) {
-                    return toTypeWriter().wrap(classVisitor);
+                public ClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+                    return toTypeWriter().wrap(classVisitor, writerFlags, readerFlags);
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool) {
-                    return toTypeWriter(typePool).wrap(classVisitor);
+                public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
+                    return toTypeWriter(typePool).wrap(classVisitor, writerFlags, readerFlags);
                 }
 
                 /**

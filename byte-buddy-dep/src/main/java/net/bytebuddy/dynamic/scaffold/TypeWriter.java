@@ -94,7 +94,15 @@ public interface TypeWriter<T> {
      */
     DynamicType.Unloaded<T> make(TypeResolutionStrategy.Resolved typeResolver);
 
-    ClassVisitor wrap(ClassVisitor classVisitor);
+    /**
+     * Wraps another ASM class visitor with a visitor that represents this ASM class writer.
+     *
+     * @param classVisitor The class visitor to wrap.
+     * @param writerFlags  The ASM writer flags to consider.
+     * @param readerFlags  The ASM reader flags to consider.
+     * @return The supplied class visitor wrapped by this type writer.
+     */
+    ClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags);
 
     /**
      * An field pool that allows a lookup for how to implement a field.
@@ -3940,14 +3948,17 @@ public interface TypeWriter<T> {
                 this.classFileLocator = classFileLocator;
             }
 
-            public ClassVisitor wrap(ClassVisitor classVisitor) {
+            /**
+             * {@inheritDoc}
+             */
+            public ClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags) {
                 // TODO: context registry, disable? flags?
                 ContextRegistry contextRegistry = new ContextRegistry();
                 return writeTo(ValidatingClassVisitor.of(classVisitor, typeValidation),
                         typeInitializer,
                         contextRegistry,
-                        asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS),
-                        asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS));
+                        asmVisitorWrapper.mergeWriter(writerFlags),
+                        asmVisitorWrapper.mergeReader(readerFlags));
             }
 
             @Override
@@ -5888,20 +5899,23 @@ public interface TypeWriter<T> {
                 this.methodPool = methodPool;
             }
 
-            public ClassVisitor wrap(ClassVisitor classVisitor) {
+            /**
+             * {@inheritDoc}
+             */
+            public ClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags) {
                 Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
                         auxiliaryTypeNamingStrategy,
                         typeInitializer,
                         classFileVersion,
-                        classFileVersion); // TODO: should be disabled, limited?
+                        classFileVersion);
                 return asmVisitorWrapper.wrap(instrumentedType,
                         ValidatingClassVisitor.of(classVisitor, typeValidation),
                         implementationContext,
                         typePool,
                         fields,
                         methods,
-                        asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS),
-                        asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS)); // TODO: flags?
+                        asmVisitorWrapper.mergeWriter(writerFlags),
+                        asmVisitorWrapper.mergeReader(readerFlags)); // TODO: class visitor for elements.
             }
 
             @Override
