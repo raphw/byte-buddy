@@ -15,17 +15,23 @@
  */
 package net.bytebuddy.build.gradle.android.connector.adapter.current;
 
-import com.android.build.api.artifact.MultipleArtifact;
+import com.android.build.api.instrumentation.InstrumentationScope;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.Variant;
 import com.android.build.gradle.AppExtension;
 import com.android.build.gradle.BaseExtension;
+import com.android.build.gradle.api.ApplicationVariant;
+import kotlin.Unit;
 import net.bytebuddy.build.gradle.android.connector.adapter.TransformationAdapter;
+import net.bytebuddy.build.gradle.android.connector.adapter.current.asm.ByteBuddyAsmClassVisitorFactory;
 import net.bytebuddy.build.gradle.android.connector.adapter.current.task.TransformAppTask;
 import net.bytebuddy.build.gradle.android.transformation.AndroidTransformation;
+import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
+
+import java.util.Objects;
 
 /**
  * Adapter for host projects using Android Gradle plugin version >= 7.2
@@ -36,22 +42,37 @@ public class CurrentAdapter implements TransformationAdapter {
     private final AndroidComponentsExtension<?, ?, ?> androidComponentsExtension;
     private final Configuration byteBuddyDependenciesConfiguration;
     private final TaskContainer tasks;
+    private final Project project;
 
-    public CurrentAdapter(BaseExtension androidExtension, AndroidComponentsExtension<?, ?, ?> androidComponentsExtension, Configuration byteBuddyDependenciesConfiguration, TaskContainer tasks) {
+    public CurrentAdapter(BaseExtension androidExtension, AndroidComponentsExtension<?, ?, ?> androidComponentsExtension, Configuration byteBuddyDependenciesConfiguration, TaskContainer tasks, Project project) {
         this.androidExtension = androidExtension;
         this.androidComponentsExtension = androidComponentsExtension;
         this.byteBuddyDependenciesConfiguration = byteBuddyDependenciesConfiguration;
         this.tasks = tasks;
+        this.project = project;
     }
 
     @Override
     public void adapt(AndroidTransformation transformation) {
         androidComponentsExtension.onVariants(androidComponentsExtension.selector().all(), variant -> {
-            TaskProvider<TransformAppTask> taskProvider = registerByteBuddyTransformTask(variant, transformation);
-            variant.getArtifacts().use(taskProvider)
-                    .wiredWith(TransformAppTask::getAllClasses, TransformAppTask::getOutput)
-                    .toTransform(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE);
+            variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, params -> {
+                params.getByteBuddyClasspath().from(byteBuddyDependenciesConfiguration);
+                params.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
+                params.getClasspath().from(project.provider(() -> getRuntimeClasspath(variant.getName())));
+                return Unit.INSTANCE;
+            });
         });
+    }
+
+    private Configuration getRuntimeClasspath(String variantName) {
+        AppExtension extension = (AppExtension) androidExtension;
+
+        for (ApplicationVariant applicationVariant : extension.getApplicationVariants()) {
+            if (Objects.equals(variantName, applicationVariant.getName())) {
+                return applicationVariant.getRuntimeConfiguration();
+            }
+        }
+        throw new RuntimeException("No runtimeconfig found");
     }
 
     private TaskProvider<TransformAppTask> registerByteBuddyTransformTask(

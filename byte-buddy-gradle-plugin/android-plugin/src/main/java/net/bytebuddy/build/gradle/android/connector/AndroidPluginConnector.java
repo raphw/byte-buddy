@@ -50,23 +50,18 @@ public class AndroidPluginConnector {
     }
 
     private TransformationAdapter getAdapter(BaseExtension androidExtension) {
-        // Using always legacy adapter since the new Android API doesn't support instrumenting libraries. There is
-        // an issue created on that, hopefully when that's sorted, we would be able to remove this workaround.
-        // The issue: https://issuetracker.google.com/issues/239815193
-        return createLegacyAdapter(androidExtension);
-
-//        AndroidComponentsExtension<?, ?, ?> androidComponentsExtension = findComponentsExtension();
-//        if (androidComponentsExtension == null) {
-//            return createLegacyAdapter(androidExtension);
-//        } else {
-//            AndroidPluginVersion currentVersion = androidComponentsExtension.getPluginVersion();
-//            AndroidPluginVersion versionWithNewApi = new AndroidPluginVersion(7, 2);
-//            if (Compare.of(currentVersion).isLessThan(versionWithNewApi)) {
-//                return createLegacyAdapter(androidExtension);
-//            } else {
-//                return createCurrentAdapter(androidComponentsExtension);
-//            }
-//    }
+        AndroidComponentsExtension<?, ?, ?> androidComponentsExtension = findComponentsExtension();
+        if (androidComponentsExtension == null) {
+            return createLegacyAdapter(androidExtension);
+        } else {
+            AndroidPluginVersion currentVersion = androidComponentsExtension.getPluginVersion();
+            AndroidPluginVersion versionWithNewApi = new AndroidPluginVersion(7, 2);
+            if (Compare.of(currentVersion).isLessThan(versionWithNewApi)) {
+                return createLegacyAdapter(androidExtension);
+            } else {
+                return createCurrentAdapter(androidComponentsExtension);
+            }
+        }
     }
 
     private CurrentAdapter createCurrentAdapter(
@@ -76,8 +71,8 @@ public class AndroidPluginConnector {
                 androidExtension,
                 androidComponentsExtension,
                 bytebuddyDependenciesConfiguration,
-                androidProject.getTasks()
-        );
+                androidProject.getTasks(),
+                androidProject);
     }
 
     private LegacyAdapter createLegacyAdapter(
