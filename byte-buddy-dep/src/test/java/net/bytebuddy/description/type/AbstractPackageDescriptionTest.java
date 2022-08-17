@@ -75,4 +75,10 @@ public abstract class AbstractPackageDescriptionTest {
         assertThat(describe(type).isDefault(), is(true));
         assertThat(describe(type).getName(), is(NamedElement.EMPTY_NAME));
     }
+
+    @Test
+    public void testNoPackage() {
+        assertThat(describe(boolean.class), nullValue(PackageDescription.class));
+        assertThat(describe(Object[].class), nullValue(PackageDescription.class));
+    }
 }
