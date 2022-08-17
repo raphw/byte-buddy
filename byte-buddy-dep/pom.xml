@@ -5,7 +5,7 @@
     <parent>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
-        <version>1.12.13-SNAPSHOT</version>
+        <version>1.12.14-SNAPSHOT</version>
     </parent>
 
     <!--
@@ -127,7 +127,7 @@
             <plugin>
                 <groupId>net.bytebuddy</groupId>
                 <artifactId>byte-buddy-maven-plugin</artifactId>
-                <version>1.12.12</version>
+                <version>1.12.13</version>
                 <executions>
                     <execution>
                         <phase>compile</phase>
@@ -142,7 +142,7 @@
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.12.12</version>
+                                    <version>1.12.13</version>
                                     <plugin>net.bytebuddy.build.HashCodeAndEqualsPlugin$WithNonNullableFields</plugin>
                                     <arguments>
                                         <argument>
@@ -154,13 +154,13 @@
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.12.12</version>
+                                    <version>1.12.13</version>
                                     <plugin>net.bytebuddy.build.CachedReturnPlugin</plugin>
                                 </transformation>
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.12.12</version>
+                                    <version>1.12.13</version>
                                     <plugin>net.bytebuddy.build.AccessControllerPlugin</plugin>
                                     <arguments>
                                         <argument>
@@ -172,13 +172,13 @@
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.12.12</version>
+                                    <version>1.12.13</version>
                                     <plugin>net.bytebuddy.build.DispatcherAnnotationPlugin</plugin>
                                 </transformation>
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.12.12</version>
+                                    <version>1.12.13</version>
                                     <plugin>net.bytebuddy.build.RepeatedAnnotationPlugin</plugin>
                                 </transformation>
                             </transformations>
@@ -187,6 +187,27 @@
                 </executions>
             </plugin>
         </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${version.plugin.javadoc}</version>
+                    <configuration>
+                        <offlineLinks>
+                            <!-- Use previously downloaded 'package-list' file as substitute for published 'element-list' file. -->
+                            <link>
+                                <url>https://javadoc.io/doc/org.ow2.asm/asm/${version.asm}</url>
+                                <location>${project.basedir}/target/javadoc-lists/asm-${version.asm}</location>
+                            </link>
+                        </offlineLinks>
+                        <links>
+                            <link>https://javadoc.io/doc/net.java.dev.jna/jna/${version.jna}</link>
+                        </links>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
     <profiles>
@@ -198,10 +219,11 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- Zulu sometimes yields a segfault when processing annotation descriptions on some OpenJDK 7. -->
+                    <!-- Avoids occasional segfault. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${version.plugin.surefire}</version>
                         <configuration>
                             <excludes>
                                 <exclude>net.bytebuddy.agent.builder.AgentBuilderDefaultApplicationTest</exclude>
@@ -220,13 +242,18 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- On recent Java 11, this test sometimes crashes the JIT compiler. -->
+                    <!-- Avoids occasional segfault. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${version.plugin.surefire}</version>
                         <configuration>
                             <excludes>
                                 <exclude>net.bytebuddy.description.type.TypeDescriptionArrayProjectionTest</exclude>
+                                <exclude>net.bytebuddy.description.annotation.AnnotationDescriptionForLoadedAnnotationTest</exclude>
+                                <exclude>net.bytebuddy.description.annotation.AnnotationDescriptionForLoadedAnnotationDifferentClassLoaderTest</exclude>
+                                <exclude>net.bytebuddy.description.annotation.AnnotationDescriptionLatentTest</exclude>
+                                <exclude>net.bytebuddy.pool.TypePoolDefaultAnnotationDescriptionTest</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
@@ -234,31 +261,31 @@
             </build>
         </profile>
         <profile>
-            <id>japicmp-check</id>
+            <id>extras</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
-                <jdk>[1.7,)</jdk>
             </activation>
             <build>
                 <plugins>
-                    <!-- Check for semantic versioning. -->
+                    <!-- Download 'element-list' file which is published by newer javadoc versions, store as 'package-list' file. -->
                     <plugin>
-                        <groupId>com.github.siom79.japicmp</groupId>
-                        <artifactId>japicmp-maven-plugin</artifactId>
-                        <version>${version.plugin.japicmp}</version>
-                        <configuration>
-                            <skip>${japicmp.skip}</skip>
-                            <parameter>
-                                <oldVersionPattern>\d+\.\d+\.\d+</oldVersionPattern>
-                                <ignoreMissingClasses>true</ignoreMissingClasses>
-                            </parameter>
-                        </configuration>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>${version.plugin.antrun}</version>
                         <executions>
                             <execution>
-                                <phase>verify</phase>
+                                <id>download-javadoc-lists</id>
+                                <phase>process-resources</phase>
                                 <goals>
-                                    <goal>cmp</goal>
+                                    <goal>run</goal>
                                 </goals>
+                                <configuration>
+                                    <skip>${javadoc.download.skip}</skip>
+                                    <target>
+                                        <mkdir dir="${project.basedir}/target/javadoc-lists/asm-${version.asm}" />
+                                        <get src="https://javadoc.io/doc/org.ow2.asm/asm/${version.asm}/element-list" dest="${project.basedir}/target/javadoc-lists/asm-${version.asm}/package-list" skipexisting="true" />
+                                    </target>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
@@ -369,7 +396,7 @@
                                 <configuration>
                                     <target>
                                         <copy todir="${project.basedir}/src/test/precompiled-4">
-                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v4/*.class"/>
+                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v4/*.class" />
                                         </copy>
                                     </target>
                                 </configuration>
@@ -464,7 +491,7 @@
                                 <configuration>
                                     <target>
                                         <copy todir="${project.basedir}/src/test/precompiled-4-jsr14">
-                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v4jsr14/*.class"/>
+                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v4jsr14/*.class" />
                                         </copy>
                                     </target>
                                 </configuration>
@@ -550,7 +577,7 @@
                                 <configuration>
                                     <target>
                                         <copy todir="${project.basedir}/src/main/precompiled-6">
-                                            <fileset dir="${project.build.outputDirectory}" includes="net/bytebuddy/build/CachedReturnPlugin$Advice$*.class"/>
+                                            <fileset dir="${project.build.outputDirectory}" includes="net/bytebuddy/build/CachedReturnPlugin$Advice$*.class" />
                                         </copy>
                                     </target>
                                 </configuration>
@@ -564,7 +591,7 @@
                                 <configuration>
                                     <target>
                                         <copy todir="${project.basedir}/src/test/precompiled-6">
-                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v6/*.class"/>
+                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v6/*.class" />
                                         </copy>
                                     </target>
                                 </configuration>
@@ -642,7 +669,7 @@
                                 <configuration>
                                     <target>
                                         <copy todir="${project.basedir}/src/test/precompiled-7">
-                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v7/*.class"/>
+                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v7/*.class" />
                                         </copy>
                                     </target>
                                 </configuration>
@@ -716,7 +743,7 @@
                                 <configuration>
                                     <target>
                                         <copy todir="${project.basedir}/src/test/precompiled-8">
-                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v8/*.class"/>
+                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v8/*.class" />
                                         </copy>
                                     </target>
                                 </configuration>
@@ -810,7 +837,7 @@
                                 <configuration>
                                     <target>
                                         <copy todir="${project.basedir}/src/test/precompiled-8-parameters">
-                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v8parameters/*.class"/>
+                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v8parameters/*.class" />
                                         </copy>
                                     </target>
                                 </configuration>
@@ -884,7 +911,7 @@
                                 <configuration>
                                     <target>
                                         <copy todir="${project.basedir}/src/test/precompiled-11">
-                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v11/*.class"/>
+                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v11/*.class" />
                                         </copy>
                                     </target>
                                 </configuration>
@@ -958,7 +985,7 @@
                                 <configuration>
                                     <target>
                                         <copy todir="${project.basedir}/src/test/precompiled-16">
-                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v16/*.class"/>
+                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v16/*.class" />
                                         </copy>
                                     </target>
                                 </configuration>
@@ -1032,7 +1059,7 @@
                                 <configuration>
                                     <target>
                                         <copy todir="${project.basedir}/src/test/precompiled-17">
-                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v17/*.class"/>
+                                            <fileset dir="${project.build.testOutputDirectory}" includes="net/bytebuddy/test/precompiled/v17/*.class" />
                                         </copy>
                                     </target>
                                 </configuration>

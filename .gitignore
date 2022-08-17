@@ -16,6 +16,7 @@ log/
 target/
 site/
 maven-wrapper.jar
+maven-checksum-extension.jar
 
 # Gradle
 .gradle/
@@ -31,5 +32,12 @@ dependency-reduced-pom.xml
 # Versions plugin
 pom.xml.versionsBackup
 
+# Release plugin
+pom.xml.releaseBackup
+release.properties
+
 # Android
 */gen/*
+
+# JVM
+.attach*

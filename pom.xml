@@ -5,7 +5,7 @@
 
     <groupId>net.bytebuddy</groupId>
     <artifactId>byte-buddy-parent</artifactId>
-    <version>1.12.13-SNAPSHOT</version>
+    <version>1.12.14-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -36,8 +36,13 @@
       - org.pitest:pitest-maven:mutationCoverage - Runs mutation tests (all modules)
       - spotbugs:spotbugs spotbugs:gui - Runs spotbugs and shows a report in a graphical interface (module specific)
       - com.github.ferstl:jitwatch-jarscan-maven-plugin:scan - Finds all methods above HotSpot's inlining threshold
-      - clirr:check - Checks for binary changes in the API
       - versions:update-properties - Automated dependency version update.
+
+      At last, two pseudo-profiles are available that allow for handling checksum data for all downloaded artifacts.
+      These profiles are only effective if the Maven wrapper is used, which is configured to install the Maven
+      checksum extension:
+      - checksum-collect: collects checksums for all used artifacts.
+      - checksum-enforce: enforces that all downloaded artifacts represent a known checksum
     -->
 
     <modules>
@@ -75,8 +80,8 @@
         <version.plugin.deploy>3.0.0</version.plugin.deploy>
         <version.plugin.staging>1.6.13</version.plugin.staging>
         <version.plugin.versions>2.11.0</version.plugin.versions>
-        <version.plugin.javadoc>3.3.1</version.plugin.javadoc>
-        <version.plugin.source>3.0.1</version.plugin.source>
+        <version.plugin.javadoc>3.4.0</version.plugin.javadoc>
+        <version.plugin.source>3.2.1</version.plugin.source>
         <version.plugin.shade>3.3.0</version.plugin.shade>
         <version.plugin.gpg>3.0.1</version.plugin.gpg>
         <version.plugin.jxr>3.2.0</version.plugin.jxr>
@@ -87,6 +92,9 @@
         <version.plugin.plugin>3.6.4</version.plugin.plugin>
         <version.plugin.release>2.5.3</version.plugin.release>
         <version.plugin.resources>3.2.0</version.plugin.resources>
+        <version.plugin.assembly>3.4.2</version.plugin.assembly>
+        <version.plugin.dependency>3.3.0</version.plugin.dependency>
+        <version.plugin.help>3.2.0</version.plugin.help>
         <version.plugin.surefire>2.22.2</version.plugin.surefire>
         <version.plugin.pitest>1.9.2</version.plugin.pitest>
         <version.plugin.animal-sniffer>1.21</version.plugin.animal-sniffer>
@@ -95,7 +103,6 @@
         <version.plugin.coveralls>4.3.0</version.plugin.coveralls>
         <version.plugin.checkstyle>3.1.2</version.plugin.checkstyle>
         <version.plugin.jitwatch>1.1</version.plugin.jitwatch>
-        <version.plugin.clirr>2.8</version.plugin.clirr>
         <version.plugin.spotbugs>4.2.3</version.plugin.spotbugs>
         <version.plugin.modulemaker>1.9</version.plugin.modulemaker>
         <version.plugin.license>3.0</version.plugin.license>
@@ -110,8 +117,9 @@
         <version.javassist>3.29.0-GA</version.javassist>
         <spotbugs.skip>false</spotbugs.skip>
         <jacoco.skip>false</jacoco.skip>
-        <japicmp.skip>true</japicmp.skip>
+        <japicmp.skip>false</japicmp.skip>
         <modulemaker.skip>false</modulemaker.skip>
+        <javadoc.download.skip>false</javadoc.download.skip>
         <repository.url>git@github.com:raphw/byte-buddy.git</repository.url>
     </properties>
 
@@ -146,6 +154,7 @@
         <connection>scm:git:${repository.url}</connection>
         <developerConnection>scm:git:${repository.url}</developerConnection>
         <url>${repository.url}</url>
+        <tag>HEAD</tag>
     </scm>
 
     <dependencies>
@@ -245,12 +254,6 @@
                 <artifactId>jitwatch-jarscan-maven-plugin</artifactId>
                 <version>${version.plugin.jitwatch}</version>
             </plugin>
-            <!-- Enable scanning for binary changes between releases -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>clirr-maven-plugin</artifactId>
-                <version>${version.plugin.clirr}</version>
-            </plugin>
             <!-- Add license headers to all files. -->
             <plugin>
                 <groupId>com.mycila</groupId>
@@ -268,7 +271,7 @@
                     </properties>
                     <includes>
                         <include>**/main/java/**/*.java</include>
-                        <include>**/precompiled/java/**/*.java</include>
+                        <include>**/main/java-*/**/*.java</include>
                         <include>**/main/c/**/*.c</include>
                     </includes>
                     <strictCheck>true</strictCheck>
@@ -376,6 +379,16 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${version.plugin.javadoc}</version>
+                    <configuration>
+                        <source>${sourcecode.main.version}</source>
+                        <failOnWarnings>true</failOnWarnings>
+                        <detectOfflineLinks>false</detectOfflineLinks>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-plugin-plugin</artifactId>
                     <version>${version.plugin.plugin}</version>
                     <dependencies>
@@ -390,6 +403,21 @@
                             <version>${version.asm}</version>
                         </dependency>
                     </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>${version.plugin.assembly}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>${version.plugin.dependency}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-help-plugin</artifactId>
+                    <version>${version.plugin.help}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -443,23 +471,26 @@
                 <version.plugin.exec>1.5.0</version.plugin.exec>
                 <version.plugin.plugin>3.5.2</version.plugin.plugin>
                 <version.plugin.resources>3.0.2</version.plugin.resources>
+                <version.plugin.assembly>2.6</version.plugin.assembly>
+                <version.plugin.dependency>2.10</version.plugin.dependency>
+                <version.plugin.help>2.2</version.plugin.help>
                 <version.plugin.animal-sniffer>1.16</version.plugin.animal-sniffer>
                 <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
                 <version.plugin.jacoco>0.7.9</version.plugin.jacoco>
                 <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
                 <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
-                <version.plugin.clirr>2.7</version.plugin.clirr>
                 <version.plugin.license>3.0</version.plugin.license>
                 <version.plugin.shade>3.1.1</version.plugin.shade>
                 <version.plugin.surefire>2.22.1</version.plugin.surefire>
                 <version.plugin.javadoc>2.10.4</version.plugin.javadoc>
                 <version.plugin.antrun>1.8</version.plugin.antrun>
-                <version.checkstyle>6.2</version.checkstyle>
+                <version.checkstyle>6.1.1</version.checkstyle>
                 <version.jmh>1.16</version.jmh>
                 <version.cglib>3.2.12</version.cglib>
                 <version.javassist>3.22.0-GA</version.javassist>
                 <modulemaker.skip>true</modulemaker.skip>
                 <spotbugs.skip>true</spotbugs.skip>
+                <javadoc.download.skip>true</javadoc.download.skip>
             </properties>
             <modules>
                 <module>byte-buddy</module>
@@ -516,9 +547,10 @@
                 <version.plugin.buildhelper>3.2.0</version.plugin.buildhelper>
                 <version.plugin.site>3.11.0</version.plugin.site>
                 <version.plugin.exec>3.0.0</version.plugin.exec>
+                <version.plugin.assembly>3.3.0</version.plugin.assembly>
                 <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
                 <version.plugin.javadoc>3.2.0</version.plugin.javadoc>
-                <version.plugin.animal-sniffer>1.19</version.plugin.animal-sniffer>
+                <version.plugin.animal-sniffer>1.17</version.plugin.animal-sniffer>
                 <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
                 <version.plugin.jacoco>0.7.9</version.plugin.jacoco>
                 <version.plugin.checkstyle>3.0.0</version.plugin.checkstyle>
@@ -529,6 +561,7 @@
                 <version.cglib>3.2.12</version.cglib>
                 <version.javassist>3.23.2-GA</version.javassist>
                 <spotbugs.skip>true</spotbugs.skip>
+                <javadoc.download.skip>true</javadoc.download.skip>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 9 JVMs. -->
@@ -884,14 +917,6 @@
                                 </goals>
                             </execution>
                         </executions>
-                        <configuration>
-                            <source>${sourcecode.main.version}</source>
-                            <detectJavaApiLink>true</detectJavaApiLink>
-                            <links>
-                                <link>https://javadoc.io/doc/org.ow2.asm/asm/${version.asm}</link>
-                                <link>https://javadoc.io/doc/net.java.dev.jna/jna/${version.jna}</link>
-                            </links>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -933,9 +958,6 @@
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
-            <properties>
-                <japicmp.skip>false</japicmp.skip>
-            </properties>
             <build>
                 <plugins>
                     <!-- Check style on build. -->
@@ -1065,6 +1087,96 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <!-- Avoid violating semantic versioning. -->
+                    <plugin>
+                        <groupId>com.github.siom79.japicmp</groupId>
+                        <artifactId>japicmp-maven-plugin</artifactId>
+                        <version>${version.plugin.japicmp}</version>
+                        <executions>
+                            <execution>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>cmp</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${japicmp.skip}</skip>
+                                    <newVersion>
+                                        <file>
+                                            <path>${project.build.directory}/${project.artifactId}-${project.version}.jar</path>
+                                        </file>
+                                    </newVersion>
+                                    <parameter>
+                                        <oldVersionPattern>\d+\.\d+\.\d+</oldVersionPattern>
+                                        <ignoreMissingClasses>true</ignoreMissingClasses>
+                                        <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
+                                        <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
+                                    </parameter>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- Pseudo profiles for checksum collection (only available via Maven wrapper). -->
+        <profile>
+            <id>checksum-collect</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>${version.plugin.antrun}</version>
+                        <inherited>false</inherited>
+                        <executions>
+                            <execution>
+                                <id>checksum-collect</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <echo level="info" message="Checksum collection is enabled (only if using mvnw)."/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- Pseudo profiles for checksum collection (only available via Maven wrapper). -->
+        <profile>
+            <id>checksum-enforce</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>${version.plugin.antrun}</version>
+                        <inherited>false</inherited>
+                        <executions>
+                            <execution>
+                                <id>checksum-enforce</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <echo level="info" message="Checksum enforcement is enabled (only if using mvnw)."/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
@@ -1085,6 +1197,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>byte-buddy-agent</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>byte-buddy-benchmark</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

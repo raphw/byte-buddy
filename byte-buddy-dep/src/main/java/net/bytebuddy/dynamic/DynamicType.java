@@ -41,6 +41,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.FileSystem;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.io.*;
@@ -59,7 +60,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * Note that the {@link TypeDescription}s will represent their
  * unloaded forms and therefore differ from the loaded types, especially with regards to annotations.
  */
-public interface DynamicType {
+public interface DynamicType extends ClassFileLocator {
 
     /**
      * <p>
@@ -1400,6 +1401,10 @@ public interface DynamicType {
          */
         @SuppressWarnings("overloads")
         RecordComponentDefinition<T> recordComponent(LatentMatcher<? super RecordComponentDescription> matcher);
+
+        ClassVisitor wrap(ClassVisitor classVisitor);
+
+        ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool);
 
         /**
          * <p>
@@ -3899,6 +3904,14 @@ public interface DynamicType {
                     return materialize().recordComponent(matcher);
                 }
 
+                public ClassVisitor wrap(ClassVisitor classVisitor) {
+                    return materialize().wrap(classVisitor);
+                }
+
+                public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool) {
+                    return materialize().wrap(classVisitor, typePool);
+                }
+
                 /**
                  * {@inheritDoc}
                  */
@@ -5920,6 +5933,26 @@ public interface DynamicType {
             this.binaryRepresentation = binaryRepresentation;
             this.loadedTypeInitializer = loadedTypeInitializer;
             this.auxiliaryTypes = auxiliaryTypes;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Resolution locate(String name) throws IOException {
+            if (typeDescription.getName().equals(name)) {
+                return new Resolution.Explicit(binaryRepresentation);
+            }
+            for (DynamicType auxiliaryType : auxiliaryTypes) {
+                Resolution resolution = auxiliaryType.locate(name);
+                if (resolution.isResolved()) {
+                    return resolution;
+                }
+            }
+            return new Resolution.Illegal(name);
+        }
+
+        public void close() {
+            /* do nothing */
         }
 
         /**

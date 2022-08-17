@@ -94,6 +94,8 @@ public interface TypeWriter<T> {
      */
     DynamicType.Unloaded<T> make(TypeResolutionStrategy.Resolved typeResolver);
 
+    ClassVisitor wrap(ClassVisitor classVisitor);
+
     /**
      * An field pool that allows a lookup for how to implement a field.
      */
@@ -3938,6 +3940,16 @@ public interface TypeWriter<T> {
                 this.classFileLocator = classFileLocator;
             }
 
+            public ClassVisitor wrap(ClassVisitor classVisitor) {
+                // TODO: context registry, disable? flags?
+                ContextRegistry contextRegistry = new ContextRegistry();
+                return writeTo(ValidatingClassVisitor.of(classVisitor, typeValidation),
+                        typeInitializer,
+                        contextRegistry,
+                        asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS),
+                        asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS));
+            }
+
             @Override
             protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Dispatcher dispatcher) {
                 try {
@@ -5874,6 +5886,22 @@ public interface TypeWriter<T> {
                         classWriterStrategy,
                         typePool);
                 this.methodPool = methodPool;
+            }
+
+            public ClassVisitor wrap(ClassVisitor classVisitor) {
+                Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
+                        auxiliaryTypeNamingStrategy,
+                        typeInitializer,
+                        classFileVersion,
+                        classFileVersion); // TODO: should be disabled, limited?
+                return asmVisitorWrapper.wrap(instrumentedType,
+                        ValidatingClassVisitor.of(classVisitor, typeValidation),
+                        implementationContext,
+                        typePool,
+                        fields,
+                        methods,
+                        asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS),
+                        asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS)); // TODO: flags?
             }
 
             @Override

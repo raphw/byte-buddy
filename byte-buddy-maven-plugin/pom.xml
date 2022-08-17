@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
-        <version>1.12.13-SNAPSHOT</version>
+        <version>1.12.14-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy-maven-plugin</artifactId>
@@ -19,12 +18,15 @@
         <version.maven>3.2.5</version.maven>
         <version.maven.annotation>3.5.2</version.maven.annotation>
         <version.maven.aether>1.1.0</version.maven.aether>
+        <version.maven.plexus-build-api>0.0.7</version.maven.plexus-build-api>
         <version.maven.test>3.3.0</version.maven.test>
         <version.slf4j>1.7.36</version.slf4j>
         <version.maven.plexus-archiver>3.7.0</version.maven.plexus-archiver>
+        <version.maven.plexus-util>3.4.2</version.maven.plexus-util>
         <version.commons-io>2.11.0</version.commons-io>
         <version.commons-compress>1.21</version.commons-compress>
         <version.guava>31.1-jre</version.guava>
+        <japicmp.skip>true</japicmp.skip>
     </properties>
 
     <dependencies>
@@ -63,7 +65,7 @@
         <dependency>
             <groupId>org.sonatype.plexus</groupId>
             <artifactId>plexus-build-api</artifactId>
-            <version>0.0.7</version>
+            <version>${version.maven.plexus-build-api}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -115,6 +117,11 @@
                 <version>${version.maven.plexus-archiver}</version>
             </dependency>
             <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-utils</artifactId>
+                <version>${version.maven.plexus-util}</version>
+            </dependency>
+            <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${version.commons-io}</version>
@@ -147,6 +154,29 @@
                 </includes>
             </resource>
         </resources>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${version.plugin.javadoc}</version>
+                    <configuration>
+                        <offlineLinks>
+                            <link>
+                                <url>https://javadoc.io/doc/net.bytebuddy/byte-buddy/${project.version}</url>
+                                <location>${project.basedir}/../byte-buddy/target/apidocs</location>
+                            </link>
+                        </offlineLinks>
+                        <links>
+                            <link>https://javadoc.io/doc/org.apache.maven/maven-core/${version.maven}</link>
+                            <link>https://javadoc.io/doc/org.apache.maven.plugin-tools/maven-plugin-annotations/${version.maven.annotation}</link>
+                            <link>https://javadoc.io/doc/org.eclipse.aether/aether-api/${version.maven.aether}</link>
+                            <link>https://javadoc.io/doc/org.sonatype.plexus/plexus-build-api/${version.maven.plexus-build-api}</link>
+                        </links>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
     <profiles>
@@ -159,6 +189,7 @@
             </activation>
             <properties>
                 <version.maven.plexus-archiver>2.1.1</version.maven.plexus-archiver>
+                <version.maven.plexus-util>3.3.1</version.maven.plexus-util>
                 <version.commons-io>2.5</version.commons-io>
                 <version.commons-compress>1.12</version.commons-compress>
                 <version.guava>20.0</version.guava>
@@ -173,6 +204,7 @@
             </activation>
             <properties>
                 <version.maven.plexus-archiver>2.11</version.maven.plexus-archiver>
+                <version.maven.plexus-util>3.3.1</version.maven.plexus-util>
                 <version.commons-io>2.6</version.commons-io>
                 <version.commons-compress>1.20</version.commons-compress>
                 <version.guava>16.0.1</version.guava>

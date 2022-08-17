@@ -5,7 +5,7 @@
     <parent>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
-        <version>1.12.13-SNAPSHOT</version>
+        <version>1.12.14-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy-agent</artifactId>
@@ -68,7 +68,7 @@
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
-            <version>1.12.12</version>
+            <version>1.12.13</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -111,23 +111,23 @@
                         <goals>
                             <goal>manifest</goal>
                         </goals>
+                        <configuration>
+                            <instructions>
+                                <Multi-Release>true</Multi-Release>
+                                <Premain-Class>${bytebuddy.agent}</Premain-Class>
+                                <Agent-Class>${bytebuddy.agent}</Agent-Class>
+                                <Can-Redefine-Classes>true</Can-Redefine-Classes>
+                                <Can-Retransform-Classes>true</Can-Retransform-Classes>
+                                <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>
+                                <Import-Package>
+                                    ${attach.package.sun};resolution:="optional",
+                                    ${attach.package.ibm};resolution:="optional"
+                                </Import-Package>
+                                <Export-Package>${packages.list}</Export-Package>
+                            </instructions>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <instructions>
-                        <Multi-Release>true</Multi-Release>
-                        <Premain-Class>${bytebuddy.agent}</Premain-Class>
-                        <Agent-Class>${bytebuddy.agent}</Agent-Class>
-                        <Can-Redefine-Classes>true</Can-Redefine-Classes>
-                        <Can-Retransform-Classes>true</Can-Retransform-Classes>
-                        <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>
-                        <Import-Package>
-                            ${attach.package.sun};resolution:="optional",
-                            ${attach.package.ibm};resolution:="optional"
-                        </Import-Package>
-                        <Export-Package>${packages.list}</Export-Package>
-                    </instructions>
-                </configuration>
             </plugin>
             <!-- Create a module-info.class file. -->
             <plugin>
@@ -143,26 +143,26 @@
                 </dependencies>
                 <executions>
                     <execution>
-                        <phase>compile</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>make-module</goal>
                         </goals>
+                        <configuration>
+                            <skip>${modulemaker.skip}</skip>
+                            <name>${project.groupId}.agent</name>
+                            <version>${project.version}</version>
+                            <multirelease>true</multirelease>
+                            <packages>${packages.list}</packages>
+                            <exports>${packages.list}</exports>
+                            <requires>java.instrument</requires>
+                            <static-requires>
+                                jdk.attach,
+                                com.sun.jna,
+                                com.sun.jna.platform
+                            </static-requires>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <skip>${modulemaker.skip}</skip>
-                    <name>${project.groupId}.agent</name>
-                    <version>${project.version}</version>
-                    <multirelease>true</multirelease>
-                    <packages>${packages.list}</packages>
-                    <exports>${packages.list}</exports>
-                    <requires>java.instrument</requires>
-                    <static-requires>
-                        jdk.attach,
-                        com.sun.jna,
-                        com.sun.jna.platform
-                    </static-requires>
-                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -211,38 +211,6 @@
                                         <argument>${project.basedir}/src/main/c/attach_hotspot_windows.c</argument>
                                     </arguments>
                                 </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>japicmp-check</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <jdk>[1.7,)</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <!-- Check for semantic versioning. -->
-                    <plugin>
-                        <groupId>com.github.siom79.japicmp</groupId>
-                        <artifactId>japicmp-maven-plugin</artifactId>
-                        <version>${version.plugin.japicmp}</version>
-                        <configuration>
-                            <skip>${japicmp.skip}</skip>
-                            <parameter>
-                                <oldVersionPattern>\d+\.\d+\.\d+</oldVersionPattern>
-                                <ignoreMissingClasses>true</ignoreMissingClasses>
-                            </parameter>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>cmp</goal>
-                                </goals>
                             </execution>
                         </executions>
                     </plugin>

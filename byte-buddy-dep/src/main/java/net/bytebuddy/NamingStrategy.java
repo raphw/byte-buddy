@@ -368,7 +368,7 @@ public interface NamingStrategy {
          *
          * @param suffix           The suffix for the generated class.
          * @param baseNameResolver The base name resolver that is queried for locating the base name.
-         * @deprecated Use {@link SuffixingRandom#SuffixingRandom(String, Suffixing.BaseNameResolver)}.
+         * @deprecated Use {@link NamingStrategy.SuffixingRandom#SuffixingRandom(String, NamingStrategy.Suffixing.BaseNameResolver)}.
          */
         @Deprecated
         public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver) {
@@ -395,7 +395,7 @@ public interface NamingStrategy {
          * @param javaLangPackagePrefix The fallback namespace for type's that subclass types within the
          *                              {@code java.*} namespace. If The prefix is set to the empty string,
          *                              no prefix is added.
-         * @deprecated Use {@link SuffixingRandom#SuffixingRandom(String, Suffixing.BaseNameResolver, String)}.
+         * @deprecated Use {@link NamingStrategy.SuffixingRandom#SuffixingRandom(String, NamingStrategy.Suffixing.BaseNameResolver, String)}.
          */
         @Deprecated
         public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver, String javaLangPackagePrefix) {
@@ -426,7 +426,7 @@ public interface NamingStrategy {
          *                              {@code java.*} namespace. If The prefix is set to the empty string,
          *                              no prefix is added.
          * @param randomString          The random string instance to use.
-         * @deprecated Use {@link SuffixingRandom#SuffixingRandom(String, Suffixing.BaseNameResolver, String, RandomString)}.
+         * @deprecated Use {@link NamingStrategy.SuffixingRandom#SuffixingRandom(String, NamingStrategy.Suffixing.BaseNameResolver, String, RandomString)}.
          */
         @Deprecated
         public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver, String javaLangPackagePrefix, RandomString randomString) {

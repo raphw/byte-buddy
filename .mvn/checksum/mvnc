@@ -1,0 +1,95 @@
+#!/bin/sh
+# ----------------------------------------------------------------------------
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+# ----------------------------------------------------------------------------
+
+# Possible user configuration.
+checksumUrl="https://repo.maven.apache.org/maven2/codes/rafael/mavenchecksumextension/maven-checksum-extension/0.0.3/maven-checksum-extension-0.0.3.jar"
+checksumJar="maven-checksum-extension.jar"
+checksumSha256Sum="ac1f5da5be49bb94db9b4cb16c447ca656332e8d90460a798cc18a9036651de6"
+
+# Define log function.
+log() {
+  if [ "$MVNC_VERBOSE" = true ]; then
+    printf '%s\n' "$1"
+  fi
+}
+
+# Setting artifact directory.
+SCRIPT=$(readlink -f "$0")
+SCRIPT_PATH=$(dirname "$SCRIPT")
+checksumJarPath=$SCRIPT_PATH/$checksumJar
+
+# Detecting if cygwin is executed.
+cygwin=false;
+case "`uname`" in
+  CYGWIN*) cygwin=true ;;
+esac
+
+# Download checksum extension if not available.
+if [ -r "$checksumJarPath" ]; then
+    log "Found $checksumJarPath"
+else
+    log "Couldn't find $checksumJarPath, downloading it ..."
+    log "Downloading from: $checksumUrl"
+    if $cygwin; then
+      checksumJarPath=`cygpath --path --windows "$checksumJarPath"`
+    fi
+    if command -v wget > /dev/null; then
+        log "Found wget ... using wget"
+        [ "$MVNC_VERBOSE" = true ] && QUIET="" || QUIET="--quiet"
+        if [ -z "$MVNC_USERNAME" ] || [ -z "$MVNC_PASSWORD" ]; then
+            wget $QUIET "$checksumUrl" -O "$checksumJarPath"
+        else
+            wget $QUIET --http-user="$MVNC_USERNAME" --http-password="$MVNC_PASSWORD" "$checksumUrl" -O "$checksumJarPath"
+        fi
+        [ $? -eq 0 ] || rm -f "$checksumJarPath"
+    elif command -v curl > /dev/null; then
+        log "Found curl ... using curl"
+        [ "$MVNC_VERBOSE" = true ] && QUIET="" || QUIET="--silent"
+        if [ -z "$MVNC_USERNAME" ] || [ -z "$MVNC_PASSWORD" ]; then
+            curl $QUIET -o "$checksumJarPath" "$checksumUrl" -f -L
+        else
+            curl $QUIET --user "$MVNC_USERNAME:$MVNC_PASSWORD" -o "$checksumJarPath" "$checksumUrl" -f -L
+        fi
+        [ $? -eq 0 ] || rm -f "$checksumJarPath"
+    else
+        log "Neither wget or curl are available, please make either available or download manually to $."
+        exit 1
+    fi
+fi
+
+# Validate the checksum of the checksum jar file.
+checksumSha256Result=false
+if command -v sha256sum > /dev/null; then
+  if echo "$checksumSha256Sum  $checksumJarPath" | sha256sum -c > /dev/null 2>&1; then
+    checksumSha256Result=true
+  fi
+elif command -v shasum > /dev/null; then
+  if echo "$checksumSha256Sum  $checksumJarPath" | shasum -a 256 -c > /dev/null 2>&1; then
+    checksumSha256Result=true
+  fi
+else
+  echo "Neither 'sha256sum' or 'shasum' are available. Please install either command."
+  exit 1
+fi
+if [ $checksumSha256Result = false ]; then
+  echo "Error: Failed to validate Maven checksum extension SHA-256, it might be compromised." >&2
+  echo "Investigate or delete $checksumJarPath to attempt a clean download." >&2
+  exit 1
+fi

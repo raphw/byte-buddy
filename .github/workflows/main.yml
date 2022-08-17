@@ -21,7 +21,7 @@ jobs:
           java-version: 19-ea
           distribution: zulu
           cache: maven
-      - name: Install JDK and build project
+      - name: Build project
         run: ./mvnw verify -Pjava19
         continue-on-error: false
   hotspot-supported:
@@ -130,7 +130,7 @@ jobs:
           architecture: x64
           cache: maven
       - name: Build project
-        run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pextras -Pchecks -Panalysis -Pintegration
+        run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pextras -Pchecks -Panalysis -Pintegration -Pchecksum-enforce
   release:
     name: Release new version
     runs-on: ubuntu-20.04
@@ -150,4 +150,4 @@ jobs:
         run: |
           git config user.name "${{ github.event.head_commit.committer.name }}"
           git config user.email "${{ github.event.head_commit.committer.email }}"
-          ./mvnw -B -s .mvn/release.settings.xml release:prepare release:perform -Drepository.url=https://${{ github.actor }}:${{ secrets.github_token }}@github.com/${{ github.repository }}.git -Dcentral.username=raphw -Dcentral.password=${{ secrets.central_password }} -Dgpg.passphrase=${{ secrets.gpg_passphrase }} -Dgpg.keyname=B4AC8CDC141AF0AE468D16921DA784CCB5C46DD5 -Dgradle.key=${{ secrets.gradle_key }} -Dgradle.secret=${{ secrets.gradle_secret }}
+          ./mvnw -B -s .mvn/release.settings.xml release:prepare release:perform -Drepository.url=https://${{ github.actor }}:${{ secrets.github_token }}@github.com/${{ github.repository }}.git -Dcentral.username=raphw -Dcentral.password=${{ secrets.central_password }} -Dgpg.passphrase=${{ secrets.gpg_passphrase }} -Dgpg.keyname=B4AC8CDC141AF0AE468D16921DA784CCB5C46DD5 -Dgradle.key=${{ secrets.gradle_key }} -Dgradle.secret=${{ secrets.gradle_secret }} -Pchecksum-enforce

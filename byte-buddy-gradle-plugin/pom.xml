@@ -5,7 +5,7 @@
     <parent>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
-        <version>1.12.13-SNAPSHOT</version>
+        <version>1.12.14-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy-gradle-plugin</artifactId>
@@ -31,6 +31,8 @@
         <gradle.exec>gradlew</gradle.exec>
         <gradle.disabled>false</gradle.disabled>
         <gradle.release>false</gradle.release>
+        <skipTests>false</skipTests>
+        <japicmp.skip>true</japicmp.skip>
         <!-- Actual values must be set via settings.xml or using command line arguments since they cannot be published. -->
         <gradle.publish.key />
         <gradle.publish.secret />
@@ -103,13 +105,14 @@
                             <executable>${project.basedir}/${gradle.exec}</executable>
                             <arguments>
                                 <argument>build</argument>
-                                <argument>javadocJar</argument>
+                                <argument>copyJavadoc</argument>
                                 <argument>--info</argument>
                                 <argument>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</argument>
                                 <argument>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</argument>
                                 <argument>-Dnet.bytebuddy.gradle.release=${gradle.release}</argument>
                                 <argument>-Dnet.bytebuddy.gradle.source=${sourcecode.main.version}</argument>
                                 <argument>-Dnet.bytebuddy.gradle.target=${bytecode.main.version}</argument>
+                                <argument>-Dnet.bytebuddy.test.disabled=${skipTests}</argument>
                             </arguments>
                         </configuration>
                     </execution>

@@ -5,7 +5,7 @@
     <parent>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
-        <version>1.12.13-SNAPSHOT</version>
+        <version>1.12.14-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy-android-test</artifactId>
@@ -19,6 +19,7 @@
         <android.build.group>com.simpligility.maven.plugins</android.build.group>
         <version.maven.android>4.6.0</version.maven.android>
         <version.android.sdk.platform>4</version.android.sdk.platform>
+        <japicmp.skip>true</japicmp.skip>
     </properties>
 
     <!--
@@ -129,6 +130,10 @@
                         <goals>
                             <goal>resources</goal>
                         </goals>
+                        <configuration>
+                            <!-- Setting this property suppresses a warning on implicit setting the filter encoding. -->
+                            <encoding>${project.build.sourceEncoding}</encoding>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

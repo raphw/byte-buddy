@@ -49,11 +49,13 @@ import java.util.List;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * This implementation delegates an method call to another method which can either be {@code static} by providing
+ * This implementation delegates a method call to another method which can either be {@code static} by providing
  * a reference to a {@link java.lang.Class} or an instance method when another object is provided. The potential
  * targets of the method delegation can further be filtered by applying a filter. The method delegation can be
  * customized by invoking the {@code MethodDelegation}'s several builder methods.
- * <h3>Without any customization, the method delegation will work as follows:</h3>
+ * <p>&nbsp;</p>
+ * <b>Without any customization, the method delegation will work as follows:</b>
+ * <p>&nbsp;</p>
  * <span style="text-decoration: underline">Binding an instrumented method to a given delegate method</span>
  * <p>&nbsp;</p>
  * A method will be bound parameter by parameter. Considering a method {@code Foo#bar} being bound to a method

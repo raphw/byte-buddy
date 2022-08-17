@@ -5,7 +5,7 @@
     <parent>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
-        <version>1.12.13-SNAPSHOT</version>
+        <version>1.12.14-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy-benchmark</artifactId>
@@ -24,6 +24,7 @@
 
     <properties>
         <benchmark.mainClass>net.bytebuddy.benchmark.runner.BenchmarkRunner</benchmark.mainClass>
+        <japicmp.skip>true</japicmp.skip>
     </properties>
 
     <dependencies>
@@ -95,10 +96,35 @@
                 </configuration>
             </plugin>
         </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${version.plugin.javadoc}</version>
+                    <configuration>
+                        <offlineLinks>
+                            <link>
+                                <url>https://javadoc.io/doc/net.bytebuddy/byte-buddy/${project.version}</url>
+                                <location>${project.basedir}/../byte-buddy/target/apidocs</location>
+                            </link>
+                            <!-- Use previously downloaded 'package-list' file as substitute for published 'element-list' file. -->
+                            <link>
+                                <url>https://javadoc.io/doc/org.openjdk.jmh/jmh-core/${version.jmh}</url>
+                                <location>${project.basedir}/target/javadoc-lists/jmh-core-${version.jmh}</location>
+                            </link>
+                        </offlineLinks>
+                        <excludePackageNames>
+                            net.bytebuddy.benchmark.generated,
+                            net.bytebuddy.benchmark.jmh_generated
+                        </excludePackageNames>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
     <profiles>
-        <!-- Shade the benchmark artifact. -->
         <profile>
             <id>extras</id>
             <activation>
@@ -106,6 +132,29 @@
             </activation>
             <build>
                 <plugins>
+                    <!-- Download 'element-list' file which is published by newer javadoc versions, store as 'package-list' file. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>${version.plugin.antrun}</version>
+                        <executions>
+                            <execution>
+                                <id>download-javadoc-lists</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${javadoc.download.skip}</skip>
+                                    <target>
+                                        <mkdir dir="${project.basedir}/target/javadoc-lists/jmh-core-${version.jmh}" />
+                                        <get src="https://javadoc.io/doc/org.openjdk.jmh/jmh-core/${version.jmh}/element-list" dest="${project.basedir}/target/javadoc-lists/jmh-core-${version.jmh}/package-list" skipexisting="true" />
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Shade the benchmark artifact. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-shade-plugin</artifactId>

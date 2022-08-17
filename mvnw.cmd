@@ -173,15 +173,35 @@ FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\%WRAP
     IF "%%A"=="wrapperHash" SET FILE_HASH=%%B
 )
 IF NOT %FILE_HASH%=="" (
-    FOR /F "usebackq tokens=*" %%A in ('certUtil -hashfile "%MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.jar" SHA256') do (
-        echo %%A | findstr /C:"hash" 1>nul || (
-            IF NOT %%A==%FILE_HASH% (
-                echo Could not validate hash of maven-wrapper.jar, was %%A
-                goto error
-            )
-        )
-    )
+    powershell -Command "&{"^
+       "$CHECKSUM = (Invoke-Expression \"certUtil -hashfile '%MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.jar' SHA256\" | Select -Index 1);"^
+       "If('%FILE_HASH%' -ne $CHECKSUM){"^
+       "  Write-Output 'Error: Failed to validate Maven checksum extension SHA-256, it might be compromised';"^
+       "  Write-Output 'Investigate or delete %MAVEN_PROJECTBASEDIR%\.mvn\%WRAPPER_LOCATION%\maven-wrapper.jar to attempt a clean download.';"^
+       "  exit 1;"^
+       "}"^
+       "}"
 )
+
+@REM If requested, add Maven checksum extension (Byte Buddy edit).
+@setlocal EnableDelayedExpansion
+set MAVEN_CHECKSUM_EXTENSION_TYPE=
+FOR %%a IN (%*) DO (
+    if "%%a"=="-Pchecksum-collect" set MAVEN_CHECKSUM_EXTENSION_TYPE=collect
+    if "%%a"=="-Pchecksum-enforce" set MAVEN_CHECKSUM_EXTENSION_TYPE=enforce
+)
+@endlocal & set MAVEN_CHECKSUM_EXTENSION_TYPE=%MAVEN_CHECKSUM_EXTENSION_TYPE%
+@setlocal EnableDelayedExpansion
+set MAVEN_CHECKSUM_EXTENSION_COMMAND=
+if not "%MAVEN_CHECKSUM_EXTENSION%"=="" (
+  CALL %MAVEN_PROJECTBASEDIR%/.mvn/checksum/mvnc.cmd
+  if ERRORLEVEL 1 goto error
+  SET MAVEN_CHECKSUM_EXTENSION_COMMAND=-Dcodes.rafael.mavenchecksumextension.mode=%MAVEN_CHECKSUM_EXTENSION_TYPE%^
+    -Dcodes.rafael.mavenchecksumextension.file=%MAVEN_PROJECTBASEDIR%\.mvn\checksums.sha256
+    -Dcodes.rafael.mavenchecksumextension.append=true
+    -Dmaven.ext.class.path=%MAVEN_PROJECTBASEDIR%\.mvn\checksum\maven-checksum-extension.jar
+)
+@endlocal & set MAVEN_CHECKSUM_EXTENSION_COMMAND=%MAVEN_CHECKSUM_EXTENSION_COMMAND%
 
 @REM Provide a "standardized" way to retrieve the CLI args that will
 @REM work with both Windows and non-Windows executions.
@@ -193,7 +213,7 @@ set MAVEN_CMD_LINE_ARGS=%*
   %MAVEN_DEBUG_OPTS% ^
   -classpath %WRAPPER_JAR% ^
   "-Dmaven.multiModuleProjectDirectory=%MAVEN_PROJECTBASEDIR%" ^
-  %WRAPPER_LAUNCHER% %MAVEN_CONFIG% %*
+  %WRAPPER_LAUNCHER% %MAVEN_CONFIG% %MAVEN_CHECKSUM_EXTENSION_COMMAND% %*
 if ERRORLEVEL 1 goto error
 goto end
 
