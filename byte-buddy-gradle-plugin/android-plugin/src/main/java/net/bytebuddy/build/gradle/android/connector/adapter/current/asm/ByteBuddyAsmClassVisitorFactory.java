@@ -27,11 +27,14 @@ public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitor
 
     @Override
     public ClassVisitor createClassVisitor(ClassContext classContext, ClassVisitor classVisitor) {
+        return BytebuddyManager.apply(classContext.getCurrentClassData().getClassName(), classVisitor);
     }
 
     @Override
     public boolean isInstrumentable(ClassData classData) {
         Params params = getParameters().get();
+        BytebuddyManager.initialize(params.getClasspath(), params.getAndroidBootClasspath(), params.getByteBuddyClasspath());
+        return BytebuddyManager.matches(classData.getClassName());
     }
 
     public interface Params extends InstrumentationParameters {

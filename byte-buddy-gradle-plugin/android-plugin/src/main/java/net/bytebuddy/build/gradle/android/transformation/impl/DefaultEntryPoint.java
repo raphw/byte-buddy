@@ -24,7 +24,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 
-class DefaultEntryPoint implements EntryPoint {
+public class DefaultEntryPoint implements EntryPoint {
 
     @Override
     public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
