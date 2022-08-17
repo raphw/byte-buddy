@@ -93,7 +93,7 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
          * {@inheritDoc}
          */
         public boolean isDefault() {
-            return getName().length() == 0;
+            return getName().equals(EMPTY_NAME);
         }
 
         @Override
