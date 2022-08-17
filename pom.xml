@@ -1106,6 +1106,7 @@
                                         </file>
                                     </newVersion>
                                     <parameter>
+                                        <accessModifier>public</accessModifier>
                                         <oldVersionPattern>\d+\.\d+\.\d+</oldVersionPattern>
                                         <ignoreMissingClasses>true</ignoreMissingClasses>
                                         <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
