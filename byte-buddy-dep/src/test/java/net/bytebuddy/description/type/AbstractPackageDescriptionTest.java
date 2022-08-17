@@ -65,7 +65,7 @@ public abstract class AbstractPackageDescriptionTest {
     }
 
     @Test
-    public void testDefault() {
+    public void testDefault() throws Exception {
         assertThat(describe(Child.class).isDefault(), is(false));
         Class<?> type = new ByteBuddy().subclass(Object.class)
                 .name("TypeWithoutPackage")
@@ -77,7 +77,7 @@ public abstract class AbstractPackageDescriptionTest {
     }
 
     @Test
-    public void testNoPackage() {
+    public void testNoPackage() throws Exception {
         assertThat(describe(boolean.class), nullValue(PackageDescription.class));
         assertThat(describe(Object[].class), nullValue(PackageDescription.class));
     }
