@@ -26,13 +26,13 @@ public class ContextClassVisitorTest {
 
     @Test
     public void testPassive() {
-        new TestContextClassVisitor(Collections.emptyList(), loadedTypeInitializer).visitEnd();
+        new TestContextClassVisitor(Collections.<DynamicType>emptyList(), loadedTypeInitializer).visitEnd();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testPassiveLoadedTypeInitializer() {
         when(loadedTypeInitializer.isAlive()).thenReturn(true);
-        new TestContextClassVisitor(Collections.emptyList(), loadedTypeInitializer).visitEnd();
+        new TestContextClassVisitor(Collections.<DynamicType>emptyList(), loadedTypeInitializer).visitEnd();
     }
 
     @Test(expected = IllegalStateException.class)
