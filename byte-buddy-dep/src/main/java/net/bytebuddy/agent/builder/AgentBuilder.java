@@ -2282,7 +2282,7 @@ public interface AgentBuilder {
                                     module,
                                     Collections.singleton(target),
                                     Collections.<String, Set<JavaModule>>emptyMap(),
-                                    !addTargetEdge || location == null
+                                    !addTargetEdge || location == null || location.isDefault()
                                             ? Collections.<String, Set<JavaModule>>emptyMap()
                                             : Collections.singletonMap(location.getName(), Collections.singleton(target)),
                                     Collections.<Class<?>>emptySet(),

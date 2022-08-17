@@ -1626,7 +1626,7 @@ public interface ClassInjector {
         public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
             PackageDescription target = TypeDescription.ForLoadedType.of(lookupType()).getPackage();
             if (target == null) {
-                throw new IllegalStateException("Cannot inject into default package");
+                throw new IllegalArgumentException("Cannot inject array or primitive type");
             }
             Map<String, Class<?>> result = new HashMap<String, Class<?>>();
             for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {

@@ -279,9 +279,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     boolean isMemberType();
 
     /**
-     * Returns the package of the type described by this instance or {@code null} if the described type does not imply a package.
+     * Returns the package of the type described by this instance or {@code null} if the described type
+     * is a primitive type or an array.
      *
-     * @return The package of the type described by this instance or {@code null} if the described type does not imply a package.
+     * @return The package of the type described by this instance or {@code null} if the described type
+     * is a primitive type or an array.
      */
     @MaybeNull
     PackageDescription getPackage();
@@ -8823,7 +8825,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     String name = type.getName();
                     int index = name.lastIndexOf('.');
                     return index == -1
-                            ? new PackageDescription.Simple(EMPTY_NAME)
+                            ? PackageDescription.DEFAULT
                             : new PackageDescription.Simple(name.substring(0, index));
                 } else {
                     return new PackageDescription.ForLoadedPackage(aPackage);
@@ -9512,7 +9514,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             String name = getName();
             int index = name.lastIndexOf('.');
             return index == -1
-                    ? PackageDescription.UNDEFINED
+                    ? PackageDescription.DEFAULT
                     : new PackageDescription.Simple(name.substring(0, index));
         }
 

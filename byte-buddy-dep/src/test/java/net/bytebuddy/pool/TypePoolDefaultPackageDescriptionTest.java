@@ -7,19 +7,7 @@ import org.junit.Before;
 
 public class TypePoolDefaultPackageDescriptionTest extends AbstractPackageDescriptionTest {
 
-    private TypePool typePool;
-
-    @Before
-    public void setUp() throws Exception {
-        typePool = TypePool.Default.ofSystemLoader();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        typePool.clear();
-    }
-
     protected PackageDescription describe(Class<?> type) {
-        return typePool.describe(type.getName()).resolve().getPackage();
+        return TypePool.Default.of(type.getClassLoader()).describe(type.getName()).resolve().getPackage();
     }
 }

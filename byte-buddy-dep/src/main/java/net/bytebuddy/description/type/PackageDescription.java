@@ -28,6 +28,11 @@ import org.objectweb.asm.Opcodes;
 public interface PackageDescription extends NamedElement.WithRuntimeName, AnnotationSource {
 
     /**
+     * A representation of the default package without any annotations.
+     */
+    PackageDescription DEFAULT = new Simple(EMPTY_NAME);
+
+    /**
      * The name of a Java class representing a package description.
      */
     String PACKAGE_CLASS_NAME = "package-info";
@@ -50,6 +55,13 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
      * @return {@code true} if the given type contains the provided type.
      */
     boolean contains(TypeDescription typeDescription);
+
+    /**
+     * Returns {@code true} if this package description represents the default package.
+     *
+     * @return {@code true} if this package description represents the default package.
+     */
+    boolean isDefault();
 
     /**
      * An abstract base implementation of a package description.
@@ -75,6 +87,13 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
          */
         public boolean contains(TypeDescription typeDescription) {
             return this.equals(typeDescription.getPackage());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isDefault() {
+            return getName().isEmpty();
         }
 
         @Override

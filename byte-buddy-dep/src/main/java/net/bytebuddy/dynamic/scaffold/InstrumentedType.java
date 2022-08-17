@@ -1425,7 +1425,7 @@ public interface InstrumentedType extends TypeDescription {
         public PackageDescription getPackage() {
             int packageIndex = name.lastIndexOf('.');
             return packageIndex == -1
-                    ? PackageDescription.UNDEFINED
+                    ? PackageDescription.DEFAULT
                     : new PackageDescription.Simple(name.substring(0, packageIndex));
         }
 
