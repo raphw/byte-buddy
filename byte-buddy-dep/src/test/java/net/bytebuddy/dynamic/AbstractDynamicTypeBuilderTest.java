@@ -30,6 +30,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.OpenedClassReader;
+import net.bytebuddy.utility.visitor.ContextClassVisitor;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
@@ -1514,12 +1515,12 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
-    public void testWrapper() throws Exception {
+    public void testWrapClassVisitor() throws Exception {
         TypeDescription typeDescription = createPlain()
                 .make()
                 .getTypeDescription();
         ClassWriter classWriter = new ClassWriter(AsmVisitorWrapper.NO_FLAGS);
-        ClassVisitor classVisitor = createPlain()
+        ContextClassVisitor classVisitor = createPlain()
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC, Ownership.STATIC)
                 .throwing(Exception.class)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
@@ -1531,6 +1532,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 typeDescription.getSuperClass().asErasure().getInternalName(),
                 typeDescription.getInterfaces().asErasures().toInternalNames());
         classVisitor.visitEnd();
+        assertThat(classVisitor.getAuxiliaryTypes().size(), is(0));
+        assertThat(classVisitor.getLoadedTypeInitializer().isAlive(), is(false));
         Class<?> type = new DynamicType.Default.Unloaded<Object>(typeDescription,
                 classWriter.toByteArray(),
                 LoadedTypeInitializer.NoOp.INSTANCE,

@@ -55,6 +55,7 @@ import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
+import net.bytebuddy.utility.visitor.ContextClassVisitor;
 import net.bytebuddy.utility.visitor.MetadataAwareClassVisitor;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.ClassRemapper;
@@ -102,7 +103,7 @@ public interface TypeWriter<T> {
      * @param readerFlags  The ASM reader flags to consider.
      * @return The supplied class visitor wrapped by this type writer.
      */
-    ClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags);
+    ContextClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags);
 
     /**
      * An field pool that allows a lookup for how to implement a field.
@@ -3991,12 +3992,13 @@ public interface TypeWriter<T> {
             /**
              * {@inheritDoc}
              */
-            public ClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags) {
-                return writeTo(ValidatingClassVisitor.of(classVisitor, typeValidation),
+            public ContextClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+                ContextRegistry contextRegistry = new ContextRegistry();
+                return new RegistryContextClassVisitor(writeTo(ValidatingClassVisitor.of(classVisitor, typeValidation),
                         typeInitializer,
-                        new ContextRegistry(),
+                        contextRegistry,
                         asmVisitorWrapper.mergeWriter(writerFlags),
-                        asmVisitorWrapper.mergeReader(readerFlags));
+                        asmVisitorWrapper.mergeReader(readerFlags)), contextRegistry);
             }
 
             @Override
@@ -4035,6 +4037,38 @@ public interface TypeWriter<T> {
                                                     ContextRegistry contextRegistry,
                                                     int writerFlags,
                                                     int readerFlags);
+
+            /**
+             * A context class visitor based on a {@link ContextRegistry}.
+             */
+            protected class RegistryContextClassVisitor extends ContextClassVisitor {
+
+                /**
+                 * The context registry to use.
+                 */
+                private final ContextRegistry contextRegistry;
+
+                /**
+                 * Creates a new context class visitor based on a {@link ContextRegistry}.
+                 *
+                 * @param classVisitor    The class visitor to delegate to.
+                 * @param contextRegistry The context registry to use.
+                 */
+                protected RegistryContextClassVisitor(ClassVisitor classVisitor, ContextRegistry contextRegistry) {
+                    super(classVisitor);
+                    this.contextRegistry = contextRegistry;
+                }
+
+                @Override
+                public List<DynamicType> getAuxiliaryTypes() {
+                    return CompoundList.of(auxiliaryTypes, contextRegistry.getAuxiliaryTypes());
+                }
+
+                @Override
+                public LoadedTypeInitializer getLoadedTypeInitializer() {
+                    return loadedTypeInitializer;
+                }
+            }
 
             /**
              * A context registry allows to extract auxiliary types from a lazily created implementation context.
@@ -5900,20 +5934,20 @@ public interface TypeWriter<T> {
             /**
              * {@inheritDoc}
              */
-            public ClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+            public ContextClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags) {
                 Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
                         auxiliaryTypeNamingStrategy,
                         typeInitializer,
                         classFileVersion,
                         classFileVersion);
-                return new WrapperClassVisitor(asmVisitorWrapper.wrap(instrumentedType,
+                return new ImplementationContextClassVisitor(new CreationClassVisitor(asmVisitorWrapper.wrap(instrumentedType,
                         ValidatingClassVisitor.of(classVisitor, typeValidation),
                         implementationContext,
                         typePool,
                         fields,
                         methods,
                         asmVisitorWrapper.mergeWriter(writerFlags),
-                        asmVisitorWrapper.mergeReader(readerFlags)), implementationContext);
+                        asmVisitorWrapper.mergeReader(readerFlags)), implementationContext), implementationContext);
             }
 
             @Override
@@ -6008,7 +6042,7 @@ public interface TypeWriter<T> {
             /**
              * A class visitor that applies the subclass creation as a wrapper.
              */
-            protected class WrapperClassVisitor extends MetadataAwareClassVisitor {
+            protected class CreationClassVisitor extends MetadataAwareClassVisitor {
 
                 /**
                  * The implementation context to apply.
@@ -6036,7 +6070,7 @@ public interface TypeWriter<T> {
                  * @param classVisitor          The class visitor being wrapped.
                  * @param implementationContext The implementation context to apply.
                  */
-                protected WrapperClassVisitor(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
+                protected CreationClassVisitor(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
                     super(OpenedClassReader.ASM_API, classVisitor);
                     this.implementationContext = implementationContext;
                 }
@@ -6092,6 +6126,38 @@ public interface TypeWriter<T> {
                             methodPool,
                             annotationValueFilterFactory), cv, annotationValueFilterFactory);
                     super.onVisitEnd();
+                }
+            }
+
+            /**
+             * A context class visitor based on an {@link Implementation.Context}.
+             */
+            protected class ImplementationContextClassVisitor extends ContextClassVisitor {
+
+                /**
+                 * The implementation context to use.
+                 */
+                private final Implementation.Context.ExtractableView implementationContext;
+
+                /**
+                 * Creates a context class loader based on an {@link Implementation.Context}.
+                 *
+                 * @param classVisitor          The class visitor to delegate to.
+                 * @param implementationContext The implementation context to use.
+                 */
+                protected ImplementationContextClassVisitor(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
+                    super(classVisitor);
+                    this.implementationContext = implementationContext;
+                }
+
+                @Override
+                public List<DynamicType> getAuxiliaryTypes() {
+                    return CompoundList.of(auxiliaryTypes, implementationContext.getAuxiliaryTypes());
+                }
+
+                @Override
+                public LoadedTypeInitializer getLoadedTypeInitializer() {
+                    return loadedTypeInitializer;
                 }
             }
         }
