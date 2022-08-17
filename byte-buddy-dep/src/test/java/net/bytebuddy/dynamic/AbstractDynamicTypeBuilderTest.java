@@ -1524,8 +1524,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .throwing(Exception.class)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .wrap(classWriter);
-        classVisitor.visit(Opcodes.V1_6,
-                Opcodes.ACC_PUBLIC,
+        classVisitor.visit(ClassFileVersion.ofThisVm().getMinorMajorVersion(),
+                typeDescription.getActualModifiers(true),
                 typeDescription.getInternalName(),
                 typeDescription.getGenericSignature(),
                 typeDescription.getSuperClass().asErasure().getInternalName(),
