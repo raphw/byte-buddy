@@ -43,8 +43,8 @@ public class ByteBuddyAndroidPluginTest extends BaseAndroidGradleTest {
         buildProject(appProject, listOf("assembleDebug"));
 
         ClassLoader classLoader = getAppClassloader(appProject);
-        verifyClassIsInstrumented(classLoader, "SomeClass");
-        verifyClassIsInstrumented(classLoader, "SomeKotlinClass");
+        verifyClassIsInstrumented(classLoader, "com.somepackage.SomeClass");
+        verifyClassIsInstrumented(classLoader, "com.somepackage.SomeKotlinClass");
     }
 
     @Test
@@ -55,7 +55,7 @@ public class ByteBuddyAndroidPluginTest extends BaseAndroidGradleTest {
         buildProject(appProject, listOf("assembleDebug"));
 
         ClassLoader classLoader = getAppClassloader(appProject);
-        verifyClassIsInstrumented(classLoader, "SomeClass");
+        verifyClassIsInstrumented(classLoader, "com.somepackage.SomeClass");
     }
 
     @Test
@@ -76,7 +76,7 @@ public class ByteBuddyAndroidPluginTest extends BaseAndroidGradleTest {
         buildProject(appProject, listOf("assembleDebug"));
 
         ClassLoader classLoader = getAppClassloader(appProject);
-        verifyClassIsInstrumented(classLoader, "SomeClass");
+        verifyClassIsInstrumented(classLoader, "com.somepackage.SomeClass");
         verifyClassIsInstrumented(classLoader, "SomeLibClass");
     }
 
@@ -88,7 +88,7 @@ public class ByteBuddyAndroidPluginTest extends BaseAndroidGradleTest {
         buildProject(appProject, listOf("assembleDebug"));
 
         ClassLoader classLoader = getAppClassloader(appProject);
-        verifyClassIsInstrumented(classLoader, "SomeClass");
+        verifyClassIsInstrumented(classLoader, "com.somepackage.SomeClass");
     }
 
     private void verifyClassIsInstrumented(ClassLoader classLoader, String className) {

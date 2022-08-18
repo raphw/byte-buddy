@@ -9,7 +9,8 @@ import net.bytebuddy.description.method.MethodDescription
 class BasicLibTransformation : Plugin {
 
     override fun matches(target: TypeDescription?): Boolean {
-        return target?.getName() == "SomeClass" || target?.getName() == "SomeKotlinClass"
+        return target?.getName()?.contains("SomeClass") == true || target?.getName()
+            ?.contains("SomeKotlinClass") == true
     }
 
     override fun apply(
@@ -17,6 +18,8 @@ class BasicLibTransformation : Plugin {
         typeDescription: TypeDescription,
         classFileLocator: ClassFileLocator
     ): DynamicType.Builder<*> {
+//        val assignableTo: Boolean = typeDescription.isAssignableTo(String::class.java)
+//        println("Is $typeDescription assignable2: $assignableTo")
         return builder.method(
             ElementMatchers.named<MethodDescription>(
                 "getMessage"
