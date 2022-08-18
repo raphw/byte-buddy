@@ -2,7 +2,6 @@ package net.bytebuddy.build.gradle.android;
 
 import net.bytebuddy.test.utility.BaseAndroidGradleTest;
 import net.bytebuddy.test.utility.ProjectInfo;
-import org.gradle.testkit.runner.BuildResult;
 import org.junit.Test;
 
 import java.io.File;
