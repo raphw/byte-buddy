@@ -64,7 +64,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     private TaskProvider<LocalClassesSync> registerLocalClassesSyncTask(Variant variant) {
         return project.getTasks().register(variant.getName() + "ByteBuddyLocalClasses", LocalClassesSync.class, classesSync -> {
             classesSync.getLocalClasspath().from(variant.getArtifacts().getAll(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE));
-            classesSync.getOutputDir().set(project.getLayout().getBuildDirectory().dir("incremental/" + classesSync.getName()));
+            classesSync.getOutputDir().set(project.getLayout().getBuildDirectory().dir("intermediates/incremental/" + classesSync.getName()));
         });
     }
 
