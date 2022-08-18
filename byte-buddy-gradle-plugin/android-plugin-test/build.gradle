@@ -11,7 +11,7 @@ repositories {
 
 dependencies {
     implementation project(':android-plugin')
-    implementation "com.android.tools.build:gradle:4.2.0"
+    implementation "com.android.tools.build:gradle:7.2.0"
     implementation "org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.10"
     testImplementation "junit:junit:4.13.2"
     testImplementation "net.lingala.zip4j:zip4j:2.9.1"
