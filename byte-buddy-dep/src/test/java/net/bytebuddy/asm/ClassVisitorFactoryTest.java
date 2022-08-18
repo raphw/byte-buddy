@@ -1,5 +1,6 @@
 package net.bytebuddy.asm;
 
+import net.bytebuddy.ByteBuddy;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;

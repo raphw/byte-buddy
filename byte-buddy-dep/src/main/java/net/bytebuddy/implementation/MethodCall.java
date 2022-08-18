@@ -1166,7 +1166,7 @@ public class MethodCall implements Implementation.Composable {
              * A factory for an argument loader that supplies a method parameter as an argument.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            protected static class Factory implements ArgumentLoader.Factory, ArgumentProvider {
+            public static class Factory implements ArgumentLoader.Factory, ArgumentProvider {
 
                 /**
                  * The index of the parameter to be loaded onto the operand stack.
