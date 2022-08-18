@@ -26,7 +26,6 @@ import net.bytebuddy.build.gradle.android.connector.adapter.current.asm.ByteBudd
 import net.bytebuddy.build.gradle.android.transformation.AndroidTransformation;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.tasks.TaskContainer;
 
 import java.util.Objects;
 
@@ -38,14 +37,12 @@ public class CurrentAdapter implements TransformationAdapter {
     private final BaseExtension androidExtension;
     private final AndroidComponentsExtension<?, ?, ?> androidComponentsExtension;
     private final Configuration byteBuddyDependenciesConfiguration;
-    private final TaskContainer tasks;
     private final Project project;
 
-    public CurrentAdapter(BaseExtension androidExtension, AndroidComponentsExtension<?, ?, ?> androidComponentsExtension, Configuration byteBuddyDependenciesConfiguration, TaskContainer tasks, Project project) {
+    public CurrentAdapter(BaseExtension androidExtension, AndroidComponentsExtension<?, ?, ?> androidComponentsExtension, Configuration byteBuddyDependenciesConfiguration, Project project) {
         this.androidExtension = androidExtension;
         this.androidComponentsExtension = androidComponentsExtension;
         this.byteBuddyDependenciesConfiguration = byteBuddyDependenciesConfiguration;
-        this.tasks = tasks;
         this.project = project;
     }
 

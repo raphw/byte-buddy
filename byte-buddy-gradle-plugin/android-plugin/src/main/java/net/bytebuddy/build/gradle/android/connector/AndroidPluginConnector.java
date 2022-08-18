@@ -71,7 +71,6 @@ public class AndroidPluginConnector {
                 androidExtension,
                 androidComponentsExtension,
                 bytebuddyDependenciesConfiguration,
-                androidProject.getTasks(),
                 androidProject);
     }
 
