@@ -30,7 +30,7 @@ public class BytebuddyDependenciesHandler {
             configuration.setCanBeConsumed(false);
             configuration.extendsFrom(bucket);
             configuration.attributes(attrs -> {
-                attrs.attribute(ARTIFACT_TYPE_ATTR, "android-java-res");
+//                attrs.attribute(ARTIFACT_TYPE_ATTR, "android-java-res");//todo fix
                 attrs.attribute(
                         Category.CATEGORY_ATTRIBUTE,
                         project.getObjects().named(Category.class, Category.LIBRARY)

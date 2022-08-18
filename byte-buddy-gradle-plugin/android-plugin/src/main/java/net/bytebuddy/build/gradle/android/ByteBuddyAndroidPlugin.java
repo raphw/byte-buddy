@@ -16,21 +16,20 @@
 package net.bytebuddy.build.gradle.android;
 
 import com.android.build.api.AndroidPluginVersion;
+import com.android.build.api.artifact.MultipleArtifact;
+import com.android.build.api.component.impl.ComponentImpl;
 import com.android.build.api.instrumentation.InstrumentationScope;
 import com.android.build.api.variant.AndroidComponentsExtension;
-import com.android.build.gradle.AppExtension;
+import com.android.build.api.variant.Variant;
 import com.android.build.gradle.BaseExtension;
-import com.android.build.gradle.api.ApplicationVariant;
 import kotlin.Unit;
 import net.bytebuddy.build.gradle.android.asm.ByteBuddyAsmClassVisitorFactory;
 import net.bytebuddy.build.gradle.android.utils.BytebuddyDependenciesHandler;
+import net.bytebuddy.build.gradle.android.utils.LocalClassesSync;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.file.DirectoryProperty;
-import org.gradle.api.provider.Provider;
-
-import java.util.Objects;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.tasks.TaskProvider;
 
 public class ByteBuddyAndroidPlugin implements Plugin<Project> {
 
@@ -51,38 +50,28 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
 
     private void registerBytebuddyAsmFactory(BytebuddyDependenciesHandler dependenciesHandler) {
         androidComponentsExtension.onVariants(androidComponentsExtension.selector().all(), variant -> {
+            TaskProvider<LocalClassesSync> localClasses = registerLocalClassesSyncTask(variant);
             variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, params -> {
                 params.getByteBuddyClasspath().from(dependenciesHandler.getConfigurationForBuildType(variant.getBuildType()));
                 params.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
-                params.getRuntimeClasspath().from(project.provider(() -> getRuntimeClasspath(variant.getName())));
-                params.getLocalClassesDirs().from(project.provider(() -> getJavaCompileClasspath(variant.getName())));
+                params.getRuntimeClasspath().from(getRuntimeClasspath(variant));
+                params.getLocalClassesDirs().from(localClasses);
                 return Unit.INSTANCE;
             });
         });
     }
 
-    private Configuration getRuntimeClasspath(String variantName) {
-        AppExtension extension = (AppExtension) androidExtension;
-
-        for (ApplicationVariant applicationVariant : extension.getApplicationVariants()) {
-            if (Objects.equals(variantName, applicationVariant.getName())) {
-                return applicationVariant.getRuntimeConfiguration();
-            }
-        }
-        throw new RuntimeException("No runtime config found");
+    private TaskProvider<LocalClassesSync> registerLocalClassesSyncTask(Variant variant) {
+        return project.getTasks().register(variant.getName() + "ByteBuddyLocalClasses", LocalClassesSync.class, classesSync -> {
+            classesSync.getLocalClasspath().from(variant.getArtifacts().getAll(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE));
+            classesSync.getOutputDir().set(project.getLayout().getBuildDirectory().dir("incremental/" + classesSync.getName()));
+        });
     }
 
-    private Provider<DirectoryProperty> getJavaCompileClasspath(String variantName) {
-        AppExtension extension = (AppExtension) androidExtension;
-
-        for (ApplicationVariant applicationVariant : extension.getApplicationVariants()) {
-            if (Objects.equals(variantName, applicationVariant.getName())) {
-                return applicationVariant.getJavaCompileProvider().flatMap(javaCompile -> project.provider(javaCompile::getDestinationDirectory));
-            }
-        }
-        throw new RuntimeException("No javac destination dir found");
+    private FileCollection getRuntimeClasspath(Variant variant) {
+        ComponentImpl component = (ComponentImpl) variant;
+        return component.getVariantDependencies().getRuntimeClasspath();
     }
-
 
     private void verifyValidAndroidPlugin() {
         AndroidPluginVersion currentVersion = androidComponentsExtension.getPluginVersion();
