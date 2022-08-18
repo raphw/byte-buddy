@@ -1,35 +1,35 @@
-package net.bytebuddy.build.gradle.android.connector.adapter.current.asm.translator;
+package net.bytebuddy.build.gradle.android.asm.translator;
 
-import net.bytebuddy.jar.asm.AnnotationVisitor;
-import net.bytebuddy.jar.asm.Attribute;
-import net.bytebuddy.jar.asm.ClassVisitor;
-import net.bytebuddy.jar.asm.ConstantDynamic;
-import net.bytebuddy.jar.asm.FieldVisitor;
-import net.bytebuddy.jar.asm.Handle;
-import net.bytebuddy.jar.asm.Label;
-import net.bytebuddy.jar.asm.MethodVisitor;
-import net.bytebuddy.jar.asm.ModuleVisitor;
-import net.bytebuddy.jar.asm.RecordComponentVisitor;
-import net.bytebuddy.jar.asm.Type;
-import net.bytebuddy.jar.asm.TypePath;
 import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Attribute;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ConstantDynamic;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.ModuleVisitor;
+import org.objectweb.asm.RecordComponentVisitor;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class WrappingClassVisitor extends ClassVisitor {
+public class UnwrappingClassVisitor extends ClassVisitor {
 
-    protected final org.objectweb.asm.ClassVisitor classVisitor;
+    private final net.bytebuddy.jar.asm.ClassVisitor classVisitor;
 
-    public WrappingClassVisitor(org.objectweb.asm.ClassVisitor classVisitor) {
+    public UnwrappingClassVisitor(net.bytebuddy.jar.asm.ClassVisitor classVisitor) {
         super(OpenedClassReader.ASM_API);
         this.classVisitor = classVisitor;
     }
 
     @MaybeNull
-    public static ClassVisitor of(@MaybeNull org.objectweb.asm.ClassVisitor classVisitor) {
-        return classVisitor == null ? null : new WrappingClassVisitor(classVisitor);
+    public static ClassVisitor of(@MaybeNull net.bytebuddy.jar.asm.ClassVisitor classVisitor) {
+        return classVisitor == null ? null : new UnwrappingClassVisitor(classVisitor);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class WrappingClassVisitor extends ClassVisitor {
 
     @Override
     public AnnotationVisitor visitTypeAnnotation(int typeRef, @MaybeNull TypePath typePath, String descriptor, boolean visible) {
-        return WrappingAnnotationVisitor.of(classVisitor.visitTypeAnnotation(typeRef, typePath == null ? null : org.objectweb.asm.TypePath.fromString(typePath.toString()), descriptor, visible));
+        return WrappingAnnotationVisitor.of(classVisitor.visitTypeAnnotation(typeRef, typePath == null ? null : net.bytebuddy.jar.asm.TypePath.fromString(typePath.toString()), descriptor, visible));
     }
 
     @Override
@@ -109,15 +109,15 @@ public class WrappingClassVisitor extends ClassVisitor {
 
     public static class WrappingModuleVisitor extends ModuleVisitor {
 
-        private final org.objectweb.asm.ModuleVisitor moduleVisitor;
+        private final net.bytebuddy.jar.asm.ModuleVisitor moduleVisitor;
 
-        protected WrappingModuleVisitor(org.objectweb.asm.ModuleVisitor moduleVisitor) {
+        protected WrappingModuleVisitor(net.bytebuddy.jar.asm.ModuleVisitor moduleVisitor) {
             super(OpenedClassReader.ASM_API);
             this.moduleVisitor = moduleVisitor;
         }
 
         @MaybeNull
-        public static ModuleVisitor of(@MaybeNull org.objectweb.asm.ModuleVisitor moduleVisitor) {
+        public static ModuleVisitor of(@MaybeNull net.bytebuddy.jar.asm.ModuleVisitor moduleVisitor) {
             return moduleVisitor == null ? null : new WrappingModuleVisitor(moduleVisitor);
         }
 
@@ -164,15 +164,15 @@ public class WrappingClassVisitor extends ClassVisitor {
 
     public static class WrappingAnnotationVisitor extends AnnotationVisitor {
 
-        private final org.objectweb.asm.AnnotationVisitor annotationVisitor;
+        private final net.bytebuddy.jar.asm.AnnotationVisitor annotationVisitor;
 
-        protected WrappingAnnotationVisitor(org.objectweb.asm.AnnotationVisitor annotationVisitor) {
+        protected WrappingAnnotationVisitor(net.bytebuddy.jar.asm.AnnotationVisitor annotationVisitor) {
             super(OpenedClassReader.ASM_API);
             this.annotationVisitor = annotationVisitor;
         }
 
         @MaybeNull
-        public static AnnotationVisitor of(@MaybeNull org.objectweb.asm.AnnotationVisitor annotationVisitor) {
+        public static AnnotationVisitor of(@MaybeNull net.bytebuddy.jar.asm.AnnotationVisitor annotationVisitor) {
             return annotationVisitor == null ? null : new WrappingAnnotationVisitor(annotationVisitor);
         }
 
@@ -204,15 +204,15 @@ public class WrappingClassVisitor extends ClassVisitor {
 
     public static class WrappingRecordComponentVisitor extends RecordComponentVisitor {
 
-        private final org.objectweb.asm.RecordComponentVisitor recordComponentVisitor;
+        private final net.bytebuddy.jar.asm.RecordComponentVisitor recordComponentVisitor;
 
-        protected WrappingRecordComponentVisitor(org.objectweb.asm.RecordComponentVisitor recordComponentVisitor) {
+        protected WrappingRecordComponentVisitor(net.bytebuddy.jar.asm.RecordComponentVisitor recordComponentVisitor) {
             super(OpenedClassReader.ASM_API);
             this.recordComponentVisitor = recordComponentVisitor;
         }
 
         @MaybeNull
-        public static RecordComponentVisitor of(@MaybeNull org.objectweb.asm.RecordComponentVisitor recordComponentVisitor) {
+        public static RecordComponentVisitor of(@MaybeNull net.bytebuddy.jar.asm.RecordComponentVisitor recordComponentVisitor) {
             return recordComponentVisitor == null ? null : new WrappingRecordComponentVisitor(recordComponentVisitor);
         }
 
@@ -223,7 +223,7 @@ public class WrappingClassVisitor extends ClassVisitor {
 
         @Override
         public AnnotationVisitor visitTypeAnnotation(int typeRef, @MaybeNull TypePath typePath, String descriptor, boolean visible) {
-            return WrappingAnnotationVisitor.of(recordComponentVisitor.visitTypeAnnotation(typeRef, typePath == null ? null : org.objectweb.asm.TypePath.fromString(typePath.toString()), descriptor, visible));
+            return WrappingAnnotationVisitor.of(recordComponentVisitor.visitTypeAnnotation(typeRef, typePath == null ? null : net.bytebuddy.jar.asm.TypePath.fromString(typePath.toString()), descriptor, visible));
         }
 
         @Override
@@ -239,15 +239,15 @@ public class WrappingClassVisitor extends ClassVisitor {
 
     public static class WrappingFieldVisitor extends FieldVisitor {
 
-        private final org.objectweb.asm.FieldVisitor fieldVisitor;
+        private final net.bytebuddy.jar.asm.FieldVisitor fieldVisitor;
 
-        protected WrappingFieldVisitor(org.objectweb.asm.FieldVisitor fieldVisitor) {
+        protected WrappingFieldVisitor(net.bytebuddy.jar.asm.FieldVisitor fieldVisitor) {
             super(OpenedClassReader.ASM_API);
             this.fieldVisitor = fieldVisitor;
         }
 
         @MaybeNull
-        public static FieldVisitor of(@MaybeNull org.objectweb.asm.FieldVisitor fieldVisitor) {
+        public static FieldVisitor of(@MaybeNull net.bytebuddy.jar.asm.FieldVisitor fieldVisitor) {
             return fieldVisitor == null ? null : new WrappingFieldVisitor(fieldVisitor);
         }
 
@@ -258,7 +258,7 @@ public class WrappingClassVisitor extends ClassVisitor {
 
         @Override
         public AnnotationVisitor visitTypeAnnotation(int typeRef, @MaybeNull TypePath typePath, String descriptor, boolean visible) {
-            return WrappingAnnotationVisitor.of(fieldVisitor.visitTypeAnnotation(typeRef, typePath == null ? null : org.objectweb.asm.TypePath.fromString(typePath.toString()), descriptor, visible));
+            return WrappingAnnotationVisitor.of(fieldVisitor.visitTypeAnnotation(typeRef, typePath == null ? null : net.bytebuddy.jar.asm.TypePath.fromString(typePath.toString()), descriptor, visible));
         }
 
         @Override
@@ -274,17 +274,17 @@ public class WrappingClassVisitor extends ClassVisitor {
 
     public static class WrappingMethodVisitor extends MethodVisitor {
 
-        private final org.objectweb.asm.MethodVisitor methodVisitor;
+        private final net.bytebuddy.jar.asm.MethodVisitor methodVisitor;
 
-        private final Map<Label, org.objectweb.asm.Label> labels = new HashMap<>();
+        private final Map<Label, net.bytebuddy.jar.asm.Label> labels = new HashMap<>();
 
-        protected WrappingMethodVisitor(org.objectweb.asm.MethodVisitor methodVisitor) {
+        protected WrappingMethodVisitor(net.bytebuddy.jar.asm.MethodVisitor methodVisitor) {
             super(OpenedClassReader.ASM_API);
             this.methodVisitor = methodVisitor;
         }
 
         @MaybeNull
-        public static MethodVisitor of(@MaybeNull org.objectweb.asm.MethodVisitor methodVisitor) {
+        public static MethodVisitor of(@MaybeNull net.bytebuddy.jar.asm.MethodVisitor methodVisitor) {
             return methodVisitor == null ? null : new WrappingMethodVisitor(methodVisitor);
         }
 
@@ -305,7 +305,7 @@ public class WrappingClassVisitor extends ClassVisitor {
 
         @Override
         public AnnotationVisitor visitTypeAnnotation(int typeRef, @MaybeNull TypePath typePath, String descriptor, boolean visible) {
-            return WrappingAnnotationVisitor.of(methodVisitor.visitTypeAnnotation(typeRef, typePath == null ? null : org.objectweb.asm.TypePath.fromString(typePath.toString()), descriptor, visible));
+            return WrappingAnnotationVisitor.of(methodVisitor.visitTypeAnnotation(typeRef, typePath == null ? null : net.bytebuddy.jar.asm.TypePath.fromString(typePath.toString()), descriptor, visible));
         }
 
         @Override
@@ -411,7 +411,7 @@ public class WrappingClassVisitor extends ClassVisitor {
 
         @Override
         public AnnotationVisitor visitInsnAnnotation(int typeRef, @MaybeNull TypePath typePath, String descriptor, boolean visible) {
-            return WrappingAnnotationVisitor.of(methodVisitor.visitInsnAnnotation(typeRef, typePath == null ? null : org.objectweb.asm.TypePath.fromString(typePath.toString()), descriptor, visible));
+            return WrappingAnnotationVisitor.of(methodVisitor.visitInsnAnnotation(typeRef, typePath == null ? null : net.bytebuddy.jar.asm.TypePath.fromString(typePath.toString()), descriptor, visible));
         }
 
         @Override
@@ -421,7 +421,7 @@ public class WrappingClassVisitor extends ClassVisitor {
 
         @Override
         public AnnotationVisitor visitTryCatchAnnotation(int typeRef, @MaybeNull TypePath typePath, String descriptor, boolean visible) {
-            return WrappingAnnotationVisitor.of(methodVisitor.visitTryCatchAnnotation(typeRef, typePath == null ? null : org.objectweb.asm.TypePath.fromString(typePath.toString()), descriptor, visible));
+            return WrappingAnnotationVisitor.of(methodVisitor.visitTryCatchAnnotation(typeRef, typePath == null ? null : net.bytebuddy.jar.asm.TypePath.fromString(typePath.toString()), descriptor, visible));
         }
 
         @Override
@@ -431,7 +431,7 @@ public class WrappingClassVisitor extends ClassVisitor {
 
         @Override
         public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, @MaybeNull TypePath typePath, Label[] start, Label[] end, int[] index, String descriptor, boolean visible) {
-            return WrappingAnnotationVisitor.of(methodVisitor.visitLocalVariableAnnotation(typeRef, typePath == null ? null : org.objectweb.asm.TypePath.fromString(typePath.toString()), label(start), label(end), index, descriptor, visible));
+            return WrappingAnnotationVisitor.of(methodVisitor.visitLocalVariableAnnotation(typeRef, typePath == null ? null : net.bytebuddy.jar.asm.TypePath.fromString(typePath.toString()), label(start), label(end), index, descriptor, visible));
         }
 
         @Override
@@ -449,18 +449,18 @@ public class WrappingClassVisitor extends ClassVisitor {
             methodVisitor.visitEnd();
         }
 
-        private org.objectweb.asm.Label[] label(Label[] source) {
-            org.objectweb.asm.Label[] target = new org.objectweb.asm.Label[source.length];
+        private net.bytebuddy.jar.asm.Label[] label(Label[] source) {
+            net.bytebuddy.jar.asm.Label[] target = new net.bytebuddy.jar.asm.Label[source.length];
             for (int index = 0; index < source.length; index++) {
                 target[index] = label(source[index]);
             }
             return target;
         }
 
-        private org.objectweb.asm.Label label(Label source) {
-            org.objectweb.asm.Label target = labels.get(source);
+        private net.bytebuddy.jar.asm.Label label(Label source) {
+            net.bytebuddy.jar.asm.Label target = labels.get(source);
             if (target == null) {
-                target = new org.objectweb.asm.Label();
+                target = new net.bytebuddy.jar.asm.Label();
                 labels.put(source, target);
             }
             return target;
@@ -480,20 +480,20 @@ public class WrappingClassVisitor extends ClassVisitor {
             return target;
         }
 
-        private static org.objectweb.asm.Handle handle(Handle handle) {
-            return new org.objectweb.asm.Handle(handle.getTag(),
+        private static net.bytebuddy.jar.asm.Handle handle(Handle handle) {
+            return new net.bytebuddy.jar.asm.Handle(handle.getTag(),
                     handle.getOwner(),
                     handle.getName(),
                     handle.getDesc(),
                     handle.isInterface());
         }
 
-        private static org.objectweb.asm.ConstantDynamic constantDynamic(ConstantDynamic constantDynamic) {
+        private static net.bytebuddy.jar.asm.ConstantDynamic constantDynamic(ConstantDynamic constantDynamic) {
             Object[] argument = new Object[constantDynamic.getBootstrapMethodArgumentCount()];
             for (int index = 0; index < argument.length; index++) {
                 argument[index] = ldc(constantDynamic.getBootstrapMethodArgument(index));
             }
-            return new org.objectweb.asm.ConstantDynamic(constantDynamic.getName(),
+            return new net.bytebuddy.jar.asm.ConstantDynamic(constantDynamic.getName(),
                     constantDynamic.getDescriptor(),
                     handle(constantDynamic.getBootstrapMethod()),
                     argument);
@@ -503,7 +503,7 @@ public class WrappingClassVisitor extends ClassVisitor {
             if (source instanceof Handle) {
                 return handle((Handle) source);
             } else if (source instanceof Type) {
-                return org.objectweb.asm.Type.getType(((Type) source).getDescriptor());
+                return net.bytebuddy.jar.asm.Type.getType(((Type) source).getDescriptor());
             } else if (source instanceof ConstantDynamic) {
                 return constantDynamic((ConstantDynamic) source);
             } else {

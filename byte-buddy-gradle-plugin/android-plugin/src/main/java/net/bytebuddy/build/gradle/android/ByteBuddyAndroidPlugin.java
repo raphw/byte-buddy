@@ -22,7 +22,7 @@ import com.android.build.gradle.AppExtension;
 import com.android.build.gradle.BaseExtension;
 import com.android.build.gradle.api.ApplicationVariant;
 import kotlin.Unit;
-import net.bytebuddy.build.gradle.android.connector.adapter.current.asm.ByteBuddyAsmClassVisitorFactory;
+import net.bytebuddy.build.gradle.android.asm.ByteBuddyAsmClassVisitorFactory;
 import net.bytebuddy.build.gradle.android.utils.BytebuddyDependenciesHandler;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;

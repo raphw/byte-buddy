@@ -31,10 +31,6 @@ public class Many {
         return list;
     }
 
-    public static boolean isNotEmpty(Collection<?> collection) {
-        return collection.size() > 0;
-    }
-
     public static <T> Set<T> setOf(T... items) {
         return toSet(Arrays.asList(items));
     }

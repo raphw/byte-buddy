@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.android.connector.adapter.current.asm;
+package net.bytebuddy.build.gradle.android.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
-import net.bytebuddy.build.gradle.android.connector.adapter.current.asm.translator.UnwrappingClassVisitor;
-import net.bytebuddy.build.gradle.android.connector.adapter.current.asm.translator.WrappingClassVisitor;
-import net.bytebuddy.build.gradle.android.transformation.impl.DefaultEntryPoint;
+import net.bytebuddy.build.gradle.android.asm.translator.UnwrappingClassVisitor;
+import net.bytebuddy.build.gradle.android.asm.translator.WrappingClassVisitor;
+import net.bytebuddy.build.gradle.android.utils.DefaultEntryPoint;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
