@@ -20,8 +20,6 @@ import com.android.build.api.instrumentation.ClassContext;
 import com.android.build.api.instrumentation.ClassData;
 import com.android.build.api.instrumentation.InstrumentationParameters;
 import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.file.Directory;
-import org.gradle.api.provider.ListProperty;
 import org.gradle.api.tasks.CompileClasspath;
 import org.objectweb.asm.ClassVisitor;
 
@@ -51,6 +49,6 @@ public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitor
         ConfigurableFileCollection getRuntimeClasspath();
 
         @CompileClasspath
-        ListProperty<Directory> getLocalClassesDirs();
+        ConfigurableFileCollection getLocalClassesDirs();
     }
 }

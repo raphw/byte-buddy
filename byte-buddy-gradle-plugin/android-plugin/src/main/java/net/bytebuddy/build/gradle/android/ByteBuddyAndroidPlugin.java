@@ -16,7 +16,6 @@
 package net.bytebuddy.build.gradle.android;
 
 import com.android.build.api.AndroidPluginVersion;
-import com.android.build.api.artifact.MultipleArtifact;
 import com.android.build.api.instrumentation.InstrumentationScope;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.gradle.AppExtension;
@@ -28,6 +27,8 @@ import net.bytebuddy.build.gradle.android.utils.BytebuddyDependenciesHandler;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.provider.Provider;
 
 import java.util.Objects;
 
@@ -54,7 +55,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                 params.getByteBuddyClasspath().from(dependenciesHandler.getConfigurationForBuildType(variant.getBuildType()));
                 params.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
                 params.getRuntimeClasspath().from(project.provider(() -> getRuntimeClasspath(variant.getName())));
-                params.getLocalClassesDirs().set(variant.getArtifacts().getAll(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE));
+                params.getLocalClassesDirs().from(project.provider(() -> getJavaCompileClasspath(variant.getName())));
                 return Unit.INSTANCE;
             });
         });
@@ -70,6 +71,18 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         }
         throw new RuntimeException("No runtime config found");
     }
+
+    private Provider<DirectoryProperty> getJavaCompileClasspath(String variantName) {
+        AppExtension extension = (AppExtension) androidExtension;
+
+        for (ApplicationVariant applicationVariant : extension.getApplicationVariants()) {
+            if (Objects.equals(variantName, applicationVariant.getName())) {
+                return applicationVariant.getJavaCompileProvider().flatMap(javaCompile -> project.provider(javaCompile::getDestinationDirectory));
+            }
+        }
+        throw new RuntimeException("No javac destination dir found");
+    }
+
 
     private void verifyValidAndroidPlugin() {
         AndroidPluginVersion currentVersion = androidComponentsExtension.getPluginVersion();
