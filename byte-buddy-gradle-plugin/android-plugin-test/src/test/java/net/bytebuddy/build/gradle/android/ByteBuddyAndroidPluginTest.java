@@ -2,6 +2,7 @@ package net.bytebuddy.build.gradle.android;
 
 import net.bytebuddy.test.utility.BaseAndroidGradleTest;
 import net.bytebuddy.test.utility.ProjectInfo;
+import org.gradle.testkit.runner.BuildResult;
 import org.junit.Test;
 
 import java.io.File;
@@ -24,7 +25,7 @@ public class ByteBuddyAndroidPluginTest extends BaseAndroidGradleTest {
         buildProject(appProject, listOf("assembleDebug"));
 
         ClassLoader classLoader = getAppClassloader(appProject);
-        verifyClassIsInstrumented(classLoader, "SomeClass");
+        verifyClassIsInstrumented(classLoader, "com.somepackage.SomeClass");
     }
 
     @Test
