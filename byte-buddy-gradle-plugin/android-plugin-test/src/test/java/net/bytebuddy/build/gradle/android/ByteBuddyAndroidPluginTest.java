@@ -14,7 +14,7 @@ import static org.junit.Assert.assertEquals;
 
 public class ByteBuddyAndroidPluginTest extends BaseAndroidGradleTest {
 
-    private static final String GRADLE_VERSION = "6.7.1";
+    private static final String GRADLE_VERSION = "7.3.3";
 
     @Test
     public void transformAndroidProjectJavaClasses() {
