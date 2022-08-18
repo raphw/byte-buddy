@@ -19,6 +19,8 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
+import net.bytebuddy.build.gradle.android.connector.adapter.current.asm.translator.UnwrappingClassVisitor;
+import net.bytebuddy.build.gradle.android.connector.adapter.current.asm.translator.WrappingClassVisitor;
 import net.bytebuddy.build.gradle.android.transformation.impl.DefaultEntryPoint;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -93,11 +95,11 @@ public final class BytebuddyManager {
     }
 
     private static ClassVisitor translateToAndroids(net.bytebuddy.jar.asm.ClassVisitor composedVisitor) {
-        return null;
+        return new UnwrappingClassVisitor(composedVisitor);
     }
 
     private static net.bytebuddy.jar.asm.ClassVisitor translateToByteBuddys(ClassVisitor original) {
-        return null;
+        return new WrappingClassVisitor(original);
     }
 
     public static boolean matches(String className) {

@@ -22,7 +22,7 @@ public class WrappingClassVisitor extends ClassVisitor {
 
     protected final org.objectweb.asm.ClassVisitor classVisitor;
 
-    protected WrappingClassVisitor(org.objectweb.asm.ClassVisitor classVisitor) {
+    public WrappingClassVisitor(org.objectweb.asm.ClassVisitor classVisitor) {
         super(OpenedClassReader.ASM_API);
         this.classVisitor = classVisitor;
     }

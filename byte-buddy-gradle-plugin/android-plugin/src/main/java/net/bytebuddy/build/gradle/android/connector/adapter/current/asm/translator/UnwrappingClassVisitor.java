@@ -22,7 +22,7 @@ public class UnwrappingClassVisitor extends ClassVisitor {
 
     private final net.bytebuddy.jar.asm.ClassVisitor classVisitor;
 
-    protected UnwrappingClassVisitor(net.bytebuddy.jar.asm.ClassVisitor classVisitor) {
+    public UnwrappingClassVisitor(net.bytebuddy.jar.asm.ClassVisitor classVisitor) {
         super(OpenedClassReader.ASM_API);
         this.classVisitor = classVisitor;
     }
