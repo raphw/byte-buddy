@@ -20,11 +20,15 @@ public class BytebuddyDependenciesHandler {
         this.project = project;
     }
 
+    public void init() {
+        initBucketConfig();
+    }
+
     public Configuration getConfigurationForBuildType(String buildType) {
         return project.getConfigurations().create(getNameFor(buildType), configuration -> {
             configuration.setCanBeResolved(true);
             configuration.setCanBeConsumed(false);
-            configuration.extendsFrom(getBucketConfiguration());
+            configuration.extendsFrom(bucket);
             configuration.attributes(attrs -> {
                 attrs.attribute(ARTIFACT_TYPE_ATTR, "android-java-res");
                 attrs.attribute(
@@ -41,14 +45,11 @@ public class BytebuddyDependenciesHandler {
         return String.format(BYTEBUDDY_CONFIGURATION_NAME_FORMAT, buildType);
     }
 
-    private Configuration getBucketConfiguration() {
-        if (bucket == null) {
-            bucket = project.getConfigurations().create("bytebuddy", configuration -> {
-                configuration.setCanBeConsumed(false);
-                configuration.setCanBeResolved(false);
-            });
-        }
-        return bucket;
+    private void initBucketConfig() {
+        bucket = project.getConfigurations().create("bytebuddy", configuration -> {
+            configuration.setCanBeConsumed(false);
+            configuration.setCanBeResolved(false);
+        });
     }
 
     private static Attribute<String> getArtifactTypeAttr() {

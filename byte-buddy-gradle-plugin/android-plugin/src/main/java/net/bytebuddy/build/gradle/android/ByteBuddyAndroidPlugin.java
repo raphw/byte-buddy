@@ -43,6 +43,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         androidComponentsExtension = project.getExtensions().findByType(AndroidComponentsExtension.class);
         verifyValidAndroidPlugin();
         BytebuddyDependenciesHandler dependenciesHandler = new BytebuddyDependenciesHandler(project);
+        dependenciesHandler.init();
         registerBytebuddyAsmFactory(dependenciesHandler);
     }
 
