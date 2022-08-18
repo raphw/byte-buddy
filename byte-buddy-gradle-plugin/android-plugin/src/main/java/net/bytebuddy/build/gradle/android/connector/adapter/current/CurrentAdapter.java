@@ -52,7 +52,7 @@ public class CurrentAdapter implements TransformationAdapter {
             variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, params -> {
                 params.getByteBuddyClasspath().from(byteBuddyDependenciesConfiguration);
                 params.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
-                params.getClasspath().from(project.provider(() -> getRuntimeClasspath(variant.getName())));
+                params.getRuntimeClasspath().from(project.provider(() -> getRuntimeClasspath(variant.getName())));
                 return Unit.INSTANCE;
             });
         });

@@ -15,57 +15,64 @@
  */
 package net.bytebuddy.build.gradle.android;
 
-import net.bytebuddy.build.gradle.android.connector.AndroidPluginConnector;
-import net.bytebuddy.build.gradle.android.transformation.AndroidTransformation;
-import net.bytebuddy.build.gradle.android.transformation.impl.DefaultAndroidTransformation;
+import com.android.build.api.AndroidPluginVersion;
+import com.android.build.api.instrumentation.InstrumentationScope;
+import com.android.build.api.variant.AndroidComponentsExtension;
+import com.android.build.gradle.AppExtension;
+import com.android.build.gradle.BaseExtension;
+import com.android.build.gradle.api.ApplicationVariant;
+import kotlin.Unit;
+import net.bytebuddy.build.gradle.android.connector.adapter.current.asm.ByteBuddyAsmClassVisitorFactory;
+import net.bytebuddy.build.gradle.android.utils.BytebuddyDependenciesHandler;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
-import org.gradle.api.attributes.Attribute;
-import org.gradle.api.attributes.Category;
-import org.gradle.api.attributes.Usage;
-import org.gradle.api.internal.artifacts.ArtifactAttributes;
+
+import java.util.Objects;
 
 public class ByteBuddyAndroidPlugin implements Plugin<Project> {
 
-    private static final Attribute<String> ARTIFACT_TYPE_ATTR = getArtifactTypeAttr();
-
-    private static Attribute<String> getArtifactTypeAttr() {
-        try {
-            return ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE;
-        } catch (NoSuchFieldError e) {
-            return ArtifactAttributes.ARTIFACT_FORMAT;
-        }
-    }
+    private AndroidComponentsExtension<?, ?, ?> androidComponentsExtension;
+    private BaseExtension androidExtension;
+    private Project project;
 
     @Override
     public void apply(Project project) {
-        Configuration byteBuddyClasspath = createBytebuddyDependenciesConfiguration(project);
-        AndroidTransformation byteBuddyTransformation = new DefaultAndroidTransformation(project.getLogger());
-        AndroidPluginConnector connector = new AndroidPluginConnector(project, byteBuddyClasspath);
-
-        connector.connect(byteBuddyTransformation);
+        this.project = project;
+        androidExtension = project.getExtensions().getByType(BaseExtension.class);
+        androidComponentsExtension = project.getExtensions().findByType(AndroidComponentsExtension.class);
+        verifyValidAndroidPlugin();
+        BytebuddyDependenciesHandler dependenciesHandler = new BytebuddyDependenciesHandler(project);
+        registerBytebuddyAsmFactory(dependenciesHandler);
     }
 
-    private Configuration createBytebuddyDependenciesConfiguration(Project project) {
-        Configuration bucket = project.getConfigurations().create("bytebuddy", it -> {
-            it.setCanBeResolved(false);
-            it.setCanBeConsumed(false);
-        });
-
-        return project.getConfigurations().create("bytebuddyClasspath", it -> {
-            it.setCanBeConsumed(false);
-            it.setCanBeResolved(true);
-            it.extendsFrom(bucket);
-            it.attributes(attrs -> {
-                attrs.attribute(ARTIFACT_TYPE_ATTR, "android-java-res");
-                attrs.attribute(
-                        Category.CATEGORY_ATTRIBUTE,
-                        project.getObjects().named(Category.class, Category.LIBRARY)
-                );
-                attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, Usage.JAVA_RUNTIME));
+    private void registerBytebuddyAsmFactory(BytebuddyDependenciesHandler dependenciesHandler) {
+        androidComponentsExtension.onVariants(androidComponentsExtension.selector().all(), variant -> {
+            variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, params -> {
+                params.getByteBuddyClasspath().from(dependenciesHandler.getConfigurationForBuildType(variant.getBuildType()));
+                params.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
+                params.getRuntimeClasspath().from(project.provider(() -> getRuntimeClasspath(variant.getName())));
+                return Unit.INSTANCE;
             });
         });
+    }
+
+    private Configuration getRuntimeClasspath(String variantName) {
+        AppExtension extension = (AppExtension) androidExtension;
+
+        for (ApplicationVariant applicationVariant : extension.getApplicationVariants()) {
+            if (Objects.equals(variantName, applicationVariant.getName())) {
+                return applicationVariant.getRuntimeConfiguration();
+            }
+        }
+        throw new RuntimeException("No runtime config found");
+    }
+
+    private void verifyValidAndroidPlugin() {
+        AndroidPluginVersion currentVersion = androidComponentsExtension.getPluginVersion();
+        AndroidPluginVersion minimumVersion = new AndroidPluginVersion(7, 2);
+        if (currentVersion.compareTo(minimumVersion) < 0) {
+            throw new IllegalStateException("ByteBuddy is supported from Android Gradle Plugin version 7.2+");
+        }
     }
 }

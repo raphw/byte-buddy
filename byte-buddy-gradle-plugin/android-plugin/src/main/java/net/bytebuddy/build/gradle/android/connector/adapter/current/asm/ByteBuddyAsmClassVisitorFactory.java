@@ -33,7 +33,7 @@ public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitor
     @Override
     public boolean isInstrumentable(ClassData classData) {
         Params params = getParameters().get();
-        BytebuddyManager.initialize(params.getClasspath(), params.getAndroidBootClasspath(), params.getByteBuddyClasspath());
+        BytebuddyManager.initialize(params.getRuntimeClasspath(), params.getAndroidBootClasspath(), params.getByteBuddyClasspath());
         return BytebuddyManager.matches(classData.getClassName());
     }
 
@@ -46,6 +46,6 @@ public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitor
         ConfigurableFileCollection getByteBuddyClasspath();
 
         @CompileClasspath
-        ConfigurableFileCollection getClasspath();
+        ConfigurableFileCollection getRuntimeClasspath();
     }
 }
