@@ -16,6 +16,7 @@
 package net.bytebuddy.build.gradle.android;
 
 import com.android.build.api.AndroidPluginVersion;
+import com.android.build.api.artifact.MultipleArtifact;
 import com.android.build.api.instrumentation.InstrumentationScope;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.gradle.AppExtension;
@@ -53,6 +54,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                 params.getByteBuddyClasspath().from(dependenciesHandler.getConfigurationForBuildType(variant.getBuildType()));
                 params.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
                 params.getRuntimeClasspath().from(project.provider(() -> getRuntimeClasspath(variant.getName())));
+                params.getLocalClassesDirs().set(variant.getArtifacts().getAll(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE));
                 return Unit.INSTANCE;
             });
         });

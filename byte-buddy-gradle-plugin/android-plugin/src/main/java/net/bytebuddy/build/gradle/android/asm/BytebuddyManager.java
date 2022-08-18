@@ -22,13 +22,16 @@ import net.bytebuddy.build.Plugin;
 import net.bytebuddy.build.gradle.android.asm.translator.UnwrappingClassVisitor;
 import net.bytebuddy.build.gradle.android.asm.translator.WrappingClassVisitor;
 import net.bytebuddy.build.gradle.android.utils.DefaultEntryPoint;
+import net.bytebuddy.build.gradle.android.utils.Many;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.pool.TypePool;
 import org.gradle.api.GradleException;
+import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.ListProperty;
 import org.objectweb.asm.ClassVisitor;
 
 import java.io.File;
@@ -56,7 +59,7 @@ public final class BytebuddyManager {
 
     public synchronized static void initialize(FileCollection runtimeClasspath,
                                                FileCollection androidBootClasspath,
-                                               FileCollection byteBuddyClasspath) {
+                                               FileCollection byteBuddyClasspath, ListProperty<Directory> localClasses) {
         if (initialized) {
             System.out.println("Already initialized");
             return;
@@ -68,7 +71,10 @@ public final class BytebuddyManager {
         byteBuddy = entryPoint.byteBuddy(ClassFileVersion.JAVA_V8);//todo set version from project
         typeStrategy = new Plugin.Engine.TypeStrategy.ForEntryPoint(entryPoint, MethodNameTransformer.Suffixing.withRandomSuffix());
         try {
-            classFileLocator = getClassFileLocator(runtimeClasspath.plus(androidBootClasspath).plus(byteBuddyClasspath));
+            Set<File> classpath = runtimeClasspath.plus(androidBootClasspath).plus(byteBuddyClasspath).getFiles();
+            ArrayList<File> localClassesDirs = Many.map(localClasses.get(), Directory::getAsFile);
+            classpath.addAll(localClassesDirs);
+            classFileLocator = getClassFileLocator(classpath);
             typePool = poolStrategy.typePool(classFileLocator);
             List<? extends Plugin.Factory> factories = createPluginFactories(androidBootClasspath.getFiles(), byteBuddyClasspath.getFiles());
             for (Plugin.Factory factory : factories) {
@@ -121,10 +127,10 @@ public final class BytebuddyManager {
         return matches;
     }
 
-    private static ClassFileLocator getClassFileLocator(FileCollection classpath) throws IOException {
+    private static ClassFileLocator getClassFileLocator(Set<File> classpath) throws IOException {
         ArrayList<ClassFileLocator> classFileLocators = new ArrayList<>();
 
-        for (File artifact : classpath.getFiles()) {
+        for (File artifact : classpath) {
             classFileLocators.add(artifact.isFile() ? ClassFileLocator.ForJarFile.of(artifact) : new ClassFileLocator.ForFolder(artifact));
         }
 

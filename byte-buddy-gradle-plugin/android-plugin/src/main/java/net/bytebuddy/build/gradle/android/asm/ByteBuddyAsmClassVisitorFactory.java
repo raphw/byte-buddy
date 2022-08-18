@@ -20,6 +20,8 @@ import com.android.build.api.instrumentation.ClassContext;
 import com.android.build.api.instrumentation.ClassData;
 import com.android.build.api.instrumentation.InstrumentationParameters;
 import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.Directory;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.tasks.CompileClasspath;
 import org.objectweb.asm.ClassVisitor;
 
@@ -33,7 +35,7 @@ public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitor
     @Override
     public boolean isInstrumentable(ClassData classData) {
         Params params = getParameters().get();
-        BytebuddyManager.initialize(params.getRuntimeClasspath(), params.getAndroidBootClasspath(), params.getByteBuddyClasspath());
+        BytebuddyManager.initialize(params.getRuntimeClasspath(), params.getAndroidBootClasspath(), params.getByteBuddyClasspath(), params.getLocalClassesDirs());
         return BytebuddyManager.matches(classData.getClassName());
     }
 
@@ -47,5 +49,8 @@ public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitor
 
         @CompileClasspath
         ConfigurableFileCollection getRuntimeClasspath();
+
+        @CompileClasspath
+        ListProperty<Directory> getLocalClassesDirs();
     }
 }

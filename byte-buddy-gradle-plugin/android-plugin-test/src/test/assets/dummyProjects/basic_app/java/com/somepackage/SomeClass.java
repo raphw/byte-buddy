@@ -1,3 +1,5 @@
+package com.somepackage;
+
 public class SomeClass {
 
     public String getMessage() {
