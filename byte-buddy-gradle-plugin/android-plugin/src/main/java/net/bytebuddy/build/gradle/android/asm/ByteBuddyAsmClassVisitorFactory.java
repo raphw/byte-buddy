@@ -36,8 +36,8 @@ public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitor
 
     @Override
     public boolean isInstrumentable(ClassData classData) {
-        BytebuddyService service = getService();
         Params parameters = getParameters().get();
+        BytebuddyService service = parameters.getBytebuddyService().get();
         service.initialize(parameters.getRuntimeClasspath(), parameters.getAndroidBootClasspath(), parameters.getByteBuddyClasspath(), parameters.getLocalClassesDirs());
         return service.matches(classData.getClassName());
     }
