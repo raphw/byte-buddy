@@ -63,17 +63,21 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     private void registerBytebuddyAsmFactory(BytebuddyDependenciesHandler dependenciesHandler) {
         androidComponentsExtension.onVariants(androidComponentsExtension.selector().all(), variant -> {
             TaskProvider<LocalClassesSync> localClasses = registerLocalClassesSyncTask(variant);
-            Provider<BytebuddyService> serviceProvider = project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "BytebuddyService", BytebuddyService.class, spec -> {
-                BytebuddyService.Params parameters = spec.getParameters();
-                parameters.getByteBuddyClasspath().from(dependenciesHandler.getConfigurationForBuildType(variant.getBuildType()));
-                parameters.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
-                parameters.getRuntimeClasspath().from(getRuntimeClasspath(variant));
-                parameters.getLocalClassesDirs().from(localClasses);
-            });
+            Provider<BytebuddyService> serviceProvider = registerService(variant);
             variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, params -> {
+                params.getByteBuddyClasspath().from(dependenciesHandler.getConfigurationForBuildType(variant.getBuildType()));
+                params.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
+                params.getRuntimeClasspath().from(getRuntimeClasspath(variant));
+                params.getLocalClassesDirs().from(localClasses);
                 params.getBytebuddyService().set(serviceProvider);
                 return Unit.INSTANCE;
             });
+        });
+    }
+
+    private Provider<BytebuddyService> registerService(Variant variant) {
+        return project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "BytebuddyService", BytebuddyService.class, noneBuildServiceSpec -> {
+
         });
     }
 

@@ -20,7 +20,10 @@ import com.android.build.api.instrumentation.ClassContext;
 import com.android.build.api.instrumentation.ClassData;
 import com.android.build.api.instrumentation.InstrumentationParameters;
 import net.bytebuddy.build.gradle.android.service.BytebuddyService;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Classpath;
+import org.gradle.api.tasks.CompileClasspath;
 import org.gradle.api.tasks.Internal;
 import org.objectweb.asm.ClassVisitor;
 
@@ -33,7 +36,10 @@ public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitor
 
     @Override
     public boolean isInstrumentable(ClassData classData) {
-        return getService().matches(classData.getClassName());
+        BytebuddyService service = getService();
+        Params parameters = getParameters().get();
+        service.initialize(parameters.getRuntimeClasspath(), parameters.getAndroidBootClasspath(), parameters.getByteBuddyClasspath(), parameters.getLocalClassesDirs());
+        return service.matches(classData.getClassName());
     }
 
     private BytebuddyService getService() {
@@ -41,6 +47,18 @@ public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitor
     }
 
     public interface Params extends InstrumentationParameters {
+
+        @CompileClasspath
+        ConfigurableFileCollection getAndroidBootClasspath();
+
+        @CompileClasspath
+        ConfigurableFileCollection getByteBuddyClasspath();
+
+        @CompileClasspath
+        ConfigurableFileCollection getRuntimeClasspath();
+
+        @Classpath
+        ConfigurableFileCollection getLocalClassesDirs();
 
         @Internal
         Property<BytebuddyService> getBytebuddyService();
