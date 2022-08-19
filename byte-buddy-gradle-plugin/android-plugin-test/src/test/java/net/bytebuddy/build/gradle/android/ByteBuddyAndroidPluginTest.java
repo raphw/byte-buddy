@@ -4,7 +4,6 @@ import net.bytebuddy.test.utility.BaseAndroidGradleTest;
 import net.bytebuddy.test.utility.ProjectInfo;
 import org.junit.Test;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
