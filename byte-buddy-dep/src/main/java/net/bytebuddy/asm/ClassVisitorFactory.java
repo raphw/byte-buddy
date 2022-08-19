@@ -48,6 +48,17 @@ public abstract class ClassVisitorFactory<T> {
     public static <S> ClassVisitorFactory<S> of(Class<S> classVisitor, ByteBuddy byteBuddy) {
         try {
             String prefix = classVisitor.getPackage().getName();
+            Map<Class<?>, Class<?>> utilities = new HashMap<Class<?>, Class<?>>();
+            for (Class<?> type : Arrays.asList(
+                    Attribute.class,
+                    Label.class,
+                    Type.class,
+                    TypePath.class,
+                    Handle.class,
+                    ConstantDynamic.class
+            )) {
+                utilities.put(type, Class.forName(prefix + "." + type.getSimpleName()));
+            }
             Map<Class<?>, Class<?>> equivalents = new HashMap<Class<?>, Class<?>>();
             Map<Class<?>, DynamicType.Builder<?>> builders = new HashMap<Class<?>, DynamicType.Builder<?>>();
             for (Class<?> type : Arrays.asList(
@@ -61,16 +72,14 @@ public abstract class ClassVisitorFactory<T> {
                 Class<?> equivalent = Class.forName(prefix + "." + type.getSimpleName());
                 DynamicType.Builder<?> wrapper, unwrapper;
                 if (type == MethodVisitor.class) {
-                    Implementation implementation = FieldAccessor.ofField(LABELS).setsValue(new StackManipulation.Compound(TypeCreation.of(TypeDescription.ForLoadedType.of(HashMap.class)),
-                            Duplication.SINGLE,
-                            MethodInvocation.invoke(TypeDescription.ForLoadedType.of(HashMap.class)
-                                    .getDeclaredMethods()
-                                    .filter(ElementMatchers.<MethodDescription.InDefinedShape>isConstructor().and(ElementMatchers.<MethodDescription.InDefinedShape>takesArguments(0)))
-                                    .getOnly())), Map.class);
-                    wrapper = toBuilder(byteBuddy, type, equivalent, implementation)
-                            .defineField(LABELS, Map.class, Visibility.PRIVATE, FieldManifestation.FINAL);
-                    unwrapper = toBuilder(byteBuddy, equivalent, type, implementation)
-                            .defineField(LABELS, Map.class, Visibility.PRIVATE, FieldManifestation.FINAL);
+                    wrapper = toMethodVisitorBuilder(byteBuddy, type, equivalent,
+                            Label.class, utilities.get(Label.class),
+                            Handle.class, utilities.get(Handle.class),
+                            ConstantDynamic.class, utilities.get(ConstantDynamic.class));
+                    unwrapper = toMethodVisitorBuilder(byteBuddy, equivalent, type,
+                            utilities.get(Label.class), Label.class,
+                            utilities.get(Handle.class), Handle.class,
+                            utilities.get(ConstantDynamic.class), ConstantDynamic.class);
                 } else {
                     wrapper = toBuilder(byteBuddy, type, equivalent, new Implementation.Simple(MethodReturn.VOID));
                     unwrapper = toBuilder(byteBuddy, equivalent, type, new Implementation.Simple(MethodReturn.VOID));
@@ -78,17 +87,6 @@ public abstract class ClassVisitorFactory<T> {
                 equivalents.put(type, equivalent);
                 builders.put(type, wrapper);
                 builders.put(equivalent, unwrapper);
-            }
-            Map<Class<?>, Class<?>> utilities = new HashMap<Class<?>, Class<?>>();
-            for (Class<?> type : Arrays.asList(
-                    Attribute.class,
-                    Label.class,
-                    Type.class,
-                    TypePath.class,
-                    Handle.class,
-                    ConstantDynamic.class
-            )) {
-                utilities.put(type, Class.forName(prefix + "." + type.getSimpleName()));
             }
             List<DynamicType> dynamicTypes = new ArrayList<DynamicType>();
             Map<Class<?>, TypeDescription> generated = new HashMap<Class<?>, TypeDescription>();
@@ -125,11 +123,11 @@ public abstract class ClassVisitorFactory<T> {
                             match[index] = utilities.get(Handle.class);
                             left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
                             right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                        } else if(parameter[index] == Object.class) {
+                        } else if (parameter[index] == Object.class) {
                             match[index] = Object.class;
                             left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
                             right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                        } else if(parameter[index] == Object[].class) {
+                        } else if (parameter[index] == Object[].class) {
                             match[index] = Object[].class;
                             left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
                             right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
@@ -213,6 +211,32 @@ public abstract class ClassVisitorFactory<T> {
                 .intercept(new Implementation.Simple(new NullCheckedConstruction(target)));
     }
 
+    private static DynamicType.Builder<?> toMethodVisitorBuilder(ByteBuddy byteBuddy,
+                                                                 Class<?> source, Class<?> target,
+                                                                 Class<?> sourceLabel, Class<?> targetLabel,
+                                                                 Class<?> sourceHandle, Class<?> targetHandle,
+                                                                 Class<?> sourceConstantDynamic, Class<?> targetConstantDynamic) throws Exception {
+        return toBuilder(byteBuddy, source, target, FieldAccessor.ofField(LABELS).setsValue(new StackManipulation.Compound(TypeCreation.of(TypeDescription.ForLoadedType.of(HashMap.class)),
+                Duplication.SINGLE,
+                MethodInvocation.invoke(TypeDescription.ForLoadedType.of(HashMap.class)
+                        .getDeclaredMethods()
+                        .filter(ElementMatchers.<MethodDescription.InDefinedShape>isConstructor().and(ElementMatchers.<MethodDescription.InDefinedShape>takesArguments(0)))
+                        .getOnly())), Map.class))
+                .defineField(LABELS, Map.class, Visibility.PRIVATE, FieldManifestation.FINAL)
+                .defineMethod(LabelTranslator.NAME, targetLabel, Visibility.PRIVATE, Ownership.STATIC)
+                .withParameters(sourceLabel)
+                .intercept(new Implementation.Simple(new LabelTranslator(targetLabel)))
+                .defineMethod(LabelArrayTranslator.NAME, Class.forName("[L" + targetLabel.getName() + ";", false, targetLabel.getClassLoader()), Visibility.PRIVATE, Ownership.STATIC)
+                .withParameters(Class.forName("[L" + sourceLabel.getName() + ";", false, targetLabel.getClassLoader()))
+                .intercept(new Implementation.Simple(new LabelArrayTranslator(sourceLabel, targetLabel)))
+                .defineMethod(HandleTranslator.NAME, targetHandle, Visibility.PRIVATE, Ownership.STATIC)
+                .withParameters(sourceHandle)
+                .intercept(new Implementation.Simple(new HandleTranslator(sourceHandle, targetHandle)))
+                .defineMethod(ConstantDynamicTranslator.NAME, targetConstantDynamic, Visibility.PRIVATE, Ownership.STATIC)
+                .withParameters(sourceConstantDynamic)
+                .intercept(new Implementation.Simple(new ConstantDynamicTranslator(sourceConstantDynamic, targetConstantDynamic, sourceHandle, targetHandle)));
+    }
+
     public abstract T wrap(ClassVisitor classVisitor);
 
     public abstract ClassVisitor unwrap(T classVisitor);
@@ -250,7 +274,217 @@ public abstract class ClassVisitorFactory<T> {
         }
     }
 
-    protected static class LabelTranslator {
+    protected static class LabelTranslator implements ByteCodeAppender {
 
+        protected static final String NAME = "label";
+
+        private final Class<?> target;
+
+        protected LabelTranslator(Class<?> target) {
+            this.target = target;
+        }
+
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+            Label end = new Label();
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitFieldInsn(Opcodes.GETFIELD,
+                    implementationContext.getInstrumentedType().getInternalName(),
+                    LABELS,
+                    Type.getDescriptor(Map.class));
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEINTERFACE, Type.getInternalName(Map.class),
+                    "get",
+                    "(Ljava/lang/Object;)Ljava/lang/Object;",
+                    true);
+            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(target));
+            methodVisitor.visitVarInsn(Opcodes.ASTORE, 2);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+            methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, end);
+            methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(target));
+            methodVisitor.visitInsn(Opcodes.DUP);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                    Type.getInternalName(target),
+                    MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                    "()V",
+                    false);
+            methodVisitor.visitVarInsn(Opcodes.ASTORE, 2);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitFieldInsn(Opcodes.GETFIELD,
+                    implementationContext.getInstrumentedType().getInternalName(),
+                    LABELS,
+                    Type.getDescriptor(Map.class));
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEINTERFACE,
+                    Type.getInternalName(Map.class),
+                    "put",
+                    "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+                    true);
+            methodVisitor.visitInsn(Opcodes.POP);
+            methodVisitor.visitLabel(end);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            return new Size(3, 3);
+        }
+    }
+
+    protected static class LabelArrayTranslator implements ByteCodeAppender {
+
+        protected static final String NAME = "labels";
+
+        private final Class<?> source, target;
+
+        protected LabelArrayTranslator(Class<?> source, Class<?> target) {
+            this.source = source;
+            this.target = target;
+        }
+
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+            Label loop = new Label(), end = new Label();
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
+            methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, Type.getInternalName(target));
+            methodVisitor.visitVarInsn(Opcodes.ASTORE, 2);
+            methodVisitor.visitInsn(Opcodes.ICONST_0);
+            methodVisitor.visitVarInsn(Opcodes.ISTORE, 3);
+            methodVisitor.visitLabel(loop);
+            methodVisitor.visitVarInsn(Opcodes.ILOAD, 3);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
+            methodVisitor.visitJumpInsn(Opcodes.IF_ICMPGE, end);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+            methodVisitor.visitVarInsn(Opcodes.ILOAD, 3);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitVarInsn(Opcodes.ILOAD, 3);
+            methodVisitor.visitInsn(Opcodes.AALOAD);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                    implementationContext.getInstrumentedType().getInternalName(),
+                    LabelTranslator.NAME,
+                    "(" + Type.getDescriptor(source) + ")" + Type.getDescriptor(target),
+                    false);
+            methodVisitor.visitInsn(Opcodes.AASTORE);
+            methodVisitor.visitIincInsn(3, 1);
+            methodVisitor.visitJumpInsn(Opcodes.GOTO, loop);
+            methodVisitor.visitLabel(end);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            return new Size(5, 4);
+        }
+    }
+
+    protected static class HandleTranslator implements ByteCodeAppender {
+
+        protected static final String NAME = "handle";
+
+        private final Class<?> source, target;
+
+        protected HandleTranslator(Class<?> source, Class<?> target) {
+            this.source = source;
+            this.target = target;
+        }
+
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+            methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(target));
+            methodVisitor.visitInsn(Opcodes.DUP);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(source), "getTag", "()I", false);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(source), "getOwner", "()Ljava/lang/String;", false);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(source), "getName", "()Ljava/lang/String;", false);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(source), "getDesc", "()Ljava/lang/String;", false);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(source), "isInterface", "()Z", false);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, Type.getInternalName(target), "<init>", "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V", false);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            return new Size(7, 1);
+        }
+    }
+
+    protected static class ConstantDynamicTranslator implements ByteCodeAppender {
+
+        protected static final String NAME = "constantDyanmic";
+
+        private final Class<?> source, target, sourceHandle, targetHandle;
+
+        protected ConstantDynamicTranslator(Class<?> source, Class<?> target, Class<?> sourceHandle, Class<?> targetHandle) {
+            this.source = source;
+            this.target = target;
+            this.sourceHandle = sourceHandle;
+            this.targetHandle = targetHandle;
+        }
+
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+            Label loop = new Label(), end = new Label();
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                    Type.getInternalName(source),
+                    "getBootstrapMethodArgumentCount",
+                    "()I",
+                    false);
+            methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, Type.getInternalName(Object.class));
+            methodVisitor.visitVarInsn(Opcodes.ASTORE, 1);
+            methodVisitor.visitInsn(Opcodes.ICONST_0);
+            methodVisitor.visitVarInsn(Opcodes.ISTORE, 2);
+            methodVisitor.visitLabel(loop);
+            methodVisitor.visitVarInsn(Opcodes.ILOAD, 2);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
+            methodVisitor.visitJumpInsn(Opcodes.IF_ICMPGE, end);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitVarInsn(Opcodes.ILOAD, 2);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitVarInsn(Opcodes.ILOAD, 2);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                    Type.getInternalName(source),
+                    "getBootstrapMethodArgument",
+                    "(I)Ljava/lang/Object;",
+                    false);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                    implementationContext.getInstrumentedType().getInternalName(),
+                    "ldc",
+                    "(Ljava/lang/Object;)Ljava/lang/Object;",
+                    false);
+            methodVisitor.visitInsn(Opcodes.AASTORE);
+            methodVisitor.visitIincInsn(2, 1);
+            methodVisitor.visitJumpInsn(Opcodes.GOTO, loop);
+            methodVisitor.visitLabel(end);
+            methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(target));
+            methodVisitor.visitInsn(Opcodes.DUP);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                    Type.getInternalName(source),
+                    "getName",
+                    "()Ljava/lang/String;",
+                    false);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                    Type.getInternalName(source),
+                    "getDescriptor",
+                    "()Ljava/lang/String;",
+                    false);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                    Type.getInternalName(source),
+                    "getBootstrapMethod",
+                    "()" + Type.getDescriptor(sourceHandle),
+                    false);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                    implementationContext.getInstrumentedType().getInternalName(),
+                    HandleTranslator.NAME,
+                    "(" + Type.getDescriptor(sourceHandle) + ")" + Type.getDescriptor(targetHandle),
+                    false);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                    Type.getInternalName(target),
+                    MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                    "(Ljava/lang/String;Ljava/lang/String;" + Type.getDescriptor(sourceHandle) + "[Ljava/lang/Object;)V",
+                    false);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            methodVisitor.visitMaxs(6, 3);
+            return new Size(6, 3);
+        }
     }
 }
