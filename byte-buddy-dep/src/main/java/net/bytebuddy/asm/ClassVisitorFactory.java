@@ -16,7 +16,12 @@ import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.Duplication;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.TypeCreation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
+import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
@@ -32,6 +37,7 @@ public abstract class ClassVisitorFactory<T> {
     // TODO: attribute-bypass
 
     private static final String DELEGATE = "delegate";
+    private static final String LABELS = "labels";
 
     private static final String WRAP = "wrap";
 
@@ -53,27 +59,25 @@ public abstract class ClassVisitorFactory<T> {
                     ModuleVisitor.class
             )) {
                 Class<?> equivalent = Class.forName(prefix + "." + type.getSimpleName());
+                DynamicType.Builder<?> wrapper, unwrapper;
+                if (type == MethodVisitor.class) {
+                    Implementation implementation = FieldAccessor.ofField(LABELS).setsValue(new StackManipulation.Compound(TypeCreation.of(TypeDescription.ForLoadedType.of(HashMap.class)),
+                            Duplication.SINGLE,
+                            MethodInvocation.invoke(TypeDescription.ForLoadedType.of(HashMap.class)
+                                    .getDeclaredMethods()
+                                    .filter(ElementMatchers.<MethodDescription.InDefinedShape>isConstructor().and(ElementMatchers.<MethodDescription.InDefinedShape>takesArguments(0)))
+                                    .getOnly())), Map.class);
+                    wrapper = toBuilder(byteBuddy, type, equivalent, implementation)
+                            .defineField(LABELS, Map.class, Visibility.PRIVATE, FieldManifestation.FINAL);
+                    unwrapper = toBuilder(byteBuddy, equivalent, type, implementation)
+                            .defineField(LABELS, Map.class, Visibility.PRIVATE, FieldManifestation.FINAL);
+                } else {
+                    wrapper = toBuilder(byteBuddy, type, equivalent, new Implementation.Simple(MethodReturn.VOID));
+                    unwrapper = toBuilder(byteBuddy, equivalent, type, new Implementation.Simple(MethodReturn.VOID));
+                }
                 equivalents.put(type, equivalent);
-                builders.put(type, byteBuddy.subclass(type, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                        .defineField(DELEGATE, equivalent, Visibility.PRIVATE, FieldManifestation.FINAL)
-                        .defineConstructor(Visibility.PUBLIC)
-                        .withParameters(equivalent)
-                        .intercept(MethodCall.invoke(type.getDeclaredConstructor(int.class))
-                                .with(OpenedClassReader.ASM_API)
-                                .andThen(FieldAccessor.ofField(DELEGATE).setsArgumentAt(0)))
-                        .defineMethod(WRAP, type, Visibility.PUBLIC, Ownership.STATIC)
-                        .withParameters(equivalent)
-                        .intercept(new Implementation.Simple(new NullCheckedConstruction(equivalent))));
-                builders.put(equivalent, byteBuddy.subclass(equivalent, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                        .defineField(DELEGATE, type, Visibility.PRIVATE, FieldManifestation.FINAL)
-                        .defineConstructor(Visibility.PUBLIC)
-                        .withParameters(type)
-                        .intercept(MethodCall.invoke(equivalent.getDeclaredConstructor(int.class))
-                                .with(OpenedClassReader.ASM_API)
-                                .andThen(FieldAccessor.ofField(DELEGATE).setsArgumentAt(0)))
-                        .defineMethod(WRAP, equivalent, Visibility.PUBLIC, Ownership.STATIC)
-                        .withParameters(type)
-                        .intercept(new Implementation.Simple(new NullCheckedConstruction(type))));
+                builders.put(type, wrapper);
+                builders.put(equivalent, unwrapper);
             }
             Map<Class<?>, Class<?>> utilities = new HashMap<Class<?>, Class<?>>();
             for (Class<?> type : Arrays.asList(
@@ -94,40 +98,43 @@ public abstract class ClassVisitorFactory<T> {
                     // TODO: add methods to translate utilities (ASMify)
                 }
                 for (Method method : entry.getKey().getMethods()) {
+                    if (method.getDeclaringClass() == Object.class) {
+                        continue;
+                    }
                     Class<?>[] parameter = method.getParameterTypes(), match = new Class<?>[parameter.length];
                     List<MethodCall.ArgumentLoader.Factory> left = new ArrayList<MethodCall.ArgumentLoader.Factory>(parameter.length);
                     List<MethodCall.ArgumentLoader.Factory> right = new ArrayList<MethodCall.ArgumentLoader.Factory>(match.length);
                     for (int index = 0; index < parameter.length; index++) {
-                        Class<?> component = parameter[index];
-                        int arity = 0;
-                        while (component.isArray()) {
-                            arity += 1;
-                            component = component.getComponentType();
-                        }
-                        Class<?> substitute = utilities.get(component);
-                        if (substitute == null) {
-                            match[index] = match[index];
-                        } else if (arity > 0) {
-                            StringBuilder stringBuilder = new StringBuilder();
-                            while (arity-- > 0) {
-                                stringBuilder.append("[");
-                            }
-                            match[index] = Class.forName(stringBuilder.append("L")
-                                    .append(substitute.getName().replace('.', '/'))
-                                    .append(";")
-                                    .toString(), false, substitute.getClassLoader());
+                        if (parameter[index] == Label.class) { // TODO: add wrappers
+                            match[index] = utilities.get(Label.class);
+                            left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
+                            right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
+                        } else if (parameter[index] == Label[].class) {
+                            match[index] = Class.forName("[L" + utilities.get(Label.class).getName() + ";", false, classVisitor.getClassLoader());
+                            left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
+                            right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
+                        } else if (parameter[index] == Type.class) {
+                            match[index] = utilities.get(Type.class);
+                            left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
+                            right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
+                        } else if (parameter[index] == TypePath.class) {
+                            match[index] = utilities.get(TypePath.class);
+                            left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
+                            right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
+                        } else if (parameter[index] == Handle.class) {
+                            match[index] = utilities.get(Handle.class);
+                            left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
+                            right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
+                        } else if(parameter[index] == Object.class) {
+                            match[index] = Object.class;
+                            left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
+                            right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
+                        } else if(parameter[index] == Object[].class) {
+                            match[index] = Object[].class;
+                            left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
+                            right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
                         } else {
-                            match[index] = substitute;
-                        }
-                        if (component == Label.class) { // TODO: add wrappers
-
-                        } else if (component == Type.class) {
-
-                        } else if (component == Handle.class) {
-
-                        } else if (component == ConstantDynamic.class) {
-
-                        } else {
+                            match[index] = parameter[index];
                             left.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
                             right.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
                         }
@@ -192,6 +199,20 @@ public abstract class ClassVisitorFactory<T> {
         }
     }
 
+    private static DynamicType.Builder<?> toBuilder(ByteBuddy byteBuddy, Class<?> source, Class<?> target, Implementation appendix) throws NoSuchMethodException {
+        return byteBuddy.subclass(source, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .defineField(DELEGATE, target, Visibility.PRIVATE, FieldManifestation.FINAL)
+                .defineConstructor(Visibility.PUBLIC)
+                .withParameters(target)
+                .intercept(MethodCall.invoke(source.getDeclaredConstructor(int.class))
+                        .with(OpenedClassReader.ASM_API)
+                        .andThen(FieldAccessor.ofField(DELEGATE).setsArgumentAt(0))
+                        .andThen(appendix))
+                .defineMethod(WRAP, source, Visibility.PUBLIC, Ownership.STATIC)
+                .withParameters(target)
+                .intercept(new Implementation.Simple(new NullCheckedConstruction(target)));
+    }
+
     public abstract T wrap(ClassVisitor classVisitor);
 
     public abstract ClassVisitor unwrap(T classVisitor);
@@ -227,5 +248,9 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(3, 1);
         }
+    }
+
+    protected static class LabelTranslator {
+
     }
 }
