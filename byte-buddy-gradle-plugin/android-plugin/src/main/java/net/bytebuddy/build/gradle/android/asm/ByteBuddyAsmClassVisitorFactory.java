@@ -19,37 +19,30 @@ import com.android.build.api.instrumentation.AsmClassVisitorFactory;
 import com.android.build.api.instrumentation.ClassContext;
 import com.android.build.api.instrumentation.ClassData;
 import com.android.build.api.instrumentation.InstrumentationParameters;
-import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.tasks.Classpath;
-import org.gradle.api.tasks.CompileClasspath;
+import net.bytebuddy.build.gradle.android.service.BytebuddyService;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Internal;
 import org.objectweb.asm.ClassVisitor;
 
 public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitorFactory<ByteBuddyAsmClassVisitorFactory.Params> {
 
     @Override
     public ClassVisitor createClassVisitor(ClassContext classContext, ClassVisitor classVisitor) {
-        return BytebuddyManager.apply(classContext.getCurrentClassData().getClassName(), classVisitor);
+        return getService().apply(classContext.getCurrentClassData().getClassName(), classVisitor);
     }
 
     @Override
     public boolean isInstrumentable(ClassData classData) {
-        Params params = getParameters().get();
-        BytebuddyManager.initialize(params.getRuntimeClasspath(), params.getAndroidBootClasspath(), params.getByteBuddyClasspath(), params.getLocalClassesDirs());
-        return BytebuddyManager.matches(classData.getClassName());
+        return getService().matches(classData.getClassName());
+    }
+
+    private BytebuddyService getService() {
+        return getParameters().get().getBytebuddyService().get();
     }
 
     public interface Params extends InstrumentationParameters {
 
-        @CompileClasspath
-        ConfigurableFileCollection getAndroidBootClasspath();
-
-        @CompileClasspath
-        ConfigurableFileCollection getByteBuddyClasspath();
-
-        @CompileClasspath
-        ConfigurableFileCollection getRuntimeClasspath();
-
-        @Classpath
-        ConfigurableFileCollection getLocalClassesDirs();
+        @Internal
+        Property<BytebuddyService> getBytebuddyService();
     }
 }

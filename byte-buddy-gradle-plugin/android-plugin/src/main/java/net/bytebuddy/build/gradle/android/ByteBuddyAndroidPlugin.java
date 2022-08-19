@@ -24,12 +24,14 @@ import com.android.build.api.variant.Variant;
 import com.android.build.gradle.BaseExtension;
 import kotlin.Unit;
 import net.bytebuddy.build.gradle.android.asm.ByteBuddyAsmClassVisitorFactory;
+import net.bytebuddy.build.gradle.android.service.BytebuddyService;
 import net.bytebuddy.build.gradle.android.utils.AarGradleTransform;
 import net.bytebuddy.build.gradle.android.utils.BytebuddyDependenciesHandler;
 import net.bytebuddy.build.gradle.android.utils.LocalClassesSync;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
 
 import static net.bytebuddy.build.gradle.android.utils.BytebuddyDependenciesHandler.ARTIFACT_TYPE_ATTR;
@@ -55,11 +57,15 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     private void registerBytebuddyAsmFactory(BytebuddyDependenciesHandler dependenciesHandler) {
         androidComponentsExtension.onVariants(androidComponentsExtension.selector().all(), variant -> {
             TaskProvider<LocalClassesSync> localClasses = registerLocalClassesSyncTask(variant);
+            Provider<BytebuddyService> serviceProvider = project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "BytebuddyService", BytebuddyService.class, spec -> {
+                BytebuddyService.Params parameters = spec.getParameters();
+                parameters.getByteBuddyClasspath().from(dependenciesHandler.getConfigurationForBuildType(variant.getBuildType()));
+                parameters.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
+                parameters.getRuntimeClasspath().from(getRuntimeClasspath(variant));
+                parameters.getLocalClassesDirs().from(localClasses);
+            });
             variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, params -> {
-                params.getByteBuddyClasspath().from(dependenciesHandler.getConfigurationForBuildType(variant.getBuildType()));
-                params.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
-                params.getRuntimeClasspath().from(getRuntimeClasspath(variant));
-                params.getLocalClassesDirs().from(localClasses);
+                params.getBytebuddyService().set(serviceProvider);
                 return Unit.INSTANCE;
             });
         });
