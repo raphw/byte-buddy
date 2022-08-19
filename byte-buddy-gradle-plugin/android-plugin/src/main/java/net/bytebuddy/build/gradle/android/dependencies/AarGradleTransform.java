@@ -1,4 +1,4 @@
-package net.bytebuddy.build.gradle.android.utils;
+package net.bytebuddy.build.gradle.android.dependencies;
 
 import org.gradle.api.artifacts.transform.InputArtifact;
 import org.gradle.api.artifacts.transform.TransformAction;

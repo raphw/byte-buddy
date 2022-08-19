@@ -1,4 +1,4 @@
-package net.bytebuddy.build.gradle.android.utils;
+package net.bytebuddy.build.gradle.android.tasks;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;

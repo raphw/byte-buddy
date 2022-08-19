@@ -1,4 +1,4 @@
-package net.bytebuddy.build.gradle.android.utils;
+package net.bytebuddy.build.gradle.android.dependencies;
 
 import com.android.build.api.attributes.BuildTypeAttr;
 import org.gradle.api.Project;
