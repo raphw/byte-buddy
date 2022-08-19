@@ -463,7 +463,7 @@ public class HashCodeMethod implements Implementation {
                  */
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                     methodVisitor.visitLabel(label);
-                    if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
+                    if (implementationContext.getFrameGeneration().isActive()) { // TODO
                         methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, INTEGER.length, INTEGER);
                     }
                     return Size.ZERO;

@@ -4995,7 +4995,10 @@ public interface TypeWriter<T> {
                                 auxiliaryTypeNamingStrategy,
                                 typeInitializer,
                                 classFileVersion,
-                                WithFullProcessing.this.classFileVersion);
+                                WithFullProcessing.this.classFileVersion,
+                                (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && classFileVersion.isAtLeast(ClassFileVersion.JAVA_V6)
+                                        ? ((readerFlags & ClassReader.EXPAND_FRAMES) == 0 ? Implementation.Context.FrameGeneration.GENERATE : Implementation.Context.FrameGeneration.EXPAND)
+                                        : Implementation.Context.FrameGeneration.DISABLED);
                         retainDeprecationModifiers = classFileVersion.isLessThan(ClassFileVersion.JAVA_V5);
                         contextRegistry.setImplementationContext(implementationContext);
                         cv = asmVisitorWrapper.wrap(instrumentedType,
@@ -5505,10 +5508,8 @@ public interface TypeWriter<T> {
                                         resolution.getResolvedMethod().getGenericSignature(),
                                         resolution.getResolvedMethod().getExceptionTypes().asErasures().toInternalNames());
                                 super.visitCode();
-                                if (!resolution.getAppendedParameters().isEmpty()
-                                        && (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0
-                                        && implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
-                                    if ((readerFlags & ClassReader.EXPAND_FRAMES) == 0 && resolution.getAppendedParameters().size() < 4) {
+                                if (!resolution.getAppendedParameters().isEmpty() && implementationContext.getFrameGeneration().isActive()) {
+                                    if (implementationContext.getFrameGeneration() == Implementation.Context.FrameGeneration.GENERATE && resolution.getAppendedParameters().size() < 4) {
                                         super.visitFrame(Opcodes.F_CHOP, resolution.getAppendedParameters().size(), EMPTY, EMPTY.length, EMPTY);
                                     } else {
                                         Object[] frame = new Object[resolution.getResolvedMethod().getParameters().size()
@@ -5799,7 +5800,10 @@ public interface TypeWriter<T> {
                                 auxiliaryTypeNamingStrategy,
                                 typeInitializer,
                                 classFileVersion,
-                                WithDecorationOnly.this.classFileVersion);
+                                WithDecorationOnly.this.classFileVersion,
+                                (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && classFileVersion.isAtLeast(ClassFileVersion.JAVA_V6)
+                                        ? ((readerFlags & ClassReader.EXPAND_FRAMES) == 0 ? Implementation.Context.FrameGeneration.GENERATE : Implementation.Context.FrameGeneration.EXPAND)
+                                        : Implementation.Context.FrameGeneration.DISABLED);
                         contextRegistry.setImplementationContext(implementationContext);
                         cv = asmVisitorWrapper.wrap(instrumentedType,
                                 cv,
@@ -5939,7 +5943,10 @@ public interface TypeWriter<T> {
                         auxiliaryTypeNamingStrategy,
                         typeInitializer,
                         classFileVersion,
-                        classFileVersion);
+                        classFileVersion,
+                        (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && classFileVersion.isAtLeast(ClassFileVersion.JAVA_V6)
+                                ? ((readerFlags & ClassReader.EXPAND_FRAMES) == 0 ? Implementation.Context.FrameGeneration.GENERATE : Implementation.Context.FrameGeneration.EXPAND)
+                                : Implementation.Context.FrameGeneration.DISABLED);
                 return new ImplementationContextClassVisitor(new CreationClassVisitor(asmVisitorWrapper.wrap(instrumentedType,
                         ValidatingClassVisitor.of(classVisitor, typeValidation),
                         implementationContext,
@@ -5953,13 +5960,16 @@ public interface TypeWriter<T> {
             @Override
             @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Relying on correlated type properties.")
             protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Dispatcher dispatcher) {
-                int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
+                int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS), readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
                 ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool);
                 Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
                         auxiliaryTypeNamingStrategy,
                         typeInitializer,
                         classFileVersion,
-                        classFileVersion);
+                        classFileVersion,
+                        (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && classFileVersion.isAtLeast(ClassFileVersion.JAVA_V6)
+                                ? ((readerFlags & ClassReader.EXPAND_FRAMES) == 0 ? Implementation.Context.FrameGeneration.GENERATE : Implementation.Context.FrameGeneration.EXPAND)
+                                : Implementation.Context.FrameGeneration.DISABLED);
                 ClassVisitor classVisitor = asmVisitorWrapper.wrap(instrumentedType,
                         ValidatingClassVisitor.of(classWriter, typeValidation),
                         implementationContext,
@@ -5967,7 +5977,7 @@ public interface TypeWriter<T> {
                         fields,
                         methods,
                         writerFlags,
-                        asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS));
+                        readerFlags);
                 classVisitor.visit(classFileVersion.getMinorMajorVersion(),
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
                         instrumentedType.getInternalName(),

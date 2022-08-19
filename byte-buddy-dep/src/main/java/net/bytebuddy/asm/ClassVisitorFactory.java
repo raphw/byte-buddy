@@ -1,6 +1,5 @@
 package net.bytebuddy.asm;
 
-import com.sun.java.accessibility.util.java.awt.LabelTranslator;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
@@ -31,13 +30,15 @@ import org.objectweb.asm.*;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.is;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 public abstract class ClassVisitorFactory<T> {
 
     // TODO: attribute-bypass
 
     private static final String DELEGATE = "delegate";
+
     private static final String LABELS = "labels";
 
     private static final String WRAP = "wrap";
@@ -279,11 +280,11 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
                     implementationContext.getInstrumentedType().getInternalName(),
                     MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                    "(" + Type.getDescriptor(target) + ")V",
+                    Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(target)),
                     false);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             methodVisitor.visitLabel(label);
-            if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
+            if (implementationContext.getFrameGeneration().isActive()) { // TODO
                 methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
             }
             methodVisitor.visitInsn(Opcodes.ACONST_NULL);
@@ -312,7 +313,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEINTERFACE, Type.getInternalName(Map.class),
                     "get",
-                    "(Ljava/lang/Object;)Ljava/lang/Object;",
+                    Type.getMethodDescriptor(Type.getType(Object.class), Type.getType(Object.class)),
                     true);
             methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(target));
             methodVisitor.visitVarInsn(Opcodes.ASTORE, 2);
@@ -336,10 +337,13 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitMethodInsn(Opcodes.INVOKEINTERFACE,
                     Type.getInternalName(Map.class),
                     "put",
-                    "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+                    Type.getMethodDescriptor(Type.getType(Object.class), Type.getType(Object.class), Type.getType(Object.class)),
                     true);
             methodVisitor.visitInsn(Opcodes.POP);
             methodVisitor.visitLabel(end);
+            if (implementationContext.getFrameGeneration().isActive()) { // TODO
+                methodVisitor.visitFrame(Opcodes.F_APPEND, 1, new Object[]{Type.getInternalName(target)}, 0, null);
+            }
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(3, 3);
@@ -366,6 +370,9 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitInsn(Opcodes.ICONST_0);
             methodVisitor.visitVarInsn(Opcodes.ISTORE, 3);
             methodVisitor.visitLabel(loop);
+            if (implementationContext.getFrameGeneration().isActive()) { // TODO
+                methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"[L" + Type.getInternalName(target) + ";", Opcodes.INTEGER}, 0, null);
+            }
             methodVisitor.visitVarInsn(Opcodes.ILOAD, 3);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
@@ -379,12 +386,16 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
                     implementationContext.getInstrumentedType().getInternalName(),
                     LabelTranslator.NAME,
-                    "(" + Type.getDescriptor(source) + ")" + Type.getDescriptor(target),
+                    Type.getMethodDescriptor(Type.getType(target), Type.getType(source)),
                     false);
             methodVisitor.visitInsn(Opcodes.AASTORE);
             methodVisitor.visitIincInsn(3, 1);
             methodVisitor.visitJumpInsn(Opcodes.GOTO, loop);
             methodVisitor.visitLabel(end);
+
+            if (implementationContext.getFrameGeneration().isActive()) { // TODO
+                methodVisitor.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+            }
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(5, 4);
@@ -406,16 +417,39 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(target));
             methodVisitor.visitInsn(Opcodes.DUP);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(source), "getTag", "()I", false);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                    Type.getInternalName(source),
+                    "getTag",
+                    Type.getMethodDescriptor(Type.INT_TYPE),
+                    false);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(source), "getOwner", "()Ljava/lang/String;", false);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                    Type.getInternalName(source),
+                    "getOwner",
+                    Type.getMethodDescriptor(Type.getType(String.class)),
+                    false);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(source), "getName", "()Ljava/lang/String;", false);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                    Type.getInternalName(source),
+                    "getName",
+                    Type.getMethodDescriptor(Type.getType(String.class)),
+                    false);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(source), "getDesc", "()Ljava/lang/String;", false);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(source),
+                    "getDesc",
+                    Type.getMethodDescriptor(Type.getType(String.class)),
+                    false);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(source), "isInterface", "()Z", false);
-            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, Type.getInternalName(target), "<init>", "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V", false);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                    Type.getInternalName(source),
+                    "isInterface",
+                    Type.getMethodDescriptor(Type.BOOLEAN_TYPE),
+                    false);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                    Type.getInternalName(target),
+                    MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                    Type.getMethodDescriptor(Type.VOID_TYPE, Type.INT_TYPE, Type.getType(String.class), Type.getType(String.class), Type.getType(String.class), Type.BOOLEAN_TYPE),
+                    false);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(7, 1);
         }
@@ -440,13 +474,14 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                     Type.getInternalName(source),
                     "getBootstrapMethodArgumentCount",
-                    "()I",
+                    Type.getMethodDescriptor(Type.INT_TYPE),
                     false);
             methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, Type.getInternalName(Object.class));
             methodVisitor.visitVarInsn(Opcodes.ASTORE, 1);
             methodVisitor.visitInsn(Opcodes.ICONST_0);
             methodVisitor.visitVarInsn(Opcodes.ISTORE, 2);
             methodVisitor.visitLabel(loop);
+            methodVisitor.visitFrame(Opcodes.F_APPEND,2, new Object[] {Type.getInternalName(Object[].class), Opcodes.INTEGER}, 0, null);
             methodVisitor.visitVarInsn(Opcodes.ILOAD, 2);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
@@ -458,36 +493,37 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                     Type.getInternalName(source),
                     "getBootstrapMethodArgument",
-                    "(I)Ljava/lang/Object;",
+                    Type.getMethodDescriptor(Type.getType(Object.class), Type.INT_TYPE),
                     false);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                     implementationContext.getInstrumentedType().getInternalName(),
                     "ldc",
-                    "(Ljava/lang/Object;)Ljava/lang/Object;",
+                    Type.getMethodDescriptor(Type.getType(Object.class), Type.getType(Object.class)),
                     false);
             methodVisitor.visitInsn(Opcodes.AASTORE);
             methodVisitor.visitIincInsn(2, 1);
             methodVisitor.visitJumpInsn(Opcodes.GOTO, loop);
             methodVisitor.visitLabel(end);
+            methodVisitor.visitFrame(Opcodes.F_CHOP,1, null, 0, null);
             methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(target));
             methodVisitor.visitInsn(Opcodes.DUP);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                     Type.getInternalName(source),
                     "getName",
-                    "()Ljava/lang/String;",
+                    Type.getMethodDescriptor(Type.getType(String.class)),
                     false);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                     Type.getInternalName(source),
                     "getDescriptor",
-                    "()Ljava/lang/String;",
+                    Type.getMethodDescriptor(Type.getType(String.class)),
                     false);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                     Type.getInternalName(source),
                     "getBootstrapMethod",
-                    "()" + Type.getDescriptor(sourceHandle),
+                    Type.getMethodDescriptor(Type.getType(sourceHandle)),
                     false);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                     implementationContext.getInstrumentedType().getInternalName(),
@@ -498,7 +534,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
                     Type.getInternalName(target),
                     MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                    "(Ljava/lang/String;Ljava/lang/String;" + Type.getDescriptor(sourceHandle) + "[Ljava/lang/Object;)V",
+                    Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String.class), Type.getType(String.class), Type.getType(sourceHandle), Type.getType(Object[].class)),
                     false);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             methodVisitor.visitMaxs(6, 3);
@@ -531,28 +567,44 @@ public abstract class ClassVisitorFactory<T> {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             Label noHandle = new Label(), noType = new Label(), noConstantDynamic = new Label();
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, "org/objectweb/asm/Handle");
+            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(sourceHandle));
             methodVisitor.visitJumpInsn(Opcodes.IFEQ, noHandle);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "org/objectweb/asm/Handle");
-            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "net/bytebuddy/Foo", "handle", "(Lorg/objectweb/asm/Handle;)Lorg/objectweb/asm/Handle;", false);
+            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(sourceHandle));
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                    implementationContext.getInstrumentedType().getInternalName(),
+                    HandleTranslator.NAME,
+                    Type.getMethodDescriptor(Type.getType(targetHandle), Type.getType(sourceHandle)),
+                    false);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             methodVisitor.visitLabel(noHandle);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, "org/objectweb/asm/Type");
+            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(sourceType));
             methodVisitor.visitJumpInsn(Opcodes.IFEQ, noType);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "org/objectweb/asm/Type");
-            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "org/objectweb/asm/Type", "getDescriptor", "()Ljava/lang/String;", false);
-            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "org/objectweb/asm/Type", "getType", "(Ljava/lang/String;)Lorg/objectweb/asm/Type;", false);
+            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(sourceType));
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                    Type.getInternalName(sourceType),
+                    "getDescriptor",
+                    Type.getMethodDescriptor(Type.getType(String.class)),
+                    false);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                    Type.getInternalName(targetType),
+                    "getType",
+                    Type.getMethodDescriptor(Type.getType(targetType), Type.getType(String.class)),
+                    false);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             methodVisitor.visitLabel(noType);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, "org/objectweb/asm/ConstantDynamic");
+            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(sourceConstantDynamic));
             methodVisitor.visitJumpInsn(Opcodes.IFEQ, noConstantDynamic);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "org/objectweb/asm/ConstantDynamic");
-            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "net/bytebuddy/Foo", "constantDynamic", "(Lorg/objectweb/asm/ConstantDynamic;)Lorg/objectweb/asm/ConstantDynamic;", false);
+            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(sourceConstantDynamic));
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                    implementationContext.getInstrumentedType().getInternalName(),
+                    ConstantDynamicTranslator.NAME,
+                    Type.getMethodDescriptor(Type.getType(sourceConstantDynamic), Type.getType(targetConstantDynamic)),
+                    false);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             methodVisitor.visitLabel(noConstantDynamic);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
@@ -586,7 +638,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                     implementationContext.getInstrumentedType().getInternalName(),
                     ConstantTranslator.NAME,
-                    "(Ljava/lang/Object;)Ljava/lang/Object;",
+                    Type.getMethodDescriptor(Type.getType(Object.class), Type.getType(Object.class)),
                     false);
             methodVisitor.visitInsn(Opcodes.AASTORE);
             methodVisitor.visitIincInsn(2, 1);
@@ -615,6 +667,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, nullCheck);
             methodVisitor.visitInsn(Opcodes.ACONST_NULL);
             methodVisitor.visitInsn(Opcodes.ARETURN);
+            methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
             methodVisitor.visitLabel(nullCheck);
             methodVisitor.visitLineNumber(43, nullCheck);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
@@ -624,6 +677,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitInsn(Opcodes.ICONST_0);
             methodVisitor.visitVarInsn(Opcodes.ISTORE, 3);
             methodVisitor.visitLabel(loop);
+            methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{Type.getInternalName(Object[].class), Opcodes.INTEGER}, 0, null);
             methodVisitor.visitVarInsn(Opcodes.ILOAD, 3);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
@@ -647,14 +701,25 @@ public abstract class ClassVisitorFactory<T> {
                     false);
             methodVisitor.visitJumpInsn(Opcodes.GOTO, store);
             methodVisitor.visitLabel(label);
+            methodVisitor.visitFrame(Opcodes.F_FULL,
+                    4,
+                    new Object[]{implementationContext.getInstrumentedType().getInternalName(), Type.getInternalName(Object[].class), Type.getInternalName(Object[].class), Opcodes.INTEGER},
+                    2,
+                    new Object[]{Type.getInternalName(Object[].class), Opcodes.INTEGER});
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitVarInsn(Opcodes.ILOAD, 3);
             methodVisitor.visitInsn(Opcodes.AALOAD);
             methodVisitor.visitLabel(store);
+            methodVisitor.visitFrame(Opcodes.F_FULL,
+                    4,
+                    new Object[]{implementationContext.getInstrumentedType().getInternalName(), Type.getInternalName(Object[].class), Type.getInternalName(Object[].class), Opcodes.INTEGER},
+                    3,
+                    new Object[]{Type.getInternalName(Object[].class), Opcodes.INTEGER, Type.getInternalName(Object.class)});
             methodVisitor.visitInsn(Opcodes.AASTORE);
             methodVisitor.visitIincInsn(3, 1);
             methodVisitor.visitJumpInsn(Opcodes.GOTO, loop);
             methodVisitor.visitLabel(end);
+            methodVisitor.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(5, 4);
@@ -678,6 +743,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, nullCheck);
             methodVisitor.visitInsn(Opcodes.ACONST_NULL);
             methodVisitor.visitJumpInsn(Opcodes.GOTO, end);
+            methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
             methodVisitor.visitLabel(nullCheck);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
@@ -690,6 +756,7 @@ public abstract class ClassVisitorFactory<T> {
                     "fromString",
                     Type.getMethodDescriptor(Type.getType(String.class), Type.getType(target)),
                     false);
+            methodVisitor.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{Type.getInternalName(target)});
             methodVisitor.visitLabel(end);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(1, 2);

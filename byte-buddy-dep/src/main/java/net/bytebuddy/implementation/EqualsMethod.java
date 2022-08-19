@@ -499,18 +499,18 @@ public class EqualsMethod implements Implementation {
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                     methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfBlock);
                     methodVisitor.visitLabel(secondValueNull);
-                    if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
+                    if (implementationContext.getFrameGeneration().isActive()) { // TODO
                         methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, REFERENCE.length, REFERENCE);
                     }
                     methodVisitor.visitJumpInsn(Opcodes.IFNULL, endOfBlock);
                     methodVisitor.visitLabel(firstValueNull);
-                    if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
+                    if (implementationContext.getFrameGeneration().isActive()) {
                         methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                     }
                     methodVisitor.visitInsn(Opcodes.ICONST_0);
                     methodVisitor.visitInsn(Opcodes.IRETURN);
                     methodVisitor.visitLabel(endOfBlock);
-                    if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
+                    if (implementationContext.getFrameGeneration().isActive()) {
                         methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                     }
                     return Size.ZERO;
@@ -911,7 +911,7 @@ public class EqualsMethod implements Implementation {
             methodVisitor.visitInsn(value);
             methodVisitor.visitInsn(Opcodes.IRETURN);
             methodVisitor.visitLabel(label);
-            if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
+            if (implementationContext.getFrameGeneration().isActive()) { // TODO
                 methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
             }
             return new Size(-1, 1);
