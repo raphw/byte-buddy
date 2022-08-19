@@ -1,7 +1,6 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.Ownership;
@@ -34,6 +33,8 @@ import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 public abstract class ClassVisitorFactory<T> {
+
+    private static final Object[] EMPTY = new Object[0];
 
     // TODO: attribute-bypass
 
@@ -108,28 +109,33 @@ public abstract class ClassVisitorFactory<T> {
                     for (int index = 0; index < parameter.length; index++) {
                         if (entry.getKey() == MethodVisitor.class && parameter[index] == Label.class) { // TODO: add wrappers
                             match[index] = utilities.get(Label.class);
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelTranslator.NAME, index));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelTranslator.NAME, index));
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelTranslator.NAME, index, true));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelTranslator.NAME, index, true));
                         } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Label[].class) {
                             match[index] = Class.forName("[L" + utilities.get(Label.class).getName() + ";", false, classVisitor.getClassLoader());
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelArrayTranslator.NAME, index));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelArrayTranslator.NAME, index));
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelArrayTranslator.NAME, index, true));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelArrayTranslator.NAME, index, true));
                         } else if (entry.getKey() == MethodVisitor.class && parameter[index] == TypePath.class) {
                             match[index] = utilities.get(TypePath.class);
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], TypePathTranslator.NAME, index));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], TypePathTranslator.NAME, index));
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], TypePathTranslator.NAME, index, false));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], TypePathTranslator.NAME, index, false));
                         } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Handle.class) {
                             match[index] = utilities.get(Handle.class);
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], HandleTranslator.NAME, index));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], HandleTranslator.NAME, index));
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], HandleTranslator.NAME, index, false));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], HandleTranslator.NAME, index, false));
                         } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Object.class) {
                             match[index] = Object.class;
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], ConstantTranslator.NAME, index));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], ConstantTranslator.NAME, index));
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object.class, ConstantTranslator.NAME, index, false));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object.class, ConstantTranslator.NAME, index, false));
                         } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Object[].class) {
                             match[index] = Object[].class;
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], ConstantArrayTranslator.NAME, index));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], ConstantArrayTranslator.NAME, index));
+                            if (method.getName().equals("visitFrame")) {
+                                left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object[].class, FrameTranslator.NAME, index, true));
+                                right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object[].class, FrameTranslator.NAME, index, true));
+                            } else {
+                                left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object[].class, ConstantArrayTranslator.NAME, index, false));
+                                right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object[].class, ConstantArrayTranslator.NAME, index, false));
+                            }
                         } else {
                             match[index] = parameter[index];
                             left.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
@@ -224,12 +230,15 @@ public abstract class ClassVisitorFactory<T> {
                         .filter(ElementMatchers.<MethodDescription.InDefinedShape>isConstructor().and(ElementMatchers.<MethodDescription.InDefinedShape>takesArguments(0)))
                         .getOnly())), Map.class))
                 .defineField(LABELS, Map.class, Visibility.PRIVATE, FieldManifestation.FINAL)
-                .defineMethod(LabelTranslator.NAME, targetLabel, Visibility.PRIVATE, Ownership.STATIC)
+                .defineMethod(LabelTranslator.NAME, targetLabel, Visibility.PRIVATE)
                 .withParameters(sourceLabel)
                 .intercept(new Implementation.Simple(new LabelTranslator(targetLabel)))
-                .defineMethod(LabelArrayTranslator.NAME, Class.forName("[L" + targetLabel.getName() + ";", false, targetLabel.getClassLoader()), Visibility.PRIVATE, Ownership.STATIC)
+                .defineMethod(LabelArrayTranslator.NAME, Class.forName("[L" + targetLabel.getName() + ";", false, targetLabel.getClassLoader()), Visibility.PRIVATE)
                 .withParameters(Class.forName("[L" + sourceLabel.getName() + ";", false, targetLabel.getClassLoader()))
                 .intercept(new Implementation.Simple(new LabelArrayTranslator(sourceLabel, targetLabel)))
+                .defineMethod(FrameTranslator.NAME, Object[].class, Visibility.PRIVATE)
+                .withParameters(Object[].class)
+                .intercept(new Implementation.Simple(new FrameTranslator(sourceLabel, targetLabel)))
                 .defineMethod(HandleTranslator.NAME, targetHandle, Visibility.PRIVATE, Ownership.STATIC)
                 .withParameters(sourceHandle)
                 .intercept(new Implementation.Simple(new HandleTranslator(sourceHandle, targetHandle)))
@@ -242,17 +251,14 @@ public abstract class ClassVisitorFactory<T> {
                 .defineMethod(ConstantArrayTranslator.NAME, Object[].class, Visibility.PRIVATE, Ownership.STATIC)
                 .withParameters(Object[].class)
                 .intercept(new Implementation.Simple(new ConstantArrayTranslator()))
-                .defineMethod(FrameTranslator.NAME, Object[].class, Visibility.PRIVATE, Ownership.STATIC)
-                .withParameters(Object[].class)
-                .intercept(new Implementation.Simple(new FrameTranslator(sourceLabel, targetLabel)))
-                .defineMethod(TypePathTranslator.NAME, TypePath.class, Visibility.PRIVATE, Ownership.STATIC)
-                .withParameters(TypePath.class)
+                .defineMethod(TypePathTranslator.NAME, sourceTypePath, Visibility.PRIVATE, Ownership.STATIC)
+                .withParameters(targetTypePath)
                 .intercept(new Implementation.Simple(new TypePathTranslator(sourceTypePath, targetTypePath)));
     }
 
-    private static MethodCall.ArgumentLoader.Factory toConvertedParameter(TypeDescription source, Class<?> target, String method, int index) {
-        return new MethodCall.ArgumentLoader.ForStackManipulation(new StackManipulation.Compound(
-                MethodVariableAccess.REFERENCE.loadFrom(index),
+    private static MethodCall.ArgumentLoader.Factory toConvertedParameter(TypeDescription source, Class<?> target, String method, int index, boolean virtual) {
+        return new MethodCall.ArgumentLoader.ForStackManipulation(new StackManipulation.Compound(virtual ? MethodVariableAccess.loadThis() : StackManipulation.Trivial.INSTANCE,
+                MethodVariableAccess.REFERENCE.loadFrom(index + 1),
                 MethodInvocation.invoke(source.getDeclaredMethods().filter(named(method)).getOnly())), target);
     }
 
@@ -285,7 +291,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitInsn(Opcodes.ARETURN);
             methodVisitor.visitLabel(label);
             if (implementationContext.getFrameGeneration().isActive()) { // TODO
-                methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
             }
             methodVisitor.visitInsn(Opcodes.ACONST_NULL);
             methodVisitor.visitInsn(Opcodes.ARETURN);
@@ -342,7 +348,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitInsn(Opcodes.POP);
             methodVisitor.visitLabel(end);
             if (implementationContext.getFrameGeneration().isActive()) { // TODO
-                methodVisitor.visitFrame(Opcodes.F_APPEND, 1, new Object[]{Type.getInternalName(target)}, 0, null);
+                methodVisitor.visitFrame(Opcodes.F_APPEND, 1, new Object[]{Type.getInternalName(target)}, EMPTY.length, EMPTY);
             }
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
             methodVisitor.visitInsn(Opcodes.ARETURN);
@@ -371,7 +377,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitVarInsn(Opcodes.ISTORE, 3);
             methodVisitor.visitLabel(loop);
             if (implementationContext.getFrameGeneration().isActive()) { // TODO
-                methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"[L" + Type.getInternalName(target) + ";", Opcodes.INTEGER}, 0, null);
+                methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"[L" + Type.getInternalName(target) + ";", Opcodes.INTEGER}, EMPTY.length, EMPTY);
             }
             methodVisitor.visitVarInsn(Opcodes.ILOAD, 3);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
@@ -394,7 +400,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitLabel(end);
 
             if (implementationContext.getFrameGeneration().isActive()) { // TODO
-                methodVisitor.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+                methodVisitor.visitFrame(Opcodes.F_CHOP, 1, EMPTY, EMPTY.length, EMPTY);
             }
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
             methodVisitor.visitInsn(Opcodes.ARETURN);
@@ -481,7 +487,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitInsn(Opcodes.ICONST_0);
             methodVisitor.visitVarInsn(Opcodes.ISTORE, 2);
             methodVisitor.visitLabel(loop);
-            methodVisitor.visitFrame(Opcodes.F_APPEND,2, new Object[] {Type.getInternalName(Object[].class), Opcodes.INTEGER}, 0, null);
+            methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{Type.getInternalName(Object[].class), Opcodes.INTEGER}, EMPTY.length, EMPTY);
             methodVisitor.visitVarInsn(Opcodes.ILOAD, 2);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
@@ -504,7 +510,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitIincInsn(2, 1);
             methodVisitor.visitJumpInsn(Opcodes.GOTO, loop);
             methodVisitor.visitLabel(end);
-            methodVisitor.visitFrame(Opcodes.F_CHOP,1, null, 0, null);
+            methodVisitor.visitFrame(Opcodes.F_CHOP, 1, EMPTY, EMPTY.length, EMPTY);
             methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(target));
             methodVisitor.visitInsn(Opcodes.DUP);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
@@ -578,6 +584,7 @@ public abstract class ClassVisitorFactory<T> {
                     false);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             methodVisitor.visitLabel(noHandle);
+            methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(sourceType));
             methodVisitor.visitJumpInsn(Opcodes.IFEQ, noType);
@@ -595,6 +602,7 @@ public abstract class ClassVisitorFactory<T> {
                     false);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             methodVisitor.visitLabel(noType);
+            methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(sourceConstantDynamic));
             methodVisitor.visitJumpInsn(Opcodes.IFEQ, noConstantDynamic);
@@ -607,6 +615,7 @@ public abstract class ClassVisitorFactory<T> {
                     false);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             methodVisitor.visitLabel(noConstantDynamic);
+            methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(1, 1);
@@ -626,6 +635,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitInsn(Opcodes.ICONST_0);
             methodVisitor.visitVarInsn(Opcodes.ISTORE, 2);
             methodVisitor.visitLabel(loop);
+            methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"[Ljava/lang/Object;", Opcodes.INTEGER}, EMPTY.length, EMPTY);
             methodVisitor.visitVarInsn(Opcodes.ILOAD, 2);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
@@ -644,6 +654,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitIincInsn(2, 1);
             methodVisitor.visitJumpInsn(Opcodes.GOTO, loop);
             methodVisitor.visitLabel(end);
+            methodVisitor.visitFrame(Opcodes.F_CHOP, 1, EMPTY, EMPTY.length, EMPTY);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(4, 3);
@@ -667,9 +678,8 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, nullCheck);
             methodVisitor.visitInsn(Opcodes.ACONST_NULL);
             methodVisitor.visitInsn(Opcodes.ARETURN);
-            methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
             methodVisitor.visitLabel(nullCheck);
-            methodVisitor.visitLineNumber(43, nullCheck);
+            methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
             methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, Type.getInternalName(Object.class));
@@ -677,7 +687,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitInsn(Opcodes.ICONST_0);
             methodVisitor.visitVarInsn(Opcodes.ISTORE, 3);
             methodVisitor.visitLabel(loop);
-            methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{Type.getInternalName(Object[].class), Opcodes.INTEGER}, 0, null);
+            methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{Type.getInternalName(Object[].class), Opcodes.INTEGER}, EMPTY.length, EMPTY);
             methodVisitor.visitVarInsn(Opcodes.ILOAD, 3);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
@@ -719,7 +729,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitIincInsn(3, 1);
             methodVisitor.visitJumpInsn(Opcodes.GOTO, loop);
             methodVisitor.visitLabel(end);
-            methodVisitor.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+            methodVisitor.visitFrame(Opcodes.F_CHOP, 1, EMPTY, EMPTY.length, EMPTY);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(5, 4);
@@ -739,13 +749,13 @@ public abstract class ClassVisitorFactory<T> {
 
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             Label nullCheck = new Label(), end = new Label();
-            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, nullCheck);
             methodVisitor.visitInsn(Opcodes.ACONST_NULL);
             methodVisitor.visitJumpInsn(Opcodes.GOTO, end);
-            methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+            methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
             methodVisitor.visitLabel(nullCheck);
-            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                     Type.getInternalName(source),
                     "toString",
@@ -754,9 +764,9 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                     Type.getInternalName(target),
                     "fromString",
-                    Type.getMethodDescriptor(Type.getType(String.class), Type.getType(target)),
+                    Type.getMethodDescriptor(Type.getType(target), Type.getType(String.class)),
                     false);
-            methodVisitor.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{Type.getInternalName(target)});
+            methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(target)});
             methodVisitor.visitLabel(end);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(1, 2);
