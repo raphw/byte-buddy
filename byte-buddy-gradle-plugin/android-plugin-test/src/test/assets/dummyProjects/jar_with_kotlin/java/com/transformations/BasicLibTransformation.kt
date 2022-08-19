@@ -1,3 +1,6 @@
+package com.transformations;
+
+import net.bytebuddy.asm.Advice
 import net.bytebuddy.build.Plugin
 import net.bytebuddy.description.type.TypeDescription
 import net.bytebuddy.dynamic.ClassFileLocator
@@ -8,9 +11,8 @@ import net.bytebuddy.description.method.MethodDescription
 
 class BasicLibTransformation : Plugin {
 
-    override fun matches(target: TypeDescription?): Boolean {
-        return target?.getName()?.contains("SomeClass") == true || target?.getName()
-            ?.contains("SomeKotlinClass") == true
+    override fun matches(target: TypeDescription): Boolean {
+        return target.getName().contains("Some")
     }
 
     override fun apply(
@@ -18,11 +20,10 @@ class BasicLibTransformation : Plugin {
         typeDescription: TypeDescription,
         classFileLocator: ClassFileLocator
     ): DynamicType.Builder<*> {
-        return builder.method(
-            ElementMatchers.named<MethodDescription>(
-                "getMessage"
-            )
-        ).intercept(FixedValue.value("Instrumented message in lib"))
+        return builder.visit(
+            Advice.to(BasicAdvice::class.java)
+                .on(ElementMatchers.named("getMessage"))
+        )
     }
 
     override fun close() {

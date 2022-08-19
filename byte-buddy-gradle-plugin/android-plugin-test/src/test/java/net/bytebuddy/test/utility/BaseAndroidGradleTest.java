@@ -116,6 +116,10 @@ public abstract class BaseAndroidGradleTest {
         addText(androidProject.buildGradeFile,
                 "android {",
                 "   compileSdkVersion 30",
+                "   compileOptions {",
+                "       sourceCompatibility JavaVersion.VERSION_1_8",
+                "       targetCompatibility JavaVersion.VERSION_1_8",
+                "   }",
                 "}"
         );
 
