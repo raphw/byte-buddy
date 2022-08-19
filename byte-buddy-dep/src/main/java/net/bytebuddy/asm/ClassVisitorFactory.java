@@ -1,5 +1,6 @@
 package net.bytebuddy.asm;
 
+import com.sun.java.accessibility.util.java.awt.LabelTranslator;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
@@ -29,8 +30,7 @@ import org.objectweb.asm.*;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.is;
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public abstract class ClassVisitorFactory<T> {
 
@@ -76,11 +76,13 @@ public abstract class ClassVisitorFactory<T> {
                             Label.class, utilities.get(Label.class),
                             Type.class, utilities.get(Type.class),
                             Handle.class, utilities.get(Handle.class),
+                            TypePath.class, utilities.get(TypePath.class),
                             ConstantDynamic.class, utilities.get(ConstantDynamic.class));
                     unwrapper = toMethodVisitorBuilder(byteBuddy, equivalent, type,
                             utilities.get(Label.class), Label.class,
                             utilities.get(Type.class), Type.class,
                             utilities.get(Handle.class), Handle.class,
+                            utilities.get(TypePath.class), TypePath.class,
                             utilities.get(ConstantDynamic.class), ConstantDynamic.class);
                 } else {
                     wrapper = toBuilder(byteBuddy, type, equivalent, new Implementation.Simple(MethodReturn.VOID));
@@ -218,6 +220,7 @@ public abstract class ClassVisitorFactory<T> {
                                                                  Class<?> sourceLabel, Class<?> targetLabel,
                                                                  Class<?> sourceType, Class<?> targetType,
                                                                  Class<?> sourceHandle, Class<?> targetHandle,
+                                                                 Class<?> sourceTypePath, Class<?> targetTypePath,
                                                                  Class<?> sourceConstantDynamic, Class<?> targetConstantDynamic) throws Exception {
         return toBuilder(byteBuddy, source, target, FieldAccessor.ofField(LABELS).setsValue(new StackManipulation.Compound(TypeCreation.of(TypeDescription.ForLoadedType.of(HashMap.class)),
                 Duplication.SINGLE,
@@ -246,7 +249,13 @@ public abstract class ClassVisitorFactory<T> {
                 .intercept(new Implementation.Simple(new ConstantArrayTranslator()))
                 .defineMethod(LabelTranslator.NAME, Object[].class, Visibility.PRIVATE, Ownership.STATIC)
                 .withParameters(Object[].class)
-                .intercept(new Implementation.Simple(new LabelTranslator(targetLabel)));
+                .intercept(new Implementation.Simple(new LabelTranslator(targetLabel)))
+                .defineMethod(FrameTranslator.NAME, Object[].class, Visibility.PRIVATE, Ownership.STATIC)
+                .withParameters(Object[].class)
+                .intercept(new Implementation.Simple(new FrameTranslator(sourceLabel, targetLabel)))
+                .defineMethod(TypePathTranslator.NAME, TypePath.class, Visibility.PRIVATE, Ownership.STATIC)
+                .withParameters(TypePath.class)
+                .intercept(new Implementation.Simple(new TypePathTranslator(sourceTypePath, targetTypePath)));
     }
 
     public abstract T wrap(ClassVisitor classVisitor);
@@ -652,6 +661,41 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(5, 4);
+        }
+    }
+
+    protected static class TypePathTranslator implements ByteCodeAppender {
+
+        protected static final String NAME = "typePath";
+
+        protected final Class<?> source, target;
+
+        protected TypePathTranslator(Class<?> source, Class<?> target) {
+            this.source = source;
+            this.target = target;
+        }
+
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+            Label nullCheck = new Label(), end = new Label();
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, nullCheck);
+            methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+            methodVisitor.visitJumpInsn(Opcodes.GOTO, end);
+            methodVisitor.visitLabel(nullCheck);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                    Type.getInternalName(source),
+                    "toString",
+                    Type.getMethodDescriptor(Type.getType(String.class)),
+                    false);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                    Type.getInternalName(target),
+                    "fromString",
+                    Type.getMethodDescriptor(Type.getType(String.class), Type.getType(target)),
+                    false);
+            methodVisitor.visitLabel(end);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            return new Size(1, 2);
         }
     }
 }
