@@ -52,11 +52,9 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
                                         FileCollection byteBuddyClasspath,
                                         FileCollection localClasses) {
         if (initialized) {
-            System.out.println("Already initialized service");
             return;
         }
         initialized = true;
-        System.out.println("Initializing");
         EntryPoint entryPoint = new DefaultEntryPoint();
         Plugin.Engine.PoolStrategy poolStrategy = Plugin.Engine.PoolStrategy.Default.FAST;
         ClassFileVersion version = ClassFileVersion.ofJavaVersionString(getParameters().getJavaTargetCompatibilityVersion().get().toString());
@@ -73,7 +71,6 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        System.out.println("Finished initializing");
     }
 
 
