@@ -73,7 +73,13 @@ public abstract class ClassVisitorFactory<T> {
                     Handle.class,
                     ConstantDynamic.class
             )) {
-                utilities.put(type, Class.forName(prefix + "." + type.getSimpleName()));
+                Class<?> utility;
+                try {
+                    utility = Class.forName(prefix + "." + type.getSimpleName());
+                } catch (ClassNotFoundException ignored) {
+                    continue;
+                }
+                utilities.put(type, utility);
             }
             Map<Class<?>, Class<?>> equivalents = new HashMap<Class<?>, Class<?>>();
             Map<Class<?>, DynamicType.Builder<?>> builders = new HashMap<Class<?>, DynamicType.Builder<?>>();
@@ -85,7 +91,12 @@ public abstract class ClassVisitorFactory<T> {
                     RecordComponentVisitor.class,
                     ModuleVisitor.class
             )) {
-                Class<?> equivalent = Class.forName(prefix + "." + type.getSimpleName());
+                Class<?> equivalent;
+                try {
+                    equivalent = Class.forName(prefix + "." + type.getSimpleName());
+                } catch (ClassNotFoundException ignored) {
+                    continue;
+                }
                 DynamicType.Builder<?> wrapper, unwrapper;
                 if (type == MethodVisitor.class) {
                     wrapper = toMethodVisitorBuilder(byteBuddy,
@@ -167,7 +178,13 @@ public abstract class ClassVisitorFactory<T> {
                             right.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
                         }
                     }
-                    Method target = entry.getValue().getMethod(method.getName(), match);
+                    Method target;
+                    try {
+                        target = entry.getValue().getMethod(method.getName(), match);
+                    } catch (NoSuchMethodException ignored) {
+                        target = null;
+                        unsupported = true;
+                    }
                     if (unsupported) {
                         wrapper = wrapper.method(is(method)).intercept(ExceptionMethod.throwing(UnsupportedOperationException.class));
                         unwrapper = unwrapper.method(is(target)).intercept(ExceptionMethod.throwing(UnsupportedOperationException.class));
