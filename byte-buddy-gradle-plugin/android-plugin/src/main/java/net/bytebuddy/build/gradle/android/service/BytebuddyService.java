@@ -13,7 +13,9 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.pool.TypePool;
 import org.gradle.api.GradleException;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.Property;
 import org.gradle.api.services.BuildService;
 import org.gradle.api.services.BuildServiceParameters;
 import org.objectweb.asm.ClassVisitor;
@@ -30,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-abstract public class BytebuddyService implements BuildService<BuildServiceParameters.None>, AutoCloseable {
+abstract public class BytebuddyService implements BuildService<BytebuddyService.Params>, AutoCloseable {
 
     private boolean initialized = false;
     private final List<Plugin> allPlugins = new ArrayList<>();
@@ -40,6 +42,10 @@ abstract public class BytebuddyService implements BuildService<BuildServiceParam
     private ClassFileLocator classFileLocator;
     private final Map<String, List<Plugin>> matchingPlugins = Collections.synchronizedMap(new HashMap<>());
     private final Map<String, TypeDescription> matchingTypeDescription = Collections.synchronizedMap(new HashMap<>());
+
+    public interface Params extends BuildServiceParameters {
+        Property<JavaVersion> getJavaTargetCompatibilityVersion();
+    }
 
     public synchronized void initialize(FileCollection runtimeClasspath,
                                         FileCollection androidBootClasspath,
@@ -53,7 +59,8 @@ abstract public class BytebuddyService implements BuildService<BuildServiceParam
         System.out.println("Initializing");
         EntryPoint entryPoint = new DefaultEntryPoint();
         Plugin.Engine.PoolStrategy poolStrategy = Plugin.Engine.PoolStrategy.Default.FAST;
-        byteBuddy = entryPoint.byteBuddy(ClassFileVersion.JAVA_V8);//todo set version from project
+        ClassFileVersion version = ClassFileVersion.ofJavaVersionString(getParameters().getJavaTargetCompatibilityVersion().get().toString());
+        byteBuddy = entryPoint.byteBuddy(version);
         typeStrategy = new Plugin.Engine.TypeStrategy.ForEntryPoint(entryPoint, MethodNameTransformer.Suffixing.withRandomSuffix());
         try {
             Set<File> classpath = runtimeClasspath.plus(androidBootClasspath).plus(byteBuddyClasspath).plus(localClasses).getFiles();

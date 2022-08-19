@@ -66,8 +66,8 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     }
 
     private Provider<BytebuddyService> registerService(Variant variant) {
-        return project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "BytebuddyService", BytebuddyService.class, noneBuildServiceSpec -> {
-
+        return project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "BytebuddyService", BytebuddyService.class, spec -> {
+            spec.getParameters().getJavaTargetCompatibilityVersion().set(androidExtension.getCompileOptions().getTargetCompatibility());
         });
     }
 
