@@ -16,8 +16,8 @@ public class BytebuddyDependenciesHandler {
     private Configuration bucket;
     private static final String BYTEBUDDY_CONFIGURATION_NAME_FORMAT = "%sBytebuddy";
 
-    public static final Attribute<String> ARTIFACT_TYPE_ATTR = Attribute.of("artifactType", String.class);
-    public static final String BYTEBUDDY_JAR_TYPE = "bytebuddy-jar";
+    private static final Attribute<String> ARTIFACT_TYPE_ATTR = Attribute.of("artifactType", String.class);
+    private static final String BYTEBUDDY_JAR_TYPE = "bytebuddy-jar";
 
     public BytebuddyDependenciesHandler(Project project) {
         this.project = project;
@@ -65,9 +65,8 @@ public class BytebuddyDependenciesHandler {
     }
 
     private void registerBytebuddyJarRule() {
-        project.getDependencies().getAttributesSchema().attribute(ARTIFACT_TYPE_ATTR, stringAttributeMatchingStrategy -> {
-            stringAttributeMatchingStrategy.getCompatibilityRules().add(BytebuddyJarsRule.class);
-        });
+        project.getDependencies().getAttributesSchema().attribute(ARTIFACT_TYPE_ATTR, stringAttributeMatchingStrategy ->
+                stringAttributeMatchingStrategy.getCompatibilityRules().add(BytebuddyJarsRule.class));
     }
 
     public abstract static class BytebuddyJarsRule implements AttributeCompatibilityRule<String> {
