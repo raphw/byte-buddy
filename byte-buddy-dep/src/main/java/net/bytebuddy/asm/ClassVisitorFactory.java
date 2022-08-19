@@ -16,6 +16,7 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.Ownership;
@@ -47,20 +48,71 @@ import java.util.*;
 import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
+/**
+ * A factory for wrapping a {@link ClassVisitor} in Byte Buddy's package namespace to a
+ * {@link ClassVisitor} in any other namespace. Note that this API does not allow for the
+ * passing of {@link Attribute}s. which must be filtered or propagated past this translation.
+ * If the supplied visitors do not declare a method that Byte Buddy's version of ASM is aware
+ * of, an {@link UnsupportedOperationException} is thrown.
+ *
+ * @param <T> The type of the mapped class visitor.
+ */
+@HashCodeAndEqualsPlugin.Enhance
 public abstract class ClassVisitorFactory<T> {
 
+    /**
+     * An empty array to represent stack map frames.
+     */
     private static final Object[] EMPTY = new Object[0];
 
+    /**
+     * The name of the delegate field containing an equivalent visitor.
+     */
     private static final String DELEGATE = "delegate";
 
+    /**
+     * The name of a map with labels that have been translated previously.
+     */
     private static final String LABELS = "labels";
 
+    /**
+     * The name of the method that wraps a translated visitor, including a {@code null} check.
+     */
     private static final String WRAP = "wrap";
 
+    /**
+     * The type of the represented class visitor wrapper.
+     */
+    @SuppressWarnings("unused")
+    private final Class<?> type;
+
+    /**
+     * Creates a new factory.
+     * @param type The type of the represented class visitor wrapper.
+     */
+    protected ClassVisitorFactory(Class<?> type) {
+        this.type = type;
+    }
+
+    /**
+     * Returns a class visitor factory for the supplied {@link ClassVisitor} type.
+     *
+     * @param classVisitor The type of the translated class visitor.
+     * @param <S>          The type of the class visitor to map to.
+     * @return A factory for wrapping {@link ClassVisitor}s in Byte Buddy's and the supplied package namespace.
+     */
     public static <S> ClassVisitorFactory<S> of(Class<S> classVisitor) {
         return of(classVisitor, new ByteBuddy().with(TypeValidation.DISABLED));
     }
 
+    /**
+     * Returns a class visitor factory for the supplied {@link ClassVisitor} type.
+     *
+     * @param classVisitor The type of the translated class visitor.
+     * @param byteBuddy    The Byte Buddy instance to use.
+     * @param <S>          The type of the class visitor to map to.
+     * @return A factory for wrapping {@link ClassVisitor}s in Byte Buddy's and the supplied package namespace.
+     */
     public static <S> ClassVisitorFactory<S> of(Class<S> classVisitor, ByteBuddy byteBuddy) {
         try {
             String prefix = classVisitor.getPackage().getName();
@@ -114,11 +166,11 @@ public abstract class ClassVisitorFactory<T> {
                             utilities.get(Handle.class), Handle.class,
                             utilities.get(ConstantDynamic.class), ConstantDynamic.class);
                 } else {
-                    wrapper = toBuilder(byteBuddy,
+                    wrapper = toVisitorBuilder(byteBuddy,
                             type, equivalent,
                             TypePath.class, utilities.get(TypePath.class),
                             new Implementation.Simple(MethodReturn.VOID));
-                    unwrapper = toBuilder(byteBuddy,
+                    unwrapper = toVisitorBuilder(byteBuddy,
                             equivalent, type,
                             utilities.get(TypePath.class), TypePath.class,
                             new Implementation.Simple(MethodReturn.VOID));
@@ -139,35 +191,36 @@ public abstract class ClassVisitorFactory<T> {
                     List<MethodCall.ArgumentLoader.Factory> left = new ArrayList<MethodCall.ArgumentLoader.Factory>(parameter.length);
                     List<MethodCall.ArgumentLoader.Factory> right = new ArrayList<MethodCall.ArgumentLoader.Factory>(match.length);
                     boolean unsupported = false;
+                    int offset = 1;
                     for (int index = 0; index < parameter.length; index++) {
                         if (entry.getKey() == MethodVisitor.class && parameter[index] == Label.class) {
                             match[index] = utilities.get(Label.class);
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelTranslator.NAME, index, true));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelTranslator.NAME, index, true));
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelTranslator.NAME, offset, true));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelTranslator.NAME, offset, true));
                         } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Label[].class) {
                             match[index] = Class.forName("[L" + utilities.get(Label.class).getName() + ";", false, classVisitor.getClassLoader());
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelArrayTranslator.NAME, index, true));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelArrayTranslator.NAME, index, true));
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelArrayTranslator.NAME, offset, true));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelArrayTranslator.NAME, offset, true));
                         } else if (parameter[index] == TypePath.class) {
                             match[index] = utilities.get(TypePath.class);
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], TypePathTranslator.NAME, index, false));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], TypePathTranslator.NAME, index, false));
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], TypePathTranslator.NAME, offset, false));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], TypePathTranslator.NAME, offset, false));
                         } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Handle.class) {
                             match[index] = utilities.get(Handle.class);
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], HandleTranslator.NAME, index, false));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], HandleTranslator.NAME, index, false));
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], HandleTranslator.NAME, offset, false));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], HandleTranslator.NAME, offset, false));
                         } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Object.class) {
                             match[index] = Object.class;
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object.class, ConstantTranslator.NAME, index, false));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object.class, ConstantTranslator.NAME, index, false));
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object.class, ConstantTranslator.NAME, offset, false));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object.class, ConstantTranslator.NAME, offset, false));
                         } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Object[].class) {
                             match[index] = Object[].class;
                             if (method.getName().equals("visitFrame")) {
-                                left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object[].class, FrameTranslator.NAME, index, true));
-                                right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object[].class, FrameTranslator.NAME, index, true));
+                                left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object[].class, FrameTranslator.NAME, offset, true));
+                                right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object[].class, FrameTranslator.NAME, offset, true));
                             } else {
-                                left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object[].class, ConstantArrayTranslator.NAME, index, false));
-                                right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object[].class, ConstantArrayTranslator.NAME, index, false));
+                                left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object[].class, ConstantArrayTranslator.NAME, offset, false));
+                                right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object[].class, ConstantArrayTranslator.NAME, offset, false));
                             }
                         } else if (parameter[index] == Attribute.class) {
                             match[index] = utilities.get(Attribute.class);
@@ -177,6 +230,7 @@ public abstract class ClassVisitorFactory<T> {
                             left.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
                             right.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
                         }
+                        offset = parameter[index] == long.class || parameter[index] == double.class ? 2 : 1;
                     }
                     Method target;
                     try {
@@ -217,7 +271,7 @@ public abstract class ClassVisitorFactory<T> {
                     .append(ClassVisitor.class, classVisitor)
                     .build();
             @SuppressWarnings("unchecked")
-            ClassVisitorFactory<S> factory = byteBuddy.subclass(ClassVisitorFactory.class)
+            ClassVisitorFactory<S> factory = byteBuddy.subclass(ClassVisitorFactory.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
                     .method(named("wrap")).intercept(MethodCall.construct(generated.get(classVisitor)
                             .getDeclaredMethods()
                             .filter(ElementMatchers.<MethodDescription.InDefinedShape>isConstructor())
@@ -230,8 +284,8 @@ public abstract class ClassVisitorFactory<T> {
                     .include(dynamicTypes)
                     .load(classLoader)
                     .getLoaded()
-                    .getConstructor()
-                    .newInstance();
+                    .getConstructor(Class.class)
+                    .newInstance(classVisitor);
             if (classLoader instanceof MultipleParentClassLoader
                     && classLoader != ClassVisitor.class.getClassLoader()
                     && classLoader != classVisitor.getClassLoader()
@@ -244,31 +298,62 @@ public abstract class ClassVisitorFactory<T> {
         }
     }
 
-    private static DynamicType.Builder<?> toBuilder(ByteBuddy byteBuddy,
-                                                    Class<?> source,
-                                                    Class<?> target,
-                                                    Class<?> sourceTypePath,
-                                                    Class<?> targetTypePath,
-                                                    Implementation appendix) throws NoSuchMethodException {
-        return byteBuddy.subclass(source, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .defineField(DELEGATE, target, Visibility.PRIVATE, FieldManifestation.FINAL)
+    /**
+     * Creates a builder for a visitor type.
+     *
+     * @param byteBuddy      The Byte Buddy instance to use.
+     * @param sourceVisitor  The visitor type to map from.
+     * @param targetVisitor  The visitor type to map to.
+     * @param sourceTypePath The {@link TypePath} source type.
+     * @param targetTypePath The {@link TypePath} target type.
+     * @param appendix       The implementation to append to the constructor.
+     * @return The created builder.
+     * @throws Exception If an exception occurs.
+     */
+    private static DynamicType.Builder<?> toVisitorBuilder(ByteBuddy byteBuddy,
+                                                           Class<?> sourceVisitor,
+                                                           Class<?> targetVisitor,
+                                                           Class<?> sourceTypePath,
+                                                           Class<?> targetTypePath,
+                                                           Implementation appendix) throws Exception {
+        return byteBuddy.subclass(sourceVisitor, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .defineField(DELEGATE, targetVisitor, Visibility.PRIVATE, FieldManifestation.FINAL)
                 .defineConstructor(Visibility.PUBLIC)
-                .withParameters(target)
-                .intercept(MethodCall.invoke(source.getDeclaredConstructor(int.class))
+                .withParameters(targetVisitor)
+                .intercept(MethodCall.invoke(sourceVisitor.getDeclaredConstructor(int.class))
                         .with(OpenedClassReader.ASM_API)
                         .andThen(FieldAccessor.ofField(DELEGATE).setsArgumentAt(0))
                         .andThen(appendix))
-                .defineMethod(WRAP, source, Visibility.PUBLIC, Ownership.STATIC)
-                .withParameters(target)
-                .intercept(new Implementation.Simple(new NullCheckedConstruction(target)))
+                .defineMethod(WRAP, sourceVisitor, Visibility.PUBLIC, Ownership.STATIC)
+                .withParameters(targetVisitor)
+                .intercept(new Implementation.Simple(new NullCheckedConstruction(targetVisitor)))
                 .defineMethod(TypePathTranslator.NAME, targetTypePath, Visibility.PRIVATE, Ownership.STATIC)
                 .withParameters(sourceTypePath)
                 .intercept(new Implementation.Simple(new TypePathTranslator(sourceTypePath, targetTypePath)));
     }
 
+    /**
+     * Creates a builder for a method visitor type.
+     *
+     * @param byteBuddy             The Byte Buddy instance to use.
+     * @param sourceVisitor         The visitor type to map from.
+     * @param targetVisitor         The visitor type to map to.
+     * @param sourceTypePath        The {@link TypePath} source type.
+     * @param targetTypePath        The {@link TypePath} target type.
+     * @param sourceLabel           The {@link Label} source type.
+     * @param targetLabel           The {@link Label} target type.
+     * @param sourceType            The {@link Type} source type.
+     * @param targetType            The {@link Type} target type.
+     * @param sourceHandle          The {@link Handle} source type.
+     * @param targetHandle          The {@link Handle} target type.
+     * @param sourceConstantDynamic The {@link ConstantDynamic} source type.
+     * @param targetConstantDynamic The {@link ConstantDynamic} target type.
+     * @return The created builder.
+     * @throws Exception If an exception occurs.
+     */
     private static DynamicType.Builder<?> toMethodVisitorBuilder(ByteBuddy byteBuddy,
-                                                                 Class<?> source,
-                                                                 Class<?> target,
+                                                                 Class<?> sourceVisitor,
+                                                                 Class<?> targetVisitor,
                                                                  Class<?> sourceTypePath,
                                                                  Class<?> targetTypePath,
                                                                  Class<?> sourceLabel,
@@ -279,9 +364,9 @@ public abstract class ClassVisitorFactory<T> {
                                                                  Class<?> targetHandle,
                                                                  Class<?> sourceConstantDynamic,
                                                                  Class<?> targetConstantDynamic) throws Exception {
-        return toBuilder(byteBuddy,
-                source,
-                target,
+        return toVisitorBuilder(byteBuddy,
+                sourceVisitor,
+                targetVisitor,
                 sourceTypePath,
                 targetTypePath,
                 FieldAccessor.ofField(LABELS).setsValue(new StackManipulation.Compound(TypeCreation.of(TypeDescription.ForLoadedType.of(HashMap.class)),
@@ -314,24 +399,61 @@ public abstract class ClassVisitorFactory<T> {
                 .intercept(new Implementation.Simple(new ConstantArrayTranslator()));
     }
 
-    private static MethodCall.ArgumentLoader.Factory toConvertedParameter(TypeDescription source, Class<?> target, String method, int index, boolean virtual) {
+    /**
+     * Creates an argument loader for a method parameter that requires conversion.
+     *
+     * @param source  The source type.
+     * @param target  The target type.
+     * @param method  The name of the method.
+     * @param offset  The parameter offset
+     * @param virtual {@code true} if the invoked method is virtual.
+     * @return An appropriate argument loader factory.
+     */
+    private static MethodCall.ArgumentLoader.Factory toConvertedParameter(TypeDescription source, Class<?> target, String method, int offset, boolean virtual) {
         return new MethodCall.ArgumentLoader.ForStackManipulation(new StackManipulation.Compound(virtual ? MethodVariableAccess.loadThis() : StackManipulation.Trivial.INSTANCE,
-                MethodVariableAccess.REFERENCE.loadFrom(index + 1),
+                MethodVariableAccess.REFERENCE.loadFrom(offset),
                 MethodInvocation.invoke(source.getDeclaredMethods().filter(named(method)).getOnly())), target);
     }
 
+    /**
+     * Wraps a {@link ClassVisitor} within an instance of the supplied class visitor type.
+     *
+     * @param classVisitor The class visitor to wrap.
+     * @return A class visitor that wraps the supplied class visitor.
+     */
     public abstract T wrap(ClassVisitor classVisitor);
 
+    /**
+     * Unwraps an instance of the supplied class visitor as a {@link ClassVisitor}.
+     *
+     * @param classVisitor The class visitor to unwrap.
+     * @return A class visitor that unwraps the supplied class visitor.
+     */
     public abstract ClassVisitor unwrap(T classVisitor);
 
+    /**
+     * An appender that performs a {@code null}-checked construction.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class NullCheckedConstruction implements ByteCodeAppender {
 
-        private final Class<?> target;
+        /**
+         * The constructed type.
+         */
+        private final Class<?> type;
 
-        protected NullCheckedConstruction(Class<?> target) {
-            this.target = target;
+        /**
+         * Creates a byte code appender for creating a {@code null}-checked construction.
+         *
+         * @param type The constructed type.
+         */
+        protected NullCheckedConstruction(Class<?> type) {
+            this.type = type;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor,
                           Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
@@ -344,7 +466,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
                     implementationContext.getInstrumentedType().getInternalName(),
                     MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                    Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(target)),
+                    Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(type)),
                     false);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             methodVisitor.visitLabel(label);
