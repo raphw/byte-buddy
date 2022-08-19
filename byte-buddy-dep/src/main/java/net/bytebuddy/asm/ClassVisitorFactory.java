@@ -231,7 +231,7 @@ public abstract class ClassVisitorFactory<T> {
                             left.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
                             right.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
                         }
-                        offset = parameter[index] == long.class || parameter[index] == double.class ? 2 : 1;
+                        offset += parameter[index] == long.class || parameter[index] == double.class ? 2 : 1;
                     }
                     Method target;
                     try {
