@@ -18,8 +18,6 @@ class BasicLibTransformation : Plugin {
         typeDescription: TypeDescription,
         classFileLocator: ClassFileLocator
     ): DynamicType.Builder<*> {
-//        val assignableTo: Boolean = typeDescription.isAssignableTo(String::class.java)
-//        println("Is $typeDescription assignable2: $assignableTo")
         return builder.method(
             ElementMatchers.named<MethodDescription>(
                 "getMessage"
