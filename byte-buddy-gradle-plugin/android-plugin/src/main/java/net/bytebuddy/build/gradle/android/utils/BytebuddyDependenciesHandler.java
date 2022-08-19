@@ -13,6 +13,7 @@ public class BytebuddyDependenciesHandler {
     private static final String BYTEBUDDY_CONFIGURATION_NAME_FORMAT = "%sBytebuddy";
 
     public static final Attribute<String> ARTIFACT_TYPE_ATTR = Attribute.of("artifactType", String.class);
+    public static final String BYTEBUDDY_JAR_TYPE = "bytebuddy-jar";
 
     public BytebuddyDependenciesHandler(Project project) {
         this.project = project;
@@ -28,7 +29,7 @@ public class BytebuddyDependenciesHandler {
             configuration.setCanBeConsumed(false);
             configuration.extendsFrom(bucket);
             configuration.attributes(attrs -> {
-                attrs.attribute(ARTIFACT_TYPE_ATTR, "jar");
+                attrs.attribute(ARTIFACT_TYPE_ATTR, BYTEBUDDY_JAR_TYPE);
                 attrs.attribute(
                         Category.CATEGORY_ATTRIBUTE,
                         project.getObjects().named(Category.class, Category.LIBRARY)
