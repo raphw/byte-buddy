@@ -88,6 +88,7 @@ public abstract class ClassVisitorFactory<T> {
 
     /**
      * Creates a new factory.
+     *
      * @param type The type of the represented class visitor wrapper.
      */
     protected ClassVisitorFactory(Class<?> type) {
@@ -241,7 +242,9 @@ public abstract class ClassVisitorFactory<T> {
                     }
                     if (unsupported) {
                         wrapper = wrapper.method(is(method)).intercept(ExceptionMethod.throwing(UnsupportedOperationException.class));
-                        unwrapper = unwrapper.method(is(target)).intercept(ExceptionMethod.throwing(UnsupportedOperationException.class));
+                        if (target != null) {
+                            unwrapper = unwrapper.method(is(target)).intercept(ExceptionMethod.throwing(UnsupportedOperationException.class));
+                        }
                     } else {
                         MethodCall wrapping = MethodCall.invoke(target).onField(DELEGATE).with(left);
                         MethodCall unwrapping = MethodCall.invoke(method).onField(DELEGATE).with(right);
@@ -479,16 +482,34 @@ public abstract class ClassVisitorFactory<T> {
         }
     }
 
+    /**
+     * A method to translate a {@link Label} from one namespace to another.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class LabelTranslator implements ByteCodeAppender {
 
+        /**
+         * The name of the method.
+         */
         protected static final String NAME = "label";
 
+        /**
+         * The label type that is targeted.
+         */
         private final Class<?> target;
 
+        /**
+         * Creates a new label translator.
+         *
+         * @param target The label type that is targeted.
+         */
         protected LabelTranslator(Class<?> target) {
             this.target = target;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             Label end = new Label();
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
@@ -536,28 +557,52 @@ public abstract class ClassVisitorFactory<T> {
         }
     }
 
+    /**
+     * A method to translate an array of {@link Label}s from one namespace to another.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class LabelArrayTranslator implements ByteCodeAppender {
 
+        /**
+         * The name of the method.
+         */
         protected static final String NAME = "labels";
 
-        private final Class<?> source, target;
+        /**
+         * The {@link Label} type in the original namespace.
+         */
+        private final Class<?> sourceLabel;
 
-        protected LabelArrayTranslator(Class<?> source, Class<?> target) {
-            this.source = source;
-            this.target = target;
+        /**
+         * The {@link Label} type in the targeted namespace.
+         */
+        private final Class<?> targetLabel;
+
+        /**
+         * Creates a new label array translator.
+         *
+         * @param sourceLabel The {@link Label} type in the original namespace.
+         * @param targetLabel The {@link Label} type in the targeted namespace.
+         */
+        protected LabelArrayTranslator(Class<?> sourceLabel, Class<?> targetLabel) {
+            this.sourceLabel = sourceLabel;
+            this.targetLabel = targetLabel;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             Label loop = new Label(), end = new Label();
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
-            methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, Type.getInternalName(target));
+            methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, Type.getInternalName(targetLabel));
             methodVisitor.visitVarInsn(Opcodes.ASTORE, 2);
             methodVisitor.visitInsn(Opcodes.ICONST_0);
             methodVisitor.visitVarInsn(Opcodes.ISTORE, 3);
             methodVisitor.visitLabel(loop);
             if (implementationContext.getFrameGeneration().isActive()) { // TODO
-                methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"[L" + Type.getInternalName(target) + ";", Opcodes.INTEGER}, EMPTY.length, EMPTY);
+                methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"[L" + Type.getInternalName(targetLabel) + ";", Opcodes.INTEGER}, EMPTY.length, EMPTY);
             }
             methodVisitor.visitVarInsn(Opcodes.ILOAD, 3);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
@@ -572,7 +617,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
                     implementationContext.getInstrumentedType().getInternalName(),
                     LabelTranslator.NAME,
-                    Type.getMethodDescriptor(Type.getType(target), Type.getType(source)),
+                    Type.getMethodDescriptor(Type.getType(targetLabel), Type.getType(sourceLabel)),
                     false);
             methodVisitor.visitInsn(Opcodes.AASTORE);
             methodVisitor.visitIincInsn(3, 1);
@@ -588,51 +633,75 @@ public abstract class ClassVisitorFactory<T> {
         }
     }
 
+    /**
+     * A method to translate a {@link Handle} from one namespace to another.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class HandleTranslator implements ByteCodeAppender {
 
+        /**
+         * The name of the method.
+         */
         protected static final String NAME = "handle";
 
-        private final Class<?> source, target;
+        /**
+         * The {@link Handle} type in the original namespace.
+         */
+        private final Class<?> sourceHandle;
 
-        protected HandleTranslator(Class<?> source, Class<?> target) {
-            this.source = source;
-            this.target = target;
+        /**
+         * The {@link Handle} type in the targeted namespace.
+         */
+        private final Class<?> targetHandle;
+
+        /**
+         * Creates a new handle translator.
+         *
+         * @param sourceHandle The {@link Handle} type in the original namespace.
+         * @param targetHandle The {@link Handle} type in the targeted namespace.
+         */
+        protected HandleTranslator(Class<?> sourceHandle, Class<?> targetHandle) {
+            this.sourceHandle = sourceHandle;
+            this.targetHandle = targetHandle;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-            methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(target));
+            methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(targetHandle));
             methodVisitor.visitInsn(Opcodes.DUP);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                    Type.getInternalName(source),
+                    Type.getInternalName(sourceHandle),
                     "getTag",
                     Type.getMethodDescriptor(Type.INT_TYPE),
                     false);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                    Type.getInternalName(source),
+                    Type.getInternalName(sourceHandle),
                     "getOwner",
                     Type.getMethodDescriptor(Type.getType(String.class)),
                     false);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                    Type.getInternalName(source),
+                    Type.getInternalName(sourceHandle),
                     "getName",
                     Type.getMethodDescriptor(Type.getType(String.class)),
                     false);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(source),
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(sourceHandle),
                     "getDesc",
                     Type.getMethodDescriptor(Type.getType(String.class)),
                     false);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                    Type.getInternalName(source),
+                    Type.getInternalName(sourceHandle),
                     "isInterface",
                     Type.getMethodDescriptor(Type.BOOLEAN_TYPE),
                     false);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
-                    Type.getInternalName(target),
+                    Type.getInternalName(targetHandle),
                     MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                     Type.getMethodDescriptor(Type.VOID_TYPE, Type.INT_TYPE, Type.getType(String.class), Type.getType(String.class), Type.getType(String.class), Type.BOOLEAN_TYPE),
                     false);
@@ -641,24 +710,60 @@ public abstract class ClassVisitorFactory<T> {
         }
     }
 
+    /**
+     * A method to translate a {@link ConstantDynamic} from one namespace to another.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class ConstantDynamicTranslator implements ByteCodeAppender {
 
+        /**
+         * The name of the method.
+         */
         protected static final String NAME = "constantDyanmic";
 
-        private final Class<?> source, target, sourceHandle, targetHandle;
+        /**
+         * The {@link ConstantDynamic} type in the original namespace.
+         */
+        private final Class<?> sourceConstantDynamic;
 
-        protected ConstantDynamicTranslator(Class<?> source, Class<?> target, Class<?> sourceHandle, Class<?> targetHandle) {
-            this.source = source;
-            this.target = target;
+        /**
+         * The {@link ConstantDynamic} type in the targeted namespace.
+         */
+        private final Class<?> targetConstantDynamic;
+
+        /**
+         * The {@link Handle} type in the original namespace.
+         */
+        private final Class<?> sourceHandle;
+
+        /**
+         * The {@link Handle} type in the targeted namespace.
+         */
+        private final Class<?> targetHandle;
+
+        /**
+         * Creates a new constant dynamic translator.
+         *
+         * @param sourceConstantDynamic The {@link ConstantDynamic} type in the original namespace.
+         * @param targetConstantDynamic The {@link ConstantDynamic} type in the targeted namespace.
+         * @param sourceHandle          The {@link Handle} type in the original namespace.
+         * @param targetHandle          The {@link Handle} type in the targeted namespace.
+         */
+        protected ConstantDynamicTranslator(Class<?> sourceConstantDynamic, Class<?> targetConstantDynamic, Class<?> sourceHandle, Class<?> targetHandle) {
+            this.sourceConstantDynamic = sourceConstantDynamic;
+            this.targetConstantDynamic = targetConstantDynamic;
             this.sourceHandle = sourceHandle;
             this.targetHandle = targetHandle;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             Label loop = new Label(), end = new Label();
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                    Type.getInternalName(source),
+                    Type.getInternalName(sourceConstantDynamic),
                     "getBootstrapMethodArgumentCount",
                     Type.getMethodDescriptor(Type.INT_TYPE),
                     false);
@@ -679,7 +784,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitVarInsn(Opcodes.ILOAD, 2);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                    Type.getInternalName(source),
+                    Type.getInternalName(sourceConstantDynamic),
                     "getBootstrapMethodArgument",
                     Type.getMethodDescriptor(Type.getType(Object.class), Type.INT_TYPE),
                     false);
@@ -695,23 +800,23 @@ public abstract class ClassVisitorFactory<T> {
             if (implementationContext.getFrameGeneration().isActive()) { // TODO
                 methodVisitor.visitFrame(Opcodes.F_CHOP, 1, EMPTY, EMPTY.length, EMPTY);
             }
-            methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(target));
+            methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(targetConstantDynamic));
             methodVisitor.visitInsn(Opcodes.DUP);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                    Type.getInternalName(source),
+                    Type.getInternalName(sourceConstantDynamic),
                     "getName",
                     Type.getMethodDescriptor(Type.getType(String.class)),
                     false);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                    Type.getInternalName(source),
+                    Type.getInternalName(sourceConstantDynamic),
                     "getDescriptor",
                     Type.getMethodDescriptor(Type.getType(String.class)),
                     false);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                    Type.getInternalName(source),
+                    Type.getInternalName(sourceConstantDynamic),
                     "getBootstrapMethod",
                     Type.getMethodDescriptor(Type.getType(sourceHandle)),
                     false);
@@ -722,7 +827,7 @@ public abstract class ClassVisitorFactory<T> {
                     false);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
-                    Type.getInternalName(target),
+                    Type.getInternalName(targetConstantDynamic),
                     MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                     Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String.class), Type.getType(String.class), Type.getType(targetHandle), Type.getType(Object[].class)),
                     false);
@@ -732,14 +837,56 @@ public abstract class ClassVisitorFactory<T> {
         }
     }
 
+    /**
+     * A method to translate a constant value from one namespace to another.
+     */
     protected static class ConstantTranslator implements ByteCodeAppender {
 
+        /**
+         * The name of the method.
+         */
         protected static final String NAME = "constant";
 
-        private final Class<?> sourceHandle, targetHandle,
-                sourceType, targetType,
-                sourceConstantDynamic, targetConstantDynamic;
+        /**
+         * The {@link Handle} type in the original namespace.
+         */
+        private final Class<?> sourceHandle;
 
+        /**
+         * The {@link Handle} type in the targeted namespace.
+         */
+        private final Class<?> targetHandle;
+
+        /**
+         * The {@link Type} type in the original namespace.
+         */
+        private final Class<?> sourceType;
+
+        /**
+         * The {@link Type} type in the targeted namespace.
+         */
+        private final Class<?> targetType;
+
+        /**
+         * The {@link ConstantDynamic} type in the original namespace.
+         */
+        private final Class<?> sourceConstantDynamic;
+
+        /**
+         * The {@link ConstantDynamic} type in the targeted namespace.
+         */
+        private final Class<?> targetConstantDynamic;
+
+        /**
+         * Creates a new constant translator.
+         *
+         * @param sourceHandle          The {@link Handle} type in the original namespace.
+         * @param targetHandle          The {@link Handle} type in the targeted namespace.
+         * @param sourceType            The {@link Type} type in the original namespace.
+         * @param targetType            The {@link Type} type in the targeted namespace.
+         * @param sourceConstantDynamic The {@link ConstantDynamic} type in the original namespace.
+         * @param targetConstantDynamic The {@link ConstantDynamic} type in the targeted namespace.
+         */
         protected ConstantTranslator(Class<?> sourceHandle,
                                      Class<?> targetHandle,
                                      Class<?> sourceType,
@@ -754,6 +901,9 @@ public abstract class ClassVisitorFactory<T> {
             this.targetConstantDynamic = targetConstantDynamic;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             Label noHandle = new Label(), noType = new Label(), noConstantDynamic = new Label();
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
@@ -812,10 +962,20 @@ public abstract class ClassVisitorFactory<T> {
         }
     }
 
+    /**
+     * A method to translate an array of constants from one namespace to another.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class ConstantArrayTranslator implements ByteCodeAppender {
 
+        /**
+         * The name of the method.
+         */
         protected static final String NAME = "constants";
 
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             Label loop = new Label(), end = new Label();
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
@@ -855,17 +1015,41 @@ public abstract class ClassVisitorFactory<T> {
         }
     }
 
+    /**
+     * A method to translate a stack map frame array from one namespace to another.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class FrameTranslator implements ByteCodeAppender {
 
+        /**
+         * The name of the method.
+         */
         protected static final String NAME = "frames";
 
-        protected final Class<?> source, target;
+        /**
+         * The {@link Label} type in the original namespace.
+         */
+        private final Class<?> sourceLabel;
 
-        protected FrameTranslator(Class<?> source, Class<?> target) {
-            this.source = source;
-            this.target = target;
+        /**
+         * The {@link Label} type in the targeted namespace.
+         */
+        private final Class<?> targetLabel;
+
+        /**
+         * Creates a new frame translator.
+         *
+         * @param sourceLabel The {@link Label} type in the original namespace.
+         * @param targetLabel The {@link Label} type in the targeted namespace.
+         */
+        protected FrameTranslator(Class<?> sourceLabel, Class<?> targetLabel) {
+            this.sourceLabel = sourceLabel;
+            this.targetLabel = targetLabel;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             Label nullCheck = new Label(), loop = new Label(), store = new Label(), end = new Label(), label = new Label();
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
@@ -895,17 +1079,17 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitVarInsn(Opcodes.ILOAD, 3);
             methodVisitor.visitInsn(Opcodes.AALOAD);
-            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(source));
+            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(sourceLabel));
             methodVisitor.visitJumpInsn(Opcodes.IFEQ, label);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitVarInsn(Opcodes.ILOAD, 3);
             methodVisitor.visitInsn(Opcodes.AALOAD);
-            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(source));
+            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(sourceLabel));
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
                     implementationContext.getInstrumentedType().getInternalName(),
                     LabelTranslator.NAME,
-                    Type.getMethodDescriptor(Type.getType(target), Type.getType(source)),
+                    Type.getMethodDescriptor(Type.getType(targetLabel), Type.getType(sourceLabel)),
                     false);
             methodVisitor.visitJumpInsn(Opcodes.GOTO, store);
             methodVisitor.visitLabel(label);
@@ -940,17 +1124,41 @@ public abstract class ClassVisitorFactory<T> {
         }
     }
 
+    /**
+     * A method to translate a {@link TypePath} type from one namespace to another.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class TypePathTranslator implements ByteCodeAppender {
 
+        /**
+         * The name of the method.
+         */
         protected static final String NAME = "typePath";
 
-        protected final Class<?> source, target;
+        /**
+         * The {@link TypePath} type in the original namespace.
+         */
+        private final Class<?> sourceTypePath;
 
-        protected TypePathTranslator(Class<?> source, Class<?> target) {
-            this.source = source;
-            this.target = target;
+        /**
+         * The {@link TypePath} type in the targeted namespace.
+         */
+        private final Class<?> targetTypePath;
+
+        /**
+         * Creates a new type path translator.
+         *
+         * @param sourceTypePath The {@link TypePath} type in the original namespace.
+         * @param targetTypePath The {@link TypePath} type in the targeted namespace.
+         */
+        protected TypePathTranslator(Class<?> sourceTypePath, Class<?> targetTypePath) {
+            this.sourceTypePath = sourceTypePath;
+            this.targetTypePath = targetTypePath;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             Label nullCheck = new Label(), end = new Label();
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
@@ -963,17 +1171,17 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitLabel(nullCheck);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                    Type.getInternalName(source),
+                    Type.getInternalName(sourceTypePath),
                     "toString",
                     Type.getMethodDescriptor(Type.getType(String.class)),
                     false);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                    Type.getInternalName(target),
+                    Type.getInternalName(targetTypePath),
                     "fromString",
-                    Type.getMethodDescriptor(Type.getType(target), Type.getType(String.class)),
+                    Type.getMethodDescriptor(Type.getType(targetTypePath), Type.getType(String.class)),
                     false);
             if (implementationContext.getFrameGeneration().isActive()) { // TODO
-                methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(target)});
+                methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(targetTypePath)});
             }
             methodVisitor.visitLabel(end);
             methodVisitor.visitInsn(Opcodes.ARETURN);
