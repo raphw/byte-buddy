@@ -48,17 +48,6 @@ public class ByteBuddyAndroidPluginTest extends BaseAndroidGradleTest {
     }
 
     @Test
-    public void transformAndroidProjectJavaClassesFromAAR() {
-        File basicAarFile = getAssetFile("artifacts/basic_aar-debug.aar");
-        ProjectInfo appProject = initAppProject("basic_app", emptyList(), listOf(String.format("bytebuddy files('%s')", basicAarFile.getAbsolutePath())));
-
-        buildProject(appProject, listOf("assembleDebug"));
-
-        ClassLoader classLoader = getAppClassloader(appProject);
-        verifyClassIsInstrumented(classLoader, "com.somepackage.SomeClass");
-    }
-
-    @Test
     public void transformAndroidProjectClassesFromItselfAndItsLibraries() {
         ProjectInfo appProject = initAppProject(
                 "basic_app", emptyList(), listOf(
