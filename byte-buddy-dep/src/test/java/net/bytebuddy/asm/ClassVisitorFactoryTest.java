@@ -49,6 +49,6 @@ public class ClassVisitorFactoryTest {
         }).visitEnd();
 
 
-        //method.invoke(factory.wrap(classVisitor));
+        // method.invoke(factory.wrap(classVisitor));
     }
 }
