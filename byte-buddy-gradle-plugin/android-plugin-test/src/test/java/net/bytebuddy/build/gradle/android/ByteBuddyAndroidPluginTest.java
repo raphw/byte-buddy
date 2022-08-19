@@ -77,7 +77,7 @@ public class ByteBuddyAndroidPluginTest extends BaseAndroidGradleTest {
 
         ClassLoader classLoader = getAppClassloader(appProject);
         verifyClassIsInstrumented(classLoader, "com.somepackage.SomeClass");
-        verifyClassIsInstrumented(classLoader, "SomeLibClass");
+        verifyClassIsInstrumented(classLoader, "com.somepackage.SomeLibClass");
     }
 
     @Test

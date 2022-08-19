@@ -1,3 +1,6 @@
+package com.transformations;
+
+import net.bytebuddy.asm.Advice;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -14,13 +17,14 @@ public class BasicLibTransformation implements Plugin {
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
                                         TypeDescription typeDescription,
                                         ClassFileLocator classFileLocator) {
-        return builder.method(ElementMatchers.named("getMessage"))
-                .intercept(FixedValue.value("Instrumented message in lib"));
+        return builder.visit(Advice.to(BasicAdvice.class)
+                .on(ElementMatchers.named("getMessage"))
+        );
     }
 
     @Override
     public boolean matches(TypeDescription target) {
-        return target.getName().equals("SomeClass") || target.getName().equals("SomeLibClass");
+        return target.getName().contains("Some");
     }
 
     @Override
