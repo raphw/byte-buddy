@@ -4,8 +4,12 @@ import com.android.build.api.attributes.BuildTypeAttr;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.attributes.Attribute;
+import org.gradle.api.attributes.AttributeCompatibilityRule;
 import org.gradle.api.attributes.Category;
+import org.gradle.api.attributes.CompatibilityCheckDetails;
 import org.gradle.api.attributes.Usage;
+
+import java.util.Objects;
 
 public class BytebuddyDependenciesHandler {
     private final Project project;
@@ -21,6 +25,8 @@ public class BytebuddyDependenciesHandler {
 
     public void init() {
         initBucketConfig();
+        registerAarToJarTransformation();
+        registerBytebuddyJarRule();
     }
 
     public Configuration getConfigurationForBuildType(String buildType) {
@@ -49,5 +55,27 @@ public class BytebuddyDependenciesHandler {
             configuration.setCanBeConsumed(false);
             configuration.setCanBeResolved(false);
         });
+    }
+
+    private void registerAarToJarTransformation() {
+        project.getDependencies().registerTransform(AarGradleTransform.class, it -> {
+            it.getFrom().attribute(ARTIFACT_TYPE_ATTR, "aar");
+            it.getTo().attribute(ARTIFACT_TYPE_ATTR, BYTEBUDDY_JAR_TYPE);
+        });
+    }
+
+    private void registerBytebuddyJarRule() {
+        project.getDependencies().getAttributesSchema().attribute(ARTIFACT_TYPE_ATTR, stringAttributeMatchingStrategy -> {
+            stringAttributeMatchingStrategy.getCompatibilityRules().add(BytebuddyJarsRule.class);
+        });
+    }
+
+    public abstract static class BytebuddyJarsRule implements AttributeCompatibilityRule<String> {
+        @Override
+        public void execute(CompatibilityCheckDetails<String> details) {
+            if (Objects.equals(details.getConsumerValue(), BYTEBUDDY_JAR_TYPE) && Objects.equals(details.getProducerValue(), "jar")) {
+                details.compatible();
+            }
+        }
     }
 }

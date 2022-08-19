@@ -25,21 +25,13 @@ import com.android.build.gradle.BaseExtension;
 import kotlin.Unit;
 import net.bytebuddy.build.gradle.android.asm.ByteBuddyAsmClassVisitorFactory;
 import net.bytebuddy.build.gradle.android.service.BytebuddyService;
-import net.bytebuddy.build.gradle.android.utils.AarGradleTransform;
 import net.bytebuddy.build.gradle.android.utils.BytebuddyDependenciesHandler;
 import net.bytebuddy.build.gradle.android.utils.LocalClassesSync;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.attributes.AttributeCompatibilityRule;
-import org.gradle.api.attributes.CompatibilityCheckDetails;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
-
-import java.util.Objects;
-
-import static net.bytebuddy.build.gradle.android.utils.BytebuddyDependenciesHandler.ARTIFACT_TYPE_ATTR;
-import static net.bytebuddy.build.gradle.android.utils.BytebuddyDependenciesHandler.BYTEBUDDY_JAR_TYPE;
 
 public class ByteBuddyAndroidPlugin implements Plugin<Project> {
 
@@ -56,8 +48,6 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         BytebuddyDependenciesHandler dependenciesHandler = new BytebuddyDependenciesHandler(project);
         dependenciesHandler.init();
         registerBytebuddyAsmFactory(dependenciesHandler);
-        registerAarToJarTransformation();
-        registerBytebuddyJarRule();
     }
 
     private void registerBytebuddyAsmFactory(BytebuddyDependenciesHandler dependenciesHandler) {
@@ -91,28 +81,6 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     private FileCollection getRuntimeClasspath(Variant variant) {
         ComponentImpl component = (ComponentImpl) variant;
         return component.getVariantDependencies().getRuntimeClasspath();
-    }
-
-    private void registerAarToJarTransformation() {
-        project.getDependencies().registerTransform(AarGradleTransform.class, it -> {
-            it.getFrom().attribute(ARTIFACT_TYPE_ATTR, "aar");
-            it.getTo().attribute(ARTIFACT_TYPE_ATTR, BYTEBUDDY_JAR_TYPE);
-        });
-    }
-
-    private void registerBytebuddyJarRule() {
-        project.getDependencies().getAttributesSchema().attribute(ARTIFACT_TYPE_ATTR, stringAttributeMatchingStrategy -> {
-            stringAttributeMatchingStrategy.getCompatibilityRules().add(BytebuddyJarsRule.class);
-        });
-    }
-
-    public abstract static class BytebuddyJarsRule implements AttributeCompatibilityRule<String> {
-        @Override
-        public void execute(CompatibilityCheckDetails<String> details) {
-            if (Objects.equals(details.getConsumerValue(), BYTEBUDDY_JAR_TYPE) && Objects.equals(details.getProducerValue(), "jar")) {
-                details.compatible();
-            }
-        }
     }
 
     private void verifyValidAndroidPlugin() {
