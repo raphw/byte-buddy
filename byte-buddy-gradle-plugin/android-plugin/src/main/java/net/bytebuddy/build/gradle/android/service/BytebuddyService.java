@@ -174,6 +174,8 @@ abstract public class BytebuddyService implements BuildService<BuildServiceParam
 
     @Override
     public void close() throws Exception {
-        System.out.println("Closing service");
+        for (Plugin plugin : allPlugins) {
+            plugin.close();
+        }
     }
 }
