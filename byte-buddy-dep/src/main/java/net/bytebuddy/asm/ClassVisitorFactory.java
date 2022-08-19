@@ -487,4 +487,78 @@ public abstract class ClassVisitorFactory<T> {
             return new Size(6, 3);
         }
     }
+
+    protected static class ConstantTranslator implements ByteCodeAppender {
+
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, "org/objectweb/asm/Handle");
+            Label label1 = new Label();
+            methodVisitor.visitJumpInsn(Opcodes.IFEQ, label1);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "org/objectweb/asm/Handle");
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "net/bytebuddy/Foo", "handle", "(Lorg/objectweb/asm/Handle;)Lorg/objectweb/asm/Handle;", false);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            methodVisitor.visitLabel(label1);
+            methodVisitor.visitLineNumber(74, label1);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, "org/objectweb/asm/Type");
+            Label label3 = new Label();
+            methodVisitor.visitJumpInsn(Opcodes.IFEQ, label3);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "org/objectweb/asm/Type");
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "org/objectweb/asm/Type", "getDescriptor", "()Ljava/lang/String;", false);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "org/objectweb/asm/Type", "getType", "(Ljava/lang/String;)Lorg/objectweb/asm/Type;", false);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            methodVisitor.visitLabel(label3);
+            methodVisitor.visitLineNumber(76, label3);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, "org/objectweb/asm/ConstantDynamic");
+            Label label5 = new Label();
+            methodVisitor.visitJumpInsn(Opcodes.IFEQ, label5);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "org/objectweb/asm/ConstantDynamic");
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "net/bytebuddy/Foo", "constantDynamic", "(Lorg/objectweb/asm/ConstantDynamic;)Lorg/objectweb/asm/ConstantDynamic;", false);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            methodVisitor.visitLabel(label5);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            return new Size(1, 1);
+        }
+
+        protected static class LabelArrayTranslator implements ByteCodeAppender {
+
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+                Label loop = new Label(), end = new Label();
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
+                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, Type.getInternalName(Object.class));
+                methodVisitor.visitVarInsn(Opcodes.ASTORE, 1);
+                methodVisitor.visitInsn(Opcodes.ICONST_0);
+                methodVisitor.visitVarInsn(Opcodes.ISTORE, 2);
+                methodVisitor.visitLabel(loop);
+                methodVisitor.visitVarInsn(Opcodes.ILOAD, 2);
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+                methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
+                methodVisitor.visitJumpInsn(Opcodes.IF_ICMPGE, end);
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+                methodVisitor.visitVarInsn(Opcodes.ILOAD, 2);
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                methodVisitor.visitVarInsn(Opcodes.ILOAD, 2);
+                methodVisitor.visitInsn(Opcodes.AALOAD);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                        implementationContext.getInstrumentedType().getInternalName(),
+                        "ldc",
+                        "(Ljava/lang/Object;)Ljava/lang/Object;",
+                        false);
+                methodVisitor.visitInsn(Opcodes.AASTORE);
+                methodVisitor.visitIincInsn(2, 1);
+                methodVisitor.visitJumpInsn(Opcodes.GOTO, loop);
+                methodVisitor.visitLabel(end);
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+                methodVisitor.visitInsn(Opcodes.ARETURN);
+                return new Size(4, 3);
+            }
+        }
+    }
 }
