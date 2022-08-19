@@ -7,6 +7,7 @@ import org.junit.rules.MethodRule;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Method;
@@ -42,11 +43,22 @@ public class ClassVisitorFactoryTest {
     public void testMethodDelegation() throws Exception {
         ClassVisitorFactory<ClassVisitor> factory = ClassVisitorFactory.of(ClassVisitor.class);
         factory.wrap(new ClassVisitor(Opcodes.ASM9) {
+
+            @Override
+            public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+                return new MethodVisitor(Opcodes.ASM9) {
+                    @Override
+                    public void visitParameter(String name, int access) {
+                        super.visitParameter(name, access);
+                    }
+                };
+            }
+
             @Override
             public void visitEnd() {
                 super.visitEnd();
             }
-        }).visitEnd();
+        }).visitMethod(1, null, null, null, null).visitParameter(null, 1);
 
 
         // method.invoke(factory.wrap(classVisitor));

@@ -23,6 +23,7 @@ import net.bytebuddy.implementation.bytecode.TypeCreation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
@@ -96,9 +97,6 @@ public abstract class ClassVisitorFactory<T> {
             Map<Class<?>, TypeDescription> generated = new HashMap<Class<?>, TypeDescription>();
             for (Map.Entry<Class<?>, Class<?>> entry : equivalents.entrySet()) {
                 DynamicType.Builder<?> wrapper = builders.get(entry.getKey()), unwrapper = builders.get(entry.getValue());
-                if (entry.getKey() == MethodVisitor.class) {
-                    // TODO: add methods to translate utilities (ASMify)
-                }
                 for (Method method : entry.getKey().getMethods()) {
                     if (method.getDeclaringClass() == Object.class) {
                         continue;
@@ -107,34 +105,30 @@ public abstract class ClassVisitorFactory<T> {
                     List<MethodCall.ArgumentLoader.Factory> left = new ArrayList<MethodCall.ArgumentLoader.Factory>(parameter.length);
                     List<MethodCall.ArgumentLoader.Factory> right = new ArrayList<MethodCall.ArgumentLoader.Factory>(match.length);
                     for (int index = 0; index < parameter.length; index++) {
-                        if (parameter[index] == Label.class) { // TODO: add wrappers
+                        if (entry.getKey() == MethodVisitor.class && parameter[index] == Label.class) { // TODO: add wrappers
                             match[index] = utilities.get(Label.class);
-                            left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                            right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                        } else if (parameter[index] == Label[].class) {
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelTranslator.NAME, index));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelTranslator.NAME, index));
+                        } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Label[].class) {
                             match[index] = Class.forName("[L" + utilities.get(Label.class).getName() + ";", false, classVisitor.getClassLoader());
-                            left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                            right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                        } else if (parameter[index] == Type.class) {
-                            match[index] = utilities.get(Type.class);
-                            left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                            right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                        } else if (parameter[index] == TypePath.class) {
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelArrayTranslator.NAME, index));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelArrayTranslator.NAME, index));
+                        } else if (entry.getKey() == MethodVisitor.class && parameter[index] == TypePath.class) {
                             match[index] = utilities.get(TypePath.class);
-                            left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                            right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                        } else if (parameter[index] == Handle.class) {
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], TypePathTranslator.NAME, index));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], TypePathTranslator.NAME, index));
+                        } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Handle.class) {
                             match[index] = utilities.get(Handle.class);
-                            left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                            right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                        } else if (parameter[index] == Object.class) {
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], HandleTranslator.NAME, index));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], HandleTranslator.NAME, index));
+                        } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Object.class) {
                             match[index] = Object.class;
-                            left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                            right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                        } else if (parameter[index] == Object[].class) {
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], ConstantTranslator.NAME, index));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], ConstantTranslator.NAME, index));
+                        } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Object[].class) {
                             match[index] = Object[].class;
-                            left.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
-                            right.add(MethodCall.ArgumentLoader.ForNullConstant.INSTANCE);
+                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], ConstantArrayTranslator.NAME, index));
+                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], ConstantArrayTranslator.NAME, index));
                         } else {
                             match[index] = parameter[index];
                             left.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
@@ -247,15 +241,18 @@ public abstract class ClassVisitorFactory<T> {
                 .defineMethod(ConstantArrayTranslator.NAME, Object[].class, Visibility.PRIVATE, Ownership.STATIC)
                 .withParameters(Object[].class)
                 .intercept(new Implementation.Simple(new ConstantArrayTranslator()))
-                .defineMethod(LabelTranslator.NAME, Object[].class, Visibility.PRIVATE, Ownership.STATIC)
-                .withParameters(Object[].class)
-                .intercept(new Implementation.Simple(new LabelTranslator(targetLabel)))
                 .defineMethod(FrameTranslator.NAME, Object[].class, Visibility.PRIVATE, Ownership.STATIC)
                 .withParameters(Object[].class)
                 .intercept(new Implementation.Simple(new FrameTranslator(sourceLabel, targetLabel)))
                 .defineMethod(TypePathTranslator.NAME, TypePath.class, Visibility.PRIVATE, Ownership.STATIC)
                 .withParameters(TypePath.class)
                 .intercept(new Implementation.Simple(new TypePathTranslator(sourceTypePath, targetTypePath)));
+    }
+
+    private static MethodCall.ArgumentLoader.Factory toConvertedParameter(TypeDescription source, Class<?> target, String method, int index) {
+        return new MethodCall.ArgumentLoader.ForStackManipulation(new StackManipulation.Compound(
+                MethodVariableAccess.REFERENCE.loadFrom(index),
+                MethodInvocation.invoke(source.getDeclaredMethods().filter(named(method)).getOnly())), target);
     }
 
     public abstract T wrap(ClassVisitor classVisitor);
@@ -603,7 +600,7 @@ public abstract class ClassVisitorFactory<T> {
 
     protected static class FrameTranslator implements ByteCodeAppender {
 
-        protected static final String NAME = "labels";
+        protected static final String NAME = "frames";
 
         protected final Class<?> source, target;
 
