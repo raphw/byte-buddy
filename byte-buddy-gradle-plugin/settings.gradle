@@ -3,3 +3,4 @@ include "android-plugin"
 include "android-plugin-test"
 include "common"
 include 'android-application-test'
+include 'android-application-test:app'
