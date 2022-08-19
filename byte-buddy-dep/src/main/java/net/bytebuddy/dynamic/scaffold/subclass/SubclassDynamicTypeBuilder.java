@@ -21,7 +21,6 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.Implementation;
@@ -32,7 +31,6 @@ import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
-import org.objectweb.asm.ClassVisitor;
 
 import java.util.Collections;
 import java.util.List;
@@ -201,28 +199,14 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     /**
      * {@inheritDoc}
      */
-    public ClassVisitor wrap(ClassVisitor classVisitor) {
-        return wrap(classVisitor, TypePool.ClassLoading.ofSystemLoader()); // Mimics the default behavior of ASM for least surprise.
+    protected TypeWriter<T> toTypeWriter() {
+        return toTypeWriter(TypePool.ClassLoading.ofSystemLoader()); // Mimics the default behavior of ASM for least surprise.
     }
 
     /**
      * {@inheritDoc}
      */
-    public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool) {
-        throw new UnsupportedOperationException("A newly created type cannot be created via a wrapper");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy) {
-        return make(typeResolutionStrategy, TypePool.ClassLoading.ofSystemLoader()); // Mimics the default behavior of ASM for least surprise.
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
+    protected TypeWriter<T> toTypeWriter(TypePool typePool) {
         MethodRegistry.Compiled methodRegistry = constructorStrategy
                 .inject(instrumentedType, this.methodRegistry)
                 .prepare(applyConstructorStrategy(instrumentedType),
@@ -244,7 +228,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 implementationContextFactory,
                 typeValidation,
                 classWriterStrategy,
-                typePool).make(typeResolutionStrategy.resolve());
+                typePool);
     }
 
     /**

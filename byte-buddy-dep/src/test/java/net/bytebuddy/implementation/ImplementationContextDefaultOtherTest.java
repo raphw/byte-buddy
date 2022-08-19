@@ -25,7 +25,8 @@ public class ImplementationContextDefaultOtherTest {
                 mock(AuxiliaryType.NamingStrategy.class),
                 mock(TypeInitializer.class),
                 mock(ClassFileVersion.class),
-                mock(ClassFileVersion.class)), instanceOf(Implementation.Context.Default.class));
+                mock(ClassFileVersion.class),
+                Implementation.Context.FrameGeneration.DISABLED), instanceOf(Implementation.Context.Default.class));
     }
 
     @Test
@@ -34,7 +35,8 @@ public class ImplementationContextDefaultOtherTest {
                 mock(AuxiliaryType.NamingStrategy.class),
                 mock(TypeInitializer.class),
                 mock(ClassFileVersion.class),
-                mock(ClassFileVersion.class)), instanceOf(Implementation.Context.Default.class));
+                mock(ClassFileVersion.class),
+                Implementation.Context.FrameGeneration.DISABLED), instanceOf(Implementation.Context.Default.class));
     }
 
     @Test
@@ -44,6 +46,7 @@ public class ImplementationContextDefaultOtherTest {
                 mock(AuxiliaryType.NamingStrategy.class),
                 mock(TypeInitializer.class),
                 mock(ClassFileVersion.class),
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO).isEnabled(), is(true));
     }
 
@@ -55,6 +58,7 @@ public class ImplementationContextDefaultOtherTest {
                 mock(AuxiliaryType.NamingStrategy.class),
                 mock(TypeInitializer.class),
                 mock(ClassFileVersion.class),
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO).getInstrumentedType(), is(instrumentedType));
     }
 

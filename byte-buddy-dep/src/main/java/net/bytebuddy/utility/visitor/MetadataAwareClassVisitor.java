@@ -260,13 +260,13 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     /**
      * An order-sensitive invocation of {@link ClassVisitor#visitInnerClass(String, String, String, int)}.
      *
-     * @param name      The internal name of the inner class.
+     * @param internalName      The internal name of the inner class.
      * @param outerName The internal name of the outer class or {@code null} for a member class.
      * @param innerName The inner class's simple name or {@code null} for an anonymous class.
      * @param modifiers The inner class's source code modifiers.
      */
-    protected void onVisitInnerClass(String name, @MaybeNull String outerName, @MaybeNull String innerName, int modifiers) {
-        super.visitInnerClass(name, outerName, innerName, modifiers);
+    protected void onVisitInnerClass(String internalName, @MaybeNull String outerName, @MaybeNull String innerName, int modifiers) {
+        super.visitInnerClass(internalName, outerName, innerName, modifiers);
     }
 
     @Override

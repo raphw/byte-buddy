@@ -533,11 +533,62 @@ public interface Implementation extends InstrumentedType.Prepareable {
         TypeDescription getInstrumentedType();
 
         /**
-         * Returns the class file version of the currently created dynamic type.
+         * Returns the class file version of the currently creatgetClassFileVersioned dynamic type.
          *
          * @return The class file version of the currently created dynamic type.
          */
         ClassFileVersion getClassFileVersion();
+
+        /**
+         * Returns {@code true} if the explicit generation of stack map frames is expected.
+         *
+         * @return {@code true} if the explicit generation of stack map frames is expected.
+         */
+        FrameGeneration getFrameGeneration();
+
+        /**
+         * Indicates the frame generation being applied.
+         */
+        enum FrameGeneration {
+
+            /**
+             * Indicates that frames should be generated.
+             */
+            GENERATE(true),
+
+            /**
+             * Indicates that frames should be generated and expanded.
+             */
+            EXPAND(true),
+
+            /**
+             * Indicates that no frames should be generated.
+             */
+            DISABLED(false);
+
+            /**
+             * {@code true} if frames should be generated.
+             */
+            private final boolean active;
+
+            /**
+             * Creates a new frame generation type.
+             *
+             * @param active {@code true} if frames should be generated.
+             */
+            FrameGeneration(boolean active) {
+                this.active = active;
+            }
+
+            /**
+             * Returns {@code true} if frames should be generated.
+             *
+             * @return {@code true} if frames should be generated.
+             */
+            public boolean isActive() {
+                return active;
+            }
+        }
 
         /**
          * Represents an extractable view of an {@link Implementation.Context} which
@@ -588,14 +639,21 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 protected final ClassFileVersion classFileVersion;
 
                 /**
+                 * Determines the frame generation to be applied.
+                 */
+                protected final FrameGeneration frameGeneration;
+
+                /**
                  * Create a new extractable view.
                  *
                  * @param instrumentedType The instrumented type.
                  * @param classFileVersion The class file version of the dynamic type.
+                 * @param frameGeneration  Determines the frame generation to be applied.
                  */
-                protected AbstractBase(TypeDescription instrumentedType, ClassFileVersion classFileVersion) {
+                protected AbstractBase(TypeDescription instrumentedType, ClassFileVersion classFileVersion, FrameGeneration frameGeneration) {
                     this.instrumentedType = instrumentedType;
                     this.classFileVersion = classFileVersion;
+                    this.frameGeneration = frameGeneration;
                 }
 
                 /**
@@ -610,6 +668,13 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  */
                 public ClassFileVersion getClassFileVersion() {
                     return classFileVersion;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public FrameGeneration getFrameGeneration() {
+                    return frameGeneration;
                 }
             }
         }
@@ -628,12 +693,32 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * @param classFileVersion            The class file version of the created class.
              * @param auxiliaryClassFileVersion   The class file version of any auxiliary classes.
              * @return An implementation context in its extractable view.
+             * @deprecated Use {@link Factory#make(TypeDescription, AuxiliaryType.NamingStrategy, TypeInitializer, ClassFileVersion, ClassFileVersion, FrameGeneration)}.
              */
+            @Deprecated
             ExtractableView make(TypeDescription instrumentedType,
                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                  TypeInitializer typeInitializer,
                                  ClassFileVersion classFileVersion,
                                  ClassFileVersion auxiliaryClassFileVersion);
+
+            /**
+             * Creates a new implementation context.
+             *
+             * @param instrumentedType            The description of the type that is currently subject of creation.
+             * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type.
+             * @param typeInitializer             The type initializer of the created instrumented type.
+             * @param classFileVersion            The class file version of the created class.
+             * @param auxiliaryClassFileVersion   The class file version of any auxiliary classes.
+             * @param frameGeneration             Indicates the frame generation being applied.
+             * @return An implementation context in its extractable view.
+             */
+            ExtractableView make(TypeDescription instrumentedType,
+                                 AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                 TypeInitializer typeInitializer,
+                                 ClassFileVersion classFileVersion,
+                                 ClassFileVersion auxiliaryClassFileVersion,
+                                 FrameGeneration frameGeneration);
         }
 
         /**
@@ -648,9 +733,10 @@ public interface Implementation extends InstrumentedType.Prepareable {
              *
              * @param instrumentedType The instrumented type.
              * @param classFileVersion The class file version to create the class in.
+             * @param frameGeneration  Determines the frame generation to be applied.
              */
-            protected Disabled(TypeDescription instrumentedType, ClassFileVersion classFileVersion) {
-                super(instrumentedType, classFileVersion);
+            protected Disabled(TypeDescription instrumentedType, ClassFileVersion classFileVersion, FrameGeneration frameGeneration) {
+                super(instrumentedType, classFileVersion, frameGeneration);
             }
 
             /**
@@ -722,15 +808,35 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * {@inheritDoc}
                  */
+                @Deprecated
                 public ExtractableView make(TypeDescription instrumentedType,
                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                             TypeInitializer typeInitializer,
                                             ClassFileVersion classFileVersion,
                                             ClassFileVersion auxiliaryClassFileVersion) {
+                    return make(instrumentedType,
+                            auxiliaryTypeNamingStrategy,
+                            typeInitializer,
+                            classFileVersion,
+                            auxiliaryClassFileVersion,
+                            classFileVersion.isAtLeast(ClassFileVersion.JAVA_V6)
+                                    ? FrameGeneration.GENERATE
+                                    : FrameGeneration.DISABLED);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ExtractableView make(TypeDescription instrumentedType,
+                                            AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                            TypeInitializer typeInitializer,
+                                            ClassFileVersion classFileVersion,
+                                            ClassFileVersion auxiliaryClassFileVersion,
+                                            FrameGeneration frameGeneration) {
                     if (typeInitializer.isDefined()) {
                         throw new IllegalStateException("Cannot define type initializer which was explicitly disabled: " + typeInitializer);
                     }
-                    return new Disabled(instrumentedType, classFileVersion);
+                    return new Disabled(instrumentedType, classFileVersion, frameGeneration);
                 }
             }
         }
@@ -814,6 +920,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type.
              * @param typeInitializer             The type initializer of the created instrumented type.
              * @param auxiliaryClassFileVersion   The class file version to use for auxiliary classes.
+             * @param frameGeneration             Determines the frame generation to be applied.
              * @param suffix                      The suffix to append to the names of accessor methods.
              */
             protected Default(TypeDescription instrumentedType,
@@ -821,8 +928,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                               AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                               TypeInitializer typeInitializer,
                               ClassFileVersion auxiliaryClassFileVersion,
+                              FrameGeneration frameGeneration,
                               String suffix) {
-                super(instrumentedType, classFileVersion);
+                super(instrumentedType, classFileVersion, frameGeneration);
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.typeInitializer = typeInitializer;
                 this.auxiliaryClassFileVersion = auxiliaryClassFileVersion;
@@ -1707,16 +1815,37 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * {@inheritDoc}
                  */
+                @Deprecated
                 public ExtractableView make(TypeDescription instrumentedType,
                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                             TypeInitializer typeInitializer,
                                             ClassFileVersion classFileVersion,
                                             ClassFileVersion auxiliaryClassFileVersion) {
+                    return make(instrumentedType,
+                            auxiliaryTypeNamingStrategy,
+                            typeInitializer,
+                            classFileVersion,
+                            auxiliaryClassFileVersion,
+                            classFileVersion.isAtLeast(ClassFileVersion.JAVA_V6)
+                                    ? FrameGeneration.GENERATE
+                                    : FrameGeneration.DISABLED);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ExtractableView make(TypeDescription instrumentedType,
+                                            AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                            TypeInitializer typeInitializer,
+                                            ClassFileVersion classFileVersion,
+                                            ClassFileVersion auxiliaryClassFileVersion,
+                                            FrameGeneration frameGeneration) {
                     return new Default(instrumentedType,
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             typeInitializer,
                             auxiliaryClassFileVersion,
+                            frameGeneration,
                             RandomString.make());
                 }
 
@@ -1744,16 +1873,37 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     /**
                      * {@inheritDoc}
                      */
+                    @Deprecated
                     public ExtractableView make(TypeDescription instrumentedType,
                                                 AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                 TypeInitializer typeInitializer,
                                                 ClassFileVersion classFileVersion,
                                                 ClassFileVersion auxiliaryClassFileVersion) {
+                        return make(instrumentedType,
+                                auxiliaryTypeNamingStrategy,
+                                typeInitializer,
+                                classFileVersion,
+                                auxiliaryClassFileVersion,
+                                classFileVersion.isAtLeast(ClassFileVersion.JAVA_V6)
+                                        ? FrameGeneration.GENERATE
+                                        : FrameGeneration.DISABLED);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ExtractableView make(TypeDescription instrumentedType,
+                                                AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                                TypeInitializer typeInitializer,
+                                                ClassFileVersion classFileVersion,
+                                                ClassFileVersion auxiliaryClassFileVersion,
+                                                FrameGeneration frameGeneration) {
                         return new Default(instrumentedType,
                                 classFileVersion,
                                 auxiliaryTypeNamingStrategy,
                                 typeInitializer,
                                 auxiliaryClassFileVersion,
+                                frameGeneration,
                                 suffix);
                     }
                 }

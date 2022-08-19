@@ -29,7 +29,6 @@ import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.Transformer;
-import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.scaffold.ClassWriterStrategy;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
@@ -61,7 +60,7 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
  * @param <T> A loaded type that the built type is guaranteed to be a subclass of.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
+public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase.UsingTypeWriter<T> {
 
     /**
      * The instrumented type to decorate.
@@ -454,7 +453,9 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
         throw new UnsupportedOperationException("Cannot define record component for decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public RecordComponentDefinition<T> recordComponent(LatentMatcher<? super RecordComponentDescription> matcher) {
         throw new UnsupportedOperationException("Cannot change record component for decorated type: " + instrumentedType);
     }
@@ -507,14 +508,14 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
     /**
      * {@inheritDoc}
      */
-    public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy) {
-        return make(typeResolutionStrategy, TypePool.Empty.INSTANCE);
+    protected TypeWriter<T> toTypeWriter() {
+        return toTypeWriter(TypePool.Empty.INSTANCE);
     }
 
     /**
      * {@inheritDoc}
      */
-    public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
+    protected TypeWriter<T> toTypeWriter(TypePool typePool) {
         return TypeWriter.Default.<T>forDecoration(instrumentedType,
                 classFileVersion,
                 auxiliaryTypes,
@@ -531,7 +532,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                 typeValidation,
                 classWriterStrategy,
                 typePool,
-                classFileLocator).make(typeResolutionStrategy.resolve());
+                classFileLocator);
     }
 
     /**

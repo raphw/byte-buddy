@@ -266,6 +266,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         assertThat(implementationContext.getAuxiliaryTypes().size(), is(0));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
@@ -281,6 +282,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         assertThat(implementationContext.getAuxiliaryTypes().size(), is(0));
         assertThat(implementationContext.register(auxiliaryType), is(firstDescription));
@@ -303,6 +305,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verifyNoMoreInteractions(classVisitor);
@@ -317,6 +320,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verifyNoMoreInteractions(classVisitor);
@@ -332,6 +336,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verifyNoMoreInteractions(classVisitor);
@@ -347,6 +352,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         FieldDescription firstField = implementationContext.cache(firstFieldValue, firstRawFieldType);
         assertThat(implementationContext.cache(firstFieldValue, firstRawFieldType), is(firstField));
@@ -378,6 +384,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verifyNoMoreInteractions(classVisitor);
@@ -393,6 +400,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         MethodDescription.InDefinedShape firstMethodDescription = implementationContext.registerAccessorFor(firstSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(firstMethodDescription.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstMethodDescription, firstSpecialParameterType)));
@@ -424,6 +432,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         MethodDescription firstMethodDescription = implementationContext.registerAccessorFor(firstSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT), is(firstMethodDescription));
@@ -447,6 +456,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         MethodDescription secondMethodDescription = implementationContext.registerAccessorFor(secondSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(implementationContext.registerAccessorFor(secondSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT), is(secondMethodDescription));
@@ -468,6 +478,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         MethodDescription firstFieldGetter = implementationContext.registerGetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(firstFieldGetter.getParameters(), is((ParameterList) new ParameterList.Empty<ParameterDescription>()));
@@ -499,6 +510,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         MethodDescription firstMethodDescription = implementationContext.registerGetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(implementationContext.registerGetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT), is(firstMethodDescription));
@@ -521,6 +533,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         MethodDescription secondMethodDescription = implementationContext.registerGetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(implementationContext.registerGetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT), is(secondMethodDescription));
@@ -541,6 +554,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         MethodDescription.InDefinedShape firstFieldSetter = implementationContext.registerSetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(firstFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstFieldSetter, firstFieldType)));
@@ -572,6 +586,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         MethodDescription firstMethodDescription = implementationContext.registerSetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(implementationContext.registerSetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT), is(firstMethodDescription));
@@ -595,6 +610,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion,
+                Implementation.Context.FrameGeneration.DISABLED,
                 FOO);
         MethodDescription secondMethodDescription = implementationContext.registerSetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(implementationContext.registerSetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT), is(secondMethodDescription));

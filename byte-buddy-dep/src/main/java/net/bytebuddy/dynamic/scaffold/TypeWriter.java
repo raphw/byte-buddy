@@ -55,6 +55,7 @@ import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
+import net.bytebuddy.utility.visitor.ContextClassVisitor;
 import net.bytebuddy.utility.visitor.MetadataAwareClassVisitor;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.ClassRemapper;
@@ -94,7 +95,15 @@ public interface TypeWriter<T> {
      */
     DynamicType.Unloaded<T> make(TypeResolutionStrategy.Resolved typeResolver);
 
-    ClassVisitor wrap(ClassVisitor classVisitor);
+    /**
+     * Wraps another ASM class visitor with a visitor that represents this ASM class writer.
+     *
+     * @param classVisitor The class visitor to wrap.
+     * @param writerFlags  The ASM writer flags to consider.
+     * @param readerFlags  The ASM reader flags to consider.
+     * @return The supplied class visitor wrapped by this type writer.
+     */
+    ContextClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags);
 
     /**
      * An field pool that allows a lookup for how to implement a field.
@@ -2278,6 +2287,46 @@ public interface TypeWriter<T> {
         }
 
         /**
+         * A key to represent a unique signature.
+         */
+        protected static class SignatureKey {
+
+            /**
+             * The represented internal name.
+             */
+            private final String internalName;
+
+            /**
+             * The represented descriptor.
+             */
+            private final String descriptor;
+
+            /**
+             * Creates a new signature key.
+             *
+             * @param internalName The represented internal name.
+             * @param descriptor   The represented descriptor.
+             */
+            public SignatureKey(String internalName, String descriptor) {
+                this.internalName = internalName;
+                this.descriptor = descriptor;
+            }
+
+            @Override
+            public boolean equals(@MaybeNull Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                SignatureKey that = (SignatureKey) other;
+                return internalName.equals(that.internalName) && descriptor.equals(that.descriptor);
+            }
+
+            @Override
+            public int hashCode() {
+                return 17 + internalName.hashCode() + 31 * descriptor.hashCode();
+            }
+        }
+
+        /**
          * A class validator that validates that a class only defines members that are appropriate for the sort of the generated class.
          */
         protected static class ValidatingClassVisitor extends ClassVisitor {
@@ -3940,14 +3989,16 @@ public interface TypeWriter<T> {
                 this.classFileLocator = classFileLocator;
             }
 
-            public ClassVisitor wrap(ClassVisitor classVisitor) {
-                // TODO: context registry, disable? flags?
+            /**
+             * {@inheritDoc}
+             */
+            public ContextClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags) {
                 ContextRegistry contextRegistry = new ContextRegistry();
-                return writeTo(ValidatingClassVisitor.of(classVisitor, typeValidation),
+                return new RegistryContextClassVisitor(writeTo(ValidatingClassVisitor.of(classVisitor, typeValidation),
                         typeInitializer,
                         contextRegistry,
-                        asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS),
-                        asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS));
+                        asmVisitorWrapper.mergeWriter(writerFlags),
+                        asmVisitorWrapper.mergeReader(readerFlags)), contextRegistry);
             }
 
             @Override
@@ -3986,6 +4037,38 @@ public interface TypeWriter<T> {
                                                     ContextRegistry contextRegistry,
                                                     int writerFlags,
                                                     int readerFlags);
+
+            /**
+             * A context class visitor based on a {@link ContextRegistry}.
+             */
+            protected class RegistryContextClassVisitor extends ContextClassVisitor {
+
+                /**
+                 * The context registry to use.
+                 */
+                private final ContextRegistry contextRegistry;
+
+                /**
+                 * Creates a new context class visitor based on a {@link ContextRegistry}.
+                 *
+                 * @param classVisitor    The class visitor to delegate to.
+                 * @param contextRegistry The context registry to use.
+                 */
+                protected RegistryContextClassVisitor(ClassVisitor classVisitor, ContextRegistry contextRegistry) {
+                    super(classVisitor);
+                    this.contextRegistry = contextRegistry;
+                }
+
+                @Override
+                public List<DynamicType> getAuxiliaryTypes() {
+                    return CompoundList.of(auxiliaryTypes, contextRegistry.getAuxiliaryTypes());
+                }
+
+                @Override
+                public LoadedTypeInitializer getLoadedTypeInitializer() {
+                    return loadedTypeInitializer;
+                }
+            }
 
             /**
              * A context registry allows to extract auxiliary types from a lazily created implementation context.
@@ -4912,7 +4995,10 @@ public interface TypeWriter<T> {
                                 auxiliaryTypeNamingStrategy,
                                 typeInitializer,
                                 classFileVersion,
-                                WithFullProcessing.this.classFileVersion);
+                                WithFullProcessing.this.classFileVersion,
+                                (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && classFileVersion.isAtLeast(ClassFileVersion.JAVA_V6)
+                                        ? ((readerFlags & ClassReader.EXPAND_FRAMES) == 0 ? Implementation.Context.FrameGeneration.GENERATE : Implementation.Context.FrameGeneration.EXPAND)
+                                        : Implementation.Context.FrameGeneration.DISABLED);
                         retainDeprecationModifiers = classFileVersion.isLessThan(ClassFileVersion.JAVA_V5);
                         contextRegistry.setImplementationContext(implementationContext);
                         cv = asmVisitorWrapper.wrap(instrumentedType,
@@ -5422,10 +5508,8 @@ public interface TypeWriter<T> {
                                         resolution.getResolvedMethod().getGenericSignature(),
                                         resolution.getResolvedMethod().getExceptionTypes().asErasures().toInternalNames());
                                 super.visitCode();
-                                if (!resolution.getAppendedParameters().isEmpty()
-                                        && (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0
-                                        && implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
-                                    if ((readerFlags & ClassReader.EXPAND_FRAMES) == 0 && resolution.getAppendedParameters().size() < 4) {
+                                if (!resolution.getAppendedParameters().isEmpty() && implementationContext.getFrameGeneration().isActive()) {
+                                    if (implementationContext.getFrameGeneration() == Implementation.Context.FrameGeneration.GENERATE && resolution.getAppendedParameters().size() < 4) {
                                         super.visitFrame(Opcodes.F_CHOP, resolution.getAppendedParameters().size(), EMPTY, EMPTY.length, EMPTY);
                                     } else {
                                         Object[] frame = new Object[resolution.getResolvedMethod().getParameters().size()
@@ -5547,46 +5631,6 @@ public interface TypeWriter<T> {
                             record.applyBody(actualMethodVisitor, implementationContext, annotationValueFilterFactory);
                             actualMethodVisitor.visitEnd();
                         }
-                    }
-                }
-
-                /**
-                 * A key to represent a unique signature.
-                 */
-                protected static class SignatureKey {
-
-                    /**
-                     * The represented internal name.
-                     */
-                    private final String internalName;
-
-                    /**
-                     * The represented descriptor.
-                     */
-                    private final String descriptor;
-
-                    /**
-                     * Creates a new signature key.
-                     *
-                     * @param internalName The represented internal name.
-                     * @param descriptor   The represented descriptor.
-                     */
-                    public SignatureKey(String internalName, String descriptor) {
-                        this.internalName = internalName;
-                        this.descriptor = descriptor;
-                    }
-
-                    @Override
-                    public boolean equals(@MaybeNull Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        SignatureKey that = (SignatureKey) other;
-                        return internalName.equals(that.internalName) && descriptor.equals(that.descriptor);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return 17 + internalName.hashCode() + 31 * descriptor.hashCode();
                     }
                 }
             }
@@ -5756,7 +5800,10 @@ public interface TypeWriter<T> {
                                 auxiliaryTypeNamingStrategy,
                                 typeInitializer,
                                 classFileVersion,
-                                WithDecorationOnly.this.classFileVersion);
+                                WithDecorationOnly.this.classFileVersion,
+                                (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && classFileVersion.isAtLeast(ClassFileVersion.JAVA_V6)
+                                        ? ((readerFlags & ClassReader.EXPAND_FRAMES) == 0 ? Implementation.Context.FrameGeneration.GENERATE : Implementation.Context.FrameGeneration.EXPAND)
+                                        : Implementation.Context.FrameGeneration.DISABLED);
                         contextRegistry.setImplementationContext(implementationContext);
                         cv = asmVisitorWrapper.wrap(instrumentedType,
                                 cv,
@@ -5888,32 +5935,41 @@ public interface TypeWriter<T> {
                 this.methodPool = methodPool;
             }
 
-            public ClassVisitor wrap(ClassVisitor classVisitor) {
+            /**
+             * {@inheritDoc}
+             */
+            public ContextClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags) {
                 Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
                         auxiliaryTypeNamingStrategy,
                         typeInitializer,
                         classFileVersion,
-                        classFileVersion); // TODO: should be disabled, limited?
-                return asmVisitorWrapper.wrap(instrumentedType,
+                        classFileVersion,
+                        (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && classFileVersion.isAtLeast(ClassFileVersion.JAVA_V6)
+                                ? ((readerFlags & ClassReader.EXPAND_FRAMES) == 0 ? Implementation.Context.FrameGeneration.GENERATE : Implementation.Context.FrameGeneration.EXPAND)
+                                : Implementation.Context.FrameGeneration.DISABLED);
+                return new ImplementationContextClassVisitor(new CreationClassVisitor(asmVisitorWrapper.wrap(instrumentedType,
                         ValidatingClassVisitor.of(classVisitor, typeValidation),
                         implementationContext,
                         typePool,
                         fields,
                         methods,
-                        asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS),
-                        asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS)); // TODO: flags?
+                        asmVisitorWrapper.mergeWriter(writerFlags),
+                        asmVisitorWrapper.mergeReader(readerFlags)), implementationContext), implementationContext);
             }
 
             @Override
             @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Relying on correlated type properties.")
             protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Dispatcher dispatcher) {
-                int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
+                int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS), readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
                 ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool);
                 Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
                         auxiliaryTypeNamingStrategy,
                         typeInitializer,
                         classFileVersion,
-                        classFileVersion);
+                        classFileVersion,
+                        (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && classFileVersion.isAtLeast(ClassFileVersion.JAVA_V6)
+                                ? ((readerFlags & ClassReader.EXPAND_FRAMES) == 0 ? Implementation.Context.FrameGeneration.GENERATE : Implementation.Context.FrameGeneration.EXPAND)
+                                : Implementation.Context.FrameGeneration.DISABLED);
                 ClassVisitor classVisitor = asmVisitorWrapper.wrap(instrumentedType,
                         ValidatingClassVisitor.of(classWriter, typeValidation),
                         implementationContext,
@@ -5921,7 +5977,7 @@ public interface TypeWriter<T> {
                         fields,
                         methods,
                         writerFlags,
-                        asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS));
+                        readerFlags);
                 classVisitor.visit(classFileVersion.getMinorMajorVersion(),
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
                         instrumentedType.getInternalName(),
@@ -5991,6 +6047,128 @@ public interface TypeWriter<T> {
                         annotationValueFilterFactory), classVisitor, annotationValueFilterFactory);
                 classVisitor.visitEnd();
                 return new UnresolvedType(classWriter.toByteArray(), implementationContext.getAuxiliaryTypes());
+            }
+
+            /**
+             * A class visitor that applies the subclass creation as a wrapper.
+             */
+            protected class CreationClassVisitor extends MetadataAwareClassVisitor {
+
+                /**
+                 * The implementation context to apply.
+                 */
+                private final Implementation.Context.ExtractableView implementationContext;
+
+                /**
+                 * The declared types that have been visited.
+                 */
+                private final Set<String> declaredTypes = new HashSet<String>();
+
+                /**
+                 * The signatures of all fields that were explicitly visited.
+                 */
+                private final Set<SignatureKey> visitedFields = new HashSet<SignatureKey>();
+
+                /**
+                 * The signature of all methods that were explicitly visited.
+                 */
+                private final Set<SignatureKey> visitedMethods = new HashSet<SignatureKey>();
+
+                /**
+                 * Creates a new wrapper visitor.
+                 *
+                 * @param classVisitor          The class visitor being wrapped.
+                 * @param implementationContext The implementation context to apply.
+                 */
+                protected CreationClassVisitor(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
+                    super(OpenedClassReader.ASM_API, classVisitor);
+                    this.implementationContext = implementationContext;
+                }
+
+                @Override
+                protected void onAfterAttributes() {
+                    typeAttributeAppender.apply(cv, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
+                }
+
+                @Override
+                protected void onVisitInnerClass(String internalName, @MaybeNull String outerName, @MaybeNull String innerName, int modifiers) {
+                    declaredTypes.add(internalName);
+                    super.onVisitInnerClass(internalName, outerName, innerName, modifiers);
+                }
+
+                @Override
+                protected FieldVisitor onVisitField(int modifiers, String name, String descriptor, @MaybeNull String signature, @MaybeNull Object value) {
+                    visitedFields.add(new SignatureKey(name, descriptor));
+                    return super.onVisitField(modifiers, name, descriptor, signature, value);
+                }
+
+                @Override
+                protected MethodVisitor onVisitMethod(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull String[] exception) {
+                    visitedMethods.add(new SignatureKey(internalName, descriptor));
+                    return super.onVisitMethod(modifiers, internalName, descriptor, signature, exception);
+                }
+
+                @Override
+                protected void onVisitEnd() {
+                    for (TypeDescription typeDescription : instrumentedType.getDeclaredTypes()) {
+                        if (!declaredTypes.contains(typeDescription.getInternalName())) {
+                            cv.visitInnerClass(typeDescription.getInternalName(),
+                                    typeDescription.isMemberType()
+                                            ? instrumentedType.getInternalName()
+                                            : NO_REFERENCE,
+                                    typeDescription.isAnonymousType()
+                                            ? NO_REFERENCE
+                                            : typeDescription.getSimpleName(),
+                                    typeDescription.getModifiers());
+                        }
+                    }
+                    for (FieldDescription fieldDescription : fields) {
+                        if (!visitedFields.contains(new SignatureKey(fieldDescription.getName(), fieldDescription.getDescriptor()))) {
+                            fieldPool.target(fieldDescription).apply(cv, annotationValueFilterFactory);
+                        }
+                    }
+                    for (MethodDescription methodDescription : instrumentedMethods) {
+                        if (!visitedMethods.contains(new SignatureKey(methodDescription.getInternalName(), methodDescription.getDescriptor()))) {
+                            methodPool.target(methodDescription).apply(cv, implementationContext, annotationValueFilterFactory);
+                        }
+                    }
+                    implementationContext.drain(new TypeInitializer.Drain.Default(instrumentedType,
+                            methodPool,
+                            annotationValueFilterFactory), cv, annotationValueFilterFactory);
+                    super.onVisitEnd();
+                }
+            }
+
+            /**
+             * A context class visitor based on an {@link Implementation.Context}.
+             */
+            protected class ImplementationContextClassVisitor extends ContextClassVisitor {
+
+                /**
+                 * The implementation context to use.
+                 */
+                private final Implementation.Context.ExtractableView implementationContext;
+
+                /**
+                 * Creates a context class loader based on an {@link Implementation.Context}.
+                 *
+                 * @param classVisitor          The class visitor to delegate to.
+                 * @param implementationContext The implementation context to use.
+                 */
+                protected ImplementationContextClassVisitor(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
+                    super(classVisitor);
+                    this.implementationContext = implementationContext;
+                }
+
+                @Override
+                public List<DynamicType> getAuxiliaryTypes() {
+                    return CompoundList.of(auxiliaryTypes, implementationContext.getAuxiliaryTypes());
+                }
+
+                @Override
+                public LoadedTypeInitializer getLoadedTypeInitializer() {
+                    return loadedTypeInitializer;
+                }
             }
         }
 

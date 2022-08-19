@@ -41,6 +41,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.FileSystem;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import net.bytebuddy.utility.visitor.ContextClassVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -1402,9 +1403,55 @@ public interface DynamicType extends ClassFileLocator {
         @SuppressWarnings("overloads")
         RecordComponentDefinition<T> recordComponent(LatentMatcher<? super RecordComponentDescription> matcher);
 
-        ClassVisitor wrap(ClassVisitor classVisitor);
+        /**
+         * Wraps a class visitor with the configuration that is represented by this dynamic type builder, using a
+         * default {@link TypePool}. A wrapper might not apply all features that are normally applied by Byte
+         * Buddy, if those features require control of the class loading life cycle. Neither does a wrapper define
+         * auxiliary types. It is therefore recommended to use {@link Implementation.Context.Disabled}.
+         *
+         * @param classVisitor The class visitor to wrap.
+         * @return A new class visitor that wraps a representation of this dynamic type.
+         */
+        ContextClassVisitor wrap(ClassVisitor classVisitor);
 
-        ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool);
+        /**
+         * Wraps a class visitor with the configuration that is represented by this dynamic type builder, using a
+         * default {@link TypePool}. A wrapper might not apply all features that are normally applied by Byte
+         * Buddy, if those features require control of the class loading life cycle. Neither does a wrapper define
+         * auxiliary types. It is therefore recommended to use {@link Implementation.Context.Disabled}.
+         *
+         * @param classVisitor The class visitor to wrap.
+         * @param writerFlags  The ASM writer flags to apply.
+         * @param readerFlags  The ASM reader flags to apply.
+         * @return A new class visitor that wraps a representation of this dynamic type.
+         */
+        ContextClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags);
+
+        /**
+         * Wraps a class visitor with the configuration that is represented by this dynamic type builder. A wrapper
+         * might not apply all features that are normally applied by Byte Buddy, if those features require control of
+         * the class loading life cycle. Neither does a wrapper define auxiliary types.  It is therefore recommended
+         * to use {@link Implementation.Context.Disabled}.
+         *
+         * @param classVisitor The class visitor to wrap.
+         * @param typePool     A type pool that is used for computing stack map frames by the underlying class writer, if required.
+         * @return A new class visitor that wraps a representation of this dynamic type.
+         */
+        ContextClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool);
+
+        /**
+         * Wraps a class visitor with the configuration that is represented by this dynamic type builder. A wrapper
+         * might not apply all features that are normally applied by Byte Buddy, if those features require control
+         * of the class loading life cycle. Neither does a wrapper define auxiliary types.  It is therefore
+         * recommended to use {@link Implementation.Context.Disabled}.
+         *
+         * @param classVisitor The class visitor to wrap.
+         * @param typePool     A type pool that is used for computing stack map frames by the underlying class writer, if required.
+         * @param writerFlags  The ASM writer flags to apply.
+         * @param readerFlags  The ASM reader flags to apply.
+         * @return A new class visitor that wraps a representation of this dynamic type.
+         */
+        ContextClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags);
 
         /**
          * <p>
@@ -3662,6 +3709,20 @@ public interface DynamicType extends ClassFileLocator {
             /**
              * {@inheritDoc}
              */
+            public ContextClassVisitor wrap(ClassVisitor classVisitor) {
+                return wrap(classVisitor, AsmVisitorWrapper.NO_FLAGS, AsmVisitorWrapper.NO_FLAGS);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ContextClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool) {
+                return wrap(classVisitor, typePool, AsmVisitorWrapper.NO_FLAGS, AsmVisitorWrapper.NO_FLAGS);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public Unloaded<S> make(TypePool typePool) {
                 return make(TypeResolutionStrategy.Passive.INSTANCE, typePool);
             }
@@ -3904,12 +3965,18 @@ public interface DynamicType extends ClassFileLocator {
                     return materialize().recordComponent(matcher);
                 }
 
-                public ClassVisitor wrap(ClassVisitor classVisitor) {
-                    return materialize().wrap(classVisitor);
+                /**
+                 * {@inheritDoc}
+                 */
+                public ContextClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+                    return materialize().wrap(classVisitor, writerFlags, readerFlags);
                 }
 
-                public ClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool) {
-                    return materialize().wrap(classVisitor, typePool);
+                /**
+                 * {@inheritDoc}
+                 */
+                public ContextClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
+                    return materialize().wrap(classVisitor, typePool, writerFlags, readerFlags);
                 }
 
                 /**
@@ -3956,12 +4023,63 @@ public interface DynamicType extends ClassFileLocator {
             }
 
             /**
+             * A dynamic type writer that uses a {@link TypeWriter} to create a dynamic type.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
+            public abstract static class UsingTypeWriter<U> extends AbstractBase<U> {
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ContextClassVisitor wrap(ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+                    return toTypeWriter().wrap(classVisitor, writerFlags, readerFlags);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ContextClassVisitor wrap(ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
+                    return toTypeWriter(typePool).wrap(classVisitor, writerFlags, readerFlags);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public DynamicType.Unloaded<U> make(TypeResolutionStrategy typeResolutionStrategy) {
+                    return toTypeWriter().make(typeResolutionStrategy.resolve());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public DynamicType.Unloaded<U> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
+                    return toTypeWriter(typePool).make(typeResolutionStrategy.resolve());
+                }
+
+                /**
+                 * Creates a {@link TypeWriter} without an explicitly specified {@link TypePool}.
+                 *
+                 * @return An appropriate {@link TypeWriter}.
+                 */
+                protected abstract TypeWriter<U> toTypeWriter();
+
+                /**
+                 * Creates a {@link TypeWriter} given the specified {@link TypePool}.
+                 *
+                 * @param typePool The {@link TypePool} to use.
+                 * @return An appropriate {@link TypeWriter}.
+                 */
+                protected abstract TypeWriter<U> toTypeWriter(TypePool typePool);
+            }
+
+            /**
              * An adapter implementation of a dynamic type builder.
              *
              * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            public abstract static class Adapter<U> extends AbstractBase<U> {
+            public abstract static class Adapter<U> extends UsingTypeWriter<U> {
 
                 /**
                  * The instrumented type to be created.

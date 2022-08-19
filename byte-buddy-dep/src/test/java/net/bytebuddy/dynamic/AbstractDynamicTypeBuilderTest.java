@@ -30,6 +30,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.OpenedClassReader;
+import net.bytebuddy.utility.visitor.ContextClassVisitor;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
@@ -1511,6 +1512,39 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .getAuxiliaryTypes();
         assertThat(auxiliaryTypes.size(), is(1));
         assertThat(auxiliaryTypes.get(TypeDescription.VOID).length, is(3));
+    }
+
+    @Test
+    public void testWrapClassVisitor() throws Exception {
+        TypeDescription typeDescription = createPlain()
+                .make()
+                .getTypeDescription();
+        ClassWriter classWriter = new ClassWriter(AsmVisitorWrapper.NO_FLAGS);
+        ContextClassVisitor classVisitor = createPlain()
+                .defineMethod(FOO, Object.class, Visibility.PUBLIC, Ownership.STATIC)
+                .throwing(Exception.class)
+                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .wrap(classWriter);
+        classVisitor.visit(ClassFileVersion.ofThisVm().getMinorMajorVersion(),
+                typeDescription.getActualModifiers(true),
+                typeDescription.getInternalName(),
+                typeDescription.getGenericSignature(),
+                typeDescription.getSuperClass().asErasure().getInternalName(),
+                typeDescription.getInterfaces().asErasures().toInternalNames());
+        classVisitor.visitEnd();
+        assertThat(classVisitor.getAuxiliaryTypes().size(), is(0));
+        assertThat(classVisitor.getLoadedTypeInitializer().isAlive(), is(false));
+        Class<?> type = new DynamicType.Default.Unloaded<Object>(typeDescription,
+                classWriter.toByteArray(),
+                LoadedTypeInitializer.NoOp.INSTANCE,
+                Collections.<DynamicType>emptyList(),
+                TypeResolutionStrategy.Passive.INSTANCE).load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        assertThat(type.getName(), is(typeDescription.getName()));
+        Method method = type.getDeclaredMethod(FOO);
+        assertThat(method.getReturnType(), CoreMatchers.<Class<?>>is(Object.class));
+        assertThat(method.getExceptionTypes(), is(new Class<?>[]{Exception.class}));
+        assertThat(method.getModifiers(), is(Modifier.PUBLIC | Modifier.STATIC));
+        assertThat(method.invoke(null), is((Object) FOO));
     }
 
     @Retention(RetentionPolicy.RUNTIME)

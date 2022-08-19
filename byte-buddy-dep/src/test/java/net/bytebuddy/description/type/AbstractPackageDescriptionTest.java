@@ -1,6 +1,9 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.visibility.Sample;
 import net.bytebuddy.test.visibility.child.Child;
 import org.junit.Test;
@@ -59,5 +62,23 @@ public abstract class AbstractPackageDescriptionTest {
         assertThat(describe(Sample.class).toString(), is(Sample.class.getPackage().toString()));
         assertThat(describe(Sample.class).toString(), is(describe(Sample.class).toString()));
         assertThat(describe(Sample.class).toString(), not(describe(Child.class).toString()));
+    }
+
+    @Test
+    public void testDefault() throws Exception {
+        assertThat(describe(Child.class).isDefault(), is(false));
+        Class<?> type = new ByteBuddy().subclass(Object.class)
+                .name("TypeWithoutPackage")
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
+                .getLoaded();
+        assertThat(describe(type).isDefault(), is(true));
+        assertThat(describe(type).getName(), is(NamedElement.EMPTY_NAME));
+    }
+
+    @Test
+    public void testNoPackage() throws Exception {
+        assertThat(describe(boolean.class), nullValue(PackageDescription.class));
+        assertThat(describe(Object[].class), nullValue(PackageDescription.class));
     }
 }

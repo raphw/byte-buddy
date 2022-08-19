@@ -16,7 +16,6 @@
 package net.bytebuddy.build;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.FieldManifestation;
@@ -32,7 +31,10 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.nullability.MaybeNull;
-import org.objectweb.asm.*;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.lang.annotation.*;
 import java.security.Permission;
@@ -271,23 +273,50 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
             methodVisitor.visitLabel(end);
             methodVisitor.visitJumpInsn(Opcodes.GOTO, complete);
             methodVisitor.visitLabel(classNotFound);
-            if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
-                methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(ClassNotFoundException.class)});
+            switch (implementationContext.getFrameGeneration()) {
+                case GENERATE:
+                    methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(ClassNotFoundException.class)});
+                    break;
+                case EXPAND:
+                    methodVisitor.visitFrame(Opcodes.F_NEW, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(ClassNotFoundException.class)});
+                    break;
+                case DISABLED:
+                    break;
+                default:
+                    throw new IllegalStateException();
             }
             methodVisitor.visitInsn(Opcodes.POP);
             methodVisitor.visitInsn(Opcodes.ICONST_0);
             methodVisitor.visitFieldInsn(Opcodes.PUTSTATIC, instrumentedType.getInternalName(), name, Type.getDescriptor(boolean.class));
             methodVisitor.visitJumpInsn(Opcodes.GOTO, complete);
             methodVisitor.visitLabel(securityException);
-            if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
-                methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(SecurityException.class)});
+            switch (implementationContext.getFrameGeneration()) {
+                case GENERATE:
+                    methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(SecurityException.class)});
+                    break;
+                case EXPAND:
+                    methodVisitor.visitFrame(Opcodes.F_NEW, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(SecurityException.class)});
+                    break;
+                case DISABLED:
+                    break;
+                default:
+                    throw new IllegalStateException();
             }
             methodVisitor.visitInsn(Opcodes.POP);
             methodVisitor.visitInsn(Opcodes.ICONST_1);
             methodVisitor.visitFieldInsn(Opcodes.PUTSTATIC, instrumentedType.getInternalName(), name, Type.getDescriptor(boolean.class));
             methodVisitor.visitLabel(complete);
-            if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
-                methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+            switch (implementationContext.getFrameGeneration()) {
+                case GENERATE:
+                    methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                    break;
+                case EXPAND:
+                    methodVisitor.visitFrame(Opcodes.F_NEW, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                    break;
+                case DISABLED:
+                    break;
+                default:
+                    throw new IllegalStateException();
             }
             return new Size(Math.max(3, size), 0);
         }
@@ -406,7 +435,7 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
                     token,
                     name,
                     instrumentedMethod.isStatic() ? 0 : 1,
-                    (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6));
+                    implementationContext.getFrameGeneration());
         }
 
         /**
@@ -435,9 +464,9 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
             private final int offset;
 
             /**
-             * {@code true} if frames should be added to a method.
+             * Indicates the frame generation mode to apply.
              */
-            private final boolean frames;
+            private final Implementation.Context.FrameGeneration frameGeneration;
 
             /**
              * Creates a new prefixing method visitor.
@@ -447,20 +476,20 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
              * @param token            The target signature of the method declared by the JVM access controller.
              * @param name             The name of the field.
              * @param offset           The base offset of the instrumented method.
-             * @param frames           {@code true} if frames should be added to a method.
+             * @param frameGeneration  Indicates the frame generation mode to apply.
              */
             protected PrefixingMethodVisitor(MethodVisitor methodVisitor,
                                              TypeDescription instrumentedType,
                                              MethodDescription.SignatureToken token,
                                              String name,
                                              int offset,
-                                             boolean frames) {
+                                             Implementation.Context.FrameGeneration frameGeneration) {
                 super(OpenedClassReader.ASM_API, methodVisitor);
                 this.instrumentedType = instrumentedType;
                 this.token = token;
                 this.name = name;
                 this.offset = offset;
-                this.frames = frames;
+                this.frameGeneration = frameGeneration;
             }
 
             @Override
@@ -484,7 +513,7 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
                         false);
                 mv.visitInsn(Type.getType(token.getReturnType().getDescriptor()).getOpcode(Opcodes.IRETURN));
                 mv.visitLabel(label);
-                if (frames) {
+                if (frameGeneration.isActive()) { // TODO
                     mv.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                 }
             }
