@@ -3,18 +3,16 @@ package net.bytebuddy.build.gradle.android.utils;
 import com.android.build.api.attributes.BuildTypeAttr;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.Usage;
-import org.gradle.api.internal.artifacts.ArtifactAttributes;
 
 public class BytebuddyDependenciesHandler {
     private final Project project;
     private Configuration bucket;
     private static final String BYTEBUDDY_CONFIGURATION_NAME_FORMAT = "%sBytebuddy";
 
-    private static final Attribute<String> ARTIFACT_TYPE_ATTR = getArtifactTypeAttr();
+    public static final Attribute<String> ARTIFACT_TYPE_ATTR = Attribute.of("artifactType", String.class);
 
     public BytebuddyDependenciesHandler(Project project) {
         this.project = project;
@@ -30,7 +28,7 @@ public class BytebuddyDependenciesHandler {
             configuration.setCanBeConsumed(false);
             configuration.extendsFrom(bucket);
             configuration.attributes(attrs -> {
-//                attrs.attribute(ARTIFACT_TYPE_ATTR, "android-java-res");//todo fix
+                attrs.attribute(ARTIFACT_TYPE_ATTR, "jar");
                 attrs.attribute(
                         Category.CATEGORY_ATTRIBUTE,
                         project.getObjects().named(Category.class, Category.LIBRARY)
@@ -50,13 +48,5 @@ public class BytebuddyDependenciesHandler {
             configuration.setCanBeConsumed(false);
             configuration.setCanBeResolved(false);
         });
-    }
-
-    private static Attribute<String> getArtifactTypeAttr() {
-        try {
-            return ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE;
-        } catch (NoSuchFieldError e) {
-            return ArtifactAttributes.ARTIFACT_FORMAT;
-        }
     }
 }

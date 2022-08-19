@@ -24,12 +24,15 @@ import com.android.build.api.variant.Variant;
 import com.android.build.gradle.BaseExtension;
 import kotlin.Unit;
 import net.bytebuddy.build.gradle.android.asm.ByteBuddyAsmClassVisitorFactory;
+import net.bytebuddy.build.gradle.android.utils.AarGradleTransform;
 import net.bytebuddy.build.gradle.android.utils.BytebuddyDependenciesHandler;
 import net.bytebuddy.build.gradle.android.utils.LocalClassesSync;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.TaskProvider;
+
+import static net.bytebuddy.build.gradle.android.utils.BytebuddyDependenciesHandler.ARTIFACT_TYPE_ATTR;
 
 public class ByteBuddyAndroidPlugin implements Plugin<Project> {
 
@@ -46,6 +49,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         BytebuddyDependenciesHandler dependenciesHandler = new BytebuddyDependenciesHandler(project);
         dependenciesHandler.init();
         registerBytebuddyAsmFactory(dependenciesHandler);
+        registerAarToJarTransformation();
     }
 
     private void registerBytebuddyAsmFactory(BytebuddyDependenciesHandler dependenciesHandler) {
@@ -71,6 +75,13 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     private FileCollection getRuntimeClasspath(Variant variant) {
         ComponentImpl component = (ComponentImpl) variant;
         return component.getVariantDependencies().getRuntimeClasspath();
+    }
+
+    private void registerAarToJarTransformation() {
+        project.getDependencies().registerTransform(AarGradleTransform.class, it -> {
+            it.getFrom().attribute(ARTIFACT_TYPE_ATTR, "aar");
+            it.getTo().attribute(ARTIFACT_TYPE_ATTR, "jar");
+        });
     }
 
     private void verifyValidAndroidPlugin() {
