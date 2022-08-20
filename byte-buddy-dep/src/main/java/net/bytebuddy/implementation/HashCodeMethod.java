@@ -462,8 +462,21 @@ public class HashCodeMethod implements Implementation {
                  */
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                     methodVisitor.visitLabel(label);
-                    if (implementationContext.getFrameGeneration().isActive()) { // TODO
-                        methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, INTEGER.length, INTEGER);
+                    switch (implementationContext.getFrameGeneration()) {
+                        case GENERATE:
+                            methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, INTEGER.length, INTEGER);
+                            break;
+                        case EXPAND:
+                            methodVisitor.visitFrame(Opcodes.F_NEW,
+                                    1,
+                                    new Object[]{implementationContext.getInstrumentedType().getInternalName()},
+                                    INTEGER.length,
+                                    INTEGER);
+                            break;
+                        case DISABLED:
+                            break;
+                        default:
+                            throw new IllegalStateException();
                     }
                     return Size.ZERO;
                 }

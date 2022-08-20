@@ -513,8 +513,21 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
                         false);
                 mv.visitInsn(Type.getType(token.getReturnType().getDescriptor()).getOpcode(Opcodes.IRETURN));
                 mv.visitLabel(label);
-                if (frameGeneration.isActive()) { // TODO
-                    mv.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                switch (frameGeneration) {
+                    case GENERATE:
+                        mv.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                        break;
+                    case EXPAND:
+                        Object[] localVariable = new Object[token.getParameterTypes().size()];
+                        for (int index = 0; index < localVariable.length; index++) {
+                            localVariable[index] = token.getParameterTypes().get(index).getInternalName();
+                        }
+                        mv.visitFrame(Opcodes.F_NEW, localVariable.length, localVariable, EMPTY.length, EMPTY);
+                        break;
+                    case DISABLED:
+                        break;
+                    default:
+                        throw new IllegalStateException();
                 }
             }
 
