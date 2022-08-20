@@ -43,6 +43,7 @@ import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
@@ -115,6 +116,9 @@ public abstract class ClassVisitorFactory<T> {
      * @return A factory for wrapping {@link ClassVisitor}s in Byte Buddy's and the supplied package namespace.
      */
     public static <S> ClassVisitorFactory<S> of(Class<S> classVisitor, ByteBuddy byteBuddy) {
+        if (!ClassVisitor.class.getSimpleName().equals(classVisitor.getSimpleName())) {
+            throw new IllegalArgumentException("Expected a class named " + ClassVisitor.class.getSimpleName() + ": " + classVisitor);
+        }
         try {
             String prefix = classVisitor.getPackage().getName();
             Map<Class<?>, Class<?>> utilities = new HashMap<Class<?>, Class<?>>();
@@ -139,10 +143,10 @@ public abstract class ClassVisitorFactory<T> {
             for (Class<?> type : Arrays.asList(
                     ClassVisitor.class,
                     AnnotationVisitor.class,
-                    FieldVisitor.class,
-                    MethodVisitor.class,
+                    ModuleVisitor.class,
                     RecordComponentVisitor.class,
-                    ModuleVisitor.class
+                    FieldVisitor.class,
+                    MethodVisitor.class
             )) {
                 Class<?> equivalent;
                 try {
@@ -511,7 +515,15 @@ public abstract class ClassVisitorFactory<T> {
          * {@inheritDoc}
          */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-            Label end = new Label();
+            Label nullCheck = new Label(), end = new Label();
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, nullCheck);
+            methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            methodVisitor.visitLabel(nullCheck);
+            if (implementationContext.getFrameGeneration().isActive()) { // TODO
+                methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+            }
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitFieldInsn(Opcodes.GETFIELD,
                     implementationContext.getInstrumentedType().getInternalName(),
@@ -593,7 +605,15 @@ public abstract class ClassVisitorFactory<T> {
          * {@inheritDoc}
          */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-            Label loop = new Label(), end = new Label();
+            Label nullCheck = new Label(), loop = new Label(), end = new Label();
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, nullCheck);
+            methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            methodVisitor.visitLabel(nullCheck);
+            if (implementationContext.getFrameGeneration().isActive()) { // TODO
+                methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+            }
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
             methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
             methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, Type.getInternalName(targetLabel));
@@ -669,6 +689,15 @@ public abstract class ClassVisitorFactory<T> {
          * {@inheritDoc}
          */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+            Label nullCheck = new Label();
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, nullCheck);
+            methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            methodVisitor.visitLabel(nullCheck);
+            if (implementationContext.getFrameGeneration().isActive()) { // TODO
+                methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+            }
             methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(targetHandle));
             methodVisitor.visitInsn(Opcodes.DUP);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
@@ -977,7 +1006,15 @@ public abstract class ClassVisitorFactory<T> {
          * {@inheritDoc}
          */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-            Label loop = new Label(), end = new Label();
+            Label nullCheck = new Label(), loop = new Label(), end = new Label();
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, nullCheck);
+            methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            methodVisitor.visitLabel(nullCheck);
+            if (implementationContext.getFrameGeneration().isActive()) { // TODO
+                methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+            }
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitInsn(Opcodes.ARRAYLENGTH);
             methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, Type.getInternalName(Object.class));
