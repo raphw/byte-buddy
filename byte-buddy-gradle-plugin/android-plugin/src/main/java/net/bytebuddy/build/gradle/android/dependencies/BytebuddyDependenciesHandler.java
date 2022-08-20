@@ -24,13 +24,15 @@ import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.CompatibilityCheckDetails;
 import org.gradle.api.attributes.Usage;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class BytebuddyDependenciesHandler {
     private final Project project;
+    private final Map<String, Configuration> classpaths = new HashMap<>();
     private Configuration bucket;
     private static final String BYTEBUDDY_CONFIGURATION_NAME_FORMAT = "%sBytebuddy";
-
     private static final Attribute<String> ARTIFACT_TYPE_ATTR = Attribute.of("artifactType", String.class);
     private static final String BYTEBUDDY_JAR_TYPE = "bytebuddy-jar";
 
@@ -45,6 +47,17 @@ public class BytebuddyDependenciesHandler {
     }
 
     public Configuration getConfigurationForBuildType(String buildType) {
+        Configuration configuration = classpaths.get(buildType);
+
+        if (configuration == null) {
+            configuration = createClasspathConfiguration(buildType);
+            classpaths.put(buildType, configuration);
+        }
+
+        return configuration;
+    }
+
+    private Configuration createClasspathConfiguration(String buildType) {
         return project.getConfigurations().create(getNameFor(buildType), configuration -> {
             configuration.setCanBeResolved(true);
             configuration.setCanBeConsumed(false);
