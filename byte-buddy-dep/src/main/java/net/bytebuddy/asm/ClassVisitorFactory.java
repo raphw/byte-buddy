@@ -42,6 +42,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.OpenedClassReader;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.*;
 
 import java.lang.reflect.Method;
@@ -61,11 +62,6 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  */
 @HashCodeAndEqualsPlugin.Enhance
 public abstract class ClassVisitorFactory<T> {
-
-    /**
-     * An empty array to represent stack map frames.
-     */
-    private static final Object[] EMPTY = new Object[0];
 
     /**
      * The name of the delegate field containing an equivalent visitor.
@@ -141,11 +137,14 @@ public abstract class ClassVisitorFactory<T> {
             )) {
                 Class<?> utility;
                 try {
-                    utility = Class.forName(prefix + "." + type.getSimpleName());
+                    utility = Class.forName(prefix + "." + type.getSimpleName(), false, classVisitor.getClassLoader());
                 } catch (ClassNotFoundException ignored) {
                     continue;
                 }
                 utilities.put(type, utility);
+            }
+            if (utilities.containsKey(Label.class)) {
+                utilities.put(Label[].class, Class.forName("[L" + utilities.get(Label.class).getName() + ";", false, classVisitor.getClassLoader()));
             }
             Map<Class<?>, Class<?>> equivalents = new HashMap<Class<?>, Class<?>>();
             Map<Class<?>, DynamicType.Builder<?>> builders = new HashMap<Class<?>, DynamicType.Builder<?>>();
@@ -159,7 +158,7 @@ public abstract class ClassVisitorFactory<T> {
             )) {
                 Class<?> equivalent;
                 try {
-                    equivalent = Class.forName(prefix + "." + type.getSimpleName());
+                    equivalent = Class.forName(prefix + "." + type.getSimpleName(), false, classVisitor.getClassLoader());
                 } catch (ClassNotFoundException ignored) {
                     continue;
                 }
@@ -204,7 +203,7 @@ public abstract class ClassVisitorFactory<T> {
                     Class<?>[] parameter = method.getParameterTypes(), match = new Class<?>[parameter.length];
                     List<MethodCall.ArgumentLoader.Factory> left = new ArrayList<MethodCall.ArgumentLoader.Factory>(parameter.length);
                     List<MethodCall.ArgumentLoader.Factory> right = new ArrayList<MethodCall.ArgumentLoader.Factory>(match.length);
-                    boolean unsupported = false;
+                    boolean unsupported = false, unresolved = false;
                     int offset = 1;
                     for (int index = 0; index < parameter.length; index++) {
                         if (entry.getKey() == MethodVisitor.class && parameter[index] == Label.class) {
@@ -212,7 +211,7 @@ public abstract class ClassVisitorFactory<T> {
                             left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelTranslator.NAME, offset, true));
                             right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelTranslator.NAME, offset, true));
                         } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Label[].class) {
-                            match[index] = Class.forName("[L" + utilities.get(Label.class).getName() + ";", false, classVisitor.getClassLoader());
+                            match[index] = utilities.get(Label[].class);
                             left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelArrayTranslator.NAME, offset, true));
                             right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelArrayTranslator.NAME, offset, true));
                         } else if (parameter[index] == TypePath.class) {
@@ -244,14 +243,23 @@ public abstract class ClassVisitorFactory<T> {
                             left.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
                             right.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
                         }
+                        if (match[index] == null) {
+                            unresolved = true;
+                            break;
+                        }
                         offset += parameter[index] == long.class || parameter[index] == double.class ? 2 : 1;
                     }
                     Method target;
-                    try {
-                        target = entry.getValue().getMethod(method.getName(), match);
-                    } catch (NoSuchMethodException ignored) {
+                    if (unresolved) {
                         target = null;
                         unsupported = true;
+                    } else {
+                        try {
+                            target = entry.getValue().getMethod(method.getName(), match);
+                        } catch (NoSuchMethodException ignored) {
+                            target = null;
+                            unsupported = true;
+                        }
                     }
                     if (unsupported) {
                         wrapper = wrapper.method(is(method)).intercept(ExceptionMethod.throwing(UnsupportedOperationException.class));
@@ -329,10 +337,10 @@ public abstract class ClassVisitorFactory<T> {
     private static DynamicType.Builder<?> toVisitorBuilder(ByteBuddy byteBuddy,
                                                            Class<?> sourceVisitor,
                                                            Class<?> targetVisitor,
-                                                           Class<?> sourceTypePath,
-                                                           Class<?> targetTypePath,
+                                                           @MaybeNull Class<?> sourceTypePath,
+                                                           @MaybeNull Class<?> targetTypePath,
                                                            Implementation appendix) throws Exception {
-        return byteBuddy.subclass(sourceVisitor, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+        DynamicType.Builder<?> builder = byteBuddy.subclass(sourceVisitor, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .defineField(DELEGATE, targetVisitor, Visibility.PRIVATE, FieldManifestation.FINAL)
                 .defineConstructor(Visibility.PUBLIC)
                 .withParameters(targetVisitor)
@@ -342,10 +350,15 @@ public abstract class ClassVisitorFactory<T> {
                         .andThen(appendix))
                 .defineMethod(WRAP, sourceVisitor, Visibility.PUBLIC, Ownership.STATIC)
                 .withParameters(targetVisitor)
-                .intercept(new Implementation.Simple(new NullCheckedConstruction(targetVisitor)))
-                .defineMethod(TypePathTranslator.NAME, targetTypePath, Visibility.PRIVATE, Ownership.STATIC)
-                .withParameters(sourceTypePath)
-                .intercept(new Implementation.Simple(new TypePathTranslator(sourceTypePath, targetTypePath)));
+                .intercept(new Implementation.Simple(new NullCheckedConstruction(targetVisitor)));
+        if (sourceTypePath == null || targetTypePath == null) {
+            return builder;
+        } else {
+            return builder
+                    .defineMethod(TypePathTranslator.NAME, targetTypePath, Visibility.PRIVATE, Ownership.STATIC)
+                    .withParameters(sourceTypePath)
+                    .intercept(new Implementation.Simple(new TypePathTranslator(sourceTypePath, targetTypePath)));
+        }
     }
 
     /**
@@ -370,17 +383,17 @@ public abstract class ClassVisitorFactory<T> {
     private static DynamicType.Builder<?> toMethodVisitorBuilder(ByteBuddy byteBuddy,
                                                                  Class<?> sourceVisitor,
                                                                  Class<?> targetVisitor,
-                                                                 Class<?> sourceTypePath,
-                                                                 Class<?> targetTypePath,
-                                                                 Class<?> sourceLabel,
-                                                                 Class<?> targetLabel,
-                                                                 Class<?> sourceType,
-                                                                 Class<?> targetType,
-                                                                 Class<?> sourceHandle,
-                                                                 Class<?> targetHandle,
-                                                                 Class<?> sourceConstantDynamic,
-                                                                 Class<?> targetConstantDynamic) throws Exception {
-        return toVisitorBuilder(byteBuddy,
+                                                                 @MaybeNull Class<?> sourceTypePath,
+                                                                 @MaybeNull Class<?> targetTypePath,
+                                                                 @MaybeNull Class<?> sourceLabel,
+                                                                 @MaybeNull Class<?> targetLabel,
+                                                                 @MaybeNull Class<?> sourceType,
+                                                                 @MaybeNull Class<?> targetType,
+                                                                 @MaybeNull Class<?> sourceHandle,
+                                                                 @MaybeNull Class<?> targetHandle,
+                                                                 @MaybeNull Class<?> sourceConstantDynamic,
+                                                                 @MaybeNull Class<?> targetConstantDynamic) throws Exception {
+        DynamicType.Builder<?> builder = toVisitorBuilder(byteBuddy,
                 sourceVisitor,
                 targetVisitor,
                 sourceTypePath,
@@ -390,23 +403,33 @@ public abstract class ClassVisitorFactory<T> {
                         MethodInvocation.invoke(TypeDescription.ForLoadedType.of(HashMap.class)
                                 .getDeclaredMethods()
                                 .filter(ElementMatchers.<MethodDescription.InDefinedShape>isConstructor().and(ElementMatchers.<MethodDescription.InDefinedShape>takesArguments(0)))
-                                .getOnly())), Map.class))
-                .defineField(LABELS, Map.class, Visibility.PRIVATE, FieldManifestation.FINAL)
-                .defineMethod(LabelTranslator.NAME, targetLabel, Visibility.PRIVATE)
-                .withParameters(sourceLabel)
-                .intercept(new Implementation.Simple(new LabelTranslator(targetLabel)))
-                .defineMethod(LabelArrayTranslator.NAME, Class.forName("[L" + targetLabel.getName() + ";", false, targetLabel.getClassLoader()), Visibility.PRIVATE)
-                .withParameters(Class.forName("[L" + sourceLabel.getName() + ";", false, targetLabel.getClassLoader()))
-                .intercept(new Implementation.Simple(new LabelArrayTranslator(sourceLabel, targetLabel)))
-                .defineMethod(FrameTranslator.NAME, Object[].class, Visibility.PRIVATE)
-                .withParameters(Object[].class)
-                .intercept(new Implementation.Simple(new FrameTranslator(sourceLabel, targetLabel)))
-                .defineMethod(HandleTranslator.NAME, targetHandle, Visibility.PRIVATE, Ownership.STATIC)
-                .withParameters(sourceHandle)
-                .intercept(new Implementation.Simple(new HandleTranslator(sourceHandle, targetHandle)))
-                .defineMethod(ConstantDynamicTranslator.NAME, targetConstantDynamic, Visibility.PRIVATE, Ownership.STATIC)
-                .withParameters(sourceConstantDynamic)
-                .intercept(new Implementation.Simple(new ConstantDynamicTranslator(sourceConstantDynamic, targetConstantDynamic, sourceHandle, targetHandle)))
+                                .getOnly())), Map.class));
+        if (sourceLabel != null && targetLabel != null) {
+            builder = builder
+                    .defineField(LABELS, Map.class, Visibility.PRIVATE, FieldManifestation.FINAL)
+                    .defineMethod(LabelTranslator.NAME, targetLabel, Visibility.PRIVATE)
+                    .withParameters(sourceLabel)
+                    .intercept(new Implementation.Simple(new LabelTranslator(targetLabel)))
+                    .defineMethod(LabelArrayTranslator.NAME, Class.forName("[L" + targetLabel.getName() + ";", false, targetLabel.getClassLoader()), Visibility.PRIVATE)
+                    .withParameters(Class.forName("[L" + sourceLabel.getName() + ";", false, targetLabel.getClassLoader()))
+                    .intercept(new Implementation.Simple(new LabelArrayTranslator(sourceLabel, targetLabel)))
+                    .defineMethod(FrameTranslator.NAME, Object[].class, Visibility.PRIVATE)
+                    .withParameters(Object[].class)
+                    .intercept(new Implementation.Simple(new FrameTranslator(sourceLabel, targetLabel)));
+        }
+        if (sourceHandle != null && targetHandle != null) {
+            builder = builder
+                    .defineMethod(HandleTranslator.NAME, targetHandle, Visibility.PRIVATE, Ownership.STATIC)
+                    .withParameters(sourceHandle)
+                    .intercept(new Implementation.Simple(new HandleTranslator(sourceHandle, targetHandle)));
+        }
+        if (sourceConstantDynamic != null && targetConstantDynamic != null && sourceHandle != null && targetHandle != null) {
+            builder = builder
+                    .defineMethod(ConstantDynamicTranslator.NAME, targetConstantDynamic, Visibility.PRIVATE, Ownership.STATIC)
+                    .withParameters(sourceConstantDynamic)
+                    .intercept(new Implementation.Simple(new ConstantDynamicTranslator(sourceConstantDynamic, targetConstantDynamic, sourceHandle, targetHandle)));
+        }
+        return builder
                 .defineMethod(ConstantTranslator.NAME, Object.class, Visibility.PRIVATE, Ownership.STATIC)
                 .withParameters(Object.class)
                 .intercept(new Implementation.Simple(new ConstantTranslator(sourceHandle, targetHandle, sourceType, targetType, sourceConstantDynamic, targetConstantDynamic)))
@@ -874,6 +897,7 @@ public abstract class ClassVisitorFactory<T> {
     /**
      * A method to translate a constant value from one namespace to another.
      */
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class ConstantTranslator implements ByteCodeAppender {
 
         /**
@@ -884,31 +908,43 @@ public abstract class ClassVisitorFactory<T> {
         /**
          * The {@link Handle} type in the original namespace.
          */
+        @MaybeNull
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final Class<?> sourceHandle;
 
         /**
          * The {@link Handle} type in the targeted namespace.
          */
+        @MaybeNull
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final Class<?> targetHandle;
 
         /**
          * The {@link Type} type in the original namespace.
          */
+        @MaybeNull
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final Class<?> sourceType;
 
         /**
          * The {@link Type} type in the targeted namespace.
          */
+        @MaybeNull
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final Class<?> targetType;
 
         /**
          * The {@link ConstantDynamic} type in the original namespace.
          */
+        @MaybeNull
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final Class<?> sourceConstantDynamic;
 
         /**
          * The {@link ConstantDynamic} type in the targeted namespace.
          */
+        @MaybeNull
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final Class<?> targetConstantDynamic;
 
         /**
@@ -921,12 +957,12 @@ public abstract class ClassVisitorFactory<T> {
          * @param sourceConstantDynamic The {@link ConstantDynamic} type in the original namespace.
          * @param targetConstantDynamic The {@link ConstantDynamic} type in the targeted namespace.
          */
-        protected ConstantTranslator(Class<?> sourceHandle,
-                                     Class<?> targetHandle,
-                                     Class<?> sourceType,
-                                     Class<?> targetType,
-                                     Class<?> sourceConstantDynamic,
-                                     Class<?> targetConstantDynamic) {
+        protected ConstantTranslator(@MaybeNull Class<?> sourceHandle,
+                                     @MaybeNull Class<?> targetHandle,
+                                     @MaybeNull Class<?> sourceType,
+                                     @MaybeNull Class<?> targetType,
+                                     @MaybeNull Class<?> sourceConstantDynamic,
+                                     @MaybeNull Class<?> targetConstantDynamic) {
             this.sourceHandle = sourceHandle;
             this.targetHandle = targetHandle;
             this.sourceType = sourceType;
@@ -939,51 +975,57 @@ public abstract class ClassVisitorFactory<T> {
          * {@inheritDoc}
          */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-            Label noHandle = new Label(), noType = new Label(), noConstantDynamic = new Label();
-            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(sourceHandle));
-            methodVisitor.visitJumpInsn(Opcodes.IFEQ, noHandle);
-            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(sourceHandle));
-            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                    implementationContext.getInstrumentedType().getInternalName(),
-                    HandleTranslator.NAME,
-                    Type.getMethodDescriptor(Type.getType(targetHandle), Type.getType(sourceHandle)),
-                    false);
-            methodVisitor.visitInsn(Opcodes.ARETURN);
-            methodVisitor.visitLabel(noHandle);
-            implementationContext.getFrameGeneration().same(methodVisitor, instrumentedMethod.getParameters().asTypeList());
-            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(sourceType));
-            methodVisitor.visitJumpInsn(Opcodes.IFEQ, noType);
-            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(sourceType));
-            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                    Type.getInternalName(sourceType),
-                    "getDescriptor",
-                    Type.getMethodDescriptor(Type.getType(String.class)),
-                    false);
-            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                    Type.getInternalName(targetType),
-                    "getType",
-                    Type.getMethodDescriptor(Type.getType(targetType), Type.getType(String.class)),
-                    false);
-            methodVisitor.visitInsn(Opcodes.ARETURN);
-            methodVisitor.visitLabel(noType);
-            implementationContext.getFrameGeneration().same(methodVisitor, instrumentedMethod.getParameters().asTypeList());
-            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(sourceConstantDynamic));
-            methodVisitor.visitJumpInsn(Opcodes.IFEQ, noConstantDynamic);
-            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(sourceConstantDynamic));
-            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                    implementationContext.getInstrumentedType().getInternalName(),
-                    ConstantDynamicTranslator.NAME,
-                    Type.getMethodDescriptor(Type.getType(targetConstantDynamic), Type.getType(sourceConstantDynamic)),
-                    false);
-            methodVisitor.visitInsn(Opcodes.ARETURN);
-            methodVisitor.visitLabel(noConstantDynamic);
-            implementationContext.getFrameGeneration().same(methodVisitor, instrumentedMethod.getParameters().asTypeList());
+            Label noType = new Label(), noHandle = new Label(), noConstantDynamic = new Label();
+            if (sourceType != null && targetType != null) {
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(sourceType));
+                methodVisitor.visitJumpInsn(Opcodes.IFEQ, noType);
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(sourceType));
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                        Type.getInternalName(sourceType),
+                        "getDescriptor",
+                        Type.getMethodDescriptor(Type.getType(String.class)),
+                        false);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                        Type.getInternalName(targetType),
+                        "getType",
+                        Type.getMethodDescriptor(Type.getType(targetType), Type.getType(String.class)),
+                        false);
+                methodVisitor.visitInsn(Opcodes.ARETURN);
+                methodVisitor.visitLabel(noType);
+                implementationContext.getFrameGeneration().same(methodVisitor, instrumentedMethod.getParameters().asTypeList());
+            }
+            if (sourceHandle != null && targetHandle != null) {
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(sourceHandle));
+                methodVisitor.visitJumpInsn(Opcodes.IFEQ, noHandle);
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(sourceHandle));
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                        implementationContext.getInstrumentedType().getInternalName(),
+                        HandleTranslator.NAME,
+                        Type.getMethodDescriptor(Type.getType(targetHandle), Type.getType(sourceHandle)),
+                        false);
+                methodVisitor.visitInsn(Opcodes.ARETURN);
+                methodVisitor.visitLabel(noHandle);
+                implementationContext.getFrameGeneration().same(methodVisitor, instrumentedMethod.getParameters().asTypeList());
+            }
+            if (sourceConstantDynamic != null && targetConstantDynamic != null) {
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, Type.getInternalName(sourceConstantDynamic));
+                methodVisitor.visitJumpInsn(Opcodes.IFEQ, noConstantDynamic);
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(sourceConstantDynamic));
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                        implementationContext.getInstrumentedType().getInternalName(),
+                        ConstantDynamicTranslator.NAME,
+                        Type.getMethodDescriptor(Type.getType(targetConstantDynamic), Type.getType(sourceConstantDynamic)),
+                        false);
+                methodVisitor.visitInsn(Opcodes.ARETURN);
+                methodVisitor.visitLabel(noConstantDynamic);
+                implementationContext.getFrameGeneration().same(methodVisitor, instrumentedMethod.getParameters().asTypeList());
+            }
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(1, 1);
