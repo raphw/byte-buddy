@@ -35,6 +35,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -383,16 +384,6 @@ public class HashCodeMethod implements Implementation {
         class UsingJump implements NullValueGuard {
 
             /**
-             * An empty array.
-             */
-            private static final Object[] EMPTY = new Object[0];
-
-            /**
-             * An array that only contains an integer stack map frame.
-             */
-            private static final Object[] INTEGER = new Object[]{Opcodes.INTEGER};
-
-            /**
              * The instrumented method.
              */
             private final MethodDescription instrumentedMethod;
@@ -462,22 +453,9 @@ public class HashCodeMethod implements Implementation {
                  */
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                     methodVisitor.visitLabel(label);
-                    switch (implementationContext.getFrameGeneration()) {
-                        case GENERATE:
-                            methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, INTEGER.length, INTEGER);
-                            break;
-                        case EXPAND:
-                            methodVisitor.visitFrame(Opcodes.F_NEW,
-                                    1,
-                                    new Object[]{implementationContext.getInstrumentedType().getInternalName()},
-                                    INTEGER.length,
-                                    INTEGER);
-                            break;
-                        case DISABLED:
-                            break;
-                        default:
-                            throw new IllegalStateException();
-                    }
+                    implementationContext.getFrameGeneration().same1(methodVisitor,
+                            TypeDescription.ForLoadedType.of(int.class),
+                            Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.OBJECT));
                     return Size.ZERO;
                 }
             }

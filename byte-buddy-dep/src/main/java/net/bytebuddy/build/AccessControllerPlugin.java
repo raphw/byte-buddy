@@ -21,6 +21,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -40,6 +41,7 @@ import java.lang.annotation.*;
 import java.security.Permission;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -273,51 +275,22 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
             methodVisitor.visitLabel(end);
             methodVisitor.visitJumpInsn(Opcodes.GOTO, complete);
             methodVisitor.visitLabel(classNotFound);
-            switch (implementationContext.getFrameGeneration()) {
-                case GENERATE:
-                    methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(ClassNotFoundException.class)});
-                    break;
-                case EXPAND:
-                    methodVisitor.visitFrame(Opcodes.F_NEW, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(ClassNotFoundException.class)});
-                    break;
-                case DISABLED:
-                    break;
-                default:
-                    throw new IllegalStateException();
-            }
+            implementationContext.getFrameGeneration().same1(methodVisitor,
+                    TypeDescription.ForLoadedType.of(ClassNotFoundException.class),
+                    Collections.<TypeDefinition>emptyList());
             methodVisitor.visitInsn(Opcodes.POP);
             methodVisitor.visitInsn(Opcodes.ICONST_0);
             methodVisitor.visitFieldInsn(Opcodes.PUTSTATIC, instrumentedType.getInternalName(), name, Type.getDescriptor(boolean.class));
             methodVisitor.visitJumpInsn(Opcodes.GOTO, complete);
             methodVisitor.visitLabel(securityException);
-            switch (implementationContext.getFrameGeneration()) {
-                case GENERATE:
-                    methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(SecurityException.class)});
-                    break;
-                case EXPAND:
-                    methodVisitor.visitFrame(Opcodes.F_NEW, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(SecurityException.class)});
-                    break;
-                case DISABLED:
-                    break;
-                default:
-                    throw new IllegalStateException();
-            }
+            implementationContext.getFrameGeneration().same1(methodVisitor,
+                    TypeDescription.ForLoadedType.of(SecurityException.class),
+                    Collections.<TypeDefinition>emptyList());
             methodVisitor.visitInsn(Opcodes.POP);
             methodVisitor.visitInsn(Opcodes.ICONST_1);
             methodVisitor.visitFieldInsn(Opcodes.PUTSTATIC, instrumentedType.getInternalName(), name, Type.getDescriptor(boolean.class));
             methodVisitor.visitLabel(complete);
-            switch (implementationContext.getFrameGeneration()) {
-                case GENERATE:
-                    methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
-                    break;
-                case EXPAND:
-                    methodVisitor.visitFrame(Opcodes.F_NEW, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
-                    break;
-                case DISABLED:
-                    break;
-                default:
-                    throw new IllegalStateException();
-            }
+            implementationContext.getFrameGeneration().same(methodVisitor, Collections.<TypeDefinition>emptyList());
             return new Size(Math.max(3, size), 0);
         }
 
@@ -513,22 +486,7 @@ public class AccessControllerPlugin extends Plugin.ForElementMatcher implements 
                         false);
                 mv.visitInsn(Type.getType(token.getReturnType().getDescriptor()).getOpcode(Opcodes.IRETURN));
                 mv.visitLabel(label);
-                switch (frameGeneration) {
-                    case GENERATE:
-                        mv.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
-                        break;
-                    case EXPAND:
-                        Object[] localVariable = new Object[token.getParameterTypes().size()];
-                        for (int index = 0; index < localVariable.length; index++) {
-                            localVariable[index] = token.getParameterTypes().get(index).getInternalName();
-                        }
-                        mv.visitFrame(Opcodes.F_NEW, localVariable.length, localVariable, EMPTY.length, EMPTY);
-                        break;
-                    case DISABLED:
-                        break;
-                    default:
-                        throw new IllegalStateException();
-                }
+                frameGeneration.same(mv, token.getParameterTypes());
             }
 
             @Override

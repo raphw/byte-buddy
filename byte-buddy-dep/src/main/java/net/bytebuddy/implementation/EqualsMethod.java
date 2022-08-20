@@ -36,7 +36,6 @@ import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 
 import java.util.*;
 
@@ -402,16 +401,6 @@ public class EqualsMethod implements Implementation {
         class UsingJump implements NullValueGuard {
 
             /**
-             * An empty array.
-             */
-            private static final Object[] EMPTY = new Object[0];
-
-            /**
-             * An array containing a single reference value.
-             */
-            private static final Object[] REFERENCE = new Object[]{Type.getInternalName(Object.class)};
-
-            /**
              * The instrumented method.
              */
             private final MethodDescription instrumentedMethod;
@@ -498,59 +487,18 @@ public class EqualsMethod implements Implementation {
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                     methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfBlock);
                     methodVisitor.visitLabel(secondValueNull);
-                    switch (implementationContext.getFrameGeneration()) {
-                        case GENERATE:
-                            methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, REFERENCE.length, REFERENCE);
-                            break;
-                        case EXPAND:
-                            methodVisitor.visitFrame(Opcodes.F_NEW,
-                                    2,
-                                    new Object[]{implementationContext.getInstrumentedType().getInternalName(), Type.getInternalName(Object.class)},
-                                    REFERENCE.length,
-                                    REFERENCE);
-                            break;
-                        case DISABLED:
-                            break;
-                        default:
-                            throw new IllegalStateException();
-                    }
+                    implementationContext.getFrameGeneration().same1(methodVisitor,
+                            TypeDescription.OBJECT,
+                            Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.OBJECT));
                     methodVisitor.visitJumpInsn(Opcodes.IFNULL, endOfBlock);
                     methodVisitor.visitLabel(firstValueNull);
-                    switch (implementationContext.getFrameGeneration()) {
-                        case GENERATE:
-                            methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
-                            break;
-                        case EXPAND:
-                            methodVisitor.visitFrame(Opcodes.F_NEW,
-                                    2,
-                                    new Object[]{implementationContext.getInstrumentedType().getInternalName(), Type.getInternalName(Object.class)},
-                                    EMPTY.length,
-                                    EMPTY);
-                            break;
-                        case DISABLED:
-                            break;
-                        default:
-                            throw new IllegalStateException();
-                    }
+                    implementationContext.getFrameGeneration().same(methodVisitor,
+                            Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.OBJECT));
                     methodVisitor.visitInsn(Opcodes.ICONST_0);
                     methodVisitor.visitInsn(Opcodes.IRETURN);
                     methodVisitor.visitLabel(endOfBlock);
-                    switch (implementationContext.getFrameGeneration()) {
-                        case GENERATE:
-                            methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
-                            break;
-                        case EXPAND:
-                            methodVisitor.visitFrame(Opcodes.F_NEW,
-                                    2,
-                                    new Object[]{implementationContext.getInstrumentedType().getInternalName(), Type.getInternalName(Object.class)},
-                                    EMPTY.length,
-                                    EMPTY);
-                            break;
-                        case DISABLED:
-                            break;
-                        default:
-                            throw new IllegalStateException();
-                    }
+                    implementationContext.getFrameGeneration().same(methodVisitor,
+                            Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.OBJECT));
                     return Size.ZERO;
                 }
             }
@@ -949,22 +897,8 @@ public class EqualsMethod implements Implementation {
             methodVisitor.visitInsn(value);
             methodVisitor.visitInsn(Opcodes.IRETURN);
             methodVisitor.visitLabel(label);
-            switch (implementationContext.getFrameGeneration()) {
-                case GENERATE:
-                    methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
-                    break;
-                case EXPAND:
-                    methodVisitor.visitFrame(Opcodes.F_NEW,
-                            2,
-                            new Object[]{implementationContext.getInstrumentedType().getInternalName(), Type.getInternalName(Object.class)},
-                            EMPTY.length,
-                            EMPTY);
-                    break;
-                case DISABLED:
-                    break;
-                default:
-                    throw new IllegalStateException();
-            }
+            implementationContext.getFrameGeneration().same(methodVisitor,
+                    Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.OBJECT));
             return new Size(-1, 1);
         }
     }

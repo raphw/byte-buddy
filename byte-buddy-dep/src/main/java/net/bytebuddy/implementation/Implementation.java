@@ -554,17 +554,58 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * Indicates that frames should be generated.
              */
-            GENERATE(true),
+            GENERATE(true) {
+                @Override
+                public void generate(MethodVisitor methodVisitor,
+                                     int type,
+                                     int stackCount,
+                                     @MaybeNull Object[] stack,
+                                     int changedLocalVariableCount,
+                                     @MaybeNull Object[] changedLocalVariable,
+                                     int fullLocalVariableCount,
+                                     @MaybeNull Object[] fullLocalVariable) {
+                    methodVisitor.visitFrame(type, changedLocalVariableCount, changedLocalVariable, stackCount, stack);
+                }
+            },
 
             /**
              * Indicates that frames should be generated and expanded.
              */
-            EXPAND(true),
+            EXPAND(true) {
+                @Override
+                public void generate(MethodVisitor methodVisitor,
+                                     int type,
+                                     int stackCount,
+                                     @MaybeNull Object[] stack,
+                                     int changedLocalVariableCount,
+                                     @MaybeNull Object[] changedLocalVariable,
+                                     int fullLocalVariableCount,
+                                     @MaybeNull Object[] fullLocalVariable) {
+                    methodVisitor.visitFrame(Opcodes.F_NEW, fullLocalVariableCount, fullLocalVariable, stackCount, stack);
+                }
+            },
 
             /**
              * Indicates that no frames should be generated.
              */
-            DISABLED(false);
+            DISABLED(false) {
+                @Override
+                public void generate(MethodVisitor methodVisitor,
+                                     int type,
+                                     int stackCount,
+                                     @MaybeNull Object[] stack,
+                                     int changedLocalVariableCount,
+                                     @MaybeNull Object[] changedLocalVariable,
+                                     int fullLocalVariableCount,
+                                     @MaybeNull Object[] fullLocalVariable) {
+                    /* do nothing */
+                }
+            };
+
+            /**
+             * An empty array to reuse for empty frames.
+             */
+            private static final Object[] EMPTY = new Object[0];
 
             /**
              * {@code true} if frames should be generated.
@@ -587,6 +628,153 @@ public interface Implementation extends InstrumentedType.Prepareable {
              */
             public boolean isActive() {
                 return active;
+            }
+
+            /**
+             * Inserts a {@link Opcodes#F_SAME} frame.
+             *
+             * @param methodVisitor  The method visitor to write to.
+             * @param localVariables The local variables that are defined at this frame location.
+             */
+            public void same(MethodVisitor methodVisitor,
+                             List<? extends TypeDefinition> localVariables) {
+                generate(methodVisitor,
+                        Opcodes.F_SAME,
+                        EMPTY.length,
+                        EMPTY,
+                        EMPTY.length,
+                        EMPTY,
+                        localVariables.size(),
+                        toStackMapFrames(localVariables));
+            }
+
+            /**
+             * Inserts a {@link Opcodes#F_SAME1} frame.
+             *
+             * @param methodVisitor  The method visitor to write to.
+             * @param stackValue     The single stack value.
+             * @param localVariables The local variables that are defined at this frame location.
+             */
+            public void same1(MethodVisitor methodVisitor,
+                              TypeDefinition stackValue,
+                              List<? extends TypeDefinition> localVariables) {
+                generate(methodVisitor,
+                        Opcodes.F_SAME1,
+                        1,
+                        new Object[]{toStackMapFrame(stackValue)},
+                        EMPTY.length,
+                        EMPTY,
+                        localVariables.size(),
+                        toStackMapFrames(localVariables));
+            }
+
+            /**
+             * Inserts a {@link Opcodes#F_APPEND} frame.
+             *
+             * @param methodVisitor  The method visitor to write to.
+             * @param appended       The appended local variables.
+             * @param localVariables The local variables that are defined at this frame location, excluding the ones appended.
+             */
+            public void append(MethodVisitor methodVisitor,
+                               List<? extends TypeDefinition> appended,
+                               List<? extends TypeDefinition> localVariables) {
+                generate(methodVisitor,
+                        Opcodes.F_APPEND,
+                        EMPTY.length,
+                        EMPTY,
+                        appended.size(),
+                        toStackMapFrames(appended),
+                        localVariables.size() + appended.size(),
+                        toStackMapFrames(CompoundList.of(localVariables, appended)));
+            }
+
+            /**
+             * Inserts a {@link Opcodes#F_CHOP} frame.
+             *
+             * @param methodVisitor  The method visitor to write to.
+             * @param chopped        The number of chopped values.
+             * @param localVariables The local variables that are defined at this frame location, excluding the chopped variables.
+             */
+            public void chop(MethodVisitor methodVisitor,
+                             int chopped,
+                             List<? extends TypeDefinition> localVariables) {
+                generate(methodVisitor,
+                        Opcodes.F_CHOP,
+                        EMPTY.length,
+                        EMPTY,
+                        chopped,
+                        EMPTY,
+                        localVariables.size(),
+                        toStackMapFrames(localVariables));
+            }
+
+            /**
+             * Inserts a {@link Opcodes#F_FULL} frame.
+             *
+             * @param methodVisitor  The method visitor to write to.
+             * @param stackValues    The values on the operand stack.
+             * @param localVariables The local variables that are defined at this frame location.
+             */
+            public void full(MethodVisitor methodVisitor,
+                             List<? extends TypeDefinition> stackValues,
+                             List<? extends TypeDefinition> localVariables) {
+                generate(methodVisitor,
+                        Opcodes.F_FULL,
+                        stackValues.size(),
+                        toStackMapFrames(stackValues),
+                        localVariables.size(),
+                        toStackMapFrames(localVariables),
+                        localVariables.size(),
+                        toStackMapFrames(localVariables));
+            }
+
+            /**
+             * Writes frames to a {@link MethodVisitor}, if applicable.
+             *
+             * @param methodVisitor             The method visitor to use
+             * @param type                      The frame type.
+             * @param stackCount                The number of values on the operand stack.
+             * @param stack                     The values on the operand stack up to {@code stackCount}, or {@link null}, if none.
+             * @param changedLocalVariableCount The number of local variables that were changed.
+             * @param changedLocalVariable      The values added to the local variable array up to {@code changedLocalVariableCount}
+             *                                  or {@link null}, if none or not applicable.
+             * @param fullLocalVariableCount    The number of local variables.
+             * @param fullLocalVariable         The total number of local variables up to {@code fullLocalVariableCount} or
+             *                                  {@code null}, if none.
+             */
+            protected abstract void generate(MethodVisitor methodVisitor,
+                                             int type,
+                                             int stackCount,
+                                             @MaybeNull Object[] stack,
+                                             int changedLocalVariableCount,
+                                             @MaybeNull Object[] changedLocalVariable,
+                                             int fullLocalVariableCount,
+                                             @MaybeNull Object[] fullLocalVariable);
+
+            private static Object[] toStackMapFrames(List<? extends TypeDefinition> typeDefinitions) {
+                Object[] value = typeDefinitions.isEmpty() ? EMPTY : new Object[typeDefinitions.size()];
+                for (int index = 0; index < typeDefinitions.size(); index++) {
+                    value[index] = toStackMapFrame(typeDefinitions.get(index));
+                }
+                return value;
+            }
+
+            private static Object toStackMapFrame(TypeDefinition typeDefinition) {
+                if (typeDefinition.represents(boolean.class)
+                        || typeDefinition.represents(byte.class)
+                        || typeDefinition.represents(short.class)
+                        || typeDefinition.represents(char.class)
+                        || typeDefinition.represents(int.class)) {
+                    return Opcodes.INTEGER;
+                } else if (typeDefinition.represents(long.class)) {
+                    return Opcodes.LONG;
+                } else if (typeDefinition.represents(float.class)) {
+                    return Opcodes.FLOAT;
+                } else if (typeDefinition.represents(double.class)) {
+                    return Opcodes.DOUBLE;
+                } else {
+                    return typeDefinition.asErasure().getInternalName();
+                }
             }
         }
 
