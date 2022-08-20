@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 abstract public class BytebuddyService implements BuildService<BytebuddyService.Params>, AutoCloseable {
 
@@ -57,6 +58,7 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
     private ClassFileLocator classFileLocator;
     private final Map<String, List<Plugin>> matchingPlugins = Collections.synchronizedMap(new HashMap<>());
     private final Map<String, TypeDescription> matchingTypeDescription = Collections.synchronizedMap(new HashMap<>());
+    private final static Pattern R_PATTERN = Pattern.compile("R\\$[^$]*$");
 
     public interface Params extends BuildServiceParameters {
         Property<JavaVersion> getJavaTargetCompatibilityVersion();
@@ -112,22 +114,29 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
     }
 
     public boolean matches(String className) {
-        List<Plugin> plugins = new ArrayList<>();
-        TypeDescription typeDescription = typePool.describe(className).resolve();
-        for (Plugin plugin : allPlugins) {
-            if (plugin.matches(typeDescription)) {
-                plugins.add(plugin);
+        try {
+            List<Plugin> plugins = new ArrayList<>();
+            TypeDescription typeDescription = typePool.describe(className).resolve();
+            for (Plugin plugin : allPlugins) {
+                if (plugin.matches(typeDescription)) {
+                    plugins.add(plugin);
+                }
             }
+
+            boolean matches = !plugins.isEmpty();
+
+            if (matches) {
+                matchingTypeDescription.put(className, typeDescription);
+                matchingPlugins.put(className, plugins);
+            }
+
+            return matches;
+        } catch (TypePool.Resolution.NoSuchTypeException e) {
+            // There are android generated classes for android XML resources, that typically end with "R$[something]",
+            // such as "R$layout, R$string, R$id", etc. Which are not available in the classpath by the time this
+            // task runs, and also, those classes aren't worthy of instrumentation either.
+            return false;
         }
-
-        boolean matches = !plugins.isEmpty();
-
-        if (matches) {
-            matchingTypeDescription.put(className, typeDescription);
-            matchingPlugins.put(className, plugins);
-        }
-
-        return matches;
     }
 
     private ClassFileLocator getClassFileLocator(Set<File> classpath) throws IOException {
