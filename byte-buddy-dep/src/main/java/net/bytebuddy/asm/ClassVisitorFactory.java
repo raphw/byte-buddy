@@ -43,7 +43,6 @@ import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
@@ -84,7 +83,6 @@ public abstract class ClassVisitorFactory<T> {
     /**
      * The type of the represented class visitor wrapper.
      */
-    @SuppressWarnings("unused")
     private final Class<?> type;
 
     /**
@@ -94,6 +92,15 @@ public abstract class ClassVisitorFactory<T> {
      */
     protected ClassVisitorFactory(Class<?> type) {
         this.type = type;
+    }
+
+    /**
+     * Returns the {@link ClassVisitor} type that this factory represents.
+     *
+     * @return The {@link ClassVisitor} type that this factory represents.
+     */
+    public Class<?> getType() {
+        return type;
     }
 
     /**
