@@ -22,10 +22,11 @@ import com.android.build.api.instrumentation.InstrumentationScope;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.Variant;
 import com.android.build.gradle.BaseExtension;
+import com.android.build.gradle.internal.publishing.AndroidArtifacts;
 import kotlin.Unit;
 import net.bytebuddy.build.gradle.android.asm.ByteBuddyAsmClassVisitorFactory;
-import net.bytebuddy.build.gradle.android.service.BytebuddyService;
 import net.bytebuddy.build.gradle.android.dependencies.BytebuddyDependenciesHandler;
+import net.bytebuddy.build.gradle.android.service.BytebuddyService;
 import net.bytebuddy.build.gradle.android.tasks.LocalClassesSync;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -80,7 +81,11 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
 
     private FileCollection getRuntimeClasspath(Variant variant) {
         ComponentImpl component = (ComponentImpl) variant;
-        return component.getVariantDependencies().getRuntimeClasspath();
+        return component.getVariantDependencies().getArtifactFileCollection(
+                AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
+                AndroidArtifacts.ArtifactScope.ALL,
+                AndroidArtifacts.ArtifactType.CLASSES_JAR
+        );
     }
 
     private void verifyValidAndroidPlugin() {
