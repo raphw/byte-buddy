@@ -46,7 +46,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 abstract public class BytebuddyService implements BuildService<BytebuddyService.Params>, AutoCloseable {
 
@@ -58,7 +57,6 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
     private ClassFileLocator classFileLocator;
     private final Map<String, List<Plugin>> matchingPlugins = Collections.synchronizedMap(new HashMap<>());
     private final Map<String, TypeDescription> matchingTypeDescription = Collections.synchronizedMap(new HashMap<>());
-    private final static Pattern R_PATTERN = Pattern.compile("R\\$[^$]*$");
 
     public interface Params extends BuildServiceParameters {
         Property<JavaVersion> getJavaTargetCompatibilityVersion();
