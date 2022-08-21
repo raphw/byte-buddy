@@ -25,6 +25,8 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.objectweb.asm.ClassVisitor;
 
 public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitorFactory<ByteBuddyAsmClassVisitorFactory.Params> {
@@ -49,12 +51,15 @@ public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitor
     public interface Params extends InstrumentationParameters {
 
         @InputFiles
+        @PathSensitive(PathSensitivity.RELATIVE)
         ConfigurableFileCollection getAndroidBootClasspath();
 
         @InputFiles
+        @PathSensitive(PathSensitivity.RELATIVE)
         ConfigurableFileCollection getByteBuddyClasspath();
 
         @InputFiles
+        @PathSensitive(PathSensitivity.RELATIVE)
         ConfigurableFileCollection getRuntimeClasspath();
 
         @Classpath
