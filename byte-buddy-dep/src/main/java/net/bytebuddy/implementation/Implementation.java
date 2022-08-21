@@ -734,10 +734,10 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * @param methodVisitor             The method visitor to use
              * @param type                      The frame type.
              * @param stackCount                The number of values on the operand stack.
-             * @param stack                     The values on the operand stack up to {@code stackCount}, or {@link null}, if none.
+             * @param stack                     The values on the operand stack up to {@code stackCount}, or {@code null}, if none.
              * @param changedLocalVariableCount The number of local variables that were changed.
              * @param changedLocalVariable      The values added to the local variable array up to {@code changedLocalVariableCount}
-             *                                  or {@link null}, if none or not applicable.
+             *                                  or {@code null}, if none or not applicable.
              * @param fullLocalVariableCount    The number of local variables.
              * @param fullLocalVariable         The total number of local variables up to {@code fullLocalVariableCount} or
              *                                  {@code null}, if none.
@@ -881,7 +881,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * @param classFileVersion            The class file version of the created class.
              * @param auxiliaryClassFileVersion   The class file version of any auxiliary classes.
              * @return An implementation context in its extractable view.
-             * @deprecated Use {@link Factory#make(TypeDescription, AuxiliaryType.NamingStrategy, TypeInitializer, ClassFileVersion, ClassFileVersion, FrameGeneration)}.
+             * @deprecated Use {@link Implementation.Context.Factory#make(TypeDescription, AuxiliaryType.NamingStrategy, TypeInitializer, ClassFileVersion, ClassFileVersion, FrameGeneration)}.
              */
             @Deprecated
             ExtractableView make(TypeDescription instrumentedType,
