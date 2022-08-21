@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation;
 
-import jdk.internal.org.objectweb.asm.Type;
 import net.bytebuddy.description.type.TypeDescription;
 import org.junit.Rule;
 import org.junit.Test;
@@ -9,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.util.Collections;
 
