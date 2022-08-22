@@ -22,7 +22,17 @@ class ByteBuddyInstrumentedTest {
     val activityRule = ActivityScenarioRule(MainActivity::class.java)
 
     @Test
-    fun bytecodeInstrumentation() {
-        onView(withId(R.id.text)).check(matches(withText("Not instrumented")))
+    fun bytecodeInstrumentation_on_local_java() {
+        onView(withId(R.id.text_from_local_java_class)).check(matches(withText("Instrumented message in lib")))
+    }
+
+    @Test
+    fun bytecodeInstrumentation_on_local_kotlin() {
+        onView(withId(R.id.text_from_local_kotlin_class)).check(matches(withText("Instrumented message in lib")))
+    }
+
+    @Test
+    fun bytecodeInstrumentation_on_dependency_class() {
+        onView(withId(R.id.text_from_aar_dependency)).check(matches(withText("AppCompatActivity toString() instrumented")))
     }
 }
