@@ -125,6 +125,7 @@ jobs:
       - uses: step-security/harden-runner@dd2c410b088af7c0dc8046f3ac9a8f4148492a95 # V1.4.5
         with:
           egress-policy: block
+          disable-telemetry: true
           allowed-endpoints: >
             github.com:443
             raw.githubusercontent.com:443
