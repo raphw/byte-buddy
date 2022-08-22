@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
     <artifactId>byte-buddy-parent</artifactId>
-    <version>1.12.14-SNAPSHOT</version>
+    <version>1.12.14</version>
     <packaging>pom</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -154,7 +153,7 @@
         <connection>scm:git:${repository.url}</connection>
         <developerConnection>scm:git:${repository.url}</developerConnection>
         <url>${repository.url}</url>
-        <tag>HEAD</tag>
+        <tag>byte-buddy-1.12.14</tag>
     </scm>
 
     <dependencies>
@@ -572,7 +571,7 @@
                 <jdk>9</jdk>
             </activation>
             <properties>
-                <project.build.outputTimestamp/>
+                <project.build.outputTimestamp />
                 <sourcecode.main.version>1.6</sourcecode.main.version>
                 <sourcecode.test.version>1.6</sourcecode.test.version>
                 <bytecode.main.version>1.6</bytecode.main.version>
@@ -1141,7 +1140,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <echo level="info" message="Checksum collection is enabled (only if using mvnw)."/>
+                                        <echo level="info" message="Checksum collection is enabled (only if using mvnw)." />
                                     </target>
                                 </configuration>
                             </execution>
@@ -1172,7 +1171,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <echo level="info" message="Checksum enforcement is enabled (only if using mvnw)."/>
+                                        <echo level="info" message="Checksum enforcement is enabled (only if using mvnw)." />
                                     </target>
                                 </configuration>
                             </execution>
