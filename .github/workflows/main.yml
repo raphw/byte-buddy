@@ -127,10 +127,10 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.azul.com:443
-            artifactcache.actions.githubusercontent.com:443
-            blob.core.windows.net:443
             cdn.azul.com:443
+            blob.core.windows.net:443
             github.com:443
+            artifactcache.actions.githubusercontent.com:443
             repo.maven.apache.org:443
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
       - uses: actions/setup-java@2c7a4878f5d120bd643426d54ae1209b29cc01a3 # v3.4.1
