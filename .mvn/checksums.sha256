@@ -542,9 +542,9 @@ log4j:log4j:jar:1.2.14 e3bff9ab64a09b1ac2800f3b5fb1e3d99728064acb6dd392493850763
 log4j:log4j:pom:1.2.12 cb54dedc5d8c4510148dfa792701cbac1a84c383a84f48f5a32e6d7e460bbb72
 log4j:log4j:pom:1.2.14 6c243babab94ee5fdc1b31d0c4fbb7ffeadf8373823532e0d03adb29f21406e3
 logkit:logkit:pom:1.0.1 3de328dfa1b563ba6dfc5829774cf2f8dab0dc9528ed2731c35251ab7fd6c4c6
-net.bytebuddy:byte-buddy-agent:jar:1.12.13 25eed4301bbde3724a4bac0e7fe4a0b371c64b5fb40160b29480de3afd04efd5
-net.bytebuddy:byte-buddy-android:jar:1.12.13 09bc6b18f4f4b670a1f431e448ae38a4941f179a2352eed00188cb78686de54e
-net.bytebuddy:byte-buddy-dep:jar:1.12.13 987973669cd6078cfdf58796a6584758449f2f234d21748ab38271e059481bc0
+net.bytebuddy:byte-buddy-agent:jar:1.12.14 1819351a0c2e9719aafdb501c5399978bcb6c2817c9bae8227827771fa13dc97
+net.bytebuddy:byte-buddy-android:jar:1.12.14 3b8653a064678090a2fafda8e1b251009dbd219533b3a5df3888197b49364b73
+net.bytebuddy:byte-buddy-dep:jar:1.12.14 1c6949362e24b7ef2198452f16b4bceb8992d34c0573f929c4e5ef4ff1fa52d7
 net.bytebuddy:byte-buddy-maven-plugin:jar:1.12.14 42075cf95e84dfabf7fd4cd268400fe7a4579ecec65bad6dc3f1abd7b8939ce2
 net.bytebuddy:byte-buddy-maven-plugin:pom:1.12.14 8cf50aa648abbdb4ba17b7d307ea04ca35f6fa39e58cf81f6644896b25b7f944
 net.bytebuddy:byte-buddy-parent:pom:1.12.14 3c1a71bd77df0ca4777955a0e8d24b389dcc8a33762482fb447f7b44f6fccb68
