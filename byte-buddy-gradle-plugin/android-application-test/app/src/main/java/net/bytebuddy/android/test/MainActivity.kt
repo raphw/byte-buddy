@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.widget.TextView
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
+import net.bytebuddy.android.test.aar.lib.SomeAarClass
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -12,7 +13,7 @@ class MainActivity : AppCompatActivity() {
 
         setTextTo(R.id.text_from_local_java_class, SomeClass().someMethod())
         setTextTo(R.id.text_from_local_kotlin_class, SomeKotlinClass().someMethod())
-//        setTextTo(R.id.text_from_aar_dependency, AppCompatActivity().toString())
+        setTextTo(R.id.text_from_aar_dependency, SomeAarClass().someMethod())
     }
 
     private fun setTextTo(@IdRes id: Int, text: String) {

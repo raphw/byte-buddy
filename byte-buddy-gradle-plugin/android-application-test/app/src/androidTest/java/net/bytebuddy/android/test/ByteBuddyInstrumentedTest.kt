@@ -33,6 +33,6 @@ class ByteBuddyInstrumentedTest {
 
     @Test
     fun bytecodeInstrumentation_on_dependency_class() {
-        onView(withId(R.id.text_from_aar_dependency)).check(matches(withText("AppCompatActivity toString() instrumented")))
+        onView(withId(R.id.text_from_aar_dependency)).check(matches(withText("Instrumented message in lib")))
     }
 }
