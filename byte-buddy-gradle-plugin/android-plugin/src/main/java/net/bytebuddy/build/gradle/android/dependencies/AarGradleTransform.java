@@ -29,6 +29,9 @@ import java.nio.file.Files;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+/**
+ * This TransformAction takes care of providing JARs embedded in AARs dependencies for the "bytebuddy" configuration.
+ */
 public abstract class AarGradleTransform implements TransformAction<TransformParameters.None> {
 
     @InputArtifact

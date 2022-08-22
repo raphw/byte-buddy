@@ -30,6 +30,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+/**
+ * Collects locally compiled classes (from both Java and Kotlin compilers) and places them in a single output
+ * that will be later used as input for ByteBuddy.
+ */
 public abstract class LocalClassesSync extends DefaultTask {
 
     @Incremental

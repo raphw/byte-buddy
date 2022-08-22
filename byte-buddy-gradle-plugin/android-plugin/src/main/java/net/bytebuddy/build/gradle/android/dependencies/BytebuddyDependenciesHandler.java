@@ -28,6 +28,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Creates the "bytebuddy" dependency configuration needed to declare libraries with Byte Buddy plugins that are
+ * going to be used at compile time.
+ */
 public class BytebuddyDependenciesHandler {
     private final Project project;
     private final Map<String, Configuration> classpaths = new HashMap<>();
