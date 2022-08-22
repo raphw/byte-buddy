@@ -17,10 +17,9 @@ package net.bytebuddy.build.gradle.android.service;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.asm.ClassVisitorFactory;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
-import net.bytebuddy.build.gradle.android.asm.translator.UnwrappingClassVisitor;
-import net.bytebuddy.build.gradle.android.asm.translator.WrappingClassVisitor;
 import net.bytebuddy.build.gradle.android.utils.DefaultEntryPoint;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -58,6 +57,7 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
     private Map<String, List<Plugin>> matchingPlugins;
     private Map<String, TypeDescription> matchingTypeDescription;
     private URLClassLoader pluginLoader;
+    private ClassVisitorFactory<ClassVisitor> classVisitorFactory;
 
     public interface Params extends BuildServiceParameters {
         Property<JavaVersion> getJavaTargetCompatibilityVersion();
@@ -79,6 +79,7 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
         ClassFileVersion version = ClassFileVersion.ofJavaVersionString(getParameters().getJavaTargetCompatibilityVersion().get().toString());
         byteBuddy = entryPoint.byteBuddy(version);
         typeStrategy = new Plugin.Engine.TypeStrategy.ForEntryPoint(entryPoint, MethodNameTransformer.Suffixing.withRandomSuffix());
+        classVisitorFactory = ClassVisitorFactory.of(ClassVisitor.class);
         try {
             Set<File> classpath = runtimeClasspath.plus(androidBootClasspath).plus(byteBuddyClasspath).plus(localClasses).getFiles();
             classFileLocator = getClassFileLocator(classpath);
@@ -108,11 +109,11 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
     }
 
     private ClassVisitor translateToAndroids(net.bytebuddy.jar.asm.ClassVisitor composedVisitor) {
-        return new UnwrappingClassVisitor(composedVisitor);
+        return classVisitorFactory.wrap(composedVisitor);
     }
 
     private net.bytebuddy.jar.asm.ClassVisitor translateToByteBuddys(ClassVisitor original) {
-        return new WrappingClassVisitor(original);
+        return classVisitorFactory.unwrap(original);
     }
 
     public boolean matches(String className) {
