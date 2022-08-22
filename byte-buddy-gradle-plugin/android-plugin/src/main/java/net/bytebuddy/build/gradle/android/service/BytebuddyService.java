@@ -50,13 +50,13 @@ import java.util.Set;
 abstract public class BytebuddyService implements BuildService<BytebuddyService.Params>, AutoCloseable {
 
     private boolean initialized = false;
-    private final List<Plugin> allPlugins = new ArrayList<>();
+    private List<Plugin> allPlugins;
     private Plugin.Engine.TypeStrategy typeStrategy;
     private ByteBuddy byteBuddy;
     private TypePool typePool;
     private ClassFileLocator classFileLocator;
-    private final Map<String, List<Plugin>> matchingPlugins = Collections.synchronizedMap(new HashMap<>());
-    private final Map<String, TypeDescription> matchingTypeDescription = Collections.synchronizedMap(new HashMap<>());
+    private Map<String, List<Plugin>> matchingPlugins;
+    private Map<String, TypeDescription> matchingTypeDescription;
 
     public interface Params extends BuildServiceParameters {
         Property<JavaVersion> getJavaTargetCompatibilityVersion();
@@ -70,6 +70,9 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
             return;
         }
         initialized = true;
+        allPlugins = new ArrayList<>();
+        matchingPlugins = Collections.synchronizedMap(new HashMap<>());
+        matchingTypeDescription = Collections.synchronizedMap(new HashMap<>());
         EntryPoint entryPoint = new DefaultEntryPoint();
         Plugin.Engine.PoolStrategy poolStrategy = Plugin.Engine.PoolStrategy.Default.FAST;
         ClassFileVersion version = ClassFileVersion.ofJavaVersionString(getParameters().getJavaTargetCompatibilityVersion().get().toString());
@@ -203,5 +206,8 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
         for (Plugin plugin : allPlugins) {
             plugin.close();
         }
+        allPlugins = null;
+        matchingPlugins = null;
+        initialized = false;
     }
 }
