@@ -881,7 +881,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * @param classFileVersion            The class file version of the created class.
              * @param auxiliaryClassFileVersion   The class file version of any auxiliary classes.
              * @return An implementation context in its extractable view.
-             * @deprecated Use {@link Implementation.Context.Factory#make(TypeDescription, AuxiliaryType.NamingStrategy, TypeInitializer, ClassFileVersion, ClassFileVersion, FrameGeneration)}.
+             * @deprecated Use {@link Implementation.Context.Factory#make(TypeDescription, AuxiliaryType.NamingStrategy, TypeInitializer, ClassFileVersion, ClassFileVersion, Implementation.Context.FrameGeneration)}.
              */
             @Deprecated
             ExtractableView make(TypeDescription instrumentedType,
