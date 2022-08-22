@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 22. August 2022: version 1.12.14
+
+- Add `wrap` method to `DynamicType.Builder` that allows for the representation of a dynamic type via a `ClassVisitor`.
+- Add `ClassVisitorFactory` that allows to translate between Byte Buddy's, the original, or other shaded representations of ASM.
+- Fix visibility check for types in the default package.
+- Return correct value for types in the default package.
+
 ### 1. August 2022: version 1.12.13
 
 - Avoid duplicate application of Byte Buddy Maven plugin.
