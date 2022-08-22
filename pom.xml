@@ -4,7 +4,7 @@
 
     <groupId>net.bytebuddy</groupId>
     <artifactId>byte-buddy-parent</artifactId>
-    <version>1.12.14</version>
+    <version>1.12.15-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -153,7 +153,7 @@
         <connection>scm:git:${repository.url}</connection>
         <developerConnection>scm:git:${repository.url}</developerConnection>
         <url>${repository.url}</url>
-        <tag>byte-buddy-1.12.14</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <dependencies>
