@@ -57,6 +57,7 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
     private ClassFileLocator classFileLocator;
     private Map<String, List<Plugin>> matchingPlugins;
     private Map<String, TypeDescription> matchingTypeDescription;
+    private URLClassLoader pluginLoader;
 
     public interface Params extends BuildServiceParameters {
         Property<JavaVersion> getJavaTargetCompatibilityVersion();
@@ -156,7 +157,7 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
 
     private List<Plugin.Factory> createPluginFactories(Set<File> androidBootClasspath, Set<File> bytebuddyDiscoveryClasspath) throws IOException {
         URLClassLoader androidLoader = new URLClassLoader(toUrlArray(androidBootClasspath), ByteBuddy.class.getClassLoader());
-        URLClassLoader pluginLoader = new URLClassLoader(toUrlArray(bytebuddyDiscoveryClasspath), androidLoader);
+        pluginLoader = new URLClassLoader(toUrlArray(bytebuddyDiscoveryClasspath), androidLoader);
         ArrayList<Plugin.Factory> factories = new ArrayList<>();
 
         for (String className : Plugin.Engine.Default.scan(pluginLoader)) {
@@ -209,5 +210,6 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
         allPlugins = null;
         matchingPlugins = null;
         initialized = false;
+        pluginLoader.close();
     }
 }
