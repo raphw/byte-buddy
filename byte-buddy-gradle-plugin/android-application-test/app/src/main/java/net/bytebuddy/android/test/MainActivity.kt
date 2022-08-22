@@ -11,7 +11,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         setTextTo(R.id.text_from_local_java_class, SomeClass().someMethod())
-//        setTextTo(R.id.text_from_local_kotlin_class, SomeKotlinClass().someMethod())
+        setTextTo(R.id.text_from_local_kotlin_class, SomeKotlinClass().someMethod())
 //        setTextTo(R.id.text_from_aar_dependency, AppCompatActivity().toString())
     }
 
