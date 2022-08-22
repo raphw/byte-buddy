@@ -5,4 +5,7 @@ include "common"
 if (Objects.equals(System.getenv("ANDROID_TEST"), "true")) {
     include "android-application-test"
     include "android-application-test:app"
+    include "android-application-test:aar-bytebuddy-target"
+    include "android-application-test:aar-bytebuddy-plugin"
+    include "android-application-test:jar-bytebuddy-plugin"
 }
