@@ -22,22 +22,14 @@ class ByteBuddyInstrumentedTest {
     val activityRule = ActivityScenarioRule(MainActivity::class.java)
 
     @Test
-    fun bytecodeInstrumentation_on_local_java() {
+    fun bytecodeInstrumentation() {
+        // On local java
         onView(withId(R.id.text_from_local_java_class)).check(matches(withText("Instrumented message in lib")))
-    }
-
-    @Test
-    fun bytecodeInstrumentation_on_local_kotlin() {
+        // On local kotlin
         onView(withId(R.id.text_from_local_kotlin_class)).check(matches(withText("Instrumented message in lib")))
-    }
-
-    @Test
-    fun bytecodeInstrumentation_on_dependency_class() {
+        // On dependency class
         onView(withId(R.id.text_from_aar_dependency)).check(matches(withText("Instrumented message in lib")))
-    }
-
-    @Test
-    fun bytecodeInstrumentation_from_aar_plugin() {
+        // From aar
         onView(withId(R.id.text_instrumented_from_aar)).check(matches(withText("Instrumented message in lib")))
     }
 }
