@@ -1,6 +1,5 @@
 include "mavenBridge"
 include "android-plugin"
-include "android-plugin-test"
 include "common"
 if (Objects.equals(System.getenv("ANDROID_TEST"), "true")) {
     include "android-application-test"
