@@ -22,7 +22,6 @@ class JarPlugin : Plugin {
         type: TypeDescription,
         locator: ClassFileLocator
     ): DynamicType.Builder<*> {
-        println("Adding advice to: ${type.typeName}")//todo delete
         return builder.visit(
             Advice.to(JarAdvice::class.java).on(ElementMatchers.named("someMethod"))
         )
