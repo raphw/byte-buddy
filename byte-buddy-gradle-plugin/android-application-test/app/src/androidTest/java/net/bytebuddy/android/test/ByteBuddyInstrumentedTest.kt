@@ -35,4 +35,9 @@ class ByteBuddyInstrumentedTest {
     fun bytecodeInstrumentation_on_dependency_class() {
         onView(withId(R.id.text_from_aar_dependency)).check(matches(withText("Instrumented message in lib")))
     }
+
+    @Test
+    fun bytecodeInstrumentation_from_aar_plugin() {
+        onView(withId(R.id.text_instrumented_from_aar)).check(matches(withText("Instrumented message in lib")))
+    }
 }
