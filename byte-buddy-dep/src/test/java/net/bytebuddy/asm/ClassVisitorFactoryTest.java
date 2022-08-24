@@ -102,22 +102,7 @@ public class ClassVisitorFactoryTest {
                     argument[index] = null;
                 }
             }
-            if (method.getName().equals("visitAttribute")) {
-                try {
-                    current = method.invoke(current, argument);
-                    fail();
-                } catch (InvocationTargetException e) {
-                    if (!(e.getCause() instanceof UnsupportedOperationException)) {
-                        throw e;
-                    }
-                }
-            } else {
-                try {
-                    current = method.invoke(current, argument);
-                } catch (Exception e) {
-                    throw e;
-                }
-            }
+            current = method.invoke(current, argument);
         }
     }
 
@@ -148,18 +133,7 @@ public class ClassVisitorFactoryTest {
                     argument[index] = null;
                 }
             }
-            if (method.getName().equals("visitAttribute")) {
-                try {
-                    current = method.invoke(current, argument);
-                    fail();
-                } catch (InvocationTargetException e) {
-                    if (!(e.getCause() instanceof UnsupportedOperationException)) {
-                        throw e;
-                    }
-                }
-            } else {
-                current = method.invoke(current, argument);
-            }
+            current = method.invoke(current, argument);
         }
     }
 }

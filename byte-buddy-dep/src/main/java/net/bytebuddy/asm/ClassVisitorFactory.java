@@ -16,7 +16,9 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.Ownership;
@@ -36,6 +38,7 @@ import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.TypeCreation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
@@ -46,10 +49,10 @@ import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.*;
 
 import java.lang.reflect.Method;
+import java.security.PrivilegedAction;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.is;
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A factory for wrapping a {@link ClassVisitor} in Byte Buddy's package namespace to a
@@ -115,211 +118,25 @@ public abstract class ClassVisitorFactory<T> {
     /**
      * Returns a class visitor factory for the supplied {@link ClassVisitor} type.
      *
-     * @param classVisitor The type of the translated class visitor.
+     * @param classVisitor The type of the translated {@link ClassVisitor}.
      * @param byteBuddy    The Byte Buddy instance to use.
      * @param <S>          The type of the class visitor to map to.
      * @return A factory for wrapping {@link ClassVisitor}s in Byte Buddy's and the supplied package namespace.
      */
     public static <S> ClassVisitorFactory<S> of(Class<S> classVisitor, ByteBuddy byteBuddy) {
-        if (!ClassVisitor.class.getSimpleName().equals(classVisitor.getSimpleName())) {
-            throw new IllegalArgumentException("Expected a class named " + ClassVisitor.class.getSimpleName() + ": " + classVisitor);
-        }
-        try {
-            String prefix = classVisitor.getPackage().getName();
-            Map<Class<?>, Class<?>> utilities = new HashMap<Class<?>, Class<?>>();
-            for (Class<?> type : Arrays.asList(
-                    Attribute.class,
-                    Label.class,
-                    Type.class,
-                    TypePath.class,
-                    Handle.class,
-                    ConstantDynamic.class
-            )) {
-                Class<?> utility;
-                try {
-                    utility = Class.forName(prefix + "." + type.getSimpleName(), false, classVisitor.getClassLoader());
-                } catch (ClassNotFoundException ignored) {
-                    continue;
-                }
-                utilities.put(type, utility);
-            }
-            if (utilities.containsKey(Label.class)) {
-                utilities.put(Label[].class, Class.forName("[L" + utilities.get(Label.class).getName() + ";", false, classVisitor.getClassLoader()));
-            }
-            Map<Class<?>, Class<?>> equivalents = new HashMap<Class<?>, Class<?>>();
-            Map<Class<?>, DynamicType.Builder<?>> builders = new HashMap<Class<?>, DynamicType.Builder<?>>();
-            for (Class<?> type : Arrays.asList(
-                    ClassVisitor.class,
-                    AnnotationVisitor.class,
-                    ModuleVisitor.class,
-                    RecordComponentVisitor.class,
-                    FieldVisitor.class,
-                    MethodVisitor.class
-            )) {
-                Class<?> equivalent;
-                try {
-                    equivalent = Class.forName(prefix + "." + type.getSimpleName(), false, classVisitor.getClassLoader());
-                } catch (ClassNotFoundException ignored) {
-                    continue;
-                }
-                DynamicType.Builder<?> wrapper, unwrapper;
-                if (type == MethodVisitor.class) {
-                    wrapper = toMethodVisitorBuilder(byteBuddy,
-                            type, equivalent,
-                            TypePath.class, utilities.get(TypePath.class),
-                            Label.class, utilities.get(Label.class),
-                            Type.class, utilities.get(Type.class),
-                            Handle.class, utilities.get(Handle.class),
-                            ConstantDynamic.class, utilities.get(ConstantDynamic.class));
-                    unwrapper = toMethodVisitorBuilder(byteBuddy,
-                            equivalent, type,
-                            utilities.get(TypePath.class), TypePath.class,
-                            utilities.get(Label.class), Label.class,
-                            utilities.get(Type.class), Type.class,
-                            utilities.get(Handle.class), Handle.class,
-                            utilities.get(ConstantDynamic.class), ConstantDynamic.class);
-                } else {
-                    wrapper = toVisitorBuilder(byteBuddy,
-                            type, equivalent,
-                            TypePath.class, utilities.get(TypePath.class),
-                            new Implementation.Simple(MethodReturn.VOID));
-                    unwrapper = toVisitorBuilder(byteBuddy,
-                            equivalent, type,
-                            utilities.get(TypePath.class), TypePath.class,
-                            new Implementation.Simple(MethodReturn.VOID));
-                }
-                equivalents.put(type, equivalent);
-                builders.put(type, wrapper);
-                builders.put(equivalent, unwrapper);
-            }
-            List<DynamicType> dynamicTypes = new ArrayList<DynamicType>();
-            Map<Class<?>, TypeDescription> generated = new HashMap<Class<?>, TypeDescription>();
-            for (Map.Entry<Class<?>, Class<?>> entry : equivalents.entrySet()) {
-                DynamicType.Builder<?> wrapper = builders.get(entry.getKey()), unwrapper = builders.get(entry.getValue());
-                for (Method method : entry.getKey().getMethods()) {
-                    if (method.getDeclaringClass() == Object.class) {
-                        continue;
-                    }
-                    Class<?>[] parameter = method.getParameterTypes(), match = new Class<?>[parameter.length];
-                    List<MethodCall.ArgumentLoader.Factory> left = new ArrayList<MethodCall.ArgumentLoader.Factory>(parameter.length);
-                    List<MethodCall.ArgumentLoader.Factory> right = new ArrayList<MethodCall.ArgumentLoader.Factory>(match.length);
-                    boolean unsupported = false, unresolved = false;
-                    int offset = 1;
-                    for (int index = 0; index < parameter.length; index++) {
-                        if (entry.getKey() == MethodVisitor.class && parameter[index] == Label.class) {
-                            match[index] = utilities.get(Label.class);
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelTranslator.NAME, offset, true));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelTranslator.NAME, offset, true));
-                        } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Label[].class) {
-                            match[index] = utilities.get(Label[].class);
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelArrayTranslator.NAME, offset, true));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelArrayTranslator.NAME, offset, true));
-                        } else if (parameter[index] == TypePath.class) {
-                            match[index] = utilities.get(TypePath.class);
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], TypePathTranslator.NAME, offset, false));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], TypePathTranslator.NAME, offset, false));
-                        } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Handle.class) {
-                            match[index] = utilities.get(Handle.class);
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], HandleTranslator.NAME, offset, false));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], HandleTranslator.NAME, offset, false));
-                        } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Object.class) {
-                            match[index] = Object.class;
-                            left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object.class, ConstantTranslator.NAME, offset, false));
-                            right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object.class, ConstantTranslator.NAME, offset, false));
-                        } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Object[].class) {
-                            match[index] = Object[].class;
-                            if (method.getName().equals("visitFrame")) {
-                                left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object[].class, FrameTranslator.NAME, offset, true));
-                                right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object[].class, FrameTranslator.NAME, offset, true));
-                            } else {
-                                left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object[].class, ConstantArrayTranslator.NAME, offset, false));
-                                right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object[].class, ConstantArrayTranslator.NAME, offset, false));
-                            }
-                        } else if (parameter[index] == Attribute.class) {
-                            match[index] = utilities.get(Attribute.class);
-                            unsupported = true;
-                        } else {
-                            match[index] = parameter[index];
-                            left.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
-                            right.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
-                        }
-                        if (match[index] == null) {
-                            unresolved = true;
-                            break;
-                        }
-                        offset += parameter[index] == long.class || parameter[index] == double.class ? 2 : 1;
-                    }
-                    Method target;
-                    if (unresolved) {
-                        target = null;
-                        unsupported = true;
-                    } else {
-                        try {
-                            target = entry.getValue().getMethod(method.getName(), match);
-                        } catch (NoSuchMethodException ignored) {
-                            target = null;
-                            unsupported = true;
-                        }
-                    }
-                    if (unsupported) {
-                        wrapper = wrapper.method(is(method)).intercept(ExceptionMethod.throwing(UnsupportedOperationException.class));
-                        if (target != null) {
-                            unwrapper = unwrapper.method(is(target)).intercept(ExceptionMethod.throwing(UnsupportedOperationException.class));
-                        }
-                    } else {
-                        MethodCall wrapping = MethodCall.invoke(target).onField(DELEGATE).with(left);
-                        MethodCall unwrapping = MethodCall.invoke(method).onField(DELEGATE).with(right);
-                        Class<?> returned = equivalents.get(method.getReturnType());
-                        if (returned != null) {
-                            wrapping = MethodCall.invoke(builders.get(method.getReturnType())
-                                    .toTypeDescription()
-                                    .getDeclaredMethods()
-                                    .filter(named(WRAP))
-                                    .getOnly()).withMethodCall(wrapping);
-                            unwrapping = MethodCall.invoke(builders.get(returned).toTypeDescription()
-                                    .getDeclaredMethods()
-                                    .filter(named(WRAP))
-                                    .getOnly()).withMethodCall(unwrapping);
-                        }
-                        wrapper = wrapper.method(is(method)).intercept(wrapping);
-                        unwrapper = unwrapper.method(is(target)).intercept(unwrapping);
-                    }
-                }
-                DynamicType left = wrapper.make(), right = unwrapper.make();
-                generated.put(entry.getKey(), left.getTypeDescription());
-                generated.put(entry.getValue(), right.getTypeDescription());
-                dynamicTypes.add(left);
-                dynamicTypes.add(right);
-            }
-            ClassLoader classLoader = new MultipleParentClassLoader.Builder(false)
-                    .append(ClassVisitor.class, classVisitor)
-                    .build();
-            @SuppressWarnings("unchecked")
-            ClassVisitorFactory<S> factory = byteBuddy.subclass(ClassVisitorFactory.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
-                    .method(named("wrap")).intercept(MethodCall.construct(generated.get(classVisitor)
-                            .getDeclaredMethods()
-                            .filter(ElementMatchers.<MethodDescription.InDefinedShape>isConstructor())
-                            .getOnly()).withArgument(0))
-                    .method(named("unwrap")).intercept(MethodCall.construct(generated.get(ClassVisitor.class)
-                            .getDeclaredMethods()
-                            .filter(ElementMatchers.<MethodDescription.InDefinedShape>isConstructor())
-                            .getOnly()).withArgument(0).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
-                    .make()
-                    .include(dynamicTypes)
-                    .load(classLoader)
-                    .getLoaded()
-                    .getConstructor(Class.class)
-                    .newInstance(classVisitor);
-            if (classLoader instanceof MultipleParentClassLoader
-                    && classLoader != ClassVisitor.class.getClassLoader()
-                    && classLoader != classVisitor.getClassLoader()
-                    && !((MultipleParentClassLoader) classLoader).seal()) {
-                throw new IllegalStateException("Failed to seal multiple parent class loader: " + classLoader);
-            }
-            return factory;
-        } catch (Exception exception) {
-            throw new IllegalArgumentException("Failed to generate factory for " + classVisitor.getName(), exception);
-        }
+        return doPrivileged(new CreateClassVisitorFactory<S>(classVisitor, byteBuddy));
+    }
+
+    /**
+     * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+     *
+     * @param action The action to execute from a privileged context.
+     * @param <T>    The type of the action's resolved value.
+     * @return The action's resolved value.
+     */
+    @AccessControllerPlugin.Enhance
+    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+        return action.run();
     }
 
     /**
@@ -452,6 +269,29 @@ public abstract class ClassVisitorFactory<T> {
         return new MethodCall.ArgumentLoader.ForStackManipulation(new StackManipulation.Compound(virtual ? MethodVariableAccess.loadThis() : StackManipulation.Trivial.INSTANCE,
                 MethodVariableAccess.REFERENCE.loadFrom(offset),
                 MethodInvocation.invoke(source.getDeclaredMethods().filter(named(method)).getOnly())), target);
+    }
+
+    private static DynamicType toAttributeWrapper(DynamicType.Builder<?> builder, Class<?> source, Class<?> target, TypeDescription sourceWrapper, TypeDescription targetWrapper) throws Exception {
+        return builder
+                .defineField(DELEGATE, target, Visibility.PUBLIC, FieldManifestation.FINAL)
+                .defineConstructor(Visibility.PUBLIC)
+                .withParameters(target)
+                .intercept(MethodCall.invoke(source.getDeclaredConstructor(String.class))
+                        .onSuper()
+                        .with(new StackManipulation.Compound(
+                                MethodVariableAccess.REFERENCE.loadFrom(1),
+                                FieldAccess.forField(new FieldDescription.ForLoadedField(target.getField("type"))).read()), String.class)
+                        .andThen(FieldAccessor.ofField(DELEGATE).setsArgumentAt(0)))
+                .defineMethod(AttributeTranslator.NAME, source, Visibility.PUBLIC, Ownership.STATIC)
+                .withParameters(target)
+                .intercept(new Implementation.Simple(new AttributeTranslator(source, target, sourceWrapper, targetWrapper)))
+                .method(isProtected())
+                .intercept(ExceptionMethod.throwing(UnsupportedOperationException.class))
+                .method(named("isUnknown"))
+                .intercept(MethodCall.invoke(target.getMethod("isUnknown")).onField(DELEGATE))
+                .method(named("isCodeAttribute"))
+                .intercept(MethodCall.invoke(target.getMethod("isCodeAttribute")).onField(DELEGATE))
+                .make();
     }
 
     /**
@@ -1259,6 +1099,337 @@ public abstract class ClassVisitorFactory<T> {
                     instrumentedMethod.getParameters().asTypeList());
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(1, 2);
+        }
+    }
+
+    /**
+     * A method to wrap an {@link Attribute}.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    protected static class AttributeTranslator implements ByteCodeAppender {
+
+        /**
+         * The name of the method.
+         */
+        protected static final String NAME = "attribute";
+
+        /**
+         * The {@link Attribute} type in the original namespace.
+         */
+        private final Class<?> sourceAttribute;
+
+        /**
+         * The {@link Attribute} type in the targeted namespace.
+         */
+        private final Class<?> targetAttribute;
+
+        /**
+         * The wrapper type for the {@link Attribute} type in the original namespace.
+         */
+        private final TypeDescription sourceWrapper;
+
+        /**
+         * The wrapper type for the {@link Attribute} type in the targeted namespace.
+         */
+        private final TypeDescription targetWrapper;
+
+        /**
+         * Creates a new attribute translator.
+         *
+         * @param sourceAttribute The {@link Attribute} type in the original namespace.
+         * @param targetAttribute The {@link Attribute} type in the targeted namespace.
+         * @param sourceWrapper   The wrapper type for the {@link Attribute} type in the original namespace.
+         * @param targetWrapper   The wrapper type for the {@link Attribute} type in the targeted namespace.
+         */
+        protected AttributeTranslator(Class<?> sourceAttribute, Class<?> targetAttribute, TypeDescription sourceWrapper, TypeDescription targetWrapper) {
+            this.sourceAttribute = sourceAttribute;
+            this.targetAttribute = targetAttribute;
+            this.sourceWrapper = sourceWrapper;
+            this.targetWrapper = targetWrapper;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+            Label nullCheck = new Label(), wrapperCheck = new Label();
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitJumpInsn(Opcodes.IFNONNULL, nullCheck);
+            methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            methodVisitor.visitLabel(nullCheck);
+            implementationContext.getFrameGeneration().same(methodVisitor, instrumentedMethod.getParameters().asTypeList());
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, targetWrapper.getInternalName());
+            methodVisitor.visitJumpInsn(Opcodes.IFEQ, wrapperCheck);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, targetWrapper.getInternalName());
+            methodVisitor.visitFieldInsn(Opcodes.GETFIELD, targetWrapper.getInternalName(), DELEGATE, Type.getDescriptor(sourceAttribute));
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            methodVisitor.visitLabel(wrapperCheck);
+            implementationContext.getFrameGeneration().same(methodVisitor, instrumentedMethod.getParameters().asTypeList());
+            methodVisitor.visitTypeInsn(Opcodes.NEW, sourceWrapper.getInternalName());
+            methodVisitor.visitInsn(Opcodes.DUP);
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                    sourceWrapper.getInternalName(),
+                    MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                    Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(targetAttribute)),
+                    false);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            return new Size(3, 1);
+        }
+    }
+
+    /**
+     * A factory for creating a wrapper for a {@link ClassVisitor}.
+     *
+     * @param <S> The type of the class visitor to map to.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    protected static class CreateClassVisitorFactory<S> implements PrivilegedAction<ClassVisitorFactory<S>> {
+
+        /**
+         * The type of the translated {@link ClassVisitor}.
+         */
+        private final Class<S> classVisitor;
+
+        /**
+         * The Byte Buddy instance to use.
+         */
+        private final ByteBuddy byteBuddy;
+
+        /**
+         * Creates a new factory for a class visitor wrapper.
+         *
+         * @param classVisitor The type of the translated {@link ClassVisitor}.
+         * @param byteBuddy    The Byte Buddy instance to use.
+         */
+        protected CreateClassVisitorFactory(Class<S> classVisitor, ByteBuddy byteBuddy) {
+            this.classVisitor = classVisitor;
+            this.byteBuddy = byteBuddy;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ClassVisitorFactory<S> run() {
+            if (!ClassVisitor.class.getSimpleName().equals(classVisitor.getSimpleName())) {
+                throw new IllegalArgumentException("Expected a class named " + ClassVisitor.class.getSimpleName() + ": " + classVisitor);
+            }
+            try {
+                String prefix = classVisitor.getPackage().getName();
+                Map<Class<?>, Class<?>> utilities = new HashMap<Class<?>, Class<?>>();
+                for (Class<?> type : Arrays.asList(
+                        Attribute.class,
+                        Label.class,
+                        Type.class,
+                        TypePath.class,
+                        Handle.class,
+                        ConstantDynamic.class
+                )) {
+                    Class<?> utility;
+                    try {
+                        utility = Class.forName(prefix + "." + type.getSimpleName(), false, classVisitor.getClassLoader());
+                    } catch (ClassNotFoundException ignored) {
+                        continue;
+                    }
+                    utilities.put(type, utility);
+                }
+                if (utilities.containsKey(Label.class)) {
+                    utilities.put(Label[].class, Class.forName("[L" + utilities.get(Label.class).getName() + ";", false, classVisitor.getClassLoader()));
+                }
+                Map<Class<?>, Class<?>> equivalents = new HashMap<Class<?>, Class<?>>();
+                Map<Class<?>, DynamicType.Builder<?>> builders = new HashMap<Class<?>, DynamicType.Builder<?>>();
+                for (Class<?> type : Arrays.asList(
+                        ClassVisitor.class,
+                        AnnotationVisitor.class,
+                        ModuleVisitor.class,
+                        RecordComponentVisitor.class,
+                        FieldVisitor.class,
+                        MethodVisitor.class
+                )) {
+                    Class<?> equivalent;
+                    try {
+                        equivalent = Class.forName(prefix + "." + type.getSimpleName(), false, classVisitor.getClassLoader());
+                    } catch (ClassNotFoundException ignored) {
+                        continue;
+                    }
+                    DynamicType.Builder<?> wrapper, unwrapper;
+                    if (type == MethodVisitor.class) {
+                        wrapper = toMethodVisitorBuilder(byteBuddy,
+                                type, equivalent,
+                                TypePath.class, utilities.get(TypePath.class),
+                                Label.class, utilities.get(Label.class),
+                                Type.class, utilities.get(Type.class),
+                                Handle.class, utilities.get(Handle.class),
+                                ConstantDynamic.class, utilities.get(ConstantDynamic.class));
+                        unwrapper = toMethodVisitorBuilder(byteBuddy,
+                                equivalent, type,
+                                utilities.get(TypePath.class), TypePath.class,
+                                utilities.get(Label.class), Label.class,
+                                utilities.get(Type.class), Type.class,
+                                utilities.get(Handle.class), Handle.class,
+                                utilities.get(ConstantDynamic.class), ConstantDynamic.class);
+                    } else {
+                        wrapper = toVisitorBuilder(byteBuddy,
+                                type, equivalent,
+                                TypePath.class, utilities.get(TypePath.class),
+                                new Implementation.Simple(MethodReturn.VOID));
+                        unwrapper = toVisitorBuilder(byteBuddy,
+                                equivalent, type,
+                                utilities.get(TypePath.class), TypePath.class,
+                                new Implementation.Simple(MethodReturn.VOID));
+                    }
+                    equivalents.put(type, equivalent);
+                    builders.put(type, wrapper);
+                    builders.put(equivalent, unwrapper);
+                }
+                List<DynamicType> dynamicTypes = new ArrayList<DynamicType>();
+                Map<Class<?>, TypeDescription> generated = new HashMap<Class<?>, TypeDescription>();
+                DynamicType sourceAttribute, targetAttribute;
+                if (utilities.containsKey(Attribute.class)) {
+                    DynamicType.Builder<?> source = byteBuddy.subclass(Attribute.class, ConstructorStrategy.Default.NO_CONSTRUCTORS);
+                    DynamicType.Builder<?> target = byteBuddy.subclass(utilities.get(Attribute.class), ConstructorStrategy.Default.NO_CONSTRUCTORS);
+                    sourceAttribute = toAttributeWrapper(source, Attribute.class, utilities.get(Attribute.class), source.toTypeDescription(), target.toTypeDescription());
+                    dynamicTypes.add(sourceAttribute);
+                    targetAttribute = toAttributeWrapper(target, utilities.get(Attribute.class), Attribute.class, target.toTypeDescription(), source.toTypeDescription());
+                    dynamicTypes.add(targetAttribute);
+                } else {
+                    sourceAttribute = null;
+                    targetAttribute = null;
+                }
+                for (Map.Entry<Class<?>, Class<?>> entry : equivalents.entrySet()) {
+                    DynamicType.Builder<?> wrapper = builders.get(entry.getKey()), unwrapper = builders.get(entry.getValue());
+                    for (Method method : entry.getKey().getMethods()) {
+                        if (method.getDeclaringClass() == Object.class) {
+                            continue;
+                        }
+                        Class<?>[] parameter = method.getParameterTypes(), match = new Class<?>[parameter.length];
+                        List<MethodCall.ArgumentLoader.Factory> left = new ArrayList<MethodCall.ArgumentLoader.Factory>(parameter.length);
+                        List<MethodCall.ArgumentLoader.Factory> right = new ArrayList<MethodCall.ArgumentLoader.Factory>(match.length);
+                        boolean unsupported = false, unresolved = false;
+                        int offset = 1;
+                        for (int index = 0; index < parameter.length; index++) {
+                            if (entry.getKey() == MethodVisitor.class && parameter[index] == Label.class) {
+                                match[index] = utilities.get(Label.class);
+                                left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelTranslator.NAME, offset, true));
+                                right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelTranslator.NAME, offset, true));
+                            } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Label[].class) {
+                                match[index] = utilities.get(Label[].class);
+                                left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], LabelArrayTranslator.NAME, offset, true));
+                                right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], LabelArrayTranslator.NAME, offset, true));
+                            } else if (parameter[index] == TypePath.class) {
+                                match[index] = utilities.get(TypePath.class);
+                                left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], TypePathTranslator.NAME, offset, false));
+                                right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], TypePathTranslator.NAME, offset, false));
+                            } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Handle.class) {
+                                match[index] = utilities.get(Handle.class);
+                                left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), match[index], HandleTranslator.NAME, offset, false));
+                                right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), parameter[index], HandleTranslator.NAME, offset, false));
+                            } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Object.class) {
+                                match[index] = Object.class;
+                                left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object.class, ConstantTranslator.NAME, offset, false));
+                                right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object.class, ConstantTranslator.NAME, offset, false));
+                            } else if (entry.getKey() == MethodVisitor.class && parameter[index] == Object[].class) {
+                                match[index] = Object[].class;
+                                if (method.getName().equals("visitFrame")) {
+                                    left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object[].class, FrameTranslator.NAME, offset, true));
+                                    right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object[].class, FrameTranslator.NAME, offset, true));
+                                } else {
+                                    left.add(toConvertedParameter(builders.get(entry.getKey()).toTypeDescription(), Object[].class, ConstantArrayTranslator.NAME, offset, false));
+                                    right.add(toConvertedParameter(builders.get(entry.getValue()).toTypeDescription(), Object[].class, ConstantArrayTranslator.NAME, offset, false));
+                                }
+                            } else if (parameter[index] == Attribute.class) {
+                                match[index] = utilities.get(Attribute.class);
+                                if (sourceAttribute != null && targetAttribute != null) {
+                                    left.add(toConvertedParameter(sourceAttribute.getTypeDescription(), utilities.get(Attribute.class), AttributeTranslator.NAME, offset, false));
+                                    right.add(toConvertedParameter(targetAttribute.getTypeDescription(), Attribute.class, AttributeTranslator.NAME, offset, false));
+                                } else {
+                                    unsupported = true;
+                                }
+                            } else {
+                                match[index] = parameter[index];
+                                left.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
+                                right.add(new MethodCall.ArgumentLoader.ForMethodParameter.Factory(index));
+                            }
+                            if (match[index] == null) {
+                                unresolved = true;
+                                break;
+                            }
+                            offset += parameter[index] == long.class || parameter[index] == double.class ? 2 : 1;
+                        }
+                        Method target;
+                        if (unresolved) {
+                            target = null;
+                            unsupported = true;
+                        } else {
+                            try {
+                                target = entry.getValue().getMethod(method.getName(), match);
+                            } catch (NoSuchMethodException ignored) {
+                                target = null;
+                                unsupported = true;
+                            }
+                        }
+                        if (unsupported) {
+                            wrapper = wrapper.method(is(method)).intercept(ExceptionMethod.throwing(UnsupportedOperationException.class));
+                            if (target != null) {
+                                unwrapper = unwrapper.method(is(target)).intercept(ExceptionMethod.throwing(UnsupportedOperationException.class));
+                            }
+                        } else {
+                            MethodCall wrapping = MethodCall.invoke(target).onField(DELEGATE).with(left);
+                            MethodCall unwrapping = MethodCall.invoke(method).onField(DELEGATE).with(right);
+                            Class<?> returned = equivalents.get(method.getReturnType());
+                            if (returned != null) {
+                                wrapping = MethodCall.invoke(builders.get(method.getReturnType())
+                                        .toTypeDescription()
+                                        .getDeclaredMethods()
+                                        .filter(named(WRAP))
+                                        .getOnly()).withMethodCall(wrapping);
+                                unwrapping = MethodCall.invoke(builders.get(returned).toTypeDescription()
+                                        .getDeclaredMethods()
+                                        .filter(named(WRAP))
+                                        .getOnly()).withMethodCall(unwrapping);
+                            }
+                            wrapper = wrapper.method(is(method)).intercept(wrapping);
+                            unwrapper = unwrapper.method(is(target)).intercept(unwrapping);
+                        }
+                    }
+                    DynamicType left = wrapper.make(), right = unwrapper.make();
+                    generated.put(entry.getKey(), left.getTypeDescription());
+                    generated.put(entry.getValue(), right.getTypeDescription());
+                    dynamicTypes.add(left);
+                    dynamicTypes.add(right);
+                }
+                ClassLoader classLoader = new MultipleParentClassLoader.Builder(false)
+                        .append(ClassVisitor.class, classVisitor)
+                        .build();
+                @SuppressWarnings("unchecked")
+                ClassVisitorFactory<S> factory = byteBuddy.subclass(ClassVisitorFactory.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
+                        .method(named("wrap")).intercept(MethodCall.construct(generated.get(classVisitor)
+                                .getDeclaredMethods()
+                                .filter(ElementMatchers.<MethodDescription.InDefinedShape>isConstructor())
+                                .getOnly()).withArgument(0))
+                        .method(named("unwrap")).intercept(MethodCall.construct(generated.get(ClassVisitor.class)
+                                .getDeclaredMethods()
+                                .filter(ElementMatchers.<MethodDescription.InDefinedShape>isConstructor())
+                                .getOnly()).withArgument(0).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
+                        .make()
+                        .include(dynamicTypes)
+                        .load(classLoader)
+                        .getLoaded()
+                        .getConstructor(Class.class)
+                        .newInstance(classVisitor);
+                if (classLoader instanceof MultipleParentClassLoader
+                        && classLoader != ClassVisitor.class.getClassLoader()
+                        && classLoader != classVisitor.getClassLoader()
+                        && !((MultipleParentClassLoader) classLoader).seal()) {
+                    throw new IllegalStateException("Failed to seal multiple parent class loader: " + classLoader);
+                }
+                return factory;
+            } catch (Exception exception) {
+                throw new IllegalArgumentException("Failed to generate factory for " + classVisitor.getName(), exception);
+            }
         }
     }
 }
