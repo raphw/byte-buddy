@@ -27,13 +27,25 @@ public class ClassVisitorFactoryOtherTest {
     @Test
     public void testAttributeWrapped() {
         final Attribute sample = new Attribute(FOO) {
-            /* empty */
+
+            @Override
+            public boolean isUnknown() {
+                return false;
+            }
+
+            @Override
+            public boolean isCodeAttribute() {
+                return true;
+            }
         };
         ClassVisitorFactory.of(ClassVisitor.class).wrap(new ClassVisitor(OpenedClassReader.ASM_API) {
 
             @Override
             public void visitAttribute(Attribute attribute) {
                 assertThat(attribute, not(sameInstance(sample)));
+                assertThat(attribute.type, is(FOO));
+                assertThat(attribute.isUnknown(), is(false));
+                assertThat(attribute.isCodeAttribute(), is(true));
                 try {
                     assertThat(attribute.getClass().getField("delegate").get(attribute), sameInstance((Object) sample));
                 } catch (Exception e) {
