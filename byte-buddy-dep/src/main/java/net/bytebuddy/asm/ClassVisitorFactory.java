@@ -271,6 +271,17 @@ public abstract class ClassVisitorFactory<T> {
                 MethodInvocation.invoke(source.getDeclaredMethods().filter(named(method)).getOnly())), target);
     }
 
+    /**
+     * Creates a wrapper type for an {@link Attribute} to pass attribues along a visitor chain.
+     *
+     * @param builder       The builder to use for the wrapper type.
+     * @param source        The {@link Attribute} type in the original namespace.
+     * @param target        The {@link Attribute} type in the targeted namespace.
+     * @param sourceWrapper The wrapper type for the {@link Attribute} type in the original namespace.
+     * @param targetWrapper The wrapper type for the {@link Attribute} type in the targeted namespace.
+     * @return The created dynamic type.
+     * @throws Exception If the dynamic type cannot be built.
+     */
     private static DynamicType toAttributeWrapper(DynamicType.Builder<?> builder, Class<?> source, Class<?> target, TypeDescription sourceWrapper, TypeDescription targetWrapper) throws Exception {
         return builder
                 .defineField(DELEGATE, target, Visibility.PUBLIC, FieldManifestation.FINAL)
