@@ -32,7 +32,6 @@ version = pom.parent.version.text().toString()
 
 dependencies {
     implementation gradleApi()
-    fatJar project(':common')
     fatJar project(':android-plugin')
     compileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
     compileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
