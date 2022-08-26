@@ -78,7 +78,7 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
         ClassFileVersion version = ClassFileVersion.ofJavaVersionString(getParameters().getJavaTargetCompatibilityVersion().get().toString());
         byteBuddy = entryPoint.byteBuddy(version);
         typeStrategy = new Plugin.Engine.TypeStrategy.ForEntryPoint(entryPoint, MethodNameTransformer.Suffixing.withRandomSuffix());
-        classVisitorFactory = ClassVisitorFactory.of(ClassVisitor.class);
+        classVisitorFactory = ClassVisitorFactory.of(ClassVisitor.class, byteBuddy);
         try {
             Set<File> classpath = runtimeClasspath.plus(androidBootClasspath).plus(byteBuddyClasspath).plus(localClasses).getFiles();
             classFileLocator = getClassFileLocator(classpath);
