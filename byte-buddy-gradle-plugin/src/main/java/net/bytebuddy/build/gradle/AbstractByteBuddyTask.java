@@ -20,8 +20,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.BuildLogger;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
-import org.gradle.api.tasks.Internal;
-import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.build.gradle.common.TransformationLogger;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.utility.nullability.MaybeNull;
@@ -29,6 +28,7 @@ import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
@@ -37,7 +37,13 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * An abstract Byte Buddy task implementation.
@@ -597,51 +603,6 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
          */
         public void error(String message, Throwable throwable) {
             logger.error(message, throwable);
-        }
-    }
-
-    /**
-     * A {@link net.bytebuddy.build.Plugin.Engine.Listener} that logs several relevant events during the build.
-     */
-    protected static class TransformationLogger extends Plugin.Engine.Listener.Adapter {
-
-        /**
-         * The logger to delegate to.
-         */
-        private final Logger logger;
-
-        /**
-         * Creates a new transformation logger.
-         *
-         * @param logger The logger to delegate to.
-         */
-        protected TransformationLogger(Logger logger) {
-            this.logger = logger;
-        }
-
-        @Override
-        public void onTransformation(TypeDescription typeDescription, List<Plugin> plugins) {
-            logger.debug("Transformed {} using {}", typeDescription, plugins);
-        }
-
-        @Override
-        public void onError(TypeDescription typeDescription, Plugin plugin, Throwable throwable) {
-            logger.warn("Failed to transform {} using {}", typeDescription, plugin, throwable);
-        }
-
-        @Override
-        public void onError(Map<TypeDescription, List<Throwable>> throwables) {
-            logger.warn("Failed to transform {} types", throwables.size());
-        }
-
-        @Override
-        public void onError(Plugin plugin, Throwable throwable) {
-            logger.error("Failed to close {}", plugin, throwable);
-        }
-
-        @Override
-        public void onLiveInitializer(TypeDescription typeDescription, TypeDescription definingType) {
-            logger.debug("Discovered live initializer for {} as a result of transforming {}", definingType, typeDescription);
         }
     }
 

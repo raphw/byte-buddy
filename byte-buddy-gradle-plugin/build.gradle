@@ -14,22 +14,26 @@ repositories {
     mavenCentral()
 }
 
+configurations {
+    fatJar {
+        canBeConsumed(false)
+        canBeResolved(false)
+    }
+    fatJarClasspath {
+        canBeConsumed(false)
+        canBeResolved(true)
+        setTransitive(false)
+        extendsFrom(fatJar)
+    }
+    compileClasspath.extendsFrom(fatJarClasspath)
+}
+
 version = pom.parent.version.text().toString()
 
 dependencies {
     implementation gradleApi()
-    if (release) {
-        implementation group: 'net.bytebuddy', name: 'byte-buddy', version: version
-    } else {
-        // At this point, it is not given that any artifact from the Maven build can be found in a repository.
-        def location = new File(project.buildscript.sourceFile.getParentFile(), "../byte-buddy/target/byte-buddy-${version}.jar").canonicalFile
-        logger.info("Relying on ${location.absolutePath} as Byte Buddy dependency")
-        if (location.exists()) {
-            implementation files(location.absolutePath)
-        } else {
-            logger.warn("${location.absolutePath} does not exist, can clean but not build project")
-        }
-    }
+    fatJar project(':common')
+    fatJar project(':android-plugin')
     compileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
     compileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
     testImplementation gradleTestKit()
@@ -41,14 +45,6 @@ dependencies {
     testCompileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
 }
 
-if (release) {
-    configurations.all {
-        resolutionStrategy.dependencySubstitution {
-            substitute module("net.bytebuddy:byte-buddy:${version}") with project(":mavenBridge")
-        }
-    }
-}
-
 validatePlugins {
     enabled = false
 }
@@ -56,6 +52,13 @@ validatePlugins {
 tasks.withType(AbstractArchiveTask).configureEach {
     preserveFileTimestamps = false
     reproducibleFileOrder = true
+}
+
+tasks.named("jar") {
+    dependsOn configurations.fatJarClasspath
+    from {
+        configurations.fatJarClasspath.collect { zipTree(it) }
+    }
 }
 
 pluginBundle {

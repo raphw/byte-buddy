@@ -1,0 +1,29 @@
+ext.pom = new XmlSlurper().parse(rootProject.file('pom.xml'))
+ext.release = Boolean.getBoolean('net.bytebuddy.gradle.release')
+
+group = pom.parent.groupId.text().toString()
+version = pom.parent.version.text().toString()
+description = pom.description.text().toString()
+
+dependencies {
+    if (release) {
+        implementation group: 'net.bytebuddy', name: 'byte-buddy', version: version
+    } else {
+        // At this point, it is not given that any artifact from the Maven build can be found in a repository.
+        def location = new File("$rootDir/../byte-buddy/target/byte-buddy-${version}.jar").canonicalFile
+        logger.info("Relying on ${location.absolutePath} as Byte Buddy dependency")
+        if (location.exists()) {
+            implementation files(location.absolutePath)
+        } else {
+            logger.warn("${location.absolutePath} does not exist, can clean but not build project")
+        }
+    }
+}
+
+if (release) {
+    configurations.all {
+        resolutionStrategy.dependencySubstitution {
+            substitute module("net.bytebuddy:byte-buddy:${version}") with project(":mavenBridge")
+        }
+    }
+}

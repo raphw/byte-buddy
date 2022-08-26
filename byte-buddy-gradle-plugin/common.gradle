@@ -1,12 +1,8 @@
 import java.util.regex.Pattern
 
-ext.pom = new XmlSlurper().parse(file('./pom.xml'))
-ext.outerPom = new XmlSlurper().parse(file('../pom.xml'))
-ext.release = Boolean.getBoolean('net.bytebuddy.gradle.release')
+apply from: "${rootDir}/versioning.gradle"
 
-group = pom.parent.groupId.text().toString()
-version = pom.parent.version.text().toString()
-description = pom.description.text().toString()
+ext.outerPom = new XmlSlurper().parse(file('../pom.xml'))
 
 compileJava {
     options.warnings = true
