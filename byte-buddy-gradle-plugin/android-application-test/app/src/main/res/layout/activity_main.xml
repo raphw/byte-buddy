@@ -13,12 +13,6 @@
         android:text="Hello World!" />
 
     <TextView
-        android:id="@+id/text_from_local_kotlin_class"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!" />
-
-    <TextView
         android:id="@+id/text_from_aar_dependency"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

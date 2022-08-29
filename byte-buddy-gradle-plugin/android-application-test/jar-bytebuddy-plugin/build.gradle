@@ -1,6 +1,5 @@
 plugins {
     id 'java-library'
-    id 'org.jetbrains.kotlin.jvm'
 }
 apply from: "$rootDir/versioning.gradle"
 
