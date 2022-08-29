@@ -835,7 +835,8 @@ class MyApplication {
                 ClassFileLocator.ForClassLoader.ofSystemLoader())
       .defineField("qux", String.class) // we learn more about defining fields later
       .make()
-      .load(ClassLoader.getSystemClassLoader());
+      .load(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+      .getLoaded();
     assertThat(bar.getDeclaredField("qux"), notNullValue());
   }
 }
