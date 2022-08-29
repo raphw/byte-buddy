@@ -1,0 +1,2172 @@
+<div class="row container">
+
+<div class="col-md-3 visible-md visible-lg" style="height: 100%;">
+    <div class="sidebar hidden-print affix-top" role="complementary" data-affix="0">
+        <div style="padding: 40px 0 0 15px;">
+            <ul class="nav nav-tabs nav-stacked" style="border: 0;" data-ng-repeat="link in links">
+                <li>
+                    <a data-ng-href="{{link.target}}" data-du-smooth-scroll="" data-du-scrollspy="" data-offset="40">
+                        {{link.name}}
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="visible-xs visible-sm">
+    <div class="hidden-print" role="complementary">
+        <ul class="nav nav-tabs nav-stacked" style="border: 0;" data-ng-repeat="link in links">
+            <li>
+                <a data-ng-href="{{link.target}}" data-du-smooth-scroll="" data-du-scrollspy="" data-offset="40">
+                    {{link.name}}
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="col-md-8 col-md-offset-1" id="affixComponent">
+
+    <select class="lang" ng-model="lang" ng-change="changeLang()">
+        <option value="cn">中文</option>
+        <option value="en">English</option>
+    </select>
+
+<div class="row" id="rational">
+
+<h2>为什么运行时生成代码？</h2>
+
+<p>
+    Java 语言带有相对严格的类型系统。Java 要求所有变量和对象都属于特定类型，任何分配不兼容类型的尝试都会导致错误发生。
+    当非法转换类型时， 这些错误通常由 Java 编译器或至少由 Java运行时产生。这种严格的类型通常是可取的，例如在编写业务应用时。
+    业务领域通常可以用一种明确的方式来描述，其中任何领域术语都代表它自己的类型。通过这种方式，
+    我们可以使用 Java 来构建非常易读且健壮的应用程序， 其中错误在靠近其源头的位置被就捕获。此外，Java 的类型系统是其在企业编程中流行的原因。
+</p>
+
+<p>
+    但是，通过强制执行其严格的类型系统，Java 强加了该语言在其他领域中范围的限制。例如，在编写供其他 Java 应用程序使用的通用库时，
+    我们通常无法引用用户应用程序中定义的任何类型，因为在编译我们的库时，这些类型对我们来说是未知的。
+    为了调用用户代码中的方法或访问用户代码中的字段，Java 类库自带了一个反射 API，使用反射 API，我们能够自省（introspect）
+    未知类型并调用方法或访问字段。不幸的是，使用反射 API 有两个明显的缺点：
+</p>
+
+<ul class="colored-list padded">
+    <li><span>
+        使用<a href="http://docs.oracle.com/javase/tutorial/reflect/index.html">反射</a>API要慢于硬编码方式的方法调用：
+        首先，需要执行相当昂贵的方法查找来获取描述特定方法的对象。当一个方法被调用时，需要 JVM 运行本地代码（native code），
+        这比直接调用需要更长的运行时间。然而，现代 JVM 知道一个叫做膨胀（
+        <a href="https://blogs.oracle.com/buck/entry/inflation_system_properties">inflation</a>）的概念，
+        其中基于 JNI 的方法调用被生成的字节码替换，这些字节码被注入到动态创建的类中。（甚至 JVM 本身也使用代码生成！）毕竟，
+        Java 的膨胀系统存在生成非常通用的代码的缺点，例如仅适用于装箱的基本类型，因此性能缺陷并未完全解决。
+    </span></li>
+    <li><span>
+        反射 API 破坏了类型安全性：尽管 JVM 能够通过反射调用代码，但反射 API 本身并不是类型安全的。当编写库时，
+        只要我们不需要将反射 API 暴露给库的用户，这不是问题。毕竟，在编译期间我们不知道用户代码，
+        也无法根据其类型校验我们的库代码。然而，有时需要向用户暴露反射 API，比如让库调用我们自己的方法。
+        这就是使用反射 API 会出现问题的地方，因为 Java 编译器将拥有所有信息来验证我们程序的类型安全性。
+        例如，在实现方法级安全性的库时，该库的用户希望该库仅在强制执行安全约束后调用方法。为此，
+        库需要在用户移交此方法所需的参数后反射性地调用该方法。这样做的话，如果这些方法的参数与方法的反射调用匹配，则不再进行编译时类型校验。
+        方法调用仍然是被校验过的，但检查延迟到运行时。这样的话，我们就弃用了ava 编程语言的一个重要特性。
+    </span></li>
+</ul>
+
+<p>
+    这就是运行时代码生成可以帮助我们的地方。它允许我们在不弃用 Java 的静态类型检查的情况下模拟一些通常只能在用动态语言编程时才能访问的功能。
+    这样，我们可以两全其美，并进一步提高运行时性能。为了更好地理解这个问题，让我们看一下实现上述方法级安全库的示例。
+</p>
+
+<h4>编写一个安全的库</h4>
+
+<p>
+    业务应用程序可能增长的很大，有时候很难在我们的应用程序中保持栈调用的概述。当我们的应用程序中存在仅应在特定条件下调用的重要方法时，
+    这可能会成为问题。想象一个业务应用程序，它实现了一个允许从应用程序的数据库中删除所有内容的重置功能。
+</p>
+
+<pre class="prettyprint">
+class Service {
+  void deleteEverything() {
+    // delete everything ...
+  }
+}
+</pre>
+
+<p>
+    这样的重置功能当让应该只能被管理员执行，而不能由应用程序的普通用户执行。通过分析我们的源码，我们当然可以确保这永远不会发生。
+    然而，我们可以期待我们的应用程序在未来增长并且被改变。因此，我们想要实现一个更严格的安全模型，
+    其中方法调用被对应用程序当前用户的显式检查保护。我们通常会使用一个安全框架来确保除了管理员之外的任何人都不会调用该方法。
+</p>
+
+<p>
+    为此，假设我们使用具有公共 API 的安全框架，如下所示：
+</p>
+
+<pre class="prettyprint">
+@Retention(RetentionPolicy.RUNTIME)
+@interface Secured {
+  String user();
+}
+
+class UserHolder {
+  static String user;
+}
+
+interface Framework {
+  &lt;T&gt; T secure(Class&lt;T&gt; type);
+}
+</pre>
+
+<p>
+    在这个框架中，<code>Secured</code>注解应该用于标记只能由给定用户访问的方法。这里的<code>UserHolder</code>
+    用于全局定义当前登录的用户。<code>Framework</code>接口允许通过调用给定类型的默认构造器来创建安全实例。当然，
+    这个框架过于简单，但原则上这就 是安全框架（例如流行的 <a href="http://projects.spring.io/spring-security/">Spring Security</a>）
+    的工作方式。这个安全框架的一个特点是我们保留了用户的类型。根据我们框架接口的约定，我们承诺用户返回他接收的<code>T</code>
+    的任何实例。由于这一点，用户能够与他自己的类型进行交互，就像安全框架不存在一样。在测试环境中，用户甚至可以创建他的类的不安全实例并使用。
+    你会同意这真的很方便！众所周知，此类框架与<i>POJO（plain old Java objects）</i>交互，
+    这个术语是为了描述不将自己的类型强加给用户的非侵入性框架而创造的。
+</p>
+
+<p>
+    现在想象一下，我们知道传递给<code>Framework</code>的类型只能<code>T = Service</code>，并且该<code>deleteEverything</code>
+    方法用<code>@Secured("ADMIN")</code>注解。这样，我们可以通过简单地让子类继Service承来轻松实现这种特定类型的安全版本：
+</p>
+
+<pre class="prettyprint">
+class SecuredService extends Service {
+  @Override
+  void deleteEverything() {
+    if(UserHolder.user.equals("ADMIN")) {
+      super.deleteEverything();
+    } else {
+      throw new IllegalStateException("Not authorized");
+    }
+  }
+}
+</pre>
+
+<p>
+    用这个额外的类，我们可以按如下方式实现框架：
+</p>
+
+<pre class="prettyprint">
+class HardcodedFrameworkImpl implements Framework {
+  @Override
+  public &lt;T&gt; T secure(Class&lt;T&gt; type) {
+    if(type == Service.class) {
+      return (T) new SecuredService();
+    } else {
+      throw new IllegalArgumentException("Unknown: " + type);
+    }
+  }
+}
+</pre>
+
+<p>
+    当然，这种实现并没有什么用。通过<code>secure</code>方法签名，我们建议该方法可以为任何类型提供安全性，但实际上，
+    一旦遇到<code>Service</code>以外的其他类型，将会抛出异常。此外，这将需要我们的安全库在编译时了解这个特定
+    <code>Service</code>类型。显然，这不是实现框架的可行方案。 那么我们如何解决这个问题呢？好吧，因为这是一个关于代码生成库的教程，
+    你已经猜到了答案：当我们的安全框架通过 调用<code>secure</code>方法第一次碰到这个<code>Service</code>
+    类的时候，我们会根据需要在运行时创建一个子类。通过代码生成，我们可以采用任何 给定的类型，在运行时对其进行子类化并覆写我们想要保护的方法。
+    在我们的例子中，我们覆写了所有带<code>@Secured</code>注解的方法， 并从注解的<code>user</code>属性中读取所需的用户。
+    许多流行的 Java 框架都是使用类似的方法实现的。
+</p>
+
+<h4>一般信息</h4>
+
+<p>
+    在我们全面学习代码生成和 Byte Buddy 之前，请注意你应该谨慎使用代码生成。Java 类型对于 JVM 来说是相当特殊的，通常不会被GC回收。
+    因此，永远不要过度使用代码生成，除非生成代码是用来解决问题的唯一方式。但是，如果你需要像前面的示例一样增强未知类型，
+    代码生成很可能是你唯一的选择。框架安全、事务管理、对象关系映射或模拟对于代码生成库的用户来说是典型的用法。
+</p>
+
+<p>
+    当然，在JVM上，Byte Buddy 并不是第一个代码的库。但是，我们相信 Byte Buddy 知道一些其他框架无法应用的技巧。
+    通过专注于其领域特定语言和注解的使用，以声明方式工作是 Byte Buddy 的总体目标。我们所知道的其他的JVM代码生成库中没有 以这种方式工作的。
+    不过，你可能想看一下其他的代码生成框架，以找出最合适的。其中，以下库在 Java 领域比较流行：
+</p>
+
+<dl class="dl-horizontal padded">
+    <dt>
+        <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html">Java 代理</a>
+    </dt>
+    <dd>
+        Java 类库自带的一个代理工具包，它允许创建实现了一组给定接口的类。这个内置的代理很方便，但是受到的限制非常多。
+        例如，上面提到的安全框架不能以这种方式实现，因为我们想要扩展类而不是接口。
+    </dd>
+    <dt>
+        <a href="http://cglib.sourceforge.net/">cglib</a>
+    </dt>
+    <dd>
+        该<i>代码生成库</i>是在 Java 开始的最初几年实现的，不幸的是，它没有跟上 Java 平台的发展。尽管如此，cglib仍然是一个相当强大的库，
+        但它是否积极发展变得很模糊。出于这个原因，许多用户已不再使用它。
+    </dd>
+    <dt>
+        <a href="http://www.csg.ci.i.u-tokyo.ac.jp/~chiba/javassist/">Javassist</a>
+    </dt>
+    <dd>
+        该库带有一个编译器，该编译器采用包含 Java 源码的字符串，这些字符串在应用程序运行时被翻译成 Java 字节码。
+        这是非常雄心勃勃的，原则上是一个好主意，因为 Java 源代码显然是描述 Java 类的非常的好方法。但是，
+        Javassist 编译器在功能上无法与 javac 编译器相比，并且在动态组合字符串以实现更复杂的逻辑时容易出错。此外，
+        Javassist 带有一个代理库，它类似于 Java 的代理程序，但允许扩展类并且不限于接口。然而，
+        Javassist 代理工具的范围在其API和功能方面同样受限限制。
+    </dd>
+</dl>
+
+<p>
+    自己评估这些框架，但我们相信 Byte Buddy 提供了功能性和便利性，否则你将徒劳。Byte Buddy 附带了一种富有表现力的领域特定语言，
+    它允许通过编写纯 Java 代码和为您自己的代码使用强类型来创建非常自定义的运行时类。同时，Byte Buddy 对定制非常开放，
+    不会限制您使用开箱即用的功能。如果需要，您甚至可以为任何已实现的方法定义自定义字节码。但即使不知道字节码是什么或它是如何工作的，
+    您也可以在不深入研究框架的情况下做很多事情。例如，您是否看过
+    <a data-ng-href="#helloworld"><code>Hello World!</code>示例</a>？ 使用 Byte Buddy 就是这么简单。
+</p>
+
+<p>
+    当然，一个优雅的API并不是选择代码生成库时要考虑的唯一特性。对于许多应用程序而言，生成代码的运行时特性更有可能决定最好的选择。
+    除了生成的代码本身的运行时之外，创建动态类的运行时也需要考虑。<i>声称我们是最快的！</i>但是很难为库的速度提供一个有效的指标。
+    尽管如此，我们还是想提供这样一个指标作为基本方向。但是，请记住，这些结果不一定会转化为你更具体的用例，
+    你应该进行自己的指标。
+</p>
+
+<p>
+    在讨论我们的指标之前，让我们看一下原始数据。下表显示了一个操作的平均运行时间(单位：纳秒)，其中标准差附在括号中：
+</p>
+
+<div class="table-responsive">
+    <table class="table table-section-border">
+        <thead>
+        <tr>
+            <td></td>
+            <td colspan="2">基线</td>
+            <td colspan="2">Byte Buddy</td>
+            <td colspan="2">cglib</td>
+            <td colspan="2">Javassist</td>
+            <td colspan="2">Java proxy</td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="table-section section-uneven">
+            <td>普通类创建</td>
+            <td>0.003</td>
+            <td>(0.001)</td>
+            <td>142.772</td>
+            <td>(1.390)</td>
+            <td>515.174</td>
+            <td>(26.753)</td>
+            <td>193.733</td>
+            <td>(4.430)</td>
+            <td>70.712</td>
+            <td>(0.645)</td>
+        </tr>
+        <tr class="table-section section-even">
+            <td>接口实现</td>
+            <td>0.004</td>
+            <td>(0.001)</td>
+            <td>1'126.364</td>
+            <td>(10.328)</td>
+            <td>960.527</td>
+            <td>(11.788)</td>
+            <td>1'070.766</td>
+            <td>(59.865)</td>
+            <td>1'060.766</td>
+            <td>(12.231)</td>
+        </tr>
+        <tr class="table-section section-uneven">
+            <td>stub方法调用</td>
+            <td>0.002</td>
+            <td>(0.001)</td>
+            <td>0.002</td>
+            <td>(0.001)</td>
+            <td>0.003</td>
+            <td>(0.001)</td>
+            <td>0.011</td>
+            <td>(0.001)</td>
+            <td>0.008</td>
+            <td>(0.001)</td>
+        </tr>
+        <tr class="table-section section-even">
+            <td>类扩展</td>
+            <td>0.004</td>
+            <td>(0.001)</td>
+            <td>885.983<br/><i>5'408.329</i></td>
+            <td>(7.901)<br/><i>(52.437)</i></td>
+            <td>1'632.730</td>
+            <td>(52.737)</td>
+            <td>683.478</td>
+            <td>(6.735)</td>
+            <td colspan="2">&ndash;</td>
+        </tr>
+        <tr class="table-section section-uneven">
+            <td>super method invocation</td>
+            <td>0.004</td>
+            <td>(0.001)</td>
+            <td>0.004<br/><i>0.004</i></td>
+            <td>(0.001)<br/><i>(0.001)</i></td>
+            <td>0.021</td>
+            <td>(0.001)</td>
+            <td>0.025</td>
+            <td>(0.001)</td>
+            <td colspan="2">&ndash;</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<p>
+    与静态编译器类似，代码生成库面临生成快速代码和快速生成代码之间的权衡。在这些相互冲突的目标之间进行选择时，Byte Buddy
+    的主要关注点在于以最少的运行时间生成代码。通常，类型创建或修改不是程序里的常见步骤，并且不会显著影响任何长时间运行的应用程序；
+    特别是因为类加载或类检测是运行此类代码时最耗时且不可避免的步骤。
+</p>
+
+<p>
+    上表中的第一个基准测试测试了类库在不实现或者覆写任何方法的情况下，子类化<code>Object</code>的运行时间。
+    这让我们对库在代码生成中的一般开销有一个印象。在这个基准测试中，由于假定始终扩展接口时会有优化，所以 Java 代理的性能要优于其他库。
+    Byte Buddy 还要检查类的泛型类型和注解，导致需要额外的时间。这种性能开销在创建类的其他基准测试中也可以看见。
+    基准测试(2a)显示了用于创建(和加载)实现了具有18个方法的单个接口的类的测试运行时间，(2b)显示了为此类生成的方法的执行时间。
+    类似地，(3a) 显示了继承一个实现了相同的18个方法的类的基准测试。由于可能对始终执行超类方法的拦截器的优化，
+    所以 Byte Buddy 提供了两个基准测试。有时候创建类时会牺牲一些时间，Byte Buddy 创建类的执行时间通常会达到基线，
+    这意味着检测不会产生任何开销。应该注意的是，如果元数据的处理被禁用，Byte Buddy 在创建类时要胜过其他任何代码生成库。
+    由于生成代码的时间与程序的总运行时间相比相当少，这种禁用是不可用的，因为这样会获得很少的性能提升，同时让库代码变得复杂。
+</p>
+
+<p>
+    最后，需要注意，我们的指标衡量的是经过
+    <a href="http://en.wikipedia.org/wiki/Just-in-time_compilation">及时编译器</a>优化过的代码性能。
+    如果你的代码是偶然执行，将会比上面指标预测的要差。 在这种情况下，你的代码一开始并不是注重性能的。这些指标的代码会随着 Byte Buddy 一起发布，
+    你可以在自己的电脑上运行，上述指标可能会有变化，这取决于电脑的处理能力。鉴于此，不要绝对解释上述指标，
+    而是将而是将它们视为比较不同库的相对衡量 标准。在后面开发 Byte Buddy 时，我们会监控这些指标，从而避免添加新功能时引起的性能损失。
+</p>
+
+<p>
+    在下面的教程中，我们将逐步解释 Byte Buddy 的功能。我们将从大多数用户最有可能使用的更通用的功能开始。然后，
+    我们将考虑越来越高级的主题，并简要介绍 Java 字节码和类文件格式。如果你快进到后面的材料，请不要气馁！
+    在不了解任何JVM细节的情况下，使用 Byte Buddy 的标准API，你几乎可以做任何事情。要了解标准API，请继续阅读。
+</p>
+
+</div>
+
+<div class="row" id="gettingstarted">
+
+<h2>类创建</h2>
+
+<p>
+    Byte Buddy 创建的任何类都是从<code>ByteBuddy</code>的实例开始创建。
+    仅仅需要通过调用<code>new ByteBuddy()</code>创建一个新实例，你就可以开始了。希望你正在使用的是开发环境，
+    在开发环境中调用给定对象的方法时会有建议。这样，可以避免手动在 Byte Buddy 的 Java 文档中查找一个类的API，
+    而是让IDE引导这个过程。正如前面所提到的，Byte Buddy 提供了一种领域特定语言，旨在尽可能地便于人类阅读。因此，
+    大多数情况下，你的IDE提示将为你指明正确的方向。话不多说，让我们在程序运行时创建第一个类：
+</p>
+
+<pre class="prettyprint">
+DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
+  .subclass(Object.class)
+  .make();
+</pre>
+
+<p>
+    很明显，上面的代码示例创建了一个继承了<code>Object</code>的类。
+    这个动态创建的类相当于一个只继承<code>Object</code>而没有显式的实现任何方法，字段或构造器的类。
+    你可能已经注意到我们甚至没有给动态生成的类命名，命名在定义一个类时是必须的。当然，你可以轻松地显式命名你的类：
+</p>
+
+<pre class="prettyprint">
+DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
+  .subclass(Object.class)
+  .name("example.Type")
+  .make();
+</pre>
+
+<p>
+    但是如果没有显式的命名会发生什么？
+    Byte Buddy 遵循<a href="http://en.wikipedia.org/wiki/Convention_over_configuration">约定优于配置原则</a>，
+    并且提供我们发现的便利的默认值。至于类的名称，Byte Buddy 的默认配置提供了一个<code>NamingStrategy（命名策略）</code>，
+    它可以根据动态类的超类名称随机生成一个名称。此外，定义的类名中的包和超类相同的话，直接父类的包私有方法对动态类就是可见的。
+    例如，如果你子类化一个名为<code>example.Foo</code>的类，
+    生成的类的名称就像<code>example.Foo$$ByteBuddy$$1376491271</code>，其中数字序列是随机的。
+    这条规则的一个例外情况是：子类化的类型来自<code>Object</code>所在的包<code>java.lang</code>。
+    Java 的安全模型不允许自定义的类在这个命名空间。
+    因此，在默认的命名策略中，这种类型以<code>net.bytebuddy.renamed</code>前缀命名。
+</p>
+
+<p>
+    这种默认的行为对你来说可能不方便。由于约定优于配置原则的原因，你总是可以根据需要改变这种默认行为，
+    这就显示出<code>ByteBuddy</code>类的功能比较周全。通过创建一个<code>new ByteBuddy()</code>实例，
+    你就创建了一个默认的配置。通过在这个配置上调用方法，你可以根据需要自定义配置。让我们试试这个：
+</p>
+
+<pre class="prettyprint">DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
+  .with(new NamingStrategy.AbstractBase() {
+    @Override
+    protected String name(TypeDescription superClass) {
+        return "i.love.ByteBuddy." + superClass.getSimpleName();
+    }
+  })
+  .subclass(Object.class)
+  .make();
+</pre>
+
+<p>
+    在上面的代码示例中，我们创建了一个新配置，其类型命名策略与默认配置不同。
+    此匿名类被实现为简单地将<code>i.love.ByteBuddy</code>与父类的类名拼接起来。
+    当子类化<code>Object</code>类时，动态类型就会被命名为<code>i.love.ByteBuddy.Object</code>。
+    但是，创建自己的命名策略时要谨慎！ Java 虚拟机用名称来区分不同的类型，这就是你要避免名称冲突的原因。如果你需要自定义命名行为，
+    请考虑使用 Byte Buddy 内置的<code>NamingStrategy.SuffixingRandom</code>，
+    用它你可以自定义包含一个比默认的名称前缀更有意义的前缀。
+</p>
+
+<h4>领域特定语言与不变性</h4>
+
+<p>
+    看过 Byte Buddy 的领域特定语言实战后，我们需要简单看看这种语言的实现方式。
+    你需要了解有关实现的一个细节是该语言是围绕<a href="http://en.wikipedia.org/wiki/Immutable_object">不可变对象</a>构建的。
+    事实上，几乎每个存在于 Byte Buddy 命名空间中的类都是不可变的，在少数情况下，我们无法使类型不可变，
+    我们会在在此类的 javadoc 中明确地提及。如果你为 Byte Buddy 实现自定义功能，我们建议你坚持这一原则。
+</p>
+
+<p>
+    由于上述不变性的影响，当你设置<code>ByteBuddy</code>实例时，一定要谨慎。你可能会犯如下的错误：
+</p>
+
+<pre class="prettyprint">
+ByteBuddy byteBuddy = new ByteBuddy();
+byteBuddy.withNamingStrategy(new NamingStrategy.SuffixingRandom("suffix"));
+DynamicType.Unloaded&lt;?&gt; dynamicType = byteBuddy.subclass(Object.class).make();
+</pre>
+
+<p>
+    你可能期望用自定义命名策略<code>new NamingStrategy.SuffixingRandom("suffix")</code>生成动态类型。
+    <code>withNamingStrategy</code>方法的调用不是改变存储在<code>byteBuddy</code>变量中的实例，
+    而是返回一个自定义且丢失了的<code>ByteBuddy</code>实例。因此，此动态类型是用原始创建的默认配置创建的。
+</p>
+
+<h4>重新定义已存在的类和对类变基(rebase)</h4>
+
+<p>
+    到目前为止，我们只演示了如何使用 Byte Buddy 创建现有类的子类。然而，相同的 API 可用于增强现有类。这种增强有两种不同的风格：
+</p>
+
+<dl class="dl-horizontal padded">
+    <dt>
+        类型重定义
+    </dt>
+    <dd>
+        重新定义类时，Byte Buddy 允许通过添加字段和方法或者替换已存在的方法实现来修改已存在的类。
+        但是，如果方法的实现被另一个实现所替换，之前的实现就会丢失。例如，当重新定义下面的类型时：<br/><br/>
+
+<pre class="prettyprint">
+class Foo {
+  String bar() { return "bar"; }
+}
+</pre>
+        从方法<code>bar</code>返回<code>"qux"</code>的话，该方法原来返回的信息<code>"bar"</code>就会丢失。
+    </dd>
+    <dt>
+        类型变基
+    </dt>
+    <dd>
+        当对类型变基时，Byte Buddy 会保留所有被变基类的方法实现。Byte Buddy 会用兼容的签名复制所有方法的实现为一个私有的重命名过的方法，
+        而不像<i>类重定义</i>时丢弃覆写的方法。用这种方式的话，不存在方法实现的丢失，而且变基的方法可以通过调用这些重命名的方法，
+        继续调用原始的方法。这样，上面的<code>Foo</code>类可能会变基为这样<br/><br/>
+<pre class="prettyprint">
+class Foo {
+  String bar() { return "foo" + bar$original(); }
+  private String bar$original() { return "bar"; }
+}
+</pre>
+        其中<code>bar</code>方法原来返回的code>"bar"</code>保存在另一个方法中，因此仍然可以访问。当对一个类变基时，
+        Byte Buddy 会处理所有方法，就像你定义了一个子类一样。例如，如果你尝试调用变基的方法的超类方法实现，
+        你将会调用变基的方法。但相反，它最终会扁平化这个假设的超类为上面显示的变基的类。
+    </dd>
+</dl>
+
+<p>
+    任何变基，重定义或者子类化都是用相同的API执行的，它是由<code>DynamicType.Builder</code>接口定义的。这样的话，
+    可以将一个类定义为子类，然后修改其定义，替换为变基类。这是通过仅更改一个 Byte Buddy 的领域特定语言的单词来实现的。
+    这样，应用任何一种可能的方式会在在定义处理的进一步阶段中透明的处理，这将在该教程的其余部分讲解。
+</p>
+
+<pre class="prettyprint">
+new ByteBuddy().subclass(Foo.class)
+new ByteBuddy().redefine(Foo.class)
+new ByteBuddy().rebase(Foo.class)
+</pre>
+
+<p>
+    因为子类定义对于 Java 开发者来说是一个熟悉的概念，所以下面关于 Byte Buddy
+    领域特定语言的所有解释和实例都是通过创建类来演示的。但是，记住，所有类都可以类似地通过重定义和变基来定义。
+</p>
+
+<h4>类加载</h4>
+
+<p>
+    目前为止，我们只是创建了一个动态类型，但是我们并没有使用它。Byte Buddy
+    创建的类型是通过<code>DynamicType.Unloaded</code>的一个实例来表示的。通过名称可以猜到，这些类不会加载到JVM。
+    相反，Byte Buddy 创建的类以<a href="http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">Java 类文件格式</a>的二进制结构表示。
+    这样的话，你可以决定用生成的类来做什么。例如，你或许想从构建脚本运行 Byte Buddy，该脚本仅在部署前生成类以增强 Java 应用。
+    对于这个目的，<code>DynamicType.Unloaded</code>类允许提取动态类型的字节数组。为了方便，
+    该类型还额外提供了<code>saveIn(File)</code>方法，该方法允许你将一个类保存到给定的文件夹。此外，
+    它允许你通过<code>inject(File)</code>方法将类注入到已存在的 <i>jar</i> 文件。
+
+</p>
+
+<p>
+    虽然直接访问一个类的二进制结构是直截了当的，但不幸的是加载一个类更复杂。在 Java 里，所有的类都用<code>ClassLoader(类加载器)</code>加载。
+    这种类加载器的一个示例是启动类加载器，它负责加载 Java 类库里的类。另一方面，系统类加载器负责加载 Java 应用程序类路径里的类。
+    显然，这些预先存在的类加载器都不知道我们创建的任何动态类。为了解决这个问题，我们需要找其他的可能性用于加载运行时生成的类。
+    Byte Buddy 通过开箱即用的不同方法提供解决方案：
+</p>
+
+<ul class="colored-list padded">
+    <li><span>
+        我们仅仅创建一个新的<code>ClassLoader</code>，它被明确地告知存在一个特定的动态创建的类。
+        因为 Java 类加载器是按层级组织的，我们定义的这个类加载器是程序里已经存在的类加载器的孩子。这样，
+        程序里的所有类对于新<code>类加载器</code>加载的动态类型都是可见的。
+    </span></li>
+    <li><span>
+        通常，Java 类加载器在尝试直接加载给定名称的类之前会询问他的父<code>类加载器</code>。这意味着，在父类加载器知道有相同名称的类时，
+        子类加载器通常不会加载类。为此，Byte Buddy 提供了孩子优先创建的类加载器，它在询问父类加载器之前会尝试自己加载类。
+        除此之外，这种方法类似于刚才上面提及的方法。注意，这种方法不会覆盖父类加载器加载的类，而是隐藏其他类型。
+    </span></li>
+    <li><span>
+        最后，我们可以用反射将一个类注入到已存在的<code>类加载器</code>。通常，类加载器会被要求通过类名称来提供一个给定的类。
+        用反射我们可以扭转这个规则，调用受保护的方法将一个新类注入类加载器，而类加载器实际上不知道如何定位这个动态类。
+     </span></li>
+</ul>
+
+<p>
+    不幸的是，上面的方法都有其缺点：
+</p>
+
+<ul class="colored-list padded">
+    <li><span>
+        如果我们创建一个新的<code>ClassLoader</code>，这个类加载器会定义一个新的命名空间。
+        这样可能会通过两个不同的类加载器加载两个有相同名称的类。这两个类永远不会被JVM视为相等，即时这两个类是相同的类实现。
+        这个相等规则也适用于 Java 包。这意味着，如果不是用相同的类加载器加载，
+        <code>example.Foo</code>类无法访问<code>example.Bar</code>类的包私有方法。此外，
+        如果<code>example.Bar</code>继承<code>example.Foo</code>，任何被覆写的包私有方法都将变为无效，但会委托给原始实现。
+    </span></li>
+    <li><span>
+        每当加载一个类时，一旦引用另一种类型的代码段被解析，它的类加载器将查找该类中引用的所有类型。该查找会委托给同一个类加载器。
+        想象一下这种场景：我们动态的创建了<code>example.Foo</code>和<code>example.Bar</code>两个类，
+        如果我们将<code>example.Foo</code>注入一个已经存在的类加载器，这个类加载器可能会尝试定位查找<code>example.Bar</code>。
+        然而，这个查找会失败，因为后一个类是动态创建的，而且对于刚才注入<code>example.Foo</code>类的类加载器来说是不可达的。
+        因此反射的方法不能用于在类加载期间生效的带有循环依赖的类。幸运的是，大多数JVM的实现在第一次使用时都会延迟解析引用类，
+        这就是类注入通常在没有这些限制的时候正常工作的原因。此外，实际上，由 Byte Buddy 创建的类通常不会受这样的循环影响。
+    </span></li>
+</ul>
+
+<p>
+    你可能会任务遇到循环依赖的机会是无关紧要的，因为一次只创建一个动态类。然而，动态类型的创建可能会触发辅助类型的创建。
+    这些类型由 Byte Buddy 自动创建，以提供对正在创建的动态类型的访问。我们将在下面的章节学习辅助类型，现在不要担心这些。
+    但是，正因为如此，我们推荐你尽可能通过创建一个特定的<code>ClassLoader</code>来加载动态类，
+    而不是将他们注入到一个已存在的类加载器。
+</p>
+
+<p>
+    创建一个<code>DynamicType.Unloaded</code>后，这个类型可以用<code>ClassLoadingStrategy</code>加载。
+    如果没有提供这个策略，Byte Buddy 会基于提供的类加载器推测出一种策略，并且仅为启动类加载器创建一个新的类加载器，
+    该类加载器不能用反射的方式注入任何类。否则为默认设置。Byte Buddy 提供了几种开箱即用的类加载策略，
+    每一种都遵循上述概念中的其中一个。这些策略都在<code>ClassLoadingStrategy.Default</code>中定义，其中，
+    <code>WRAPPER</code>策略会创建一个新的，经过包装的<code>ClassLoader</code>，
+    <code>CHILD_FIRST</code>策略会创建一个类似的具有孩子优先语义的类加载器，<code>INJECTION</code>策略会用反射注入一个动态类型。
+    <code>WRAPPER</code>和<code>CHILD_FIRST</code>策略也可以在所谓的<i>manifest(清单)</i>版本中使用，即使在类加载后，
+    也会保留类的二进制格式。这些可替代的版本使类加载器加载的类的二进制表示可以通过<code>ClassLoader::getResourceAsStream</code>方法访问。
+    但是，请注意，这需要这些类加载器保留一个类的完整的二进制表示的引用，这会占用 JVM 堆上的空间。因此，
+    如果你打算实际访问类的二进制格式，你应该只使用清单版本。由于<code>INJECTION</code>策略通过反射实现，
+    而且不可能改变方法ClassLoader::getResourceAsStream的语义，因此它自然在清单版本中不可用。
+</p>
+
+<p>
+    让我们看一下这样的类加载：
+</p>
+
+<pre class="prettyprint">
+Class&lt;?&gt; type = new ByteBuddy()
+  .subclass(Object.class)
+  .make()
+  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .getLoaded();
+</pre>
+
+<p>
+    在上面的示例中，我们创建并加载了一个类。像我们之前提到的，我们用<code>WRAPPER</code>加载策略加载类，
+    它适用于大多数场景。最后，<code>getLoaded</code>方法返回了一个现在已经加载的 Java <code>Class(类)</code>的实例，
+    这个实例代表着动态类。
+</p>
+
+<p>
+    注意，当加载类时，预定义的类加载策略是通过应用执行上下文的<code>ProtectionDomain</code>来执行的。或者，
+    所有默认的策略通过调用<code>withProtectionDomain</code>方法来提供明确地保护域规范。
+    当使用安全管理器或使用签名jar包中定义的类时，定义一个明确地保护域是非常重要的。
+</p>
+
+<h4>重新加载类</h4>
+
+<p>
+    在上一节中，我们了解到 Byte Buddy 可以用来重新定义或变基一个已存在的类。然而，在执行 Java 程序时，通常无法保证给定的类没有加载。
+    (此外，Byte Buddy 目前仅仅将加载的类作为参数，这将在未来的版本中改变，现有的API同样可以处理未加载的类)由于 Java 虚拟机的HotSwap功能，
+    即使在类被加载之后，他们也可以被重新定义。这个功能可以通过 Byte Buddy 的<code>ClassReloadingStrategy</code>使用。
+    让我们通过重新定义<code>Foo</code>类来演示一下这个策略：
+</p>
+
+<pre class="prettyprint">
+class Foo {
+  String m() { return "foo"; }
+}
+
+class Bar {
+  String m() { return "bar"; }
+}
+</pre>
+
+<p>
+    用 Byte Buddy，我们现在可以容易地将<code>Foo</code>重新定义为<code>Bar</code>。
+    用 HotSwap，这个重定义甚至可以用于预先存在的示例：
+</p>
+
+<pre class="prettyprint">
+ByteBuddyAgent.install();
+Foo foo = new Foo();
+new ByteBuddy()
+  .redefine(Bar.class)
+  .name(Foo.class.getName())
+  .make()
+  .load(Foo.class.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
+assertThat(foo.m(), is("bar"));
+</pre>
+
+<p>
+    HotSwap只能用<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/instrument/package-summary.html">所谓的
+    Java agent </a>访问。这样的代理可以通过在虚拟机启动时使用<code>-javaagent</code>参数指定它来安装，其中 javaagent 的参数得是 Byte Buddy
+    的代理jar，它可以从<a href="https://search.maven.org/search?q=a:byte-buddy-agent">从 Maven 仓库下载</a>。
+    然而，当 Java 应用从虚拟机的一个JDK运行时，即使应用启动后，Byte Buddy 也可以通过<code>ByteBuddyAgent.installOnOpenJDK()</code>加载 Java 代理。
+    因为类重定义主要用在工具和测试的实现上，这可能是一个非常方便的可选方案。从 Java 9 开始，在没有JDK的情况下，运行时安装代理成为可能。
+</p>
+
+<p>
+    上述示例中，可能首先出现违反直觉的一件事是，Byte Buddy 重新定义<code>Bar</code>类，其中<code>Foo</code>类最终也被重定义了。
+    JVM 通过名称和类加载器识别类，因此，通过将<code>Bar</code>重命名为<code>Foo</code>且应用这个定义，
+    我们最终重新定义了重命名的类型<code>Bar</code>。当然，同样可以直接重定义<code>Foo</code>，而不重命名不同的类型。
+</p>
+
+<p>
+    然而，使用 Java 的 HotSwap 功能有一个巨大的缺陷，HotSwap的当前实现要求重定义的类在重定义前后应用相同的类模式。
+    这意味着当重新加载类时，不允许添加方法或字段。我们已经讨论过 Byte Buddy 为任何变基的类定义了原始方法的副本，
+    因此类的变基不适用于<code>ClassReloadingStrategy</code>。此外，类重定义不适用于具有显式的类初始化程序的方法(类中的静态块)的类，
+    因为该初始化程序也需要复制到额外的方法中。不幸的是，
+    OpenJDK已经退出了<a href="http://openjdk.java.net/jeps/159">扩展HotSwap的功能</a>，
+    因此，无法使用HotSwap的功能解决此限制。同时，Byte Buddy 的HotSwap支持可用于某些看起来有用的极端情况。
+    否则，当(例如，从构建脚本)增强存在的类时，变基和重定义可能是一个便利的功能。
+</p>
+
+<h4>使用未加载的类</h4>
+
+<p>
+    意识到HotSwap功能的局限性后，人们可能会认为<code>变基</code>和<code>重定义</code>指令的唯一有意义的应用是在构建期间。
+    通过应用构建时的处理，人们可以断言一个已经处理过的类在它的初始类简单地加载之前没有被加载，因为这个类加载是在不同的JVM实例中完成的。
+    然而，Byte Buddy 同样有能力处理尚未加载的类。为此，Byte Buddy 抽象了 Java 的反射 API，例如，
+    一个<code>Class</code>实例在内部由一个<code>TypeDescription</code>表示。事实上，
+    Byte Buddy 只知道如何处理由实现了<code>TypeDescription</code>接口的适配器提供的<code>Class</code>。
+    这种抽象的最大好处是类的信息不需要由<code>类加载器</code>提供，而是可以由其他的源提供。
+</p>
+
+<p>
+    Byte Buddy 使用<code>TypePool(类型池)</code>，提供了一种标准的方式来获取类的<code>TypeDescription(类描述)</code>。当然，
+    这个池的默认实现也提供了。<code>TypePool.Default</code>的实现解析类的二进制格式并将其表示为需要的<code>TypeDescription</code>。
+    类似于<code>类加载器</code>为加载好的类维护一个缓存，该缓存也是可定制的。此外，它通常从<code>类加载器</code>中检索类的二进制格式，
+    但不指示它加载此类。
+</p>
+
+<p>
+    JVM仅在第一次使用时加载一个类。因此，我们可以安全的重定义一个类，例如：
+</p>
+
+<pre class="prettyprint">
+package foo;
+class Bar { }
+</pre>
+
+<p>
+    在运行任何其他的代码之前，程序启动时：
+</p>
+
+<pre class="prettyprint">
+class MyApplication {
+  public static void main(String[] args) {
+    TypePool typePool = TypePool.Default.ofSystemLoader();
+    Class<?> bar = new ByteBuddy()
+      .redefine(typePool.describe("foo.Bar").resolve(), // do not use 'Bar.class'
+                ClassFileLocator.ForClassLoader.ofSystemLoader())
+      .defineField("qux", String.class) // we learn more about defining fields later
+      .make()
+      .load(ClassLoader.getSystemClassLoader());
+    assertThat(bar.getDeclaredField("qux"), notNullValue());
+  }
+}
+</pre>
+
+<p>
+    通过第一次在断言中使用类之前显式地重定义类，我们先于JVM内置的类加载。这样，重新定义的类<code>foo.Bar</code>就被加载了，
+    并且贯穿整个应用的运行时。然而，请注意，当我们用<code>TypePool</code>来提供类型描述时，我们不会通过一个类的字面量(literal)来引用该类。
+    如果我们用了<code>foo.bar</code>的字面量，JVM 将在我们有机会重定义该类之前加载它，我们的重定义尝试将无效。此外，请注意，
+    当处理未加载的类时，我们还需要指定一个<code>ClassFileLocator(类文件定位器)</code>，它允许定位类的类文件。在上面的示例中，
+    我们简单地创建了一个类文件定位器，它扫描了正在运行的应用的类路径以查找foo.Bar这样的文件。
+</p>
+
+<h4>创建 Java 代理</h4>
+
+<p>
+    当一个应用增长得更大，且变得更模块化时，在指定的程序位置应用这样的转换当然是一个繁琐的强制约束。而且，
+    确实有一个更好的办法来<i>按需要</i>应用类的重定义。
+    用<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html">Java 代理</a>，
+    它可以拦截 Java 应用中进行的任何类加载活动。Java 代理被实现为一个简单的带有入口点的 jar 文件，其入口点在 jar 文件的 manifest(清单) 文件中指定，
+    像链接中描述的一样。在 Byte Buddy 中，通过使用<code>AgentBuilder</code>，代理的实现是相当直接的。
+    假定我们之前定义了一个名为<code>ToString</code>的注解，通过实现代理的<code>premain</code>方法，
+    对所有带该注解的类实现<code>toString</code>方法是很容易的。如下所示：
+</p>
+
+<pre class="prettyprint">
+class ToStringAgent {
+  public static void premain(String arguments, Instrumentation instrumentation) {
+    new AgentBuilder.Default()
+        .type(isAnnotatedWith(ToString.class))
+        .transform(new AgentBuilder.Transformer() {
+      @Override
+      public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                              TypeDescription typeDescription,
+                                              ClassLoader classloader) {
+        return builder.method(named("toString"))
+                      .intercept(FixedValue.value("transformed"));
+      }
+    }).installOn(instrumentation);
+  }
+}
+</pre>
+
+<p>
+    作为应用上述<code>AgentBuilder.Transformer</code>的结果，添加注解的类的所有<code>toString</code>方法将返回 <code>transformed</code>。
+    我们将在接下来的章节中学习<code>DynamicType.Builder</code>，所以现在不要担心这个类。上面的代码当然是一个微不足道且毫无意义的应用。
+    然而，正确使用这个概念，对于实现面向切面编程会提供一个非常强大的工具。
+</p>
+
+<p>
+    请注意，在使用代理时也可以检测由启动类加载器加载的类。但是，这需要一些准备。首先，启动类加载器由<code>null</code>值表示，
+    这会导致无法通过反射在该类加载器加载类。然而，有时需要加载辅助类到检测类的类加载器中以支持类的实现。为了向启动类加载器中加载类，
+    Byte Buddy 可以创建 jar 文件并且将这些文件添加到启动类的加载路径中。然而，为了使这个成为可能，需要将这些类保存到磁盘上。
+    使用<code>enableBootstrapInjection</code>命令可以指定存放这些类的文件夹，该命令也采用<code>Instrumentation</code>接口以附加这些类。
+    请注意，被检测类使用的所有用户类也需要放在启动类加载器类加载路径上，这样会使使用<code>Instrumentation</code>接口成为可能。
+</p>
+
+<h4>在 Android 应用中加载类</h4>
+
+<p>
+    Android 使用了不同的类文件格式，使用的是不在 Java 类文件格式布局中的 dex 文件。此外，通过接替 Dalvik 虚拟机的ART运行时，
+    Android 应用可以安装到设备之前编译成本地机器码。因此，只要应用没有显式地与 Java 源码部署在一起，Byte Buddy 就不能对类进行重定义或变基，
+    否则，就没有中间代码表示可以解释。然而，Byte Buddy 仍然能够使用<code>DexClassLoader</code>和内置的dex编译器一起定义新类。
+    为此，Byte Buddy 提供了<code>byte-buddy-android</code>模块，它包含了允许加载在 Android
+    应用中动态创建的类的<code>AndroidLoadingStrategy</code>。为了运行，它需要一个用于写入临时文件和保存编译后的类文件的文件夹。
+    该文件夹不能在不同应用之间共享，因为这在 Android 的安全管理器中是禁止的。
+</p>
+
+<h4>使用泛型</h4>
+
+<p>
+    Byte Buddy 在处理 Java 程序语言中定义的泛型类型。Java 运行时不考虑泛型，只处理泛型的擦除。然而，
+    泛型仍然会嵌入在任何 Java 文件中并且被反射 API 暴露。因此，有时在生成的类中包含泛型信息是有意义的，
+    因为泛型信息能影响其他类库和框架的行为。当编译器将一个类作为类库进行处理和持久化时，嵌入的泛型信息也很重要。
+</p>
+
+<p>
+    当子类化一个类、实现一个接口，或声明一个字段或方法时，由于上述原因，Byte Buddy 接受一个 Java
+    <code>Type</code>而不是一个擦除泛型的<code>类</code>。
+    泛型也可以用<code>TypeDescription.Generic.Builder</code>被显式的定义。Java 泛型与类型擦除一个重要的不同是类型变量的上下文含义。
+    当另一种类型以相同的名称声明相同类型的变量时，通过某种类型定义的具有特定名称的类型变量不一定表示相同类型。因此，
+    当将一个<code>类型</code>实例交给库时，Byte Buddy 会重新绑定所有泛型类型，这些泛型类型在生成的类型或方法的上下文中表示类型变量。
+</p>
+
+<p>
+    当一个类型被创建时，Byte Buddy 还会透明的插入<a href="https://docs.oracle.com/javase/tutorial/java/generics/bridgeMethods.html">
+    <i>桥接方法</i></a>。桥接方法被<code>MethodGraph.Compiler</code>处理，它是<code>ByteBuddy</code>实例的一个属性。
+    默认方法图编译器行为像 Java 编译器一样处理任何类文件的泛型信息。但是，对于 Java 以外的语言，不同的方法图编译器可能是合适的。
+</p>
+
+</div>
+
+<div class="row" id="members">
+
+<h2>字段和方法</h2>
+
+<p>
+    在之前的章节中，我们创建的大多数类型没有定义任何字段和方法。然而，通过子类化<code>Object</code>，创建的类会继承它的超类定义的方法。
+    让我们验证这个细节并在动态类的实例上调用<code>toString</code>方法。我们可以通过反射调用创建的类的构造器来获取该类的实例。
+</p>
+
+<pre class="prettyprint">
+String toString = new ByteBuddy()
+  .subclass(Object.class)
+  .name("example.Type")
+  .make()
+  .load(getClass().getClassLoader())
+  .getLoaded()
+  .newInstance() // Java reflection API
+  .toString();
+</pre>
+
+<p>
+    <code>Object#toString</code>方法的实现返回实例的全限定类名和实例的16进制表示的哈希码的拼接。实际上，
+    调用创建的类的<code>toString</code>方法会返回类似于<code>example.Type@340d1fa5</code>的字符串。
+</p>
+
+<p>
+    当然，这里我们还没有讲完。创建动态类的主要目的是定义新的逻辑。让我们从简单的例子开始，以演示这是怎么实现的。
+    我们想要覆写<code>toString</code>方法，并返回<code>Hello World!</code>，而不是返回默认值：
+</p>
+
+<pre class="prettyprint">
+String toString = new ByteBuddy()
+  .subclass(Object.class)
+  .name("example.Type")
+  .method(named("toString")).intercept(FixedValue.value("Hello World!"))
+  .make()
+  .load(getClass().getClassLoader())
+  .getLoaded()
+  .newInstance()
+  .toString();
+</pre>
+
+<p>
+    添加代码中的那行包含了 Byte Buddy 领域特定语言的两条指令。第一个指令是<code>Method</code>，它允许我们覆写任何方法。
+    选择通过移交<code>ElementMatcher(元素匹配器)</code>被应用，该匹配器决定哪一个方法被覆写。Byte Buddy 自带许多预定义的方法匹配器，
+    这些被收集在<code>ElementMatchers</code>类中。通常，你将静态导入这个类，这样最终的代码读起来更加自然。对于上面的示例，
+    假设了这样的静态导入，其中我们使用了<code>named</code>方法匹配器，它通过确切的名称来选择方法。请注意：预定义的方法匹配器是可以组合的。
+    这样，我们可以更详细的描述方法选择，例如：
+</p>
+
+<pre class="prettyprint">
+named("toString").and(returns(String.class)).and(takesArguments(0))
+</pre>
+
+<p>
+    后面的方法选择器通过其完整的 Java 签名来描述<code>toString</code>方法，因此只能匹配到特定方法。然而，在给定的上下文中，
+    我们知道没有其他名称为<code>toString</code>且签名不同的方法，这样的话原来的方法匹配器就够用了。
+</p>
+
+<p>
+    在选择了<code>toString</code>方法后，第二条指令<code>intercept</code>决定方法的实现，该实现将覆写所有选择的方法。
+    为了知道如何实现一个方法，这个指令需要一个<code>Implementation</code>类型的参数。在上面的示例中，我们使用 Byte Buddy
+    自带的<code>FixedValue</code>实现。正如这个类名所表明的，这个实现实现了一个总是返回给定值的方法。
+    我们将在本节稍后部分更详细的了解 FixedValue 的实现。现在，让我们仔细地看一下方法选择。
+</p>
+
+<p>
+    目前为止，我们仅仅拦截了一个方法。然而，在实际的应用中，事情可能会更复杂，我们可能想用不同的规则来覆写方法。让我们看一个这种场景的示例：
+</p>
+
+<pre class="prettyprint">
+class Foo {
+  public String bar() { return null; }
+  public String foo() { return null; }
+  public String foo(Object o) { return null; }
+}
+
+Foo dynamicFoo = new ByteBuddy()
+  .subclass(Foo.class)
+  .method(isDeclaredBy(Foo.class)).intercept(FixedValue.value("One!"))
+  .method(named("foo")).intercept(FixedValue.value("Two!"))
+  .method(named("foo").and(takesArguments(1))).intercept(FixedValue.value("Three!"))
+  .make()
+  .load(getClass().getClassLoader())
+  .getLoaded()
+  .newInstance();
+</pre>
+
+<p>
+    在上面的示例中，我们定义了三条不同的规则来覆写方法。当研究代码时，你会注意到：第一条规则涉及<code>Foo</code>类中定义的任何方法，
+    也就是示例类中的所有(三个)方法。第二条规则匹配所有名称为<code>foo</code>的方法，是之前选择的方法的子集。最后一个规则匹配 foo(Object) 方法，
+    这个比之前的选择范围进一步减少了。但是，考虑到这种选择重叠，Byte Buddy 是如何决定哪个规则应用于哪个方法的？
+</p>
+
+<p>
+    Byte Buddy 以栈的形式组织覆写方法的规则。这意味着每当你注册一条用于覆写方法的新规则时，它将被压入栈顶，并且始终首先应用，
+    直到添加一条新规则，该规则将有更高的优先级。对于上面的示例，这意味着：
+</p>
+
+<ul class="colored-list padded">
+    <li><span>
+        方法<code>bar()</code>第一次被<code>named("foo").and(takesArguments(1))</code>匹配，
+        之后与<code>named("foo")</code> 匹配，这两个都没有匹配上。最后，
+        <code>isDeclaredBy(Foo.class)</code>匹配器匹配成功覆写<code>bar()</code>方法，返回 <code>One!</code>。
+    </span></li>
+    <li><span>
+        类似地，<code>foo()</code>第一次匹配被<code>named("foo").and(takesArguments(1))</code>匹配，
+        该匹配缺少参数导致不能成功。之后<code>named("foo")</code>匹配成功并覆写返回<code>Two!</code>。
+    </span></li>
+    <li><span>
+        <code>foo(Object)</code>立即匹配到<code>named("foo").and(takesArguments(1))</code>，
+        方法覆写后返回<code>Three!</code>。
+    </span></li>
+</ul>
+
+<p>
+    因为这样的组织，你应该始终最后注册更具体的方法匹配器。否则，之后注册的任何不太具体的方法匹配器可能会阻止你之前定义的规则被应用。
+    注意，<code>ByteByddy</code>设置允许定义一个<code>ignoreMethod</code>属性，与该方法匹配器成功匹配的方法永远不会被覆写。
+    默认，Byte Buddy 不会覆写任何synthetic方法。
+</p>
+
+<p>
+    在一些场景中，你或许想定义一个新方法，这个方法不会覆写超类或接口的方法。这个可以使用 Byte Buddy 实现。为此，
+    你可以调用<code>defineMethod</code>来定义一个方法签名。在定义方法后，你需要提供一个<code>Implementation</code>，如同方法匹配器标识的方法。
+    注意，在方法定义后注册的方法匹配器可能会通过我们之前讨论过的堆积(stacking)原则取代该实现。
+</p>
+
+<p>
+    Byte Buddy 允许用<code>defineField</code>为给定的类定义字段。在Java中，字段不会被覆写，
+    只能被<a href="http://en.wikipedia.org/wiki/Variable_shadowing">隐藏</a>。因此，没有字段匹配或者类似功能。
+</p>
+
+<p>
+    带着这些关于如何选择方法的知识，我们已经准备好学习如何实现这些方法。为此，我们现在看一下 Byte Buddy
+    自带的预定义<code>Implementation</code>的实现。定义自定义实现在它自己的章节中讨论，这里仅适用于需要完全自定义方法实现的用户。
+</p>
+
+<h4>深究fixed values(固定值)</h4>
+
+<p>
+    我们在实战中已经看到了<code>FixedValue</code>实现。顾名思义，通过<code>FixedValue</code>实现的方法会简单地返回一个给定的对象。
+    一个类能以两种不同的方式记住这个对象：
+</p>
+
+<ul class="colored-list padded">
+    <li><span>
+        固定值被写入到<a href="http://en.wikipedia.org/wiki/Java_class_file#The_constant_pool">类的常量池</a>。
+        常量池是 Java 类文件格式中的一部分，它包含大量的无状态的值，用来描述任何类的属性。常量池主要用来记住类的属性，比如类名称或者方法名称。
+        除了这些反映的属性外，常量池还有空间用来保存在类中的方法或者字段中用到的任何字符串或基本类型的值。除了字符串和基本类型的值以外，
+        常量池还保存了其他类型的引用。
+    </span></li>
+    <li><span>
+        保存在静态字段中的值。但是，为了实现这点，一旦类加载到 JVM，这个字段必须赋予给定的值。为此，
+        每一个动态创建的类都附带一个<code>TypeInitializer</code>，它可以配置执行这样的显式初始化。
+        当<code>DynamicType.Unloaded</code>被加载时，Byte Buddy 会自动触发其类型初始化器，这样类就可以准备被使用了。
+        因此，你通常不需要担心类型的初始化器。然而，如果你想在 Byte Buddy 之外加载动态类，在这些类加载之后手动运行它们的类初始化器是非常重要的。
+        否则，<code>FixedValue</code>实现将返<code>null</code>而不是需要的值，因为这个静态字段从来就没有被赋此值。
+        然而，多数动态类型或许都不需要显式地初始化。因此，通过调用它的<code>isAlive</code>方法，类的初始化器会被查询它的存活状态。
+        如果你需要手动触发一个<code>TypeInitializer(类型初始化器)</code>，你会发现它被<code>DynamicType</code>接口所暴露。
+    </span></li>
+</ul>
+
+<p>
+    当你通过<code>FixedValue#value(Object)</code>实现一个方法时，Byte Buddy 会分析参数的类型，
+    并在可能的情况下将这个参数的值定义到动态类的常量池中，否则将值存储到静态字段中。然而，需要注意，如果该值存储在常量池中，
+    选中的方法返回的实例可能具有不同的对象身份。因此，你可以指示 Byte Buddy 总是通过用<code>FixedValue#reference(Object)</code>
+    将对象保存在静态字段中。后一种方法<code>reference(Object fixedValue, String fieldName)</code>被重载了，
+    这样你就可以提供字段的名称作为第二个参数。 否则，字段名称会自动从对象的哈希码中提取。这种行为的一个例外是<code>null</code>值。
+    <code>null</code>值从不会保存在字段中， 而是简单地由其字面上的表达式表示。
+</p>
+
+<p>
+    你或许想知道在这个上下文中的类型安全。显然，你可以定义一个返回无效值的方法：
+</p>
+
+<pre class="prettyprint">
+new ByteBuddy()
+  .subclass(Foo.class)
+  .method(isDeclaredBy(Foo.class)).intercept(FixedValue.value(0))
+  .make();
+</pre>
+
+<p>
+    在 Java 的类型系统中，编译器很难去阻止这种无效的实现。相反，当类型被创建并且非法的赋值(将一个整形赋值给一个返回<code>String</code>类型的方法)生效时，
+    Byte Buddy 将抛出一个<code>IllegalArgumentException</code>异常。Byte Buddy 会尽最大努力去保证它创建的所有类型都是合法的 Java 类型，
+    并且通过在创建非法的类型时抛出异常而<i>快速失败</i>。
+</p>
+
+<p>
+    Byte Buddy 的赋值行为是可以自定义的。同样，Byte Buddy 只提供一个健全的默认值，它模仿了 Java 编译器的赋值行为。因此，
+    Byte Buddy 允许将一个类型赋值给它的任何超类，并且还考虑到将基本类型的值装箱或拆箱。然而，需要注意，Byte Buddy
+    目前没有完全支持泛型类型，并且只考虑类型的擦除。因此，Byte Buddy
+    可能会造成<a href="http://en.wikipedia.org/wiki/Heap_pollution">堆污染(heap pollution)</a>。
+    你可以实现自己的<code>Assigner(赋值器)</code>，而不是使用预定义的，该赋值器能够进行 Java 编程语言中非隐式的类型转换。
+    我们将在本教程的最后一节中研究这种自定义实现。现在，
+    我们只需要提及你可以在任何<code>FixedValue</code>上通过调用<code>withAssigner</code>来定义这样的自定义赋值器。
+</p>
+
+<h4>委托方法调用</h4>
+
+<p>
+    在大多数情况下，方法返回一个固定值当然是不够的。为了更好的灵活性，Byte Buddy 提供了<code>MethodDelegation(方法委托)</code>实现，
+    它在对方法调用做出反应时提供最大程度的自由。一个方法委托定义了动态创建的类方法，到另外一个可能存在于动态类型之外的方法的任何调用。
+    这样，动态类的逻辑可以用简单的 Java 表示，仅通过代码生成就可以与另外的方法绑定。在讨论细节之前，
+    我们来看一下使用<code>MethodDelegation</code>的示例：
+</p>
+
+<pre class="prettyprint">
+class Source {
+  public String hello(String name) { return null; }
+}
+
+class Target {
+  public static String hello(String name) {
+    return "Hello " + name + "!";
+  }
+}
+
+String helloWorld = new ByteBuddy()
+  .subclass(Source.class)
+  .method(named("hello")).intercept(MethodDelegation.to(Target.class))
+  .make()
+  .load(getClass().getClassLoader())
+  .getLoaded()
+  .newInstance()
+  .hello("World");
+</pre>
+
+<p>
+    在示例中，我们将<code>Source#hello(String)</code>方法的调用委托给<code>Target</code>类型，
+    这样方法就会返回<code>Hello World!</code>，而不是<code>null</code>。为此，<code>MethodDelegation</code>
+    实现识别<code>Target</code>类的任何方法调用并且在这些方法中找出一个最匹配的。在上面的实例中，这是微不足道的，
+    因为<code>Target</code>类型只定义了一个静态方法，其中方法的参数、返回类型和名称与方法<code>Source#name(String)</code> 的相同，很容易识别。
+</p>
+
+<p>
+    实际上，委托方法的决定很可能会更复杂。那么，Byte Buddy在这些方法之间是如果选择的呢？为此，我们假定<code>Target</code>类被如下定义：
+</p>
+
+<pre class="prettyprint">
+class Target {
+  public static String intercept(String name) { return "Hello " + name + "!"; }
+  public static String intercept(int i) { return Integer.toString(i); }
+  public static String intercept(Object o) { return o.toString(); }
+}
+</pre>
+
+<p>
+    你或许已经注意到上面的方法现在都被称为<code>intercept</code>。Byte Buddy 不需要目标方法被命名为与原方法名称一样。
+    我们很快就会仔细研究这个问题。更重要的是，如果你使用定义更改后的<code>Target</code>去运行之前的实例，
+    你将观察到<code>name(String)</code>方法被绑定到了<code>intercept(String)</code>。但是，为什么会这样？
+    显然，<code>intercept(int)</code>方法不会接收源方法的<code>String</code>参数，因此不会被视为可能的匹配。
+    但是对于<code>intercept(Object)</code>方法，该方法从参数形式上看是可以绑定的，但是最终没有绑定。为了解决这种歧义，
+    Byte Buddy 再次模拟 Java 编译器，选择绑定参数类型最明确的的方法。因为，<code>String</code>比<code>Object</code>更明确，
+    所以在这三个选项中，<code>intercept(String)</code>方法最终被选择。
+</p>
+
+<p>
+    根据目前的信息，你可能会认为方法绑定算法具有相当严格的性质。然而，我们还没有讲完。目前我们只观察了两一个约定由于配置原则的示例。
+    如果默认的配置不满足实际需求，这个原则对于改变是开放的。实际上，<code>MethodDelegation</code>实现与注解一起工作，
+    其中参数的注解决定应该为其分配什么值。但是，如果没有发现注解，Byte Buddy 会将参数看作带了<code>@Argument</code>注解。
+    后面的注解会导致 Byte Buddy 将源方法的第<code>n</code>个参数分配给注解的目标方法。当注解没有显式添加时，
+    注解的值<code>n</code>会被设置为参数的索引顺序。通过这个规则，Byte Buddy 将下面的代码
+</p>
+
+<pre class="prettyprint">
+void foo(Object o1, Object o2)
+</pre>
+
+<p>
+    看作如同下面带注解的方法：
+</p>
+
+<pre class="prettyprint">
+void foo(@Argument(0) Object o1, @Argument(1) Object o2)
+</pre>
+
+<p>
+    结果，被检测方法的第一个和第二个参数被分配给拦截器。如果被拦截的方法声明的参数少于两个，
+    或者带注释的参数类型不能从检测方法的参数类型中分配，则相关拦截器方法将被丢弃。
+</p>
+
+<p>
+    除了<code>@Argument</code>注解，还有几个其他预定义的注解可以用于<code>MethodDelegation</code>:
+</p>
+
+<ul class="colored-list padded">
+    <li><span>
+        带有<code>@AllArguments</code>注解的参数必须是数组类型，并分配一个包含所有源方法参数的数组。为此，
+        所有源方法的参数对数组的组成类型必须是可分配的。如果不是这种情况，则当前的目标方法不会被认为是可以绑定到源方法的候选方法。
+    </span></li>
+    <li><span>
+        <code>@This</code>注解会导致动态类型的实例分配，在这个实例上当前的拦截方法会被调用。如果被注解的参数不可分配给一个动态类型的实例，
+        则当前方法不会被认为是可以绑定到源方法的候选方法。注意，在这个实例上的任何方法调用将会导致可能调用检测方法实现。
+        对于调用覆写实现，你需要使用<code>@Super</code>注解，这个将在下面讨论。使用<code>@This</code>注解的一个典型原因是获取一个实例字段的访问权限。
+    </span></li>
+    <li><span>
+        带有<code>@Origin</code>注解的参数必须在任何类型上是有用的，<code>Method</code>、<code>Constructor</code>、
+        <code>Executable</code>、<code>Class</code>、<code>MethodHandle</code>、 <code>MethodType</code>、
+        <code>String</code><code>int</code>。根据参数的类型，它被分配一个方法或构造器对现在检测的原始<code>Mehtod(方法)</code>和<code>构造器</code>的引用，
+        或者动态创建的<code>Class(类)</code>的引用。当使用 Java8 时，还可以通过在拦截器中使用<code>Executable</code>类型来接收方法和构造器的引用。
+        如果被注解的参数是一个<code>String</code>，则参数将分配的值为<code>Method</code>的<code>toString</code>方法返回的值。
+        通常，我们建议尽可能将这些<code>String</code>值作为方法的标识符，而且不鼓励使用<code>Method</code>对象，
+        因为它们的查找会引入显著的运行时开销。为了避免这个开销，<code>@Origin</code>注解还提供了一个用于缓存这些实例以供复用的属性。注意，
+        <code>MethodHandle</code>和<code>MethodType</code>存储在类的常量池中，使用这些常量的类必须至少是 Java7 版本。
+        我们还建议使用稍后会讨论到的<code>@Pipe</code>注解，而不是使用反射来反射性地调用另一个对象上的被拦截的方法。
+        当在类型为<code>int</code>的参数上使用<code>@Origin</code>注解时，会被分配检测方法的修饰符。
+    </span></li>
+</ul>
+
+<p>
+    除了使用预定义的注解，Byte Buddy 还允许通过注册一个或几个<code>ParameterBinder</code>来定义自己的注解。我们将在本教程的最后一节研究这种自定义。
+</p>
+
+<p>
+    除了我们目前讨论过的四个注解之外，还存在两个其它的预定义注解，它们可以授予对动态类型方法的超类实现的访问权限。这样，
+    动态类型可以给一个类添加<a href="http://en.wikipedia.org/wiki/Aspect-oriented_programming">切面</a>，
+    例如方法调用的日志。用<code>@SuperCall</code>注解，一个方法的超类方法调用甚至可以从动态类的外部被执行。如下示例所示：
+</p>
+
+<pre class="prettyprint">
+class MemoryDatabase {
+  public List&lt;String&gt; load(String info) {
+    return Arrays.asList(info + ": foo", info + ": bar");
+  }
+}
+
+class LoggerInterceptor {
+  public static List&lt;String&gt; log(@SuperCall Callable&lt;List&lt;String&gt;&gt; zuper)
+      throws Exception {
+    System.out.println("Calling database");
+    try {
+      return zuper.call();
+    } finally {
+      System.out.println("Returned from database");
+    }
+  }
+}
+
+MemoryDatabase loggingDatabase = new ByteBuddy()
+  .subclass(MemoryDatabase.class)
+  .method(named("load")).intercept(MethodDelegation.to(LoggerInterceptor.class))
+  .make()
+  .load(getClass().getClassLoader())
+  .getLoaded()
+  .newInstance();
+</pre>
+
+<p>
+    从上面的例子中，很明显通过注入某个<code>Callable</code>类型的实例到<code>LoggerInterceptor</code>来调用超类方法，
+    这个实例从它的<code>call</code>方法调用原始的没有被覆写的<code>MemoryDatabase#load(String)</code>实现。
+    这个辅助类在 Byte Buddy 的术语中被称为<code>AuxiliaryType(辅助类型)</code>。这个辅助类型由 Byte Buddy 根据需要创建，
+    并且可以在类创建后直接从<code>DynamicType(动态类型)</code>接口直接访问。由于这个辅助类型，手动创建一个动态类可能会导致一些附加的类被创建，
+    这有助于源类的实现。最后，注意<code>@SuperCall</code>注解也能用于<code>Runnable</code>类型，其中源方法的返回值会被丢弃。
+</p>
+
+<p>
+    你可能仍然好奇这个辅助类为何能调用另一个类的超类方法，这在 Java 中通常是禁止的。然而，仔细观察，这种行为相当普遍，
+    类似于以下的 Java 代码片段被编译时生成的编译代码。
+</p>
+
+<pre class="prettyprint">
+class LoggingMemoryDatabase extends MemoryDatabase {
+
+  private class LoadMethodSuperCall implements Callable {
+
+    private final String info;
+    private LoadMethodSuperCall(String info) {
+      this.info = info;
+    }
+
+    @Override
+    public Object call() throws Exception {
+      return LoggingMemoryDatabase.super.load(info);
+    }
+  }
+
+  @Override
+  public List&lt;String&gt; load(String info) {
+    return LoggerInterceptor.log(new LoadMethodSuperCall(info));
+  }
+}
+</pre>
+
+<p>
+    但是，有时你可能想调用超类方法，它(超类方法)带有与在源方法的调用中分配的参数不同的参数。在 Byte Buddy 中通过使用<code>@Super</code>注解也能实现。
+    这个注解会触发另一个<code>AuxiliaryType</code>的创建，它会继承超类或动态类型的接口。与之前类似，这个辅助类会覆写所有方法以在动态类型上调用超类方法的实现。
+    这样，上面的日志拦截器示例可以被实现来更改实际调用。
+</p>
+
+<pre class="prettyprint">
+class ChangingLoggerInterceptor {
+  public static List&lt;String&gt; log(String info, @Super MemoryDatabase zuper) {
+    System.out.println("Calling database");
+    try {
+      return zuper.load(info + " (logged access)");
+    } finally {
+      System.out.println("Returned from database");
+    }
+  }
+}
+</pre>
+
+<p>
+    注意，分配给带有<code>@Super</code>注解的参数的实例和真正动态类型的实例具有不同的身份！因此，没有通过参数访问的实例字段能反应出实际的实例字段。
+    此外，辅助实例的不可覆写方法不会委托它们的调用，而是保留原来的实现，这会在它们被调用时产生荒谬的行为。最后，
+    假使一个带有<code>@Super</code>注解的参数不能代表相关动态类的超类，则该方法不会被认为是其任何方法的绑定目标。
+</p>
+
+<p>
+    因为<code>@Super</code>注解允许任何类型使用，所以我们可能需要提供这个类型如何被构造的信息。默认情况下，Byte Buddy
+    尝试用类的默认构造器。这总是适用于隐式继承<code>Object</code>类型的接口。然而，当继承一个动态类型的超类时，
+    这个类或许不能提供一个默认的构造器。如果是这种情况，或者如果一个特定的构造器应该被用来创建这种辅助类，
+    则<code>@Super</code>注解允许通过设置其参数类型作为注解的<code>constructorParameters(构造器参数)</code>属性来识别不同构造器。
+    这个构造器将会通过给每个参数分配相应的默认值被调用。或者，也可以使用<code>Super.Instantiation.UNSAFE</code>策略来创建类，
+    这将使用 Java 内置的类来创建辅助类型而不是调用<i>任何</i>构造器。然而，注意，这种策略不一定能移植到非 Oracle 的 JVM 上，
+    并且可能会在未来发行的 JVM 里不可用。至今，通过这种不安全的实例化策略被使用的内部类在几乎所有的 JVM 实现中都可以找到。
+</p>
+
+<p>
+    此外，你可能已经注意到上面的<code>LoggerInterceptor</code>声明了一个
+    <a href="http://docs.oracle.com/javase/tutorial/essential/exceptions/declaring.html">checked<code>Exception(检查异常)</code></a>。
+    另一方面，调用此方法的被检测的源方法<i>没有</i>声明任何检查异常。 通常，Java 编译器会拒绝编译这样的调用。然而，和编译器相比，
+    Java 运行时不会区别对待检查异常和未检查异常，且允许这样的调用。鉴于这个原因，我们决定忽略检查异常并在它们的使用中授予完全的灵活性。
+    然而，当从动态创建的方法中抛出未检查异常时要小心，因为遇到此类异常可能会使应用的用户困惑。
+</p>
+
+<p>
+    方法委托模型中的另一个警告可能会引起你的注意。虽然静态类型对于实现方法是非常好的，但是严格的类型会限制代码的复用。要理解为什么，考虑一下下面的示例：
+</p>
+
+<pre class="prettyprint">
+class Loop {
+  public String loop(String value) { return value; }
+  public int loop(int value) { return value; }
+}
+</pre>
+
+<p>
+    由于上述类的方法描述了两个类似的带有不兼容类型的签名，你将不能通过一个拦截器方法去检测这两个方法。相反，你必须提供两个具有不同签名的不同的目标方法，
+    来满足静态类型检查。为了克服这个限制，Byte Buddy 允许给方法和方法参数添加<code>@RuntimeType</code>注解，
+    它指示 Byte Buddy 终止严格类型检查以支持运行时类型转换：
+</p>
+
+<pre class="prettyprint">
+class Interceptor {
+  @RuntimeType
+  public static Object intercept(@RuntimeType Object value) {
+    System.out.println("Invoked method with: " + value);
+    return value;
+  }
+}
+</pre>
+
+<p>
+    用上面的目标方法，我们现在可以为两个源方法提供单个拦截方法。注意，Byte Buddy 可以对基本类型装箱和开箱。然而，
+    要意识到使用<code>@RuntimeType</code>注解是以放弃类型安全为代价的，如果你将不兼容的类型混淆，
+    可能会以<code>ClassCastException(类转换异常)</code>结束。
+</p>
+
+<p>
+    和<code>@SuperCall</code>相同，Byte Buddy有一个<code>@DefaultCall</code>注解，它允许调用默认方法而不是调用方法的超类方法。
+    如果拦截的方法实际上由被检测类型直接实现的接口声明为默认方法时，才考虑使用此参数注解的方法进行绑定。类似地，如果检测方法没有定义一个非抽象的超类方法，
+    <code>@SuperCall</code>注解会阻止方法的绑定。但是，如果你想在特定的类型上调用一个默认的方法，
+    你可以指定<code>@DefaultCall</code>的<code>targetType(目标类型)</code>参数为特定接口。用这个指定，Byte Buddy 会注入一个代理实例，
+    它可以调用给定接口的默认方法，如果这个方法存在的话。否则，带有参数注解的目标方法不会被认为是一个委托目标。显然，默认方法调用只在 Java8 或以上版本定义的类适用。
+    类似地，除了<code>@Super</code>注解，还有一个<code>@Default</code>注解，它会注入一个代理以显式地调用特定的默认方法。
+</p>
+
+<p>
+    我们已经提到过你可以定义并注册自定义的注解与任何<code>MethodDelegation</code>一起使用。Byte Buddy 自带一个可以使用但需要显示地安装和注册的注解。
+    通过使用<code>@Pipe</code>注解，你可以将一个拦截的方法调用转发到另一个对象。<code>@Pipe</code> 注解没有与<code>MethodDelegation</code>一起预先注册，
+    因为 Java 类库在 Java8 之前没有一个合适的接口类型，Java8 定义了<code>Function(函数)</code>类型。所以，你需要显式地提供一个只有一个非静态方法的类型，
+    这个方法以<code>Object</code>为参数，返回另一个<code>Object</code>为结果。注意你仍然可以使用泛型类型，只要方法的类型通过<code>Object</code>类型被绑定。
+    当然，如果你正在使用 Java8，code>Function</code>类型是一个更可行的选择。当在一个参数(parameter)的参数(argument)上调用方法时，
+    Byte Buddy 会将这个参数(parameter)转换为方法的声明类型，并且用相同的参数调用拦截的方法，就像调用源方法一样。在我们看一个示例之前，让我们定义一个自定义类型，
+    你可以在 Java5 及以上版本中使用它：
+</p>
+
+<pre class="prettyprint">
+interface Forwarder&lt;T, S&gt; {
+  T to(S target);
+}
+</pre>
+
+<p>
+    用这个类，我们现在可以通过将方法调用转发到现有实例来实现记录访问上面的<code>MemoryDatabase</code>的新方案：
+</p>
+
+<pre class="prettyprint">
+class ForwardingLoggerInterceptor {
+
+  private final MemoryDatabase memoryDatabase; // constructor omitted
+
+  public List&lt;String&gt; log(@Pipe Forwarder&lt;List&lt;String&gt;, MemoryDatabase&gt; pipe) {
+    System.out.println("Calling database");
+    try {
+      return pipe.to(memoryDatabase);
+    } finally {
+      System.out.println("Returned from database");
+    }
+  }
+}
+
+MemoryDatabase loggingDatabase = new ByteBuddy()
+  .subclass(MemoryDatabase.class)
+  .method(named("load")).intercept(MethodDelegation.withDefaultConfiguration()
+    .withBinders(Pipe.Binder.install(Forwarder.class)))
+    .to(new ForwardingLoggerInterceptor(new MemoryDatabase()))
+  .make()
+  .load(getClass().getClassLoader())
+  .getLoaded()
+  .newInstance();
+</pre>
+
+<p>
+    在上面的示例中，我们只转发了我们本地创建的实例的调用。然而，通过子类化一个类型来拦截一个方法的优势在于，这种方法允许增强一个存在的实例。
+    此外，你通常会在实例级别注册拦截器，而不是在类级别注册一个静态拦截器。
+</p>
+
+<p>
+    目前为止，我们已经看到了大量的<code>MethodDelegation(方法委托)</code>实现。但是，在我们继续之前，我们想更详细了解 Byte Buddy
+    是怎样选择一个目标方法的。我们已经描述了 Byte Buddy 如何通过比较参数类型来解析<i>最明确</i>地方法，但还有更多内容。在 Byte Buddy
+    确定有资格绑定到给定源方法的候选方法后，它将解析委托给<code>AmbiguityResolver(歧义解析器)</code>链。同样，你可以自由实现自己的歧义解析器，
+    它可以补充甚至替代 Byte Buddy 的默认解析器。如果没有此类更改，歧义解析器链会尝试通过应用下面具有相同顺序的规则来识别一个唯一的目标方法：
+</p>
+
+<ul class="colored-list padded">
+    <li><span>
+        可以通过添加<code>@BindingPriority</code>注解给方法分配明确地优先级。如果一个方法优先级高于另一个方法，
+        高优先级的方法总是优先于低优先级的方法。另外，带有<code>@IgnoreForBinding</code>注解的方法永远不会被视为目标方法。
+    </span></li>
+    <li><span>
+        如果源方法和目标方法有一个相同的名称，则该目标方法优先于其它与源方法不同名的方法。
+    </span></li>
+    <li><span>
+        如果两个方法通过使用<code>@Argument</code>注解绑定源方法的相同参数，则有更确切的参数类型的方法将会被考虑。在这种情况下，
+        显式地或不注解参数隐式地提供一个注解并不重要。解析的算法类似于 Java 编译器解析重载方法的调用。如果两种类型都是明确的，
+        则绑定更多参数的方法被视为目标方法。如果在解析阶段参数(parameter)应该被分配参数(argument)而不考虑参数(parameter)的类型，
+        则可以通过设置注解的<code>bindingMechanic</code>属性为<code>BindingMechanic.ANONYMOUS</code>。此外，注意，
+        非匿名参数需要在每个目标方法上的每个索引值都是唯一的，才能使解析算法起作用。
+    </span></li>
+    <li><span>
+        如果一个目标方法比另一个目标方法参数多，则前一种方法优于后一种方法。
+    </span></li>
+</ul>
+
+<p>
+    目前为止，我们仅当在 <code>MethodDelegation.to(Target.class)</code>中通过命名特定类来将方法调用委托给一个静态方法。
+    然而也可以委托给实例方法和构造器：
+</p>
+
+<ul class="colored-list padded">
+    <li><span>
+        通过调用<code>MethodDelegation.to(new Target())</code>，可以将方法调用委托给<code>Target</code>类的任何实例方法。注意，
+        这包含实例的类继承层次中任何位置定义的方法，包含<code>Object</code>类中定义的方法。你或许想通过在任何<code>MethodDelegation
+        </code>上调用<code>filter(ElementMatcher)</code>来将过滤器应用到任意<code>MethodDelegation</code>上，从而限制候选方法的范围。
+        这个<code>ElementMatcher(元素匹配器)</code>类型与之前用于在 Byte Buddy 领域特定语言中选择源方法的类型相同。
+        方法委托目标的实例存储在静态字段中。类似于固定值的定义，这需要定义<code>TypeInitializer(类型初始化器)</code>。
+        或者，你可以通过<code>MethodDelegation.toField(String)</code>定义任何字段的使用，其中参数指定一个字段名称，
+        所有方法委托都会转发到这个指定的字段，而不是将委托存储在静态字段中。始终记住，在此动态实例上调用方法之前，给这个字段分配一个值。否则，方
+        法委托会导致<code>NullPointerException(空指针异常)</code>。
+    </span></li>
+    <li><span>
+        方法委托可用于构造给定类型的实例。通过使用<code>MethodDelegation.toConstructor(Class)</code>，拦截方法的任何调用将返回一个给定的目标类型的实例。
+    </span></li>
+</ul>
+
+<p>
+    正如你刚才了解的，<code>MethodDelegation</code>会检查注解以调整它的绑定逻辑。这些注解对于 Byte Buddy 是确定的，
+    但这并不意味着带注解的类以任何形式依赖 Byte Buddy。相反，Java 运行时只是忽略当加载类时在类路径找不到的注解类型。
+    这意味着在动态类创建后不再需要 Byte Buddy，同时意味着，即使 Byte Buddy 没有在类路径上，你也可以在另一个JVM进程中加载动态类和委托其方法调用的类。
+</p>
+
+<p>
+    这里有几个预定义的注解可以和我们只想简要命名的<code>MethodDelegation</code>一起使用。如果你想要阅读更多关于这些注解的信息，
+    你可以在代码内的文档中找到更多的信息。这些注解是：
+</p>
+
+<ul class="colored-list padded">
+    <li><span>
+        <code>@Empty</code>：应用此注解，Byte Buddy会注入参数(parameter)类型的默认值。对于基本类型，这相当于零值，对于引用类型，
+        值为<code>null</code>。使用该注解是为了避免拦截器的参数。
+    </span></li>
+    <li><span>
+        <code>@StubValue</code>：使用此注解，注解的参数将注入拦截方法的存根值。对于reference-return-types(返回引用类型)和<code>void</code>的方法，
+        会注入<code>null</code>。对于返回基本类型的方法，会注入相等的<code>0</code>的包装类型。
+        当使用<code>@RuntimeType</code>注解定义一个返回<code>Object</code>类型的通用拦截器时，结合使用可能会非常有用。通过返回注入的值，
+        该方法在合适地被视为基本返回类型时充当从根。
+    </span></li>
+    <li><span>
+        <code>@FieldValue</code>：此注解在检测类的类层次结构中定位一个字段并且将字段值注入到注解的参数中。如果没有找到注解参数兼容的可见字段，
+        则目标方法不会被绑定。
+    </span></li>
+    <li><span>
+        <code>@FieldProxy</code>：使用此注解，Byte Buddy 会为给定字段注入一个accessor(访问器)。如果拦截的方法表示此类方法，
+        被访问的字段可以通过名称显式地指定，也可以从getter或setter方法名称派生。在这个注解被使用之前，需要显式地安装和注册，类似于<code>@Pipe</code>注解。
+    </span></li>
+    <li><span>
+        <code>@Morph</code>：这个注解的工作方式与<code>@SuperCall</code>注解非常相似。然而，使用这个注解允许指定用于调用超类方法参数。注意，
+        仅当你需要调用具有与原始调用不同参数的超类方法时，才应该使用此注解，因为使用<code>@Morph</code>注解需要对所有参数装箱和拆箱。如果过你想调用一个特定的超类方法，
+        请考虑使用<code>@Super</code>注解来创建类型安全的代理。在这个注解被使用之前，需要显式地安装和注册，类似于<code>@Pipe</code>注解。
+    </span></li>
+    <li><span>
+        <code>@SuperMethod</code>：此注解只能用于可从<code>Method</code>分配的参数类型。分配的方法被设置为允许原始代码调用的综合的访问器方法。
+        注意，使用此注解会导致为代理类创建一个公共访问器，该代理类允许不通过security manager(安全管理器)在外部调用超类方法。
+    </span></li>
+    <li><span>
+        <code>@DefaultMethod</code>：<code>@SuperMethod</code>，但用于默认方法调用。如果默认方法调用只有一种可能性，
+        则该默认方法在唯一类型上被调用。否则，可以将类型显式地指定为注解属性。
+    </span></li>
+</ul>
+
+
+<h4>调用超类方法</h4>
+
+<p>
+    顾名思义，<code>SuperMethodCall(超类方法调用)</code>可以用于调用方法的超类实现。乍一看，超级实现的唯一调用看起来不是非常有用，
+    因为这不会改变实现，只是复制了已存在的逻辑。但是，通过覆写一个方法，你可以改变方法的注解和参数，我们将在下一节研究这些内容。
+    在 Java 中调用超类方法的另一个根本原因是构造器的定义，构造器总是会调用另一个超类的构造器或自身类的构造器。
+</p>
+
+<p>
+    目前为止，我们只是假设动态类的构造器总是与其直接超类的构造器类似。例如，我们可以调用
+</p>
+
+<pre class="prettyprint">
+new ByteBuddy()
+  .subclass(Object.class)
+  .make()
+</pre>
+
+<p>
+    创建一个带有默认构造器的<code>Object</code>类型的子类，该构造器被定义为简单地调用它的直接父类构造器，<code>Object</code>类型默认的构造器。
+    然而，这个行为通过 Byte Buddy 没有被保证。相反，上面的代码是下面这个调用的快捷方式
+</p>
+
+<pre class="prettyprint">
+new ByteBuddy()
+  .subclass(Object.class, ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
+  .make()
+</pre>
+
+<p>
+    其中，<code>ConstructorStrategy(构造器策略)</code>负责为任何给定的类创建一组预定义的构造器。
+    除了上面的策略(复制动态类型的直接超类的每一个可见构造器)之外，还有三个其它的预定义策略：一个不创建任何构造器；另一个创建默认的构造器，
+    该构造器会调用直接超类的默认构造器，如果没有这样的构造器，则会抛出异常；最后一种仅模仿超类的公共构造器。
+</p>
+
+<p>
+    在 Java 类文件格式中，构造器通常与方法没什么区别，这样 Byte Buddy 允许将它们相同对待。但是，构造器需要包含调用另一个构造器的硬编码调用才能被 Java
+    运行时接受。由于这个原因，除了<code>SuperMethodCall</code>，大多数预定义实现应用于构造器时将无法创建有效的 Java 类。
+</p>
+
+<p>
+    然而，通过使用自定义实现，你可以通过实现一个自定义<code>ConstructorStrategy</code>或者在 Byte Buddy 的领域特定语言中，
+    使用<code>defineConstructor(定义构造器)</code>方法定义你自己的构造器。此外，我们计划向 Byte Buddy 添加新功能，以便开箱即用地定义更复杂的构造器。
+</p>
+
+<p>
+    对于类变基和重定义，构造器当然只是简单地保留，这使得<code>ConstructorStrategy</code>的规范过时了。相反，对于复制这些保留的构造器(和方法)的实现，
+    需要指定一个<code>ClassFileLocator(类文件定位器)</code>，它允许查找包含了这些构造器定义的源类。Byte Buddy 会尽最大努力识别源类文件的位置，
+    例如，通过查询对应的<code>ClassLoader</code>或者通过查看应用的类路径。然而，当处理自定义的类加载器时，查看可能仍然会失败。然后，
+    就要提供一个自定义<code>ClassFileLocator</code>。
+</p>
+
+<h4>调用默认方法</h4>
+
+<p>
+    随着版本8的发布，Java 编程语言引入了<a href="http://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html">接口的默认方法
+    </a>，在 Java 中，通过与调用超类方法类似的语法表示默认方法的调用。作为唯一的区别，默认方法调用命名定义该方法的接口。这很有必要，
+    因为如果两个接口用相同的签名定义了一个方法，默认方法调用将会不明确。相应地，Byte Buddy 的<code>DefaultMethodCall</code> 实现采用了优先接口列表。
+    当拦截一个方法时，<code>DefaultMethodCall</code> 将在第一个提到的接口上调用默认方法。例如，假定我们要实现下面两个接口：
+</p>
+
+<pre class="prettyprint">
+interface First {
+  default String qux() { return "FOO"; }
+}
+
+interface Second {
+  default String qux() { return "BAR"; }
+}
+</pre>
+
+<p>
+    如果我们现在创建一个类，它实现上面两个接口并且实现了调用默认方法的<code>qux</code>方法，
+    这个调用可以表示定义在<code>First</code>和<code>Second</code>两个接口上的默认方法的调用。然而，
+    通过指定<code>DefaultMethodCall</code>优先考虑<code>First</code>接口，Byte Buddy 知道它应该调用后一个接口的方法而不是另外一个。
+</p>
+
+<pre class="prettyprint">
+new ByteBuddy(ClassFileVersion.JAVA_V8)
+  .subclass(Object.class)
+  .implement(First.class)
+  .implement(Second.class)
+  .method(named("qux")).intercept(DefaultMethodCall.prioritize(First.class))
+  .make()
+</pre>
+
+<p>
+    注意，Java8 之前定义在类文件中的任何 Java 类都不支持默认方法。此外，你应该意识到相比于 Java 编程语言，Byte Buddy 强制弱化对默认方法可调用性的需求。
+    Byte Buddy 只需要有类型继承结构中最具体的类来实现默认方法的接口。除了 Java 编程语言，它不要求这个接口是任何超类实现的最具体的接口。最后，
+    如果你不想期望一个不明确的默认方法定义，你可以每次都使用<code>DefaultMethodCall.unambiguousOnly()</code>用于接收在发现不明确的默认方法调用时抛出异常的实现。
+    通过优先化<code>DefaultMethodCall</code>显示相同的行为，其中，在没有优先化的接口中调用默认方法是不明确的，并且没有找到优先化的接口来定义具有兼容的签名的方法。
+</p>
+
+<h4>调用特定方法</h4>
+
+<p>
+    在一些场景中，上面的<code>Implementation</code>不能满足实现更多自定义的行为。例如，有人可能想实现一个有显式行为的自定义类。例如，
+    我们或许想要实现下面的 Java 类，它有一个和超类构造器参数不同的构造器：
+</p>
+
+<pre class="prettyprint">
+public class SampleClass {
+  public SampleClass(int unusedValue) {
+    super();
+  }
+}
+</pre>
+
+<p>
+    之前的<code>SuperMethodCall</code>实现不能实现这个类，因为<code>Object</code>类不能定义一个带有<code>int</code>类型的构造器。相反，
+    我们可以显式地调用<code>Object</code>的(super constructor)超级构造器(这里没有用超类构造器，因为Object没有超类)：
+</p>
+
+<pre class="prettyprint">
+new ByteBuddy()
+  .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+  .defineConstructor(Arrays.&lt;Class&lt;?&gt;&gt;asList(int.class), Visibility.PUBLIC)
+  .intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()))
+  .make()
+</pre>
+
+<p>
+    用上面的代码，我们可以创建一个简单的<code>Object</code>子类，它定义了单个构造器，该构造器接收一个没有使用的<code>int</code>参数。
+    然后通过对<code>Object</code>超级构造器的显式调用来实现后一个构造器。
+</p>
+
+<p>
+    <code>MethodCall</code>实现传递参数时也可以被使用。这些参数要么作为值显式的传递，要么作为需要手动设置的实例字段的值或者作为给定的参数值。
+    此外，这个实现允许在被检测的实例之外的其他实例上调用方法。此外，它允许新实例的创建从拦截方法返回。<code>MethodCall</code>的类文档提供了这些功能的详情。
+</p>
+
+<h4>访问字段</h4>
+
+<p>
+    用<code>FieldAccessor(字段访问器)</code>，可以实现一个方法来读取或写入一个字段值。为了与这个实现兼容，方法必须：
+</p>
+
+<ul class="colored-list padded">
+    <li><span>
+        有一个类似于<code>void setBar(Foo f)</code>的签名用来定义字段的setter。作为<a
+            href="http://www.oracle.com/technetwork/java/javase/documentation/spec-136004.html">Java bean specification(Java Bean规范)
+    </a>中的惯例，通常这个setter将访问名为<code>bar</code>的字段。在此上下文中，参数类型Foo必须是这个字段类型的子类。
+    </span></li>
+    <li><span>
+        有一个类似于<code>Foo getBar()</code>的签名来定义字段的 getter。作为 Java Bean 规范中的惯例，通常这个 getter
+        将访问名为<code>bar</code>的字段。为此，方法返回的类型<code>Foo</code>必须是字段类型的超类。
+    </span></li>
+</ul>
+
+<p>
+    创建这样一个实现很简单：只需调用<code>FieldAccessor.ofBeanProperty()</code>。然而，如果你不想从方法名称获取字段名称，
+    你仍然可以通过<code>FieldAccessor.ofField(String)</code>显式地指定字段名。用这个方法，唯一的参数定义应该访问的字段名。如果需要，
+    甚至允许你在这个字段不存在的情况下定义一个新字段。当访问一个现有字段时，你可以通过调用<code>in</code>方法来指定定义字段的类型。
+    在 Java 中，在类继承结构的多个类中定义一个字段是合法的。在这个过程中，一个类的一个字段通过它的子类中定义的字段被<i>隐藏</i>了。
+    没有这样显式的字段的类的定位，Byte Buddy 将通过遍历类继承结构访问它遇到的第一个字段，从最具体的类开始。
+</p>
+
+<p>
+    让我们看一个<code>FieldAccessor</code>的实例应用。对于这个实例，我们假设我们收到了一些我们想在运行时子类化的<code>UserType(用户类型)</code>。
+    出于此目的，我们想为每个接口表示的实例注册一个<code>Interceptor(拦截器)</code>。这样，我们就可以根据我们的实际需要来提供不同的实现。然后，
+    后一种实现应该可以通过调用相应实例上的<code>InterceptionAccessor</code>接口方法来交换。为了创建这种动态类型的实例，进一步，
+    我们不想用反射，而是调用一个<code>InstanceCreator(实例创建器)</code>的方法，这个对象创建器充当对象工厂。下面的类型类似于此设置：
+</p>
+
+<pre class="prettyprint">
+class UserType {
+  public String doSomething() { return null; }
+}
+
+interface Interceptor {
+  String doSomethingElse();
+}
+
+interface InterceptionAccessor {
+  Interceptor getInterceptor();
+  void setInterceptor(Interceptor interceptor);
+}
+
+interface InstanceCreator {
+  Object makeInstance();
+}
+</pre>
+
+<p>
+    我们已经学会了用<code>MethodDelegation</code>如何拦截一个方法。使用后一种实现，我们可以定义一个实例字段的委托并命名这个字段的<code>interceptor</code>。
+    另外我们正在实现<code>InterceptionAccessor</code>接口并拦截接口的所有方法以实现这个字段的访问器。通过定义一个bean属性访问器，
+    我们会得到<code>getInterceptor</code>的getter方法，和<code>setInterceptor</code>的setter方法。
+</p>
+
+<pre class="prettyprint">
+Class&lt;? extends UserType&gt; dynamicUserType = new ByteBuddy()
+  .subclass(UserType.class)
+    .method(not(isDeclaredBy(Object.class)))
+    .intercept(MethodDelegation.toField("interceptor"))
+  .defineField("interceptor", Interceptor.class, Visibility.PRIVATE)
+  .implement(InterceptionAccessor.class).intercept(FieldAccessor.ofBeanProperty())
+  .make()
+  .load(getClass().getClassLoader())
+  .getLoaded();
+</pre>
+
+<p>
+    使用新的<code>dynamicUserType</code>，我们可以实现<code>InstanceCreator</code>接口成为这个动态类型的工厂。同样，
+    我们正在用已知的<code>MethodDelegation</code>调用动态类型的默认构造器：
+</p>
+
+<pre class="prettyprint">
+InstanceCreator factory = new ByteBuddy()
+  .subclass(InstanceCreator.class)
+    .method(not(isDeclaredBy(Object.class)))
+    .intercept(MethodDelegation.construct(dynamicUserType))
+  .make()
+  .load(dynamicUserType.getClassLoader())
+  .getLoaded().newInstance();
+</pre>
+
+<p>
+    注意，我们需要使用<code>dynamicUserType</code>的类加载器加载这个工厂。否则，当这个类型加载后对这个工厂是不可见的。
+</p>
+
+<p>
+    用这两种动态类型，我们最终可以创建一个动态增强<code>UserType</code>类型的新实例，并为其实例自定义<code>Interceptor</code>。
+    让我们通过将<code>HelloWorldInterceptor</code>应用于新创建的实例来结束这个示例。注意，我们现在是如何在不使用反射的情况下做到这一点的，
+    这要归功于字段访问器接口和工厂。
+</p>
+
+<pre class="prettyprint">
+class HelloWorldInterceptor implements Interceptor {
+  @Override
+  public String doSomethingElse() {
+    return "Hello World!";
+  }
+}
+
+UserType userType = (UserType) factory.makeInstance();
+((InterceptionAccessor) userType).setInterceptor(new HelloWorldInterceptor());
+</pre>
+
+<h4>杂项</h4>
+
+<p>
+    除了目前我们讨论过的<code>Implementation</code>外，Byte Buddy还包含其他的实现：
+</p>
+
+<ul class="colored-list padded">
+    <li><span>
+        <code>StubMethod</code>实现了一个方法，只需返回方法返回类型的默认值，而无需任何进一步的操作。这样，一个方法的调用可以被静默地抑制。
+        例如，这种方式可以实现模拟(mock)类型。任何基本类型的默认值分别为零或者零字符。返回引用类型的方法将返回<code>null</code>作为默认值。
+    </span></li>
+    <li><span>
+        <code>ExceptionMethod</code>能用来实现一个只抛出异常的方法。如前所述，可以从任何方法抛出已检查异常，即使这个方法没有声明这个异常。
+    </span></li>
+    <li><span>
+        <code>Forwarding</code>实现允许简单地将方法调用转发到另一个与拦截方法的声明类型相同类型的实例。用<code>MethodDelegation</code>可以达到相同的效果。
+        然而，通过<code>Forwarding</code>，应用更简单的委托模型，该模型可以覆盖不需要目标方法发现的用例。
+    </span></li>
+    <li><span>
+        <code>InvocationHandlerAdapter</code>允许使用 Java 类库自带的<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html"
+        >代理类</a>中现有的<code>InvocationHandler</code>。
+    </span></li>
+    <li><span>
+        <code>InvokeDynamic</code>实现允许用<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/invoke/package-summary.html"
+        >bootstrap方法</a>运行时动态绑定一个方法，这个方法从 Java7 可以访问。
+    </span></li>
+</ul>
+
+</div>
+
+<div class="row" id="annotation">
+
+    <h2>注解</h2>
+
+    <p>
+        我们刚刚学习了 Byte Buddy 如果依赖注解提供一些功能。目前为止，Byte Buddy 不是唯一一个基于注解 API 的 Java 应用。
+        为了在这样的应用中集成动态创建的类型，Byte Buddy 允许为它创建的类和成员定义注解。在研究将注解分配给动态创建的类之前，
+        我们看一下给一个运行时类添加注解的示例：
+    </p>
+
+<pre class="prettyprint">
+@Retention(RetentionPolicy.RUNTIME)
+@interface RuntimeDefinition { }
+
+class RuntimeDefinitionImpl implements RuntimeDefinition {
+  @Override
+  public Class&lt;? extends Annotation&gt; annotationType() {
+    return RuntimeDefinition.class;
+  }
+}
+
+new ByteBuddy()
+  .subclass(Object.class)
+  .annotateType(new RuntimeDefinitionImpl())
+  .make();
+</pre>
+
+    <p>
+        就像 Java 的<code>@interface</code>关键字所暗示的，注解在内部代表的是接口类型。因此，注解可以像普通的接口一样被实现。
+        实现接口的唯一不同就是注解的隐式<code>annotationType</code>方法，它决定类表示的注解类型。后一种方法通常返回实现的注解类型的类字面量。
+        除此之外，任何注解属性会被实现，就像是一个接口方法一样。然而，注意，一个注解的默认值需要通过注解方法的实现被重复。
+    </p>
+
+    <p>
+        当一个类应该作为另一个类的子类代理时，为动态创建的类定义注解将非常重要。子类代理通常被用于实现<a href="http://en.wikipedia.org/wiki/Cross-cutting_concern"
+        >cross-cutting concerns(横切关注点)</a>，其中子类应该尽可能透明地模仿源类。然而，一个类上的注解不会为它的子类保留，
+        只要这个行为通过定义为一个<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Inherited.html"><code>@Inherited</code></a>注解被显式要求。
+        用 Byte Buddy，通过调用 Byte Buddy 领域特定语言的<code>attribute(属性)</code>方法，创建返回它的基类注解的子类代理很容易。
+        这个方法要求一个<code>TypeAttributeAppender</code>作为参数。类型属性追加器提供了一种灵活的方式定义基于其基类动态创建的类的注解。
+        例如，通过传递一个<code>TypeAttributeAppender.ForSuperType</code>，一个类的注解会被复制到它动态创建的子类中。注意，注解和类属性追加器是附加的，
+        任何类都不能多次定义注解类型。
+    </p>
+
+    <p>
+        被定义的方法和字段注解类似于我们刚讨论过的类型注解。一个方法注解可以被定义为 Byte Buddy 领域特定语言中用于实现方法的结论性表达式。同样地，
+        字段可以在定义之后添加注解。让我们再一次看个示例：
+    </p>
+
+<pre class="prettyprint">
+new ByteBuddy()
+  .subclass(Object.class)
+    .annotateType(new RuntimeDefinitionImpl())
+  .method(named("toString"))
+    .intercept(SuperMethodCall.INSTANCE)
+    .annotateMethod(new RuntimeDefinitionImpl())
+  .defineField("foo", Object.class)
+    .annotateField(new RuntimeDefinitionImpl())
+</pre>
+
+    <p>
+        上面的代码示例覆写了<code>toString</code>方法并且用<code>RuntimeDefinition</code>注解了这个覆写的方法。此外，
+        该创建的类定义了字段<code>foo</code>，它带有相同的注解，并且在创建的类本身上定义了后面的注解。
+    </p>
+
+    <p>
+        默认情况下，<code>ByteBuddy</code>配置对于动态创建的类或类成员不会预定义任何注解。但是，可以通过提供一个默认的<code>TypeAttributeAppender</code>，
+        <code>MethodAttributeAppender</code>或者<code>FieldAttributeAppender</code>来改变这个行为。注意，这样的默认追加器不是附加的，而是替换它们之前的值。
+    </p>
+
+    <p>
+        有时，在定义一个定时，最好不要加载注解类型或其它任何属性的类型。为此，可以使用<code>AnnotationDescription.Builder</code>提供流式接口来定义注解而不触发类的加载，
+        但这是以类型安全为代价的。然而，所有注解属性都是在运行时评估的。
+    </p>
+
+    <p>
+        默认情况下，Byte Buddy 将注解的任何属性都包含到类文件里，包括通过<code>default</code>值隐式指定的默认属性。但是，
+        可以通过为<code>ByteBuddy</code>实例提供一个<code>AnnotationFilter</code>来自定义这个行为。
+    </p>
+
+<h4>类型注解</h4>
+
+<p>
+    Byte Buddy 暴露并写入类型注解，因为它们是作为 Java 8的一部分被引入的。类型注解作为被声明的注解可以通过任何<code>TypeDescription.Generic</code>实例被访问。
+    如果一个类型注解应该被加到一个泛型类型的字段或方法上，这个被注解的类就可以用<code>TypeDescription.Generic.Builder</code>生成。
+</p>
+
+<h4>属性追加器</h4>
+
+<p>
+    Java 类文件可以包含任何自定义信息作为所谓的属性。对于一个类型，字段或方法，用 Byte Buddy 通过使用<code>*AttributeAppender</code>，
+    这样的属性可以被包含。然而，属性追加器也可以用来基于通过拦截的类型，字段或方法提供的信息来定义方法。例如，当覆写子类中的方法时，可以复制拦截方法的所有注解：
+</p>
+
+<pre class="prettyprint">
+class AnnotatedMethod {
+  @SomeAnnotation
+  void bar() { }
+}
+new ByteBuddy()
+  .subclass(AnnotatedMethod.class)
+  .method(named("bar"))
+  .intercept(StubMethod.INSTANCE)
+  .attribute(MethodAttributeAppender.ForInstrumentedMethod.INSTANCE)
+</pre>
+
+<p>
+    上面的代码覆写<code>AnnotatedMethod</code>类的<code>bar</code>方法，但是复制了被覆盖方法的所有注解，包含参数或类型上的注解。
+</p>
+
+<p>
+    当一个类被重定义或变基时，相同的规则可能不适用。默认情况下，<code>ByteBuddy</code>被配置为保留变基或重定义方法的任何注解，即使这个方法像上面一样被拦截。
+    但是，通过设置<code>AnnotationRetention</code>策略为<code>DISABLED</code>，这个行为可以被改变，以便丢弃任何预先存在的注解。
+</p>
+
+</div>
+
+<div class="row" id="customization">
+
+<h2>自定义方法实现</h2>
+
+<p>
+    在前面的部分，我们描述了 Byte Buddy 的标准 API。目前为止前面描述的特性都不需要 Java 字节码的知识和显式表示。然而，如果你需要创建自定义的字节码，
+    你可以通过直接访问<a href="http://asm.ow2.org/"> ASM </a>的 API 来实现，它是一个底层的字节码类库，Byte Buddy是在它上面构建的。
+    但是，注意 ASM 不同版本之间是不兼容的，这样当你发布代码时，你需要将 Byte Buddy 重新打包到你的命名空间。否则，当另一个依赖要求基于不同版本 ASM
+    构建的 Byte Buddy 时，你的应用可能导致不兼容Byte Buddy的其它用途。你可以在 Byte Buddy <a href="/#dependency">首页</a>找到维护
+    Byte Buddy 依赖的详情。
+</p>
+
+<p>
+    ASM 类库带有一份极好的关于 Java 字节码和类库使用的<a href="https://asm.ow2.io/asm4-guide.pdf">文档</a>。因此，
+    如果你想深入了解 Java 字节码和 ASM 的 API，我们希望你参考此文档。相反，我们只是简单介绍 JVM 的执行模型和 Byte Buddy 对 ASM 的 API 的适配。
+</p>
+
+<p>
+    任何 Java 类都由下面几部分组成。核心的部分大致可以分为如下几类：
+</p>
+
+<ul class="colored-list padded">
+    <li><span>
+        <b>基础数据</b>：一个类文件引用类名及超类名和它实现的接口。另外类文件引用不同的元数据，比如类的 Java 版本号、注解或者编译器为创建类文件而处理的原文件名。
+    </span></li>
+    <li><span>
+        <b>常量池</b>：类常量池是由一些值组成的集合，这些值被类的成员或注解所引用。在这些值中，常量池存储如基本类型的值和类的源代码中由一些字面量表达式创建的字符串。
+    </span></li>
+    <li><span>
+         <b>字段列表</b>：Java 类文件中包含了在这个类中声明的所有字段的一个列表。除了字段的类型、名称和修饰符，类文件还保存了每个字段的注解。
+    </span></li>
+    <li><span>
+        <b>方法列表</b>：类似于字段列表，Java 类文件包含一个所有声明方法的列表。除了字段之外，非抽象方法还由描述主体方法的字节编码指令数组描述。
+        这些指令代表所谓的 Java 字节码。
+    </span></li>
+</ul>
+
+<p>
+    幸运的是，当创建类时，ASM类库完全负责创建一个合适的常量池。有了这个，唯一重要的元素仍然是方法的描述，它由一个执行指令的数组表示，
+    每个指令被编码为一个字节。这些指令在方法调用上由虚拟<a href="http://en.wikipedia.org/wiki/Stack_machine">stack machine</a>处理。
+    举一个简单的示例，让我们考虑一个计算并返回两个基本类型整数<code>10</code>和<code>50</code>之和的方法。
+</p>
+
+<pre class="prettyprint">
+LDC     10  // stack contains 10
+LDC     50  // stack contains 10, 50
+IADD        // stack contains 60
+IRETURN     // stack is empty
+</pre>
+
+<p>
+    上面的<a href="http://en.wikipedia.org/wiki/Java_bytecode_instruction_listings">一组 Java
+    字节组助记符</a>是通过使用<code>LDC</code>指令将两个数压入栈开始的。注意，这个执行顺序与 Java 源码中表示的顺序有何不同，
+    在源码中加法被写为中缀表示法的<code>10 + 50</code>。但是后一种顺序不能被栈机处理，其中任何像<code>+</code>一样的指令都只能访问栈中最上面的值。
+    这个加法用<code>IADD</code>表示，它消费栈中两个最上面的值，并且这两个值都要是基本的整型。最后，
+    <code>IRETURN</code>表达式会消费这个计算结果并且从方法返回，给我们留下一个空栈。
+</p>
+
+<p>
+    我们已经提到过，任何方法中引用的基本类型的值都保存在类的常量池中。上述方法中用到的数字<code>50</code>和<code>10</code>也是如此。
+    常量池中的值都被分配了一个两字节长度的索引。让我们假定数字<code>10</code>和<code>50</code>存储在索引<code>1</code>和<code>2</code>的位置。
+    和上述助记符对应的字节值一起，<code>0x12</code>对应对应<code>LDC</code>，<code>0x60</code>对应<code>IADD</code>，
+    <code>0xAC</code>对应<code>IRETURN</code>，我们现在知道如何将上述方法表示为原始字节指令：
+</p>
+
+<pre class="prettyprint pln-as-lit">
+12 00 01
+12 00 02
+60
+AC
+</pre>
+
+<p>
+    对于已经编译的类，这个精确的字节序列可以在类文件中找到。然而，这个描述还不足以定义一个方法的实现。为了加速 Java 应用的运行时执行，
+    每个方法都需要通知JVM其需要的执行栈大小。对于上面的没有分支的代码，这很容易确定，因为我们已经看到栈里最多有两个值。但是，对于更复杂的方法，
+    提供这个信息很容易成为一个复杂的任务。更糟糕的是，栈的值可以有不同的大小。<code>long</code>和<code>double</code>值消耗两个插槽(slot)，
+    而其它的值消耗一个。好像这还不够，JVM 也需要有关方法体里本地变量的数量信息。方法里所有此类变量都存储在一个数组里，
+    该数组中还包含任何方法的参数和非静态方法的<code>this</code>引用。同样，在这个数组中，<code>long</code>和<code>double</code>会消耗两个插槽。
+</p>
+
+<p>
+    显然，保持跟踪所有这些信息会使手动组装 Java 字节码变得啰嗦且容易出错，这就是 Byte Buddy 提供简化抽象的原因。用 Byte Buddy，
+    任何栈指令都包含在<code>StackManipulation</code> 接口的实现中。任何栈操作的实现都结合了更改给定栈的指令和该指令的大小影响的信息。
+    然后可以轻松地将任意数量的此类指令合并为一个通用指令。为了演示这个，让我们先为<code>IADD</code>指令实现一个<code>StackManipulation</code>：
+</p>
+
+<pre class="prettyprint">
+enum IntegerSum implements StackManipulation {
+
+  INSTANCE; // singleton
+
+  @Override
+  public boolean isValid() {
+    return true;
+  }
+
+  @Override
+  public Size apply(MethodVisitor methodVisitor,
+                    Implementation.Context implementationContext) {
+    methodVisitor.visitInsn(Opcodes.IADD);
+    return new Size(-1, 0);
+  }
+}
+</pre>
+
+<p>
+    从上面的<code>apply</code>方法，我们了解到这个栈操作通过在 ASM 的方法访问者上调用相应方法来执行<code>IADD</code>指令。此外，
+    这个方法表示这条指令将当前的栈<code>Size</code>减少一个槽。创建的<code>Size</code>实例的第二个参数是<code>0</code>，
+    这个表示该指令不需要确定的最小栈大小来计算中间结果。此外，任何<code>StackManipulation</code>可以表示为无效。这个行为可以用于更复杂的栈操作，
+    比如用在可能破坏类型约束的对象分配上。我们将在本节的后面看一个无效的栈操作示例。
+    最后，注意我们描述的栈操作是一个<a href="http://en.wikipedia.org/wiki/Singleton_pattern#The_Enum_way">singleton enumeration(单例枚举)</a>。
+</p>
+
+<p>
+    通过组合上面的<code>IntegerSum</code>与预定义的<code>IntegerConstant</code>和<code>MethodReturn</code>栈操作，我们现在可以实现一个方法。
+    在 Byte Buddy 中，方法的实现包含在<code>ByteCodeAppender</code>中，我们的实现如下：
+</p>
+
+<pre class="prettyprint">
+enum SumMethod implements ByteCodeAppender {
+
+  INSTANCE; // singleton
+
+  @Override
+  public Size apply(MethodVisitor methodVisitor,
+                    Implementation.Context implementationContext,
+                    MethodDescription instrumentedMethod) {
+    if (!instrumentedMethod.getReturnType().asErasure().represents(int.class)) {
+      throw new IllegalArgumentException(instrumentedMethod + " must return int");
+    }
+    StackManipulation.Size operandStackSize = new StackManipulation.Compound(
+      IntegerConstant.forValue(10),
+      IntegerConstant.forValue(50),
+      IntegerSum.INSTANCE,
+      MethodReturn.INTEGER
+    ).apply(methodVisitor, implementationContext);
+    return new Size(operandStackSize.getMaximalSize(),
+                    instrumentedMethod.getStackSize());
+  }
+}
+</pre>
+
+<p>
+    同样，自定义的<code>ByteCodeAppender</code>也是作为一个单例枚举实现的。
+</p>
+
+<p>
+    在实现期望的方法之前，我们首先校验检测的方法是否真的返回一个基本整形类型。否则，这个创建的类将会被 JVM 的验证器拒绝。
+    接着我们将<code>10</code>和<code>50</code>装载到执行栈中，应用这些值的和，然后返回计算结果。通过用一个混合的栈操作包装这些指令，
+    我们可以最终找到需要执行栈操作链的聚合栈的大小。最终，我们返回该方法需要的总的(容量)大小。
+    返回的<code>ByteCodeAppender.Size</code>中第一个参数反应了我们刚刚提到的包含在<code>StackManipulation.Size</code>中的执行栈需要的大小。
+    此外，第二个参数反应了本地变量数组所需要的大小，数组简单地类似于方法的参数和可能的<code>this</code>引用需要的大小，因为我们没有定义任何自己的本地变量。
+</p>
+
+<p>
+    用我们的求和(summation)方法的实现，我们现在为这个方法提供一个自定义<code>Implementation(实现)</code>，我们可以提供给 Byte Buddy 的领域特定语言：
+</p>
+
+<pre class="prettyprint">
+enum SumImplementation implements Implementation {
+
+  INSTANCE; // singleton
+
+  @Override
+  public InstrumentedType prepare(InstrumentedType instrumentedType) {
+    return instrumentedType;
+  }
+
+  @Override
+  public ByteCodeAppender appender(Target implementationTarget) {
+    return SumMethod.INSTANCE;
+  }
+}
+</pre>
+
+<p>
+    任何<code>Implementation</code>需要分两阶段查询。首先，一个实现有机会在<code>prepare</code>方法中通过添加额外的字段或方法去改变创建的类。
+    此外，准备工作允许实现注册一个我们上节中了解到的<code>TypeInitializer</code>。如果不需要这样的准备，
+    返回未更改的<code>InstrumentedType</code>作为参数就足够了。注意，一个<code>Implementation</code>通常不应该返回检测类型的单个实例，
+    而应该调用检测类型中以<code>with</code>为前缀的附加方法。在任何<code>Implementation</code>为特定类的创建准备好后，
+    <code>appender</code>方法会被调用以检索<code>ByteCodeAppender</code>。然后查询这个追加器以获取为给定实现的拦截选择的任何方法，
+    以及在实现调用<code>prepare</code>方法期间，注册的任何方法。
+</p>
+
+<p>
+    注意，Byte Buddy 在任何类的创建过程中，每个<code>Implementation</code>的<code>prepare</code>和<code>appender</code>方法只调用一次，
+    无论一个实现为类创建的使用注册了多少次都可以保证。这样，<code>Implementation</code>可以避免验证字段和方法是否已经定义。在这个过程中，
+    Byte Buddy 通过它们的<code>hashCode</code>和<code>equals</code>方法来比较<code>Implementation</code>的实例。通常，Byte Buddy
+    用到的任何类都应该提供这些方法的有意义的实现。 枚举每个定义的此类实现是使用它们的另一个好理由。
+</p>
+
+<p>
+    有了这一切，让我们实际看一下<code>SumImplementation</code>：
+</p>
+
+<pre class="prettyprint">
+abstract class SumExample {
+  public abstract int calculate();
+}
+
+new ByteBuddy()
+  .subclass(SumExample.class)
+    .method(named("calculate"))
+    .intercept(SumImplementation.INSTANCE)
+  .make()
+</pre>
+
+<p>
+    恭喜！你刚刚扩展了 Byte Buddy 实现了一个自定义方法，该方法计算并返回<code>10</code>和<code>50</code>的和。当然，这个实现实例没有啥实际用途。
+    然而，可以在这个架构之上轻松地实现更复杂的实现。毕竟，如果你觉得你创造了一些有用的东西，请考虑<a href="/develop">贡献你的实现</a>。我们期待你的消息！
+</p>
+
+<p>
+    在我们继续定制一些 Byte Buddy 的组件之前，我们应该简要地讨论一下跳转指令的使用和所谓的 Java 栈帧。从 Java6 开始，为了加速 JVM 的验证过程，
+    任何跳转指令都需要一些额外的信息，这些指令用于实现比如<code>if</code>或<code>while</code>这类语句。这些额外信息称为<i>stack map frame(栈映射帧)</i>。
+    一个栈映射帧包含有关在跳转指令的目标处的执行栈上找到的所有值信息。通过提供这个信息，JVM的验证器减少了一些需要我们来做的工作。对于更复杂的跳转指令，
+    提供正确的栈映射帧是一项相当困难的任务，许多代码生成框架创建正确的栈映射帧时会遇到相当多的困难。那么我们该如何解决这个问题呢？事实上，我们没有处理。
+    Byte Buddy 的思想是：代码生成应该只用作编译时未知的类型继承结构和需要注入到这些类型中的自定义代码之间的粘合剂。因此，生成的真正代码尽可能地受限制。
+    只要有可能，条件语句应该用你选择的 JVM 语言实现和编译，然后用简约的实现绑定到给定的方法。这种方法的一个很好的副作用是 Byte Buddy
+    的用户可以使用标准的 Java 代码并使用他们习惯的工具，像调试或者集成开发工具代码导航器。对于没有源码表示的生成的代码，这一切都是不可能的。但是，
+    如果你真地需要用跳转指令创建字节码，请确保使用 ASM 添加正确的栈映射帧，因为 Byte Buddy 不会自动包含它们。
+</p>
+
+<h4>创建自定义分配器</h4>
+
+<p>
+    在上一节中，我们讨论了 Byte Buddy 内置的<code>Implementation</code>依赖<code>Assigner(分配器)</code>为变量分配值。在这个过程中，
+    <code>Assigner</code>能够通过发出合适的<code>StackManipulation(栈操作)</code>来将一个值转换为另一个值。这样做，Byte Buddy
+    的内置分配器提供了比如基本类型和包装类型的自动装箱功能。在最简单的情况下，一个值照原样(<i>as is</i>)分配给一个变量。然而，在某些场景下，
+    分配或许根本不可能通过从分配至返回一个无效的<code>StackManipulation</code>来表示。Byte Buddy
+    的<code>IllegalStackManipulation</code>类提供了无效分配的规范实现。
+</p>
+
+<p>
+    为了演示自定义分配器的使用，我们现在实现一个分配器，它通过在它接收到的任何值上调用<code>toString</code>方法来仅仅将值分配给<code>String</code>类型的变量：
+</p>
+
+<pre class="prettyprint">
+enum ToStringAssigner implements Assigner {
+
+  INSTANCE; // singleton
+
+  @Override
+  public StackManipulation assign(TypeDescription.Generic source,
+                                  TypeDescription.Generic target,
+                                  Assigner.Typing typing) {
+    if (!source.isPrimitive() && target.represents(String.class)) {
+      MethodDescription toStringMethod = new TypeDescription.ForLoadedType(Object.class)
+        .getDeclaredMethods()
+        .filter(named("toString"))
+        .getOnly();
+      return MethodInvocation.invoke(toStringMethod).virtual(sourceType);
+    } else {
+      return StackManipulation.Illegal.INSTANCE;
+    }
+  }
+}
+</pre>
+
+<p>
+    上面的实现首先验证输入的值不是基本类型，并且目标变量类型是<code>String</code>类型。如果这些条件没有满足，
+    <code>Assigner</code>将发出一个<code>IllegalStackManipulation</code>使尝试的分配无效。否则，
+    我们通过它的名称来识别<code>Object</code>类型的<code>toString</code>方法。然后，我们用 Byte Buddy
+    的<code>MethodInvocation</code>创建一个<code>StackManipulation</code>，它在源类型上虚拟调用此方法。最后，
+    我们可以将这个自定义的<code>Assigner</code>和比如 Byte Buddy 的<code>FixedValue</code>实现集成，如下所示：
+</p>
+
+<pre class="prettyprint">
+new ByteBuddy()
+  .subclass(Object.class)
+  .method(named("toString"))
+    .intercept(FixedValue.value(42)
+      .withAssigner(new PrimitiveTypeAwareAssigner(ToStringAssigner.INSTANCE),
+                    Assigner.Typing.STATIC))
+  .make()
+</pre>
+
+<p>
+    当<code>toString</code>方法在上面的类型的实例上被调用时，它将返回字符串<code>42</code>。这只能通过我们自定义的分配器来实现，
+    它通过调用<code>toString</code>方法将<code>Integer</code>类型转换为<code>String</code>。注意，
+    我们还用内置的<code>PrimitiveTypeAwareAssigner</code>包装了自定义的分配器。
+    这个内置的分配器在将这个包装的原始值的分配委托给其内部分配器之前将提供的基本类型<code>int</code>自动装箱为它的包装类型。
+    其它的内置分配器是<code>VoidAwareAssigner</code>和<code>ReferenceTypeAwareAssigner</code>。
+    永远记住为你自定义的分配器实现有意义的<code>hashCode</code>和<code>equals</code>方法，
+    因为这些方法通常是从它们在<code>Implementation</code>中的对应部分调用的，这个实现使用给定的分配器。同样，通过将分配器实现为单例枚举，我们避免手动执行。
+</p>
+
+<h4>创建自定义参数绑定器</h4>
+
+<p>
+    我们上一节已经提到过，可以继承<code>MethodDelegation</code>实现以处理用户定义的注解。为此，我们需要提供一个自定义的<code>ParameterBinder(参数绑定器)</code>，
+    它知道如何处理给定的注解。例如，我们想定义一个注解，目的是简单地向注解的参数中注入一个固定的字符串。首先，我们定义一个<code>StringValue</code>注解：
+</p>
+
+<pre class="prettyprint">
+@Retention(RetentionPolicy.RUNTIME)
+@interface StringValue {
+  String value();
+}
+</pre>
+
+<p>
+    通过设置合适的<code>RuntimePolicy</code>，我们需要确保注解是可见的。否则，注解不会在运行时保留，Byte Buddy 就没有机会发现它。这样做，
+    上述的<code>value</code>属性包含作为值分配给注解参数的字符串。
+</p>
+
+<p>
+    用我们自定义的注解，需要创建一个对应的<code>ParameterBinder</code>，它能够创建一个表示此参数绑定的<code>StackManipulation</code>。
+    每次调用这个参数绑定器， 它的对应注解在参数上通过<code>MethodDelegation</code>会被发现。为我们的实例注解实现一个自定义参数绑定器很简单：
+</p>
+
+<pre class="prettyprint">
+enum StringValueBinder
+    implements TargetMethodAnnotationDrivenBinder.ParameterBinder&lt;StringValue&gt; {
+
+  INSTANCE; // singleton
+
+  @Override
+  public Class&lt;StringValue&gt; getHandledType() {
+    return StringValue.class;
+  }
+
+  @Override
+  public MethodDelegationBinder.ParameterBinding&lt;?&gt; bind(AnnotationDescription.Loaded&lt;StringValue&gt; annotation,
+                                                         MethodDescription source,
+                                                         ParameterDescription target,
+                                                         Implementation.Target implementationTarget,
+                                                         Assigner assigner,
+                                                         Assigner.Typing typing) {
+    if (!target.getType().asErasure().represents(String.class)) {
+      throw new IllegalStateException(target + " makes illegal use of @StringValue");
+    }
+    StackManipulation constant = new TextConstant(annotation.loadSilent().value());
+    return new MethodDelegationBinder.ParameterBinding.Anonymous(constant);
+  }
+}
+</pre>
+
+<p>
+    最初，参数绑定器确保<code>target(目标)</code>参数实际上是一个<code>String</code>类型。如果不是这样，我们将会抛出一个异常通知注解的用户非法放置了这个注解。
+    否则，我们仅创建一个<code>TextConstant</code>，它表示将常量池字符串加载到执行栈上。然后，
+    <code>StackManipulation</code>被包装为匿名的<code>ParameterBinding(参数绑定)</code>，它最终会从该方法返回。或者，
+    你可以提供一个<code>Unique(唯一的)</code>或<code>Illegal(非法的)</code>参数绑定。
+    唯一的绑定通过允许从<code>AmbiguityResolver(不明确解析器)</code>中检索这个绑定的任意对象标识。在后面的步骤中，
+    这样的解析器能够查找参数绑定是否用某个唯一标识符注册，然后可以决定这个绑定是否优于另一个成功绑定的方法。使用非法绑定，
+    可以指示 Byte Buddy 一对特定的<code>source</code>和<code>target</code>方法是不兼容的且不能绑定在一起。
+</p>
+
+<p>
+    这已经是和<code>MethodDelegation</code>一起使用自定义注解所需要的所有信息。收到<code>ParameterBinding</code>后，它会确保它的值绑定到正确的参数上，
+    不然它将丢弃当前的<code>source</code>和<code>target</code>方法对，因为它们不可绑定，此外，它将允许<code>AmbiguityResolver</code>查找唯一的绑定。
+    最终让我们把这个自定义注解付诸实践：
+</p>
+
+<pre class="prettyprint">
+class ToStringInterceptor {
+  public static String makeString(@StringValue("Hello!") String value) {
+    return value;
+  }
+}
+
+new ByteBuddy()
+  .subclass(Object.class)
+  .method(named("toString"))
+    .intercept(MethodDelegation.withDefaultConfiguration()
+      .withBinders(StringValueBinder.INSTANCE)
+      .to(ToStringInterceptor.class))
+  .make()
+</pre>
+
+<p>
+    注意，通过指定<code>StringValueBinder</code>为唯一的参数绑定器，我们将替换所有默认值。或者，我们可以将参数绑定器追加到那些已经注册的绑定器上。
+    在<code>ToStringInterceptor</code>中只有一个可能的目标方法，被动态类拦截的<code>toString</code>方法被绑定到后一个方法的调用。当目标方法被调用，
+    Byte Buddy 将注解的字符串值分配为目标方法的唯一参数。
+</p>
+
+</div>
+
+</div>
+
+</div>

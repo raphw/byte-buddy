@@ -28,12 +28,10 @@
 
 <div class="col-md-8 col-md-offset-1" id="affixComponent">
 
-
-<div class="row">
-    <div class="translation">
-        There is <a href="https://notes.diguage.com/byte-buddy-tutorial">a Chinese translation</a> available.
-    </div>
-</div>
+    <select class="lang" ng-model="lang" ng-change="changeLang()">
+        <option value="cn">中文</option>
+        <option value="en">English</option>
+    </select>
 
 <div class="row" id="rational">
 
