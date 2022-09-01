@@ -234,11 +234,6 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
     public static class Builder {
 
         /**
-         * Indicates the first index of a list.
-         */
-        private static final int ONLY = 0;
-
-        /**
          * {@code true} if the created class loader is sealed.
          */
         private final boolean sealed;
@@ -439,11 +434,10 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
          *
          * @return A suitable class loader.
          */
-        @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Assuring privilege is explicit user responsibility.")
         public ClassLoader build() {
             return classLoaders.size() == 1
-                    ? classLoaders.get(ONLY)
-                    : new MultipleParentClassLoader(classLoaders);
+                    ? classLoaders.get(0)
+                    : doBuild(ClassLoadingStrategy.BOOTSTRAP_LOADER);
         }
 
         /**

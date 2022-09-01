@@ -1413,7 +1413,7 @@ public abstract class ClassVisitorFactory<T> {
                     dynamicTypes.add(right);
                 }
                 ClassLoader classLoader = new MultipleParentClassLoader.Builder(false)
-                        .append(ClassVisitor.class, classVisitor)
+                        .appendMostSpecific(ClassVisitor.class, classVisitor)
                         .build();
                 @SuppressWarnings("unchecked")
                 ClassVisitorFactory<S> factory = byteBuddy.subclass(ClassVisitorFactory.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
