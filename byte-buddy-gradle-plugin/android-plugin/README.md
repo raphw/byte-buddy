@@ -47,6 +47,6 @@ environment, those are:
 
 - You cannot instrument classes that belong to the [Android SDK](https://developer.android.com/reference/packages).
 - You can instrument libraries only on Android application projects,
-  not [Android libraries](https://developer.android.com/studio/projects/android-library).
+  not [Android libraries](https://developer.android.com/studio/projects/android-library) projects.
 - You cannot use `ByteBuddy.intercept(MethodDelegation)` since it requires the creation of additional classes, and the
   ASM API that this tools is based on, doesn't allow to create new classes.
