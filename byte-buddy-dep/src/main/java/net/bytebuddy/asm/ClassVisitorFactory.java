@@ -1354,8 +1354,8 @@ public abstract class ClassVisitorFactory<T> {
                             } else if (parameter[index] == Attribute.class) {
                                 match[index] = utilities.get(Attribute.class);
                                 if (sourceAttribute != null && targetAttribute != null) {
-                                    left.add(toConvertedParameter(sourceAttribute.getTypeDescription(), utilities.get(Attribute.class), AttributeTranslator.NAME, offset, false));
-                                    right.add(toConvertedParameter(targetAttribute.getTypeDescription(), Attribute.class, AttributeTranslator.NAME, offset, false));
+                                    left.add(toConvertedParameter(targetAttribute.getTypeDescription(), utilities.get(Attribute.class), AttributeTranslator.NAME, offset, false));
+                                    right.add(toConvertedParameter(sourceAttribute.getTypeDescription(), Attribute.class, AttributeTranslator.NAME, offset, false));
                                 } else {
                                     unsupported = true;
                                 }
