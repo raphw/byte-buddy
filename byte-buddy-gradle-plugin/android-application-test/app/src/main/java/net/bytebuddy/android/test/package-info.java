@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 /**
- * A package for Byte Buddy's integration with Android's instrumentation API.
+ * A package containing a sample application for testing the Byte Buddy plugin on Android.
  */
-@NeverNull.ByDefault
-package net.bytebuddy.build.gradle.android;
-
-import net.bytebuddy.utility.nullability.NeverNull;
+package net.bytebuddy.android.test;

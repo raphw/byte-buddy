@@ -2,7 +2,7 @@ plugins {
     id "java-library"
 }
 
-apply from: "$rootDir/versioning.gradle"
+apply from: "$rootDir/bytebuddy.gradle"
 
 targetCompatibility = JavaVersion.VERSION_1_8
 sourceCompatibility = JavaVersion.VERSION_1_8

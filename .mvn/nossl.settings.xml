@@ -1,4 +1,5 @@
 <settings>
+    <localRepository>${user.home}/.m2/repository-no-ssl</localRepository>
     <mirrors>
         <mirror>
             <id>central-no-ssl</id>

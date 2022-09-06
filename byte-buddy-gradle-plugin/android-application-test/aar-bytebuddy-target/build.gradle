@@ -1,7 +1,7 @@
 plugins {
     id 'com.android.library'
 }
-apply from: "$rootDir/versioning.gradle"
+apply from: "$rootDir/bytebuddy.gradle"
 
 android {
     compileSdk 32

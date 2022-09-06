@@ -16,6 +16,7 @@
 package net.bytebuddy.build.gradle.android;
 
 import com.android.build.gradle.BaseExtension;
+import jdk.tools.jlink.resources.plugins;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorFactory;
@@ -87,17 +88,16 @@ abstract public class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                             ? ClassFileLocator.ForJarFile.of(artifact)
                             : new ClassFileLocator.ForFolder(artifact));
                 }
-                ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersionString(getParameters().getJavaTargetCompatibilityVersion()
+                ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersionString(getParameters()
+                        .getJavaTargetCompatibilityVersion()
                         .get()
                         .toString());
                 ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
-                Plugin.Engine.PoolStrategy.Default poolStrategy = Plugin.Engine.PoolStrategy.Default.FAST;
-                List<Plugin> plugins = new ArrayList<>();
-                TypePool typePool = poolStrategy.typePool(classFileLocator);
+                TypePool typePool = Plugin.Engine.PoolStrategy.Default.FAST.typePool(classFileLocator);
                 ClassLoader classLoader = new URLClassLoader(
                         toUrls(parameters.getByteBuddyClasspath().getFiles()),
                         new URLClassLoader(toUrls(parameters.getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
-                ArrayList<Plugin.Factory> factories = new ArrayList<>();
+                ArrayList<Plugin.Factory> factories = new ArrayList<Plugin.Factory>();
                 for (String name : Plugin.Engine.Default.scan(classLoader)) {
                     try {
                         @SuppressWarnings("unchecked")
@@ -110,6 +110,7 @@ abstract public class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         throw new IllegalStateException("Cannot resolve plugin: " + name, throwable);
                     }
                 }
+                List<Plugin> plugins = new ArrayList<Plugin>(factories.size());
                 for (Plugin.Factory factory : factories) {
                     Plugin plugin = factory.make();
                     if (plugin instanceof Plugin.WithInitialization) {

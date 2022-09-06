@@ -3,21 +3,26 @@ plugins {
     id 'java-gradle-plugin'
 }
 
-apply from: 'common.gradle'
-
 if (!gradle.gradleVersion.startsWith("2.")) {
     throw new GradleException("Use build.gradle for executing build with modern Gradle")
-} else if (release) {
+} else if (Boolean.getBoolean('net.bytebuddy.gradle.release')) {
     throw new GradleException("Cannot apply release using legacy build");
 }
+
+apply from: 'common.gradle'
+
+ext.pom = new groovy.util.XmlSlurper().parse(rootProject.file('pom.xml'))
+ext.outerPom = new groovy.util.XmlSlurper().parse(file('../pom.xml'))
+
+group = pom.parent.groupId.text().toString()
+version = pom.parent.version.text().toString()
+description = pom.description.text().toString()
 
 repositories {
     maven {
         url 'http://insecure.repo1.maven.org/maven2/'
     }
 }
-
-version = pom.parent.version.text().toString()
 
 dependencies {
     compile gradleApi()

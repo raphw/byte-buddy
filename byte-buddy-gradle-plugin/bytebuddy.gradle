@@ -1,4 +1,5 @@
-ext.pom = new XmlSlurper().parse(rootProject.file('pom.xml'))
+ext.pom = new groovy.xml.XmlSlurper().parse(rootProject.file('pom.xml'))
+ext.outerPom = new groovy.xml.XmlSlurper().parse(file('../pom.xml'))
 ext.release = Boolean.getBoolean('net.bytebuddy.gradle.release')
 
 group = pom.parent.groupId.text().toString()

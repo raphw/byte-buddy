@@ -9,6 +9,7 @@ if (gradle.gradleVersion.startsWith("2.")) {
 }
 
 apply from: 'common.gradle'
+apply from: 'bytebuddy.gradle'
 
 repositories {
     mavenCentral()
@@ -27,8 +28,6 @@ configurations {
     }
     compileClasspath.extendsFrom(fatJarClasspath)
 }
-
-version = pom.parent.version.text().toString()
 
 dependencies {
     implementation gradleApi()
