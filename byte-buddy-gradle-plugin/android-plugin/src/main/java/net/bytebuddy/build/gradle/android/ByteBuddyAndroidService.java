@@ -15,7 +15,7 @@
  */
 package net.bytebuddy.build.gradle.android;
 
-import com.android.build.api.variant.AndroidComponentsExtension;
+import com.android.build.gradle.BaseExtension;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorFactory;
@@ -26,117 +26,136 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Property;
 import org.gradle.api.services.BuildService;
 import org.gradle.api.services.BuildServiceParameters;
 import org.gradle.api.services.BuildServiceSpec;
 import org.objectweb.asm.ClassVisitor;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-abstract public class ByteBuddyAndroidService implements BuildService<ByteBuddyAndroidService.Params>, AutoCloseable {
+/**
+ * A {@link BuildService} for use with the Byte Buddy Android plugin.
+ */
+abstract public class ByteBuddyAndroidService implements BuildService<ByteBuddyAndroidService.Parameters>, Closeable {
 
-    private boolean initialized = false;
-    private List<Plugin> allPlugins;
-    private Plugin.Engine.TypeStrategy typeStrategy;
-    private ByteBuddy byteBuddy;
-    private TypePool typePool;
-    private ClassFileLocator classFileLocator;
-    private Map<String, List<Plugin>> matchingPlugins;
-    private Map<String, TypeDescription> matchingTypeDescription;
-    private URLClassLoader pluginLoader;
-    private ClassVisitorFactory<ClassVisitor> classVisitorFactory;
+    /**
+     * A {@link ClassVisitorFactory} to bridge between Android and Byte Buddy's ASM namespace.
+     */
+    private final ClassVisitorFactory<ClassVisitor> classVisitorFactory = ClassVisitorFactory.of(ClassVisitor.class);
 
-    public interface Params extends BuildServiceParameters {
-        Property<JavaVersion> getJavaTargetCompatibilityVersion();
-    }
+    /**
+     * The current state of Byte Buddy after initialization or {@code null} if the service is not yet initialized.
+     */
+    @MaybeNull
+    private volatile State state;
 
-    public synchronized void initialize(FileCollection runtimeClasspath,
-                                        FileCollection androidBootClasspath,
-                                        FileCollection byteBuddyClasspath,
-                                        FileCollection localClasses) {
-        if (initialized) {
+    /**
+     * Initializes the service.
+     *
+     * @param parameters The Byte Buddy instrumentation parameters.
+     */
+    public void initialize(ByteBuddyInstrumentationParameters parameters) {
+        if (state != null) {
             return;
         }
-        initialized = true;
-        allPlugins = new ArrayList<>();
-        matchingPlugins = Collections.synchronizedMap(new HashMap<>());
-        matchingTypeDescription = Collections.synchronizedMap(new HashMap<>());
-        EntryPoint entryPoint = new EntryPoint.Unvalidated(EntryPoint.Default.REBASE);
-        Plugin.Engine.PoolStrategy poolStrategy = Plugin.Engine.PoolStrategy.Default.FAST;
-        ClassFileVersion version = ClassFileVersion.ofJavaVersionString(getParameters().getJavaTargetCompatibilityVersion().get().toString());
-        byteBuddy = entryPoint.byteBuddy(version);
-        typeStrategy = new Plugin.Engine.TypeStrategy.ForEntryPoint(entryPoint, MethodNameTransformer.Suffixing.withRandomSuffix());
-        classVisitorFactory = ClassVisitorFactory.of(ClassVisitor.class, byteBuddy);
-        try {
-            Set<File> classpath = runtimeClasspath.plus(androidBootClasspath).plus(byteBuddyClasspath).plus(localClasses).getFiles();
-            classFileLocator = getClassFileLocator(classpath);
-            typePool = poolStrategy.typePool(classFileLocator);
-            List<? extends Plugin.Factory> factories = createPluginFactories(androidBootClasspath.getFiles(), byteBuddyClasspath.getFiles());
-            for (Plugin.Factory factory : factories) {
-                allPlugins.add(factory.make());
+        synchronized (this) {
+            if (state != null) {
+                return;
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
-    public ClassVisitor apply(String className, ClassVisitor original) {
-        TypeDescription typeDescription = matchingTypeDescription.get(className);
-        List<Plugin> classMatchingPlugins = matchingPlugins.get(className);
-        matchingTypeDescription.remove(className);
-        matchingPlugins.remove(className);
-
-        net.bytebuddy.jar.asm.ClassVisitor composedVisitor = translateToByteBuddys(original);
-        DynamicType.Builder<?> builder = typeStrategy.builder(byteBuddy, typeDescription, classFileLocator);
-        for (Plugin matchingPlugin : classMatchingPlugins) {
-            composedVisitor = matchingPlugin.apply(builder, typeDescription, classFileLocator).wrap(composedVisitor);
-        }
-        return translateToAndroids(composedVisitor);
-    }
-
-    private ClassVisitor translateToAndroids(net.bytebuddy.jar.asm.ClassVisitor composedVisitor) {
-        return classVisitorFactory.wrap(composedVisitor);
-    }
-
-    private net.bytebuddy.jar.asm.ClassVisitor translateToByteBuddys(ClassVisitor original) {
-        return classVisitorFactory.unwrap(original);
-    }
-
-    public boolean matches(String className) {
-        try {
-            List<Plugin> plugins = new ArrayList<>();
-            TypeDescription typeDescription = typePool.describe(className).resolve();
-            for (Plugin plugin : allPlugins) {
-                if (plugin.matches(typeDescription)) {
+            try {
+                List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
+                classFileLocators.add(ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader()));
+                for (File artifact : parameters.getRuntimeClasspath()
+                        .plus(parameters.getAndroidBootClasspath())
+                        .plus(parameters.getByteBuddyClasspath())
+                        .plus(parameters.getLocalClassesDirectories())
+                        .getFiles()) {
+                    classFileLocators.add(artifact.isFile()
+                            ? ClassFileLocator.ForJarFile.of(artifact)
+                            : new ClassFileLocator.ForFolder(artifact));
+                }
+                ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersionString(getParameters().getJavaTargetCompatibilityVersion()
+                        .get()
+                        .toString());
+                ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
+                Plugin.Engine.PoolStrategy.Default poolStrategy = Plugin.Engine.PoolStrategy.Default.FAST;
+                List<Plugin> plugins = new ArrayList<>();
+                TypePool typePool = poolStrategy.typePool(classFileLocator);
+                ClassLoader classLoader = new URLClassLoader(
+                        toUrls(parameters.getByteBuddyClasspath().getFiles()),
+                        new URLClassLoader(toUrls(parameters.getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
+                ArrayList<Plugin.Factory> factories = new ArrayList<>();
+                for (String name : Plugin.Engine.Default.scan(classLoader)) {
+                    try {
+                        @SuppressWarnings("unchecked")
+                        Class<? extends Plugin> type = (Class<? extends Plugin>) Class.forName(name, false, classLoader);
+                        if (!Plugin.class.isAssignableFrom(type)) {
+                            throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
+                        }
+                        factories.add(new Plugin.Factory.UsingReflection(type));
+                    } catch (Throwable throwable) {
+                        throw new IllegalStateException("Cannot resolve plugin: " + name, throwable);
+                    }
+                }
+                for (Plugin.Factory factory : factories) {
+                    Plugin plugin = factory.make();
+                    if (plugin instanceof Plugin.WithInitialization) {
+                        ((Plugin.WithInitialization) plugin).initialize(classFileLocator);
+                    }
                     plugins.add(plugin);
                 }
+                EntryPoint entryPoint = new EntryPoint.Unvalidated(EntryPoint.Default.REBASE);
+                ByteBuddy byteBuddy = entryPoint.byteBuddy(classFileVersion);
+                state = new State(plugins,
+                        new Plugin.Engine.TypeStrategy.ForEntryPoint(entryPoint, MethodNameTransformer.Suffixing.withRandomSuffix()),
+                        byteBuddy,
+                        typePool,
+                        classFileLocator,
+                        classLoader);
+            } catch (IOException exception) {
+                throw new IllegalStateException(exception);
             }
+        }
+    }
 
-            boolean matches = !plugins.isEmpty();
-
-            if (matches) {
-                matchingTypeDescription.put(className, typeDescription);
-                matchingPlugins.put(className, plugins);
+    /**
+     * Matches a type name for being instrumented.
+     *
+     * @param name The name of the matched type.
+     * @return {@code true} if the type with the given name should be instrumented.
+     */
+    public boolean matches(String name) {
+        State state = this.state;
+        if (state == null) {
+            throw new IllegalStateException("Byte Buddy Android service was not initialized");
+        }
+        try {
+            TypeDescription typeDescription = state.getTypePool().describe(name).resolve();
+            for (Plugin plugin : state.getPlugins()) {
+                if (plugin instanceof Plugin.WithPreprocessor) {
+                    ((Plugin.WithPreprocessor) plugin).onPreprocess(typeDescription, state.getClassFileLocator());
+                }
             }
-
-            return matches;
-        } catch (TypePool.Resolution.NoSuchTypeException e) {
+            for (Plugin plugin : state.getPlugins()) {
+                if (plugin.matches(typeDescription)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (TypePool.Resolution.NoSuchTypeException ignored) {
             // There are android generated classes for android XML resources, that typically end with "R$[something]",
             // such as "R$layout, R$string, R$id", etc. Which are not available in the classpath by the time this
             // task runs, and also, those classes aren't worthy of instrumentation either.
@@ -144,91 +163,219 @@ abstract public class ByteBuddyAndroidService implements BuildService<ByteBuddyA
         }
     }
 
-    private ClassFileLocator getClassFileLocator(Set<File> classpath) throws IOException {
-        ArrayList<ClassFileLocator> classFileLocators = new ArrayList<>();
-
-        for (File artifact : classpath) {
-            classFileLocators.add(artifact.isFile() ? ClassFileLocator.ForJarFile.of(artifact) : new ClassFileLocator.ForFolder(artifact));
+    /**
+     * Applies an instrumentation for a given type.
+     *
+     * @param name         The name of the type being matched.
+     * @param classVisitor The class visitor to wrap the instrumentation around.
+     * @return A class visitor that includes the applied instrumentation.
+     */
+    public ClassVisitor apply(String name, ClassVisitor classVisitor) {
+        State state = this.state;
+        if (state == null) {
+            throw new IllegalStateException("Byte Buddy Android service was not initialized");
         }
-
-        classFileLocators.add(
-                ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader())
-        );
-
-        return new ClassFileLocator.Compound(classFileLocators);
-    }
-
-    private List<Plugin.Factory> createPluginFactories(Set<File> androidBootClasspath, Set<File> bytebuddyDiscoveryClasspath) throws IOException {
-        URLClassLoader androidLoader = new URLClassLoader(toUrlArray(androidBootClasspath), ByteBuddy.class.getClassLoader());
-        pluginLoader = new URLClassLoader(toUrlArray(bytebuddyDiscoveryClasspath), androidLoader);
-        ArrayList<Plugin.Factory> factories = new ArrayList<>();
-
-        for (String className : Plugin.Engine.Default.scan(pluginLoader)) {
-            factories.add(createFactoryFromClassName(className, pluginLoader));
-        }
-
-        return factories;
-    }
-
-    private Plugin.Factory.UsingReflection createFactoryFromClassName(
-            String className,
-            ClassLoader classLoader
-    ) {
-        try {
-            Class<? extends Plugin> pluginClass = getClassFromName(className, classLoader);
-            return new Plugin.Factory.UsingReflection(pluginClass);
-        } catch (Throwable t) {
-            throw new IllegalStateException("Cannot resolve plugin: " + className, t);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private Class<? extends Plugin> getClassFromName(String className, ClassLoader classLoader) throws ClassNotFoundException {
-        Class<?> type = Class.forName(className, false, classLoader);
-
-        if (!Plugin.class.isAssignableFrom(type)) {
-            throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
-        }
-
-        return (Class<? extends Plugin>) type;
-    }
-
-    private URL[] toUrlArray(Set<File> files) {
-        List<URL> urls = new ArrayList<>();
-        files.forEach(file -> {
-            try {
-                urls.add(file.toURI().toURL());
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
+        TypeDescription typeDescription = state.getTypePool().describe(name).resolve();
+        DynamicType.Builder<?> builder = state.getTypeStrategy().builder(state.getByteBuddy(), typeDescription, state.getClassFileLocator());
+        for (Plugin plugin : state.getPlugins()) {
+            if (plugin.matches(typeDescription)) {
+                builder = plugin.apply(builder, typeDescription, state.getClassFileLocator());
             }
-        });
-        return urls.toArray(new URL[0]);
+        }
+        return classVisitorFactory.wrap(builder.wrap(classVisitorFactory.unwrap(classVisitor)));
     }
 
-    @Override
-    public void close() throws Exception {
-        for (Plugin plugin : allPlugins) {
+    /**
+     * {@inheritDoc}
+     */
+    public synchronized void close() throws IOException {
+        State state = this.state;
+        if (state == null) {
+            return;
+        }
+        for (Plugin plugin : state.getPlugins()) {
             plugin.close();
         }
-        allPlugins = null;
-        matchingPlugins = null;
-        initialized = false;
-        pluginLoader.close();
+        state.getTypePool().clear();
+        state.getClassFileLocator().close();
+        if (state.getClassLoader() instanceof Closeable) {
+            ((Closeable) state.getClassLoader()).close();
+        }
+        this.state = null;
     }
 
-    protected static class ConfigurationAction implements Action<BuildServiceSpec<ByteBuddyAndroidService.Params>> {
+    /**
+     * Translates a collection of files to {@link URL}s.
+     *
+     * @param files The list of files to translate.
+     * @return An array of URLs representing the provided files.
+     */
+    private static URL[] toUrls(Collection<File> files) {
+        URL[] url = new URL[files.size()];
+        int index = 0;
+        for (File file : files) {
+            try {
+                url[index++] = file.toURI().toURL();
+            } catch (MalformedURLException exception) {
+                throw new IllegalStateException("Failed to convert file " + file.getAbsolutePath(), exception);
+            }
+        }
+        return url;
+    }
 
-        private final AndroidComponentsExtension<?, ?, ?> extension;
+    /**
+     * A state object for a {@link ByteBuddyAndroidService} to represent its post-initialization values.
+     */
+    protected static class State {
 
-        protected ConfigurationAction(AndroidComponentsExtension<?, ?, ?> extension) {
+        /**
+         * The plugins being applied.
+         */
+        private final List<Plugin> plugins;
+
+        /**
+         * The type strategy being used.
+         */
+        private final Plugin.Engine.TypeStrategy typeStrategy;
+
+        /**
+         * The Byte Buddy instance to use.
+         */
+        private final ByteBuddy byteBuddy;
+
+        /**
+         * The type pool to use.
+         */
+        private final TypePool typePool;
+
+        /**
+         * The class file locator to use.
+         */
+        private final ClassFileLocator classFileLocator;
+
+        /**
+         * The class loader to use.
+         */
+        private final ClassLoader classLoader;
+
+        /**
+         * Creates a new state representation.
+         *
+         * @param plugins          The plugins being applied.
+         * @param typeStrategy     The type strategy being used.
+         * @param byteBuddy        The Byte Buddy instance to use.
+         * @param typePool         The type pool to use.
+         * @param classFileLocator The class file locator to use.
+         * @param classLoader      The class loader to use.
+         */
+        protected State(List<Plugin> plugins,
+                        Plugin.Engine.TypeStrategy typeStrategy,
+                        ByteBuddy byteBuddy,
+                        TypePool typePool,
+                        ClassFileLocator classFileLocator,
+                        ClassLoader classLoader) {
+            this.plugins = plugins;
+            this.typeStrategy = typeStrategy;
+            this.byteBuddy = byteBuddy;
+            this.typePool = typePool;
+            this.classFileLocator = classFileLocator;
+            this.classLoader = classLoader;
+        }
+
+        /**
+         * Returns the plugins being applied.
+         *
+         * @return The plugins being applied.
+         */
+        protected List<Plugin> getPlugins() {
+            return plugins;
+        }
+
+        /**
+         * Returns the type strategy to use.
+         *
+         * @return The type strategy to use.
+         */
+        protected Plugin.Engine.TypeStrategy getTypeStrategy() {
+            return typeStrategy;
+        }
+
+        /**
+         * Returns the Byte Buddy instance to use.
+         *
+         * @return The Byte Buddy instance to use.
+         */
+        protected ByteBuddy getByteBuddy() {
+            return byteBuddy;
+        }
+
+        /**
+         * Returns the type pool to use.
+         *
+         * @return The type pool to use.
+         */
+        protected TypePool getTypePool() {
+            return typePool;
+        }
+
+        /**
+         * Returns the class file locator to use.
+         *
+         * @return The class file locator to use.
+         */
+        protected ClassFileLocator getClassFileLocator() {
+            return classFileLocator;
+        }
+
+        /**
+         * Returns the class loader to use.
+         *
+         * @return The class loader to use.
+         */
+        protected ClassLoader getClassLoader() {
+            return classLoader;
+        }
+    }
+
+    /**
+     * A configuration action for the {@link BuildServiceSpec} of the {@link Parameters} of {@link ByteBuddyAndroidService}.
+     */
+    protected static class ConfigurationAction implements Action<BuildServiceSpec<Parameters>> {
+
+        /**
+         * The base extension.
+         */
+        private final BaseExtension extension;
+
+        /**
+         * Creates a new configuration action.
+         *
+         * @param extension The base extension.
+         */
+        protected ConfigurationAction(BaseExtension extension) {
             this.extension = extension;
         }
 
-        @Override
-        public void execute(BuildServiceSpec<ByteBuddyAndroidService.Params> spec) {
+        /**
+         * {@inheritDoc}
+         */
+        public void execute(BuildServiceSpec<Parameters> spec) {
             spec.getParameters()
                     .getJavaTargetCompatibilityVersion()
                     .set(extension.getCompileOptions().getTargetCompatibility());
         }
+    }
+
+    /**
+     * The parameters that are supplied to {@link ByteBuddyAndroidService}.
+     */
+    public interface Parameters extends BuildServiceParameters {
+
+        /**
+         * Returns the Java target compatibility version.
+         *
+         * @return The Java target compatibility version.
+         */
+        Property<JavaVersion> getJavaTargetCompatibilityVersion();
     }
 }

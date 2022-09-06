@@ -61,9 +61,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         }
         project.getDependencies().registerTransform(AarGradleTransformAction.class, new AarGradleTransformAction.ConfigurationAction());
         project.getDependencies().getAttributesSchema().attribute(ARTIFACT_TYPE_ATTRIBUTE, new AttributeMatchingStrategyConfigurationAction());
-        extension.onVariants(extension.selector().all(), new VariantAction(project,
-                extension,
-                project.getConfigurations().create("byteBuddy", new ConfigurationConfigurationAction())));
+        extension.onVariants(extension.selector().all(), new VariantAction(project, project.getConfigurations().create("byteBuddy", new ConfigurationConfigurationAction())));
     }
 
     /**
@@ -77,11 +75,6 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         private final Project project;
 
         /**
-         * The Android components extension.
-         */
-        private final AndroidComponentsExtension<?, ?, ?> extension;
-
-        /**
          * The general Byte Buddy configuration.
          */
         private final Configuration configuration;
@@ -90,12 +83,10 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          * Creates a new variant action.
          *
          * @param project       The current Gradle project.
-         * @param extension     The Android components extension.
          * @param configuration The general Byte Buddy configuration.
          */
-        protected VariantAction(Project project, AndroidComponentsExtension<?, ?, ?> extension, Configuration configuration) {
+        protected VariantAction(Project project, Configuration configuration) {
             this.project = project;
-            this.extension = extension;
             this.configuration = configuration;
         }
 
@@ -108,7 +99,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     new ByteBuddyCopyOutputTask.ConfigurationAction(project, variant));
             Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider = project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "ByteBuddyAndroidService",
                     ByteBuddyAndroidService.class,
-                    new ByteBuddyAndroidService.ConfigurationAction(extension));
+                    new ByteBuddyAndroidService.ConfigurationAction(project.getExtensions().getByType(BaseExtension.class)));
             variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, new ByteBuddyTransformationConfiguration(project,
                     configuration,
                     byteBuddyCopyOutputTaskProvider,
