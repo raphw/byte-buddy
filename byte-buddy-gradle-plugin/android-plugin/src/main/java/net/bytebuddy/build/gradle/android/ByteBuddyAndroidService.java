@@ -16,7 +16,6 @@
 package net.bytebuddy.build.gradle.android;
 
 import com.android.build.gradle.BaseExtension;
-import jdk.tools.jlink.resources.plugins;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorFactory;
