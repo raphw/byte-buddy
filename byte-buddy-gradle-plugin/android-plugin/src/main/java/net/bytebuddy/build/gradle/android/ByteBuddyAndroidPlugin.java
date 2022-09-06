@@ -16,7 +16,6 @@
 package net.bytebuddy.build.gradle.android;
 
 import com.android.build.api.AndroidPluginVersion;
-import com.android.build.api.artifact.MultipleArtifact;
 import com.android.build.api.component.impl.ComponentImpl;
 import com.android.build.api.instrumentation.InstrumentationScope;
 import com.android.build.api.variant.AndroidComponentsExtension;
@@ -24,74 +23,59 @@ import com.android.build.api.variant.Variant;
 import com.android.build.gradle.BaseExtension;
 import com.android.build.gradle.internal.publishing.AndroidArtifacts;
 import kotlin.Unit;
-import net.bytebuddy.utility.nullability.MaybeNull;
+import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
 
 public class ByteBuddyAndroidPlugin implements Plugin<Project> {
 
-    @MaybeNull
-    private AndroidComponentsExtension<?, ?, ?> androidComponentsExtension;
-    private BaseExtension androidExtension;
-    private Project project;
-
     /**
      * {@inheritDoc}
      */
     public void apply(Project project) {
-        this.project = project;
-        androidExtension = project.getExtensions().getByType(BaseExtension.class);
-        androidComponentsExtension = project.getExtensions().findByType(AndroidComponentsExtension.class);
-        verifyValidAndroidPlugin();
+        BaseExtension baseExtension = project.getExtensions().getByType(BaseExtension.class);
+        AndroidComponentsExtension<?, ?, ?> extension = project.getExtensions().getByType(AndroidComponentsExtension.class);
+        if (extension.getPluginVersion().compareTo(new AndroidPluginVersion(7, 2)) < 0) {
+            throw new IllegalStateException("Byte Buddy requires at least Gradle Plugin version 7.2+, but found " + extension.getPluginVersion());
+        }
         ByteBuddyDependenciesHandler dependenciesHandler = ByteBuddyDependenciesHandler.of(project);
-        registerBytebuddyAsmFactory(dependenciesHandler);
+        extension.onVariants(extension.selector().all(), new VariantAction(project, extension));
     }
 
-    private void registerBytebuddyAsmFactory(ByteBuddyDependenciesHandler dependenciesHandler) {
-        androidComponentsExtension.onVariants(androidComponentsExtension.selector().all(), variant -> {
-            TaskProvider<ByteBuddyCopyOutputTask> localClasses = registerLocalClassesSyncTask(variant);
-            Provider<ByteBuddyService> serviceProvider = registerService(variant);
+    protected static class VariantAction implements Action<Variant> {
+
+        private final Project project;
+
+        private final AndroidComponentsExtension<?, ?, ?> extension;
+
+        protected VariantAction(Project project, AndroidComponentsExtension<?, ?, ?> extension) {
+            this.project = project;
+            this.extension = extension;
+        }
+
+        @Override
+        public void execute(Variant variant) {
+            TaskProvider<ByteBuddyCopyOutputTask> localClasses = project.getTasks().register(variant.getName() + "ByteBuddyLocalClasses",
+                    ByteBuddyCopyOutputTask.class,
+                    new ByteBuddyCopyOutputTask.ConfigurationAction(project, variant));
+            Provider<ByteBuddyService> serviceProvider = project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "ByteBuddyService",
+                    ByteBuddyService.class,
+                    new ByteBuddyService.ConfigurationAction(extension));
             variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, params -> {
                 params.getByteBuddyClasspath().from(dependenciesHandler.getConfigurationForBuildType(variant.getBuildType()));
-                params.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
-                params.getRuntimeClasspath().from(getRuntimeClasspath(variant));
+                params.getAndroidBootClasspath().from(extension.getBootClasspath());
+                ComponentImpl component = (ComponentImpl) variant;
+                params.getRuntimeClasspath().from(component.getVariantDependencies().getArtifactFileCollection(
+                        AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
+                        AndroidArtifacts.ArtifactScope.ALL,
+                        AndroidArtifacts.ArtifactType.CLASSES_JAR
+                ));
                 params.getLocalClassesDirectories().from(localClasses);
                 params.getByteBuddyService().set(serviceProvider);
                 return Unit.INSTANCE;
             });
-        });
-    }
-
-    private Provider<ByteBuddyService> registerService(Variant variant) {
-        return project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "BytebuddyService", ByteBuddyService.class, spec -> {
-            spec.getParameters().getJavaTargetCompatibilityVersion().set(androidExtension.getCompileOptions().getTargetCompatibility());
-        });
-    }
-
-    private TaskProvider<ByteBuddyCopyOutputTask> registerLocalClassesSyncTask(Variant variant) {
-        return project.getTasks().register(variant.getName() + "ByteBuddyLocalClasses", ByteBuddyCopyOutputTask.class, classesSync -> {
-            classesSync.getLocalClasspath().from(variant.getArtifacts().getAll(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE));
-            classesSync.getOutputDir().set(project.getLayout().getBuildDirectory().dir("intermediates/incremental/" + classesSync.getName()));
-        });
-    }
-
-    private FileCollection getRuntimeClasspath(Variant variant) {
-        ComponentImpl component = (ComponentImpl) variant;
-        return component.getVariantDependencies().getArtifactFileCollection(
-                AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
-                AndroidArtifacts.ArtifactScope.ALL,
-                AndroidArtifacts.ArtifactType.CLASSES_JAR
-        );
-    }
-
-    private void verifyValidAndroidPlugin() {
-        AndroidPluginVersion currentVersion = androidComponentsExtension.getPluginVersion();
-        AndroidPluginVersion minimumVersion = new AndroidPluginVersion(7, 2);
-        if (currentVersion.compareTo(minimumVersion) < 0) {
-            throw new IllegalStateException("ByteBuddy is supported from Android Gradle Plugin version 7.2+");
         }
     }
 }

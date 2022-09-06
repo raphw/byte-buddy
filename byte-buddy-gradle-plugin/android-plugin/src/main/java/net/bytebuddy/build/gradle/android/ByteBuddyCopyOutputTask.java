@@ -15,8 +15,12 @@
  */
 package net.bytebuddy.build.gradle.android;
 
+import com.android.build.api.artifact.MultipleArtifact;
+import com.android.build.api.variant.Variant;
 import net.bytebuddy.utility.FileSystem;
+import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.Project;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileType;
@@ -82,6 +86,24 @@ public abstract class ByteBuddyCopyOutputTask extends DefaultTask {
                 default:
                     throw new IllegalStateException();
             }
+        }
+    }
+
+    protected static class ConfigurationAction implements Action<ByteBuddyCopyOutputTask> {
+
+        private final Project project;
+
+        private final Variant variant;
+
+        protected ConfigurationAction(Project project, Variant variant) {
+            this.project = project;
+            this.variant = variant;
+        }
+
+        @Override
+        public void execute(ByteBuddyCopyOutputTask task) {
+            task.getLocalClasspath().from(variant.getArtifacts().getAll(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE));
+            task.getOutputDir().set(project.getLayout().getBuildDirectory().dir("intermediates/incremental/" + task.getName()));
         }
     }
 }

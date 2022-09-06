@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.build.gradle.android;
 
+import com.android.build.api.variant.AndroidComponentsExtension;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorFactory;
@@ -25,12 +26,14 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.pool.TypePool;
+import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Property;
 import org.gradle.api.services.BuildService;
 import org.gradle.api.services.BuildServiceParameters;
+import org.gradle.api.services.BuildServiceSpec;
 import org.objectweb.asm.ClassVisitor;
 
 import java.io.File;
@@ -211,5 +214,21 @@ abstract public class ByteBuddyService implements BuildService<ByteBuddyService.
         matchingPlugins = null;
         initialized = false;
         pluginLoader.close();
+    }
+
+    protected static class ConfigurationAction implements Action<BuildServiceSpec<ByteBuddyService.Params>> {
+
+        private final AndroidComponentsExtension<?, ?, ?> extension;
+
+        protected ConfigurationAction(AndroidComponentsExtension<?, ?, ?> extension) {
+            this.extension = extension;
+        }
+
+        @Override
+        public void execute(BuildServiceSpec<ByteBuddyService.Params> spec) {
+            spec.getParameters()
+                    .getJavaTargetCompatibilityVersion()
+                    .set(extension.getCompileOptions().getTargetCompatibility());
+        }
     }
 }
