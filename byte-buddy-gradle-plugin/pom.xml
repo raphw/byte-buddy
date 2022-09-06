@@ -32,6 +32,7 @@
         <gradle.disabled>false</gradle.disabled>
         <gradle.release>false</gradle.release>
         <skipTests>false</skipTests>
+        <androidTests>false</androidTests>
         <japicmp.skip>true</japicmp.skip>
         <!-- Actual values must be set via settings.xml or using command line arguments since they cannot be published. -->
         <gradle.publish.key />
@@ -113,6 +114,7 @@
                                 <argument>-Dnet.bytebuddy.gradle.source=${sourcecode.main.version}</argument>
                                 <argument>-Dnet.bytebuddy.gradle.target=${bytecode.main.version}</argument>
                                 <argument>-Dnet.bytebuddy.test.disabled=${skipTests}</argument>
+                                <argument>-Dnet.bytebuddy.build.gradle.android.test=${androidTests}</argument>
                             </arguments>
                         </configuration>
                     </execution>

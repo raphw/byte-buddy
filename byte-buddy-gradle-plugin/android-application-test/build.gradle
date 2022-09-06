@@ -6,7 +6,7 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.2.0'
+        classpath group: 'com.android.tools.build', name: 'gradle', version: '7.2.0'
         classpath files(new File("${rootProject.buildDir}/libs/byte-buddy-gradle-plugin-${version}.jar").canonicalFile)
     }
 }

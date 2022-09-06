@@ -14,7 +14,9 @@ repositories {
 
 dependencies {
     api gradleApi()
-    compileOnly "com.android.tools.build:gradle:7.2.0"
-    testImplementation "junit:junit:4.13.2"
-    testImplementation "org.mockito:mockito-core:4.6.1"
+    compileOnly group: 'com.android.tools.build', name: 'gradle', version: '7.2.0'
+    testImplementation group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
+    testImplementation(group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
+        exclude group: 'net.bytebuddy'
+    }
 }

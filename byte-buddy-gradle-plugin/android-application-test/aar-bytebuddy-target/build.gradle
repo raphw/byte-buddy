@@ -24,6 +24,5 @@ android {
 }
 
 dependencies {
-    implementation 'com.google.android.material:material:1.6.1'
-    testImplementation 'junit:junit:4.13.2'
+    implementation group: 'com.google.android.material', name: 'material', version: '1.6.1'
 }
