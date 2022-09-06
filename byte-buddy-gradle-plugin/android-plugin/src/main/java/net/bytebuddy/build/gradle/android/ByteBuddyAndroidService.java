@@ -50,7 +50,7 @@ import java.util.List;
 /**
  * A {@link BuildService} for use with the Byte Buddy Android plugin.
  */
-abstract public class ByteBuddyAndroidService implements BuildService<ByteBuddyAndroidService.Parameters>, Closeable {
+public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyAndroidService.Parameters>, Closeable {
 
     /**
      * A {@link ClassVisitorFactory} to bridge between Android and Byte Buddy's ASM namespace.
