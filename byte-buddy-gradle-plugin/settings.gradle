@@ -7,7 +7,8 @@ if (!raw.startsWith("1.") && raw.contains(".")) {
 } else {
     current = JavaVersion.toVersion(raw)
 }
-if (current > JavaVersion.VERSION_1_7 && current != JavaVersion.VERSION_9) {
+// The Android plugin requires at least Java 8 and does not work with Java 9 for an obscure error.
+if (current > JavaVersion.VERSION_1_7 && current != JavaVersion.VERSION_1_9) {
     include "android-plugin"
     if (Boolean.getBoolean("net.bytebuddy.build.gradle.android.test")) {
         include "android-application-test"

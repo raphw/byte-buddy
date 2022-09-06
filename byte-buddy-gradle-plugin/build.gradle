@@ -33,7 +33,7 @@ dependencies {
     implementation gradleApi()
     if (targetCompatibility >= JavaVersion.VERSION_1_8
             && sourceCompatibility >= JavaVersion.VERSION_1_8
-            && JavaVersion.current() != JavaVersion.VERSION_1_9) {
+            && findProject(':android-plugin') != null) {
         fatJar project(':android-plugin')
     }
     compileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
