@@ -51,5 +51,5 @@ public interface ByteBuddyInstrumentationParameters extends InstrumentationParam
      * @return The Byte Buddy service to use.
      */
     @Internal
-    Property<ByteBuddyService> getByteBuddyService();
+    Property<ByteBuddyAndroidService> getByteBuddyService();
 }

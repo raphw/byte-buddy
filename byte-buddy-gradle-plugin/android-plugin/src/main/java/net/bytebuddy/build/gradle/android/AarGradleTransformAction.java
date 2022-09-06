@@ -15,10 +15,8 @@
  */
 package net.bytebuddy.build.gradle.android;
 
-import org.gradle.api.artifacts.transform.InputArtifact;
-import org.gradle.api.artifacts.transform.TransformAction;
-import org.gradle.api.artifacts.transform.TransformOutputs;
-import org.gradle.api.artifacts.transform.TransformParameters;
+import org.gradle.api.Action;
+import org.gradle.api.artifacts.transform.*;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.provider.Provider;
 
@@ -33,6 +31,11 @@ import java.util.zip.ZipFile;
 public abstract class AarGradleTransformAction implements TransformAction<TransformParameters.None> {
 
     /**
+     * The AAR file format extension.
+     */
+    private static final String AAR_FILE_EXTENSION = "aar";
+
+    /**
      * Returns the input artifact.
      *
      * @return The input artifact.
@@ -45,7 +48,7 @@ public abstract class AarGradleTransformAction implements TransformAction<Transf
      */
     public void transform(TransformOutputs transformOutputs) {
         File input = getInputArtifact().get().getAsFile();
-        String outputName = input.getName().replaceAll("\\.aar$", ".jar");
+        String outputName = input.getName().replaceAll("\\." + AAR_FILE_EXTENSION + "$", ".jar");
         try {
             ZipFile zipFile = new ZipFile(input);
             try {
@@ -70,6 +73,20 @@ public abstract class AarGradleTransformAction implements TransformAction<Transf
             }
         } catch (IOException exception) {
             throw new IllegalStateException("Failed to transform " + getInputArtifact(), exception);
+        }
+    }
+
+    /**
+     * A configuration action for transforming an AAR file.
+     */
+    protected static class ConfigurationAction implements Action<TransformSpec<TransformParameters.None>> {
+
+        /**
+         * {@inheritDoc}
+         */
+        public void execute(TransformSpec<TransformParameters.None> spec) {
+            spec.getFrom().attribute(ByteBuddyAndroidPlugin.ARTIFACT_TYPE_ATTRIBUTE, AAR_FILE_EXTENSION);
+            spec.getTo().attribute(ByteBuddyAndroidPlugin.ARTIFACT_TYPE_ATTRIBUTE, "bytebuddy-jar");
         }
     }
 }

@@ -48,7 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-abstract public class ByteBuddyService implements BuildService<ByteBuddyService.Params>, AutoCloseable {
+abstract public class ByteBuddyAndroidService implements BuildService<ByteBuddyAndroidService.Params>, AutoCloseable {
 
     private boolean initialized = false;
     private List<Plugin> allPlugins;
@@ -216,7 +216,7 @@ abstract public class ByteBuddyService implements BuildService<ByteBuddyService.
         pluginLoader.close();
     }
 
-    protected static class ConfigurationAction implements Action<BuildServiceSpec<ByteBuddyService.Params>> {
+    protected static class ConfigurationAction implements Action<BuildServiceSpec<ByteBuddyAndroidService.Params>> {
 
         private final AndroidComponentsExtension<?, ?, ?> extension;
 
@@ -225,7 +225,7 @@ abstract public class ByteBuddyService implements BuildService<ByteBuddyService.
         }
 
         @Override
-        public void execute(BuildServiceSpec<ByteBuddyService.Params> spec) {
+        public void execute(BuildServiceSpec<ByteBuddyAndroidService.Params> spec) {
             spec.getParameters()
                     .getJavaTargetCompatibilityVersion()
                     .set(extension.getCompileOptions().getTargetCompatibility());

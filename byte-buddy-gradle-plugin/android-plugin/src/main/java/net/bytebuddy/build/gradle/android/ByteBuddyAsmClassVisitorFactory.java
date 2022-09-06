@@ -30,7 +30,7 @@ public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitor
      */
     public boolean isInstrumentable(ClassData classData) {
         ByteBuddyInstrumentationParameters parameters = getParameters().get();
-        ByteBuddyService service = parameters.getByteBuddyService().get();
+        ByteBuddyAndroidService service = parameters.getByteBuddyService().get();
         service.initialize(parameters.getRuntimeClasspath(),
                 parameters.getAndroidBootClasspath(),
                 parameters.getByteBuddyClasspath(),
@@ -48,5 +48,4 @@ public abstract class ByteBuddyAsmClassVisitorFactory implements AsmClassVisitor
                 .get()
                 .apply(classContext.getCurrentClassData().getClassName(), classVisitor);
     }
-
 }
