@@ -33,14 +33,21 @@ import org.gradle.api.attributes.*;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
 
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * A Byte Buddy plugin-variant to use in combination with Gradle's support for Android.
+ */
 public class ByteBuddyAndroidPlugin implements Plugin<Project> {
 
+    /**
+     * The name of the artifact type attribute.
+     */
     protected static final Attribute<String> ARTIFACT_TYPE_ATTRIBUTE = Attribute.of("artifactType", String.class);
 
-
+    /**
+     * The name of the Byte Buddy jar type.
+     */
     private static final String BYTE_BUDDY_JAR_TYPE = "bytebuddy-jar";
 
     /**
@@ -53,128 +60,218 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             throw new IllegalStateException("Byte Buddy requires at least Gradle Plugin version 7.2+, but found " + extension.getPluginVersion());
         }
         project.getDependencies().registerTransform(AarGradleTransformAction.class, new AarGradleTransformAction.ConfigurationAction());
-        project.getDependencies().getAttributesSchema().attribute(ARTIFACT_TYPE_ATTRIBUTE, new AttributeMatchingStrategyConfiguration());
+        project.getDependencies().getAttributesSchema().attribute(ARTIFACT_TYPE_ATTRIBUTE, new AttributeMatchingStrategyConfigurationAction());
         extension.onVariants(extension.selector().all(), new VariantAction(project,
                 extension,
-                project.getConfigurations().create("byteBuddy", new ConfigurationConfiguration())));
+                project.getConfigurations().create("byteBuddy", new ConfigurationConfigurationAction())));
     }
 
+    /**
+     * An action to handle a {@link Variant}.
+     */
     protected static class VariantAction implements Action<Variant> {
 
+        /**
+         * The current Gradle project.
+         */
         private final Project project;
 
+        /**
+         * The Android components extension.
+         */
         private final AndroidComponentsExtension<?, ?, ?> extension;
 
+        /**
+         * The general Byte Buddy configuration.
+         */
         private final Configuration configuration;
 
+        /**
+         * Creates a new variant action.
+         *
+         * @param project       The current Gradle project.
+         * @param extension     The Android components extension.
+         * @param configuration The general Byte Buddy configuration.
+         */
         protected VariantAction(Project project, AndroidComponentsExtension<?, ?, ?> extension, Configuration configuration) {
             this.project = project;
             this.extension = extension;
             this.configuration = configuration;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void execute(Variant variant) {
-            TaskProvider<ByteBuddyCopyOutputTask> localClasses = project.getTasks().register(variant.getName() + "ByteBuddyLocalClasses",
+            TaskProvider<ByteBuddyCopyOutputTask> byteBuddyCopyOutputTaskProvider = project.getTasks().register(variant.getName() + "ByteBuddyCopyOutputTask",
                     ByteBuddyCopyOutputTask.class,
                     new ByteBuddyCopyOutputTask.ConfigurationAction(project, variant));
-            Provider<ByteBuddyAndroidService> serviceProvider = project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "ByteBuddyAndroidService",
+            Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider = project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "ByteBuddyAndroidService",
                     ByteBuddyAndroidService.class,
                     new ByteBuddyAndroidService.ConfigurationAction(extension));
             variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, new ByteBuddyTransformationConfiguration(project,
                     configuration,
-                    localClasses,
-                    serviceProvider,
+                    byteBuddyCopyOutputTaskProvider,
+                    byteBuddyAndroidServiceProvider,
                     variant));
         }
     }
 
+    /**
+     * A function to register Byte Buddy instrumentation parameters into the current execution.
+     */
     protected static class ByteBuddyTransformationConfiguration implements Function1<ByteBuddyInstrumentationParameters, Unit> {
 
+        /**
+         * The current Gradle project.
+         */
         private final Project project;
 
+        /**
+         * The general Byte Buddy configuration.
+         */
         private final Configuration configuration;
 
-        private final TaskProvider<ByteBuddyCopyOutputTask> localClasses;
+        /**
+         * A task provider for a {@link ByteBuddyCopyOutputTask}.
+         */
+        private final TaskProvider<ByteBuddyCopyOutputTask> byteBuddyCopyOutputTaskProvider;
 
-        private final Provider<ByteBuddyAndroidService> serviceProvider;
+        /**
+         * A provider for a {@link ByteBuddyAndroidService}.
+         */
+        private final Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider;
 
+        /**
+         * The current variant.
+         */
         private final Variant variant;
 
+        /**
+         * A cache for configurations by build type.
+         */
         private final ConcurrentHashMap<String, Configuration> configurations;
 
-        public ByteBuddyTransformationConfiguration(Project project,
-                                                    Configuration configuration,
-                                                    TaskProvider<ByteBuddyCopyOutputTask> localClasses,
-                                                    Provider<ByteBuddyAndroidService> serviceProvider,
-                                                    Variant variant) {
+        /**
+         * Creates a new Byte Buddy transformation configuration.
+         *
+         * @param project                         The current Gradle project.
+         * @param configuration                   The general Byte Buddy configuration.
+         * @param byteBuddyCopyOutputTaskProvider A task provider for a {@link ByteBuddyCopyOutputTask}.
+         * @param byteBuddyAndroidServiceProvider A provider for a {@link ByteBuddyAndroidService}.
+         * @param variant                         The current variant.
+         */
+        protected ByteBuddyTransformationConfiguration(Project project,
+                                                       Configuration configuration,
+                                                       TaskProvider<ByteBuddyCopyOutputTask> byteBuddyCopyOutputTaskProvider,
+                                                       Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider,
+                                                       Variant variant) {
             this.project = project;
             this.configuration = configuration;
-            this.localClasses = localClasses;
-            this.serviceProvider = serviceProvider;
+            this.byteBuddyCopyOutputTaskProvider = byteBuddyCopyOutputTaskProvider;
+            this.byteBuddyAndroidServiceProvider = byteBuddyAndroidServiceProvider;
             this.variant = variant;
             configurations = new ConcurrentHashMap<String, Configuration>();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Unit invoke(ByteBuddyInstrumentationParameters parameters) {
             if (variant.getBuildType() == null) {
                 throw new IllegalStateException();
             }
             Configuration configuration = configurations.get(variant.getBuildType());
             if (configuration == null) {
-                configuration = project.getConfigurations().create(variant.getBuildType() + "ByteBuddy", new VariantConfiguration(project,
+                configuration = project.getConfigurations().create(variant.getBuildType() + "ByteBuddy", new VariantConfigurationConfigurationAction(project,
                         this.configuration,
                         variant.getBuildType()));
                 configurations.put(variant.getBuildType(), configuration);
             }
             parameters.getByteBuddyClasspath().from(configuration);
             parameters.getAndroidBootClasspath().from(project.getExtensions().getByType(BaseExtension.class).getBootClasspath());
-            ComponentImpl component = (ComponentImpl) variant;
-            parameters.getRuntimeClasspath().from(component.getVariantDependencies().getArtifactFileCollection(AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
+            parameters.getRuntimeClasspath().from(((ComponentImpl) variant).getVariantDependencies().getArtifactFileCollection(AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
                     AndroidArtifacts.ArtifactScope.ALL,
                     AndroidArtifacts.ArtifactType.CLASSES_JAR));
-            parameters.getLocalClassesDirectories().from(localClasses);
-            parameters.getByteBuddyService().set(serviceProvider);
+            parameters.getLocalClassesDirectories().from(byteBuddyCopyOutputTaskProvider);
+            parameters.getByteBuddyService().set(byteBuddyAndroidServiceProvider);
             return Unit.INSTANCE;
         }
     }
 
-    protected static class VariantConfiguration implements Action<Configuration> {
+    /**
+     * A configuration action for a variant {@link Configuration}.
+     */
+    protected static class VariantConfigurationConfigurationAction implements Action<Configuration> {
 
+        /**
+         * The current Gradle project.
+         */
         private final Project project;
 
+        /**
+         * The general Byte Buddy configuration.
+         */
         private final Configuration configuration;
 
+        /**
+         * The name of the build type.
+         */
         private final String buildType;
 
-        public VariantConfiguration(Project project, Configuration configuration, String buildType) {
+        /**
+         * Creates a new variant configuration for a {@link Configuration}.
+         *
+         * @param project       The current Gradle project.
+         * @param configuration The general Byte Buddy configuration.
+         * @param buildType     The name of the build type.
+         */
+        protected VariantConfigurationConfigurationAction(Project project, Configuration configuration, String buildType) {
             this.project = project;
             this.configuration = configuration;
             this.buildType = buildType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void execute(Configuration configuration) {
             configuration.setCanBeResolved(true);
             configuration.setCanBeConsumed(false);
             configuration.extendsFrom(this.configuration);
-            configuration.attributes(new AttributeContainerConfiguration(project, buildType));
+            configuration.attributes(new AttributeContainerConfigurationAction(project, buildType));
         }
     }
 
-    protected static class AttributeContainerConfiguration implements Action<AttributeContainer> {
+    /**
+     * A configuration action for an {@link AttributeContainer}.
+     */
+    protected static class AttributeContainerConfigurationAction implements Action<AttributeContainer> {
 
+        /**
+         * The current Gradle project.
+         */
         private final Project project;
 
+        /**
+         * The name of the build type.
+         */
         private final String buildType;
 
-        protected AttributeContainerConfiguration(Project project, String buildType) {
+        /**
+         * Creates a new configuration for an {@link AttributeContainer}.
+         *
+         * @param project   The current Gradle project.
+         * @param buildType The name of the build type.
+         */
+        protected AttributeContainerConfigurationAction(Project project, String buildType) {
             this.project = project;
             this.buildType = buildType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void execute(AttributeContainer attributes) {
             attributes.attribute(ARTIFACT_TYPE_ATTRIBUTE, BYTE_BUDDY_JAR_TYPE);
             attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.getObjects().named(Category.class, Category.LIBRARY));
@@ -184,17 +281,23 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         }
     }
 
-    protected static class AttributeMatchingStrategyConfiguration implements Action<AttributeMatchingStrategy<String>> {
+    /**
+     * A configuration for a {@link AttributeMatchingStrategy}.
+     */
+    protected static class AttributeMatchingStrategyConfigurationAction implements Action<AttributeMatchingStrategy<String>> {
 
         /**
          * {@inheritDoc}
          */
         public void execute(AttributeMatchingStrategy<String> stringAttributeMatchingStrategy) {
-            stringAttributeMatchingStrategy.getCompatibilityRules().add(BytebuddyJarsRule.class);
+            stringAttributeMatchingStrategy.getCompatibilityRules().add(ByteBuddyJarRule.class);
         }
     }
 
-    protected static class ConfigurationConfiguration implements Action<Configuration> {
+    /**
+     * A configuration action for a {@link Configuration}.
+     */
+    protected static class ConfigurationConfigurationAction implements Action<Configuration> {
 
         /**
          * {@inheritDoc}
@@ -205,10 +308,16 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         }
     }
 
-    public abstract static class BytebuddyJarsRule implements AttributeCompatibilityRule<String> {
-        @Override
+    /**
+     * A rule to check for jar compatibility.
+     */
+    public abstract static class ByteBuddyJarRule implements AttributeCompatibilityRule<String> {
+
+        /**
+         * {@inheritDoc}
+         */
         public void execute(CompatibilityCheckDetails<String> details) {
-            if (Objects.equals(details.getConsumerValue(), BYTE_BUDDY_JAR_TYPE) && Objects.equals(details.getProducerValue(), "jar")) {
+            if (BYTE_BUDDY_JAR_TYPE.equals(details.getConsumerValue()) && "jar".equals(details.getProducerValue())) {
                 details.compatible();
             }
         }

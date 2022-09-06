@@ -89,18 +89,35 @@ public abstract class ByteBuddyCopyOutputTask extends DefaultTask {
         }
     }
 
+    /**
+     * A configuration action for a {@link ByteBuddyCopyOutputTask}.
+     */
     protected static class ConfigurationAction implements Action<ByteBuddyCopyOutputTask> {
 
+        /**
+         * The current Gradle project.
+         */
         private final Project project;
 
+        /**
+         * The current variant.
+         */
         private final Variant variant;
 
+        /**
+         * Creates a new configuration action for a {@link ByteBuddyCopyOutputTask}.
+         *
+         * @param project The current Gradle project.
+         * @param variant The current variant.
+         */
         protected ConfigurationAction(Project project, Variant variant) {
             this.project = project;
             this.variant = variant;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void execute(ByteBuddyCopyOutputTask task) {
             task.getLocalClasspath().from(variant.getArtifacts().getAll(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE));
             task.getOutputDir().set(project.getLayout().getBuildDirectory().dir("intermediates/incremental/" + task.getName()));
