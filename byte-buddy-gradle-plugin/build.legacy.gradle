@@ -9,10 +9,10 @@ if (!gradle.gradleVersion.startsWith("2.")) {
     throw new GradleException("Cannot apply release using legacy build");
 }
 
-apply from: 'common.gradle'
-
 ext.pom = new groovy.util.XmlSlurper().parse(rootProject.file('pom.xml'))
 ext.outerPom = new groovy.util.XmlSlurper().parse(file('../pom.xml'))
+
+apply from: 'common.gradle'
 
 group = pom.parent.groupId.text().toString()
 version = pom.parent.version.text().toString()
