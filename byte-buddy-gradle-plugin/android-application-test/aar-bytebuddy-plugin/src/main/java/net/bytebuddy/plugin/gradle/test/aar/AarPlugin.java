@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.plugin.test.aar;
+package net.bytebuddy.plugin.gradle.test.aar;
 
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.build.Plugin;
@@ -22,24 +22,29 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatchers;
 
-import java.io.IOException;
-
+/**
+ * A sample plugin to apply.
+ */
 public class AarPlugin implements Plugin {
 
-    @Override
-    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
-        return builder.visit(
-                Advice.to(AarAdvice.class).on(ElementMatchers.named("someMethod"))
-        );
-    }
-
-    @Override
-    public void close() throws IOException {
-        //NoOp
-    }
-
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(TypeDescription typeDefinitions) {
         return typeDefinitions.getTypeName().contains("Another");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+        return builder.visit(Advice.to(AarAdvice.class).on(ElementMatchers.named("method")));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void close() {
+        /* do nothing */
     }
 }

@@ -1,1 +1,1 @@
-net.bytebuddy.plugin.test.aar.AarPlugin
+net.bytebuddy.plugin.gradle.test.aar.AarPlugin

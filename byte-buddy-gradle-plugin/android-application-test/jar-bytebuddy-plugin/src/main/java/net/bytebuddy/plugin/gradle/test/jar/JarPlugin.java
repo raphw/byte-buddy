@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.plugin.test.jar;
+package net.bytebuddy.plugin.gradle.test.jar;
 
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.build.Plugin;
@@ -24,22 +24,29 @@ import net.bytebuddy.matcher.ElementMatchers;
 
 import java.io.IOException;
 
+/**
+ * A sample plugin for instrumenting a jar file.
+ */
 public class JarPlugin implements Plugin {
 
-    @Override
-    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
-        return builder.visit(
-                Advice.to(JarAdvice.class).on(ElementMatchers.named("someMethod"))
-        );
-    }
-
-    @Override
-    public void close() throws IOException {
-        //NoOp
-    }
-
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(TypeDescription typeDefinitions) {
         return typeDefinitions.getSimpleName().contains("Some");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+        return builder.visit(Advice.to(JarAdvice.class).on(ElementMatchers.named("method")));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void close() {
+        /* do nothing */
     }
 }

@@ -15,8 +15,17 @@
  */
 package net.bytebuddy.android.test.aar.lib;
 
+/**
+ * A sample class for instrumentation during a test.
+ */
 public class SomeAarClass {
-    public String someMethod() {
-        return "Not instrumented";
+
+    /**
+     * A sample method for instrumentation.
+     *
+     * @return A fixed sample value.
+     */
+    public String method() {
+        return "foo";
     }
 }

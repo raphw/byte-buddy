@@ -23,8 +23,14 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import net.bytebuddy.android.test.aar.lib.SomeAarClass;
 
+/**
+ * The main activity to use under test.
+ */
 public class MainActivity extends AppCompatActivity {
 
+    /**
+     * {@inheritDoc}
+     */
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -34,6 +40,12 @@ public class MainActivity extends AppCompatActivity {
         setTextTo(R.id.text_instrumented_from_aar, new AnotherClass().someMethod());
     }
 
+    /**
+     * Sets a resource text to a given value.
+     *
+     * @param id   The text id.
+     * @param text The text to set.
+     */
     private void setTextTo(@IdRes int id, String text) {
         TextView textView = findViewById(id);
         textView.setText(text);

@@ -1,15 +1,13 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
-    def pom = new XmlSlurper().parse(rootProject.file('pom.xml'))
-    ext.bytebuddy_version = pom.parent.version.text().toString()
+    def pom = new groovy.xml.XmlSlurper().parse(rootProject.file('pom.xml'))
+    def version = pom.parent.version.text().toString()
     repositories {
         mavenCentral()
         google()
     }
-    def pluginLocation = new File("${rootProject.buildDir}/libs/byte-buddy-gradle-plugin-${bytebuddy_version}.jar").canonicalFile
     dependencies {
         classpath 'com.android.tools.build:gradle:7.2.0'
-        classpath files(pluginLocation)
+        classpath files(new File("${rootProject.buildDir}/libs/byte-buddy-gradle-plugin-${version}.jar").canonicalFile)
     }
 }
 

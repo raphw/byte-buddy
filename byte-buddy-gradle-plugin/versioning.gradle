@@ -23,7 +23,7 @@ dependencies {
 if (release) {
     configurations.all {
         resolutionStrategy.dependencySubstitution {
-            substitute module("net.bytebuddy:byte-buddy:${version}") with project(":mavenBridge")
+            substitute module("net.bytebuddy:byte-buddy:${version}") using project(":mavenBridge")
         }
     }
 }

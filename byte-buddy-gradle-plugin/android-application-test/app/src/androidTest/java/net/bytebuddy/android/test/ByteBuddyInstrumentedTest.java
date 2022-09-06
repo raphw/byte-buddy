@@ -12,11 +12,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-/**
- * Instrumented test, which will execute on an Android device.
- * <p>
- * See [testing documentation](http://d.android.com/tools/testing).
- */
 @RunWith(AndroidJUnit4.class)
 class ByteBuddyInstrumentedTest {
 
@@ -26,10 +21,10 @@ class ByteBuddyInstrumentedTest {
     @Test
     public void bytecodeInstrumentation() {
         // On local java
-        onView(withId(R.id.text_from_local_java_class)).check(matches(withText("Instrumented message in lib")));
+        onView(withId(R.id.text_from_local_java_class)).check(matches(withText("bar")));
         // On dependency class
-        onView(withId(R.id.text_from_aar_dependency)).check(matches(withText("Instrumented message in lib")));
+        onView(withId(R.id.text_from_aar_dependency)).check(matches(withText("bar")));
         // From aar
-        onView(withId(R.id.text_instrumented_from_aar)).check(matches(withText("Instrumented message in lib")));
+        onView(withId(R.id.text_instrumented_from_aar)).check(matches(withText("bar")));
     }
 }
