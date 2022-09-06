@@ -20,7 +20,6 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorFactory;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
-import net.bytebuddy.build.gradle.android.utils.DefaultEntryPoint;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -74,12 +73,12 @@ abstract public class BytebuddyService implements BuildService<BytebuddyService.
         allPlugins = new ArrayList<>();
         matchingPlugins = Collections.synchronizedMap(new HashMap<>());
         matchingTypeDescription = Collections.synchronizedMap(new HashMap<>());
-        EntryPoint entryPoint = new DefaultEntryPoint();
+        EntryPoint entryPoint = new EntryPoint.Unvalidated(EntryPoint.Default.REBASE);
         Plugin.Engine.PoolStrategy poolStrategy = Plugin.Engine.PoolStrategy.Default.FAST;
         ClassFileVersion version = ClassFileVersion.ofJavaVersionString(getParameters().getJavaTargetCompatibilityVersion().get().toString());
         byteBuddy = entryPoint.byteBuddy(version);
         typeStrategy = new Plugin.Engine.TypeStrategy.ForEntryPoint(entryPoint, MethodNameTransformer.Suffixing.withRandomSuffix());
-        classVisitorFactory = ClassVisitorFactory.of(ClassVisitor.class);
+        classVisitorFactory = ClassVisitorFactory.of(ClassVisitor.class, byteBuddy);
         try {
             Set<File> classpath = runtimeClasspath.plus(androidBootClasspath).plus(byteBuddyClasspath).plus(localClasses).getFiles();
             classFileLocator = getClassFileLocator(classpath);

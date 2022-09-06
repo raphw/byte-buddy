@@ -1,5 +1,8 @@
 # Byte Buddy Gradle Plugin
 
+> This info is focused on plain Java Gradle projects, if you need to use Byte Buddy on Android projects instead, you
+> should take a look at the [Android's specific README](android-plugin/README.md) as well.
+
 The **Byte Buddy Gradle Plugin** enables you to apply bytecode enhancements during the build process. If the *java* plugin 
 is registered, the plugin registers an intermediate task for every source set for which at least one transformation is defined.
 For the *main* source set, the task is named *byteBuddy*. For each other source set, the source set name is prefixed as in *[source set]ByteBuddy*. If the *java* plugin is not used in a Gradle build or subproject, the Byte Buddy plugin remains passive.

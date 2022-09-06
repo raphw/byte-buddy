@@ -15,7 +15,6 @@
  */
 package net.bytebuddy.build.gradle;
 
-import net.bytebuddy.build.gradle.android.ByteBuddyAndroidPlugin;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
@@ -62,9 +61,15 @@ public class ByteBuddyPlugin implements Plugin<Project> {
         Object androidExtension = project.getExtensions().findByName("android");
         if (androidExtension != null) {
             project.getLogger().debug("Applying Byte Buddy Android plugin");
-            project.getPlugins().apply(ByteBuddyAndroidPlugin.class);
+            try {
+                @SuppressWarnings("unchecked")
+                Class<? extends Plugin<Project>> plugin = (Class<? extends Plugin<Project>>) Class.forName("net.bytebuddy.build.gradle.android.ByteBuddyAndroidPlugin");
+                project.getPlugins().apply(plugin);
+            } catch (ClassNotFoundException exception) {
+                project.getLogger().error("Failed to load Byte Buddy Android plugin", exception);
+            }
         } else {
-            project.getLogger().debug("Applying Byte Buddy Gradle plugin (legacy mode: {})", DISPATCHER instanceof Dispatcher.ForLegacyGradle);
+            project.getLogger().debug("Applying Byte Buddy plugin (legacy mode: {})", DISPATCHER instanceof Dispatcher.ForLegacyGradle);
             project.getPlugins().withType(JavaPlugin.class, new JavaPluginConfigurationAction(project));
         }
     }

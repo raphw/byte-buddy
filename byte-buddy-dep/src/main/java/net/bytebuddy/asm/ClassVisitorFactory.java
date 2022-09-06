@@ -227,8 +227,8 @@ public abstract class ClassVisitorFactory<T> {
                     .defineMethod(LabelTranslator.NAME, targetLabel, Visibility.PRIVATE)
                     .withParameters(sourceLabel)
                     .intercept(new Implementation.Simple(new LabelTranslator(targetLabel)))
-                    .defineMethod(LabelArrayTranslator.NAME, Class.forName("[L" + targetLabel.getName() + ";", false, targetLabel.getClassLoader()), Visibility.PRIVATE)
-                    .withParameters(Class.forName("[L" + sourceLabel.getName() + ";", false, targetLabel.getClassLoader()))
+                    .defineMethod(LabelArrayTranslator.NAME, TypeDescription.ArrayProjection.of(TypeDescription.ForLoadedType.ForLoadedType.of(targetLabel)), Visibility.PRIVATE)
+                    .withParameters(TypeDescription.ArrayProjection.of(TypeDescription.ForLoadedType.ForLoadedType.of(sourceLabel)))
                     .intercept(new Implementation.Simple(new LabelArrayTranslator(sourceLabel, targetLabel)))
                     .defineMethod(FrameTranslator.NAME, Object[].class, Visibility.PRIVATE)
                     .withParameters(Object[].class)
@@ -1354,8 +1354,8 @@ public abstract class ClassVisitorFactory<T> {
                             } else if (parameter[index] == Attribute.class) {
                                 match[index] = utilities.get(Attribute.class);
                                 if (sourceAttribute != null && targetAttribute != null) {
-                                    left.add(toConvertedParameter(sourceAttribute.getTypeDescription(), utilities.get(Attribute.class), AttributeTranslator.NAME, offset, false));
-                                    right.add(toConvertedParameter(targetAttribute.getTypeDescription(), Attribute.class, AttributeTranslator.NAME, offset, false));
+                                    left.add(toConvertedParameter(targetAttribute.getTypeDescription(), utilities.get(Attribute.class), AttributeTranslator.NAME, offset, false));
+                                    right.add(toConvertedParameter(sourceAttribute.getTypeDescription(), Attribute.class, AttributeTranslator.NAME, offset, false));
                                 } else {
                                     unsupported = true;
                                 }
@@ -1413,7 +1413,7 @@ public abstract class ClassVisitorFactory<T> {
                     dynamicTypes.add(right);
                 }
                 ClassLoader classLoader = new MultipleParentClassLoader.Builder(false)
-                        .append(ClassVisitor.class, classVisitor)
+                        .appendMostSpecific(ClassVisitor.class, classVisitor)
                         .build();
                 @SuppressWarnings("unchecked")
                 ClassVisitorFactory<S> factory = byteBuddy.subclass(ClassVisitorFactory.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)

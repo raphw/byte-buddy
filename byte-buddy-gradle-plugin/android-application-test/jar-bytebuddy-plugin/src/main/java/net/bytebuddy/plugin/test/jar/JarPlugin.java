@@ -13,31 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.android.utils;
+package net.bytebuddy.plugin.test.jar;
 
-import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.ClassFileVersion;
-import net.bytebuddy.build.EntryPoint;
+import net.bytebuddy.asm.Advice;
+import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.scaffold.TypeValidation;
-import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
+import net.bytebuddy.matcher.ElementMatchers;
 
-public class DefaultEntryPoint implements EntryPoint {
+import java.io.IOException;
+
+public class JarPlugin implements Plugin {
 
     @Override
-    public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
-        return new ByteBuddy(classFileVersion).with(TypeValidation.DISABLED);
+    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+        return builder.visit(
+                Advice.to(JarAdvice.class).on(ElementMatchers.named("someMethod"))
+        );
     }
 
     @Override
-    public DynamicType.Builder<?> transform(
-            TypeDescription typeDescription,
-            ByteBuddy byteBuddy,
-            ClassFileLocator classFileLocator,
-            MethodNameTransformer methodNameTransformer
-    ) {
-        return byteBuddy.decorate(typeDescription, classFileLocator);
+    public void close() throws IOException {
+        //NoOp
+    }
+
+    @Override
+    public boolean matches(TypeDescription typeDefinitions) {
+        return typeDefinitions.getSimpleName().contains("Some");
     }
 }
