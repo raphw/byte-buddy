@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.android.dependencies;
+package net.bytebuddy.build.gradle.android;
 
 import com.android.build.api.attributes.BuildTypeAttr;
 import org.gradle.api.Project;
@@ -32,7 +32,7 @@ import java.util.Objects;
  * Creates the "bytebuddy" dependency configuration needed to declare libraries with Byte Buddy plugins that are
  * going to be used at compile time.
  */
-public class BytebuddyDependenciesHandler {
+public class ByteBuddyDependenciesHandler {
     private final Project project;
     private final Map<String, Configuration> classpaths = new HashMap<>();
     private Configuration bucket;
@@ -40,7 +40,7 @@ public class BytebuddyDependenciesHandler {
     private static final Attribute<String> ARTIFACT_TYPE_ATTR = Attribute.of("artifactType", String.class);
     private static final String BYTEBUDDY_JAR_TYPE = "bytebuddy-jar";
 
-    public BytebuddyDependenciesHandler(Project project) {
+    public ByteBuddyDependenciesHandler(Project project) {
         this.project = project;
     }
 
@@ -90,7 +90,7 @@ public class BytebuddyDependenciesHandler {
     }
 
     private void registerAarToJarTransformation() {
-        project.getDependencies().registerTransform(AarGradleTransform.class, it -> {
+        project.getDependencies().registerTransform(AarGradleTransformAction.class, it -> {
             it.getFrom().attribute(ARTIFACT_TYPE_ATTR, "aar");
             it.getTo().attribute(ARTIFACT_TYPE_ATTR, BYTEBUDDY_JAR_TYPE);
         });

@@ -24,10 +24,6 @@ import com.android.build.api.variant.Variant;
 import com.android.build.gradle.BaseExtension;
 import com.android.build.gradle.internal.publishing.AndroidArtifacts;
 import kotlin.Unit;
-import net.bytebuddy.build.gradle.android.asm.ByteBuddyAsmClassVisitorFactory;
-import net.bytebuddy.build.gradle.android.dependencies.BytebuddyDependenciesHandler;
-import net.bytebuddy.build.gradle.android.service.BytebuddyService;
-import net.bytebuddy.build.gradle.android.tasks.LocalClassesSync;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
@@ -40,40 +36,42 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     private BaseExtension androidExtension;
     private Project project;
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public void apply(Project project) {
         this.project = project;
         androidExtension = project.getExtensions().getByType(BaseExtension.class);
         androidComponentsExtension = project.getExtensions().findByType(AndroidComponentsExtension.class);
         verifyValidAndroidPlugin();
-        BytebuddyDependenciesHandler dependenciesHandler = new BytebuddyDependenciesHandler(project);
+        ByteBuddyDependenciesHandler dependenciesHandler = new ByteBuddyDependenciesHandler(project);
         dependenciesHandler.init();
         registerBytebuddyAsmFactory(dependenciesHandler);
     }
 
-    private void registerBytebuddyAsmFactory(BytebuddyDependenciesHandler dependenciesHandler) {
+    private void registerBytebuddyAsmFactory(ByteBuddyDependenciesHandler dependenciesHandler) {
         androidComponentsExtension.onVariants(androidComponentsExtension.selector().all(), variant -> {
-            TaskProvider<LocalClassesSync> localClasses = registerLocalClassesSyncTask(variant);
-            Provider<BytebuddyService> serviceProvider = registerService(variant);
+            TaskProvider<ByteBuddyCopyOutputTask> localClasses = registerLocalClassesSyncTask(variant);
+            Provider<ByteBuddyService> serviceProvider = registerService(variant);
             variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, params -> {
                 params.getByteBuddyClasspath().from(dependenciesHandler.getConfigurationForBuildType(variant.getBuildType()));
                 params.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
                 params.getRuntimeClasspath().from(getRuntimeClasspath(variant));
-                params.getLocalClassesDirs().from(localClasses);
-                params.getBytebuddyService().set(serviceProvider);
+                params.getLocalClassesDirectories().from(localClasses);
+                params.getByteBuddyService().set(serviceProvider);
                 return Unit.INSTANCE;
             });
         });
     }
 
-    private Provider<BytebuddyService> registerService(Variant variant) {
-        return project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "BytebuddyService", BytebuddyService.class, spec -> {
+    private Provider<ByteBuddyService> registerService(Variant variant) {
+        return project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "BytebuddyService", ByteBuddyService.class, spec -> {
             spec.getParameters().getJavaTargetCompatibilityVersion().set(androidExtension.getCompileOptions().getTargetCompatibility());
         });
     }
 
-    private TaskProvider<LocalClassesSync> registerLocalClassesSyncTask(Variant variant) {
-        return project.getTasks().register(variant.getName() + "ByteBuddyLocalClasses", LocalClassesSync.class, classesSync -> {
+    private TaskProvider<ByteBuddyCopyOutputTask> registerLocalClassesSyncTask(Variant variant) {
+        return project.getTasks().register(variant.getName() + "ByteBuddyLocalClasses", ByteBuddyCopyOutputTask.class, classesSync -> {
             classesSync.getLocalClasspath().from(variant.getArtifacts().getAll(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE));
             classesSync.getOutputDir().set(project.getLayout().getBuildDirectory().dir("intermediates/incremental/" + classesSync.getName()));
         });

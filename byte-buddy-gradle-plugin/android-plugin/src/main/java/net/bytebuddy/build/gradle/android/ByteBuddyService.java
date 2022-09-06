@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.android.service;
+package net.bytebuddy.build.gradle.android;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-abstract public class BytebuddyService implements BuildService<BytebuddyService.Params>, AutoCloseable {
+abstract public class ByteBuddyService implements BuildService<ByteBuddyService.Params>, AutoCloseable {
 
     private boolean initialized = false;
     private List<Plugin> allPlugins;

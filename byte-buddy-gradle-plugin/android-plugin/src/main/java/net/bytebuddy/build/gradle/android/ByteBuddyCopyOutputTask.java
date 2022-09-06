@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.android.tasks;
+package net.bytebuddy.build.gradle.android;
 
+import net.bytebuddy.utility.FileSystem;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
@@ -28,50 +29,59 @@ import org.gradle.work.InputChanges;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 
 /**
- * Collects locally compiled classes (from both Java and Kotlin compilers) and places them in a single output
- * that will be later used as input for ByteBuddy.
+ * Collects locally compiled classes (from both the Java and Kotlin compilers) and places them in a
+ * single output folder that will be later used as input for Byte Buddy.
  */
-public abstract class LocalClassesSync extends DefaultTask {
+public abstract class ByteBuddyCopyOutputTask extends DefaultTask {
 
+    /**
+     * Returns the local class path.
+     *
+     * @return The local class path.
+     */
     @Incremental
     @Classpath
     public abstract ConfigurableFileCollection getLocalClasspath();
 
+    /**
+     * Returns the output directory.
+     *
+     * @return The output directory.
+     */
     @OutputDirectory
     public abstract DirectoryProperty getOutputDir();
 
+    /**
+     * The action to execute.
+     *
+     * @param inputChanges The incremental changes of the task.
+     */
     @TaskAction
     public void execute(InputChanges inputChanges) {
         for (FileChange fileChange : inputChanges.getFileChanges(getLocalClasspath())) {
             if (fileChange.getFileType() == FileType.DIRECTORY) {
                 return;
             }
-
             File target = getOutputDir().file(fileChange.getNormalizedPath()).get().getAsFile();
             switch (fileChange.getChangeType()) {
                 case REMOVED:
-                    target.delete();
+                    if (target.delete()) {
+                        getLogger().debug("Deleted file {}", target);
+                    }
                     break;
+                case ADDED:
                 case MODIFIED:
-                    target.delete();
-                default:
-                    copyfile(fileChange.getFile(), target);
+                    try {
+                        FileSystem.getInstance().copy(fileChange.getFile(), target);
+                    } catch (IOException e) {
+                        throw new IllegalStateException("Failed to copy " + fileChange.getFile() + " to " + target);
+                    }
                     break;
+                default:
+                    throw new IllegalStateException();
             }
-        }
-    }
-
-    private void copyfile(File from, File into) {
-        try {
-            if (!into.getParentFile().exists()) {
-                into.getParentFile().mkdirs();
-            }
-            Files.copy(from.toPath(), into.toPath());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 }
