@@ -16,38 +16,95 @@
 package net.bytebuddy.build.gradle.android;
 
 import com.android.build.api.attributes.BuildTypeAttr;
+import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.attributes.Attribute;
-import org.gradle.api.attributes.AttributeCompatibilityRule;
-import org.gradle.api.attributes.Category;
-import org.gradle.api.attributes.CompatibilityCheckDetails;
-import org.gradle.api.attributes.Usage;
+import org.gradle.api.artifacts.transform.TransformParameters;
+import org.gradle.api.artifacts.transform.TransformSpec;
+import org.gradle.api.attributes.*;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * Creates the "bytebuddy" dependency configuration needed to declare libraries with Byte Buddy plugins that are
- * going to be used at compile time.
+ * Creates Byte Buddy's dependency configuration which is needed to declare libraries
+ * with Byte Buddy plugins that are going to be used at compile time.
  */
 public class ByteBuddyDependenciesHandler {
-    private final Project project;
-    private final Map<String, Configuration> classpaths = new HashMap<>();
-    private Configuration bucket;
+
     private static final String BYTEBUDDY_CONFIGURATION_NAME_FORMAT = "%sBytebuddy";
     private static final Attribute<String> ARTIFACT_TYPE_ATTR = Attribute.of("artifactType", String.class);
     private static final String BYTEBUDDY_JAR_TYPE = "bytebuddy-jar";
 
-    public ByteBuddyDependenciesHandler(Project project) {
+    /**
+     * The targeted Gradle project.
+     */
+    private final Project project;
+
+    /**
+     * The class paths being used.
+     */
+    private final Map<String, Configuration> classpaths = new HashMap<>();
+
+    /**
+     * The configuration to use.
+     */
+    private final Configuration configuration;
+
+    /**
+     * Creates a new dependencies handler for Byte Buddy.
+     *
+     * @param project       The targeted Gradle project.
+     * @param configuration The configuration to use.
+     */
+    protected ByteBuddyDependenciesHandler(Project project, Configuration configuration) {
         this.project = project;
+        this.configuration = configuration;
     }
 
-    public void init() {
-        initBucketConfig();
-        registerAarToJarTransformation();
-        registerBytebuddyJarRule();
+    /**
+     * Resolves a dependencies handler for Byte Buddy.
+     *
+     * @param project The targeted Gradle project.
+     * @return An appropriate dependencies handler.
+     */
+    protected static ByteBuddyDependenciesHandler of(Project project) {
+        project.getDependencies().registerTransform(AarGradleTransformAction.class, new TransformActionConfiguration());
+        project.getDependencies().getAttributesSchema().attribute(ARTIFACT_TYPE_ATTR, new AttributeMatchingStrategyConfiguration());
+        return new ByteBuddyDependenciesHandler(project, project.getConfigurations().create("byteBuddy", new BucketConfiguration()));
+    }
+
+    protected static class BucketConfiguration implements Action<Configuration> {
+
+        /**
+         * {@inheritDoc}
+         */
+        public void execute(Configuration configuration) {
+            configuration.setCanBeConsumed(false);
+            configuration.setCanBeResolved(false);
+        }
+    }
+
+    protected static class TransformActionConfiguration implements Action<TransformSpec<TransformParameters.None>> {
+
+        /**
+         * {@inheritDoc}
+         */
+        public void execute(TransformSpec<TransformParameters.None> spec) {
+            spec.getFrom().attribute(ARTIFACT_TYPE_ATTR, "aar");
+            spec.getTo().attribute(ARTIFACT_TYPE_ATTR, BYTEBUDDY_JAR_TYPE);
+        }
+    }
+
+    protected static class AttributeMatchingStrategyConfiguration implements Action<AttributeMatchingStrategy<String>> {
+
+        /**
+         * {@inheritDoc}
+         */
+        public void execute(AttributeMatchingStrategy<String> stringAttributeMatchingStrategy) {
+            stringAttributeMatchingStrategy.getCompatibilityRules().add(BytebuddyJarsRule.class);
+        }
     }
 
     public Configuration getConfigurationForBuildType(String buildType) {
@@ -65,7 +122,7 @@ public class ByteBuddyDependenciesHandler {
         return project.getConfigurations().create(getNameFor(buildType), configuration -> {
             configuration.setCanBeResolved(true);
             configuration.setCanBeConsumed(false);
-            configuration.extendsFrom(bucket);
+            configuration.extendsFrom(this.configuration);
             configuration.attributes(attrs -> {
                 attrs.attribute(ARTIFACT_TYPE_ATTR, BYTEBUDDY_JAR_TYPE);
                 attrs.attribute(
@@ -80,25 +137,6 @@ public class ByteBuddyDependenciesHandler {
 
     private String getNameFor(String buildType) {
         return String.format(BYTEBUDDY_CONFIGURATION_NAME_FORMAT, buildType);
-    }
-
-    private void initBucketConfig() {
-        bucket = project.getConfigurations().create("bytebuddy", configuration -> {
-            configuration.setCanBeConsumed(false);
-            configuration.setCanBeResolved(false);
-        });
-    }
-
-    private void registerAarToJarTransformation() {
-        project.getDependencies().registerTransform(AarGradleTransformAction.class, it -> {
-            it.getFrom().attribute(ARTIFACT_TYPE_ATTR, "aar");
-            it.getTo().attribute(ARTIFACT_TYPE_ATTR, BYTEBUDDY_JAR_TYPE);
-        });
-    }
-
-    private void registerBytebuddyJarRule() {
-        project.getDependencies().getAttributesSchema().attribute(ARTIFACT_TYPE_ATTR, stringAttributeMatchingStrategy ->
-                stringAttributeMatchingStrategy.getCompatibilityRules().add(BytebuddyJarsRule.class));
     }
 
     public abstract static class BytebuddyJarsRule implements AttributeCompatibilityRule<String> {

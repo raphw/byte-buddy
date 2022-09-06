@@ -24,6 +24,7 @@ import com.android.build.api.variant.Variant;
 import com.android.build.gradle.BaseExtension;
 import com.android.build.gradle.internal.publishing.AndroidArtifacts;
 import kotlin.Unit;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
@@ -32,6 +33,7 @@ import org.gradle.api.tasks.TaskProvider;
 
 public class ByteBuddyAndroidPlugin implements Plugin<Project> {
 
+    @MaybeNull
     private AndroidComponentsExtension<?, ?, ?> androidComponentsExtension;
     private BaseExtension androidExtension;
     private Project project;
@@ -44,8 +46,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         androidExtension = project.getExtensions().getByType(BaseExtension.class);
         androidComponentsExtension = project.getExtensions().findByType(AndroidComponentsExtension.class);
         verifyValidAndroidPlugin();
-        ByteBuddyDependenciesHandler dependenciesHandler = new ByteBuddyDependenciesHandler(project);
-        dependenciesHandler.init();
+        ByteBuddyDependenciesHandler dependenciesHandler = ByteBuddyDependenciesHandler.of(project);
         registerBytebuddyAsmFactory(dependenciesHandler);
     }
 
