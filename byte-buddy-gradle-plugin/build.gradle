@@ -30,7 +30,9 @@ configurations {
 
 dependencies {
     implementation gradleApi()
-    fatJar project(':android-plugin')
+    if (findProject(':android-plugin') != null) {
+        fatJar project(':android-plugin')
+    }
     compileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
     compileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
     testImplementation gradleTestKit()
