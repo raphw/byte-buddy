@@ -11,7 +11,7 @@ run at compile time of the host Android project.
 
 In order to add your compiler plugin to an Android project, you'd first need to apply the Byte Buddy Gradle plugin to
 said Android project, the same way as the plain Java Byte Buddy Gradle plugin is added, shown below. Then you need to
-add your compiler plugin as a dependency of the Android project, but said dependency needs to be of type `bytebuddy`.
+add your compiler plugin as a dependency of the Android project, but said dependency needs to be of type `byteBuddy`.
 This custom type of dependency is used at compile time, but won't be present at runtime. So, if your compiler plugin
 needs to add classes that will be referenced at runtime, then those classes will have to be added as a separate, regular
 dependency, as shown below.
@@ -25,7 +25,7 @@ plugins {
 }
 
 dependencies {
-    bytebuddy "my.plugin:compiler:0.0.0"
+    byteBuddy "my.plugin:compiler:0.0.0"
     implementation "my.plugin:library:0.0.0"
 }
 ```
