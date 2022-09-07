@@ -79,7 +79,7 @@ public abstract class ByteBuddyCopyOutputTask extends DefaultTask {
                 case MODIFIED:
                     try {
                         if (!target.getParentFile().exists()) {
-                            target.mkdirs();
+                            target.getParentFile().mkdirs();
                         }
                         FileSystem.getInstance().copy(fileChange.getFile(), target);
                     } catch (IOException e) {
