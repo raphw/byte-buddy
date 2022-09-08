@@ -1,23 +1,15 @@
-# Byte buddy Android Gradle plugin
+# Byte Buddy Gradle plugin for Android
 
-This plugin shares some similarities with the plain Java Byte Buddy Gradle plugin, so it's worth having a look at [its
-readme](../README.md) first.
+This plugin shares some similarities with the regular Byte Buddy Gradle plugin which is described in [its own readme](../README.md).
 
-The Android version of Byte Buddy works similarly to
-how [Android's annotation processors](https://developer.android.com/studio/build/dependencies#annotation_processor) (or
-`kapt` for Kotlin) work in the sense that you'd need to define your "compiler" project, which will be a separate project
-containing the instrumentation code, where the Byte Buddy API is used to create your own Byte Buddy Plugin that will
-run at compile time of the host Android project.
+The Android version of Byte Buddy works similarly to [Android's annotation processors](https://developer.android.com/studio/build/dependencies#annotation_processor) (or `kapt` for Kotlin), as far as you need to define a *compiler project*, which will be a separate project containing the instrumentation code. Within this project, you use Byte Buddy's API to create a custom `Plugin` that runs during compilation of the actual Android project.
 
-In order to add your compiler plugin to an Android project, you'd first need to apply the Byte Buddy Gradle plugin to
-said Android project, the same way as the plain Java Byte Buddy Gradle plugin is added, shown below. Then you need to
-add your compiler plugin as a dependency of the Android project, but said dependency needs to be of type `byteBuddy`.
-This custom type of dependency is used at compile time, but won't be present at runtime. So, if your compiler plugin
-needs to add classes that will be referenced at runtime, then those classes will have to be added as a separate, regular
-dependency, as shown below.
+To add a compiler plugin to an Android project, you first apply the Byte Buddy Gradle plugin to the Android project, the same way as the plain Java Byte Buddy Gradle plugin is added. Then you
+add your compiler plugin as a dependency of the Android project as a dependency of type `byteBuddy`. This custom type of dependency is used at compile time, but won't be present at runtime. So, if your compiler plugin needs to add classes that will be referenced at runtime, then those classes will have to be added as a separate, regular dependency.
+
+For example, the following build file applies the `my.plugin:compiler` plugin with the shared dependency `my.plugin:library`:
 
 ###### build.gradle
-
 ```groovy
 plugins {
     id 'com.android.application'
@@ -25,28 +17,21 @@ plugins {
 }
 
 dependencies {
-    byteBuddy "my.plugin:compiler:0.0.0"
-    implementation "my.plugin:library:0.0.0"
+    byteBuddy "my.plugin:compiler:1.0.0"
+    implementation "my.plugin:library:1.0.0"
 }
 ```
 
-## Creating a Plugin project
+## Creating a plugin project
 
-A plugin project is a Gradle project that can be either a regular `java-library` or `com.android.library` type of
-project. The advantage of defining it as an Android Library project (`com.android.library`) is that you'd be able
-to reference other Android libraries from it, and also Android SDK classes as well.
+A plugin project is a Gradle project that can be either a regular `java-library` or `com.android.library` type. The advantage of defining it as an Android library project (`com.android.library`) is that you are able to reference other Android libraries from it, as well as Android SDK classes.
 
-For your compiler plugin to be able of getting recognized as a Byte Buddy compiler project, it must contain its
-Byte Buddy plugins class names listed in the *META-INF/net.bytebuddy/build.plugins* resource file (same way as for the
-plain Java Byte Buddy Gradle plugin).
+For your compiler plugin to be able of getting recognized as a Byte Buddy compiler project, it must contain its Byte Buddy plugins class names listed in the */META-INF/net.bytebuddy/build.plugins* resource file. Currently, this form of discovery is the only option for configuring plugins, but explicit configuration forms will be added in a future version.
 
-## Limitations
+## Special behaviour
 
-There are limitations to this tool in comparison to the plain Java Byte Buddy Gradle plugin, caused by the Android
-environment, those are:
+As the plugin support relies on Android's build APIs, the instrumentation of Android plugins differs in the following ways.
 
-- You cannot instrument classes that belong to the [Android SDK](https://developer.android.com/reference/packages).
-- You can instrument libraries only on Android application projects,
-  not [Android libraries](https://developer.android.com/studio/projects/android-library) projects.
-- You cannot use `ByteBuddy.intercept(MethodDelegation)` since it requires the creation of additional classes, and the
-  ASM API that this tools is based on, doesn't allow to create new classes.
+- You cannot instrument classes that belong to the [Android SDK](https://developer.android.com/reference/packages) or to the core JVM. However, you can instrument classes that are defined by libraries on Android application projects. However, you can instrument libraries only on Android application projects, not [Android libraries](https://developer.android.com/studio/projects/android-library) projects.
+- You cannot add additional classes during an instrumentation as those cannot be added to a project using Android's current APIs. As a consequence, it is currently only possible to apply decorating transformations.
+- As Byte Buddy does not control the lifecycle of the instrumentation, a `Plugin.WithPreprocessor` might be required to instrument a class before all classes of a project are preprocessed.

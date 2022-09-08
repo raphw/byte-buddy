@@ -24,6 +24,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.utility.nullability.MaybeNull;
+import net.bytebuddy.utility.nullability.UnknownNull;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.logging.Logger;
@@ -52,11 +53,13 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
     /**
      * The entry point to use.
      */
+    @UnknownNull
     private EntryPoint entryPoint;
 
     /**
      * The suffix to use for rebased methods or the empty string if a random suffix should be used.
      */
+    @UnknownNull
     private String suffix;
 
     /**
@@ -85,6 +88,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      * where each line contains the fully qualified class name. Discovered plugins are not provided with any
      * explicit constructor arguments.
      */
+    @UnknownNull
     private Discovery discovery;
 
     /**
