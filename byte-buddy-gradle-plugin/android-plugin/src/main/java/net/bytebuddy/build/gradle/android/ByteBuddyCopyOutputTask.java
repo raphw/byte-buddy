@@ -79,7 +79,7 @@ public abstract class ByteBuddyCopyOutputTask extends DefaultTask {
                 case MODIFIED:
                     try {
                         if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
-                            throw new IllegalStateException("Failed to create target directory: " + target.getParentFile())
+                            throw new IllegalStateException("Failed to create target directory: " + target.getParentFile());
                         }
                         FileSystem.getInstance().copy(fileChange.getFile(), target);
                     } catch (IOException e) {
