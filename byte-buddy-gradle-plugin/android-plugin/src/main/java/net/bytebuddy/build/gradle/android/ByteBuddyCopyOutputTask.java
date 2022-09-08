@@ -78,9 +78,12 @@ public abstract class ByteBuddyCopyOutputTask extends DefaultTask {
                 case ADDED:
                 case MODIFIED:
                     try {
+                        if (!target.getParentFile().exists()) {
+                            target.getParentFile().mkdirs();
+                        }
                         FileSystem.getInstance().copy(fileChange.getFile(), target);
                     } catch (IOException e) {
-                        throw new IllegalStateException("Failed to copy " + fileChange.getFile() + " to " + target);
+                        throw new IllegalStateException("Failed to copy " + fileChange.getFile() + " to " + target, e);
                     }
                     break;
                 default:

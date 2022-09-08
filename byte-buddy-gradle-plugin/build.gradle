@@ -26,14 +26,11 @@ configurations {
         setTransitive(false)
         extendsFrom(fatJar)
     }
-    compileClasspath.extendsFrom(fatJarClasspath)
 }
 
 dependencies {
     implementation gradleApi()
-    if (targetCompatibility >= JavaVersion.VERSION_1_8
-            && sourceCompatibility >= JavaVersion.VERSION_1_8
-            && findProject(':android-plugin') != null) {
+    if (findProject(':android-plugin') != null) {
         fatJar project(':android-plugin')
     }
     compileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
