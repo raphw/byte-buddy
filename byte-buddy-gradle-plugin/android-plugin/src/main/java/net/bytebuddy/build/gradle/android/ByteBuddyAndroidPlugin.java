@@ -87,6 +87,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          */
         private final Configuration configuration;
 
+        /**
+         * A cache of configurations by built type name.
+         */
         private final ConcurrentMap<String, Configuration> configurations;
 
         /**
@@ -135,6 +138,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          */
         private final Configuration configuration;
 
+        /**
+         * A cache of configurations by built type name.
+         */
         private final ConcurrentMap<String, Configuration> configurations;
 
         /**
@@ -157,6 +163,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          *
          * @param project                         The current Gradle project.
          * @param configuration                   The general Byte Buddy configuration.
+         * @param configurations                  A cache of configurations by built type name.
          * @param byteBuddyCopyOutputTaskProvider A task provider for a {@link ByteBuddyCopyOutputTask}.
          * @param byteBuddyAndroidServiceProvider A provider for a {@link ByteBuddyAndroidService}.
          * @param variant                         The current variant.
