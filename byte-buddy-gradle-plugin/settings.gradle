@@ -11,10 +11,10 @@ if (!raw.startsWith("1.") && raw.contains(".")) {
 if (current > JavaVersion.VERSION_1_7 && current != JavaVersion.VERSION_1_9) {
     include "android-plugin"
     if (Boolean.getBoolean("net.bytebuddy.build.gradle.android.test")) {
-        include "android-application-test"
-        include "android-application-test:app"
-        include "android-application-test:aar-bytebuddy-target"
-        include "android-application-test:aar-bytebuddy-plugin"
-        include "android-application-test:jar-bytebuddy-plugin"
+        include "android-plugin-test"
+        include "android-plugin-test:app"
+        include "android-plugin-test:aar-bytebuddy-target"
+        include "android-plugin-test:aar-bytebuddy-plugin"
+        include "android-plugin-test:jar-bytebuddy-plugin"
     }
 }
