@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 22. August 2022: version 1.12.16
+
+- Fix Gradle release script to publish plugin.
+
+### 22. August 2022: version 1.12.15
+
+- Introduce `ClassVisitorFactory` which allows to translate to and from class wrappers in a different ASM namespace.
+- Allow builders to change to `ClassVisitors`.
+- Add support for Android instrumentation from Gradle plugin.
+
 ### 22. August 2022: version 1.12.14
 
 - Add `wrap` method to `DynamicType.Builder` that allows for the representation of a dynamic type via a `ClassVisitor`.
