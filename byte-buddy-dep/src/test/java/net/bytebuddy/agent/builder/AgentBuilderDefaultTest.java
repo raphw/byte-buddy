@@ -1179,21 +1179,6 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testRetransformationPatchNotRegistered() throws Exception {
-        new AgentBuilder.Default(byteBuddy)
-                .with(initializationStrategy)
-                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                .with(poolStrategy)
-                .with(typeStrategy)
-                .with(installationListener)
-                .with(listener)
-                .disableNativeMethodPrefix()
-                .ignore(none())
-                .type(typeMatcher).transform(transformer)
-                .patchOn(instrumentation, mock(ResettableClassFileTransformer.class));
-    }
-
     @Test
     public void testSuccessfulWithRedefinitionMatched() throws Exception {
         when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
@@ -2006,7 +1991,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testRedefinitionPatchPreviousNotRegistered() throws Exception {
         new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)

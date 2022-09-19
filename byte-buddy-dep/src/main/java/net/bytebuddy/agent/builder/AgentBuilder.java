@@ -705,7 +705,7 @@ public interface AgentBuilder {
      * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
      * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
      * the installation also causes all loaded types to be retransformed which have changed compared to the previous
-     * class file transformer that is provided as an argument.
+     * class file transformer that is provided as an argument. Without specification, {@link PatchMode#OVERLAP} is used.
      * </p>
      * <p>
      * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
@@ -721,9 +721,28 @@ public interface AgentBuilder {
     /**
      * <p>
      * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
+     * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
+     * the installation also causes all loaded types to be retransformed which have changed compared to the previous
+     * class file transformer that is provided as an argument.
+     * </p>
+     * <p>
+     * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
+     * via the {@link ResettableClassFileTransformer}'s {@code reset} methods.
+     * </p>
+     *
+     * @param instrumentation      The instrumentation on which this agent builder's configuration is to be installed.
+     * @param classFileTransformer The class file transformer that is being patched.
+     * @param patchMode            The patch mode to apply.
+     * @return The installed class file transformer.
+     */
+    ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, PatchMode patchMode);
+
+    /**
+     * <p>
+     * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
      * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method. If retransformation
      * is enabled, the installation also causes all loaded types to be retransformed which have changed compared to the previous
-     * class file transformer that is provided as an argument.
+     * class file transformer that is provided as an argument. Without specification, {@link PatchMode#OVERLAP} is used.
      * </p>
      * <p>
      * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
@@ -735,6 +754,25 @@ public interface AgentBuilder {
      * @see AgentBuilder#patchOn(Instrumentation, ResettableClassFileTransformer)
      */
     ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer);
+
+    /**
+     * <p>
+     * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
+     * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method. If retransformation
+     * is enabled, the installation also causes all loaded types to be retransformed which have changed compared to the previous
+     * class file transformer that is provided as an argument.
+     * </p>
+     * <p>
+     * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
+     * via the {@link ResettableClassFileTransformer}'s {@code reset} methods.
+     * </p>
+     *
+     * @param classFileTransformer The class file transformer that is being patched.
+     * @param patchMode            The patch mode to apply.
+     * @return The installed class file transformer.
+     * @see AgentBuilder#patchOn(Instrumentation, ResettableClassFileTransformer, PatchMode)
+     */
+    ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer, PatchMode patchMode);
 
     /**
      * An abstraction for extending a matcher.
@@ -9720,6 +9758,164 @@ public interface AgentBuilder {
     }
 
     /**
+     * Determines how patching a {@link ResettableClassFileTransformer} resolves the transformer exchange.
+     */
+    enum PatchMode {
+
+        /**
+         * Allows for a short period where neither class file transformer is registered. This might allow
+         * for classes to execute without instrumentation if they are loaded in a short moment where neither
+         * transformer is registered. In some rare cases, this might also cause that these classes are not
+         * instrumented as a result of the patching.
+         */
+        GAP {
+            @Override
+            protected Handler toHandler(ResettableClassFileTransformer classFileTransformer) {
+                return new Handler.ForPatchWithGap(classFileTransformer);
+            }
+        },
+
+        /**
+         * Allows for a short period where both class file transformer are registered. This might allow
+         * for classes to apply both instrumentations. In some rare cases, this might also cause that both
+         * instrumentations are permanently applied.
+         */
+        OVERLAP {
+            @Override
+            protected Handler toHandler(ResettableClassFileTransformer classFileTransformer) {
+                return new Handler.ForPatchWithOverlap(classFileTransformer);
+            }
+        };
+
+        /**
+         * Resolves this strategy to a handler.
+         *
+         * @param classFileTransformer The class file transformer to deregister.
+         * @return The handler to apply.
+         */
+        protected abstract Handler toHandler(ResettableClassFileTransformer classFileTransformer);
+
+        /**
+         * A handler to allow for callbacks prior and after registering a {@link ClassFileTransformer}.
+         */
+        protected interface Handler {
+
+            /**
+             * Invoked prior to registering a class file transformer.
+             *
+             * @param instrumentation The instrumentation to use.
+             */
+            void onBeforeRegistration(Instrumentation instrumentation);
+
+            /**
+             * Invoked right after registering a class file transformer.
+             *
+             * @param instrumentation The instrumentation to use.
+             */
+            void onAfterRegistration(Instrumentation instrumentation);
+
+            /**
+             * A non-operational handler.
+             */
+            enum NoOp implements Handler {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onBeforeRegistration(Instrumentation instrumentation) {
+                    /* do nothing */
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onAfterRegistration(Instrumentation instrumentation) {
+                    /* do nothing */
+                }
+            }
+
+            /**
+             * A handler for patching by {@link PatchMode#GAP}.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForPatchWithGap implements Handler {
+
+                /**
+                 * The class file transformer to deregister.
+                 */
+                private final ResettableClassFileTransformer classFileTransformer;
+
+                /**
+                 * Creates a new handler.
+                 *
+                 * @param classFileTransformer The class file transformer to deregister.
+                 */
+                protected ForPatchWithGap(ResettableClassFileTransformer classFileTransformer) {
+                    this.classFileTransformer = classFileTransformer;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onBeforeRegistration(Instrumentation instrumentation) {
+                    if (!classFileTransformer.reset(instrumentation, RedefinitionStrategy.DISABLED)) {
+                        throw new IllegalArgumentException("Failed to deregister patched class file transformer: " + classFileTransformer);
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onAfterRegistration(Instrumentation instrumentation) {
+                    /* do nothing */
+                }
+            }
+
+            /**
+             * A handler for patching by {@link PatchMode#OVERLAP}.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForPatchWithOverlap implements Handler {
+
+                /**
+                 * The class file transformer to deregister.
+                 */
+                private final ResettableClassFileTransformer classFileTransformer;
+
+                /**
+                 * Creates a new handler.
+                 *
+                 * @param classFileTransformer The class file transformer to deregister.
+                 */
+                protected ForPatchWithOverlap(ResettableClassFileTransformer classFileTransformer) {
+                    this.classFileTransformer = classFileTransformer;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onBeforeRegistration(Instrumentation instrumentation) {
+                    /* do nothing */
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onAfterRegistration(Instrumentation instrumentation) {
+                    if (!classFileTransformer.reset(instrumentation, RedefinitionStrategy.DISABLED)) {
+                        throw new IllegalArgumentException("Failed to deregister patched class file transformer: " + classFileTransformer);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * <p>
      * The default implementation of an {@link net.bytebuddy.agent.builder.AgentBuilder}.
      * </p>
@@ -10845,14 +11041,7 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer installOn(Instrumentation instrumentation) {
-            if (!circularityLock.acquire()) {
-                throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
-            }
-            try {
-                return doInstall(instrumentation, new Transformation.SimpleMatcher(ignoreMatcher, transformations));
-            } finally {
-                circularityLock.release();
-            }
+            return doInstall(instrumentation, new Transformation.SimpleMatcher(ignoreMatcher, transformations), PatchMode.Handler.NoOp.INSTANCE);
         }
 
         /**
@@ -10866,24 +11055,28 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
-            if (!circularityLock.acquire()) {
-                throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
-            }
-            try {
-                if (!classFileTransformer.reset(instrumentation, RedefinitionStrategy.DISABLED)) {
-                    throw new IllegalArgumentException("Cannot patch unregistered class file transformer: " + classFileTransformer);
-                }
-                return doInstall(instrumentation, new Transformation.DifferentialMatcher(ignoreMatcher, transformations, classFileTransformer));
-            } finally {
-                circularityLock.release();
-            }
+            return patchOn(instrumentation, classFileTransformer, PatchMode.OVERLAP);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, PatchMode patchMode) {
+            return doInstall(instrumentation, new Transformation.DifferentialMatcher(ignoreMatcher, transformations, classFileTransformer), patchMode.toHandler(classFileTransformer));
         }
 
         /**
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer) {
-            return patchOn(resolveByteBuddyAgentInstrumentation(), classFileTransformer);
+            return patchOnByteBuddyAgent(classFileTransformer, PatchMode.OVERLAP);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer, PatchMode patchMode) {
+            return patchOn(resolveByteBuddyAgentInstrumentation(), classFileTransformer, patchMode);
         }
 
         /**
@@ -10891,59 +11084,69 @@ public interface AgentBuilder {
          *
          * @param instrumentation The instrumentation to install the matcher on.
          * @param matcher         The matcher to identify redefined types.
+         * @param handler         The handler to use for implementing a patch mode.
          * @return The created class file transformer.
          */
-        private ResettableClassFileTransformer doInstall(Instrumentation instrumentation, RawMatcher matcher) {
-            RedefinitionStrategy.ResubmissionStrategy.Installation installation = redefinitionResubmissionStrategy.apply(instrumentation,
-                    poolStrategy,
-                    locationStrategy,
-                    descriptionStrategy,
-                    fallbackStrategy,
-                    listener,
-                    installationListener,
-                    circularityLock,
-                    new Transformation.SimpleMatcher(ignoreMatcher, transformations),
-                    redefinitionStrategy,
-                    redefinitionBatchAllocator,
-                    redefinitionListener);
-            ResettableClassFileTransformer classFileTransformer = transformerDecorator.decorate(makeRaw(installation.getListener(),
-                    installation.getInstallationListener(),
-                    installation.getResubmissionEnforcer()));
-            installation.getInstallationListener().onBeforeInstall(instrumentation, classFileTransformer);
+        private ResettableClassFileTransformer doInstall(Instrumentation instrumentation, RawMatcher matcher, PatchMode.Handler handler) {
+            if (!circularityLock.acquire()) {
+                throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
+            }
             try {
-                warmupStrategy.apply(classFileTransformer,
-                        locationStrategy,
-                        redefinitionStrategy,
-                        circularityLock,
-                        installation.getInstallationListener());
-                if (redefinitionStrategy.isRetransforming()) {
-                    DISPATCHER.addTransformer(instrumentation, classFileTransformer, true);
-                } else {
-                    instrumentation.addTransformer(classFileTransformer);
-                }
-                nativeMethodStrategy.apply(instrumentation, classFileTransformer);
-                lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
-                redefinitionStrategy.apply(instrumentation,
+                RedefinitionStrategy.ResubmissionStrategy.Installation installation = redefinitionResubmissionStrategy.apply(instrumentation,
                         poolStrategy,
                         locationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
-                        redefinitionDiscoveryStrategy,
-                        lambdaInstrumentationStrategy,
-                        installation.getListener(),
-                        redefinitionListener,
-                        matcher,
+                        listener,
+                        installationListener,
+                        circularityLock,
+                        new Transformation.SimpleMatcher(ignoreMatcher, transformations),
+                        redefinitionStrategy,
                         redefinitionBatchAllocator,
-                        circularityLock);
-            } catch (Throwable throwable) {
-                throwable = installation.getInstallationListener().onError(instrumentation, classFileTransformer, throwable);
-                if (throwable != null) {
-                    instrumentation.removeTransformer(classFileTransformer);
-                    throw new IllegalStateException("Could not install class file transformer", throwable);
+                        redefinitionListener);
+                ResettableClassFileTransformer classFileTransformer = transformerDecorator.decorate(makeRaw(installation.getListener(),
+                        installation.getInstallationListener(),
+                        installation.getResubmissionEnforcer()));
+                installation.getInstallationListener().onBeforeInstall(instrumentation, classFileTransformer);
+                try {
+                    warmupStrategy.apply(classFileTransformer,
+                            locationStrategy,
+                            redefinitionStrategy,
+                            circularityLock,
+                            installation.getInstallationListener());
+                    handler.onBeforeRegistration(instrumentation);
+                    if (redefinitionStrategy.isRetransforming()) {
+                        DISPATCHER.addTransformer(instrumentation, classFileTransformer, true);
+                    } else {
+                        instrumentation.addTransformer(classFileTransformer);
+                    }
+                    handler.onAfterRegistration(instrumentation);
+                    nativeMethodStrategy.apply(instrumentation, classFileTransformer);
+                    lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
+                    redefinitionStrategy.apply(instrumentation,
+                            poolStrategy,
+                            locationStrategy,
+                            descriptionStrategy,
+                            fallbackStrategy,
+                            redefinitionDiscoveryStrategy,
+                            lambdaInstrumentationStrategy,
+                            installation.getListener(),
+                            redefinitionListener,
+                            matcher,
+                            redefinitionBatchAllocator,
+                            circularityLock);
+                } catch (@MaybeNull Throwable throwable) {
+                    throwable = installation.getInstallationListener().onError(instrumentation, classFileTransformer, throwable);
+                    if (throwable != null) {
+                        instrumentation.removeTransformer(classFileTransformer);
+                        throw new IllegalStateException("Could not install class file transformer", throwable);
+                    }
                 }
+                installation.getInstallationListener().onInstall(instrumentation, classFileTransformer);
+                return classFileTransformer;
+            } finally {
+                circularityLock.release();
             }
-            installation.getInstallationListener().onInstall(instrumentation, classFileTransformer);
-            return classFileTransformer;
         }
 
         /**
@@ -12610,8 +12813,22 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
+            public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, PatchMode patchMode) {
+                return materialize().patchOn(instrumentation, classFileTransformer, patchMode);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer) {
                 return materialize().patchOnByteBuddyAgent(classFileTransformer);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer, PatchMode patchMode) {
+                return materialize().patchOnByteBuddyAgent(classFileTransformer, patchMode);
             }
 
             /**
