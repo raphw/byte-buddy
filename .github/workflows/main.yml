@@ -169,6 +169,7 @@ jobs:
             docs.gradle.org:443
             plugins.gradle.org:443
             services.gradle.org:443
+            plugins-artifacts.gradle.org:443
             downloads.gradle-dn.com:443
             jcenter.bintray.com:443
             repository.sonatype.org:443
