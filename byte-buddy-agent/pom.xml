@@ -18,6 +18,7 @@
         <packages.list>net.bytebuddy.agent,net.bytebuddy.agent.utility.nullability</packages.list>
         <native.compiler.32>i686-w64-mingw32-gcc</native.compiler.32>
         <native.compiler.64>x86_64-w64-mingw32-gcc</native.compiler.64>
+        <net.bytebuddy.test.jnapath/>
     </properties>
 
     <name>Byte Buddy agent</name>
@@ -89,6 +90,15 @@
             </resource>
         </resources>
         <plugins>
+            <!-- Allow for specifying a custom library path for JNA. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${version.plugin.surefire}</version>
+                <configuration combine.children="append">
+                    <argLine>-Djna.library.path=${net.bytebuddy.test.jnapath}</argLine>
+                </configuration>
+            </plugin>
             <!-- Create manifest file which is required for creating an OSGi bundle. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

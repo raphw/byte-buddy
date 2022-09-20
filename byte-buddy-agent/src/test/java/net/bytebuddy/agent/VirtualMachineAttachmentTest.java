@@ -1,9 +1,12 @@
 package net.bytebuddy.agent;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.test.utility.JnaRule;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -19,6 +22,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class VirtualMachineAttachmentTest {
 
     private static final String FOO = "foo";
+
+    @Rule
+    public TestRule jnaRule = new JnaRule();
 
     private File agent;
 
