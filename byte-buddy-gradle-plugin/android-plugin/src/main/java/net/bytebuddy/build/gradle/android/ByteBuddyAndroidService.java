@@ -117,7 +117,7 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                     }
                     plugins.add(plugin);
                 }
-                EntryPoint entryPoint = new EntryPoint.Unvalidated(EntryPoint.Default.REBASE);
+                EntryPoint entryPoint = new EntryPoint.Unvalidated(EntryPoint.Default.DECORATE);
                 ByteBuddy byteBuddy = entryPoint.byteBuddy(classFileVersion);
                 state = new State(plugins,
                         new Plugin.Engine.TypeStrategy.ForEntryPoint(entryPoint, MethodNameTransformer.Suffixing.withRandomSuffix()),
