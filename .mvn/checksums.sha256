@@ -545,11 +545,11 @@ logkit:logkit:pom:1.0.1 3de328dfa1b563ba6dfc5829774cf2f8dab0dc9528ed2731c35251ab
 net.bytebuddy:byte-buddy-agent:jar:1.12.16 38e258787665ac95e4f42ff1ca5b7550093762d289a61d436a26b6a25386358e
 net.bytebuddy:byte-buddy-android:jar:1.12.16 0ee35e2ed2a78c034a6c19f498b80a2368dd6b975a2e9cdb196d2a7ed46c651b
 net.bytebuddy:byte-buddy-dep:jar:1.12.16 a280c274f035338db70ab47adc672db35f3c172a9ce1394757a5b3849446deba
-net.bytebuddy:byte-buddy-maven-plugin:jar:1.12.16 35edaff13e93d56991740945df9c67ca85902f86a85275faff994e016a314126
-net.bytebuddy:byte-buddy-maven-plugin:pom:1.12.16 f6d1f65911d274b2047f8e32d5410810ee8e94def02081082df2b06ea7fca5c7
-net.bytebuddy:byte-buddy-parent:pom:1.12.16 ce01acea4b1bcce0fb2af70f4a83c023371c5d40d42bf06ea7b62a670dbd2a99
-net.bytebuddy:byte-buddy:jar:1.12.16 e2a59ccffe107e83b355eb81dd8e9f3c82d0753c4b9a0e20bc64b0811d76795b
-net.bytebuddy:byte-buddy:pom:1.12.16 b013193fe7957de56555caabd5571ec8931fdc5a7aebb7f99718468244fdc033
+net.bytebuddy:byte-buddy-maven-plugin:jar:1.12.17 1834113e0dcdfd4e56a17d8661cda23b4c8c539743586d0c032875b19598168a
+net.bytebuddy:byte-buddy-maven-plugin:pom:1.12.17 a84e87bdf42e5582a7c078a5b56ff2f85062fce90347ccd89f67e29a8556934e
+net.bytebuddy:byte-buddy-parent:pom:1.12.17 190d3c289f7f1cb2efcba781a55d99895205a5f03328ee0bf42432f40a56c517
+net.bytebuddy:byte-buddy:jar:1.12.17 ec606fed9e903f9b4ccbdbe50cd653643b117681d57ed59e5b72c1e9f0850a0c
+net.bytebuddy:byte-buddy:pom:1.12.17 6622ee96a1e30442aa7fb4ed2b42da5f5f210d1da061c6fc2343ac526ec38484
 net.java.dev.jna:jna-platform:jar:5.12.1 8ce969116cac95bd61b07a8d5e07174b352e63301473caac72c395e3c08488d2
 net.java.dev.jna:jna-platform:pom:5.12.1 c279ffa3b5168e2203087231c638919a7cec7458006b1cda66959747860fb457
 net.java.dev.jna:jna:jar:5.12.1 91a814ac4f40d60dee91d842e1a8ad874c62197984403d0e3c30d39e55cf53b3

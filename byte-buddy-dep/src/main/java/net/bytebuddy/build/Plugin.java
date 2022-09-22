@@ -3397,7 +3397,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     String name = element.getName();
                     if (!name.endsWith("/")) {
                         File target = new File(folder, name), resolved = element.resolveAs(File.class);
-                        if (!target.getCanonicalPath().startsWith(folder.getCanonicalPath())) {
+                        if (!target.getCanonicalPath().startsWith(folder.getCanonicalPath() + File.separatorChar)) {
                             throw new IllegalArgumentException(target + " is not a subdirectory of " + folder);
                         } else if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
                             throw new IOException("Could not create directory: " + target.getParent());

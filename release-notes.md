@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 22. August 2022: version 1.12.17
+
+- Use decorating `EntryPoint` in Android Gradle plugin.
+- Introduce `PatchMode` on `AgentBuilder` patching to allow for control over overlap.
+
 ### 22. August 2022: version 1.12.16
 
 - Fix Gradle release script to publish plugin.
