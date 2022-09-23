@@ -19,6 +19,7 @@ import com.android.build.gradle.BaseExtension;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorFactory;
+import net.bytebuddy.build.AndroidDescriptor;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
@@ -45,6 +46,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A {@link BuildService} for use with the Byte Buddy Android plugin.
@@ -97,6 +99,7 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         toUrls(parameters.getByteBuddyClasspath().getFiles()),
                         new URLClassLoader(toUrls(parameters.getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
                 ArrayList<Plugin.Factory> factories = new ArrayList<Plugin.Factory>();
+                AndroidDescriptor androidDescriptor = new AndroidDescriptorImpl(parameters.getLocalClassesDirectories().getFiles());
                 for (String name : Plugin.Engine.Default.scan(classLoader)) {
                     try {
                         @SuppressWarnings("unchecked")
@@ -104,7 +107,9 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         if (!Plugin.class.isAssignableFrom(type)) {
                             throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
                         }
-                        factories.add(new Plugin.Factory.UsingReflection(type));
+                        factories.add(new Plugin.Factory.UsingReflection(type)
+                                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor))
+                        );
                     } catch (Throwable throwable) {
                         throw new IllegalStateException("Cannot resolve plugin: " + name, throwable);
                     }
@@ -124,7 +129,8 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         byteBuddy,
                         typePool,
                         classFileLocator,
-                        classLoader);
+                        classLoader,
+                        androidDescriptor);
             } catch (IOException exception) {
                 throw new IllegalStateException(exception);
             }
@@ -201,6 +207,9 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
         if (state.getClassLoader() instanceof Closeable) {
             ((Closeable) state.getClassLoader()).close();
         }
+        if (state.getAndroidDescriptor() instanceof Closeable) {
+            ((Closeable) state.getAndroidDescriptor()).close();
+        }
         this.state = null;
     }
 
@@ -259,27 +268,35 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
         private final ClassLoader classLoader;
 
         /**
+         * Provides Android context information.
+         */
+        private final AndroidDescriptor androidDescriptor;
+
+        /**
          * Creates a new state representation.
          *
-         * @param plugins          The plugins being applied.
-         * @param typeStrategy     The type strategy being used.
-         * @param byteBuddy        The Byte Buddy instance to use.
-         * @param typePool         The type pool to use.
-         * @param classFileLocator The class file locator to use.
-         * @param classLoader      The class loader to use.
+         * @param plugins           The plugins being applied.
+         * @param typeStrategy      The type strategy being used.
+         * @param byteBuddy         The Byte Buddy instance to use.
+         * @param typePool          The type pool to use.
+         * @param classFileLocator  The class file locator to use.
+         * @param classLoader       The class loader to use.
+         * @param androidDescriptor The Android context information provider.
          */
         protected State(List<Plugin> plugins,
                         Plugin.Engine.TypeStrategy typeStrategy,
                         ByteBuddy byteBuddy,
                         TypePool typePool,
                         ClassFileLocator classFileLocator,
-                        ClassLoader classLoader) {
+                        ClassLoader classLoader,
+                        AndroidDescriptor androidDescriptor) {
             this.plugins = plugins;
             this.typeStrategy = typeStrategy;
             this.byteBuddy = byteBuddy;
             this.typePool = typePool;
             this.classFileLocator = classFileLocator;
             this.classLoader = classLoader;
+            this.androidDescriptor = androidDescriptor;
         }
 
         /**
@@ -335,6 +352,15 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
         protected ClassLoader getClassLoader() {
             return classLoader;
         }
+
+        /**
+         * Returns The Android context information provider.
+         *
+         * @return The Android context information provider.
+         */
+        protected AndroidDescriptor getAndroidDescriptor() {
+            return androidDescriptor;
+        }
     }
 
     /**
@@ -363,6 +389,36 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
             spec.getParameters()
                     .getJavaTargetCompatibilityVersion()
                     .set(extension.getCompileOptions().getTargetCompatibility());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    private static class AndroidDescriptorImpl implements AndroidDescriptor, Closeable {
+        private final TypePool localTypePool;
+        private final URLClassLoader localClassLoader;
+
+        public AndroidDescriptorImpl(Set<File> localClasspath) {
+            localClassLoader = new URLClassLoader(toUrls(localClasspath));
+            localTypePool = TypePool.Default.of(localClassLoader);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public TypeScope getTypeScope(TypeDescription typeDescription) {
+            return (localTypePool.describe(typeDescription.getTypeName()).isResolved()) ? TypeScope.LOCAL : TypeScope.EXTERNAL;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void close() throws IOException {
+            localTypePool.clear();
+            localClassLoader.close();
         }
     }
 
