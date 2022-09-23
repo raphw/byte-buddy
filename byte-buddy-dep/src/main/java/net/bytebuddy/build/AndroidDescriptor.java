@@ -18,10 +18,11 @@ package net.bytebuddy.build;
 import net.bytebuddy.description.type.TypeDescription;
 
 /**
- * Provides Android context information to {@link Plugin} instances that include it as their constructor
- * parameter.
+ * Provides Android context information to {@link Plugin} instances that include it as
+ * their constructor parameter.
  */
 public interface AndroidDescriptor {
+
     /**
      * Provides the scope of the passed {@link TypeDescription} instance.
      *
@@ -31,9 +32,10 @@ public interface AndroidDescriptor {
     TypeScope getTypeScope(TypeDescription typeDescription);
 
     /**
-     * Describes the origin of a type.
+     * Describes the origin of a type within an Android project.
      */
     enum TypeScope {
+
         /**
          * Denotes a type that comes from the local project.
          */
