@@ -27,6 +27,7 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.QueueFactory;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
@@ -43,10 +44,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A {@link BuildService} for use with the Byte Buddy Android plugin.
@@ -99,7 +97,6 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         toUrls(parameters.getByteBuddyClasspath().getFiles()),
                         new URLClassLoader(toUrls(parameters.getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
                 ArrayList<Plugin.Factory> factories = new ArrayList<Plugin.Factory>();
-                AndroidDescriptor androidDescriptor = new AndroidDescriptorImpl(parameters.getLocalClassesDirectories().getFiles());
                 for (String name : Plugin.Engine.Default.scan(classLoader)) {
                     try {
                         @SuppressWarnings("unchecked")
@@ -130,7 +127,7 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         typePool,
                         classFileLocator,
                         classLoader,
-                        androidDescriptor);
+                        DefaultAndroidDescriptor.ofClassPath(parameters.getLocalClassesDirectories().getFiles()));
             } catch (IOException exception) {
                 throw new IllegalStateException(exception);
             }
@@ -207,9 +204,6 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
         if (state.getClassLoader() instanceof Closeable) {
             ((Closeable) state.getClassLoader()).close();
         }
-        if (state.getAndroidDescriptor() instanceof Closeable) {
-            ((Closeable) state.getAndroidDescriptor()).close();
-        }
         this.state = null;
     }
 
@@ -281,7 +275,7 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
          * @param typePool          The type pool to use.
          * @param classFileLocator  The class file locator to use.
          * @param classLoader       The class loader to use.
-         * @param androidDescriptor The Android context information provider.
+         * @param androidDescriptor The Android descriptor to use.
          */
         protected State(List<Plugin> plugins,
                         Plugin.Engine.TypeStrategy typeStrategy,
@@ -393,32 +387,62 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
     }
 
     /**
-     * {@inheritDoc}
+     * An implementation for an Android descriptor based on resolving class names against the class path.
      */
-    private static class AndroidDescriptorImpl implements AndroidDescriptor, Closeable {
-        private final TypePool localTypePool;
-        private final URLClassLoader localClassLoader;
+    protected static class DefaultAndroidDescriptor implements AndroidDescriptor {
 
-        public AndroidDescriptorImpl(Set<File> localClasspath) {
-            localClassLoader = new URLClassLoader(toUrls(localClasspath));
-            localTypePool = TypePool.Default.of(localClassLoader);
+        /**
+         * The file name extension of a Java class file.
+         */
+        private static final String CLASS_FILE_EXTENSION = ".class";
+
+        /**
+         * The files on the class path.
+         */
+        private final Set<String> names;
+
+        /**
+         * Creates a default Android descriptor.
+         *
+         * @param names The names of all classes on the class path.
+         */
+        protected DefaultAndroidDescriptor(Set<String> names) {
+            this.names = names;
+        }
+
+        /**
+         * Resolves class names of a set of class files from the class path.
+         *
+         * @param roots The class path roots to resolve.
+         * @return A suitable Android descriptor.
+         */
+        protected static AndroidDescriptor ofClassPath(Set<File> roots) {
+            Set<String> names = new HashSet<String>();
+            for (File root : roots) {
+                Queue<File> queue = QueueFactory.make(Collections.singleton(root));
+                while (!queue.isEmpty()) {
+                    File file = queue.remove();
+                    if (file.isDirectory()) {
+                        File[] value = file.listFiles();
+                        if (value != null) {
+                            queue.addAll(Arrays.asList(value));
+                        }
+                    } else if (file.getName().endsWith(CLASS_FILE_EXTENSION)) {
+                        String path = root.getAbsoluteFile().toURI().relativize(file.getAbsoluteFile().toURI()).getPath();
+                        names.add(path.substring(0, path.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.'));
+                    }
+                }
+            }
+            return new DefaultAndroidDescriptor(names);
         }
 
         /**
          * {@inheritDoc}
          */
-        @Override
         public TypeScope getTypeScope(TypeDescription typeDescription) {
-            return (localTypePool.describe(typeDescription.getTypeName()).isResolved()) ? TypeScope.LOCAL : TypeScope.EXTERNAL;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void close() throws IOException {
-            localTypePool.clear();
-            localClassLoader.close();
+            return names.contains(typeDescription.getName())
+                    ? TypeScope.LOCAL
+                    : TypeScope.EXTERNAL;
         }
     }
 
