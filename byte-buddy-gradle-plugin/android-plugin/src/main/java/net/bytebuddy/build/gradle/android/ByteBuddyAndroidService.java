@@ -96,6 +96,7 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                 ClassLoader classLoader = new URLClassLoader(
                         toUrls(parameters.getByteBuddyClasspath().getFiles()),
                         new URLClassLoader(toUrls(parameters.getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
+                AndroidDescriptor androidDescriptor = DefaultAndroidDescriptor.ofClassPath(parameters.getLocalClassesDirectories().getFiles());
                 ArrayList<Plugin.Factory> factories = new ArrayList<Plugin.Factory>();
                 for (String name : Plugin.Engine.Default.scan(classLoader)) {
                     try {
@@ -127,7 +128,7 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         typePool,
                         classFileLocator,
                         classLoader,
-                        DefaultAndroidDescriptor.ofClassPath(parameters.getLocalClassesDirectories().getFiles()));
+                        androidDescriptor);
             } catch (IOException exception) {
                 throw new IllegalStateException(exception);
             }
