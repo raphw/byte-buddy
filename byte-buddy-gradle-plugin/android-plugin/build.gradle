@@ -14,5 +14,6 @@ repositories {
 
 dependencies {
     api gradleApi()
+    implementation project(":common")
     compileOnly group: 'com.android.tools.build', name: 'gradle', version: '7.2.0'
 }

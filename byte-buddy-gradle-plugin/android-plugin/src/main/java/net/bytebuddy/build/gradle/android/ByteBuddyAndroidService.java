@@ -20,8 +20,10 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorFactory;
 import net.bytebuddy.build.AndroidDescriptor;
+import net.bytebuddy.build.BuildLogger;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
+import net.bytebuddy.build.gradle.common.GradleBuildLogger;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -32,6 +34,7 @@ import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.Property;
 import org.gradle.api.services.BuildService;
 import org.gradle.api.services.BuildServiceParameters;
@@ -44,7 +47,14 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * A {@link BuildService} for use with the Byte Buddy Android plugin.
@@ -105,8 +115,11 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         if (!Plugin.class.isAssignableFrom(type)) {
                             throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
                         }
+                        Logger gradleLogger = getParameters().getGradleLogger().get();
                         factories.add(new Plugin.Factory.UsingReflection(type)
                                 .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor))
+                                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new GradleBuildLogger(gradleLogger)))
+                                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, gradleLogger))
                         );
                     } catch (Throwable throwable) {
                         throw new IllegalStateException("Cannot resolve plugin: " + name, throwable);
@@ -369,12 +382,19 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
         private final BaseExtension extension;
 
         /**
+         * Gradle's logger.
+         */
+        private final Logger gradleLogger;
+
+        /**
          * Creates a new configuration action.
          *
-         * @param extension The base extension.
+         * @param extension    The base extension.
+         * @param gradleLogger Gradle's logger.
          */
-        protected ConfigurationAction(BaseExtension extension) {
+        protected ConfigurationAction(BaseExtension extension, Logger gradleLogger) {
             this.extension = extension;
+            this.gradleLogger = gradleLogger;
         }
 
         /**
@@ -384,6 +404,7 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
             spec.getParameters()
                     .getJavaTargetCompatibilityVersion()
                     .set(extension.getCompileOptions().getTargetCompatibility());
+            spec.getParameters().getGradleLogger().set(gradleLogger);
         }
     }
 
@@ -458,5 +479,12 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
          * @return The Java target compatibility version.
          */
         Property<JavaVersion> getJavaTargetCompatibilityVersion();
+
+        /**
+         * Returns Gradle's logger.
+         *
+         * @return Gradle's logger.
+         */
+        Property<Logger> getGradleLogger();
     }
 }
