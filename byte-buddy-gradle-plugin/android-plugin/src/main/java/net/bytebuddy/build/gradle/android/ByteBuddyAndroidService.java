@@ -34,7 +34,6 @@ import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
-import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.Property;
 import org.gradle.api.services.BuildService;
 import org.gradle.api.services.BuildServiceParameters;
@@ -115,7 +114,6 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         if (!Plugin.class.isAssignableFrom(type)) {
                             throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
                         }
-                        Logger gradleLogger = getParameters().getGradleLogger().get();
                         factories.add(new Plugin.Factory.UsingReflection(type)
                                 .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor))
                                 .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new GradleBuildLogger(gradleLogger)))
@@ -382,19 +380,12 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
         private final BaseExtension extension;
 
         /**
-         * Gradle's logger.
-         */
-        private final Logger gradleLogger;
-
-        /**
          * Creates a new configuration action.
          *
-         * @param extension    The base extension.
-         * @param gradleLogger Gradle's logger.
+         * @param extension The base extension.
          */
-        protected ConfigurationAction(BaseExtension extension, Logger gradleLogger) {
+        protected ConfigurationAction(BaseExtension extension) {
             this.extension = extension;
-            this.gradleLogger = gradleLogger;
         }
 
         /**
@@ -404,7 +395,6 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
             spec.getParameters()
                     .getJavaTargetCompatibilityVersion()
                     .set(extension.getCompileOptions().getTargetCompatibility());
-            spec.getParameters().getGradleLogger().set(gradleLogger);
         }
     }
 
@@ -479,12 +469,5 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
          * @return The Java target compatibility version.
          */
         Property<JavaVersion> getJavaTargetCompatibilityVersion();
-
-        /**
-         * Returns Gradle's logger.
-         *
-         * @return Gradle's logger.
-         */
-        Property<Logger> getGradleLogger();
     }
 }
