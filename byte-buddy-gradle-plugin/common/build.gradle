@@ -1,0 +1,12 @@
+plugins {
+    id 'java-library'
+}
+
+apply from: "$rootDir/bytebuddy.gradle"
+
+targetCompatibility = JavaVersion.VERSION_1_5
+sourceCompatibility = JavaVersion.VERSION_1_5
+
+dependencies {
+    compileOnly gradleApi()
+}
