@@ -20,6 +20,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.BuildLogger;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
+import net.bytebuddy.build.gradle.common.GradleBuildLogger;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
@@ -38,7 +39,14 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * An abstract Byte Buddy task implementation.
@@ -498,110 +506,6 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
             }
         }
         return deleted;
-    }
-
-    /**
-     * A {@link BuildLogger} implementation for a Gradle {@link Logger}.
-     */
-    protected static class GradleBuildLogger implements BuildLogger {
-
-        /**
-         * The logger to delegate to.
-         */
-        private final Logger logger;
-
-        /**
-         * Creates a new Gradle build logger.
-         *
-         * @param logger The logger to delegate to.
-         */
-        protected GradleBuildLogger(Logger logger) {
-            this.logger = logger;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isDebugEnabled() {
-            return logger.isDebugEnabled();
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public void debug(String message) {
-            logger.debug(message);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public void debug(String message, Throwable throwable) {
-            logger.debug(message, throwable);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isInfoEnabled() {
-            return logger.isInfoEnabled();
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public void info(String message) {
-            logger.info(message);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public void info(String message, Throwable throwable) {
-            logger.info(message, throwable);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isWarnEnabled() {
-            return logger.isWarnEnabled();
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public void warn(String message) {
-            logger.warn(message);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public void warn(String message, Throwable throwable) {
-            logger.warn(message, throwable);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean isErrorEnabled() {
-            return logger.isErrorEnabled();
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public void error(String message) {
-            logger.error(message);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public void error(String message, Throwable throwable) {
-            logger.error(message, throwable);
-        }
     }
 
     /**
