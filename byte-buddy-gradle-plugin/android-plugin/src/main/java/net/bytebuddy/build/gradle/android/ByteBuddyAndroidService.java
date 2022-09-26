@@ -34,6 +34,8 @@ import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Property;
 import org.gradle.api.services.BuildService;
 import org.gradle.api.services.BuildServiceParameters;
@@ -107,6 +109,7 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         new URLClassLoader(toUrls(parameters.getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
                 AndroidDescriptor androidDescriptor = DefaultAndroidDescriptor.ofClassPath(parameters.getLocalClassesDirectories().getFiles());
                 ArrayList<Plugin.Factory> factories = new ArrayList<Plugin.Factory>();
+                Logger gradleLogger = Logging.getLogger(ByteBuddyAndroidService.class);
                 for (String name : Plugin.Engine.Default.scan(classLoader)) {
                     try {
                         @SuppressWarnings("unchecked")
