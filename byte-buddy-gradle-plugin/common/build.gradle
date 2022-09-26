@@ -4,8 +4,8 @@ plugins {
 
 apply from: "$rootDir/bytebuddy.gradle"
 
-targetCompatibility = JavaVersion.VERSION_1_5
-sourceCompatibility = JavaVersion.VERSION_1_5
+targetCompatibility = JavaVersion.VERSION_1_6
+sourceCompatibility = JavaVersion.VERSION_1_6
 
 dependencies {
     compileOnly gradleApi()
