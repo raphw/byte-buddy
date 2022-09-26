@@ -408,6 +408,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                         .with(transformation.makeArgumentResolvers())
                         .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File.class, source()),
                                 Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, getLogger()),
+                                Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, getLogger()),
                                 Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new GradleBuildLogger(getLogger()))));
                 getLogger().info("Resolved plugin: {}", transformation.toPluginName());
             } catch (Throwable throwable) {
