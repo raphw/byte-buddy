@@ -23,7 +23,6 @@ import net.bytebuddy.build.AndroidDescriptor;
 import net.bytebuddy.build.BuildLogger;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
-import net.bytebuddy.build.gradle.common.GradleBuildLogger;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -109,7 +108,15 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         new URLClassLoader(toUrls(parameters.getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
                 AndroidDescriptor androidDescriptor = DefaultAndroidDescriptor.ofClassPath(parameters.getLocalClassesDirectories().getFiles());
                 ArrayList<Plugin.Factory> factories = new ArrayList<Plugin.Factory>();
-                Logger gradleLogger = Logging.getLogger(ByteBuddyAndroidService.class);
+                Logger logger = Logging.getLogger(ByteBuddyAndroidService.class);
+                BuildLogger buildLogger;
+                try {
+                    buildLogger = (BuildLogger) Class.forName("net.bytebuddy.build.gradle.GradleBuildLogger")
+                            .getConstructor(Logger.class)
+                            .newInstance(logger);
+                } catch (Exception exception) {
+                    throw new GradleException("Failed to resolve Gradle build logger", exception);
+                }
                 for (String name : Plugin.Engine.Default.scan(classLoader)) {
                     try {
                         @SuppressWarnings("unchecked")
@@ -119,9 +126,9 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         }
                         factories.add(new Plugin.Factory.UsingReflection(type)
                                 .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor))
-                                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new GradleBuildLogger(gradleLogger)))
-                                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, gradleLogger))
-                        );
+                                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, logger))
+                                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, logger))
+                                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, buildLogger)));
                     } catch (Throwable throwable) {
                         throw new IllegalStateException("Cannot resolve plugin: " + name, throwable);
                     }

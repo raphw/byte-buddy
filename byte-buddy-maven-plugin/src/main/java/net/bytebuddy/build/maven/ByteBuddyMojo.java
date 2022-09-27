@@ -315,13 +315,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     source = new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory()));
                     getLog().debug("Cannot build incrementally - all class files are processed");
                 }
-                Plugin.Engine.Summary summary = apply(new File(getOutputDirectory()), getClassPathElements(), transformers, source);
+                Plugin.Engine.Summary summary = apply(new File(getOutputDirectory()), getClassPathElements(), transformers, source, true);
                 for (TypeDescription typeDescription : summary.getTransformed()) {
                     context.refresh(new File(getOutputDirectory(), typeDescription.getName() + JAVA_CLASS_EXTENSION));
                 }
             } else {
                 getLog().debug("Not applying incremental build with context: " + context);
-                apply(new File(getOutputDirectory()), getClassPathElements(), transformers, new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory())));
+                apply(new File(getOutputDirectory()), getClassPathElements(), transformers, new Plugin.Engine.Source.ForFolder(new File(getOutputDirectory())), false);
             }
         } catch (IOException exception) {
             throw new MojoFailureException("Error during writing process", exception);
@@ -358,12 +358,17 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param classPath    An iterable over all class path elements.
      * @param transformers The transformers to apply.
      * @param source       The source for the plugin's application.
+     * @param filtered     {@code true} if files are already filtered and should not be checked for staleness.
      * @return A summary of the applied transformation.
      * @throws MojoExecutionException If the plugin cannot be applied.
      * @throws IOException            If an I/O exception occurs.
      */
     @SuppressWarnings("unchecked")
-    private Plugin.Engine.Summary apply(File root, List<? extends String> classPath, List<Transformer> transformers, Plugin.Engine.Source source) throws MojoExecutionException, IOException {
+    private Plugin.Engine.Summary apply(File root,
+                                        List<? extends String> classPath,
+                                        List<Transformer> transformers,
+                                        Plugin.Engine.Source source,
+                                        boolean filtered) throws MojoExecutionException, IOException {
         if (!root.exists()) {
             if (warnOnMissingOutputDirectory) {
                 getLog().warn("Skipping instrumentation due to missing directory: " + root);
@@ -375,30 +380,28 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             throw new MojoExecutionException("Not a directory: " + root);
         }
         StalenessFilter stalenessFilter;
-        if (staleMilliseconds >= 0) {
-            if (session == null) {
-                stalenessFilter = null;
-                getLog().warn("Stale file detection is disabled but Maven session is not available");
-            } else {
-                MavenExecutionRequest mavenExecutionRequest = session.getRequest();
-                if (mavenExecutionRequest == null) {
-                    stalenessFilter = null;
-                    getLog().warn("Stale file detection is disabled but Maven execution request is not available");
-                } else {
-                    Date startTime = mavenExecutionRequest.getStartTime();
-                    if (startTime != null) {
-                        stalenessFilter = new StalenessFilter(getLog(), startTime.getTime() + staleMilliseconds);
-                        source = new Plugin.Engine.Source.Filtering(source, stalenessFilter);
-                        getLog().debug("Using stale file detection with a margin of " + staleMilliseconds + " milliseconds");
-                    } else {
-                        stalenessFilter = null;
-                        getLog().warn("Stale file detection is disabled but Maven build start time is not available");
-                    }
-                }
-            }
-        } else {
+        if (filtered || staleMilliseconds < 0) {
             stalenessFilter = null;
             getLog().debug("Stale file detection is disabled");
+        } else if (session == null) {
+            stalenessFilter = null;
+            getLog().warn("Stale file detection is enabled but Maven session is not available");
+        } else {
+            MavenExecutionRequest mavenExecutionRequest = session.getRequest();
+            if (mavenExecutionRequest == null) {
+                stalenessFilter = null;
+                getLog().warn("Stale file detection is enabled but Maven execution request is not available");
+            } else {
+                Date startTime = mavenExecutionRequest.getStartTime();
+                if (startTime != null) {
+                    stalenessFilter = new StalenessFilter(getLog(), startTime.getTime() + staleMilliseconds);
+                    source = new Plugin.Engine.Source.Filtering(source, stalenessFilter);
+                    getLog().debug("Using stale file detection with a margin of " + staleMilliseconds + " milliseconds");
+                } else {
+                    stalenessFilter = null;
+                    getLog().warn("Stale file detection is enabled but Maven build start time is not available");
+                }
+            }
         }
         Map<Coordinate, String> coordinates = new HashMap<Coordinate, String>();
         if (project.getDependencyManagement() != null) {
@@ -412,7 +415,11 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             for (Transformer transformer : transformers) {
                 String plugin = transformer.getPlugin();
                 try {
-                    factories.add(new Plugin.Factory.UsingReflection((Class<? extends Plugin>) Class.forName(plugin, false, transformer.toClassLoader(classLoaderResolver, coordinates, project.getGroupId(), project.getArtifactId(), project.getVersion(), project.getPackaging()))).with(transformer.toArgumentResolvers()).with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File.class, root), Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Log.class, getLog()), Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new MavenBuildLogger(getLog()))));
+                    factories.add(new Plugin.Factory.UsingReflection((Class<? extends Plugin>) Class.forName(plugin, false, transformer.toClassLoader(classLoaderResolver, coordinates, project.getGroupId(), project.getArtifactId(), project.getVersion(), project.getPackaging())))
+                            .with(transformer.toArgumentResolvers())
+                            .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File.class, root),
+                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Log.class, getLog()),
+                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new MavenBuildLogger(getLog()))));
                     getLog().info("Resolved plugin: " + plugin);
                 } catch (Throwable throwable) {
                     throw new MojoExecutionException("Cannot resolve plugin: " + plugin, throwable);
