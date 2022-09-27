@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.build.gradle.common;
+package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.BuildLogger;
 import org.gradle.api.logging.Logger;
