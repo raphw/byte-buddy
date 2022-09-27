@@ -28,12 +28,10 @@
 
 <div class="col-md-8 col-md-offset-1" id="affixComponent">
 
-
-<div class="row">
-    <div class="translation">
-        There is <a href="https://notes.diguage.com/byte-buddy-tutorial">a Chinese translation</a> available.
-    </div>
-</div>
+    <select class="lang" ng-model="lang" ng-change="changeLang()">
+        <option value="cn">中文</option>
+        <option value="en">English</option>
+    </select>
 
 <div class="row" id="rational">
 
@@ -469,7 +467,7 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
 <pre class="prettyprint">DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .with(new NamingStrategy.AbstractBase() {
     @Override
-    public String subclass(TypeDescription superClass) {
+    protected String name(TypeDescription superClass) {
         return "i.love.ByteBuddy." + superClass.getSimpleName();
     }
   })
@@ -837,7 +835,8 @@ class MyApplication {
                 ClassFileLocator.ForClassLoader.ofSystemLoader())
       .defineField("qux", String.class) // we learn more about defining fields later
       .make()
-      .load(ClassLoader.getSystemClassLoader());
+      .load(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+      .getLoaded();
     assertThat(bar.getDeclaredField("qux"), notNullValue());
   }
 }

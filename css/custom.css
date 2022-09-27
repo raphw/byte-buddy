@@ -6,6 +6,12 @@ html {
     overflow-x: hidden;
 }
 
+.lang {
+    position: absolute;
+    right: 0;
+    top: 20px;
+}
+
 .buddy_logo {
     margin-top: 30px;
 }

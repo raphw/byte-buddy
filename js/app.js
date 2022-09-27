@@ -16,7 +16,11 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
             })
             .when('/tutorial', {
                 controller: 'tutorialController',
-                templateUrl: 'partial/tutorial.partial.html'
+                templateUrl:'partial/tutorial.partial.html'
+            })
+            .when('/tutorial-cn', {
+                controller: 'tutorialController',
+                templateUrl:'partial/tutorial.partial.cn.html'
             })
             .when('/develop', {
                 controller: 'developController',
@@ -35,7 +39,7 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
     })
 
     .controller('menuController', function ($scope, $location, $rootScope, scroller, repository) {
-        $scope.menuItems = [
+        $rootScope.menuItems = [
             {name: 'Welcome', target: '#/'},
             {name: 'Learn', target: '#/tutorial'},
             {name: 'Develop', target: '#/develop'},
@@ -149,14 +153,25 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
         ];
     })
 
-    .controller('tutorialController', function ($scope) {
+    .controller('tutorialController', function ($scope,$rootScope) {
+        $rootScope.lang = location.hash.indexOf("cn") > -1 ? 'cn' : "en";
         $scope.links = [
-            {name: 'Preliminary', target: '#rational'},
-            {name: 'Creating a class', target: '#gettingstarted'},
-            {name: 'Fields and methods', target: '#members'},
-            {name: 'Annotations', target: '#annotation'},
-            {name: 'Custom instrumentation', target: '#customization'}
+            {name: $rootScope.lang === 'cn' ? '准备' : 'Preliminary', target: '#rational'},
+            {name: $rootScope.lang === 'cn' ? '类创建' : 'Creating a class', target: '#gettingstarted'},
+            {name: $rootScope.lang === 'cn' ? '字段和方法' : 'Fields and methods', target: '#members'},
+            {name: $rootScope.lang === 'cn' ? '注解' : 'Annotations', target: '#annotation'},
+            {name: $rootScope.lang === 'cn' ? '自定义方法实现' : 'Custom instrumentation', target: '#customization'}
         ];
+        $scope.changeLang = ()=>{
+            $rootScope.lang = $rootScope.lang === 'en' ? 'cn' : 'en';
+            if($rootScope.lang === 'en'){
+                location.href = location.href.split("#/")[0] + '#/tutorial'
+                $rootScope.menuItems.find(i=>i.name === "Learn").target = '#/tutorial';
+            }else{
+                location.href = location.href.split("#/")[0] + '#/tutorial-cn'
+                $rootScope.menuItems.find(i=>i.name === "Learn").target = '#/tutorial-cn';
+            }
+        }
     })
 
     .controller('developController', function ($scope) {
