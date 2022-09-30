@@ -4,6 +4,8 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.implementation.FixedValue;
 import org.apache.maven.model.Build;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.testing.MojoRule;
 import org.apache.maven.plugin.testing.SilentLog;
@@ -317,6 +319,7 @@ public class ByteBuddyMojoTest {
             project.setVersion(QUX);
             project.setPackaging(JAR);
             mojo.project = project;
+            mojo.execution = new MojoExecution(new Plugin(), goal, "default");
             mojo.setLog(new SilentLog());
             mojo.execute();
         } finally {

@@ -28,11 +28,10 @@ import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
-import org.apache.maven.execution.MavenExecutionRequest;
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.PluginManagement;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
@@ -83,11 +82,11 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     public MavenProject project;
 
     /**
-     * The current Maven session.
+     * The current execution of this plugin.
      */
-    @MaybeNull
-    @Parameter(defaultValue = "${session}", readonly = true, required = true)
-    public MavenSession session;
+    @UnknownNull
+    @Parameter(defaultValue = "${mojoExecution}", readonly = true)
+    public MojoExecution execution;
 
     /**
      * The currently used repository system.
@@ -379,29 +378,22 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         } else if (!root.isDirectory()) {
             throw new MojoExecutionException("Not a directory: " + root);
         }
+        File staleness = new File(project.getBuild().getDirectory(), "maven-status"
+                + File.separator + execution.getArtifactId()
+                + File.separator + execution.getGoal()
+                + File.separator + execution.getExecutionId()
+                + File.separator + "staleness");
         StalenessFilter stalenessFilter;
         if (filtered || staleMilliseconds < 0) {
             stalenessFilter = null;
             getLog().debug("Stale file detection is disabled");
-        } else if (session == null) {
-            stalenessFilter = null;
-            getLog().warn("Stale file detection is enabled but Maven session is not available");
+        } else if (staleness.exists()) {
+            stalenessFilter = new StalenessFilter(getLog(), staleness.lastModified() + staleMilliseconds);
+            source = new Plugin.Engine.Source.Filtering(source, stalenessFilter);
+            getLog().debug("Using stale file detection with a margin of " + staleMilliseconds + " milliseconds");
         } else {
-            MavenExecutionRequest mavenExecutionRequest = session.getRequest();
-            if (mavenExecutionRequest == null) {
-                stalenessFilter = null;
-                getLog().warn("Stale file detection is enabled but Maven execution request is not available");
-            } else {
-                Date startTime = mavenExecutionRequest.getStartTime();
-                if (startTime != null) {
-                    stalenessFilter = new StalenessFilter(getLog(), startTime.getTime() + staleMilliseconds);
-                    source = new Plugin.Engine.Source.Filtering(source, stalenessFilter);
-                    getLog().debug("Using stale file detection with a margin of " + staleMilliseconds + " milliseconds");
-                } else {
-                    stalenessFilter = null;
-                    getLog().warn("Stale file detection is enabled but Maven build start time is not available");
-                }
-            }
+            stalenessFilter = null;
+            getLog().debug("Did not discover previous staleness file");
         }
         Map<Coordinate, String> coordinates = new HashMap<Coordinate, String>();
         if (project.getDependencyManagement() != null) {
@@ -464,15 +456,18 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 classFileLocator.close();
             }
             if (!summary.getFailed().isEmpty()) {
-                throw new MojoExecutionException(summary.getFailed() + " type transformations have failed");
+                throw new MojoExecutionException(summary.getFailed() + " type transformation(s) have failed");
             } else if (warnOnEmptyTypeSet && summary.getTransformed().isEmpty()) {
                 if (stalenessFilter != null && stalenessFilter.getFiltered() > 0) {
-                    getLog().info("No types were transformed during plugin execution but " + stalenessFilter.getFiltered() + " class files were considered stale");
+                    getLog().info("No types were transformed during plugin execution but " + stalenessFilter.getFiltered() + " class file(s) were considered stale");
                 } else {
                     getLog().warn("No types were transformed during plugin execution");
                 }
             } else {
-                getLog().info("Transformed " + summary.getTransformed().size() + " types");
+                getLog().info("Transformed " + summary.getTransformed().size() + " type(s)");
+            }
+            if (!(staleness.getParentFile().isDirectory() || staleness.getParentFile().mkdirs()) || (!staleness.createNewFile() && (!staleness.delete() || !staleness.createNewFile()))) {
+                throw new MojoExecutionException("Failed to define instrumentation staleness: " + staleness.getAbsolutePath());
             }
             return summary;
         } finally {
@@ -947,12 +942,12 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     protected static class Coordinate {
 
         /**
-         * The managed depencency's group id.
+         * The managed dependency's group id.
          */
         private final String groupId;
 
         /**
-         * The managed depencency's artifact id.
+         * The managed dependency's artifact id.
          */
         private final String artifactId;
 
