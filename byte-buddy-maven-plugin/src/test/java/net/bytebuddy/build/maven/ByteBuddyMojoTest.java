@@ -15,11 +15,11 @@ import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.collection.CollectResult;
 import org.eclipse.aether.graph.DependencyNode;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
@@ -44,6 +44,9 @@ public class ByteBuddyMojoTest {
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", TEMP = "tmp", JAR = "jar";
 
     @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    @Rule
     public MojoRule mojoRule = new MojoRule();
 
     @Rule
@@ -63,9 +66,7 @@ public class ByteBuddyMojoTest {
     @Before
     public void setUp() throws Exception {
         when(repositorySystem.collectDependencies(Mockito.<RepositorySystemSession>any(), Mockito.<CollectRequest>any())).thenReturn(new CollectResult(new CollectRequest()).setRoot(root));
-        folder = File.createTempFile(FOO, TEMP);
-        assertThat(folder.delete(), is(true));
-        assertThat(folder.mkdir(), is(true));
+        folder = temporaryFolder.newFolder();
 
         Properties properties = new Properties();
         properties.setProperty("maven.compiler.target", "1.5");
@@ -73,11 +74,6 @@ public class ByteBuddyMojoTest {
         project = new MavenProject();
         project.setBuild(new Build());
         project.getModel().setProperties(properties);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        assertThat(folder.delete(), is(true));
     }
 
     @Test
@@ -312,6 +308,7 @@ public class ByteBuddyMojoTest {
             } else {
                 throw new AssertionError("Unknown goal: " + goal);
             }
+            project.getBuild().setDirectory(temporaryFolder.newFolder().getAbsolutePath());
             mojoRule.setVariableValueToObject(mojo, "repositorySystem", repositorySystem);
             mojoRule.setVariableValueToObject(mojo, "discovery", Discovery.EMPTY);
             project.setGroupId(FOO);
@@ -319,7 +316,10 @@ public class ByteBuddyMojoTest {
             project.setVersion(QUX);
             project.setPackaging(JAR);
             mojo.project = project;
-            mojo.execution = new MojoExecution(new Plugin(), goal, "default");
+            mojo.staleMilliseconds = -1;
+            Plugin plugin = new Plugin();
+            plugin.setArtifactId("byte-buddy-maven-plugin");
+            mojo.execution = new MojoExecution(plugin, goal, "default");
             mojo.setLog(new SilentLog());
             mojo.execute();
         } finally {
