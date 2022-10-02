@@ -1231,7 +1231,7 @@ public abstract class ClassVisitorFactory<T> {
             try {
                 String prefix = classVisitor.getPackage().getName();
                 Map<Class<?>, Class<?>> utilities = new HashMap<Class<?>, Class<?>>();
-                for (Class<?> type : Arrays.asList(
+                for (Class<?> type : Arrays.<Class<?>>asList(
                         Attribute.class,
                         Label.class,
                         Type.class,
@@ -1252,7 +1252,7 @@ public abstract class ClassVisitorFactory<T> {
                 }
                 Map<Class<?>, Class<?>> equivalents = new HashMap<Class<?>, Class<?>>();
                 Map<Class<?>, DynamicType.Builder<?>> builders = new HashMap<Class<?>, DynamicType.Builder<?>>();
-                for (Class<?> type : Arrays.asList(
+                for (Class<?> type : Arrays.<Class<?>>asList(
                         ClassVisitor.class,
                         AnnotationVisitor.class,
                         ModuleVisitor.class,
