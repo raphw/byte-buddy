@@ -68,7 +68,7 @@
         <bytecode.test.version>1.6</bytecode.test.version>
         <pitest.target>net.bytebuddy</pitest.target>
         <nexus.url>https://s01.oss.sonatype.org</nexus.url>
-        <version.asm>9.3</version.asm>
+        <version.asm>9.4</version.asm>
         <version.jna>5.12.1</version.jna>
         <version.junit>4.13.2</version.junit>
         <version.mockito>2.28.2</version.mockito>
@@ -690,7 +690,6 @@
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
                 <jacoco.skip>true</jacoco.skip>
-                <bytebuddy.experimental>true</bytebuddy.experimental>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 18 JVMs. -->
@@ -706,7 +705,6 @@
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
                 <jacoco.skip>true</jacoco.skip>
-                <bytebuddy.experimental>true</bytebuddy.experimental>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 19 JVMs. -->
@@ -722,7 +720,21 @@
                 <bytecode.main.version>8</bytecode.main.version>
                 <bytecode.test.version>8</bytecode.test.version>
                 <jacoco.skip>true</jacoco.skip>
-                <bytebuddy.experimental>true</bytebuddy.experimental>
+            </properties>
+        </profile>
+        <!-- Runs the build with compatibility for Java 20 JVMs. -->
+        <profile>
+            <id>java20-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>20</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>8</sourcecode.main.version>
+                <sourcecode.test.version>8</sourcecode.test.version>
+                <bytecode.main.version>8</bytecode.main.version>
+                <bytecode.test.version>8</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 6. -->
@@ -868,7 +880,7 @@
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
-        <!-- Builds using a byte code target for Java 18. -->
+        <!-- Builds using a byte code target for Java 19. -->
         <profile>
             <id>java19</id>
             <activation>
@@ -877,6 +889,18 @@
             <properties>
                 <bytecode.main.version>19</bytecode.main.version>
                 <bytecode.test.version>19</bytecode.test.version>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Builds using a byte code target for Java 20. -->
+        <profile>
+            <id>java20</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>20</bytecode.main.version>
+                <bytecode.test.version>20</bytecode.test.version>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>

@@ -25,6 +25,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.security.PrivilegedAction;
 
 /**
@@ -140,6 +141,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
     public static final ClassFileVersion JAVA_V19 = new ClassFileVersion(Opcodes.V19);
 
     /**
+     * The class file version of Java 20.
+     */
+    public static final ClassFileVersion JAVA_V20 = new ClassFileVersion(Opcodes.V20);
+
+    /**
      * A version locator for the executing JVM.
      */
     private static final VersionLocator VERSION_LOCATOR = doPrivileged(VersionLocator.Resolver.INSTANCE);
@@ -229,6 +235,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
             return JAVA_V18;
         } else if (javaVersionString.equals("1.19") || javaVersionString.equals("19")) {
             return JAVA_V19;
+        } else if (javaVersionString.equals("1.20") || javaVersionString.equals("20")) {
+            return JAVA_V20;
         } else {
             if (OpenedClassReader.EXPERIMENTAL) {
                 try {
@@ -292,6 +300,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
                 return JAVA_V18;
             case 19:
                 return JAVA_V19;
+            case 20:
+                return JAVA_V20;
             default:
                 if (OpenedClassReader.EXPERIMENTAL && javaVersion > 0) {
                     return new ClassFileVersion(BASE_VERSION + javaVersion);
@@ -307,7 +317,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
      * @return The latest officially supported Java version.
      */
     public static ClassFileVersion latest() {
-        return ClassFileVersion.JAVA_V19;
+        return ClassFileVersion.JAVA_V20;
     }
 
     /**
@@ -500,6 +510,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
     protected interface VersionLocator {
 
         /**
+         * A suffix that might indicate an early access version of Java.
+         */
+        String EARLY_ACCESS = "-ea";
+
+        /**
          * The property for reading the current VM's Java version.
          */
         String JAVA_VERSION = "java.version";
@@ -527,9 +542,14 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
             public VersionLocator run() {
                 try {
-                    return new Resolved(ClassFileVersion.ofJavaVersion((Integer) Class.forName(Runtime.class.getName() + "$Version")
-                            .getMethod("major")
-                            .invoke(Runtime.class.getMethod("version").invoke(null))));
+                    Class<?> type = Class.forName(Runtime.class.getName() + "$Version");
+                    Method method;
+                    try {
+                        method = type.getMethod("feature");
+                    } catch (NoSuchMethodException ignored) {
+                        method = type.getMethod("major");
+                    }
+                    return new Resolved(ClassFileVersion.ofJavaVersion((Integer) method.invoke(Runtime.class.getMethod("version").invoke(null))));
                 } catch (Throwable ignored) {
                     try {
                         String versionString = System.getProperty(JAVA_VERSION);
@@ -537,6 +557,9 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
                             throw new IllegalStateException("Java version property is not set");
                         } else if (versionString.equals("0")) { // Used by Android, assume Java 6 defensively.
                             return new Resolved(ClassFileVersion.JAVA_V6);
+                        }
+                        if (versionString.endsWith(EARLY_ACCESS)) {
+                            versionString = versionString.substring(0, versionString.length() - EARLY_ACCESS.length());
                         }
                         int[] versionIndex = {-1, 0, 0};
                         for (int index = 1; index < 3; index++) {

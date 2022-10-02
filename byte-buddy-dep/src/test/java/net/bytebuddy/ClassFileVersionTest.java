@@ -53,6 +53,11 @@ public class ClassFileVersionTest {
     }
 
     @Test
+    public void name() {
+        ClassFileVersion.ofThisVm();
+    }
+
+    @Test
     public void testLatestVersion() throws Exception {
         double version = 0d;
         int value = 0;
