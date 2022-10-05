@@ -4125,7 +4125,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                     return new ForStackManipulation(MethodInvocation.invoke(bootstrapMethod).dynamic(methodCandidates.getOnly().getInternalName(),
                             target.getType().asErasure(),
-                            methodCandidates.getOnly().getParameters().asTypeList().asErasures(),
+                            Collections.emptyList(),
                             arguments), target.getType(), target.getType(), Assigner.Typing.STATIC);
                 }
             }
