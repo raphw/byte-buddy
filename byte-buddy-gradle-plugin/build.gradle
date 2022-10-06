@@ -26,17 +26,6 @@ configurations {
         setTransitive(false)
         extendsFrom(fatJar)
     }
-    compileFatJar {
-        canBeConsumed(false)
-        canBeResolved(false)
-    }
-    compileFatJarClasspath {
-        canBeConsumed(false)
-        canBeResolved(true)
-        setTransitive(false)
-        extendsFrom(compileFatJar)
-    }
-    compileClasspath.extendsFrom(compileFatJarClasspath)
 }
 
 dependencies {
@@ -44,7 +33,6 @@ dependencies {
     if (findProject(':android-plugin') != null) {
         fatJar project(':android-plugin')
     }
-    compileFatJar project(":common")
     compileOnly group: 'com.google.code.findbugs', name: 'findbugs-annotations', version: outerPom.properties.'version.utility.findbugs'
     compileOnly group: 'com.google.code.findbugs', name: 'jsr305', version: outerPom.properties.'version.utility.jsr305'
     testImplementation gradleTestKit()
@@ -67,9 +55,8 @@ tasks.withType(AbstractArchiveTask).configureEach {
 
 tasks.named("jar") {
     dependsOn configurations.fatJarClasspath
-    dependsOn configurations.compileFatJarClasspath
     from {
-        (configurations.fatJarClasspath + configurations.compileFatJarClasspath).collect { zipTree(it) }
+        configurations.fatJarClasspath.collect { zipTree(it) }
     }
 }
 
