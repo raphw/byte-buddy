@@ -91,7 +91,6 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                 for (File artifact : parameters.getRuntimeClasspath()
                         .plus(parameters.getAndroidBootClasspath())
                         .plus(parameters.getByteBuddyClasspath())
-                        .plus(parameters.getLocalClassesDirectories())
                         .getFiles()) {
                     classFileLocators.add(artifact.isFile()
                             ? ClassFileLocator.ForJarFile.of(artifact)
@@ -106,7 +105,7 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                 ClassLoader classLoader = new URLClassLoader(
                         toUrls(parameters.getByteBuddyClasspath().getFiles()),
                         new URLClassLoader(toUrls(parameters.getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
-                AndroidDescriptor androidDescriptor = DefaultAndroidDescriptor.ofClassPath(parameters.getLocalClassesDirectories().getFiles());
+                AndroidDescriptor androidDescriptor = new SimpleAndroidDescriptor();
                 ArrayList<Plugin.Factory> factories = new ArrayList<Plugin.Factory>();
                 Logger logger = Logging.getLogger(ByteBuddyAndroidService.class);
                 BuildLogger buildLogger;
@@ -167,25 +166,22 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
         if (state == null) {
             throw new IllegalStateException("Byte Buddy Android service was not initialized");
         }
-        try {
-            TypeDescription typeDescription = state.getTypePool().describe(name).resolve();
-            for (Plugin plugin : state.getPlugins()) {
-                if (plugin instanceof Plugin.WithPreprocessor) {
-                    ((Plugin.WithPreprocessor) plugin).onPreprocess(typeDescription, state.getClassFileLocator());
-                }
-            }
-            for (Plugin plugin : state.getPlugins()) {
-                if (plugin.matches(typeDescription)) {
-                    return true;
-                }
-            }
-            return false;
-        } catch (TypePool.Resolution.NoSuchTypeException ignored) {
-            // There are android generated classes for android XML resources, that typically end with "R$[something]",
-            // such as "R$layout, R$string, R$id", etc. Which are not available in the classpath by the time this
-            // task runs, and also, those classes aren't worthy of instrumentation either.
+        TypePool.Resolution resolution = state.getTypePool().describe(name);
+        if (!resolution.isResolved()) {
             return false;
         }
+        TypeDescription typeDescription = resolution.resolve();
+        for (Plugin plugin : state.getPlugins()) {
+            if (plugin instanceof Plugin.WithPreprocessor) {
+                ((Plugin.WithPreprocessor) plugin).onPreprocess(typeDescription, state.getClassFileLocator());
+            }
+        }
+        for (Plugin plugin : state.getPlugins()) {
+            if (plugin.matches(typeDescription)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -405,6 +401,14 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
             spec.getParameters()
                     .getJavaTargetCompatibilityVersion()
                     .set(extension.getCompileOptions().getTargetCompatibility());
+        }
+    }
+
+    protected static class SimpleAndroidDescriptor implements AndroidDescriptor {
+
+        @Override
+        public TypeScope getTypeScope(TypeDescription typeDescription) {
+            return TypeScope.EXTERNAL;
         }
     }
 
