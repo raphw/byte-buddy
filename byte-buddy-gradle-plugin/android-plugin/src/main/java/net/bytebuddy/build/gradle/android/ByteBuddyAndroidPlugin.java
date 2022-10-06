@@ -114,8 +114,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     new ByteBuddyAndroidService.ConfigurationAction(project.getExtensions().getByType(BaseExtension.class)));
             Configuration bytebuddyVariantConfiguration = getBytebuddyConfigurationForVariant(variant);
             variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, new ByteBuddyTransformationConfiguration(project,
-                    configuration,
-                    configurations,
+                    bytebuddyVariantConfiguration,
                     byteBuddyAndroidServiceProvider,
                     variant));
 
@@ -161,14 +160,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         private final Project project;
 
         /**
-         * The general Byte Buddy configuration.
+         * The target variant Byte Buddy configuration.
          */
         private final Configuration configuration;
-
-        /**
-         * A cache of configurations by built type name.
-         */
-        private final ConcurrentMap<String, Configuration> configurations;
 
         /**
          * A provider for a {@link ByteBuddyAndroidService}.
@@ -184,19 +178,16 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          * Creates a new Byte Buddy transformation configuration.
          *
          * @param project                         The current Gradle project.
-         * @param configuration                   The general Byte Buddy configuration.
-         * @param configurations                  A cache of configurations by built type name.
+         * @param configuration                   The target variant Byte Buddy configuration.
          * @param byteBuddyAndroidServiceProvider A provider for a {@link ByteBuddyAndroidService}.
          * @param variant                         The current variant.
          */
         protected ByteBuddyTransformationConfiguration(Project project,
                                                        Configuration configuration,
-                                                       ConcurrentMap<String, Configuration> configurations,
                                                        Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider,
                                                        Variant variant) {
             this.project = project;
             this.configuration = configuration;
-            this.configurations = configurations;
             this.byteBuddyAndroidServiceProvider = byteBuddyAndroidServiceProvider;
             this.variant = variant;
         }
@@ -207,16 +198,6 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         public Unit invoke(ByteBuddyInstrumentationParameters parameters) {
             if (variant.getBuildType() == null) {
                 throw new GradleException("Build type for " + variant + " was null");
-            }
-            Configuration configuration = configurations.get(variant.getBuildType());
-            if (configuration == null) {
-                configuration = project.getConfigurations().create(variant.getBuildType() + "ByteBuddy", new VariantConfigurationConfigurationAction(project,
-                        this.configuration,
-                        variant.getBuildType()));
-                Configuration previous = configurations.putIfAbsent(variant.getBuildType(), configuration);
-                if (previous != null) {
-                    configuration = previous;
-                }
             }
             parameters.getByteBuddyClasspath().from(configuration);
             parameters.getAndroidBootClasspath().from(project.getExtensions().getByType(BaseExtension.class).getBootClasspath());
