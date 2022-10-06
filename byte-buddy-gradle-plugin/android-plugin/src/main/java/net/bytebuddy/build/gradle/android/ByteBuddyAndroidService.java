@@ -28,7 +28,6 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.utility.QueueFactory;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
@@ -48,13 +47,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Queue;
-import java.util.Set;
 
 /**
  * A {@link BuildService} for use with the Byte Buddy Android plugin.
@@ -105,7 +99,7 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                 ClassLoader classLoader = new URLClassLoader(
                         toUrls(parameters.getByteBuddyClasspath().getFiles()),
                         new URLClassLoader(toUrls(parameters.getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
-                AndroidDescriptor androidDescriptor = new SimpleAndroidDescriptor();
+                AndroidDescriptor androidDescriptor = new ExternalClassesAndroidDescriptor();
                 ArrayList<Plugin.Factory> factories = new ArrayList<Plugin.Factory>();
                 Logger logger = Logging.getLogger(ByteBuddyAndroidService.class);
                 BuildLogger buildLogger;
@@ -404,71 +398,19 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
         }
     }
 
-    protected static class SimpleAndroidDescriptor implements AndroidDescriptor {
+    /**
+     * An implementation for an Android descriptor for external classpath queries.
+     */
+    protected static class ExternalClassesAndroidDescriptor implements AndroidDescriptor {
 
+        /**
+         * Returns the EXTERNAL {@link net.bytebuddy.build.AndroidDescriptor.TypeScope}.
+         *
+         * @return the EXTERNAL {@link net.bytebuddy.build.AndroidDescriptor.TypeScope}.
+         */
         @Override
         public TypeScope getTypeScope(TypeDescription typeDescription) {
             return TypeScope.EXTERNAL;
-        }
-    }
-
-    /**
-     * An implementation for an Android descriptor based on resolving class names against the class path.
-     */
-    protected static class DefaultAndroidDescriptor implements AndroidDescriptor {
-
-        /**
-         * The file name extension of a Java class file.
-         */
-        private static final String CLASS_FILE_EXTENSION = ".class";
-
-        /**
-         * The files on the class path.
-         */
-        private final Set<String> names;
-
-        /**
-         * Creates a default Android descriptor.
-         *
-         * @param names The names of all classes on the class path.
-         */
-        protected DefaultAndroidDescriptor(Set<String> names) {
-            this.names = names;
-        }
-
-        /**
-         * Resolves class names of a set of class files from the class path.
-         *
-         * @param roots The class path roots to resolve.
-         * @return A suitable Android descriptor.
-         */
-        protected static AndroidDescriptor ofClassPath(Set<File> roots) {
-            Set<String> names = new HashSet<String>();
-            for (File root : roots) {
-                Queue<File> queue = QueueFactory.make(Collections.singleton(root));
-                while (!queue.isEmpty()) {
-                    File file = queue.remove();
-                    if (file.isDirectory()) {
-                        File[] value = file.listFiles();
-                        if (value != null) {
-                            queue.addAll(Arrays.asList(value));
-                        }
-                    } else if (file.getName().endsWith(CLASS_FILE_EXTENSION)) {
-                        String path = root.getAbsoluteFile().toURI().relativize(file.getAbsoluteFile().toURI()).getPath();
-                        names.add(path.substring(0, path.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.'));
-                    }
-                }
-            }
-            return new DefaultAndroidDescriptor(names);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public TypeScope getTypeScope(TypeDescription typeDescription) {
-            return names.contains(typeDescription.getName())
-                    ? TypeScope.LOCAL
-                    : TypeScope.EXTERNAL;
         }
     }
 

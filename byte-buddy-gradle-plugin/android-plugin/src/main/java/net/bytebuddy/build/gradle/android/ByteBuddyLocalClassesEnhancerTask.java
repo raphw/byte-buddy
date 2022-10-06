@@ -52,6 +52,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Transformation task for instrumenting the project's local classes.
+ */
 public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
 
     /**
@@ -86,9 +89,19 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     @Input
     public abstract Property<JavaVersion> getJavaTargetCompatibilityVersion();
 
+    /**
+     * Target project's local classes dirs.
+     *
+     * @return The target project's local classes dirs.
+     */
     @InputFiles
     public abstract ListProperty<Directory> getLocalClassesDirs();
 
+    /**
+     * The instrumented classes destination dir.
+     *
+     * @return The instrumented classes destination dir.
+     */
     @OutputDirectory
     public abstract DirectoryProperty getOutputDir();
 
@@ -97,7 +110,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
         transform(getOutputDir().get().getAsFile());
     }
 
-    public void transform(File outputDir) {
+    private void transform(File outputDir) {
         try (ClassFileLocator contextClassFileLocator = createContextClassFileLocator(getRuntimeClasspath().plus(getAndroidBootClasspath()).plus(getByteBuddyClasspath()).getFiles())) {
             makeEngine()
                     .with(contextClassFileLocator)
@@ -193,8 +206,16 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
         return new ClassFileLocator.Compound(classFileLocators);
     }
 
+    /**
+     * An implementation for an Android descriptor for local classpath queries.
+     */
     protected static class LocalAndroidDescriptor implements AndroidDescriptor {
 
+        /**
+         * Returns the LOCAL {@link net.bytebuddy.build.AndroidDescriptor.TypeScope}.
+         *
+         * @return the LOCAL {@link net.bytebuddy.build.AndroidDescriptor.TypeScope}.
+         */
         @Override
         public TypeScope getTypeScope(TypeDescription typeDescription) {
             return TypeScope.LOCAL;
@@ -219,11 +240,28 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
         }
     }
 
+    /**
+     * A configuration action for the {@link ByteBuddyLocalClassesEnhancerTask} task.
+     */
     protected static class ConfigurationAction implements Action<ByteBuddyLocalClassesEnhancerTask> {
+        /**
+         * The current variant Byte Buddy configuration.
+         */
         private final Configuration bytebuddyClasspath;
+        /**
+         * The android gradle extension.
+         */
         private final BaseExtension androidExtension;
+        /**
+         * The current variant's runtime classpath.
+         */
         private final FileCollection runtimeClasspath;
 
+        /**
+         * @param bytebuddyClasspath The current variant Byte Buddy configuration.
+         * @param androidExtension   The android gradle extension.
+         * @param runtimeClasspath   The current variant's runtime classpath.
+         */
         public ConfigurationAction(Configuration bytebuddyClasspath, BaseExtension androidExtension, FileCollection runtimeClasspath) {
             this.bytebuddyClasspath = bytebuddyClasspath;
             this.androidExtension = androidExtension;
