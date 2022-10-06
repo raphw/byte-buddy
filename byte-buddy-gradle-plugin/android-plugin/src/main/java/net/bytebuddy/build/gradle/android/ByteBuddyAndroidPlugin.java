@@ -38,6 +38,7 @@ import org.gradle.api.attributes.AttributeMatchingStrategy;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.CompatibilityCheckDetails;
 import org.gradle.api.attributes.Usage;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
 
@@ -113,18 +114,20 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     ByteBuddyAndroidService.class,
                     new ByteBuddyAndroidService.ConfigurationAction(project.getExtensions().getByType(BaseExtension.class)));
             Configuration bytebuddyVariantConfiguration = getBytebuddyConfigurationForVariant(variant);
+            FileCollection runtimeClasspath = ((ComponentImpl) variant).getVariantDependencies().getArtifactFileCollection(AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
+                    AndroidArtifacts.ArtifactScope.ALL,
+                    AndroidArtifacts.ArtifactType.CLASSES_JAR);
+
             variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, new ByteBuddyTransformationConfiguration(project,
                     bytebuddyVariantConfiguration,
                     byteBuddyAndroidServiceProvider,
-                    variant));
+                    runtimeClasspath));
 
             TaskProvider<ByteBuddyLocalClassesEnhancerTask> localClassesTransformation = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform", ByteBuddyLocalClassesEnhancerTask.class,
                     new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(
                             bytebuddyVariantConfiguration,
                             project.getExtensions().getByType(BaseExtension.class),
-                            ((ComponentImpl) variant).getVariantDependencies().getArtifactFileCollection(AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
-                                    AndroidArtifacts.ArtifactScope.ALL,
-                                    AndroidArtifacts.ArtifactType.CLASSES_JAR)));
+                            runtimeClasspath));
 
             variant.getArtifacts().use(localClassesTransformation)
                     .wiredWith(ByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, ByteBuddyLocalClassesEnhancerTask::getOutputDir)
@@ -160,7 +163,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         private final Project project;
 
         /**
-         * The target variant Byte Buddy configuration.
+         * The current variant Byte Buddy configuration.
          */
         private final Configuration configuration;
 
@@ -170,40 +173,35 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         private final Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider;
 
         /**
-         * The current variant.
+         * The current variant's runtime classpath.
          */
-        private final Variant variant;
+        private final FileCollection runtimeClasspath;
 
         /**
          * Creates a new Byte Buddy transformation configuration.
          *
          * @param project                         The current Gradle project.
-         * @param configuration                   The target variant Byte Buddy configuration.
+         * @param configuration                   The current variant Byte Buddy configuration.
          * @param byteBuddyAndroidServiceProvider A provider for a {@link ByteBuddyAndroidService}.
-         * @param variant                         The current variant.
+         * @param runtimeClasspath                The current variant's runtime classpath.
          */
         protected ByteBuddyTransformationConfiguration(Project project,
                                                        Configuration configuration,
                                                        Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider,
-                                                       Variant variant) {
+                                                       FileCollection runtimeClasspath) {
             this.project = project;
             this.configuration = configuration;
             this.byteBuddyAndroidServiceProvider = byteBuddyAndroidServiceProvider;
-            this.variant = variant;
+            this.runtimeClasspath = runtimeClasspath;
         }
 
         /**
          * {@inheritDoc}
          */
         public Unit invoke(ByteBuddyInstrumentationParameters parameters) {
-            if (variant.getBuildType() == null) {
-                throw new GradleException("Build type for " + variant + " was null");
-            }
             parameters.getByteBuddyClasspath().from(configuration);
             parameters.getAndroidBootClasspath().from(project.getExtensions().getByType(BaseExtension.class).getBootClasspath());
-            parameters.getRuntimeClasspath().from(((ComponentImpl) variant).getVariantDependencies().getArtifactFileCollection(AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
-                    AndroidArtifacts.ArtifactScope.ALL,
-                    AndroidArtifacts.ArtifactType.CLASSES_JAR));
+            parameters.getRuntimeClasspath().from(runtimeClasspath);
             parameters.getByteBuddyService().set(byteBuddyAndroidServiceProvider);
             return Unit.INSTANCE;
         }
