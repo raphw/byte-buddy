@@ -204,7 +204,6 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             parameters.getRuntimeClasspath().from(((ComponentImpl) variant).getVariantDependencies().getArtifactFileCollection(AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
                     AndroidArtifacts.ArtifactScope.ALL,
                     AndroidArtifacts.ArtifactType.CLASSES_JAR));
-            parameters.getLocalClassesDirectories().from(byteBuddyCopyOutputTaskProvider);
             parameters.getByteBuddyService().set(byteBuddyAndroidServiceProvider);
             return Unit.INSTANCE;
         }
