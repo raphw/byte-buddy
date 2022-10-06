@@ -1,0 +1,226 @@
+package net.bytebuddy.build.gradle.android;
+
+import com.android.build.gradle.BaseExtension;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.AndroidDescriptor;
+import net.bytebuddy.build.EntryPoint;
+import net.bytebuddy.build.Plugin;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
+import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
+import org.gradle.api.Action;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
+import org.gradle.api.JavaVersion;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.Directory;
+import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.tasks.TaskAction;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
+
+    /**
+     * Returns the boot class path of Android.
+     *
+     * @return The boot class path of Android.
+     */
+    @InputFiles
+    public abstract ConfigurableFileCollection getAndroidBootClasspath();
+
+    /**
+     * Returns Byte Buddy's class path.
+     *
+     * @return Byte Buddy's class path.
+     */
+    @InputFiles
+    public abstract ConfigurableFileCollection getByteBuddyClasspath();
+
+    /**
+     * Returns the runtime class path.
+     *
+     * @return The runtime class path.
+     */
+    @InputFiles
+    public abstract ConfigurableFileCollection getRuntimeClasspath();
+
+    /**
+     * Returns the Java target compatibility version.
+     *
+     * @return The Java target compatibility version.
+     */
+    @Input
+    public abstract Property<JavaVersion> getJavaTargetCompatibilityVersion();
+
+    @InputFiles
+    public abstract ListProperty<Directory> getLocalClassesDirs();
+
+    @OutputDirectory
+    public abstract DirectoryProperty getOutputDir();
+
+    @TaskAction
+    public void action() {
+        transform(getOutputDir().get().getAsFile());
+    }
+
+    public void transform(File outputDir) {
+        try (ClassFileLocator contextClassFileLocator = createContextClassFileLocator(getRuntimeClasspath().plus(getAndroidBootClasspath()).plus(getByteBuddyClasspath()).getFiles())) {
+            makeEngine()
+                    .with(contextClassFileLocator)
+                    .apply(
+                            createSource(),
+                            new Plugin.Engine.Target.ForFolder(outputDir),
+                            createPluginFactories()
+                    );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Plugin.Engine makeEngine() {
+        ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersionString(getJavaTargetCompatibilityVersion()
+                .get()
+                .toString());
+        MethodNameTransformer methodNameTransformer = MethodNameTransformer.Suffixing.withRandomSuffix();
+
+        return Plugin.Engine.Default.of(new AndroidEntryPoint(), classFileVersion, methodNameTransformer);
+    }
+
+    private List<Plugin.Factory> createPluginFactories() throws IOException {
+        URLClassLoader androidLoader = new URLClassLoader(toUrlArray(getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader());
+        URLClassLoader pluginLoader = new URLClassLoader(toUrlArray(getByteBuddyClasspath().getFiles()), androidLoader);
+        ArrayList<Plugin.Factory> factories = new ArrayList<>();
+
+        AndroidDescriptor androidDescriptor = new LocalAndroidDescriptor();
+        for (String className : Plugin.Engine.Default.scan(pluginLoader)) {
+            factories.add(createFactoryFromClassName(className, pluginLoader, androidDescriptor));
+        }
+
+        return factories;
+    }
+
+    private Plugin.Factory.UsingReflection createFactoryFromClassName(
+            String className,
+            ClassLoader classLoader,
+            AndroidDescriptor androidDescriptor
+    ) {
+        try {
+            Class<? extends Plugin> pluginClass = getClassFromName(className, classLoader);
+            return new Plugin.Factory.UsingReflection(pluginClass)
+                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor));
+        } catch (Throwable t) {
+            throw new IllegalStateException("Cannot resolve plugin: $className", t);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Class<? extends Plugin> getClassFromName(String className, ClassLoader classLoader) throws ClassNotFoundException {
+        Class<?> type = Class.forName(className, false, classLoader);
+
+        if (!Plugin.class.isAssignableFrom(type)) {
+            throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
+        }
+
+        return (Class<? extends Plugin>) type;
+    }
+
+    private URL[] toUrlArray(Set<File> files) {
+        List<URL> urls = new ArrayList<>();
+        files.forEach(file -> {
+            try {
+                urls.add(file.toURI().toURL());
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        return urls.toArray(new URL[0]);
+    }
+
+    private CompoundSourceOrigin createSource() {
+        List<Directory> directories = getLocalClassesDirs().get();
+        Set<Plugin.Engine.Source.Origin> origins = new HashSet<>();
+        for (Directory directory : directories) {
+            origins.add(new Plugin.Engine.Source.ForFolder(directory.getAsFile()));
+        }
+        return new CompoundSourceOrigin(origins);
+    }
+
+    private ClassFileLocator createContextClassFileLocator(Set<File> filesAndDirs) throws IOException {
+        ArrayList<ClassFileLocator> classFileLocators = new ArrayList<>();
+
+        for (File artifact : filesAndDirs) {
+            classFileLocators.add(artifact.isFile() ? ClassFileLocator.ForJarFile.of(artifact) : new ClassFileLocator.ForFolder(artifact));
+        }
+
+        classFileLocators.add(
+                ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader())
+        );
+
+        return new ClassFileLocator.Compound(classFileLocators);
+    }
+
+    protected static class LocalAndroidDescriptor implements AndroidDescriptor {
+
+        @Override
+        public TypeScope getTypeScope(TypeDescription typeDescription) {
+            return TypeScope.LOCAL;
+        }
+    }
+
+    private static class AndroidEntryPoint implements EntryPoint {
+
+        @Override
+        public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
+            return new ByteBuddy(classFileVersion).with(TypeValidation.DISABLED);
+        }
+
+        @Override
+        public DynamicType.Builder<?> transform(
+                TypeDescription typeDescription,
+                ByteBuddy byteBuddy,
+                ClassFileLocator classFileLocator,
+                MethodNameTransformer methodNameTransformer
+        ) {
+            return byteBuddy.decorate(typeDescription, classFileLocator);
+        }
+    }
+
+    protected static class ConfigurationAction implements Action<ByteBuddyLocalClassesEnhancerTask> {
+        private final Configuration bytebuddyClasspath;
+        private final BaseExtension androidExtension;
+        private final FileCollection runtimeClasspath;
+
+        public ConfigurationAction(Configuration bytebuddyClasspath, BaseExtension androidExtension, FileCollection runtimeClasspath) {
+            this.bytebuddyClasspath = bytebuddyClasspath;
+            this.androidExtension = androidExtension;
+            this.runtimeClasspath = runtimeClasspath;
+        }
+
+        @Override
+        public void execute(ByteBuddyLocalClassesEnhancerTask task) {
+            task.getByteBuddyClasspath().from(bytebuddyClasspath);
+            task.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
+            task.getRuntimeClasspath().from(runtimeClasspath);
+            task.getJavaTargetCompatibilityVersion().set(androidExtension.getCompileOptions().getTargetCompatibility());
+        }
+    }
+}
