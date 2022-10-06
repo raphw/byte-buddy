@@ -19,6 +19,7 @@ import com.android.build.gradle.BaseExtension;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AndroidDescriptor;
+import net.bytebuddy.build.BuildLogger;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
@@ -35,6 +36,7 @@ import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -139,8 +141,16 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
         ArrayList<Plugin.Factory> factories = new ArrayList<>();
 
         AndroidDescriptor androidDescriptor = new LocalAndroidDescriptor();
+        BuildLogger buildLogger;
+        try {
+            buildLogger = (BuildLogger) Class.forName("net.bytebuddy.build.gradle.GradleBuildLogger")
+                    .getConstructor(Logger.class)
+                    .newInstance(getProject().getLogger());
+        } catch (Exception exception) {
+            throw new GradleException("Failed to resolve Gradle build logger", exception);
+        }
         for (String className : Plugin.Engine.Default.scan(pluginLoader)) {
-            factories.add(createFactoryFromClassName(className, pluginLoader, androidDescriptor));
+            factories.add(createFactoryFromClassName(className, pluginLoader, androidDescriptor, getProject().getLogger(), buildLogger));
         }
 
         return factories;
@@ -149,12 +159,17 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     private Plugin.Factory.UsingReflection createFactoryFromClassName(
             String className,
             ClassLoader classLoader,
-            AndroidDescriptor androidDescriptor
+            AndroidDescriptor androidDescriptor,
+            Logger gradleLogger,
+            BuildLogger buildLogger
     ) {
         try {
             Class<? extends Plugin> pluginClass = getClassFromName(className, classLoader);
             return new Plugin.Factory.UsingReflection(pluginClass)
-                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor));
+                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor))
+                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, gradleLogger))
+                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, gradleLogger))
+                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, buildLogger));
         } catch (Throwable t) {
             throw new IllegalStateException("Cannot resolve plugin: $className", t);
         }
