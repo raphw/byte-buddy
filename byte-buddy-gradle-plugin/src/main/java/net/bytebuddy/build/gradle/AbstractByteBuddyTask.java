@@ -467,7 +467,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
         } else if (isWarnOnEmptyTypeSet() && summary.getTransformed().isEmpty()) {
             getLogger().warn("No types were transformed during plugin execution");
         } else {
-            getLogger().info("Transformed {} types", summary.getTransformed().size());
+            getLogger().info("Transformed {} type(s)", summary.getTransformed().size());
         }
     }
 

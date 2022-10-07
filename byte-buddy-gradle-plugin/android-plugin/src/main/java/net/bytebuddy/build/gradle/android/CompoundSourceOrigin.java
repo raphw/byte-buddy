@@ -30,8 +30,7 @@ import java.util.jar.Manifest;
 /**
  * Needed to go through sources from across multiple locations, either multiple folders or even jar files too.
  */
-public class CompoundSourceOrigin implements Plugin.Engine.Source,
-        Plugin.Engine.Source.Origin {
+public class CompoundSourceOrigin implements Plugin.Engine.Source, Plugin.Engine.Source.Origin {
     private final Set<Origin> origins;
 
     private ClassFileLocator locator;

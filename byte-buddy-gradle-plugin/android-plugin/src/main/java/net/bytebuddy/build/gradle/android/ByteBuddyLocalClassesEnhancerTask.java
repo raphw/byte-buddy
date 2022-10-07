@@ -44,15 +44,13 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Transformation task for instrumenting the project's local classes.
@@ -107,151 +105,99 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     @OutputDirectory
     public abstract DirectoryProperty getOutputDir();
 
-    @TaskAction
-    public void action() {
-        transform(getOutputDir().get().getAsFile());
-    }
-
-    private void transform(File outputDir) {
-        try (ClassFileLocator contextClassFileLocator = createContextClassFileLocator(getRuntimeClasspath().plus(getAndroidBootClasspath()).plus(getByteBuddyClasspath()).getFiles())) {
-            makeEngine()
-                    .with(contextClassFileLocator)
-                    .apply(
-                            createSource(),
-                            new Plugin.Engine.Target.ForFolder(outputDir),
-                            createPluginFactories()
-                    );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Plugin.Engine makeEngine() {
-        ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersionString(getJavaTargetCompatibilityVersion()
-                .get()
-                .toString());
-        MethodNameTransformer methodNameTransformer = MethodNameTransformer.Suffixing.withRandomSuffix();
-
-        return Plugin.Engine.Default.of(new AndroidEntryPoint(), classFileVersion, methodNameTransformer);
-    }
-
-    private List<Plugin.Factory> createPluginFactories() throws IOException {
-        URLClassLoader androidLoader = new URLClassLoader(toUrlArray(getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader());
-        URLClassLoader pluginLoader = new URLClassLoader(toUrlArray(getByteBuddyClasspath().getFiles()), androidLoader);
-        ArrayList<Plugin.Factory> factories = new ArrayList<>();
-
-        AndroidDescriptor androidDescriptor = new LocalAndroidDescriptor();
-        BuildLogger buildLogger;
-        try {
-            buildLogger = (BuildLogger) Class.forName("net.bytebuddy.build.gradle.GradleBuildLogger")
-                    .getConstructor(Logger.class)
-                    .newInstance(getProject().getLogger());
-        } catch (Exception exception) {
-            throw new GradleException("Failed to resolve Gradle build logger", exception);
-        }
-        for (String className : Plugin.Engine.Default.scan(pluginLoader)) {
-            factories.add(createFactoryFromClassName(className, pluginLoader, androidDescriptor, getProject().getLogger(), buildLogger));
-        }
-
-        return factories;
-    }
-
-    private Plugin.Factory.UsingReflection createFactoryFromClassName(
-            String className,
-            ClassLoader classLoader,
-            AndroidDescriptor androidDescriptor,
-            Logger gradleLogger,
-            BuildLogger buildLogger
-    ) {
-        try {
-            Class<? extends Plugin> pluginClass = getClassFromName(className, classLoader);
-            return new Plugin.Factory.UsingReflection(pluginClass)
-                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor))
-                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, gradleLogger))
-                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, gradleLogger))
-                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, buildLogger));
-        } catch (Throwable t) {
-            throw new IllegalStateException("Cannot resolve plugin: $className", t);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private Class<? extends Plugin> getClassFromName(String className, ClassLoader classLoader) throws ClassNotFoundException {
-        Class<?> type = Class.forName(className, false, classLoader);
-
-        if (!Plugin.class.isAssignableFrom(type)) {
-            throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
-        }
-
-        return (Class<? extends Plugin>) type;
-    }
-
-    private URL[] toUrlArray(Set<File> files) {
-        List<URL> urls = new ArrayList<>();
-        files.forEach(file -> {
+    /**
+     * Translates a collection of files to {@link URL}s.
+     *
+     * @param files The list of files to translate.
+     * @return An array of URLs representing the provided files.
+     */
+    private static URL[] toUrls(Collection<File> files) {
+        URL[] url = new URL[files.size()];
+        int index = 0;
+        for (File file : files) {
             try {
-                urls.add(file.toURI().toURL());
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
+                url[index++] = file.toURI().toURL();
+            } catch (MalformedURLException exception) {
+                throw new IllegalStateException("Failed to convert file " + file.getAbsolutePath(), exception);
             }
-        });
-        return urls.toArray(new URL[0]);
-    }
-
-    private CompoundSourceOrigin createSource() {
-        List<Directory> directories = getLocalClassesDirs().get();
-        Set<Plugin.Engine.Source.Origin> origins = new HashSet<>();
-        for (Directory directory : directories) {
-            origins.add(new Plugin.Engine.Source.ForFolder(directory.getAsFile()));
         }
-        return new CompoundSourceOrigin(origins);
-    }
-
-    private ClassFileLocator createContextClassFileLocator(Set<File> filesAndDirs) throws IOException {
-        ArrayList<ClassFileLocator> classFileLocators = new ArrayList<>();
-
-        for (File artifact : filesAndDirs) {
-            classFileLocators.add(artifact.isFile() ? ClassFileLocator.ForJarFile.of(artifact) : new ClassFileLocator.ForFolder(artifact));
-        }
-
-        classFileLocators.add(
-                ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader())
-        );
-
-        return new ClassFileLocator.Compound(classFileLocators);
+        return url;
     }
 
     /**
-     * An implementation for an Android descriptor for local classpath queries.
+     * Executes the plugin for transforming local classes.
      */
-    protected static class LocalAndroidDescriptor implements AndroidDescriptor {
-
-        /**
-         * Returns the LOCAL {@link net.bytebuddy.build.AndroidDescriptor.TypeScope}.
-         *
-         * @return the LOCAL {@link net.bytebuddy.build.AndroidDescriptor.TypeScope}.
-         */
-        @Override
-        public TypeScope getTypeScope(TypeDescription typeDescription) {
-            return TypeScope.LOCAL;
-        }
-    }
-
-    private static class AndroidEntryPoint implements EntryPoint {
-
-        @Override
-        public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
-            return new ByteBuddy(classFileVersion).with(TypeValidation.DISABLED);
-        }
-
-        @Override
-        public DynamicType.Builder<?> transform(
-                TypeDescription typeDescription,
-                ByteBuddy byteBuddy,
-                ClassFileLocator classFileLocator,
-                MethodNameTransformer methodNameTransformer
-        ) {
-            return byteBuddy.decorate(typeDescription, classFileLocator);
+    @TaskAction
+    public void execute() {
+        try {
+            ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersionString(getJavaTargetCompatibilityVersion().get().toString());
+            List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
+            for (File file : getRuntimeClasspath().plus(getAndroidBootClasspath()).plus(getByteBuddyClasspath()).getFiles()) {
+                classFileLocators.add(file.isFile()
+                        ? ClassFileLocator.ForJarFile.of(file)
+                        : new ClassFileLocator.ForFolder(file));
+            }
+            classFileLocators.add(ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader()));
+            ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
+            try {
+                List<Directory> directories = getLocalClassesDirs().get();
+                Set<Plugin.Engine.Source.Origin> origins = new HashSet<>();
+                for (Directory directory : directories) {
+                    origins.add(new Plugin.Engine.Source.ForFolder(directory.getAsFile()));
+                }
+                MethodNameTransformer methodNameTransformer = MethodNameTransformer.Suffixing.withRandomSuffix();
+                ClassLoader classLoader = new URLClassLoader(
+                        toUrls(getByteBuddyClasspath().getFiles()),
+                        new URLClassLoader(toUrls(getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
+                try {
+                    List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>();
+                    BuildLogger buildLogger;
+                    try {
+                        buildLogger = (BuildLogger) Class.forName("net.bytebuddy.build.gradle.GradleBuildLogger")
+                                .getConstructor(Logger.class)
+                                .newInstance(getProject().getLogger());
+                    } catch (Exception exception) {
+                        throw new GradleException("Failed to resolve Gradle build logger", exception);
+                    }
+                    for (String name : Plugin.Engine.Default.scan(classLoader)) {
+                        try {
+                            @SuppressWarnings("unchecked")
+                            Class<? extends Plugin> type = (Class<? extends Plugin>) Class.forName(name, false, classLoader);
+                            if (!Plugin.class.isAssignableFrom(type)) {
+                                throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
+                            }
+                            factories.add(new Plugin.Factory.UsingReflection(type)
+                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, AndroidDescriptor.Trivial.LOCAL))
+                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, getProject().getLogger()))
+                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, getProject().getLogger()))
+                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, buildLogger)));
+                        } catch (Throwable throwable) {
+                            throw new IllegalStateException("Cannot resolve plugin: " + name, throwable);
+                        }
+                    }
+                    Plugin.Engine.Summary summary = Plugin.Engine.Default.of(new EntryPoint.Unvalidated(EntryPoint.Default.DECORATE), classFileVersion, methodNameTransformer)
+                            .with(classFileLocator)
+                            .apply(new CompoundSourceOrigin(origins), new Plugin.Engine.Target.ForFolder(getOutputDir().get().getAsFile()), factories);
+                    if (!summary.getFailed().isEmpty()) {
+                        throw new IllegalStateException(summary.getFailed() + " type transformations have failed");
+                    } else if (summary.getTransformed().isEmpty()) {
+                        getLogger().info("No types were transformed during plugin execution");
+                    } else {
+                        getLogger().info("Transformed {} type(s)", summary.getTransformed().size());
+                    }
+                } finally {
+                    if (classLoader instanceof Closeable) {
+                        ((Closeable) classLoader).close();
+                    }
+                    if (classLoader.getParent() instanceof Closeable) {
+                        ((Closeable) classLoader.getParent()).close();
+                    }
+                }
+            } finally {
+                classFileLocator.close();
+            }
+        } catch (IOException exception) {
+            throw new GradleException("Failed to transform local classes", exception);
         }
     }
 

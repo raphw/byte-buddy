@@ -67,6 +67,25 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
     private volatile State state;
 
     /**
+     * Translates a collection of files to {@link URL}s.
+     *
+     * @param files The list of files to translate.
+     * @return An array of URLs representing the provided files.
+     */
+    private static URL[] toUrls(Collection<File> files) {
+        URL[] url = new URL[files.size()];
+        int index = 0;
+        for (File file : files) {
+            try {
+                url[index++] = file.toURI().toURL();
+            } catch (MalformedURLException exception) {
+                throw new IllegalStateException("Failed to convert file " + file.getAbsolutePath(), exception);
+            }
+        }
+        return url;
+    }
+
+    /**
      * Initializes the service.
      *
      * @param parameters The Byte Buddy instrumentation parameters.
@@ -99,7 +118,6 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                 ClassLoader classLoader = new URLClassLoader(
                         toUrls(parameters.getByteBuddyClasspath().getFiles()),
                         new URLClassLoader(toUrls(parameters.getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
-                AndroidDescriptor androidDescriptor = new ExternalClassesAndroidDescriptor();
                 ArrayList<Plugin.Factory> factories = new ArrayList<Plugin.Factory>();
                 Logger logger = Logging.getLogger(ByteBuddyAndroidService.class);
                 BuildLogger buildLogger;
@@ -118,7 +136,7 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                             throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
                         }
                         factories.add(new Plugin.Factory.UsingReflection(type)
-                                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor))
+                                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, AndroidDescriptor.Trivial.EXTERNAL))
                                 .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, logger))
                                 .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, logger))
                                 .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, buildLogger)));
@@ -142,7 +160,7 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         typePool,
                         classFileLocator,
                         classLoader,
-                        androidDescriptor);
+                        AndroidDescriptor.Trivial.EXTERNAL);
             } catch (IOException exception) {
                 throw new IllegalStateException(exception);
             }
@@ -216,26 +234,10 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
         if (state.getClassLoader() instanceof Closeable) {
             ((Closeable) state.getClassLoader()).close();
         }
-        this.state = null;
-    }
-
-    /**
-     * Translates a collection of files to {@link URL}s.
-     *
-     * @param files The list of files to translate.
-     * @return An array of URLs representing the provided files.
-     */
-    private static URL[] toUrls(Collection<File> files) {
-        URL[] url = new URL[files.size()];
-        int index = 0;
-        for (File file : files) {
-            try {
-                url[index++] = file.toURI().toURL();
-            } catch (MalformedURLException exception) {
-                throw new IllegalStateException("Failed to convert file " + file.getAbsolutePath(), exception);
-            }
+        if (state.getClassLoader().getParent() instanceof Closeable) {
+            ((Closeable) state.getClassLoader().getParent()).close();
         }
-        return url;
+        this.state = null;
     }
 
     /**
@@ -395,22 +397,6 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
             spec.getParameters()
                     .getJavaTargetCompatibilityVersion()
                     .set(extension.getCompileOptions().getTargetCompatibility());
-        }
-    }
-
-    /**
-     * An implementation for an Android descriptor for external classpath queries.
-     */
-    protected static class ExternalClassesAndroidDescriptor implements AndroidDescriptor {
-
-        /**
-         * Returns the EXTERNAL {@link net.bytebuddy.build.AndroidDescriptor.TypeScope}.
-         *
-         * @return the EXTERNAL {@link net.bytebuddy.build.AndroidDescriptor.TypeScope}.
-         */
-        @Override
-        public TypeScope getTypeScope(TypeDescription typeDescription) {
-            return TypeScope.EXTERNAL;
         }
     }
 
