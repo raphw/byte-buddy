@@ -3872,11 +3872,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Creates a binding for a fixed {@link String}, a primitive value or a method handle or type.
                  *
                  * @param annotationType The annotation type.
-                 * @param value          The primitive (wrapper) value, {@link String} value, method handle or type to bind.
+                 * @param value          The constant value to bind or {@code null} to bind the parameter type's default value.
                  * @param <S>            The annotation type.
                  * @return A factory for creating an offset mapping that binds the supplied value.
                  */
-                public static <S extends Annotation> OffsetMapping.Factory<S> of(Class<S> annotationType, Object value) {
+                public static <S extends Annotation> OffsetMapping.Factory<S> of(Class<S> annotationType, @MaybeNull Object value) {
                     StackManipulation stackManipulation;
                     TypeDescription typeDescription;
                     if (value == null) {
@@ -13732,11 +13732,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * and any primitive or the value {@code null}.
          *
          * @param type  The type of the annotation being bound.
-         * @param value The value to bind to the annotation.
+         * @param value The value to bind to the annotation or {@code null} to bind the parameter type's default value.
          * @param <T>   The annotation type.
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
-        public <T extends Annotation> WithCustomMapping bind(Class<T> type, Object value) {
+        public <T extends Annotation> WithCustomMapping bind(Class<T> type, @MaybeNull Object value) {
             return bind(OffsetMapping.ForStackManipulation.Factory.of(type, value));
         }
 
