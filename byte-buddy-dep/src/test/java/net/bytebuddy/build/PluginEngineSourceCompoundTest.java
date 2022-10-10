@@ -76,7 +76,7 @@ public class PluginEngineSourceCompoundTest {
 
     @Test
     public void testEmptyCompound() throws Exception {
-        assertThat(new Plugin.Engine.Source.Compound(Collections.emptyList()).read(), sameInstance((Plugin.Engine.Source.Origin) Plugin.Engine.Source.Empty.INSTANCE));
+        assertThat(new Plugin.Engine.Source.Compound(Collections.<Plugin.Engine.Source>emptyList()).read(), sameInstance((Plugin.Engine.Source.Origin) Plugin.Engine.Source.Empty.INSTANCE));
     }
 
     @Test
