@@ -1632,7 +1632,7 @@ public class AdviceTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(sample.getField(FOO).get(sample.getConstructor().newInstance()), is(FOO));
+        assertThat(sample.getField(FOO).get(sample.getConstructor().newInstance()), is((Object) FOO));
     }
 
     @Test(expected = IllegalStateException.class)
