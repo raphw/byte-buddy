@@ -46,4 +46,41 @@ public interface AndroidDescriptor {
          */
         EXTERNAL
     }
+
+    /**
+     * A trivial implementation of an {@link AndroidDescriptor} that returns a fixed value.
+     */
+    enum Trivial implements AndroidDescriptor {
+
+        /**
+         * A descriptor that marks all types as {@link TypeScope#LOCAL}.
+         */
+        LOCAL(TypeScope.LOCAL),
+
+        /**
+         * A descriptor that marks all types as {@link TypeScope#EXTERNAL}.
+         */
+        EXTERNAL(TypeScope.EXTERNAL);
+
+        /**
+         * The type scope to return.
+         */
+        private final TypeScope typeScope;
+
+        /**
+         * Creates a new trivial android descriptor.
+         *
+         * @param typeScope The type scope to return.
+         */
+        Trivial(TypeScope typeScope) {
+            this.typeScope = typeScope;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeScope getTypeScope(TypeDescription typeDescription) {
+            return typeScope;
+        }
+    }
 }

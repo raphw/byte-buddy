@@ -26,17 +26,6 @@ configurations {
         setTransitive(false)
         extendsFrom(fatJar)
     }
-    compileFatJar {
-        canBeConsumed(false)
-        canBeResolved(false)
-    }
-    compileFatJarClasspath {
-        canBeConsumed(false)
-        canBeResolved(true)
-        setTransitive(false)
-        extendsFrom(compileFatJar)
-    }
-    compileClasspath.extendsFrom(compileFatJarClasspath)
 }
 
 dependencies {
@@ -66,9 +55,8 @@ tasks.withType(AbstractArchiveTask).configureEach {
 
 tasks.named("jar") {
     dependsOn configurations.fatJarClasspath
-    dependsOn configurations.compileFatJarClasspath
     from {
-        (configurations.fatJarClasspath + configurations.compileFatJarClasspath).collect { zipTree(it) }
+        configurations.fatJarClasspath.collect { zipTree(it) }
     }
 }
 

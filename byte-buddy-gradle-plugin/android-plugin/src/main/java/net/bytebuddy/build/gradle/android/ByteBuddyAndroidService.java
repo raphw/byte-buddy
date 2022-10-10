@@ -28,7 +28,6 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.utility.QueueFactory;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
@@ -48,13 +47,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Queue;
-import java.util.Set;
 
 /**
  * A {@link BuildService} for use with the Byte Buddy Android plugin.
@@ -71,6 +65,25 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
      */
     @MaybeNull
     private volatile State state;
+
+    /**
+     * Translates a collection of files to {@link URL}s.
+     *
+     * @param files The list of files to translate.
+     * @return An array of URLs representing the provided files.
+     */
+    private static URL[] toUrls(Collection<File> files) {
+        URL[] url = new URL[files.size()];
+        int index = 0;
+        for (File file : files) {
+            try {
+                url[index++] = file.toURI().toURL();
+            } catch (MalformedURLException exception) {
+                throw new IllegalStateException("Failed to convert file " + file.getAbsolutePath(), exception);
+            }
+        }
+        return url;
+    }
 
     /**
      * Initializes the service.
@@ -91,7 +104,6 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                 for (File artifact : parameters.getRuntimeClasspath()
                         .plus(parameters.getAndroidBootClasspath())
                         .plus(parameters.getByteBuddyClasspath())
-                        .plus(parameters.getLocalClassesDirectories())
                         .getFiles()) {
                     classFileLocators.add(artifact.isFile()
                             ? ClassFileLocator.ForJarFile.of(artifact)
@@ -106,7 +118,6 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                 ClassLoader classLoader = new URLClassLoader(
                         toUrls(parameters.getByteBuddyClasspath().getFiles()),
                         new URLClassLoader(toUrls(parameters.getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
-                AndroidDescriptor androidDescriptor = DefaultAndroidDescriptor.ofClassPath(parameters.getLocalClassesDirectories().getFiles());
                 ArrayList<Plugin.Factory> factories = new ArrayList<Plugin.Factory>();
                 Logger logger = Logging.getLogger(ByteBuddyAndroidService.class);
                 BuildLogger buildLogger;
@@ -125,7 +136,7 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                             throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
                         }
                         factories.add(new Plugin.Factory.UsingReflection(type)
-                                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor))
+                                .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, AndroidDescriptor.Trivial.EXTERNAL))
                                 .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, logger))
                                 .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, logger))
                                 .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, buildLogger)));
@@ -149,7 +160,7 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
                         typePool,
                         classFileLocator,
                         classLoader,
-                        androidDescriptor);
+                        AndroidDescriptor.Trivial.EXTERNAL);
             } catch (IOException exception) {
                 throw new IllegalStateException(exception);
             }
@@ -167,25 +178,22 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
         if (state == null) {
             throw new IllegalStateException("Byte Buddy Android service was not initialized");
         }
-        try {
-            TypeDescription typeDescription = state.getTypePool().describe(name).resolve();
-            for (Plugin plugin : state.getPlugins()) {
-                if (plugin instanceof Plugin.WithPreprocessor) {
-                    ((Plugin.WithPreprocessor) plugin).onPreprocess(typeDescription, state.getClassFileLocator());
-                }
-            }
-            for (Plugin plugin : state.getPlugins()) {
-                if (plugin.matches(typeDescription)) {
-                    return true;
-                }
-            }
-            return false;
-        } catch (TypePool.Resolution.NoSuchTypeException ignored) {
-            // There are android generated classes for android XML resources, that typically end with "R$[something]",
-            // such as "R$layout, R$string, R$id", etc. Which are not available in the classpath by the time this
-            // task runs, and also, those classes aren't worthy of instrumentation either.
+        TypePool.Resolution resolution = state.getTypePool().describe(name);
+        if (!resolution.isResolved()) {
             return false;
         }
+        TypeDescription typeDescription = resolution.resolve();
+        for (Plugin plugin : state.getPlugins()) {
+            if (plugin instanceof Plugin.WithPreprocessor) {
+                ((Plugin.WithPreprocessor) plugin).onPreprocess(typeDescription, state.getClassFileLocator());
+            }
+        }
+        for (Plugin plugin : state.getPlugins()) {
+            if (plugin.matches(typeDescription)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -226,26 +234,10 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
         if (state.getClassLoader() instanceof Closeable) {
             ((Closeable) state.getClassLoader()).close();
         }
-        this.state = null;
-    }
-
-    /**
-     * Translates a collection of files to {@link URL}s.
-     *
-     * @param files The list of files to translate.
-     * @return An array of URLs representing the provided files.
-     */
-    private static URL[] toUrls(Collection<File> files) {
-        URL[] url = new URL[files.size()];
-        int index = 0;
-        for (File file : files) {
-            try {
-                url[index++] = file.toURI().toURL();
-            } catch (MalformedURLException exception) {
-                throw new IllegalStateException("Failed to convert file " + file.getAbsolutePath(), exception);
-            }
+        if (state.getClassLoader().getParent() instanceof Closeable) {
+            ((Closeable) state.getClassLoader().getParent()).close();
         }
-        return url;
+        this.state = null;
     }
 
     /**
@@ -405,66 +397,6 @@ public abstract class ByteBuddyAndroidService implements BuildService<ByteBuddyA
             spec.getParameters()
                     .getJavaTargetCompatibilityVersion()
                     .set(extension.getCompileOptions().getTargetCompatibility());
-        }
-    }
-
-    /**
-     * An implementation for an Android descriptor based on resolving class names against the class path.
-     */
-    protected static class DefaultAndroidDescriptor implements AndroidDescriptor {
-
-        /**
-         * The file name extension of a Java class file.
-         */
-        private static final String CLASS_FILE_EXTENSION = ".class";
-
-        /**
-         * The files on the class path.
-         */
-        private final Set<String> names;
-
-        /**
-         * Creates a default Android descriptor.
-         *
-         * @param names The names of all classes on the class path.
-         */
-        protected DefaultAndroidDescriptor(Set<String> names) {
-            this.names = names;
-        }
-
-        /**
-         * Resolves class names of a set of class files from the class path.
-         *
-         * @param roots The class path roots to resolve.
-         * @return A suitable Android descriptor.
-         */
-        protected static AndroidDescriptor ofClassPath(Set<File> roots) {
-            Set<String> names = new HashSet<String>();
-            for (File root : roots) {
-                Queue<File> queue = QueueFactory.make(Collections.singleton(root));
-                while (!queue.isEmpty()) {
-                    File file = queue.remove();
-                    if (file.isDirectory()) {
-                        File[] value = file.listFiles();
-                        if (value != null) {
-                            queue.addAll(Arrays.asList(value));
-                        }
-                    } else if (file.getName().endsWith(CLASS_FILE_EXTENSION)) {
-                        String path = root.getAbsoluteFile().toURI().relativize(file.getAbsoluteFile().toURI()).getPath();
-                        names.add(path.substring(0, path.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.'));
-                    }
-                }
-            }
-            return new DefaultAndroidDescriptor(names);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public TypeScope getTypeScope(TypeDescription typeDescription) {
-            return names.contains(typeDescription.getName())
-                    ? TypeScope.LOCAL
-                    : TypeScope.EXTERNAL;
         }
     }
 

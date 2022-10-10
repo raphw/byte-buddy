@@ -18,7 +18,10 @@ package net.bytebuddy.build.gradle.android;
 import com.android.build.api.instrumentation.InstrumentationParameters;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.*;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 
 /**
  * The parameters provided to the Byte Buddy instrumentation.
@@ -51,14 +54,6 @@ public interface ByteBuddyInstrumentationParameters extends InstrumentationParam
     @InputFiles
     @PathSensitive(PathSensitivity.RELATIVE)
     ConfigurableFileCollection getRuntimeClasspath();
-
-    /**
-     * Returns the local classes' directories.
-     *
-     * @return The local classes' directories.
-     */
-    @Classpath
-    ConfigurableFileCollection getLocalClassesDirectories();
 
     /**
      * Returns the Byte Buddy service to use.
