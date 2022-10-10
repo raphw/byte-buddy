@@ -1622,7 +1622,17 @@ public class AdviceTest {
                 .load(sample.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertThat(type.getMethod("run").invoke(type.getConstructor().newInstance()), nullValue(Object.class));
+    }
 
+    @Test
+    public void testWriteFieldInConstructor() throws Exception {
+        Class<?> sample = new ByteBuddy()
+                .redefine(ConstructorWriteFieldTest.class)
+                .visit(Advice.to(ConstructorWriteFieldTest.class).on(isConstructor()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(sample.getField(FOO).get(sample.getConstructor().newInstance()), is(FOO));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -3720,6 +3730,16 @@ public class AdviceTest {
 
         public String foo(String x) {
             return x;
+        }
+    }
+
+    public static class ConstructorWriteFieldTest {
+
+        public String foo;
+
+        @Advice.OnMethodEnter
+        static String enter(@Advice.FieldValue(value = "foo", readOnly = false) String value) {
+            return value = "foo";
         }
     }
 }

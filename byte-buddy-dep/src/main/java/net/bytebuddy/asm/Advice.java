@@ -1133,6 +1133,65 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 /**
+                 * A write-only mapping for a field value, typically to be used for constructors prior to invoking the super-constructor.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                public static class WriteOnly implements Target {
+
+                    /**
+                     * The field value to load.
+                     */
+                    private final FieldDescription fieldDescription;
+
+                    /**
+                     * An assignment to apply prior to a field write.
+                     */
+                    private final StackManipulation writeAssignment;
+
+                    /**
+                     * Creates a write-only mapping for a field value.
+                     *
+                     * @param fieldDescription The field value to load.
+                     * @param writeAssignment  An assignment to apply prior to a field write.
+                     */
+                    protected WriteOnly(FieldDescription fieldDescription, StackManipulation writeAssignment) {
+                        this.fieldDescription = fieldDescription;
+                        this.writeAssignment = writeAssignment;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public StackManipulation resolveRead() {
+                        throw new IllegalStateException("Cannot read write-only field value");
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public StackManipulation resolveWrite() {
+                        StackManipulation preparation;
+                        if (fieldDescription.isStatic()) {
+                            preparation = StackManipulation.Trivial.INSTANCE;
+                        } else {
+                            preparation = new StackManipulation.Compound(
+                                    MethodVariableAccess.loadThis(),
+                                    Duplication.SINGLE.flipOver(fieldDescription.getType()),
+                                    Removal.SINGLE
+                            );
+                        }
+                        return new StackManipulation.Compound(writeAssignment, preparation, FieldAccess.forField(fieldDescription).write());
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public StackManipulation resolveIncrement(int value) {
+                        throw new IllegalStateException("Cannot increment write-only field value");
+                    }
+                }
+
+                /**
                  * A mapping for a writable field.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
@@ -2309,20 +2368,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 FieldDescription fieldDescription = resolve(instrumentedType, instrumentedMethod);
                 if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
                     throw new IllegalStateException("Cannot read non-static field " + fieldDescription + " from static method " + instrumentedMethod);
-                } else if (sort.isPremature(instrumentedMethod) && !fieldDescription.isStatic()) {
-                    throw new IllegalStateException("Cannot access non-static field before calling constructor: " + instrumentedMethod);
                 }
-                StackManipulation readAssignment = assigner.assign(fieldDescription.getType(), target, typing);
-                if (!readAssignment.isValid()) {
-                    throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + target);
-                } else if (readOnly) {
-                    return new Target.ForField.ReadOnly(fieldDescription, readAssignment);
-                } else {
-                    StackManipulation writeAssignment = assigner.assign(target, fieldDescription.getType(), typing);
-                    if (!writeAssignment.isValid()) {
-                        throw new IllegalStateException("Cannot assign " + target + " to " + fieldDescription);
+                if (sort.isPremature(instrumentedMethod) && !fieldDescription.isStatic()) {
+                    if (readOnly) {
+                        throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + target);
+                    } else {
+                        StackManipulation writeAssignment = assigner.assign(target, fieldDescription.getType(), typing);
+                        if (!writeAssignment.isValid()) {
+                            throw new IllegalStateException("Cannot assign " + target + " to " + fieldDescription);
+                        }
+                        return new Target.ForField.WriteOnly(fieldDescription.asDefined(), writeAssignment);
                     }
-                    return new Target.ForField.ReadWrite(fieldDescription.asDefined(), readAssignment, writeAssignment);
+                } else {
+                    StackManipulation readAssignment = assigner.assign(fieldDescription.getType(), target, typing);
+                    if (!readAssignment.isValid()) {
+                        throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + target);
+                    } else if (readOnly) {
+                        return new Target.ForField.ReadOnly(fieldDescription, readAssignment);
+                    } else {
+                        StackManipulation writeAssignment = assigner.assign(target, fieldDescription.getType(), typing);
+                        if (!writeAssignment.isValid()) {
+                            throw new IllegalStateException("Cannot assign " + target + " to " + fieldDescription);
+                        }
+                        return new Target.ForField.ReadWrite(fieldDescription.asDefined(), readAssignment, writeAssignment);
+                    }
                 }
             }
 
