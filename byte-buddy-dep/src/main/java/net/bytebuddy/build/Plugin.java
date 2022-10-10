@@ -2737,6 +2737,174 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             }
 
             /**
+             * A compound source that combines multiple sources into a single representation.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class Compound implements Source {
+
+                /**
+                 * The represented sources.
+                 */
+                private final Collection<? extends Source> sources;
+
+                /**
+                 * Creates a new compound source.
+                 *
+                 * @param sources The represented sources.
+                 */
+                public Compound(Collection<? extends Source> sources) {
+                    this.sources = sources;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Source.Origin read() throws IOException {
+                    if (sources.isEmpty()) {
+                        return Empty.INSTANCE;
+                    }
+                    List<Source.Origin> origins = new ArrayList<Source.Origin>(sources.size());
+                    try {
+                        for (Source source : sources) {
+                            origins.add(source.read());
+                        }
+                    } catch (IOException exception) {
+                        for (Source.Origin origin : origins) {
+                            origin.close();
+                        }
+                        throw exception;
+                    }
+                    return new Origin(origins);
+                }
+
+                /**
+                 * Implements a compound {@link Source.Origin}.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                protected static class Origin implements Source.Origin {
+
+                    /**
+                     * A list of represented origins.
+                     */
+                    private final List<Source.Origin> origins;
+
+                    /**
+                     * Creates a new compound origin.
+                     *
+                     * @param origins A list of represented origins.
+                     */
+                    protected Origin(List<Source.Origin> origins) {
+                        this.origins = origins;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Manifest getManifest() throws IOException {
+                        for (Source.Origin origin : origins) {
+                            Manifest manifest = origin.getManifest();
+                            if (manifest != null) {
+                                return manifest;
+                            }
+                        }
+                        return NO_MANIFEST;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ClassFileLocator getClassFileLocator() {
+                        List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(origins.size());
+                        for (Source.Origin origin : origins) {
+                            classFileLocators.add(origin.getClassFileLocator());
+                        }
+                        return new ClassFileLocator.Compound(classFileLocators);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Iterator<Element> iterator() {
+                        return new CompoundIterator(origins);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void close() throws IOException {
+                        for (Source.Origin origin : origins) {
+                            origin.close();
+                        }
+                    }
+
+                    /**
+                     * A compound iterator that combines several iterables.
+                     */
+                    protected static class CompoundIterator implements Iterator<Element> {
+
+                        /**
+                         * The current iterator or {@code null} if no such iterator is defined.
+                         */
+                        @MaybeNull
+                        private Iterator<? extends Element> current;
+
+                        /**
+                         * A backlog of iterables to still consider.
+                         */
+                        private final List<? extends Iterable<? extends Element>> backlog;
+
+                        /**
+                         * Creates a compound iterator.
+                         *
+                         * @param iterables The iterables to consider.
+                         */
+                        protected CompoundIterator(List<? extends Iterable<? extends Element>> iterables) {
+                            backlog = iterables;
+                            forward();
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public boolean hasNext() {
+                            return current != null && current.hasNext();
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Element next() {
+                            try {
+                                if (current != null) {
+                                    return current.next();
+                                } else {
+                                    throw new NoSuchElementException();
+                                }
+                            } finally {
+                                forward();
+                            }
+                        }
+
+                        /**
+                         * Forwards the iterator to the next relevant iterable.
+                         */
+                        private void forward() {
+                            while ((current == null || !current.hasNext()) && !backlog.isEmpty()) {
+                                current = backlog.remove(0).iterator();
+                            }
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public void remove() {
+                            throw new UnsupportedOperationException("remove");
+                        }
+                    }
+                }
+            }
+
+            /**
              * A source that represents a collection of in-memory resources that are represented as byte arrays.
              */
             @HashCodeAndEqualsPlugin.Enhance

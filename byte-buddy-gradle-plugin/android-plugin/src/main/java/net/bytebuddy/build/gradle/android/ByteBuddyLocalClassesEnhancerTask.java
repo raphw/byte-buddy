@@ -22,10 +22,7 @@ import net.bytebuddy.build.AndroidDescriptor;
 import net.bytebuddy.build.BuildLogger;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
@@ -140,12 +137,10 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
             classFileLocators.add(ClassFileLocator.ForClassLoader.of(ByteBuddy.class.getClassLoader()));
             ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
             try {
-                List<Directory> directories = getLocalClassesDirs().get();
-                Set<Plugin.Engine.Source.Origin> origins = new HashSet<>();
-                for (Directory directory : directories) {
-                    origins.add(new Plugin.Engine.Source.ForFolder(directory.getAsFile()));
+                Set<Plugin.Engine.Source> sources = new LinkedHashSet<Plugin.Engine.Source>();
+                for (Directory directory : getLocalClassesDirs().get()) {
+                    sources.add(new Plugin.Engine.Source.ForFolder(directory.getAsFile()));
                 }
-                MethodNameTransformer methodNameTransformer = MethodNameTransformer.Suffixing.withRandomSuffix();
                 ClassLoader classLoader = new URLClassLoader(
                         toUrls(getByteBuddyClasspath().getFiles()),
                         new URLClassLoader(toUrls(getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
@@ -175,15 +170,17 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                             throw new IllegalStateException("Cannot resolve plugin: " + name, throwable);
                         }
                     }
-                    Plugin.Engine.Summary summary = Plugin.Engine.Default.of(new EntryPoint.Unvalidated(EntryPoint.Default.DECORATE), classFileVersion, methodNameTransformer)
+                    Plugin.Engine.Summary summary = Plugin.Engine.Default.of(new EntryPoint.Unvalidated(EntryPoint.Default.DECORATE),
+                                    classFileVersion,
+                                    MethodNameTransformer.Suffixing.withRandomSuffix())
                             .with(classFileLocator)
-                            .apply(new CompoundSourceOrigin(origins), new Plugin.Engine.Target.ForFolder(getOutputDir().get().getAsFile()), factories);
+                            .apply(new Plugin.Engine.Source.Compound(sources), new Plugin.Engine.Target.ForFolder(getOutputDir().get().getAsFile()), factories);
                     if (!summary.getFailed().isEmpty()) {
-                        throw new IllegalStateException(summary.getFailed() + " type transformations have failed");
+                        throw new IllegalStateException(summary.getFailed() + " local type transformations have failed");
                     } else if (summary.getTransformed().isEmpty()) {
-                        getLogger().info("No types were transformed during plugin execution");
+                        getLogger().info("No local types were transformed during plugin execution");
                     } else {
-                        getLogger().info("Transformed {} type(s)", summary.getTransformed().size());
+                        getLogger().info("Transformed {} local type(s)", summary.getTransformed().size());
                     }
                 } finally {
                     if (classLoader instanceof Closeable) {
@@ -205,33 +202,36 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
      * A configuration action for the {@link ByteBuddyLocalClassesEnhancerTask} task.
      */
     protected static class ConfigurationAction implements Action<ByteBuddyLocalClassesEnhancerTask> {
+
         /**
-         * The current variant Byte Buddy configuration.
+         * The current variant's Byte Buddy configuration.
          */
-        private final Configuration bytebuddyClasspath;
+        private final Configuration byteBuddyConfiguration;
         /**
          * The android gradle extension.
          */
+
         private final BaseExtension androidExtension;
         /**
          * The current variant's runtime classpath.
          */
+
         private final FileCollection runtimeClasspath;
 
         /**
-         * @param bytebuddyClasspath The current variant Byte Buddy configuration.
-         * @param androidExtension   The android gradle extension.
-         * @param runtimeClasspath   The current variant's runtime classpath.
+         * @param byteBuddyConfiguration The current variant Byte Buddy configuration.
+         * @param androidExtension       The android gradle extension.
+         * @param runtimeClasspath       The current variant's runtime classpath.
          */
-        public ConfigurationAction(Configuration bytebuddyClasspath, BaseExtension androidExtension, FileCollection runtimeClasspath) {
-            this.bytebuddyClasspath = bytebuddyClasspath;
+        public ConfigurationAction(Configuration byteBuddyConfiguration, BaseExtension androidExtension, FileCollection runtimeClasspath) {
+            this.byteBuddyConfiguration = byteBuddyConfiguration;
             this.androidExtension = androidExtension;
             this.runtimeClasspath = runtimeClasspath;
         }
 
         @Override
         public void execute(ByteBuddyLocalClassesEnhancerTask task) {
-            task.getByteBuddyClasspath().from(bytebuddyClasspath);
+            task.getByteBuddyClasspath().from(byteBuddyConfiguration);
             task.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
             task.getRuntimeClasspath().from(runtimeClasspath);
             task.getJavaTargetCompatibilityVersion().set(androidExtension.getCompileOptions().getTargetCompatibility());
