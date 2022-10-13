@@ -1,16 +1,23 @@
 Byte Buddy release notes
 ------------------------
 
-### 22. August 2022: version 1.12.17
+### 11. October 2022: version 1.12.18
+
+- Allow writing to field from enter `Advice` in constructor, as byte code allows it.
+- Refactor Android plugin processor to avoid skipping local classes.
+- Improve staleness filter for Maven plugin.
+- Fix incorrect resolution of custom bound *invokedynamic* values in `Advice`.
+
+### 21. September 2022: version 1.12.17
 
 - Use decorating `EntryPoint` in Android Gradle plugin.
 - Introduce `PatchMode` on `AgentBuilder` patching to allow for control over overlap.
 
-### 22. August 2022: version 1.12.16
+### 8. September 2022: version 1.12.16
 
 - Fix Gradle release script to publish plugin.
 
-### 22. August 2022: version 1.12.15
+### 8. September 2022: version 1.12.15
 
 - Introduce `ClassVisitorFactory` which allows to translate to and from class wrappers in a different ASM namespace.
 - Allow builders to change to `ClassVisitors`.

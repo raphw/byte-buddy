@@ -15,7 +15,7 @@
         <version.android.sdk.dx>11.0.0_r3</version.android.sdk.dx>
         <version.commons-codec>1.15</version.commons-codec>
         <version.httpcomponents>4.5.13</version.httpcomponents>
-        <version.org-json>20220320</version.org-json>
+        <version.org-json>20220924</version.org-json>
     </properties>
 
     <name>Byte Buddy for Android</name>
