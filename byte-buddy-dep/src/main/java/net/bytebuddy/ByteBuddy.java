@@ -146,6 +146,9 @@ public class ByteBuddy {
     @MaybeNull
     private static final Implementation.Context.Factory DEFAULT_IMPLEMENTATION_CONTEXT_FACTORY;
 
+    // break a class initialization cycle
+    private static final TypeDescription.Generic genericTypeDescription = TypeDescription.Generic.OBJECT;
+
     /*
      * Resolves the default naming strategy.
      */
