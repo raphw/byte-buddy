@@ -8542,6 +8542,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * Initializes the type cache.
          */
         static {
+            // Avoids class loading lock when Generic.OfNonGenericType.ForLoadedType is used
+            // from this class while it is loaded from another thread.
+            try {
+                Class.forName(Generic.OfNonGenericType.ForLoadedType.class.getName());
+            } catch (Throwable ignored) {
+                /* do nothing */
+            }
             TYPE_CACHE = new HashMap<Class<?>, TypeDescription>();
             TYPE_CACHE.put(TargetType.class, new ForLoadedType(TargetType.class));
             TYPE_CACHE.put(Object.class, new ForLoadedType(Object.class));
