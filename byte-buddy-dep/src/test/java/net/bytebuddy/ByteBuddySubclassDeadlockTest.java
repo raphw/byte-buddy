@@ -44,7 +44,7 @@ public class ByteBuddySubclassDeadlockTest {
         /* empty */
     }
 
-    static class Tester implements Runnable {
+    public static class Tester implements Runnable {
 
         public void run() {
             Semaphore semaphore = new Semaphore(0);
