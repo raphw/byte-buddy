@@ -473,22 +473,22 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * A representation of the {@link Object} type.
          */
-        Generic OBJECT = new OfNonGenericType.ForLoadedType(Object.class);
+        Generic OBJECT = OfNonGenericType.ForLoadedType.of(Object.class);
 
         /**
          * A representation of the {@link Class} non-type.
          */
-        Generic CLASS = new OfNonGenericType.ForLoadedType(Class.class);
+        Generic CLASS = OfNonGenericType.ForLoadedType.of(Class.class);
 
         /**
          * A representation of the {@code void} non-type.
          */
-        Generic VOID = new OfNonGenericType.ForLoadedType(void.class);
+        Generic VOID = OfNonGenericType.ForLoadedType.of(void.class);
 
         /**
          * A representation of the {@link Annotation} type.
          */
-        Generic ANNOTATION = new OfNonGenericType.ForLoadedType(Annotation.class);
+        Generic ANNOTATION = OfNonGenericType.ForLoadedType.of(Annotation.class);
 
         /**
          * Represents any undefined property representing a generic type description that is instead represented as {@code null} in order
@@ -8542,13 +8542,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * Initializes the type cache.
          */
         static {
-            // Avoids class loading lock when Generic.OfNonGenericType.ForLoadedType is used
-            // from this class while it is loaded from another thread.
-            try {
-                Class.forName(Generic.OfNonGenericType.ForLoadedType.class.getName());
-            } catch (Throwable ignored) {
-                /* do nothing */
-            }
             TYPE_CACHE = new HashMap<Class<?>, TypeDescription>();
             TYPE_CACHE.put(TargetType.class, new ForLoadedType(TargetType.class));
             TYPE_CACHE.put(Object.class, new ForLoadedType(Object.class));
