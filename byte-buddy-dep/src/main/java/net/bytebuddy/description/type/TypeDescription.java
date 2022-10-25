@@ -64,28 +64,43 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
     /**
      * A representation of the {@link java.lang.Object} type.
+     *
+     * @deprecated Use {@link TypeDescription.ForLoadedType#of(Class)} instead.
      */
-    TypeDescription OBJECT = new ForLoadedType(Object.class);
+    @Deprecated
+    TypeDescription OBJECT = LazyProxy.of(Object.class);
 
     /**
      * A representation of the {@link java.lang.String} type.
+     *
+     * @deprecated Use {@link TypeDescription.ForLoadedType#of(Class)} instead.
      */
-    TypeDescription STRING = new ForLoadedType(String.class);
+    @Deprecated
+    TypeDescription STRING = LazyProxy.of(String.class);
 
     /**
      * A representation of the {@link java.lang.Class} type.
+     *
+     * @deprecated Use {@link TypeDescription.ForLoadedType#of(Class)} instead.
      */
-    TypeDescription CLASS = new ForLoadedType(Class.class);
+    @Deprecated
+    TypeDescription CLASS = LazyProxy.of(Class.class);
 
     /**
      * A representation of the {@link java.lang.Throwable} type.
+     *
+     * @deprecated Use {@link TypeDescription.ForLoadedType#of(Class)} instead.
      */
-    TypeDescription THROWABLE = new ForLoadedType(Throwable.class);
+    @Deprecated
+    TypeDescription THROWABLE = LazyProxy.of(Throwable.class);
 
     /**
      * A representation of the {@code void} non-type.
+     *
+     * @deprecated Use {@link TypeDescription.ForLoadedType#of(Class)} instead.
      */
-    TypeDescription VOID = new ForLoadedType(void.class);
+    @Deprecated
+    TypeDescription VOID = LazyProxy.of(void.class);
 
     /**
      * A list of interfaces that are implicitly implemented by any array type.
@@ -472,23 +487,35 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         /**
          * A representation of the {@link Object} type.
+         *
+         * @deprecated Use {@link OfNonGenericType.ForLoadedType#of(Class)} instead.
          */
-        Generic OBJECT = OfNonGenericType.ForLoadedType.of(Object.class);
+        @Deprecated
+        Generic OBJECT = LazyProxy.of(Object.class);
 
         /**
          * A representation of the {@link Class} non-type.
+         *
+         * @deprecated Use {@link OfNonGenericType.ForLoadedType#of(Class)} instead.
          */
-        Generic CLASS = OfNonGenericType.ForLoadedType.of(Class.class);
+        @Deprecated
+        Generic CLASS = LazyProxy.of(Class.class);
 
         /**
          * A representation of the {@code void} non-type.
+         *
+         * @deprecated Use {@link OfNonGenericType.ForLoadedType#of(Class)} instead.
          */
-        Generic VOID = OfNonGenericType.ForLoadedType.of(void.class);
+        @Deprecated
+        Generic VOID = LazyProxy.of(void.class);
 
         /**
          * A representation of the {@link Annotation} type.
+         *
+         * @deprecated Use {@link OfNonGenericType.ForLoadedType#of(Class)} instead.J
          */
-        Generic ANNOTATION = OfNonGenericType.ForLoadedType.of(Annotation.class);
+        @Deprecated
+        Generic ANNOTATION = LazyProxy.of(Annotation.class);
 
         /**
          * Represents any undefined property representing a generic type description that is instead represented as {@code null} in order
@@ -3573,6 +3600,51 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             public boolean represents(java.lang.reflect.Type type) {
                 return equals(Sort.describe(type));
+            }
+        }
+
+        /**
+         * A lazy proxy for representing a {@link Generic} for a loaded type. This proxy is used to
+         * avoid locks when Byte Buddy is loaded circularly.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class LazyProxy implements InvocationHandler {
+
+            /**
+             * The represented loaded type.
+             */
+            private final Class<?> type;
+
+            /**
+             * Creates a new lazy proxy.
+             *
+             * @param type The represented loaded type.
+             */
+            protected LazyProxy(Class<?> type) {
+                this.type = type;
+            }
+
+            /**
+             * Resolves a lazy proxy for a loaded type as a generic type description.
+             *
+             * @param type The represented loaded type.
+             * @return The lazy proxy.
+             */
+            protected static Generic of(Class<?> type) {
+                return (Generic) Proxy.newProxyInstance(Generic.class.getClassLoader(),
+                        new Class<?>[]{Generic.class},
+                        new LazyProxy(type));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Object invoke(Object proxy, Method method, @MaybeNull Object[] argument) throws Throwable {
+                try {
+                    return method.invoke(OfNonGenericType.ForLoadedType.of(type), argument);
+                } catch (InvocationTargetException exception) {
+                    throw exception.getTargetException();
+                }
             }
         }
 
@@ -8518,6 +8590,51 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     }
 
     /**
+     * A lazy proxy for representing a {@link TypeDescription} for a loaded type. This proxy is used to
+     * avoid locks when Byte Buddy is loaded circularly.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    class LazyProxy implements InvocationHandler {
+
+        /**
+         * The represented loaded type.
+         */
+        private final Class<?> type;
+
+        /**
+         * Creates a new lazy proxy.
+         *
+         * @param type The represented loaded type.
+         */
+        protected LazyProxy(Class<?> type) {
+            this.type = type;
+        }
+
+        /**
+         * Resolves a lazy proxy for a loaded type as a type description.
+         *
+         * @param type The represented loaded type.
+         * @return The lazy proxy.
+         */
+        protected static TypeDescription of(Class<?> type) {
+            return (TypeDescription) Proxy.newProxyInstance(TypeDescription.class.getClassLoader(),
+                    new Class<?>[]{TypeDescription.class},
+                    new LazyProxy(type));
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Object invoke(Object proxy, Method method, @MaybeNull Object[] argument) throws Throwable {
+            try {
+                return method.invoke(ForLoadedType.of(type), argument);
+            } catch (InvocationTargetException exception) {
+                throw exception.getTargetException();
+            }
+        }
+    }
+
+    /**
      * A type description implementation that represents a loaded type.
      */
     @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED", justification = "Field is only used as a cache store and is implicitly recomputed")
@@ -8544,6 +8661,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         static {
             TYPE_CACHE = new HashMap<Class<?>, TypeDescription>();
             TYPE_CACHE.put(TargetType.class, new ForLoadedType(TargetType.class));
+            TYPE_CACHE.put(Class.class, new ForLoadedType(Class.class));
+            TYPE_CACHE.put(Throwable.class, new ForLoadedType(Throwable.class));
+            TYPE_CACHE.put(Annotation.class, new ForLoadedType(Annotation.class));
             TYPE_CACHE.put(Object.class, new ForLoadedType(Object.class));
             TYPE_CACHE.put(String.class, new ForLoadedType(String.class));
             TYPE_CACHE.put(Boolean.class, new ForLoadedType(Boolean.class));
