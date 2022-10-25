@@ -22,7 +22,7 @@ public class ByteBuddySubclassDeadlockTest {
     @Test
     @JavaVersionRule.Enforce(value = 8, target = Tester.class)
     public void testDeadlock() throws Exception {
-        List<URL> urls = new ArrayList<>();
+        List<URL> urls = new ArrayList<URL>();
         for (String path : System.getProperty("java.class.path").split(File.pathSeparator, -1)) {
             urls.add(Paths.get(path).toUri().toURL());
         }
