@@ -25,7 +25,7 @@ public class TypeDescriptionGenericVisitorReifyingTest {
 
     @Test
     public void testInitiatingGenerifiedNonGenericType() throws Exception {
-        when(generic.asErasure()).thenReturn(TypeDescription.OBJECT);
+        when(generic.asErasure()).thenReturn(TypeDescription.ForLoadedType.of(Object.class));
         assertThat(TypeDescription.Generic.Visitor.Reifying.INITIATING.onNonGenericType(generic), sameInstance(generic));
     }
 
@@ -58,7 +58,7 @@ public class TypeDescriptionGenericVisitorReifyingTest {
 
     @Test
     public void testInheritingGenerifiedNonGenericType() throws Exception {
-        when(generic.asErasure()).thenReturn(TypeDescription.OBJECT);
+        when(generic.asErasure()).thenReturn(TypeDescription.ForLoadedType.of(Object.class));
         assertThat(TypeDescription.Generic.Visitor.Reifying.INHERITING.onNonGenericType(generic), sameInstance(generic));
     }
 

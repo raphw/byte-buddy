@@ -43,7 +43,7 @@ public class PluginEngineTargetForJarFileTest {
         Plugin.Engine.Target target = new Plugin.Engine.Target.ForJarFile(file);
         Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.Origin.NO_MANIFEST);
         try {
-            sink.store(Collections.singletonMap(TypeDescription.OBJECT, new byte[]{1, 2, 3}));
+            sink.store(Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{1, 2, 3}));
         } finally {
             sink.close();
         }
@@ -51,7 +51,7 @@ public class PluginEngineTargetForJarFileTest {
         try {
             assertThat(inputStream.getManifest(), nullValue(Manifest.class));
             JarEntry entry = inputStream.getNextJarEntry();
-            assertThat(entry.getName(), is(TypeDescription.OBJECT.getInternalName() + ".class"));
+            assertThat(entry.getName(), is(TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ".class"));
             assertThat(StreamDrainer.DEFAULT.drain(inputStream), is(new byte[]{1, 2, 3}));
             assertThat(inputStream.getNextJarEntry(), nullValue(JarEntry.class));
         } finally {

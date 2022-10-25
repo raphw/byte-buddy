@@ -517,7 +517,7 @@ public class AdviceAssignReturnedTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testHandledNotThrowable() {
-        new Advice.AssignReturned.Factory().withSuppressed(TypeDescription.OBJECT);
+        new Advice.AssignReturned.Factory().withSuppressed(TypeDescription.ForLoadedType.of(Object.class));
     }
 
     public static class Sample {

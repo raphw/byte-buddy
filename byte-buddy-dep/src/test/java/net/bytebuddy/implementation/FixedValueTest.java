@@ -46,7 +46,7 @@ public class FixedValueTest {
         Class<? extends Qux> qux = new ByteBuddy()
                 .subclass(Qux.class)
                 .method(isDeclaredBy(Qux.class))
-                .intercept(FixedValue.value(TypeDescription.OBJECT))
+                .intercept(FixedValue.value(TypeDescription.ForLoadedType.of(Object.class)))
                 .make()
                 .load(Qux.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

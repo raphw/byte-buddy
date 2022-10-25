@@ -425,7 +425,7 @@ public @interface Morph {
                  * Creates the constructor call singleton.
                  */
                 StaticFieldConstructor() {
-                    objectTypeDefaultConstructor = TypeDescription.OBJECT.getDeclaredMethods()
+                    objectTypeDefaultConstructor = TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods()
                             .filter(isConstructor())
                             .getOnly();
                 }

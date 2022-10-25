@@ -985,7 +985,7 @@ public class MethodCallTest {
         DynamicType.Loaded<SimpleMethod> loaded = new ByteBuddy()
                 .subclass(SimpleMethod.class)
                 .method(named(FOO))
-                .intercept(MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class)).with(TypeDescription.OBJECT, TypeDescription.STRING))
+                .intercept(MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class)).with(TypeDescription.ForLoadedType.of(Object.class), TypeDescription.ForLoadedType.of(String.class)))
                 .make()
                 .load(SimpleMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));

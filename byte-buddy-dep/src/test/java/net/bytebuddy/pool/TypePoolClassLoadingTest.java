@@ -34,7 +34,7 @@ public class TypePoolClassLoadingTest {
     public void testLoadableBootstrapLoaderClass() throws Exception {
         TypePool.Resolution resolution = typePool.describe(Object.class.getName());
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.resolve(), is(TypeDescription.OBJECT));
+        assertThat(resolution.resolve(), is(TypeDescription.ForLoadedType.of(Object.class)));
     }
 
     @Test
@@ -57,10 +57,10 @@ public class TypePoolClassLoadingTest {
     public void testClearRetainsFunctionality() throws Exception {
         TypePool.Resolution resolution = typePool.describe(Object.class.getName());
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.resolve(), is(TypeDescription.OBJECT));
+        assertThat(resolution.resolve(), is(TypeDescription.ForLoadedType.of(Object.class)));
         typePool.clear();
         TypePool.Resolution otherResolution = typePool.describe(Object.class.getName());
         assertThat(otherResolution.isResolved(), is(true));
-        assertThat(resolution.resolve(), is(TypeDescription.OBJECT));
+        assertThat(resolution.resolve(), is(TypeDescription.ForLoadedType.of(Object.class)));
     }
 }

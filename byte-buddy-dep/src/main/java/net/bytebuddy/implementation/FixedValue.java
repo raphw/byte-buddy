@@ -97,9 +97,9 @@ public abstract class FixedValue implements Implementation {
         } else {
             Class<?> type = fixedValue.getClass();
             if (type == String.class) {
-                return new ForPoolValue(new TextConstant((String) fixedValue), TypeDescription.STRING);
+                return new ForPoolValue(new TextConstant((String) fixedValue), TypeDescription.ForLoadedType.of(String.class));
             } else if (type == Class.class) {
-                return new ForPoolValue(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) fixedValue)), TypeDescription.CLASS);
+                return new ForPoolValue(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) fixedValue)), TypeDescription.ForLoadedType.of(Class.class));
             } else if (type == Boolean.class) {
                 return new ForPoolValue(IntegerConstant.forValue((Boolean) fixedValue), boolean.class);
             } else if (type == Byte.class) {
@@ -161,7 +161,7 @@ public abstract class FixedValue implements Implementation {
      * @return An implementation for the given {@code value}.
      */
     public static AssignerConfigurable value(TypeDescription fixedValue) {
-        return new ForPoolValue(ClassConstant.of(fixedValue), TypeDescription.CLASS);
+        return new ForPoolValue(ClassConstant.of(fixedValue), TypeDescription.ForLoadedType.of(Class.class));
     }
 
     /**
@@ -368,7 +368,7 @@ public abstract class FixedValue implements Implementation {
                 return ForOriginType.this.apply(methodVisitor,
                         implementationContext,
                         instrumentedMethod,
-                        TypeDescription.CLASS.asGenericType(),
+                        TypeDescription.ForLoadedType.of(Class.class).asGenericType(),
                         ClassConstant.of(originType));
             }
         }

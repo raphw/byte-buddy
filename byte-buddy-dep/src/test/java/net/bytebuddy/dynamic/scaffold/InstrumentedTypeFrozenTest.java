@@ -29,124 +29,124 @@ public class InstrumentedTypeFrozenTest {
     public void testDelegation() throws Exception {
         for (Method method : TypeDescription.class.getDeclaredMethods()) {
             if (method.getParameterTypes().length == 0 && Modifier.isPublic(method.getModifiers()) && !method.isSynthetic()) {
-                Object value = method.invoke(new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE));
+                Object value = method.invoke(new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE));
                 assertThat(value, value instanceof ClassFileVersion
-                        ? hasPrototype(method.invoke(TypeDescription.STRING))
-                        : is(method.invoke(TypeDescription.STRING)));
+                        ? hasPrototype(method.invoke(TypeDescription.ForLoadedType.of(String.class)))
+                        : is(method.invoke(TypeDescription.ForLoadedType.of(String.class))));
             }
         }
     }
 
     @Test(expected = IllegalStateException.class)
     public void testFieldToken() throws Exception {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withField(mock(FieldDescription.Token.class));
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withField(mock(FieldDescription.Token.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testAuxiliaryFieldToken() throws Exception {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withAuxiliaryField(mock(FieldDescription.Token.class), mock(Object.class));
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withAuxiliaryField(mock(FieldDescription.Token.class), mock(Object.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testMethodToken() throws Exception {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withMethod(mock(MethodDescription.Token.class));
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withMethod(mock(MethodDescription.Token.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testRecordComponentToken() throws Exception {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withRecordComponent(mock(RecordComponentDescription.Token.class));
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withRecordComponent(mock(RecordComponentDescription.Token.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testRecord() throws Exception {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withRecord(false);
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withRecord(false);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testAnnotation() throws Exception {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withAnnotations(Collections.<AnnotationDescription>emptyList());
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withAnnotations(Collections.<AnnotationDescription>emptyList());
     }
 
     @Test(expected = IllegalStateException.class)
     public void testInitializer() throws Exception {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withInitializer(mock(ByteCodeAppender.class));
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withInitializer(mock(ByteCodeAppender.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testWithTypeVariable() throws Exception {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withTypeVariable(mock(TypeVariableToken.class));
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withTypeVariable(mock(TypeVariableToken.class));
     }
 
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testWithTypeVariables() throws Exception {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withTypeVariables(mock(ElementMatcher.class), mock(Transformer.class));
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withTypeVariables(mock(ElementMatcher.class), mock(Transformer.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testWithName() throws Exception {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withName("foo");
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withName("foo");
     }
 
     @Test(expected = IllegalStateException.class)
     public void testWithDeclaringType() {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withDeclaringType(mock(TypeDescription.class));
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withDeclaringType(mock(TypeDescription.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testWithDeclaredType() {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withDeclaredTypes(mock(TypeList.class));
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withDeclaredTypes(mock(TypeList.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testWithEnclosingType() {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withEnclosingType(mock(TypeDescription.class));
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withEnclosingType(mock(TypeDescription.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testWithEnclosingMethod() {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withEnclosingMethod(mock(MethodDescription.InDefinedShape.class));
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withEnclosingMethod(mock(MethodDescription.InDefinedShape.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testWithNestHost() {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withNestHost(mock(TypeDescription.class));
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withNestHost(mock(TypeDescription.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testWithNestMember() {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withNestMembers(mock(TypeList.class));
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withNestMembers(mock(TypeList.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testWithPermittedSubclass() {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withPermittedSubclasses(mock(TypeList.class));
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withPermittedSubclasses(mock(TypeList.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testWithLocalClass() {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withLocalClass(true);
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withLocalClass(true);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testWithAnonymousClass() {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withAnonymousClass(true);
+        new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).withAnonymousClass(true);
     }
 
     @Test
     public void testValidation() throws Exception {
-        assertThat(new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).validated(), is(TypeDescription.STRING));
+        assertThat(new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).validated(), is(TypeDescription.ForLoadedType.of(String.class)));
     }
 
     @Test
     public void testTypeInitializer() throws Exception {
-        assertThat(new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).getTypeInitializer(),
+        assertThat(new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), LoadedTypeInitializer.NoOp.INSTANCE).getTypeInitializer(),
                 is((TypeInitializer) TypeInitializer.None.INSTANCE));
     }
 
     @Test
     public void testLoadedTypeInitializer() throws Exception {
         LoadedTypeInitializer loadedTypeInitializer = mock(LoadedTypeInitializer.class);
-        assertThat(new InstrumentedType.Frozen(TypeDescription.STRING, loadedTypeInitializer).getLoadedTypeInitializer(), is(loadedTypeInitializer));
+        assertThat(new InstrumentedType.Frozen(TypeDescription.ForLoadedType.of(String.class), loadedTypeInitializer).getLoadedTypeInitializer(), is(loadedTypeInitializer));
     }
 }

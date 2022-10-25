@@ -759,7 +759,7 @@ public interface MethodDescription extends TypeVariableSource,
          * {@inheritDoc}
          */
         public boolean isConstantBootstrap() {
-            return isBootstrap(TypeDescription.CLASS);
+            return isBootstrap(TypeDescription.ForLoadedType.of(Class.class));
         }
 
         /**

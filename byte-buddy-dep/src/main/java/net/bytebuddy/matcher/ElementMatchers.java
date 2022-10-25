@@ -1600,7 +1600,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a Java <i>main</i> method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isMain() {
-        return named("main").and(takesArguments(String[].class)).and(returns(TypeDescription.VOID).and(isStatic()).and(isPublic()));
+        return named("main").and(takesArguments(String[].class)).and(returns(TypeDescription.ForLoadedType.of(void.class)).and(isStatic()).and(isPublic()));
     }
 
     /**
@@ -1610,7 +1610,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches a non-overridden {@link Object#finalize()} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isDefaultFinalizer() {
-        return isFinalizer().and(isDeclaredBy(TypeDescription.OBJECT));
+        return isFinalizer().and(isDeclaredBy(TypeDescription.ForLoadedType.of(Object.class)));
     }
 
     /**
@@ -1620,7 +1620,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the {@link Object#finalize()} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isFinalizer() {
-        return named("finalize").and(takesNoArguments()).and(returns(TypeDescription.VOID));
+        return named("finalize").and(takesNoArguments()).and(returns(TypeDescription.ForLoadedType.of(void.class)));
     }
 
     /**
@@ -1640,7 +1640,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the {@link Object#equals(Object)} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isEquals() {
-        return named("equals").and(takesArguments(TypeDescription.OBJECT)).and(returns(boolean.class));
+        return named("equals").and(takesArguments(TypeDescription.ForLoadedType.of(Object.class))).and(returns(boolean.class));
     }
 
     /**
@@ -1660,7 +1660,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the {@link Object#toString()} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isToString() {
-        return named("toString").and(takesNoArguments()).and(returns(TypeDescription.STRING));
+        return named("toString").and(takesNoArguments()).and(returns(TypeDescription.ForLoadedType.of(String.class)));
     }
 
     /**
@@ -1670,7 +1670,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any setter method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter() {
-        return nameStartsWith("set").and(takesArguments(1)).and(returns(TypeDescription.VOID));
+        return nameStartsWith("set").and(takesArguments(1)).and(returns(TypeDescription.ForLoadedType.of(void.class)));
     }
 
     /**
@@ -1760,7 +1760,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any getter method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter() {
-        return takesNoArguments().and(not(returns(TypeDescription.VOID))).and(nameStartsWith("get").or(nameStartsWith("is").and(returnsGeneric(anyOf(boolean.class, Boolean.class)))));
+        return takesNoArguments().and(not(returns(TypeDescription.ForLoadedType.of(void.class)))).and(nameStartsWith("get").or(nameStartsWith("is").and(returnsGeneric(anyOf(boolean.class, Boolean.class)))));
     }
 
     /**

@@ -465,7 +465,7 @@ public class AdviceInconsistentFrameTest {
         }
 
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-            methodVisitor.visitFrame(Opcodes.F_FULL, 1, new Object[]{TypeDescription.OBJECT.getInternalName()}, 0, new Object[0]);
+            methodVisitor.visitFrame(Opcodes.F_FULL, 1, new Object[]{TypeDescription.ForLoadedType.of(Object.class).getInternalName()}, 0, new Object[0]);
             methodVisitor.visitLdcInsn(BAR);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(1, 2);
@@ -483,7 +483,7 @@ public class AdviceInconsistentFrameTest {
         }
 
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-            methodVisitor.visitFrame(Opcodes.F_FULL, 1, new Object[]{TypeDescription.OBJECT.getInternalName()}, 0, new Object[0]);
+            methodVisitor.visitFrame(Opcodes.F_FULL, 1, new Object[]{TypeDescription.ForLoadedType.of(Object.class).getInternalName()}, 0, new Object[0]);
             methodVisitor.visitLdcInsn(BAR);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(1, 2);

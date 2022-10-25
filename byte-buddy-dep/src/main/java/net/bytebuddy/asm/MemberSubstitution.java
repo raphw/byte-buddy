@@ -2367,10 +2367,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 : candidates.getOnly().getReturnType().getStackSize()).getSize());
                         if (candidates.getOnly().isConstructor()) {
                             stackSizeBuffer = Math.max(stackSizeBuffer, new StackManipulation.Compound(
-                                    Duplication.SINGLE.flipOver(TypeDescription.OBJECT),
+                                    Duplication.SINGLE.flipOver(TypeDescription.ForLoadedType.of(Object.class)),
                                     Removal.SINGLE,
                                     Removal.SINGLE,
-                                    Duplication.SINGLE.flipOver(TypeDescription.OBJECT),
+                                    Duplication.SINGLE.flipOver(TypeDescription.ForLoadedType.of(Object.class)),
                                     Removal.SINGLE,
                                     Removal.SINGLE
                             ).apply(mv, implementationContext).getMaximalSize() + StackSize.SINGLE.getSize());

@@ -97,12 +97,12 @@ public class TypeDescriptionGenericVisitorAssignerTest {
     @Test
     public void testAssignNonGenericTypeFromAssignableNonGenericType() throws Exception {
         assertThat(TypeDescription.Generic.OBJECT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
-                .isAssignableFrom(TypeDescription.STRING.asGenericType()), is(true));
+                .isAssignableFrom(TypeDescription.ForLoadedType.of(String.class).asGenericType()), is(true));
     }
 
     @Test
     public void testAssignNonGenericTypeFromNonAssignableNonGenericType() throws Exception {
-        assertThat(TypeDescription.STRING.asGenericType().accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+        assertThat(TypeDescription.ForLoadedType.of(String.class).asGenericType().accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
                 .isAssignableFrom(TypeDescription.Generic.OBJECT), is(false));
     }
 
@@ -114,7 +114,7 @@ public class TypeDescriptionGenericVisitorAssignerTest {
 
     @Test
     public void testAssignNonGenericTypeFromNonAssignableGenericType() throws Exception {
-        assertThat(TypeDescription.STRING.asGenericType().accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+        assertThat(TypeDescription.ForLoadedType.of(String.class).asGenericType().accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
                 .isAssignableFrom(listWildcard), is(false));
     }
 
@@ -162,7 +162,7 @@ public class TypeDescriptionGenericVisitorAssignerTest {
 
     @Test
     public void testAssignNonGenericTypeFromNonAssignableTypeVariable() throws Exception {
-        assertThat(TypeDescription.STRING.asGenericType().accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+        assertThat(TypeDescription.ForLoadedType.of(String.class).asGenericType().accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
                 .isAssignableFrom(typeVariableT), is(false));
     }
 
@@ -349,7 +349,7 @@ public class TypeDescriptionGenericVisitorAssignerTest {
     @Test
     public void testAssignParameterizedWildcardTypeFromNonAssignableRawType() throws Exception {
         assertThat(collectionWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
-                .isAssignableFrom(TypeDescription.STRING.asGenericType()), is(false));
+                .isAssignableFrom(TypeDescription.ForLoadedType.of(String.class).asGenericType()), is(false));
     }
 
     @Test

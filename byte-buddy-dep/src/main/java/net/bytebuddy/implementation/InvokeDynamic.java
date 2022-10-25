@@ -318,7 +318,7 @@ public class InvokeDynamic implements Implementation.Composable {
                         Collections.<TypeVariableToken>emptyList(),
                         JavaType.CALL_SITE.getTypeStub().asGenericType(),
                         Arrays.asList(new ParameterDescription.Token(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().asGenericType()),
-                                new ParameterDescription.Token(TypeDescription.STRING.asGenericType()),
+                                new ParameterDescription.Token(TypeDescription.ForLoadedType.of(String.class).asGenericType()),
                                 new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
                                 new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
                                 new ParameterDescription.Token(JavaType.METHOD_HANDLE.getTypeStub().asGenericType()),
@@ -2013,7 +2013,7 @@ public class InvokeDynamic implements Implementation.Composable {
                  * {@inheritDoc}
                  */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(new TextConstant(value), TypeDescription.STRING);
+                    return new Resolved.Simple(new TextConstant(value), TypeDescription.ForLoadedType.of(String.class));
                 }
 
                 /**
@@ -2048,7 +2048,7 @@ public class InvokeDynamic implements Implementation.Composable {
                  * {@inheritDoc}
                  */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(ClassConstant.of(typeDescription), TypeDescription.CLASS);
+                    return new Resolved.Simple(ClassConstant.of(typeDescription), TypeDescription.ForLoadedType.of(Class.class));
                 }
 
                 /**

@@ -5606,7 +5606,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             public TypeDescription asErasure() {
                 TypeList.Generic upperBounds = getUpperBounds();
                 return upperBounds.isEmpty()
-                        ? TypeDescription.OBJECT
+                        ? TypeDescription.ForLoadedType.of(Object.class)
                         : upperBounds.get(0).asErasure();
             }
 

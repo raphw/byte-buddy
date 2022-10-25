@@ -2427,7 +2427,7 @@ public interface AnnotationValue<T, S> {
             for (TypeDescription value : typeDescription) {
                 values.add((AnnotationValue) ForTypeDescription.<Class>of(value));
             }
-            return new ForDescriptionArray<TypeDescription[], Class<?>[]>(TypeDescription.class, TypeDescription.CLASS, values);
+            return new ForDescriptionArray<TypeDescription[], Class<?>[]>(TypeDescription.class, TypeDescription.ForLoadedType.of(Class.class), values);
         }
 
         /**

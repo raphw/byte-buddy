@@ -44,7 +44,7 @@ public class AgentBuilderDescriptionStrategyTest {
                 mock(AgentBuilder.CircularityLock.class),
                 Object.class.getClassLoader(),
                 JavaModule.ofType(Object.class));
-        assertThat(typeDescription, is(TypeDescription.OBJECT));
+        assertThat(typeDescription, is(TypeDescription.ForLoadedType.of(Object.class)));
         assertThat(typeDescription, instanceOf(TypeDescription.ForLoadedType.class));
     }
 

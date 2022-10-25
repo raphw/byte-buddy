@@ -66,9 +66,9 @@ public class ClassLoadingStrategyForUnsafeInjectionTest {
     @ClassUnsafeInjectionAvailableRule.Enforce
     public void testInjectionDoesNotThrowExceptionOnExistingClass() throws Exception {
         Map<TypeDescription, Class<?>> types = new ClassLoadingStrategy.ForUnsafeInjection(protectionDomain)
-                .load(ClassLoader.getSystemClassLoader(), Collections.singletonMap(TypeDescription.STRING, new byte[0]));
+                .load(ClassLoader.getSystemClassLoader(), Collections.singletonMap(TypeDescription.ForLoadedType.of(String.class), new byte[0]));
         assertThat(types.size(), is(1));
-        assertEquals(String.class, types.get(TypeDescription.STRING));
+        assertEquals(String.class, types.get(TypeDescription.ForLoadedType.of(String.class)));
     }
 
     private static class Foo {

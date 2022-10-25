@@ -265,13 +265,13 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     suppliedType = TypeDescription.ForLoadedType.of(double.class);
                 } else if (value instanceof String) {
                     stackManipulation = new TextConstant((String) value);
-                    suppliedType = TypeDescription.STRING;
+                    suppliedType = TypeDescription.ForLoadedType.of(String.class);
                 } else if (value instanceof Class) {
                     stackManipulation = ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value));
-                    suppliedType = TypeDescription.CLASS;
+                    suppliedType = TypeDescription.ForLoadedType.of(Class.class);
                 } else if (value instanceof TypeDescription) {
                     stackManipulation = ClassConstant.of((TypeDescription) value);
-                    suppliedType = TypeDescription.CLASS;
+                    suppliedType = TypeDescription.ForLoadedType.of(Class.class);
                 } else if (value instanceof Enum<?>) {
                     stackManipulation = FieldAccess.forEnumeration(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
                     suppliedType = TypeDescription.ForLoadedType.of(((Enum<?>) value).getDeclaringClass());

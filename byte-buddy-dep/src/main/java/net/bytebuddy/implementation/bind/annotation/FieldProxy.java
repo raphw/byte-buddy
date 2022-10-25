@@ -657,7 +657,7 @@ public @interface FieldProxy {
              * Creates the constructor call singleton.
              */
             StaticFieldConstructor() {
-                objectTypeDefaultConstructor = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
+                objectTypeDefaultConstructor = TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isConstructor()).getOnly();
             }
 
             /**

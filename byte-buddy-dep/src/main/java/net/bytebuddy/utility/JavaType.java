@@ -68,7 +68,7 @@ public enum JavaType {
      */
     DYNAMIC_CONSTANT_DESCRIPTION("java.lang.constant.DynamicConstantDesc",
             Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
-            TypeDescription.OBJECT,
+            TypeDescription.ForLoadedType.of(Object.class),
             CONSTANT_DESCRIPTION.getTypeStub()),
 
     /**
@@ -108,7 +108,7 @@ public enum JavaType {
     /**
      * The Java 7 {@code java.lang.invoke.MethodHandle} type.
      */
-    METHOD_HANDLE("java.lang.invoke.MethodHandle", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, TypeDescription.OBJECT, CONSTABLE.getTypeStub()),
+    METHOD_HANDLE("java.lang.invoke.MethodHandle", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, TypeDescription.ForLoadedType.of(Object.class), CONSTABLE.getTypeStub()),
 
     /**
      * The Java 7 {@code java.lang.invoke.MethodHandles} type.
@@ -120,7 +120,7 @@ public enum JavaType {
      */
     METHOD_TYPE("java.lang.invoke.MethodType",
             Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,
-            TypeDescription.OBJECT,
+            TypeDescription.ForLoadedType.of(Object.class),
             CONSTABLE.getTypeStub(),
             TYPE_DESCRIPTOR_OF_METHOD.getTypeStub(),
             TypeDescription.ForLoadedType.of(Serializable.class)),

@@ -20,11 +20,11 @@ public class InstrumentedTypeFactoryDefaultTest {
 
     @Test
     public void testRepresentModifiable() throws Exception {
-        assertThat(InstrumentedType.Factory.Default.MODIFIABLE.represent(TypeDescription.OBJECT), instanceOf(InstrumentedType.Default.class));
+        assertThat(InstrumentedType.Factory.Default.MODIFIABLE.represent(TypeDescription.ForLoadedType.of(Object.class)), instanceOf(InstrumentedType.Default.class));
     }
 
     @Test
     public void testRepresentFrozen() throws Exception {
-        assertThat(InstrumentedType.Factory.Default.FROZEN.represent(TypeDescription.OBJECT), instanceOf(InstrumentedType.Frozen.class));
+        assertThat(InstrumentedType.Factory.Default.FROZEN.represent(TypeDescription.ForLoadedType.of(Object.class)), instanceOf(InstrumentedType.Frozen.class));
     }
 }

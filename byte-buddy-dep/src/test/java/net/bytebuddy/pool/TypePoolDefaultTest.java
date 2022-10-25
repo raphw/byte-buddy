@@ -70,7 +70,7 @@ public class TypePoolDefaultTest {
         TypePool typePool = TypePool.Default.of(classFileLocator);
         TypePool.Resolution resolution = typePool.describe(String.class.getName());
         assertThat(typePool.describe(String.class.getName()).resolve(), CoreMatchers.is(resolution.resolve()));
-        assertThat(typePool.describe(String.class.getName()).resolve().getSuperClass().asErasure(), CoreMatchers.is(TypeDescription.OBJECT));
+        assertThat(typePool.describe(String.class.getName()).resolve().getSuperClass().asErasure(), CoreMatchers.is(TypeDescription.ForLoadedType.of(Object.class)));
         verify(classFileLocator).locate(String.class.getName());
         verify(classFileLocator).locate(Object.class.getName());
         verifyNoMoreInteractions(classFileLocator);

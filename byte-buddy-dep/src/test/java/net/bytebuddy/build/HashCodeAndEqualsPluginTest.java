@@ -31,7 +31,7 @@ public class HashCodeAndEqualsPluginTest {
     public void testPluginMatches() throws Exception {
         Plugin plugin = new HashCodeAndEqualsPlugin();
         assertThat(plugin.matches(TypeDescription.ForLoadedType.of(SimpleSample.class)), is(true));
-        assertThat(plugin.matches(TypeDescription.OBJECT), is(false));
+        assertThat(plugin.matches(TypeDescription.ForLoadedType.of(Object.class)), is(false));
     }
 
     @Test

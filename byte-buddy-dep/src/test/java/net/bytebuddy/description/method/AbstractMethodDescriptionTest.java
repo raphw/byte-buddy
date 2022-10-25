@@ -54,7 +54,7 @@ public abstract class AbstractMethodDescriptionTest {
     private static int hashCode(Constructor<?> constructor) {
         int hashCode = 17 + TypeDescription.ForLoadedType.of(constructor.getDeclaringClass()).hashCode();
         hashCode = 31 * hashCode + MethodDescription.CONSTRUCTOR_INTERNAL_NAME.hashCode();
-        hashCode = 31 * hashCode + TypeDescription.VOID.hashCode();
+        hashCode = 31 * hashCode + TypeDescription.ForLoadedType.of(void.class).hashCode();
         return 31 * hashCode + new TypeList.ForLoadedTypes(constructor.getParameterTypes()).hashCode();
     }
 
@@ -198,7 +198,7 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(firstMethod), not(equalMethodButName));
         MethodDescription.InDefinedShape equalMethodButReturnType = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButReturnType.getInternalName()).thenReturn(firstMethod.getName());
-        when(equalMethodButReturnType.getDeclaringType()).thenReturn(TypeDescription.OBJECT);
+        when(equalMethodButReturnType.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(Object.class));
         when(equalMethodButReturnType.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(firstMethod.getReturnType()));
         when(equalMethodButReturnType.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButReturnType,
                 new TypeList.Generic.ForLoadedTypes(firstMethod.getParameterTypes())));
@@ -251,14 +251,14 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(firstConstructor), not(equalMethodButName));
         MethodDescription.InDefinedShape equalMethodButReturnType = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButReturnType.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
-        when(equalMethodButReturnType.getDeclaringType()).thenReturn(TypeDescription.OBJECT);
+        when(equalMethodButReturnType.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(Object.class));
         when(equalMethodButReturnType.getReturnType()).thenReturn(TypeDescription.Generic.OBJECT);
         when(equalMethodButReturnType.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButReturnType,
                 new TypeList.ForLoadedTypes(firstConstructor.getParameterTypes())));
         assertThat(describe(firstConstructor), not(equalMethodButReturnType));
         MethodDescription.InDefinedShape equalMethodButDeclaringType = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButDeclaringType.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
-        when(equalMethodButDeclaringType.getDeclaringType()).thenReturn(TypeDescription.OBJECT);
+        when(equalMethodButDeclaringType.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(Object.class));
         when(equalMethodButDeclaringType.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
         when(equalMethodButDeclaringType.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButDeclaringType,
                 new TypeList.ForLoadedTypes(firstConstructor.getParameterTypes())));
@@ -413,13 +413,13 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredMethod("privateMethod"))
                 .isVisibleTo(TypeDescription.ForLoadedType.of(Sample.class)), is(ClassFileVersion.of(Sample.class).isAtLeast(ClassFileVersion.JAVA_V11)));
         assertThat(describe(PublicType.class.getDeclaredMethod("publicMethod"))
-                .isVisibleTo(TypeDescription.OBJECT), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredMethod("protectedMethod"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredMethod("packagePrivateMethod"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredMethod("privateMethod"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredMethod("publicMethod"))
                 .isVisibleTo(TypeDescription.ForLoadedType.of(MethodDescriptionTestHelper.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredMethod("protectedMethod"))
@@ -429,21 +429,21 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredMethod("privateMethod"))
                 .isVisibleTo(TypeDescription.ForLoadedType.of(MethodDescriptionTestHelper.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("publicMethod"))
-                .isVisibleTo(TypeDescription.OBJECT), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("protectedMethod"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("packagePrivateMethod"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("privateMethod"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticPublicMethod"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticProtectedMethod"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticPackagePrivateMethod"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticPrivateMethod"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
     }
 
     @Test
@@ -465,13 +465,13 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredConstructor(String.class))
                 .isVisibleTo(TypeDescription.ForLoadedType.of(Sample.class)), is(ClassFileVersion.of(Sample.class).isAtLeast(ClassFileVersion.JAVA_V11)));
         assertThat(describe(PublicType.class.getDeclaredConstructor())
-                .isVisibleTo(TypeDescription.OBJECT), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredConstructor(Void.class))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredConstructor(Object.class))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredConstructor(String.class))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredConstructor())
                 .isVisibleTo(TypeDescription.ForLoadedType.of(MethodDescriptionTestHelper.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredConstructor(Void.class))
@@ -481,21 +481,21 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredConstructor(String.class))
                 .isVisibleTo(TypeDescription.ForLoadedType.of(MethodDescriptionTestHelper.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredConstructor())
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredConstructor(Void.class))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredConstructor(Object.class))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredConstructor(String.class))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateArgument", PackagePrivateType.class))
                 .isVisibleTo(TypeDescription.ForLoadedType.of(MethodVisibilityType.class)), is(true));
         assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateReturnType"))
                 .isVisibleTo(TypeDescription.ForLoadedType.of(MethodVisibilityType.class)), is(true));
         assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateArgument", PackagePrivateType.class))
-                .isVisibleTo(TypeDescription.OBJECT), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
         assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateReturnType"))
-                .isVisibleTo(TypeDescription.OBJECT), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
     }
 
     @Test
@@ -518,13 +518,13 @@ public abstract class AbstractMethodDescriptionTest {
                         .isAccessibleTo(TypeDescription.ForLoadedType.of(Sample.class)),
                 is(ClassFileVersion.of(PublicType.class).isAtLeast(ClassFileVersion.JAVA_V11))); // introduction of nest mates
         assertThat(describe(PublicType.class.getDeclaredMethod("publicMethod"))
-                .isAccessibleTo(TypeDescription.OBJECT), is(true));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredMethod("protectedMethod"))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredMethod("packagePrivateMethod"))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredMethod("privateMethod"))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredMethod("publicMethod"))
                 .isAccessibleTo(TypeDescription.ForLoadedType.of(MethodDescriptionTestHelper.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredMethod("protectedMethod"))
@@ -534,21 +534,21 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredMethod("privateMethod"))
                 .isAccessibleTo(TypeDescription.ForLoadedType.of(MethodDescriptionTestHelper.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("publicMethod"))
-                .isAccessibleTo(TypeDescription.OBJECT), is(true));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("protectedMethod"))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("packagePrivateMethod"))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("privateMethod"))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticPublicMethod"))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticProtectedMethod"))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticPackagePrivateMethod"))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticPrivateMethod"))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
     }
 
     @Test
@@ -570,13 +570,13 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredConstructor(String.class))
                 .isAccessibleTo(TypeDescription.ForLoadedType.of(AbstractMethodDescriptionTestNoNestMate.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredConstructor())
-                .isAccessibleTo(TypeDescription.OBJECT), is(true));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredConstructor(Void.class))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredConstructor(Object.class))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredConstructor(String.class))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredConstructor())
                 .isAccessibleTo(TypeDescription.ForLoadedType.of(MethodDescriptionTestHelper.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredConstructor(Void.class))
@@ -586,21 +586,21 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredConstructor(String.class))
                 .isAccessibleTo(TypeDescription.ForLoadedType.of(MethodDescriptionTestHelper.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredConstructor())
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredConstructor(Void.class))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredConstructor(Object.class))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredConstructor(String.class))
-                .isAccessibleTo(TypeDescription.OBJECT), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateArgument", PackagePrivateType.class))
                 .isAccessibleTo(TypeDescription.ForLoadedType.of(MethodVisibilityType.class)), is(true));
         assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateReturnType"))
                 .isAccessibleTo(TypeDescription.ForLoadedType.of(MethodVisibilityType.class)), is(true));
         assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateArgument", PackagePrivateType.class))
-                .isAccessibleTo(TypeDescription.OBJECT), is(true));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
         assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateReturnType"))
-                .isAccessibleTo(TypeDescription.OBJECT), is(true));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
     }
 
     @Test
@@ -668,7 +668,7 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(secondMethod).isSpecializableFor(TypeDescription.ForLoadedType.of(Sample.class)), is(false));
         assertThat(describe(thirdMethod).isSpecializableFor(TypeDescription.ForLoadedType.of(Sample.class)), is(true));
         assertThat(describe(thirdMethod).isSpecializableFor(TypeDescription.ForLoadedType.of(SampleSub.class)), is(true));
-        assertThat(describe(thirdMethod).isSpecializableFor(TypeDescription.OBJECT), is(false));
+        assertThat(describe(thirdMethod).isSpecializableFor(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(firstConstructor).isSpecializableFor(TypeDescription.ForLoadedType.of(Sample.class)), is(true));
         assertThat(describe(firstConstructor).isSpecializableFor(TypeDescription.ForLoadedType.of(SampleSub.class)), is(false));
     }
@@ -678,7 +678,7 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(firstMethod).isInvokableOn(TypeDescription.ForLoadedType.of(Sample.class)), is(false));
         assertThat(describe(secondMethod).isInvokableOn(TypeDescription.ForLoadedType.of(Sample.class)), is(true));
         assertThat(describe(secondMethod).isInvokableOn(TypeDescription.ForLoadedType.of(SampleSub.class)), is(true));
-        assertThat(describe(secondMethod).isInvokableOn(TypeDescription.OBJECT), is(false));
+        assertThat(describe(secondMethod).isInvokableOn(TypeDescription.ForLoadedType.of(Object.class)), is(false));
     }
 
     @Test
@@ -739,23 +739,23 @@ public abstract class AbstractMethodDescriptionTest {
 
     @Test
     public void testBridgeCompatible() throws Exception {
-        assertThat(describe(firstMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.VOID, Collections.<TypeDescription>emptyList())), is(true));
-        assertThat(describe(firstMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.VOID, Collections.singletonList(TypeDescription.OBJECT))), is(false));
-        assertThat(describe(firstMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.OBJECT, Collections.<TypeDescription>emptyList())), is(false));
+        assertThat(describe(firstMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.ForLoadedType.of(void.class), Collections.<TypeDescription>emptyList())), is(true));
+        assertThat(describe(firstMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.ForLoadedType.of(void.class), Collections.singletonList(TypeDescription.ForLoadedType.of(Object.class)))), is(false));
+        assertThat(describe(firstMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.ForLoadedType.of(Object.class), Collections.<TypeDescription>emptyList())), is(false));
         assertThat(describe(firstMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.ForLoadedType.of(int.class), Collections.<TypeDescription>emptyList())), is(false));
-        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.OBJECT,
+        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.ForLoadedType.of(Object.class),
                 Arrays.asList(TypeDescription.ForLoadedType.of(String.class), TypeDescription.ForLoadedType.of(long.class)))), is(true));
-        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.OBJECT,
+        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.ForLoadedType.of(Object.class),
                 Arrays.asList(TypeDescription.ForLoadedType.of(Object.class), TypeDescription.ForLoadedType.of(long.class)))), is(true));
         assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.ForLoadedType.of(String.class),
                 Arrays.asList(TypeDescription.ForLoadedType.of(Object.class), TypeDescription.ForLoadedType.of(long.class)))), is(true));
-        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.VOID,
+        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.ForLoadedType.of(void.class),
                 Arrays.asList(TypeDescription.ForLoadedType.of(String.class), TypeDescription.ForLoadedType.of(long.class)))), is(false));
-        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.OBJECT,
+        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.ForLoadedType.of(Object.class),
                 Arrays.asList(TypeDescription.ForLoadedType.of(int.class), TypeDescription.ForLoadedType.of(long.class)))), is(false));
-        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.OBJECT,
+        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.ForLoadedType.of(Object.class),
                 Arrays.asList(TypeDescription.ForLoadedType.of(String.class), TypeDescription.ForLoadedType.of(Object.class)))), is(false));
-        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.OBJECT,
+        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.ForLoadedType.of(Object.class),
                 Arrays.asList(TypeDescription.ForLoadedType.of(String.class), TypeDescription.ForLoadedType.of(int.class)))), is(false));
     }
 
@@ -801,10 +801,10 @@ public abstract class AbstractMethodDescriptionTest {
             assertThat(methods.filter(named(entry.getKey())).getOnly().isDefaultValue(entry.getValue()), is(true));
             assertThat(methods.filter(named(entry.getKey())).getOnly().isDefaultValue(mock(AnnotationValue.class)), is(false));
         }
-        when(annotationDescription.getAnnotationType()).thenReturn(TypeDescription.OBJECT);
+        when(annotationDescription.getAnnotationType()).thenReturn(TypeDescription.ForLoadedType.of(Object.class));
         assertThat(methods.filter(named("annotation_property")).getOnly().isDefaultValue(new AnnotationValue.ForAnnotationDescription(annotationDescription)), is(false));
         assertThat(methods.filter(named("annotation_property_array")).getOnly().isDefaultValue(AnnotationValue.ForDescriptionArray.of(TypeDescription.ForLoadedType.of(Object.class), new AnnotationDescription[]{annotationDescription})), is(false));
-        when(enumerationDescription.getEnumerationType()).thenReturn(TypeDescription.OBJECT);
+        when(enumerationDescription.getEnumerationType()).thenReturn(TypeDescription.ForLoadedType.of(Object.class));
         assertThat(methods.filter(named("enum_property")).getOnly().isDefaultValue(AnnotationValue.ForEnumerationDescription.<Enum>of(enumerationDescription)), is(false));
         assertThat(methods.filter(named("enum_property_array")).getOnly().isDefaultValue(AnnotationValue.ForDescriptionArray.<Enum>of(TypeDescription.ForLoadedType.of(Object.class), new EnumerationDescription[]{enumerationDescription})), is(false));
     }

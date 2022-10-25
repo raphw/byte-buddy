@@ -344,7 +344,7 @@ public @interface Pipe {
                  * Creates the constructor call singleton.
                  */
                 ConstructorCall() {
-                    objectTypeDefaultConstructor = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
+                    objectTypeDefaultConstructor = TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isConstructor()).getOnly();
                 }
 
                 /**

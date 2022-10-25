@@ -7,6 +7,6 @@ public class PrimitiveBoxingDelegateTestWithReferenceTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testThrowsException() throws Exception {
-        PrimitiveBoxingDelegate.forPrimitive(TypeDescription.OBJECT);
+        PrimitiveBoxingDelegate.forPrimitive(TypeDescription.ForLoadedType.of(Object.class));
     }
 }

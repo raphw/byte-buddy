@@ -45,11 +45,11 @@ public class PluginEngineTargetForFolderTest {
         Plugin.Engine.Target target = new Plugin.Engine.Target.ForFolder(folder);
         Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.Origin.NO_MANIFEST);
         try {
-            sink.store(Collections.singletonMap(TypeDescription.OBJECT, new byte[]{1, 2, 3}));
+            sink.store(Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{1, 2, 3}));
         } finally {
             sink.close();
         }
-        File file = new File(folder, TypeDescription.OBJECT.getInternalName() + ".class");
+        File file = new File(folder, TypeDescription.ForLoadedType.of(Object.class).getInternalName() + ".class");
         assertThat(file.isFile(), is(true));
         InputStream inputStream = new FileInputStream(file);
         try {

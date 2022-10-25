@@ -84,7 +84,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
     public void testGenericOwnerType() throws Exception {
         TypeDescription.Generic.Builder.parameterizedType(TypeDescription.ForLoadedType.of(Foo.Nested.class),
                 TypeDescription.Generic.Builder.parameterizedType(Foo.class, Object.class).build(),
-                Collections.<TypeDefinition>singletonList(TypeDescription.OBJECT));
+                Collections.<TypeDefinition>singletonList(TypeDescription.ForLoadedType.of(Object.class)));
     }
 
     @Test(expected = IllegalArgumentException.class)

@@ -158,7 +158,7 @@ public class ClassReloadingStrategyTest {
         when(instrumentation.getInitiatedClasses(classLoader)).thenReturn(new Class<?>[0]);
         ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.of(instrumentation).preregistered(Object.class);
         ArgumentCaptor<ClassDefinition> classDefinition = ArgumentCaptor.forClass(ClassDefinition.class);
-        classReloadingStrategy.load(classLoader, Collections.singletonMap(TypeDescription.OBJECT, new byte[]{1, 2, 3}));
+        classReloadingStrategy.load(classLoader, Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{1, 2, 3}));
         verify(instrumentation).redefineClasses(classDefinition.capture());
         assertEquals(Object.class, classDefinition.getValue().getDefinitionClass());
         assertThat(classDefinition.getValue().getDefinitionClassFile(), is(new byte[]{1, 2, 3}));

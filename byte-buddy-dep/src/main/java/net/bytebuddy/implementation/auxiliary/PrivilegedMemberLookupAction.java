@@ -72,7 +72,7 @@ public enum PrivilegedMemberLookupAction implements AuxiliaryType {
     /**
      * The default constructor of the {@link Object} class.
      */
-    private static final MethodDescription.InDefinedShape DEFAULT_CONSTRUCTOR = TypeDescription.OBJECT.getDeclaredMethods()
+    private static final MethodDescription.InDefinedShape DEFAULT_CONSTRUCTOR = TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods()
             .filter(isConstructor())
             .getOnly();
 

@@ -33,7 +33,7 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
                 .subclass(Foo.class)
                 .method(named(FOO))
                 .intercept(MethodDelegation.withDefaultConfiguration()
-                        .withBinders(TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFixedValue.OfConstant.of(Bar.class, TypeDescription.OBJECT))
+                        .withBinders(TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFixedValue.OfConstant.of(Bar.class, TypeDescription.ForLoadedType.of(Object.class)))
                         .to(Foo.class))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)

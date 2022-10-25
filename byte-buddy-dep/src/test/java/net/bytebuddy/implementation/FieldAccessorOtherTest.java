@@ -135,7 +135,7 @@ public class FieldAccessorOtherTest {
         DynamicType.Loaded<SampleNoArgumentSetter> loaded = new ByteBuddy()
                 .subclass(SampleNoArgumentSetter.class)
                 .method(named(FOO))
-                .intercept(FieldAccessor.ofField(FOO).setsValue(TypeDescription.OBJECT))
+                .intercept(FieldAccessor.ofField(FOO).setsValue(TypeDescription.ForLoadedType.of(Object.class)))
                 .make()
                 .load(SampleNoArgumentSetter.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));

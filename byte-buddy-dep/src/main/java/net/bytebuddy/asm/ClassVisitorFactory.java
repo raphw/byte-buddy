@@ -1031,7 +1031,7 @@ public abstract class ClassVisitorFactory<T> {
             methodVisitor.visitInsn(Opcodes.AALOAD);
             methodVisitor.visitLabel(store);
             implementationContext.getFrameGeneration().full(methodVisitor,
-                    Arrays.asList(TypeDescription.ForLoadedType.of(Object[].class), TypeDescription.ForLoadedType.of(int.class), TypeDescription.OBJECT),
+                    Arrays.asList(TypeDescription.ForLoadedType.of(Object[].class), TypeDescription.ForLoadedType.of(int.class), TypeDescription.ForLoadedType.of(Object.class)),
                     CompoundList.of(
                             Collections.singletonList(implementationContext.getInstrumentedType()),
                             instrumentedMethod.getParameters().asTypeList(),

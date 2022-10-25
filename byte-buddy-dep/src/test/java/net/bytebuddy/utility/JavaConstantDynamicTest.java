@@ -612,7 +612,7 @@ public class JavaConstantDynamicTest {
     @Test
     public void testTypeResolution() {
         assertThat(JavaConstant.Dynamic.ofNullConstant(), equalTo(JavaConstant.Dynamic.ofNullConstant()));
-        assertThat(JavaConstant.Dynamic.ofNullConstant(), not(equalTo(JavaConstant.Dynamic.ofNullConstant().withType(TypeDescription.STRING))));
+        assertThat(JavaConstant.Dynamic.ofNullConstant(), not(equalTo(JavaConstant.Dynamic.ofNullConstant().withType(TypeDescription.ForLoadedType.of(String.class)))));
     }
 
     @Test(expected = IllegalArgumentException.class)

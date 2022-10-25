@@ -1000,7 +1000,7 @@ public interface TypeWriter<T> {
                         if (bridgeType == null) {
                             bridgeType = instrumentedType.getSuperClass();
                             if (bridgeType == null) {
-                                bridgeType = TypeDescription.OBJECT;
+                                bridgeType = TypeDescription.ForLoadedType.of(Object.class);
                             }
                         }
                         return new OfVisibilityBridge(new VisibilityBridge(instrumentedType, bridgeTarget),
@@ -5019,7 +5019,7 @@ public interface TypeWriter<T> {
                                         ? genericSignature
                                         : instrumentedType.getGenericSignature(),
                                 instrumentedType.getSuperClass() == null
-                                        ? (instrumentedType.isInterface() ? TypeDescription.OBJECT.getInternalName() : NO_REFERENCE)
+                                        ? (instrumentedType.isInterface() ? TypeDescription.ForLoadedType.of(Object.class).getInternalName() : NO_REFERENCE)
                                         : instrumentedType.getSuperClass().asErasure().getInternalName(),
                                 instrumentedType.getInterfaces().asErasures().toInternalNames());
                     }
@@ -5983,7 +5983,7 @@ public interface TypeWriter<T> {
                         instrumentedType.getInternalName(),
                         instrumentedType.getGenericSignature(),
                         (instrumentedType.getSuperClass() == null
-                                ? TypeDescription.OBJECT
+                                ? TypeDescription.ForLoadedType.of(Object.class)
                                 : instrumentedType.getSuperClass().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
                 if (!instrumentedType.isNestHost()) {

@@ -114,7 +114,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(invokableMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(resolution.isRebased()).thenReturn(true);
         when(resolution.getResolvedMethod()).thenReturn(rebasedMethod);
-        when(resolution.getAppendedParameters()).thenReturn(new TypeList.Explicit(TypeDescription.OBJECT));
+        when(resolution.getAppendedParameters()).thenReturn(new TypeList.Explicit(TypeDescription.ForLoadedType.of(Object.class)));
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
         Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeSuper(rebasedSignatureToken);
         assertThat(specialMethodInvocation.isValid(), is(true));

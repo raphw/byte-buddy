@@ -58,7 +58,7 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         TypePool typePool = TypePool.Default.WithLazyResolution.of(classFileLocator);
         TypePool.Resolution resolution = typePool.describe(Object.class.getName());
-        assertThat(resolution.resolve().getName(), CoreMatchers.is(TypeDescription.OBJECT.getName()));
+        assertThat(resolution.resolve().getName(), CoreMatchers.is(TypeDescription.ForLoadedType.of(Object.class).getName()));
         verifyNoMoreInteractions(classFileLocator);
     }
 
@@ -67,8 +67,8 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         TypePool typePool = TypePool.Default.WithLazyResolution.of(classFileLocator);
         TypePool.Resolution resolution = typePool.describe(String.class.getName());
-        assertThat(resolution.resolve().getName(), CoreMatchers.is(TypeDescription.STRING.getName()));
-        assertThat(resolution.resolve().getSuperClass().asErasure().getName(), CoreMatchers.is(TypeDescription.OBJECT.getName()));
+        assertThat(resolution.resolve().getName(), CoreMatchers.is(TypeDescription.ForLoadedType.of(String.class).getName()));
+        assertThat(resolution.resolve().getSuperClass().asErasure().getName(), CoreMatchers.is(TypeDescription.ForLoadedType.of(Object.class).getName()));
         verify(classFileLocator).locate(String.class.getName());
         verifyNoMoreInteractions(classFileLocator);
     }
@@ -78,8 +78,8 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         TypePool typePool = TypePool.Default.WithLazyResolution.of(classFileLocator);
         TypePool.Resolution resolution = typePool.describe(Object.class.getName());
-        assertThat(resolution.resolve().getModifiers(), CoreMatchers.is(TypeDescription.OBJECT.getModifiers()));
-        assertThat(resolution.resolve().getInterfaces(), CoreMatchers.is(TypeDescription.OBJECT.getInterfaces()));
+        assertThat(resolution.resolve().getModifiers(), CoreMatchers.is(TypeDescription.ForLoadedType.of(Object.class).getModifiers()));
+        assertThat(resolution.resolve().getInterfaces(), CoreMatchers.is(TypeDescription.ForLoadedType.of(Object.class).getInterfaces()));
         assertThat(typePool.describe(Object.class.getName()).resolve(), CoreMatchers.is(resolution.resolve()));
         verify(classFileLocator).locate(Object.class.getName());
         verifyNoMoreInteractions(classFileLocator);
@@ -90,11 +90,11 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         TypePool typePool = TypePool.Default.WithLazyResolution.of(classFileLocator);
         TypePool.Resolution resolution = typePool.describe(String.class.getName());
-        assertThat(resolution.resolve().getModifiers(), CoreMatchers.is(TypeDescription.STRING.getModifiers()));
+        assertThat(resolution.resolve().getModifiers(), CoreMatchers.is(TypeDescription.ForLoadedType.of(String.class).getModifiers()));
         TypeDescription superClass = resolution.resolve().getSuperClass().asErasure();
-        assertThat(superClass, CoreMatchers.is(TypeDescription.OBJECT));
-        assertThat(superClass.getModifiers(), CoreMatchers.is(TypeDescription.OBJECT.getModifiers()));
-        assertThat(superClass.getInterfaces(), CoreMatchers.is(TypeDescription.OBJECT.getInterfaces()));
+        assertThat(superClass, CoreMatchers.is(TypeDescription.ForLoadedType.of(Object.class)));
+        assertThat(superClass.getModifiers(), CoreMatchers.is(TypeDescription.ForLoadedType.of(Object.class).getModifiers()));
+        assertThat(superClass.getInterfaces(), CoreMatchers.is(TypeDescription.ForLoadedType.of(Object.class).getInterfaces()));
         assertThat(typePool.describe(String.class.getName()).resolve(), CoreMatchers.is(resolution.resolve()));
         verify(classFileLocator).locate(String.class.getName());
         verify(classFileLocator).locate(Object.class.getName());

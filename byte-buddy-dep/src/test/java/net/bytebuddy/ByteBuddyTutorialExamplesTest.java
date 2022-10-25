@@ -190,7 +190,7 @@ public class ByteBuddyTutorialExamplesTest {
 
     @Test
     public void testFieldsAndMethodsDetailedMatcher() throws Exception {
-        assertThat(TypeDescription.OBJECT
+        assertThat(TypeDescription.ForLoadedType.of(Object.class)
                 .getDeclaredMethods()
                 .filter(named("toString").and(returns(String.class)).and(takesArguments(0))).size(), is(1));
     }
@@ -488,7 +488,7 @@ public class ByteBuddyTutorialExamplesTest {
 
         public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
             if (!source.isPrimitive() && target.represents(String.class)) {
-                MethodDescription toStringMethod = TypeDescription.OBJECT.getDeclaredMethods()
+                MethodDescription toStringMethod = TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods()
                         .filter(named("toString"))
                         .getOnly();
                 return MethodInvocation.invoke(toStringMethod).virtual(source.asErasure());

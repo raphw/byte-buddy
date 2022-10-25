@@ -272,7 +272,7 @@ public class MethodCallProxy implements AuxiliaryType {
          * Creates the constructor call singleton.
          */
         ConstructorCall() {
-            objectTypeDefaultConstructor = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
+            objectTypeDefaultConstructor = TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isConstructor()).getOnly();
         }
 
         /**

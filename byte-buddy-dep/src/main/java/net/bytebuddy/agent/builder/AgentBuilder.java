@@ -9176,7 +9176,7 @@ public interface AgentBuilder {
                  * Creates a new executing transformer implementation.
                  */
                 ConstructorImplementation() {
-                    objectConstructor = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
+                    objectConstructor = TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isConstructor()).getOnly();
                 }
 
                 /**

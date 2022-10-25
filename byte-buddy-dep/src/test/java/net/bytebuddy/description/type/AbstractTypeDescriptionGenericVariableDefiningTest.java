@@ -468,6 +468,6 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(recordType.asErasure().represents(Class.forName(RECORD_SAMPLE)), is(true));
         assertThat(recordType.getRecordComponents().size(), is(1));
         assertThat(recordType.getRecordComponents().get(0).getType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(recordType.getRecordComponents().get(0).getType().asErasure(), is(TypeDescription.STRING));
+        assertThat(recordType.getRecordComponents().get(0).getType().asErasure(), is(TypeDescription.ForLoadedType.of(String.class)));
     }
 }

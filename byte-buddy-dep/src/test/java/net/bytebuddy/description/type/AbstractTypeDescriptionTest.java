@@ -364,7 +364,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(SampleClass.class), not(new Object()));
         assertThat(describe(SampleClass.class), not(equalTo(null)));
         assertThat(describe(Object[].class), is((TypeDescription) TypeDescription.ForLoadedType.of(Object[].class)));
-        assertThat(describe(Object[].class), not(TypeDescription.OBJECT));
+        assertThat(describe(Object[].class), not(TypeDescription.ForLoadedType.of(Object.class)));
     }
 
     @Test
@@ -517,12 +517,12 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(SamplePackagePrivate.class).isVisibleTo(TypeDescription.ForLoadedType.of(SampleClass.class)), is(true));
         assertThat(describe(SampleInterface.class).isVisibleTo(TypeDescription.ForLoadedType.of(SampleClass.class)), is(true));
         assertThat(describe(OtherAnnotation.class).isVisibleTo(TypeDescription.ForLoadedType.of(SampleClass.class)), is(true));
-        assertThat(describe(SamplePackagePrivate.class).isVisibleTo(TypeDescription.OBJECT), is(false));
-        assertThat(describe(SampleInterface.class).isVisibleTo(TypeDescription.OBJECT), is(true));
-        assertThat(describe(OtherAnnotation.class).isVisibleTo(TypeDescription.OBJECT), is(false));
-        assertThat(describe(int.class).isVisibleTo(TypeDescription.OBJECT), is(true));
-        assertThat(describe(SampleInterface[].class).isVisibleTo(TypeDescription.OBJECT), is(true));
-        assertThat(describe(SamplePackagePrivate[].class).isVisibleTo(TypeDescription.OBJECT), is(false));
+        assertThat(describe(SamplePackagePrivate.class).isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
+        assertThat(describe(SampleInterface.class).isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
+        assertThat(describe(OtherAnnotation.class).isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
+        assertThat(describe(int.class).isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
+        assertThat(describe(SampleInterface[].class).isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
+        assertThat(describe(SamplePackagePrivate[].class).isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
     }
 
     @Test
@@ -577,7 +577,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next(), is((TypeDefinition) TypeDescription.ForLoadedType.of(Traversal.class)));
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is((TypeDefinition) TypeDescription.OBJECT));
+        assertThat(iterator.next(), is((TypeDefinition) TypeDescription.ForLoadedType.of(Object.class)));
         assertThat(iterator.hasNext(), is(false));
     }
 
@@ -585,7 +585,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     public void testHierarchyEnds() throws Exception {
         Iterator<TypeDefinition> iterator = describe(Object.class).iterator();
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is((TypeDefinition) TypeDescription.OBJECT));
+        assertThat(iterator.next(), is((TypeDefinition) TypeDescription.ForLoadedType.of(Object.class)));
         assertThat(iterator.hasNext(), is(false));
         iterator.next();
     }
@@ -723,11 +723,11 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     public void testNestMatesTrivial() throws Exception {
-        assertThat(describe(Object.class).getNestHost(), is(TypeDescription.OBJECT));
+        assertThat(describe(Object.class).getNestHost(), is(TypeDescription.ForLoadedType.of(Object.class)));
         assertThat(describe(Object.class).getNestMembers().size(), is(1));
-        assertThat(describe(Object.class).getNestMembers(), hasItem(TypeDescription.OBJECT));
+        assertThat(describe(Object.class).getNestMembers(), hasItem(TypeDescription.ForLoadedType.of(Object.class)));
         assertThat(describe(Object.class).isNestMateOf(Object.class), is(true));
-        assertThat(describe(Object.class).isNestMateOf(TypeDescription.STRING), is(false));
+        assertThat(describe(Object.class).isNestMateOf(TypeDescription.ForLoadedType.of(String.class)), is(false));
         assertThat(describe(Object.class).isNestHost(), is(true));
     }
 

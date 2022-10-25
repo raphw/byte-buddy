@@ -489,7 +489,7 @@ public class InstrumentedTypeDefaultTest {
         assertThat(makePlainInstrumentedType().isAssignableFrom(Object.class), is(false));
         assertThat(makePlainInstrumentedType().isAssignableFrom(Serializable.class), is(false));
         assertThat(makePlainInstrumentedType().isAssignableFrom(Integer.class), is(false));
-        TypeDescription objectTypeDescription = TypeDescription.OBJECT;
+        TypeDescription objectTypeDescription = TypeDescription.ForLoadedType.of(Object.class);
         assertThat(makePlainInstrumentedType().isAssignableFrom(objectTypeDescription), is(false));
         TypeDescription serializableTypeDescription = TypeDescription.ForLoadedType.of(Serializable.class);
         assertThat(makePlainInstrumentedType().isAssignableFrom(serializableTypeDescription), is(false));
@@ -502,7 +502,7 @@ public class InstrumentedTypeDefaultTest {
         assertThat(makePlainInstrumentedType().isAssignableTo(Object.class), is(true));
         assertThat(makePlainInstrumentedType().isAssignableTo(makePlainInstrumentedType()), is(true));
         assertThat(makePlainInstrumentedType().isAssignableTo(Integer.class), is(false));
-        assertThat(makePlainInstrumentedType().isAssignableTo(TypeDescription.OBJECT), is(true));
+        assertThat(makePlainInstrumentedType().isAssignableTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
     }
 
     @Test
@@ -835,7 +835,7 @@ public class InstrumentedTypeDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void testDeclaredTypesDuplicate() throws Exception {
         makePlainInstrumentedType()
-                .withDeclaredTypes(new TypeList.Explicit(TypeDescription.OBJECT, TypeDescription.OBJECT))
+                .withDeclaredTypes(new TypeList.Explicit(TypeDescription.ForLoadedType.of(Object.class), TypeDescription.ForLoadedType.of(Object.class)))
                 .validated();
     }
 
@@ -884,7 +884,7 @@ public class InstrumentedTypeDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void testNestHostForeignPackage() throws Exception {
         makePlainInstrumentedType()
-                .withNestHost(TypeDescription.OBJECT)
+                .withNestHost(TypeDescription.ForLoadedType.of(Object.class))
                 .validated();
     }
 
@@ -906,21 +906,21 @@ public class InstrumentedTypeDefaultTest {
     public void testNestMemberDuplicate() throws Exception {
         makePlainInstrumentedType()
                 .withName("java.lang.Test")
-                .withNestMembers(new TypeList.Explicit(TypeDescription.OBJECT, TypeDescription.OBJECT))
+                .withNestMembers(new TypeList.Explicit(TypeDescription.ForLoadedType.of(Object.class), TypeDescription.ForLoadedType.of(Object.class)))
                 .validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testNestMemberForeignPackage() throws Exception {
         makePlainInstrumentedType()
-                .withNestMembers(new TypeList.Explicit(TypeDescription.OBJECT))
+                .withNestMembers(new TypeList.Explicit(TypeDescription.ForLoadedType.of(Object.class)))
                 .validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testPermittedSubclassNoSubclass() throws Exception {
         makePlainInstrumentedType()
-                .withPermittedSubclasses(new TypeList.Explicit(TypeDescription.OBJECT))
+                .withPermittedSubclasses(new TypeList.Explicit(TypeDescription.ForLoadedType.of(Object.class)))
                 .validated();
     }
 

@@ -122,12 +122,12 @@ public interface ClassWriterStrategy {
             } else if (leftType.isAssignableTo(rightType)) {
                 return rightType.getInternalName();
             } else if (leftType.isInterface() || rightType.isInterface()) {
-                return TypeDescription.OBJECT.getInternalName();
+                return TypeDescription.ForLoadedType.of(Object.class).getInternalName();
             } else {
                 do {
                     TypeDescription.Generic superClass = leftType.getSuperClass();
                     if (superClass == null) {
-                        return TypeDescription.OBJECT.getInternalName();
+                        return TypeDescription.ForLoadedType.of(Object.class).getInternalName();
                     }
                     leftType = superClass.asErasure();
                 } while (!leftType.isAssignableFrom(rightType));

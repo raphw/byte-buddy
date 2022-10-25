@@ -53,7 +53,7 @@ public class EqualsMethod implements Implementation {
     /**
      * The {@link Object#equals(Object)} method.
      */
-    private static final MethodDescription.InDefinedShape EQUALS = TypeDescription.OBJECT
+    private static final MethodDescription.InDefinedShape EQUALS = TypeDescription.ForLoadedType.of(Object.class)
             .getDeclaredMethods()
             .filter(isEquals())
             .getOnly();
@@ -488,17 +488,17 @@ public class EqualsMethod implements Implementation {
                     methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfBlock);
                     methodVisitor.visitLabel(secondValueNull);
                     implementationContext.getFrameGeneration().same1(methodVisitor,
-                            TypeDescription.OBJECT,
-                            Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.OBJECT));
+                            TypeDescription.ForLoadedType.of(Object.class),
+                            Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.ForLoadedType.of(Object.class)));
                     methodVisitor.visitJumpInsn(Opcodes.IFNULL, endOfBlock);
                     methodVisitor.visitLabel(firstValueNull);
                     implementationContext.getFrameGeneration().same(methodVisitor,
-                            Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.OBJECT));
+                            Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.ForLoadedType.of(Object.class)));
                     methodVisitor.visitInsn(Opcodes.ICONST_0);
                     methodVisitor.visitInsn(Opcodes.IRETURN);
                     methodVisitor.visitLabel(endOfBlock);
                     implementationContext.getFrameGeneration().same(methodVisitor,
-                            Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.OBJECT));
+                            Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.ForLoadedType.of(Object.class)));
                     return Size.ZERO;
                 }
             }
@@ -898,7 +898,7 @@ public class EqualsMethod implements Implementation {
             methodVisitor.visitInsn(Opcodes.IRETURN);
             methodVisitor.visitLabel(label);
             implementationContext.getFrameGeneration().same(methodVisitor,
-                    Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.OBJECT));
+                    Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.ForLoadedType.of(Object.class)));
             return new Size(-1, 1);
         }
     }

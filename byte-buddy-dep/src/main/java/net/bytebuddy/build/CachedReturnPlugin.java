@@ -165,7 +165,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
                             .bind(CacheField.class, new CacheFieldOffsetMapping(name))
                             .to(adviceByType.get(methodDescription.getReturnType().isPrimitive()
                                     ? methodDescription.getReturnType().asErasure()
-                                    : TypeDescription.OBJECT), this.classFileLocator)
+                                    : TypeDescription.ForLoadedType.of(Object.class)), this.classFileLocator)
                             .on(is(methodDescription)));
         }
         return builder;

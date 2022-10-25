@@ -1310,7 +1310,7 @@ public class AdviceTest {
     public void testUserStackManipulation() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(Advice.withCustomMapping().bind(Custom.class, ClassConstant.of(TypeDescription.OBJECT), Object.class).to(CustomAdvice.class).on(named(BAR)))
+                .visit(Advice.withCustomMapping().bind(Custom.class, ClassConstant.of(TypeDescription.ForLoadedType.of(Object.class)), Object.class).to(CustomAdvice.class).on(named(BAR)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -1321,9 +1321,9 @@ public class AdviceTest {
     public void testUserOffsetMapping() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.OffsetMapping.ForStackManipulation(ClassConstant.of(TypeDescription.OBJECT),
-                        TypeDescription.STRING.asGenericType(),
-                        TypeDescription.STRING.asGenericType(),
+                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.OffsetMapping.ForStackManipulation(ClassConstant.of(TypeDescription.ForLoadedType.of(Object.class)),
+                        TypeDescription.ForLoadedType.of(String.class).asGenericType(),
+                        TypeDescription.ForLoadedType.of(String.class).asGenericType(),
                         Assigner.Typing.STATIC)).to(CustomAdvice.class).on(named(BAR)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -1671,7 +1671,7 @@ public class AdviceTest {
     public void testNonAssignableTypeDescriptionValue() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(Advice.withCustomMapping().bind(Custom.class, TypeDescription.OBJECT).to(CustomPrimitiveAdvice.class).on(named(FOO)))
+                .visit(Advice.withCustomMapping().bind(Custom.class, TypeDescription.ForLoadedType.of(Object.class)).to(CustomPrimitiveAdvice.class).on(named(FOO)))
                 .make();
     }
 

@@ -306,7 +306,7 @@ public interface TypePool {
              */
             public static CacheProvider withObjectType() {
                 CacheProvider cacheProvider = new Simple();
-                cacheProvider.register(Object.class.getName(), new Resolution.Simple(TypeDescription.OBJECT));
+                cacheProvider.register(Object.class.getName(), new Resolution.Simple(TypeDescription.ForLoadedType.of(Object.class)));
                 return cacheProvider;
             }
 

@@ -31,7 +31,7 @@ public class JavaConstantMethodHandleTest {
         assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.INVOKE_VIRTUAL));
         assertThat(methodHandle.getName(), is(BAR));
         assertThat(methodHandle.getOwnerType(), is(TypeDescription.ForLoadedType.of(Foo.class)));
-        assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
+        assertThat(methodHandle.getReturnType(), is(TypeDescription.ForLoadedType.of(void.class)));
         assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
         assertThat(methodHandle.getDescriptor(), is(new MethodDescription.ForLoadedMethod(Foo.class.getDeclaredMethod(BAR, Void.class)).getDescriptor()));
     }
@@ -42,7 +42,7 @@ public class JavaConstantMethodHandleTest {
         assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.INVOKE_SPECIAL));
         assertThat(methodHandle.getName(), is(BAR));
         assertThat(methodHandle.getOwnerType(), is(TypeDescription.ForLoadedType.of(Foo.class)));
-        assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
+        assertThat(methodHandle.getReturnType(), is(TypeDescription.ForLoadedType.of(void.class)));
         assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
@@ -52,7 +52,7 @@ public class JavaConstantMethodHandleTest {
         assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.INVOKE_STATIC));
         assertThat(methodHandle.getName(), is(QUX));
         assertThat(methodHandle.getOwnerType(), is(TypeDescription.ForLoadedType.of(Foo.class)));
-        assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
+        assertThat(methodHandle.getReturnType(), is(TypeDescription.ForLoadedType.of(void.class)));
         assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
@@ -62,7 +62,7 @@ public class JavaConstantMethodHandleTest {
         assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.INVOKE_SPECIAL_CONSTRUCTOR));
         assertThat(methodHandle.getName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
         assertThat(methodHandle.getOwnerType(), is(TypeDescription.ForLoadedType.of(Foo.class)));
-        assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
+        assertThat(methodHandle.getReturnType(), is(TypeDescription.ForLoadedType.of(void.class)));
         assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
@@ -73,7 +73,7 @@ public class JavaConstantMethodHandleTest {
         assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.INVOKE_SPECIAL_CONSTRUCTOR));
         assertThat(methodHandle.getName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
         assertThat(methodHandle.getOwnerType(), is(TypeDescription.ForLoadedType.of(Foo.class)));
-        assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
+        assertThat(methodHandle.getReturnType(), is(TypeDescription.ForLoadedType.of(void.class)));
         assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
@@ -103,7 +103,7 @@ public class JavaConstantMethodHandleTest {
         assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.PUT_FIELD));
         assertThat(methodHandle.getName(), is(BAZ));
         assertThat(methodHandle.getOwnerType(), is(TypeDescription.ForLoadedType.of(Foo.class)));
-        assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
+        assertThat(methodHandle.getReturnType(), is(TypeDescription.ForLoadedType.of(void.class)));
         assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Integer.class)));
         assertThat(methodHandle.getDescriptor(), is(methodHandle.getParameterTypes().getOnly().getDescriptor()));
     }
@@ -114,7 +114,7 @@ public class JavaConstantMethodHandleTest {
         assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.PUT_STATIC_FIELD));
         assertThat(methodHandle.getName(), is(QUX));
         assertThat(methodHandle.getOwnerType(), is(TypeDescription.ForLoadedType.of(Foo.class)));
-        assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
+        assertThat(methodHandle.getReturnType(), is(TypeDescription.ForLoadedType.of(void.class)));
         assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
         assertThat(methodHandle.getDescriptor(), is(methodHandle.getParameterTypes().getOnly().getDescriptor()));
     }
@@ -130,7 +130,7 @@ public class JavaConstantMethodHandleTest {
         assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.INVOKE_VIRTUAL));
         assertThat(methodHandle.getName(), is(BAR));
         assertThat(methodHandle.getOwnerType(), is(TypeDescription.ForLoadedType.of(Foo.class)));
-        assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
+        assertThat(methodHandle.getReturnType(), is(TypeDescription.ForLoadedType.of(void.class)));
         assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 

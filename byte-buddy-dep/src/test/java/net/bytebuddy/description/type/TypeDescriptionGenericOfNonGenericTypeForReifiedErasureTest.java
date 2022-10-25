@@ -14,7 +14,7 @@ public class TypeDescriptionGenericOfNonGenericTypeForReifiedErasureTest {
 
     @Test
     public void testNonGenerifiedType() throws Exception {
-        TypeDescription.Generic typeDescription = TypeDescription.Generic.OfNonGenericType.ForReifiedErasure.of(TypeDescription.OBJECT);
+        TypeDescription.Generic typeDescription = TypeDescription.Generic.OfNonGenericType.ForReifiedErasure.of(TypeDescription.ForLoadedType.of(Object.class));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.getSort(), not(instanceOf(TypeDescription.Generic.OfNonGenericType.ForReifiedErasure.class)));
     }

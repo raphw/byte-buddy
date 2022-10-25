@@ -161,7 +161,7 @@ public class NexusAccessor {
                         new TextConstant("initialize"),
                         ArrayFactory.forType(TypeDescription.Generic.CLASS)
                                 .withValues(Arrays.asList(
-                                        ClassConstant.of(TypeDescription.CLASS),
+                                        ClassConstant.of(TypeDescription.ForLoadedType.of(Class.class)),
                                         ClassConstant.of(TypeDescription.ForLoadedType.of(int.class)))),
                         MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Class.class.getMethod("getMethod", String.class, Class[].class))),
                         NullConstant.INSTANCE,

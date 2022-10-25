@@ -114,10 +114,10 @@ public class AnnotationValueRenderingDispatcherTest {
 
     @Test
     public void testTypeDescription() throws Exception {
-        assertThat(AnnotationValue.RenderingDispatcher.LEGACY_VM.toSourceString(TypeDescription.OBJECT), is("class java.lang.Object"));
-        assertThat(AnnotationValue.RenderingDispatcher.JAVA_9_CAPABLE_VM.toSourceString(TypeDescription.OBJECT), is("java.lang.Object.class"));
-        assertThat(AnnotationValue.RenderingDispatcher.JAVA_14_CAPABLE_VM.toSourceString(TypeDescription.OBJECT), is("java.lang.Object.class"));
-        assertThat(AnnotationValue.RenderingDispatcher.JAVA_17_CAPABLE_VM.toSourceString(TypeDescription.OBJECT), is("java.lang.Object.class"));
+        assertThat(AnnotationValue.RenderingDispatcher.LEGACY_VM.toSourceString(TypeDescription.ForLoadedType.of(Object.class)), is("class java.lang.Object"));
+        assertThat(AnnotationValue.RenderingDispatcher.JAVA_9_CAPABLE_VM.toSourceString(TypeDescription.ForLoadedType.of(Object.class)), is("java.lang.Object.class"));
+        assertThat(AnnotationValue.RenderingDispatcher.JAVA_14_CAPABLE_VM.toSourceString(TypeDescription.ForLoadedType.of(Object.class)), is("java.lang.Object.class"));
+        assertThat(AnnotationValue.RenderingDispatcher.JAVA_17_CAPABLE_VM.toSourceString(TypeDescription.ForLoadedType.of(Object.class)), is("java.lang.Object.class"));
     }
 
     @Test

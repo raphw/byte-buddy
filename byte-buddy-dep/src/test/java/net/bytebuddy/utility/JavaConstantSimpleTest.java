@@ -22,9 +22,9 @@ public class JavaConstantSimpleTest {
                 {0L, TypeDescription.ForLoadedType.of(long.class), 0L},
                 {0f, TypeDescription.ForLoadedType.of(float.class), 0f},
                 {0d, TypeDescription.ForLoadedType.of(double.class), 0d},
-                {"foo", TypeDescription.STRING, "foo"},
-                {Object.class, TypeDescription.CLASS, TypeDescription.ForLoadedType.of(Object.class)},
-                {TypeDescription.OBJECT, TypeDescription.CLASS, TypeDescription.ForLoadedType.of(Object.class)},
+                {"foo", TypeDescription.ForLoadedType.of(String.class), "foo"},
+                {Object.class, TypeDescription.ForLoadedType.of(Class.class), TypeDescription.ForLoadedType.of(Object.class)},
+                {TypeDescription.ForLoadedType.of(Object.class), TypeDescription.ForLoadedType.of(Class.class), TypeDescription.ForLoadedType.of(Object.class)},
                 {JavaConstant.Simple.ofLoaded(0), TypeDescription.ForLoadedType.of(int.class), 0}
         });
     }

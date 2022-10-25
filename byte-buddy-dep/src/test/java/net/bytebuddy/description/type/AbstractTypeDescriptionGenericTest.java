@@ -554,7 +554,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next(), is((TypeDefinition) typeDescription));
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is((TypeDefinition) TypeDescription.OBJECT));
+        assertThat(iterator.next(), is((TypeDefinition) TypeDescription.ForLoadedType.of(Object.class)));
         assertThat(iterator.hasNext(), is(false));
     }
 
@@ -621,7 +621,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next(), is((TypeDefinition) typeDescription));
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is((TypeDefinition) TypeDescription.OBJECT));
+        assertThat(iterator.next(), is((TypeDefinition) TypeDescription.ForLoadedType.of(Object.class)));
         assertThat(iterator.hasNext(), is(false));
     }
 
@@ -1182,7 +1182,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(methodDescription.getReturnType().asErasure(), is(TypeDescription.OBJECT));
+        assertThat(methodDescription.getReturnType().asErasure(), is(TypeDescription.ForLoadedType.of(Object.class)));
     }
 
     @Test
@@ -1191,7 +1191,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(QUX)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(methodDescription.getReturnType().asErasure(), is(TypeDescription.OBJECT));
+        assertThat(methodDescription.getReturnType().asErasure(), is(TypeDescription.ForLoadedType.of(Object.class)));
     }
 
     @Test
@@ -1307,7 +1307,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         TypeDescription.Generic type = describeType(RawType.class.getDeclaredField(FOO)).getSuperClass().getSuperClass();
         FieldDescription fieldDescription = type.getDeclaredFields().filter(named(BAR)).getOnly();
         assertThat(fieldDescription.getType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(fieldDescription.getType().asErasure(), is(TypeDescription.OBJECT));
+        assertThat(fieldDescription.getType().asErasure(), is(TypeDescription.ForLoadedType.of(Object.class)));
     }
 
     @Test

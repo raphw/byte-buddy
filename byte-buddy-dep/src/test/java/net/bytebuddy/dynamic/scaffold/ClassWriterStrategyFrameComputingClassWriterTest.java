@@ -60,13 +60,13 @@ public class ClassWriterStrategyFrameComputingClassWriterTest {
     @Test
     public void testLeftIsInterface() throws Exception {
         when(leftType.isInterface()).thenReturn(true);
-        assertThat(frameComputingClassWriter.getCommonSuperClass(FOO, BAR), is(TypeDescription.OBJECT.getInternalName()));
+        assertThat(frameComputingClassWriter.getCommonSuperClass(FOO, BAR), is(TypeDescription.ForLoadedType.of(Object.class).getInternalName()));
     }
 
     @Test
     public void testRightIsInterface() throws Exception {
         when(rightType.isInterface()).thenReturn(true);
-        assertThat(frameComputingClassWriter.getCommonSuperClass(FOO, BAR), is(TypeDescription.OBJECT.getInternalName()));
+        assertThat(frameComputingClassWriter.getCommonSuperClass(FOO, BAR), is(TypeDescription.ForLoadedType.of(Object.class).getInternalName()));
     }
 
     @Test

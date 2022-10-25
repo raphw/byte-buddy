@@ -41,9 +41,9 @@ public class JavaConstantTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testVisitSimpleType() throws Exception {
-        when(visitor.onType((JavaConstant.Simple<TypeDescription>) JavaConstant.Simple.of(TypeDescription.OBJECT))).thenReturn(value);
-        assertThat(JavaConstant.Simple.of(TypeDescription.OBJECT).accept(visitor), is(value));
-        verify(visitor).onType((JavaConstant.Simple<TypeDescription>) JavaConstant.Simple.of(TypeDescription.OBJECT));
+        when(visitor.onType((JavaConstant.Simple<TypeDescription>) JavaConstant.Simple.of(TypeDescription.ForLoadedType.of(Object.class)))).thenReturn(value);
+        assertThat(JavaConstant.Simple.of(TypeDescription.ForLoadedType.of(Object.class)).accept(visitor), is(value));
+        verify(visitor).onType((JavaConstant.Simple<TypeDescription>) JavaConstant.Simple.of(TypeDescription.ForLoadedType.of(Object.class)));
         verifyNoMoreInteractions(visitor);
     }
 

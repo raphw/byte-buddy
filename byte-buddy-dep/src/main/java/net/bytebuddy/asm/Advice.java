@@ -3741,17 +3741,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   Assigner assigner,
                                   ArgumentHandler argumentHandler,
                                   Sort sort) {
-                StackManipulation readAssignment = assigner.assign(TypeDescription.THROWABLE.asGenericType(), target, typing);
+                StackManipulation readAssignment = assigner.assign(TypeDescription.ForLoadedType.of(Throwable.class).asGenericType(), target, typing);
                 if (!readAssignment.isValid()) {
                     throw new IllegalStateException("Cannot assign Throwable to " + target);
                 } else if (readOnly) {
-                    return new Target.ForVariable.ReadOnly(TypeDescription.THROWABLE, argumentHandler.thrown(), readAssignment);
+                    return new Target.ForVariable.ReadOnly(TypeDescription.ForLoadedType.of(Throwable.class), argumentHandler.thrown(), readAssignment);
                 } else {
-                    StackManipulation writeAssignment = assigner.assign(target, TypeDescription.THROWABLE.asGenericType(), typing);
+                    StackManipulation writeAssignment = assigner.assign(target, TypeDescription.ForLoadedType.of(Throwable.class).asGenericType(), typing);
                     if (!writeAssignment.isValid()) {
                         throw new IllegalStateException("Cannot assign " + target + " to Throwable");
                     }
-                    return new Target.ForVariable.ReadWrite(TypeDescription.THROWABLE, argumentHandler.thrown(), readAssignment, writeAssignment);
+                    return new Target.ForVariable.ReadWrite(TypeDescription.ForLoadedType.of(Throwable.class), argumentHandler.thrown(), readAssignment, writeAssignment);
                 }
             }
 
@@ -3911,7 +3911,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param typeDescription The type to bind.
                  */
                 public Factory(Class<T> annotationType, TypeDescription typeDescription) {
-                    this(annotationType, ClassConstant.of(typeDescription), TypeDescription.CLASS.asGenericType());
+                    this(annotationType, ClassConstant.of(typeDescription), TypeDescription.ForLoadedType.of(Class.class).asGenericType());
                 }
 
                 /**
@@ -3976,13 +3976,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         typeDescription = TypeDescription.ForLoadedType.of(double.class);
                     } else if (value instanceof String) {
                         stackManipulation = new TextConstant((String) value);
-                        typeDescription = TypeDescription.STRING;
+                        typeDescription = TypeDescription.ForLoadedType.of(String.class);
                     } else if (value instanceof Class<?>) {
                         stackManipulation = ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value));
-                        typeDescription = TypeDescription.CLASS;
+                        typeDescription = TypeDescription.ForLoadedType.of(Class.class);
                     } else if (value instanceof TypeDescription) {
                         stackManipulation = ClassConstant.of((TypeDescription) value);
-                        typeDescription = TypeDescription.CLASS;
+                        typeDescription = TypeDescription.ForLoadedType.of(Class.class);
                     } else if (value instanceof Enum<?>) {
                         stackManipulation = FieldAccess.forEnumeration(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
                         typeDescription = TypeDescription.ForLoadedType.of(((Enum<?>) value).getDeclaringClass());
@@ -5203,10 +5203,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                               boolean exit) {
                 Object[] argument;
                 if (instrumentedMethod.isTypeInitializer()) {
-                    if (!bootstrapMethod.isInvokeBootstrap(Arrays.asList(TypeDescription.STRING,
+                    if (!bootstrapMethod.isInvokeBootstrap(Arrays.asList(TypeDescription.ForLoadedType.of(String.class),
                             TypeDescription.ForLoadedType.of(int.class),
-                            TypeDescription.CLASS,
-                            TypeDescription.STRING))) {
+                            TypeDescription.ForLoadedType.of(Class.class),
+                            TypeDescription.ForLoadedType.of(String.class)))) {
                         throw new IllegalArgumentException(bootstrapMethod + " is not accepting advice bootstrap arguments");
                     }
                     argument = new Object[]{adviceMethod.getDeclaringType().getName(),
@@ -5214,10 +5214,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             Type.getType(instrumentedType.getDescriptor()),
                             instrumentedMethod.getInternalName()};
                 } else {
-                    if (!bootstrapMethod.isInvokeBootstrap(Arrays.asList(TypeDescription.STRING,
+                    if (!bootstrapMethod.isInvokeBootstrap(Arrays.asList(TypeDescription.ForLoadedType.of(String.class),
                             TypeDescription.ForLoadedType.of(int.class),
-                            TypeDescription.CLASS,
-                            TypeDescription.STRING,
+                            TypeDescription.ForLoadedType.of(Class.class),
+                            TypeDescription.ForLoadedType.of(String.class),
                             JavaType.METHOD_HANDLE.getTypeStub()))) {
                         throw new IllegalArgumentException(bootstrapMethod + " is not accepting advice bootstrap arguments");
                     }
@@ -6493,7 +6493,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!expandFrames && currentFrameDivergence == 0) {
                         methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
                     } else {
-                        injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes), Collections.singletonList(TypeDescription.THROWABLE));
+                        injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes), Collections.singletonList(TypeDescription.ForLoadedType.of(Throwable.class)));
                     }
                 }
 
@@ -6872,7 +6872,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!expandFrames && currentFrameDivergence == 0) {
                         methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
                     } else {
-                        injectFullFrame(methodVisitor, initialization, startTypes, Collections.singletonList(TypeDescription.THROWABLE));
+                        injectFullFrame(methodVisitor, initialization, startTypes, Collections.singletonList(TypeDescription.ForLoadedType.of(Throwable.class)));
                     }
                 }
 
@@ -7970,7 +7970,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public TypeDescription getAdviceType() {
-                return TypeDescription.VOID;
+                return TypeDescription.ForLoadedType.of(void.class);
             }
 
             /**
@@ -7984,7 +7984,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * {@inheritDoc}
              */
             public TypeDefinition getActualAdviceType() {
-                return TypeDescription.VOID;
+                return TypeDescription.ForLoadedType.of(void.class);
             }
 
             /**
@@ -8834,7 +8834,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * {@inheritDoc}
                          */
                         public TypeDefinition getAdviceType() {
-                            return TypeDescription.VOID;
+                            return TypeDescription.ForLoadedType.of(void.class);
                         }
 
                         /**
@@ -10222,7 +10222,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * {@inheritDoc}
                          */
                         public TypeDefinition getAdviceType() {
-                            return TypeDescription.VOID;
+                            return TypeDescription.ForLoadedType.of(void.class);
                         }
 
                         /**
@@ -11077,8 +11077,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodEnter,
                             methodExit,
                             instrumentedMethod.getReturnType().represents(void.class)
-                                    ? Collections.singletonList(TypeDescription.THROWABLE)
-                                    : Arrays.asList(instrumentedMethod.getReturnType().asErasure(), TypeDescription.THROWABLE),
+                                    ? Collections.singletonList(TypeDescription.ForLoadedType.of(Throwable.class))
+                                    : Arrays.asList(instrumentedMethod.getReturnType().asErasure(), TypeDescription.ForLoadedType.of(Throwable.class)),
                             writerFlags,
                             readerFlags);
                     this.throwable = throwable;
@@ -14131,7 +14131,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             Collections.<TypeVariableToken>emptyList(),
                             JavaType.CALL_SITE.getTypeStub().asGenericType(),
                             Arrays.asList(new ParameterDescription.Token(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().asGenericType()),
-                                    new ParameterDescription.Token(TypeDescription.STRING.asGenericType()),
+                                    new ParameterDescription.Token(TypeDescription.ForLoadedType.of(String.class).asGenericType()),
                                     new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
                                     new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
                                     new ParameterDescription.Token(JavaType.METHOD_HANDLE.getTypeStub().asGenericType()),

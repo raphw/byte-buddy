@@ -20,6 +20,6 @@ public class PluginEngineTargetDiscardingTest {
         Plugin.Engine.Source.Element eleement = mock(Plugin.Engine.Source.Element.class);
         Plugin.Engine.Target.Discarding.INSTANCE.write(Plugin.Engine.Source.Origin.NO_MANIFEST).retain(eleement);
         verifyNoMoreInteractions(eleement);
-        Plugin.Engine.Target.Discarding.INSTANCE.write(Plugin.Engine.Source.Origin.NO_MANIFEST).store(Collections.singletonMap(TypeDescription.OBJECT, new byte[]{1, 2, 3}));
+        Plugin.Engine.Target.Discarding.INSTANCE.write(Plugin.Engine.Source.Origin.NO_MANIFEST).store(Collections.singletonMap(TypeDescription.ForLoadedType.of(Object.class), new byte[]{1, 2, 3}));
     }
 }

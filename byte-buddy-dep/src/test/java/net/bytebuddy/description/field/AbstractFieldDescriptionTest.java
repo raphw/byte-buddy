@@ -148,13 +148,13 @@ public abstract class AbstractFieldDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredField("privateField"))
                 .isVisibleTo(TypeDescription.ForLoadedType.of(FirstSample.class)), is(ClassFileVersion.of(FirstSample.class).isAtLeast(ClassFileVersion.JAVA_V11)));
         assertThat(describe(PublicType.class.getDeclaredField("publicField"))
-                .isVisibleTo(TypeDescription.OBJECT), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("protectedField"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredField("packagePrivateField"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredField("privateField"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredField("publicField"))
                 .isVisibleTo(TypeDescription.ForLoadedType.of(FieldDescriptionTestHelper.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("protectedField"))
@@ -164,17 +164,17 @@ public abstract class AbstractFieldDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredField("privateField"))
                 .isVisibleTo(TypeDescription.ForLoadedType.of(FieldDescriptionTestHelper.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredField("publicField"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredField("protectedField"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredField("packagePrivateField"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredField("privateField"))
-                .isVisibleTo(TypeDescription.OBJECT), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(false));
         assertThat(describe(PackagePrivateFieldType.class.getDeclaredField("packagePrivateType"))
                 .isVisibleTo(TypeDescription.ForLoadedType.of(PackagePrivateFieldType.class)), is(true));
         assertThat(describe(PackagePrivateFieldType.class.getDeclaredField("packagePrivateType"))
-                .isVisibleTo(TypeDescription.OBJECT), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Object.class)), is(true));
     }
 
     @Test

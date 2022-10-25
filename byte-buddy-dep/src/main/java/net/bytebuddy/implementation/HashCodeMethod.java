@@ -294,7 +294,7 @@ public class HashCodeMethod implements Implementation {
              * {@inheritDoc}
              */
             public StackManipulation resolve(TypeDescription instrumentedType) {
-                return new StackManipulation.Compound(ClassConstant.of(instrumentedType), MethodInvocation.invoke(HASH_CODE).virtual(TypeDescription.CLASS));
+                return new StackManipulation.Compound(ClassConstant.of(instrumentedType), MethodInvocation.invoke(HASH_CODE).virtual(TypeDescription.ForLoadedType.of(Class.class)));
             }
         }
 
@@ -314,7 +314,7 @@ public class HashCodeMethod implements Implementation {
             public StackManipulation resolve(TypeDescription instrumentedType) {
                 return new StackManipulation.Compound(MethodVariableAccess.loadThis(),
                         MethodInvocation.invoke(GET_CLASS).virtual(instrumentedType),
-                        MethodInvocation.invoke(HASH_CODE).virtual(TypeDescription.CLASS));
+                        MethodInvocation.invoke(HASH_CODE).virtual(TypeDescription.ForLoadedType.of(Class.class)));
             }
         }
     }
@@ -455,7 +455,7 @@ public class HashCodeMethod implements Implementation {
                     methodVisitor.visitLabel(label);
                     implementationContext.getFrameGeneration().same1(methodVisitor,
                             TypeDescription.ForLoadedType.of(int.class),
-                            Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.OBJECT));
+                            Arrays.asList(implementationContext.getInstrumentedType(), TypeDescription.ForLoadedType.of(Object.class)));
                     return Size.ZERO;
                 }
             }

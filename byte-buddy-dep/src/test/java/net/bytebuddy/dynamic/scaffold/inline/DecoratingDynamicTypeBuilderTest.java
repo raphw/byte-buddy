@@ -139,11 +139,11 @@ public class DecoratingDynamicTypeBuilderTest {
     public void testAuxiliaryTypes() throws Exception {
         Map<TypeDescription, byte[]> auxiliaryTypes = new ByteBuddy()
                 .decorate(Foo.class)
-                .require(TypeDescription.VOID, new byte[]{1, 2, 3})
+                .require(TypeDescription.ForLoadedType.of(void.class), new byte[]{1, 2, 3})
                 .make()
                 .getAuxiliaryTypes();
         assertThat(auxiliaryTypes.size(), is(1));
-        assertThat(auxiliaryTypes.get(TypeDescription.VOID).length, is(3));
+        assertThat(auxiliaryTypes.get(TypeDescription.ForLoadedType.of(void.class)).length, is(3));
     }
 
     @Test(expected = UnsupportedOperationException.class)

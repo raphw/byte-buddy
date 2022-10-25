@@ -38,11 +38,11 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testTrivialJavaHierarchy() throws Exception {
-        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) TypeDescription.OBJECT);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size()));
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) TypeDescription.ForLoadedType.of(Object.class));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size()));
         assertThat(methodGraph.getSuperClassGraph().listNodes().size(), is(0));
         assertThat(methodGraph.getInterfaceGraph(mock(TypeDescription.class)).listNodes().size(), is(0));
-        for (MethodDescription methodDescription : TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual())) {
+        for (MethodDescription methodDescription : TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual())) {
             MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
             assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
             assertThat(node.getMethodTypes().size(), is(1));
@@ -55,11 +55,11 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testTrivialJVMHierarchy() throws Exception {
-        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJVMHierarchy().compile((TypeDefinition) TypeDescription.OBJECT);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size()));
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJVMHierarchy().compile((TypeDefinition) TypeDescription.ForLoadedType.of(Object.class));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size()));
         assertThat(methodGraph.getSuperClassGraph().listNodes().size(), is(0));
         assertThat(methodGraph.getInterfaceGraph(mock(TypeDescription.class)).listNodes().size(), is(0));
-        for (MethodDescription methodDescription : TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual())) {
+        for (MethodDescription methodDescription : TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual())) {
             MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
             assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
             assertThat(node.getMethodTypes().size(), is(1));
@@ -74,10 +74,10 @@ public class MethodGraphCompilerDefaultTest {
     public void testSimpleClass() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(SimpleClass.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size()));
-        assertThat(methodGraph.getSuperClassGraph().listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size()));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size()));
+        assertThat(methodGraph.getSuperClassGraph().listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size()));
         assertThat(methodGraph.getInterfaceGraph(mock(TypeDescription.class)).listNodes().size(), is(0));
-        for (MethodDescription methodDescription : TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual())) {
+        for (MethodDescription methodDescription : TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual())) {
             MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
             assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
             assertThat(node.getMethodTypes().size(), is(1));
@@ -99,7 +99,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testClassInheritance() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(ClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription method = typeDescription.getDeclaredMethods().filter(isMethod()).getOnly();
         MethodGraph.Node node = methodGraph.locate(method.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -118,7 +118,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testInterfaceImplementation() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(InterfaceBase.InnerClass.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription method = typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly();
         MethodGraph.Node node = methodGraph.locate(method.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -163,7 +163,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testClassAndInterfaceDominantInheritance() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(ClassAndInterfaceInheritance.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription method = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly();
         MethodGraph.Node node = methodGraph.locate(method.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -181,7 +181,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testMultipleAmbiguousClassInheritance() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.ClassTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription first = typeDescription.getInterfaces().filter(erasure(InterfaceBase.class)).getOnly()
                 .getDeclaredMethods().filter(isMethod()).getOnly();
         MethodDescription second = typeDescription.getInterfaces().filter(erasure(AmbiguousInterfaceBase.class)).getOnly()
@@ -233,7 +233,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testDominantClassInheritance() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.DominantClassTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription methodDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.DominantIntermediate.class)
                 .getDeclaredMethods().getOnly();
         MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
@@ -308,7 +308,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testGenericClassSingleEvolution() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
         MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken bridgeToken = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly().asDefined().asSignatureToken();
@@ -324,7 +324,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testGenericClassMultipleEvolution() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericClassBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
         MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken firstBridgeToken = typeDescription.getSuperClass().getDeclaredMethods()
@@ -345,7 +345,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testReturnTypeClassSingleEvolution() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(ReturnTypeClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
         MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken bridgeToken = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly().asSignatureToken();
@@ -361,7 +361,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testReturnTypeClassMultipleEvolution() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(ReturnTypeClassBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
         MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken firstBridgeToken = typeDescription.getSuperClass().getDeclaredMethods()
@@ -382,7 +382,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testGenericReturnTypeClassSingleEvolution() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericReturnClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
         MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken bridgeToken = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly().asSignatureToken();
@@ -398,7 +398,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testGenericReturnTypeClassMultipleEvolution() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericReturnClassBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
         MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken firstBridgeToken = typeDescription.getSuperClass().getDeclaredMethods()
@@ -493,7 +493,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testGenericWithReturnTypeClassSingleEvolution() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericWithReturnTypeClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
         MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken bridgeToken = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly().asDefined().asSignatureToken();
@@ -509,7 +509,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testGenericWithReturnTypeClassMultipleEvolution() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericWithReturnTypeClassBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
         MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken firstBridgeToken = typeDescription.getSuperClass().getDeclaredMethods()
@@ -568,7 +568,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testGenericNonOverriddenClassExtension() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericNonOverriddenClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription methodDescription = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly();
         MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -584,7 +584,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testGenericNonOverriddenInterfaceExtension() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericNonOverriddenInterfaceBase.InnerClass.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription methodDescription = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(isMethod()).getOnly();
         MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -650,7 +650,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testDuplicateNameClass() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameClass.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 2));
         MethodDescription objectMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
         MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asSignatureToken());
         assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -671,7 +671,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testDuplicateNameClassExtension() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameClass.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 3));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 3));
         MethodDescription objectMethod = typeDescription.getSuperClass().getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
         MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asSignatureToken());
         assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -720,7 +720,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testDuplicateNameInterfaceImplementation() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameInterface.InnerClass.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 3));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 3));
         MethodDescription objectMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
         MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asSignatureToken());
         assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -776,7 +776,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testDuplicateNameGenericClass() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameGenericClass.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 2));
         MethodDescription objectMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
         MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asSignatureToken());
         assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -797,7 +797,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testDuplicateNameGenericClassExtension() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameGenericClass.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 3));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 3));
         MethodDescription objectMethod = typeDescription.getSuperClass().getDeclaredMethods().filter(takesArguments(String.class)).getOnly();
         MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asSignatureToken());
         assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -846,7 +846,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testDuplicateNameGenericInterfaceImplementation() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameGenericInterface.InnerClass.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 3));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 3));
         MethodDescription objectMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(String.class)).getOnly();
         MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asSignatureToken());
         assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -906,7 +906,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testVisibilityBridge() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(VisibilityBridgeTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription methodDescription = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly();
         MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.VISIBLE));
@@ -920,7 +920,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testGenericVisibilityBridge() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericVisibilityBridgeTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription methodDescription = typeDescription.getSuperClass()
                 .getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly();
         MethodDescription.SignatureToken bridgeToken = typeDescription.getSuperClass().getSuperClass()
@@ -939,7 +939,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testMethodClassConvergence() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(MethodClassConvergence.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly();
         MethodDescription genericMethod = typeDescription.getSuperClass().getDeclaredMethods()
                 .filter(isMethod().and(definedMethod(takesArguments(Object.class)))).getOnly();
@@ -992,7 +992,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testMethodConvergenceVisibilityTarget() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(MethodConvergenceVisibilityBridgeTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription genericMethod = typeDescription.getSuperClass().getSuperClass()
                 .getDeclaredMethods().filter(isMethod().and(definedMethod(takesArguments(Object.class)))).getOnly();
         MethodDescription nonGenericMethod = typeDescription.getSuperClass().getSuperClass()
@@ -1012,7 +1012,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testDiamondInheritanceClass() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericDiamondClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription diamondOverride = typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly();
         MethodDescription explicitOverride = typeDescription.getSuperClass().getDeclaredMethods().filter(isVirtual()).getOnly();
         MethodGraph.Node node = methodGraph.locate(diamondOverride.asSignatureToken());
@@ -1116,7 +1116,7 @@ public class MethodGraphCompilerDefaultTest {
                 TypeDescription.ForLoadedType.of(void.class),
                 Collections.<TypeDescription>emptyList());
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(1 + TypeDescription.OBJECT.getDeclaredMethods().filter(ElementMatchers.isVirtual()).size()));
+        assertThat(methodGraph.listNodes().size(), is(1 + TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(ElementMatchers.isVirtual()).size()));
         MethodGraph.Node node = methodGraph.locate(signatureToken);
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(node.getRepresentative().asSignatureToken(), is(signatureToken));
@@ -1128,7 +1128,7 @@ public class MethodGraphCompilerDefaultTest {
     @Test
     public void testOrphanedBridge() throws Exception {
         MethodDescription.SignatureToken bridgeMethod = new MethodDescription.SignatureToken("foo",
-                TypeDescription.VOID,
+                TypeDescription.ForLoadedType.of(void.class),
                 Collections.<TypeDescription>emptyList());
         TypeDescription typeDescription = new InstrumentedType.Default("foo",
                 Opcodes.ACC_PUBLIC,
@@ -1156,7 +1156,7 @@ public class MethodGraphCompilerDefaultTest {
                 TargetType.DESCRIPTION,
                 Collections.<TypeDescription>emptyList());
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(1 + TypeDescription.OBJECT.getDeclaredMethods().filter(ElementMatchers.isVirtual()).size()));
+        assertThat(methodGraph.listNodes().size(), is(1 + TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(ElementMatchers.isVirtual()).size()));
         MethodGraph.Node node = methodGraph.locate(bridgeMethod);
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(node.getRepresentative().asSignatureToken(), is(bridgeMethod));
@@ -1169,7 +1169,7 @@ public class MethodGraphCompilerDefaultTest {
     public void testRawType() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(RawType.Raw.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile((TypeDefinition) typeDescription);
-        assertThat(methodGraph.getSuperClassGraph().listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.getSuperClassGraph().listNodes().size(), is(TypeDescription.ForLoadedType.of(Object.class).getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription method = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly();
         MethodGraph.Node node = methodGraph.locate(method.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
