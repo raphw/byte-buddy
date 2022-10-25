@@ -7,9 +7,9 @@ import org.junit.rules.MethodRule;
 
 import java.io.Closeable;
 import java.io.File;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -24,7 +24,7 @@ public class ByteBuddySubclassDeadlockTest {
     public void testDeadlock() throws Exception {
         List<URL> urls = new ArrayList<URL>();
         for (String path : System.getProperty("java.class.path").split(File.pathSeparator, -1)) {
-            urls.add(Paths.get(path).toUri().toURL());
+            urls.add(new File(path).toURI().toURL());
         }
         ClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[0]));
         try {
