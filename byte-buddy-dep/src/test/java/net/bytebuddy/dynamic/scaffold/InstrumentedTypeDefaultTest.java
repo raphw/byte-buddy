@@ -60,7 +60,7 @@ public class InstrumentedTypeDefaultTest {
     protected static InstrumentedType.WithFlexibleName makePlainInstrumentedType() {
         return new InstrumentedType.Default(FOO + "." + BAZ,
                 ModifierReviewable.EMPTY_MASK,
-                TypeDescription.Generic.OBJECT,
+                TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                 Collections.<TypeVariableToken>emptyList(),
                 Collections.<TypeDescription.Generic>emptyList(),
                 Collections.<FieldDescription.Token>emptyList(),
@@ -515,7 +515,7 @@ public class InstrumentedTypeDefaultTest {
     @Test
     @SuppressWarnings("cast")
     public void testSuperClass() {
-        assertThat(makePlainInstrumentedType().getSuperClass(), is(TypeDescription.Generic.OBJECT));
+        assertThat(makePlainInstrumentedType().getSuperClass(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
         assertThat(makePlainInstrumentedType().getSuperClass(), not((TypeDescription.Generic) TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Integer.class)));
         assertThat(makePlainInstrumentedType().getSuperClass(), not((TypeDescription.Generic) TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Serializable.class)));
     }
@@ -738,7 +738,7 @@ public class InstrumentedTypeDefaultTest {
 
     @Test(expected = IllegalStateException.class)
     public void testTypeIllegalInterfaceType() throws Exception {
-        makePlainInstrumentedType().withInterfaces(new TypeList.Generic.Explicit(TypeDescription.Generic.OBJECT)).validated();
+        makePlainInstrumentedType().withInterfaces(new TypeList.Generic.Explicit(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))).validated();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -757,22 +757,22 @@ public class InstrumentedTypeDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void testTypeThrowableWithGenerics() throws Exception {
         InstrumentedType.Factory.Default.MODIFIABLE.represent(TypeDescription.ForLoadedType.of(Exception.class))
-                .withTypeVariable(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OBJECT)))
+                .withTypeVariable(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))))
                 .validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testTypeDuplicateTypeVariableName() throws Exception {
         makePlainInstrumentedType()
-                .withTypeVariable(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OBJECT)))
-                .withTypeVariable(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OBJECT)))
+                .withTypeVariable(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))))
+                .withTypeVariable(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))))
                 .validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testTypeTypeVariableIllegalName() throws Exception {
         makePlainInstrumentedType()
-                .withTypeVariable(new TypeVariableToken(ILLEGAL_NAME, Collections.singletonList(TypeDescription.Generic.OBJECT)))
+                .withTypeVariable(new TypeVariableToken(ILLEGAL_NAME, Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))))
                 .validated();
     }
 
@@ -793,14 +793,14 @@ public class InstrumentedTypeDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void testTypeTypeVariableIllegalBound() throws Exception {
         makePlainInstrumentedType()
-                .withTypeVariable(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.VOID)))
+                .withTypeVariable(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class))))
                 .validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testTypeTypeVariableDoubleClassBound() throws Exception {
         makePlainInstrumentedType()
-                .withTypeVariable(new TypeVariableToken(FOO, Arrays.asList(TypeDescription.Generic.OBJECT, TypeDefinition.Sort.describe(String.class))))
+                .withTypeVariable(new TypeVariableToken(FOO, Arrays.asList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), TypeDefinition.Sort.describe(String.class))))
                 .validated();
     }
 
@@ -975,7 +975,7 @@ public class InstrumentedTypeDefaultTest {
     public void testAnnotationTypeIncompatibleTypeVariableTypeAnnotation() throws Exception {
         makePlainInstrumentedType()
                 .withTypeVariable(new TypeVariableToken(FOO,
-                        Collections.singletonList(TypeDescription.Generic.OBJECT),
+                        Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)),
                         Collections.singletonList(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build())))
                 .validated();
     }
@@ -992,24 +992,24 @@ public class InstrumentedTypeDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void testFieldDuplicateName() throws Exception {
         makePlainInstrumentedType()
-                .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT))
-                .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT))
+                .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)))
+                .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)))
                 .validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testFieldIllegalName() throws Exception {
-        makePlainInstrumentedType().withField(new FieldDescription.Token(ILLEGAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT)).validated();
+        makePlainInstrumentedType().withField(new FieldDescription.Token(ILLEGAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))).validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testFieldIllegalModifiers() throws Exception {
-        makePlainInstrumentedType().withField(new FieldDescription.Token(FOO, ILLEGAL_MODIFIERS, TypeDescription.Generic.OBJECT)).validated();
+        makePlainInstrumentedType().withField(new FieldDescription.Token(FOO, ILLEGAL_MODIFIERS, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))).validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testFieldIllegalType() throws Exception {
-        makePlainInstrumentedType().withField(new FieldDescription.Token(ILLEGAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.VOID)).validated();
+        makePlainInstrumentedType().withField(new FieldDescription.Token(ILLEGAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class))).validated();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -1022,7 +1022,7 @@ public class InstrumentedTypeDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void tesFieldDuplicateAnnotation() throws Exception {
         makePlainInstrumentedType()
-                .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT, Arrays.asList(
+                .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), Arrays.asList(
                         AnnotationDescription.Builder.ofType(SampleAnnotation.class).build(),
                         AnnotationDescription.Builder.ofType(SampleAnnotation.class).build()
                 ))).validated();
@@ -1031,7 +1031,7 @@ public class InstrumentedTypeDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void tesFieldIncompatibleAnnotation() throws Exception {
         makePlainInstrumentedType()
-                .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT, Collections.singletonList(
+                .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), Collections.singletonList(
                         AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()
                 ))).validated();
     }
@@ -1049,22 +1049,22 @@ public class InstrumentedTypeDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void testMethodDuplicateErasure() throws Exception {
         makePlainInstrumentedType()
-                .withMethod(new MethodDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT))
-                .withMethod(new MethodDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT))
+                .withMethod(new MethodDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)))
+                .withMethod(new MethodDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)))
                 .validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testMethodTypeInitializer() throws Exception {
         makePlainInstrumentedType()
-                .withMethod(new MethodDescription.Token(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.VOID))
+                .withMethod(new MethodDescription.Token(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class)))
                 .validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testConstructorNonVoidReturnType() throws Exception {
         makePlainInstrumentedType()
-                .withMethod(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT))
+                .withMethod(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)))
                 .validated();
     }
 
@@ -1084,29 +1084,29 @@ public class InstrumentedTypeDefaultTest {
 
     @Test(expected = IllegalStateException.class)
     public void testMethodIllegalName() throws Exception {
-        makePlainInstrumentedType().withMethod(new MethodDescription.Token(ILLEGAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT)).validated();
+        makePlainInstrumentedType().withMethod(new MethodDescription.Token(ILLEGAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))).validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testMethodIllegalModifiers() throws Exception {
-        makePlainInstrumentedType().withMethod(new MethodDescription.Token(FOO, ILLEGAL_MODIFIERS, TypeDescription.Generic.OBJECT)).validated();
+        makePlainInstrumentedType().withMethod(new MethodDescription.Token(FOO, ILLEGAL_MODIFIERS, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))).validated();
     }
 
     @Test // Must not throw exception as methods might become implemented by interception - requires delayed validation
     public void testMethodAbstractNonAbstractType() throws Exception {
-        makePlainInstrumentedType().withMethod(new MethodDescription.Token(FOO, Opcodes.ACC_ABSTRACT, TypeDescription.Generic.OBJECT)).validated();
+        makePlainInstrumentedType().withMethod(new MethodDescription.Token(FOO, Opcodes.ACC_ABSTRACT, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))).validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testMethodProtectedInterface() throws Exception {
         makePlainInstrumentedType().withModifiers(Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT)
-                .withMethod(new MethodDescription.Token(FOO, Opcodes.ACC_PROTECTED, TypeDescription.Generic.OBJECT)).validated();
+                .withMethod(new MethodDescription.Token(FOO, Opcodes.ACC_PROTECTED, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))).validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testMethodPackagePrivateInterface() throws Exception {
         makePlainInstrumentedType().withModifiers(Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT)
-                .withMethod(new MethodDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT)).validated();
+                .withMethod(new MethodDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))).validated();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -1115,7 +1115,7 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Arrays.asList(
@@ -1132,7 +1132,7 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.singletonList(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()),
@@ -1157,9 +1157,9 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.singletonList(new TypeVariableToken(FOO,
-                                Collections.singletonList(TypeDescription.Generic.OBJECT),
+                                Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)),
                                 Collections.singletonList(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()))),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1176,7 +1176,7 @@ public class InstrumentedTypeDefaultTest {
                         Collections.singletonList(new TypeVariableToken(FOO,
                                 Collections.singletonList(TypeDescription.Generic.Builder.rawType(Object.class).build(
                                         AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build())))),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1190,8 +1190,8 @@ public class InstrumentedTypeDefaultTest {
         makePlainInstrumentedType()
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
-                        Collections.singletonList(new TypeVariableToken(ILLEGAL_NAME, Collections.singletonList(TypeDescription.Generic.OBJECT))),
-                        TypeDescription.Generic.OBJECT,
+                        Collections.singletonList(new TypeVariableToken(ILLEGAL_NAME, Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)))),
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1206,10 +1206,10 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Arrays.asList(
-                                new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OBJECT)),
-                                new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OBJECT))
+                                new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))),
+                                new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)))
                         ),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1224,7 +1224,7 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.singletonList(new TypeVariableToken(FOO, Collections.<TypeDescription.Generic>emptyList())),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1238,8 +1238,8 @@ public class InstrumentedTypeDefaultTest {
         makePlainInstrumentedType()
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
-                        Collections.singletonList(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.VOID))),
-                        TypeDescription.Generic.OBJECT,
+                        Collections.singletonList(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class)))),
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1255,7 +1255,7 @@ public class InstrumentedTypeDefaultTest {
                         ModifierContributor.EMPTY_MASK,
                         Collections.singletonList(new TypeVariableToken(FOO, Arrays.asList(TypeDefinition.Sort.describe(Serializable.class),
                                 TypeDefinition.Sort.describe(Serializable.class)))),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1269,8 +1269,8 @@ public class InstrumentedTypeDefaultTest {
         makePlainInstrumentedType()
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
-                        Collections.singletonList(new TypeVariableToken(FOO, Arrays.asList(TypeDescription.Generic.OBJECT, TypeDefinition.Sort.describe(String.class)))),
-                        TypeDescription.Generic.OBJECT,
+                        Collections.singletonList(new TypeVariableToken(FOO, Arrays.asList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), TypeDefinition.Sort.describe(String.class)))),
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1285,8 +1285,8 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
-                        Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT, ILLEGAL_NAME, 0)),
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
+                        Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), ILLEGAL_NAME, 0)),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         AnnotationValue.UNDEFINED,
@@ -1300,8 +1300,8 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
-                        Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.VOID)),
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
+                        Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class))),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         AnnotationValue.UNDEFINED,
@@ -1315,7 +1315,7 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.singletonList(new ParameterDescription.Token(TypeDefinition.Sort.describe(PackagePrivateType.TYPE))),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1330,7 +1330,7 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         Opcodes.ACC_SYNTHETIC,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.singletonList(new ParameterDescription.Token(TypeDefinition.Sort.describe(PackagePrivateType.TYPE))),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1345,10 +1345,10 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Arrays.asList(
-                                new ParameterDescription.Token(TypeDescription.Generic.OBJECT, FOO, 0),
-                                new ParameterDescription.Token(TypeDescription.Generic.OBJECT, FOO, 0)
+                                new ParameterDescription.Token(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), FOO, 0),
+                                new ParameterDescription.Token(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), FOO, 0)
                         ), Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         AnnotationValue.UNDEFINED,
@@ -1362,8 +1362,8 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
-                        Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT, FOO, -1)),
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
+                        Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), FOO, -1)),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         AnnotationValue.UNDEFINED,
@@ -1377,8 +1377,8 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
-                        Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT, Arrays.asList(
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
+                        Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), Arrays.asList(
                                 AnnotationDescription.Builder.ofType(SampleAnnotation.class).build(),
                                 AnnotationDescription.Builder.ofType(SampleAnnotation.class).build()
                         ))), Collections.<TypeDescription.Generic>emptyList(),
@@ -1394,8 +1394,8 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
-                        Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT, Collections.singletonList(
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
+                        Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), Collections.singletonList(
                                 AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()
                         ))), Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1410,9 +1410,9 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
-                        Collections.singletonList(TypeDescription.Generic.OBJECT),
+                        Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)),
                         Collections.<AnnotationDescription>emptyList(),
                         AnnotationValue.UNDEFINED,
                         TypeDescription.Generic.UNDEFINED))
@@ -1425,7 +1425,7 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.singletonList(TypeDescription.Generic.Builder.rawType(Exception.class)
                                 .build(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build())),
@@ -1441,7 +1441,7 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.singletonList(TypeDefinition.Sort.describe(PackagePrivateType.EXCEPTION_TYPE)),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1456,7 +1456,7 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         Opcodes.ACC_SYNTHETIC,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.singletonList(TypeDefinition.Sort.describe(PackagePrivateType.EXCEPTION_TYPE)),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1471,7 +1471,7 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Arrays.asList(TypeDefinition.Sort.describe(Exception.class), TypeDefinition.Sort.describe(Exception.class)),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1486,7 +1486,7 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1501,12 +1501,12 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         Opcodes.ACC_STATIC,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         AnnotationValue.UNDEFINED,
-                        TypeDescription.Generic.OBJECT))
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)))
                 .validated();
     }
 
@@ -1516,12 +1516,12 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         AnnotationValue.UNDEFINED,
-                        TypeDescription.Generic.OBJECT))
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)))
                 .validated();
     }
 
@@ -1531,12 +1531,12 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         AnnotationValue.UNDEFINED,
-                        TypeDescription.Generic.OBJECT))
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)))
                 .validated();
     }
 
@@ -1546,7 +1546,7 @@ public class InstrumentedTypeDefaultTest {
                 .withMethod(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
@@ -1566,7 +1566,7 @@ public class InstrumentedTypeDefaultTest {
                 Collections.<String, Object>emptyMap(),
                 Collections.singletonList(new MethodDescription.Token("foo",
                         Opcodes.ACC_BRIDGE,
-                        TypeDescription.Generic.VOID,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class),
                         Collections.<TypeDescription.Generic>emptyList())),
                 Collections.<RecordComponentDescription.Token>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
@@ -1583,7 +1583,7 @@ public class InstrumentedTypeDefaultTest {
                 TargetType.DESCRIPTION,
                 Collections.<TypeDescription>emptyList());
         MethodDescription methodDescription = typeDescription.getSuperClass().getSuperClass().getDeclaredMethods().filter(named(FOO)).getOnly();
-        assertThat(methodDescription.getReturnType(), is(TypeDescription.Generic.OBJECT));
+        assertThat(methodDescription.getReturnType(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
     }
 
     public @interface SampleAnnotation {

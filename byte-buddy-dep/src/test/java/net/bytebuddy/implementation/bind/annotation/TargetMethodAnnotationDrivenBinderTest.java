@@ -250,8 +250,8 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(targetMethod.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(firstParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(secondParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
-        when(firstParameter.getType()).thenReturn(TypeDescription.Generic.OBJECT);
-        when(secondParameter.getType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(firstParameter.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
+        when(secondParameter.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         when(sourceMethod.getParameters()).thenReturn(new ParameterList.Explicit(firstParameter, secondParameter));
         MethodDelegationBinder methodDelegationBinder = TargetMethodAnnotationDrivenBinder.of(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList());
         MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.compile(targetMethod).bind(implementationTarget,

@@ -124,7 +124,7 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test
     public void testSkippedMethodCannotBePrepended() throws Exception {
-        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         assertThat(new TypeWriter.MethodPool.Record.ForNonImplementedMethod(methodDescription).prepend(byteCodeAppender), hasPrototype((TypeWriter.MethodPool.Record)
                 new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription,
                         new ByteCodeAppender.Compound(byteCodeAppender, new ByteCodeAppender.Simple(DefaultValue.REFERENCE, MethodReturn.REFERENCE)))));

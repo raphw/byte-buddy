@@ -312,7 +312,7 @@ public class InvokeDynamic implements Implementation.Composable {
         }
         return bootstrap(new MethodDescription.Latent(new TypeDescription.Latent("java.lang.invoke.LambdaMetafactory",
                         Opcodes.ACC_PUBLIC,
-                        TypeDescription.Generic.OBJECT),
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)),
                         "metafactory",
                         Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
                         Collections.<TypeVariableToken>emptyList(),

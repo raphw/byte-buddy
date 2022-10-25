@@ -71,7 +71,7 @@ public class TypeWriterFieldPoolRecordTest {
         when(fieldDescription.getDescriptor()).thenReturn(BAR);
         when(fieldDescription.getGenericSignature()).thenReturn(QUX);
         when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(annotationDescription));
-        when(fieldDescription.getType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(fieldDescription.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         when(classVisitor.visitField(MODIFIER, FOO, BAR, QUX, defaultValue)).thenReturn(fieldVisitor);
         when(classVisitor.visitField(MODIFIER, FOO, BAR, QUX, FieldDescription.NO_DEFAULT_VALUE)).thenReturn(fieldVisitor);
         when(annotationValueFilterFactory.on(fieldDescription)).thenReturn(valueFilter);

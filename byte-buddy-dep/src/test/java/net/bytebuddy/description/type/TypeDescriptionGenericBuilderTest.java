@@ -124,12 +124,12 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
 
     @Test(expected = IllegalArgumentException.class)
     public void testIncompatibleType() throws Exception {
-        TypeDescription.Generic.Builder.rawType(Bar.Inner.class, TypeDescription.Generic.OBJECT);
+        TypeDescription.Generic.Builder.rawType(Bar.Inner.class, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIncompatibleOwnerTypeWhenNonRequired() throws Exception {
-        TypeDescription.Generic.Builder.rawType(Object.class, TypeDescription.Generic.OBJECT);
+        TypeDescription.Generic.Builder.rawType(Object.class, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
     }
 
     @Test

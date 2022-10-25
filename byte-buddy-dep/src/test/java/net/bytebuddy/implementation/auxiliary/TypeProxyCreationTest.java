@@ -76,7 +76,7 @@ public class TypeProxyCreationTest {
         when(proxyMethod.getDeclaringType()).thenReturn(foo);
         when(proxyMethod.getInternalName()).thenReturn(FOO);
         when(proxyMethod.getDescriptor()).thenReturn(FOO);
-        when(proxyMethod.getReturnType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(proxyMethod.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         when(proxyMethod.asDefined()).thenReturn(proxyMethod);
     }
 

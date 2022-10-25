@@ -85,7 +85,7 @@ public @interface StubValue {
             return new MethodDelegationBinder.ParameterBinding.Anonymous(source.getReturnType().represents(void.class)
                     ? NullConstant.INSTANCE
                     : new StackManipulation.Compound(DefaultValue.of(source.getReturnType().asErasure()),
-                    assigner.assign(source.getReturnType(), TypeDescription.Generic.OBJECT, typing)));
+                    assigner.assign(source.getReturnType(), TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), typing)));
         }
     }
 }

@@ -9645,7 +9645,7 @@ public interface AgentBuilder {
                     for (FieldDescription.InDefinedShape fieldDescription : implementationTarget.getInstrumentedType().getDeclaredFields()) {
                         lambdaArguments.add(new StackManipulation.Compound(MethodVariableAccess.loadThis(),
                                 FieldAccess.forField(fieldDescription).read(),
-                                Assigner.DEFAULT.assign(fieldDescription.getType(), TypeDescription.Generic.OBJECT, Assigner.Typing.STATIC)));
+                                Assigner.DEFAULT.assign(fieldDescription.getType(), TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), Assigner.Typing.STATIC)));
                     }
                     return new ByteCodeAppender.Simple(new StackManipulation.Compound(
                             TypeCreation.of(serializedLambda),
@@ -9659,7 +9659,7 @@ public interface AgentBuilder {
                             new TextConstant(targetMethod.getName()),
                             new TextConstant(targetMethod.getDescriptor()),
                             new TextConstant(specializedMethod.getDescriptor()),
-                            ArrayFactory.forType(TypeDescription.Generic.OBJECT).withValues(lambdaArguments),
+                            ArrayFactory.forType(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)).withValues(lambdaArguments),
                             MethodInvocation.invoke(serializedLambda.getDeclaredMethods().filter(isConstructor()).getOnly()),
                             MethodReturn.REFERENCE
                     ));

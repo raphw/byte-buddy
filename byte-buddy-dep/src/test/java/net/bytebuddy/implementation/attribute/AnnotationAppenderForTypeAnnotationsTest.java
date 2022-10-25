@@ -85,7 +85,7 @@ public class AnnotationAppenderForTypeAnnotationsTest {
     @Test
     public void testWildcardLowerBound() throws Exception {
         when(typeDescription.getLowerBounds()).thenReturn(new TypeList.Generic.Explicit(second));
-        when(typeDescription.getUpperBounds()).thenReturn(new TypeList.Generic.Explicit(TypeDescription.Generic.OBJECT));
+        when(typeDescription.getUpperBounds()).thenReturn(new TypeList.Generic.Explicit(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
         assertThat(visitor.onWildcard(typeDescription), is(result));
         verify(annotationAppender).append(annotationDescription, annotationValueFilter, BAR, FOO);
         verifyNoMoreInteractions(annotationAppender);

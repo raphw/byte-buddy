@@ -95,7 +95,7 @@ public class MethodConstantTest {
         when(implementationContext.getInstrumentedType()).thenReturn(instrumentedType);
         when(auxiliaryConstructor.isConstructor()).thenReturn(true);
         when(auxiliaryConstructor.getDeclaringType()).thenReturn(auxiliaryType);
-        when(auxiliaryConstructor.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(auxiliaryConstructor.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(auxiliaryConstructor.getDescriptor()).thenReturn(FOO);
         when(auxiliaryConstructor.getInternalName()).thenReturn(BAR);
         when(auxiliaryType.getInternalName()).thenReturn(QUX);

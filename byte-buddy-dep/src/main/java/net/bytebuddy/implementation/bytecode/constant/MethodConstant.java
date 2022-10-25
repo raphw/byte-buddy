@@ -150,7 +150,7 @@ public abstract class MethodConstant extends StackManipulation.AbstractBase {
         return new Compound(
                 ClassConstant.of(methodDescription.getDeclaringType()),
                 methodName(),
-                ArrayFactory.forType(TypeDescription.Generic.OfNonGenericType.CLASS)
+                ArrayFactory.forType(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Class.class))
                         .withValues(typeConstantsFor(methodDescription.getParameters().asTypeList().asErasures())),
                 MethodInvocation.invoke(accessorMethod())
         ).apply(methodVisitor, implementationContext);
@@ -406,7 +406,7 @@ public abstract class MethodConstant extends StackManipulation.AbstractBase {
                     Duplication.SINGLE,
                     ClassConstant.of(methodDescription.getDeclaringType()),
                     methodName,
-                    ArrayFactory.forType(TypeDescription.Generic.OfNonGenericType.CLASS)
+                    ArrayFactory.forType(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Class.class))
                             .withValues(typeConstantsFor(methodDescription.getParameters().asTypeList().asErasures())),
                     MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly()),
                     MethodInvocation.invoke(DO_PRIVILEGED),

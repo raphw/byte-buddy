@@ -3566,7 +3566,7 @@ public interface TypePool {
                          * {@inheritDoc}
                          */
                         public TypeList.Generic getUpperBounds() {
-                            return new TypeList.Generic.Explicit(Generic.OBJECT);
+                            return new TypeList.Generic.Explicit(Generic.OfNonGenericType.ForLoadedType.of(Object.class));
                         }
 
                         /**
@@ -4984,7 +4984,7 @@ public interface TypePool {
                          * {@inheritDoc}
                          */
                         public TypeList.Generic getUpperBounds() {
-                            return new TypeList.Generic.Explicit(Generic.OBJECT);
+                            return new TypeList.Generic.Explicit(Generic.OfNonGenericType.ForLoadedType.of(Object.class));
                         }
 
                         /**

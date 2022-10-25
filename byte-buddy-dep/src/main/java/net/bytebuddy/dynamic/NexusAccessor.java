@@ -159,13 +159,13 @@ public class NexusAccessor {
                         new TextConstant(Nexus.class.getName()),
                         MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(ClassLoader.class.getMethod("loadClass", String.class))),
                         new TextConstant("initialize"),
-                        ArrayFactory.forType(TypeDescription.Generic.CLASS)
+                        ArrayFactory.forType(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Class.class))
                                 .withValues(Arrays.asList(
                                         ClassConstant.of(TypeDescription.ForLoadedType.of(Class.class)),
                                         ClassConstant.of(TypeDescription.ForLoadedType.of(int.class)))),
                         MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Class.class.getMethod("getMethod", String.class, Class[].class))),
                         NullConstant.INSTANCE,
-                        ArrayFactory.forType(TypeDescription.Generic.OBJECT)
+                        ArrayFactory.forType(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))
                                 .withValues(Arrays.asList(
                                         ClassConstant.of(instrumentedMethod.getDeclaringType().asErasure()),
                                         new StackManipulation.Compound(

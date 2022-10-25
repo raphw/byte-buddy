@@ -69,7 +69,7 @@ public class TypeDescriptionGenericOfTypeVariableSymbolicTest {
         assertThat(typeVariable, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, new AnnotationSource.Explicit(annotationDescription))));
         assertThat(typeVariable, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, AnnotationSource.Empty.INSTANCE)));
         assertThat(typeVariable, not((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(BAR, AnnotationSource.Empty.INSTANCE)));
-        assertThat(typeVariable, not(TypeDescription.Generic.OBJECT));
+        assertThat(typeVariable, not(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
         assertThat(typeVariable, not(new Object()));
         assertThat(typeVariable, not(equalTo(null)));
     }

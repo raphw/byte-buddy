@@ -204,7 +204,7 @@ public class TypeDescriptionGenericVisitorValidatorForTypeAnnotations {
 
     @Test
     public void testWildcardIllegalLowerBounds() throws Exception {
-        when(legal.getUpperBounds()).thenReturn(new TypeList.Generic.Explicit(TypeDescription.Generic.OBJECT));
+        when(legal.getUpperBounds()).thenReturn(new TypeList.Generic.Explicit(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
         when(legal.getLowerBounds()).thenReturn(new TypeList.Generic.Explicit(otherIllegal));
         assertThat(TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE.onWildcard(legal), is(false));
     }
@@ -212,7 +212,7 @@ public class TypeDescriptionGenericVisitorValidatorForTypeAnnotations {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testWildcardLegal() throws Exception {
-        when(legal.getUpperBounds()).thenReturn(new TypeList.Generic.Explicit(TypeDescription.Generic.OBJECT));
+        when(legal.getUpperBounds()).thenReturn(new TypeList.Generic.Explicit(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
         when(legal.getLowerBounds()).thenReturn(new TypeList.Generic.Explicit(otherLegal));
         when(legalAnnotation.isSupportedOn("TYPE_USE")).thenReturn(true);
         assertThat(TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE.onWildcard(legal), is(true));

@@ -2205,7 +2205,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException("Cannot define writable field access for " + target);
                     } else {
                         return new ForAllArguments(target.getType().represents(Object.class)
-                                ? TypeDescription.Generic.OBJECT
+                                ? TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)
                                 : target.getType().getComponentType(), annotation);
                     }
                 }
@@ -3137,7 +3137,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   ArgumentHandler argumentHandler,
                                   Sort sort) {
                 return new Target.ForDefaultValue.ReadOnly(instrumentedMethod.getReturnType(), assigner.assign(instrumentedMethod.getReturnType(),
-                        TypeDescription.Generic.OBJECT,
+                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         Assigner.Typing.DYNAMIC));
             }
 
@@ -14125,7 +14125,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
             return bindDynamic(type, new MethodDescription.Latent(new TypeDescription.Latent("java.lang.invoke.LambdaMetafactory",
                             Opcodes.ACC_PUBLIC,
-                            TypeDescription.Generic.OBJECT),
+                            TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)),
                             "metafactory",
                             Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
                             Collections.<TypeVariableToken>emptyList(),

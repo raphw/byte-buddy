@@ -1663,7 +1663,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  * {@inheritDoc}
                  */
                 public TypeDescription.Generic getReturnType() {
-                    return TypeDescription.Generic.VOID;
+                    return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class);
                 }
 
                 /**

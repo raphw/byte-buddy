@@ -75,6 +75,6 @@ public class TypeDescriptionForPackageDescriptionTest {
 
     @Test
     public void testSuperClass() throws Exception {
-        assertThat(typeDescription.getSuperClass(), is(TypeDescription.Generic.OBJECT));
+        assertThat(typeDescription.getSuperClass(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
     }
 }

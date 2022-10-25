@@ -35,8 +35,8 @@ public class StubValueBinderTest extends AbstractAnnotationBinderTest<StubValue>
 
     @Test
     public void testVoidReturnType() throws Exception {
-        when(target.getType()).thenReturn(TypeDescription.Generic.OBJECT);
-        when(source.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(target.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
+        when(source.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         assertThat(StubValue.Binder.INSTANCE.bind(annotationDescription,
                 source,
                 target,
@@ -47,7 +47,7 @@ public class StubValueBinderTest extends AbstractAnnotationBinderTest<StubValue>
 
     @Test
     public void testNonVoidAssignableReturnType() throws Exception {
-        when(target.getType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(target.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         when(source.getReturnType()).thenReturn(genericType);
         when(stackManipulation.isValid()).thenReturn(true);
         assertThat(StubValue.Binder.INSTANCE.bind(annotationDescription,
@@ -60,8 +60,8 @@ public class StubValueBinderTest extends AbstractAnnotationBinderTest<StubValue>
 
     @Test
     public void testNonVoidNonAssignableReturnType() throws Exception {
-        when(target.getType()).thenReturn(TypeDescription.Generic.OBJECT);
-        when(source.getReturnType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(target.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
+        when(source.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         when(stackManipulation.isValid()).thenReturn(false);
         assertThat(StubValue.Binder.INSTANCE.bind(annotationDescription,
                 source,

@@ -34,13 +34,13 @@ public class GenericTypeAwareAssignerTest {
     @Test
     public void testNonGenericToNonAssignableGenericType() throws Exception {
         TypeDescription.Generic target = TypeDefinition.Sort.describe(Sample.class.getDeclaredField("parameterizedString").getGenericType());
-        assertThat(GenericTypeAwareAssigner.INSTANCE.assign(TypeDescription.Generic.OBJECT, target, Assigner.Typing.STATIC).isValid(), is(false));
+        assertThat(GenericTypeAwareAssigner.INSTANCE.assign(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), target, Assigner.Typing.STATIC).isValid(), is(false));
     }
 
     @Test
     public void testNonGenericToNonAssignableNonGenericType() throws Exception {
         TypeDescription.Generic target = TypeDefinition.Sort.describe(Sample.class);
-        assertThat(GenericTypeAwareAssigner.INSTANCE.assign(TypeDescription.Generic.OBJECT, target, Assigner.Typing.STATIC).isValid(), is(false));
+        assertThat(GenericTypeAwareAssigner.INSTANCE.assign(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), target, Assigner.Typing.STATIC).isValid(), is(false));
     }
 
     @Test
@@ -108,7 +108,7 @@ public class GenericTypeAwareAssignerTest {
     @Test
     public void testParameterizedTypeToSuperType() throws Exception {
         TypeDescription.Generic source = TypeDefinition.Sort.describe(Sample.class.getDeclaredField("parameterizedString").getGenericType());
-        assertThat(GenericTypeAwareAssigner.INSTANCE.assign(source, TypeDescription.Generic.OBJECT, Assigner.Typing.STATIC).isValid(), is(true));
+        assertThat(GenericTypeAwareAssigner.INSTANCE.assign(source, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), Assigner.Typing.STATIC).isValid(), is(true));
     }
 
     @Test

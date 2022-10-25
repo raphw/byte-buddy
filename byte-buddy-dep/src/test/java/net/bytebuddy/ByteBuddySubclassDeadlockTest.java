@@ -1,8 +1,9 @@
 package net.bytebuddy;
 
 import net.bytebuddy.test.utility.JavaVersionRule;
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.io.Closeable;
 import java.io.File;
@@ -14,6 +15,34 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class ByteBuddySubclassDeadlockTest {
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
+
+    @Test
+    @JavaVersionRule.Enforce(value = 8, target = Tester.class)
+    public void testDeadlock() throws Exception {
+        List<URL> urls = new ArrayList<>();
+        for (String path : System.getProperty("java.class.path").split(File.pathSeparator, -1)) {
+            urls.add(Paths.get(path).toUri().toURL());
+        }
+        ClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[0]));
+        try {
+            ((Runnable) classLoader.loadClass(Tester.class.getName()).getConstructor().newInstance()).run();
+        } finally {
+            if (classLoader instanceof Closeable) {
+                ((Closeable) classLoader).close();
+            }
+        }
+    }
+
+    public static class Foo {
+        /* empty */
+    }
+
+    public interface Bar {
+        /* empty */
+    }
 
     static class Tester implements Runnable {
 
@@ -53,31 +82,5 @@ public class ByteBuddySubclassDeadlockTest {
             }
             new ByteBuddy().subclass(type);
         }
-    }
-
-    @Test
-    @Ignore("Avoid static fields from interfaces?")
-    @JavaVersionRule.Enforce(value = 8, target = Tester.class)
-    public void testDeadlock() throws Exception {
-        List<URL> urls = new ArrayList<>();
-        for (String path : System.getProperty("java.class.path").split(File.pathSeparator, -1)) {
-            urls.add(Paths.get(path).toUri().toURL());
-        }
-        ClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[0]));
-        try {
-            ((Runnable) classLoader.loadClass(Tester.class.getName()).getConstructor().newInstance()).run();
-        } finally {
-            if (classLoader instanceof Closeable) {
-                ((Closeable) classLoader).close();
-            }
-        }
-    }
-
-    public static class Foo {
-        /* empty */
-    }
-
-    public interface Bar {
-        /* empty */
     }
 }

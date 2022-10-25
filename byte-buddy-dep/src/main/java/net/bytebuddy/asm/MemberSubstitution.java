@@ -2288,11 +2288,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         switch (opcode) {
                             case Opcodes.PUTFIELD:
                                 parameters = new TypeList.Generic.Explicit(candidates.getOnly().getDeclaringType(), candidates.getOnly().getType());
-                                result = TypeDescription.Generic.VOID;
+                                result = TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class);
                                 break;
                             case Opcodes.PUTSTATIC:
                                 parameters = new TypeList.Generic.Explicit(candidates.getOnly().getType());
-                                result = TypeDescription.Generic.VOID;
+                                result = TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class);
                                 break;
                             case Opcodes.GETFIELD:
                                 parameters = new TypeList.Generic.Explicit(candidates.getOnly().getDeclaringType());

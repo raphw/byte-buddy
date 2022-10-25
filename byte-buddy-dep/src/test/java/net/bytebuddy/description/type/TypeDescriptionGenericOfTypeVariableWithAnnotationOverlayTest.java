@@ -88,7 +88,7 @@ public class TypeDescriptionGenericOfTypeVariableWithAnnotationOverlayTest {
         assertThat(typeVariable, is(typeVariable(FOO, typeVariableSource)));
         assertThat(typeVariable, not(typeVariable(BAR, typeVariableSource, annotationDescription)));
         assertThat(typeVariable, not(typeVariable(FOO, mock(TypeVariableSource.class), annotationDescription)));
-        assertThat(typeVariable, not(TypeDescription.Generic.OBJECT));
+        assertThat(typeVariable, not(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
         assertThat(typeVariable, not(new Object()));
         assertThat(typeVariable, not(equalTo(null)));
     }

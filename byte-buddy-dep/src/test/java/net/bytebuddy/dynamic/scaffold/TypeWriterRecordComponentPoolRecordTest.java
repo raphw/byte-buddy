@@ -65,7 +65,7 @@ public class TypeWriterRecordComponentPoolRecordTest {
         when(recordComponentDescription.getDescriptor()).thenReturn(BAR);
         when(recordComponentDescription.getGenericSignature()).thenReturn(QUX);
         when(recordComponentDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(annotationDescription));
-        when(recordComponentDescription.getType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(recordComponentDescription.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         when(classVisitor.visitRecordComponent(FOO, BAR, QUX)).thenReturn(recordComponentVisitor);
         when(classVisitor.visitRecordComponent(FOO, BAR, QUX)).thenReturn(recordComponentVisitor);
         when(annotationValueFilterFactory.on(recordComponentDescription)).thenReturn(valueFilter);

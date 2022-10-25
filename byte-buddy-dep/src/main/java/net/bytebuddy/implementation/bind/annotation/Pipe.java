@@ -485,7 +485,7 @@ public @interface Pipe {
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 MethodVariableAccess.REFERENCE.loadFrom(1),
-                                assigner.assign(TypeDescription.Generic.OBJECT, redirectedMethod.getDeclaringType().asGenericType(), Assigner.Typing.DYNAMIC),
+                                assigner.assign(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), redirectedMethod.getDeclaringType().asGenericType(), Assigner.Typing.DYNAMIC),
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodInvocation.invoke(redirectedMethod),
                                 assigner.assign(redirectedMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),

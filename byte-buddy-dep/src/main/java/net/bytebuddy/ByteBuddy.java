@@ -509,7 +509,7 @@ public class ByteBuddy {
         if (superType.isPrimitive() || superType.isArray() || superType.isFinal()) {
             throw new IllegalArgumentException("Cannot subclass primitive, array or final types: " + superType);
         } else if (superType.isInterface()) {
-            actualSuperType = TypeDescription.Generic.OBJECT;
+            actualSuperType = TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class);
             interfaceTypes = new TypeList.Generic.Explicit(superType);
         } else {
             actualSuperType = superType.asGenericType();
@@ -672,7 +672,7 @@ public class ByteBuddy {
     public DynamicType.Builder<?> makePackage(String name) {
         return new SubclassDynamicTypeBuilder<Object>(instrumentedTypeFactory.subclass(name + "." + PackageDescription.PACKAGE_CLASS_NAME,
                 PackageDescription.PACKAGE_MODIFIERS,
-                TypeDescription.Generic.OBJECT),
+                TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 annotationValueFilterFactory,
@@ -693,7 +693,7 @@ public class ByteBuddy {
      * @return A dynamic type builder that creates a record.
      */
     public DynamicType.Builder<?> makeRecord() {
-        TypeDescription.Generic record = InstrumentedType.Default.of(JavaType.RECORD.getTypeStub().getName(), TypeDescription.Generic.OBJECT, Visibility.PUBLIC)
+        TypeDescription.Generic record = InstrumentedType.Default.of(JavaType.RECORD.getTypeStub().getName(), TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), Visibility.PUBLIC)
                 .withMethod(new MethodDescription.Token(Opcodes.ACC_PROTECTED))
                 .withMethod(new MethodDescription.Token("hashCode",
                         Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
@@ -701,7 +701,7 @@ public class ByteBuddy {
                 .withMethod(new MethodDescription.Token("equals",
                         Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
                         TypeDescription.ForLoadedType.of(boolean.class).asGenericType(),
-                        Collections.singletonList(TypeDescription.Generic.OBJECT)))
+                        Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))))
                 .withMethod(new MethodDescription.Token("toString",
                         Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
                         TypeDescription.ForLoadedType.of(String.class).asGenericType()))
@@ -736,9 +736,9 @@ public class ByteBuddy {
      * @return A type builder that creates a new {@link Annotation} type.
      */
     public DynamicType.Builder<? extends Annotation> makeAnnotation() {
-        return new SubclassDynamicTypeBuilder<Annotation>(instrumentedTypeFactory.subclass(namingStrategy.subclass(TypeDescription.Generic.ANNOTATION),
+        return new SubclassDynamicTypeBuilder<Annotation>(instrumentedTypeFactory.subclass(namingStrategy.subclass(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Annotation.class)),
                 ModifierContributor.Resolver.of(Visibility.PUBLIC, TypeManifestation.ANNOTATION).resolve(),
-                TypeDescription.Generic.OBJECT).withInterfaces(new TypeList.Generic.Explicit(TypeDescription.Generic.ANNOTATION)),
+                TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)).withInterfaces(new TypeList.Generic.Explicit(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Annotation.class))),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 annotationValueFilterFactory,
@@ -1507,7 +1507,7 @@ public class ByteBuddy {
              */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 FieldDescription valuesField = instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly();
-                MethodDescription cloneMethod = TypeDescription.Generic.OBJECT.getDeclaredMethods().filter(named(CLONE_METHOD_NAME)).getOnly();
+                MethodDescription cloneMethod = TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class).getDeclaredMethods().filter(named(CLONE_METHOD_NAME)).getOnly();
                 return new Size(new StackManipulation.Compound(
                         FieldAccess.forField(valuesField).read(),
                         MethodInvocation.invoke(cloneMethod).virtual(valuesField.getType().asErasure()),
@@ -1598,7 +1598,7 @@ public class ByteBuddy {
             return Collections.singletonList(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                     Opcodes.ACC_PUBLIC,
                     Collections.<TypeVariableToken>emptyList(),
-                    TypeDescription.Generic.VOID,
+                    TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class),
                     tokens,
                     Collections.<TypeDescription.Generic>emptyList(),
                     Collections.<AnnotationDescription>emptyList(),
@@ -1771,7 +1771,7 @@ public class ByteBuddy {
                     stackManipulation,
                     MethodInvocation.invoke(new MethodDescription.Latent(JavaType.OBJECT_METHODS.getTypeStub(), new MethodDescription.Token("bootstrap",
                             Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                            TypeDescription.Generic.OBJECT,
+                            TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                             Arrays.asList(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().asGenericType(),
                                     TypeDescription.ForLoadedType.of(String.class).asGenericType(),
                                     JavaType.TYPE_DESCRIPTOR.getTypeStub().asGenericType(),

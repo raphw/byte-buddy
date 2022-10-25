@@ -3395,7 +3395,7 @@ public interface DynamicType extends ClassFileLocator {
              * {@inheritDoc}
              */
             public TypeVariableDefinition<S> typeVariable(String symbol) {
-                return typeVariable(symbol, TypeDescription.Generic.OBJECT);
+                return typeVariable(symbol, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
             }
 
             /**

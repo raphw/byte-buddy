@@ -1055,7 +1055,7 @@ public interface MethodDescription extends TypeVariableSource,
          * {@inheritDoc}
          */
         public TypeDescription.Generic getReturnType() {
-            return TypeDescription.Generic.VOID;
+            return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class);
         }
 
         /**
@@ -1546,7 +1546,7 @@ public interface MethodDescription extends TypeVariableSource,
              * {@inheritDoc}
              */
             public TypeDescription.Generic getReturnType() {
-                return TypeDescription.Generic.VOID;
+                return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class);
             }
 
             /**
@@ -1807,7 +1807,7 @@ public interface MethodDescription extends TypeVariableSource,
          * @param modifiers The constructor's modifiers.
          */
         public Token(int modifiers) {
-            this(MethodDescription.CONSTRUCTOR_INTERNAL_NAME, modifiers, TypeDescription.Generic.VOID);
+            this(MethodDescription.CONSTRUCTOR_INTERNAL_NAME, modifiers, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         }
 
         /**

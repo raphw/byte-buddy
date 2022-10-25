@@ -53,7 +53,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(superClass.getDeclaredMethods())
                 .thenReturn(new MethodList.Explicit<MethodDescription.InGenericShape>(superClassConstructor));
         when(superClassConstructor.asDefined()).thenReturn(definedSuperClassConstructor);
-        when(definedSuperClassConstructor.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(definedSuperClassConstructor.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(definedSuperClassConstructor.getDeclaringType()).thenReturn(rawSuperClass);
         when(definedSuperClassConstructor.isConstructor()).thenReturn(true);
         when(superClassConstructor.isVisibleTo(instrumentedType)).thenReturn(true);
@@ -62,7 +62,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(definedSuperClassConstructor.getDescriptor()).thenReturn(BAZ);
         when(superClassConstructor.isConstructor()).thenReturn(true);
         when(superClassConstructor.getDeclaringType()).thenReturn(superClass);
-        when(superClassConstructor.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(superClassConstructor.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(superClassConstructor.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InGenericShape>());
         when(invokableToken.getName()).thenReturn(FOO);
         when(superConstructorToken.getName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);

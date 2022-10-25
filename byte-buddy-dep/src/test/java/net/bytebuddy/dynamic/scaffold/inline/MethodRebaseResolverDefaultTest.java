@@ -65,7 +65,7 @@ public class MethodRebaseResolverDefaultTest {
     public void setUp() throws Exception {
         when(methodDescription.asDefined()).thenReturn(methodDescription);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
-        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.asToken(matchesPrototype(ElementMatchers.is(instrumentedType)))).thenReturn(token);
         when(methodDescription.asSignatureToken()).thenReturn(signatureToken);

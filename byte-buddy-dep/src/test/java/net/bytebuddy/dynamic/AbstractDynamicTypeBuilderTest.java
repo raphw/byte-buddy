@@ -1130,7 +1130,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testDeclaredAsMemberType() throws Exception {
-        TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)) {
             @Override
             public String getSimpleName() {
                 return "Qux";
@@ -1171,7 +1171,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testDeclaredAsAnonymousType() throws Exception {
         // Older JVMs derive the anonymous class property from a naming convention.
-        TypeDescription sample = new TypeDescription.Latent("foo.Bar$1", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$1", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)) {
             @Override
             public String getSimpleName() {
                 return "";
@@ -1211,7 +1211,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testDeclaredAsLocalType() throws Exception {
-        TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)) {
             @Override
             public String getSimpleName() {
                 return "Qux";
@@ -1252,7 +1252,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testDeclaredAsAnonymousTypeInMethod() throws Exception {
         // Older JVMs derive the anonymous class property from a naming convention.
-        TypeDescription sample = new TypeDescription.Latent("foo.Bar$1", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$1", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)) {
             @Override
             public String getSimpleName() {
                 return "";
@@ -1293,7 +1293,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testDeclaredAsLocalTypeInInitializer() throws Exception {
         // Older JVMs derive the anonymous class property from a naming convention.
-        TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)) {
             @Override
             public String getSimpleName() {
                 return "Qux";
@@ -1334,7 +1334,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testDeclaredAsAnonymousTypeInInitializer() throws Exception {
         // Older JVMs derive the anonymous class property from a naming convention.
-        TypeDescription sample = new TypeDescription.Latent("foo.Bar$1", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$1", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)) {
             @Override
             public String getSimpleName() {
                 return "";
@@ -1374,7 +1374,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testDeclaredAsLocalTypeInMethod() throws Exception {
-        TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)) {
             @Override
             public String getSimpleName() {
                 return "Qux";
@@ -1416,7 +1416,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testDeclaredAsLocalTypeInConstructor() throws Exception {
-        TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)) {
             @Override
             public String getSimpleName() {
                 return "Qux";
@@ -1457,7 +1457,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     @JavaVersionRule.Enforce(11)
     public void testNestMates() throws Exception {
-        TypeDescription sample = new TypeDescription.Latent("foo.Bar", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT);
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         Class<?> outer = new ByteBuddy()
                 .subclass(Object.class)
                 .name("foo.Qux")
@@ -1483,7 +1483,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     public void testPermittedSubclasses() throws Exception {
         TypeDescription sample = new TypeDescription.Latent("foo.Qux",
                 Opcodes.ACC_PUBLIC,
-                new TypeDescription.Latent("foo.Bar", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT).asGenericType());
+                new TypeDescription.Latent("foo.Bar", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)).asGenericType());
         Class<?> type = createPlainEmpty()
                 .visit(new JavaVersionAdjustment())
                 .permittedSubclass(sample)
@@ -1595,7 +1595,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType.withField(new FieldDescription.Token(FOO,
                     MODIFIERS,
-                    TypeDescription.Generic.OBJECT,
+                    TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                     Collections.singletonList(AnnotationDescription.Builder.ofType(SampleAnnotation.class).define(FOO, BAR).build())));
         }
 
@@ -1610,8 +1610,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
             return instrumentedType.withMethod(new MethodDescription.Token(FOO,
                     MODIFIERS,
                     Collections.<TypeVariableToken>emptyList(),
-                    TypeDescription.Generic.OBJECT,
-                    Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT,
+                    TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
+                    Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                             Collections.singletonList(AnnotationDescription.Builder.ofType(SampleAnnotation.class).define(FOO, QUX).build()))),
                     Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Exception.class)),
                     Collections.singletonList(AnnotationDescription.Builder.ofType(SampleAnnotation.class).define(FOO, BAR).build()),

@@ -191,7 +191,7 @@ public @interface AllArguments {
                                                                Assigner.Typing typing) {
             TypeDescription.Generic componentType;
             if (target.getType().represents(Object.class)) {
-                componentType = TypeDescription.Generic.OBJECT;
+                componentType = TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class);
             } else if (target.getType().isArray()) {
                 componentType = target.getType().getComponentType();
             } else {

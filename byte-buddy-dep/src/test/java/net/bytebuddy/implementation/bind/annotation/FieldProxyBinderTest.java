@@ -176,7 +176,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FieldProxy.Binder.BEAN_PROPERTY);
         when(fieldDescription.getActualName()).thenReturn(FOO);
-        when(source.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(source.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, fieldType));
         when(source.getActualName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
@@ -196,7 +196,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getActualName()).thenReturn(FOO);
-        when(source.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(source.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, fieldType));
         when(source.getName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
@@ -217,7 +217,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         when(instrumentedType.isAssignableTo(TypeDescription.ForLoadedType.of(Foo.class))).thenReturn(true);
         when(annotation.value()).thenReturn(FieldProxy.Binder.BEAN_PROPERTY);
         when(fieldDescription.getActualName()).thenReturn(FOO);
-        when(source.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(source.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, fieldType));
         when(source.getName()).thenReturn("setFoo");
         when(source.getActualName()).thenReturn("setFoo");
@@ -239,7 +239,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         when(instrumentedType.isAssignableTo(TypeDescription.ForLoadedType.of(Foo.class))).thenReturn(true);
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getActualName()).thenReturn(FOO);
-        when(source.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(source.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, fieldType));
         when(source.getName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");

@@ -20,7 +20,7 @@ public class RecordComponentAttributeAppenderForInstrumentedFieldTest extends Ab
 
     @Test
     public void testAnnotationAppenderNoRetention() throws Exception {
-        when(recordComponentDescription.getType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(recordComponentDescription.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         when(recordComponentDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
         RecordComponentAttributeAppender.ForInstrumentedRecordComponent.INSTANCE.apply(recordComponentVisitor, recordComponentDescription, annotationValueFilter);
         verifyNoMoreInteractions(recordComponentVisitor);
@@ -31,7 +31,7 @@ public class RecordComponentAttributeAppenderForInstrumentedFieldTest extends Ab
 
     @Test
     public void testAnnotationAppenderRuntimeRetention() throws Exception {
-        when(recordComponentDescription.getType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(recordComponentDescription.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         when(recordComponentDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
         RecordComponentAttributeAppender.ForInstrumentedRecordComponent.INSTANCE.apply(recordComponentVisitor, recordComponentDescription, annotationValueFilter);
         verify(recordComponentVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
@@ -43,7 +43,7 @@ public class RecordComponentAttributeAppenderForInstrumentedFieldTest extends Ab
 
     @Test
     public void testAnnotationAppenderByteCodeRetention() throws Exception {
-        when(recordComponentDescription.getType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(recordComponentDescription.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         when(recordComponentDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new QuxBaz.Instance()));
         RecordComponentAttributeAppender.ForInstrumentedRecordComponent.INSTANCE.apply(recordComponentVisitor, recordComponentDescription, annotationValueFilter);
         verify(recordComponentVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);

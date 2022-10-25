@@ -47,7 +47,7 @@ public class TypeDescriptionGenericVisitorSubstitutorForAttachmentTest {
     public void testIllegalAttachment() throws Exception {
         TypeDescription.Generic original = TypeDefinition.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
         TypeDescription.Generic detached = original.accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
-        detached.accept(new TypeDescription.Generic.Visitor.Substitutor.ForAttachment(TypeDescription.Generic.OBJECT, TypeDescription.ForLoadedType.of(Object.class)));
+        detached.accept(new TypeDescription.Generic.Visitor.Substitutor.ForAttachment(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), TypeDescription.ForLoadedType.of(Object.class)));
     }
 
     @SuppressWarnings("unused")

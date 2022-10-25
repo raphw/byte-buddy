@@ -529,7 +529,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(typeDescription.getDeclaredFields().size(), is(0));
         assertThat(typeDescription.getDeclaredMethods().size(), is(0));
-        assertThat(typeDescription.getSuperClass(), is(TypeDescription.Generic.OBJECT));
+        assertThat(typeDescription.getSuperClass(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
         assertThat(typeDescription.getInterfaces(), is(TypeDescription.ARRAY_INTERFACES));
         assertThat(typeDescription.getActualName(), is(SimpleGenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getTypeName(), is(SimpleGenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
@@ -596,7 +596,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getDeclaredFields().size(), is(0));
         assertThat(typeDescription.getDeclaredMethods().size(), is(0));
         assertThat(typeDescription.getOwnerType(), nullValue(TypeDescription.Generic.class));
-        assertThat(typeDescription.getSuperClass(), is(TypeDescription.Generic.OBJECT));
+        assertThat(typeDescription.getSuperClass(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
         assertThat(typeDescription.getInterfaces(), is(TypeDescription.ARRAY_INTERFACES));
         assertThat(typeDescription.getActualName(), is(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getTypeName(), is(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType().toString()));
@@ -661,7 +661,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.equals(null), is(false));
         assertThat(typeDescription.getSymbol(), is(T));
         assertThat(typeDescription.getUpperBounds().size(), is(1));
-        assertThat(typeDescription.getUpperBounds().getOnly(), is(TypeDescription.Generic.OBJECT));
+        assertThat(typeDescription.getUpperBounds().getOnly(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
         assertThat(typeDescription.getUpperBounds().getOnly().getStackSize(), is(StackSize.SINGLE));
         assertThat(typeDescription.getTypeName(), is(SimpleTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         MatcherAssert.assertThat(typeDescription.getTypeVariableSource(), is((TypeVariableSource) TypeDescription.ForLoadedType.of(SimpleTypeVariableType.class)));
@@ -771,7 +771,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getSymbol(), is(T));
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(typeDescription.getUpperBounds().size(), is(1));
-        assertThat(typeDescription.getUpperBounds().getOnly(), is(TypeDescription.Generic.OBJECT));
+        assertThat(typeDescription.getUpperBounds().getOnly(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
         assertThat(typeDescription.getTypeName(), is(ShadowingTypeVariableType.class.getDeclaredMethod(FOO).getGenericReturnType().toString()));
         assertThat(typeDescription.getTypeVariableSource(), is((TypeVariableSource) new MethodDescription.ForLoadedMethod(ShadowingTypeVariableType.class.getDeclaredMethod(FOO))));
         assertThat(typeDescription.getTypeVariableSource().getTypeVariables().size(), is(1));
@@ -842,7 +842,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(foo.getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(foo.getSymbol(), is(T));
         assertThat(foo.getUpperBounds().size(), is(1));
-        assertThat(foo.getUpperBounds().getOnly(), is(TypeDescription.Generic.OBJECT));
+        assertThat(foo.getUpperBounds().getOnly(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
         assertThat(foo.getTypeVariableSource(), is((TypeVariableSource) TypeDescription.ForLoadedType.of(NestedInnerType.class)));
         TypeDescription.Generic bar = describeReturnType(NestedInnerType.InnerType.class.getDeclaredMethod(BAR));
         assertThat(bar.getSort(), is(TypeDefinition.Sort.VARIABLE));
@@ -866,7 +866,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(foo.getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(foo.getSymbol(), is(T));
         assertThat(foo.getUpperBounds().size(), is(1));
-        assertThat(foo.getUpperBounds().getOnly(), is(TypeDescription.Generic.OBJECT));
+        assertThat(foo.getUpperBounds().getOnly(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
         assertThat(foo.getTypeVariableSource(), is((TypeVariableSource) TypeDescription.ForLoadedType.of(NestedInnerMethod.class)));
         TypeDescription.Generic bar = describeReturnType(innerType.getDeclaredMethod(BAR));
         assertThat(bar.getSort(), is(TypeDefinition.Sort.VARIABLE));
@@ -914,7 +914,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(bar.getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(bar.getSymbol(), is(T));
         assertThat(bar.getUpperBounds().size(), is(1));
-        assertThat(bar.getUpperBounds().getOnly(), is(TypeDescription.Generic.OBJECT));
+        assertThat(bar.getUpperBounds().getOnly(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
     }
 
     @Test

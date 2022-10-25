@@ -138,7 +138,7 @@ public enum JavaType {
     /**
      * The Java 9 {@code java.lang.invoke.VarHandle} type.
      */
-    VAR_HANDLE("java.lang.invoke.VarHandle", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, TypeDescription.Generic.OBJECT, CONSTABLE.getTypeStub()),
+    VAR_HANDLE("java.lang.invoke.VarHandle", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), CONSTABLE.getTypeStub()),
 
     /**
      * The Java 8 {@code java.lang.reflect.Parameter} type.

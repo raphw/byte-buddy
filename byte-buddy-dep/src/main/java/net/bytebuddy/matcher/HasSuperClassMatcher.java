@@ -46,7 +46,7 @@ public class HasSuperClassMatcher<T extends TypeDescription> extends ElementMatc
      */
     protected boolean doMatch(T target) {
         if (target.isInterface()) {
-            return matcher.matches(TypeDescription.Generic.OBJECT);
+            return matcher.matches(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         }
         for (TypeDefinition typeDefinition : target) {
             if (matcher.matches(typeDefinition.asGenericType())) {

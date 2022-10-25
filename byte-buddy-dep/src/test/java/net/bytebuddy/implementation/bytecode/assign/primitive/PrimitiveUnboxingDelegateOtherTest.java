@@ -12,6 +12,6 @@ public class PrimitiveUnboxingDelegateOtherTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testVoidIllegal() throws Exception {
-        PrimitiveUnboxingDelegate.forPrimitive(TypeDescription.Generic.VOID);
+        PrimitiveUnboxingDelegate.forPrimitive(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
     }
 }

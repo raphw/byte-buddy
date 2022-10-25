@@ -1052,7 +1052,7 @@ public class MethodCall implements Implementation.Composable {
             public StackManipulation toStackManipulation(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         ClassConstant.of(instrumentedType),
-                        assigner.assign(TypeDescription.Generic.OfNonGenericType.ForLoadedType.CLASS, target.getType(), typing));
+                        assigner.assign(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Class.class), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign Class value to " + target);
                 }
@@ -1236,7 +1236,7 @@ public class MethodCall implements Implementation.Composable {
             public StackManipulation toStackManipulation(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 TypeDescription.Generic componentType;
                 if (target.getType().represents(Object.class)) {
-                    componentType = TypeDescription.Generic.OBJECT;
+                    componentType = TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class);
                 } else if (target.getType().isArray()) {
                     componentType = target.getType().getComponentType();
                 } else {

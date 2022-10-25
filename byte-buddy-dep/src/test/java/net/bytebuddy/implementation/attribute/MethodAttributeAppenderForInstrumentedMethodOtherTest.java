@@ -19,7 +19,7 @@ public class MethodAttributeAppenderForInstrumentedMethodOtherTest extends Abstr
     @SuppressWarnings("unchecked")
     public void testReceiverTypeTypeAnnotationsIgnored() throws Exception {
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
-        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(methodDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
         when(methodDescription.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
@@ -39,7 +39,7 @@ public class MethodAttributeAppenderForInstrumentedMethodOtherTest extends Abstr
     @SuppressWarnings("unchecked")
     public void testReceiverTypeTypeAnnotationsNoRetention() throws Exception {
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
-        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(methodDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
         when(methodDescription.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
@@ -60,7 +60,7 @@ public class MethodAttributeAppenderForInstrumentedMethodOtherTest extends Abstr
     @SuppressWarnings("unchecked")
     public void testReceiverTypeTypeAnnotationsRuntimeRetention() throws Exception {
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
-        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(methodDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
         when(methodDescription.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
@@ -85,7 +85,7 @@ public class MethodAttributeAppenderForInstrumentedMethodOtherTest extends Abstr
     @SuppressWarnings("unchecked")
     public void testReceiverTypeTypeAnnotationsClassFileRetention() throws Exception {
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
-        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(methodDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
         when(methodDescription.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());

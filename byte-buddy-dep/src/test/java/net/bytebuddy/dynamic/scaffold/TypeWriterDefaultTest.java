@@ -684,7 +684,7 @@ public class TypeWriterDefaultTest {
         classWriter.visitMethod(Opcodes.ACC_DEPRECATED | Opcodes.ACC_ABSTRACT, "baz", "()V", null, null).visitEnd();
         classWriter.visitEnd();
 
-        TypeDescription typeDescription = new TypeDescription.Latent("foo.Bar", 0, TypeDescription.Generic.OBJECT);
+        TypeDescription typeDescription = new TypeDescription.Latent("foo.Bar", 0, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         Class<?> type = ByteArrayClassLoader.load(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 Collections.singletonMap(typeDescription, classWriter.toByteArray()),
                 ClassLoadingStrategy.NO_PROTECTION_DOMAIN,

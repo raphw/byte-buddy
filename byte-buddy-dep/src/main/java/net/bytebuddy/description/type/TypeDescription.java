@@ -3861,6 +3861,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 static {
                     TYPE_CACHE = new HashMap<Class<?>, Generic>();
                     TYPE_CACHE.put(TargetType.class, new ForLoadedType(TargetType.class));
+                    TYPE_CACHE.put(Class.class, new ForLoadedType(Class.class));
+                    TYPE_CACHE.put(Throwable.class, new ForLoadedType(Throwable.class));
+                    TYPE_CACHE.put(Annotation.class, new ForLoadedType(Annotation.class));
                     TYPE_CACHE.put(Object.class, new ForLoadedType(Object.class));
                     TYPE_CACHE.put(String.class, new ForLoadedType(String.class));
                     TYPE_CACHE.put(Boolean.class, new ForLoadedType(Boolean.class));
@@ -4253,7 +4256,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             @MaybeNull
             public Generic getSuperClass() {
-                return TypeDescription.Generic.OBJECT;
+                return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class);
             }
 
             /**
@@ -4729,7 +4732,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     stringBuilder.append(" super ");
                 } else {
                     bounds = getUpperBounds();
-                    if (bounds.getOnly().equals(TypeDescription.Generic.OBJECT)) {
+                    if (bounds.getOnly().equals(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class))) {
                         return SYMBOL;
                     }
                     stringBuilder.append(" extends ");
@@ -4923,7 +4926,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @return A description of an unbounded wildcard.
                  */
                 public static Generic unbounded(AnnotationSource annotationSource) {
-                    return new Latent(Collections.singletonList(TypeDescription.Generic.OBJECT), Collections.<Generic>emptyList(), annotationSource);
+                    return new Latent(Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)), Collections.<Generic>emptyList(), annotationSource);
                 }
 
                 /**
@@ -4945,7 +4948,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @return A wildcard with the given lower bound.
                  */
                 public static Generic boundedBelow(Generic lowerBound, AnnotationSource annotationSource) {
-                    return new Latent(Collections.singletonList(TypeDescription.Generic.OBJECT), Collections.singletonList(lowerBound), annotationSource);
+                    return new Latent(Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)), Collections.singletonList(lowerBound), annotationSource);
                 }
 
                 /**
@@ -7941,7 +7944,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 Generic superClass = getSuperClass();
                 // The object type itself is non generic and implicitly returns a non-generic signature
                 if (superClass == null) {
-                    superClass = TypeDescription.Generic.OBJECT;
+                    superClass = TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class);
                 }
                 superClass.accept(new Generic.Visitor.ForSignatureVisitor(signatureWriter.visitSuperclass()));
                 generic = generic || !superClass.getSort().isNonGeneric();
@@ -9295,7 +9298,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         @MaybeNull
         public Generic getSuperClass() {
-            return TypeDescription.Generic.OBJECT;
+            return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class);
         }
 
         /**
@@ -9733,7 +9736,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         @MaybeNull
         public Generic getSuperClass() {
-            return TypeDescription.Generic.OBJECT;
+            return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class);
         }
 
         /**

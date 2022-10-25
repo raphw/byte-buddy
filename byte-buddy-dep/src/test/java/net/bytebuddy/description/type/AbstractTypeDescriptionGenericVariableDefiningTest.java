@@ -40,7 +40,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(t.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(t.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value).resolve(Integer.class), is(0));
         assertThat(t.getUpperBounds().size(), is(1));
-        assertThat(t.getUpperBounds().contains(TypeDescription.Generic.OBJECT), is(true));
+        assertThat(t.getUpperBounds().contains(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)), is(true));
     }
 
     @Test

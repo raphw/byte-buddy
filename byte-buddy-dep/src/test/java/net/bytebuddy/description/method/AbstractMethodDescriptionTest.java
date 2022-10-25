@@ -96,8 +96,8 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(firstMethod).getReturnType(), is((TypeDefinition) TypeDescription.ForLoadedType.of(firstMethod.getReturnType())));
         assertThat(describe(secondMethod).getReturnType(), is((TypeDefinition) TypeDescription.ForLoadedType.of(secondMethod.getReturnType())));
         assertThat(describe(thirdMethod).getReturnType(), is((TypeDefinition) TypeDescription.ForLoadedType.of(thirdMethod.getReturnType())));
-        assertThat(describe(firstConstructor).getReturnType(), is(TypeDescription.Generic.VOID));
-        assertThat(describe(secondConstructor).getReturnType(), is(TypeDescription.Generic.VOID));
+        assertThat(describe(firstConstructor).getReturnType(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class)));
+        assertThat(describe(secondConstructor).getReturnType(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class)));
     }
 
     @Test
@@ -238,35 +238,35 @@ public abstract class AbstractMethodDescriptionTest {
         MethodDescription.InDefinedShape equalMethod = mock(MethodDescription.InDefinedShape.class);
         when(equalMethod.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
         when(equalMethod.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(firstConstructor.getDeclaringClass()));
-        when(equalMethod.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(equalMethod.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(equalMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethod,
                 new TypeList.ForLoadedTypes(firstConstructor.getParameterTypes())));
         assertThat(describe(firstConstructor), is(equalMethod));
         MethodDescription.InDefinedShape equalMethodButName = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButName.getInternalName()).thenReturn(firstMethod.getName());
         when(equalMethodButName.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(firstConstructor.getDeclaringClass()));
-        when(equalMethodButName.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(equalMethodButName.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(equalMethodButName.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButName,
                 new TypeList.ForLoadedTypes(firstConstructor.getParameterTypes())));
         assertThat(describe(firstConstructor), not(equalMethodButName));
         MethodDescription.InDefinedShape equalMethodButReturnType = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButReturnType.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
         when(equalMethodButReturnType.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(Object.class));
-        when(equalMethodButReturnType.getReturnType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(equalMethodButReturnType.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         when(equalMethodButReturnType.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButReturnType,
                 new TypeList.ForLoadedTypes(firstConstructor.getParameterTypes())));
         assertThat(describe(firstConstructor), not(equalMethodButReturnType));
         MethodDescription.InDefinedShape equalMethodButDeclaringType = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButDeclaringType.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
         when(equalMethodButDeclaringType.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(Object.class));
-        when(equalMethodButDeclaringType.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(equalMethodButDeclaringType.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(equalMethodButDeclaringType.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButDeclaringType,
                 new TypeList.ForLoadedTypes(firstConstructor.getParameterTypes())));
         assertThat(describe(firstConstructor), not(equalMethodButDeclaringType));
         MethodDescription.InDefinedShape equalMethodButParameterTypes = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButParameterTypes.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
         when(equalMethodButParameterTypes.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(firstConstructor.getDeclaringClass()));
-        when(equalMethodButParameterTypes.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(equalMethodButParameterTypes.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
         when(equalMethodButParameterTypes.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButParameterTypes,
                 new TypeList.ForLoadedTypes(secondConstructor.getParameterTypes())));
         assertThat(describe(firstConstructor), not(equalMethodButParameterTypes));

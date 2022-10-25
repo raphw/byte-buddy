@@ -20,7 +20,7 @@ public class FieldAttributeAppenderForInstrumentedFieldTest extends AbstractFiel
 
     @Test
     public void testAnnotationAppenderNoRetention() throws Exception {
-        when(fieldDescription.getType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(fieldDescription.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
         FieldAttributeAppender.ForInstrumentedField.INSTANCE.apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verifyNoMoreInteractions(fieldVisitor);
@@ -31,7 +31,7 @@ public class FieldAttributeAppenderForInstrumentedFieldTest extends AbstractFiel
 
     @Test
     public void testAnnotationAppenderRuntimeRetention() throws Exception {
-        when(fieldDescription.getType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(fieldDescription.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
         FieldAttributeAppender.ForInstrumentedField.INSTANCE.apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
@@ -43,7 +43,7 @@ public class FieldAttributeAppenderForInstrumentedFieldTest extends AbstractFiel
 
     @Test
     public void testAnnotationAppenderByteCodeRetention() throws Exception {
-        when(fieldDescription.getType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(fieldDescription.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new QuxBaz.Instance()));
         FieldAttributeAppender.ForInstrumentedField.INSTANCE.apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);

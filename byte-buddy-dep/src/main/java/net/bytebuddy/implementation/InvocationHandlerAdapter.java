@@ -193,7 +193,7 @@ public abstract class InvocationHandlerAdapter implements Implementation.Composa
         for (TypeDescription.Generic parameterType : parameterTypes) {
             instruction.add(new StackManipulation.Compound(
                     MethodVariableAccess.of(parameterType).loadFrom(currentIndex),
-                    assigner.assign(parameterType, TypeDescription.Generic.OBJECT, Assigner.Typing.STATIC)));
+                    assigner.assign(parameterType, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), Assigner.Typing.STATIC)));
             currentIndex += parameterType.getStackSize().getSize();
         }
         return instruction;
@@ -251,9 +251,9 @@ public abstract class InvocationHandlerAdapter implements Implementation.Composa
                 cached ? methodConstant.cached() : methodConstant,
                 instrumentedMethod.getParameters().isEmpty()
                         ? NullConstant.INSTANCE
-                        : ArrayFactory.forType(TypeDescription.Generic.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
+                        : ArrayFactory.forType(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(INVOCATION_HANDLER_TYPE.getDeclaredMethods().filter(isAbstract()).getOnly()),
-                returning ? new StackManipulation.Compound(assigner.assign(TypeDescription.Generic.OBJECT,
+                returning ? new StackManipulation.Compound(assigner.assign(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
                         instrumentedMethod.getReturnType(),
                         Assigner.Typing.DYNAMIC), MethodReturn.of(instrumentedMethod.getReturnType())) : Removal.SINGLE
         ).apply(methodVisitor, implementationContext);

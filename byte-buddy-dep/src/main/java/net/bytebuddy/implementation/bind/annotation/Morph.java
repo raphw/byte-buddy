@@ -596,7 +596,7 @@ public @interface Morph {
                             parameterLoading[index] = new StackManipulation.Compound(arrayReference,
                                     IntegerConstant.forValue(index),
                                     ArrayAccess.REFERENCE.load(),
-                                    assigner.assign(TypeDescription.Generic.OBJECT, parameterType, Assigner.Typing.DYNAMIC));
+                                    assigner.assign(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class), parameterType, Assigner.Typing.DYNAMIC));
                             index++;
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(

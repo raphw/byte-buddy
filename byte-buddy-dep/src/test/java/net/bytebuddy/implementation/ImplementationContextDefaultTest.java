@@ -558,7 +558,7 @@ public class ImplementationContextDefaultTest {
                 FOO);
         MethodDescription.InDefinedShape firstFieldSetter = implementationContext.registerSetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(firstFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstFieldSetter, firstFieldType)));
-        assertThat(firstFieldSetter.getReturnType(), is(TypeDescription.Generic.VOID));
+        assertThat(firstFieldSetter.getReturnType(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class)));
         assertThat(firstFieldSetter.getInternalName(), equalTo(FOO + "$accessor$" + FOO));
         assertThat(firstFieldSetter.getModifiers(), is(accessorMethodModifiers));
         assertThat(firstFieldSetter.getExceptionTypes(), is((TypeList.Generic) new TypeList.Generic.Empty()));
@@ -566,7 +566,7 @@ public class ImplementationContextDefaultTest {
         when(secondField.isStatic()).thenReturn(true);
         MethodDescription.InDefinedShape secondFieldSetter = implementationContext.registerSetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(secondFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(secondFieldSetter, secondFieldType)));
-        assertThat(secondFieldSetter.getReturnType(), is(TypeDescription.Generic.VOID));
+        assertThat(secondFieldSetter.getReturnType(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class)));
         assertThat(secondFieldSetter.getInternalName(), equalTo(BAR + "$accessor$" + FOO));
         assertThat(secondFieldSetter.getModifiers(), is(accessorMethodModifiers | Opcodes.ACC_STATIC));
         assertThat(secondFieldSetter.getExceptionTypes(), is((TypeList.Generic) new TypeList.Generic.Empty()));

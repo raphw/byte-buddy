@@ -69,7 +69,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(rawTypeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE));
-        assertThat(resolution.getResolvedMethod().getReturnType(), is(TypeDescription.Generic.VOID));
+        assertThat(resolution.getResolvedMethod().getReturnType(), is(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class)));
         assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList<ParameterDescription.InDefinedShape>) new ParameterList.Explicit
                 .ForTypes(resolution.getResolvedMethod(), parameterType, placeholderType)));
         assertThat(resolution.getAppendedParameters(), equalTo((TypeList) new TypeList.Explicit(rawPlaceholderType)));

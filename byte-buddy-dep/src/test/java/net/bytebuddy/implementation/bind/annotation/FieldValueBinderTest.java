@@ -277,7 +277,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         when(stackManipulation.isValid()).thenReturn(true);
         when(source.getInternalName()).thenReturn("getFoo");
         when(source.getActualName()).thenReturn("getFoo");
-        when(source.getReturnType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(source.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class));
         when(source.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
                 source,
@@ -321,8 +321,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         when(stackManipulation.isValid()).thenReturn(true);
         when(source.getInternalName()).thenReturn("setFoo");
         when(source.getActualName()).thenReturn("setFoo");
-        when(source.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
-        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, TypeDescription.Generic.OBJECT));
+        when(source.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
         MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
                 source,
                 target,
