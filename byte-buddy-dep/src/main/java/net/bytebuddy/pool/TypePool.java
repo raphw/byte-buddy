@@ -219,7 +219,7 @@ public interface TypePool {
          * Attempts to find a resolution in this cache.
          *
          * @param name The name of the type to describe.
-         * @return A resolution of the type or {@code null} if no such resolution can be found in the cache..
+         * @return A resolution of the type or {@code null} if no such resolution can be found in the cache.
          */
         @MaybeNull
         Resolution find(String name);
