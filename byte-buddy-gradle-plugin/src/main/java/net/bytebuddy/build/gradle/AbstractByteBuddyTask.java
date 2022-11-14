@@ -372,6 +372,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
         }
         List<Transformation> transformations = new ArrayList<Transformation>(getTransformations());
         ClassLoader classLoader = ByteBuddySkippingUrlClassLoader.of(getClass().getClassLoader(), discoverySet(), classPath());
+        Plugin.Engine.Summary summary;
         try {
             if (discovery.isDiscover(transformations)) {
                 Set<String> undiscoverable = new HashSet<String>();
@@ -423,7 +424,6 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                         : new ClassFileLocator.ForFolder(artifact));
             }
             ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
-            Plugin.Engine.Summary summary;
             try {
                 getLogger().info("Processing class files located in in: {}", source());
                 Plugin.Engine pluginEngine;
