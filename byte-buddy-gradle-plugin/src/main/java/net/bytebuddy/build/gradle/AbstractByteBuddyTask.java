@@ -470,7 +470,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
             }
         }
         if (!summary.getFailed().isEmpty()) {
-            throw new IllegalStateException(summary.getFailed() + " type transformations have failed");
+            throw new IllegalStateException(summary.getFailed() + " type transformation(s) have failed");
         } else if (isWarnOnEmptyTypeSet() && summary.getTransformed().isEmpty()) {
             getLogger().warn("No types were transformed during plugin execution");
         } else {
