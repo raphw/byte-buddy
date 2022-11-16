@@ -1189,7 +1189,7 @@ public interface ClassInjector {
                                 .noNestMate()
                                 .visit(new MemberRemoval().stripInvokables(any()))
                                 .make()
-                                .load(AccessibleObject.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                                .load(AccessibleObject.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER.with(AccessibleObject.class.getProtectionDomain()))
                                 .getLoaded()
                                 .getDeclaredField("override");
                     }
