@@ -265,7 +265,6 @@
                     <failIfMissing>true</failIfMissing>
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <properties>
-                        <current.year>Present</current.year>
                         <copyright.holder>${copyright.holder}</copyright.holder>
                     </properties>
                     <includes>

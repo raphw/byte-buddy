@@ -107,9 +107,7 @@ task copyLicense(type: Copy) {
         while (matcher.find()) {
             def property = matcher.group(1)
             String resolved
-            if (property.equals("current.year")) {
-                resolved = Calendar.getInstance().get(Calendar.YEAR)
-            } else if (property.startsWith("project.")) {
+            if (property.startsWith("project.")) {
                 resolved = outerPom.getProperty(property.substring("project.".length()))
             } else {
                 resolved = outerPom.properties.getProperty(property)
