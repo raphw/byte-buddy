@@ -1027,6 +1027,20 @@ public interface MethodDescription extends TypeVariableSource,
             }
             return stringBuilder.toString();
         }
+
+        @Override
+        protected String toSafeString() {
+            StringBuilder stringBuilder = new StringBuilder();
+            int modifiers = getModifiers() & SOURCE_MODIFIERS;
+            if (modifiers != EMPTY_MASK) {
+                stringBuilder.append(Modifier.toString(modifiers)).append(' ');
+            }
+            if (isMethod()) {
+                stringBuilder.append(getReturnType().asErasure().getActualName()).append(' ');
+                stringBuilder.append(getDeclaringType().asErasure().getActualName()).append('.');
+            }
+            return stringBuilder.append(getName()).append("(?)").toString();
+        }
     }
 
     /**

@@ -8336,6 +8336,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return (isPrimitive() ? "" : (isInterface() ? "interface" : "class") + " ") + getName();
         }
 
+        @Override
+        protected String toSafeString() {
+            return toString();
+        }
+
         /**
          * An adapter implementation of a {@link TypeDescription} that
          * describes any type that is not an array or a primitive type.

@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 17. November 2022: version 1.12.19
+
+- Avoid possible lock through circular class loading of `TypeDescription` subtypes.
+- Avoid access error when using unsafe API on Java 17 with an active security manager.
+- Close URL class loader used in Gradle plugin.
+
 ### 11. October 2022: version 1.12.18
 
 - Allow writing to field from enter `Advice` in constructor, as byte code allows it.

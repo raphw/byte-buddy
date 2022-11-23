@@ -171,9 +171,17 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
         public TypeDescription.Generic findExpectedVariable(String symbol) {
             TypeDescription.Generic variable = findVariable(symbol);
             if (variable == null) {
-                throw new IllegalArgumentException("Cannot resolve " + symbol + " from " + this);
+                throw new IllegalArgumentException("Cannot resolve " + symbol + " from " + toSafeString());
             }
             return variable;
         }
+
+        /**
+         * Returns a {@link Object#toString()} representation that does not attempt to resolve any
+         * type variables to avoid stack overflow exceptions.
+         *
+         * @return A safe string representation.
+         */
+        protected abstract String toSafeString();
     }
 }
