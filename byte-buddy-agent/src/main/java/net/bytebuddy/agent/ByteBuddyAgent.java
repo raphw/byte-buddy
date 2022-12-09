@@ -93,7 +93,7 @@ public class ByteBuddyAgent {
     /**
      * The size of the buffer for copying the agent installer file into another jar.
      */
-    private static final int BUFFER_SIZE = 1024;
+    private static final int BUFFER_SIZE = 1024 * 8;
 
     /**
      * Convenience indices for reading and writing to the buffer to make the code more readable.
@@ -689,6 +689,7 @@ public class ByteBuddyAgent {
             if (new ProcessBuilder(System.getProperty(JAVA_HOME)
                     + File.separatorChar + "bin"
                     + File.separatorChar + (System.getProperty(OS_NAME, "").toLowerCase(Locale.US).contains("windows") ? "java.exe" : "java"),
+                    "-D" + Attacher.DUMP_PROPERTY + "=" + System.getProperty(Attacher.DUMP_PROPERTY, ""),
                     CLASS_PATH_ARGUMENT,
                     classPath.toString(),
                     Attacher.class.getName(),

@@ -18,6 +18,8 @@ package net.bytebuddy.agent;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.agent.utility.nullability.MaybeNull;
 
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -26,24 +28,9 @@ import java.lang.reflect.InvocationTargetException;
 public class Attacher {
 
     /**
-     * The name of the {@code attach} method of the  {@code VirtualMachine} class.
+     * Indicates that any error during attachment should be dumped to a given file location.
      */
-    private static final String ATTACH_METHOD_NAME = "attach";
-
-    /**
-     * The name of the {@code loadAgent} method of the  {@code VirtualMachine} class.
-     */
-    private static final String LOAD_AGENT_METHOD_NAME = "loadAgent";
-
-    /**
-     * The name of the {@code loadAgentPath} method of the  {@code VirtualMachine} class.
-     */
-    private static final String LOAD_AGENT_PATH_METHOD_NAME = "loadAgentPath";
-
-    /**
-     * The name of the {@code detach} method of the  {@code VirtualMachine} class.
-     */
-    private static final String DETACH_METHOD_NAME = "detach";
+    public static final String DUMP_PROPERTY = "net.bytebuddy.agent.attacher.dump";
 
     /**
      * The attacher provides only {@code static} utility methods and should not be instantiated.
@@ -75,7 +62,20 @@ public class Attacher {
                 argument = stringBuilder.toString();
             }
             install(Class.forName(args[0]), args[1], args[2], Boolean.parseBoolean(args[3]), argument);
-        } catch (Throwable ignored) {
+        } catch (Throwable throwable) {
+            try {
+                String property = System.getProperty(DUMP_PROPERTY);
+                if (property != null && !property.isEmpty()) {
+                    PrintStream outputStream = new PrintStream(new FileOutputStream(property));
+                    try {
+                        throwable.printStackTrace(outputStream);
+                    } finally {
+                        outputStream.close();
+                    }
+                }
+            } catch (Throwable ignored) {
+                /* empty */
+            }
             System.exit(1);
         }
     }
@@ -98,15 +98,15 @@ public class Attacher {
                                   boolean isNative,
                                   @MaybeNull String argument) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Object virtualMachineInstance = virtualMachineType
-                .getMethod(ATTACH_METHOD_NAME, String.class)
+                .getMethod("attach", String.class)
                 .invoke(null, processId);
         try {
             virtualMachineType
-                    .getMethod(isNative ? LOAD_AGENT_PATH_METHOD_NAME : LOAD_AGENT_METHOD_NAME, String.class, String.class)
+                    .getMethod(isNative ? "loadAgentPath" : "loadAgent", String.class, String.class)
                     .invoke(virtualMachineInstance, agent, argument);
         } finally {
             virtualMachineType
-                    .getMethod(DETACH_METHOD_NAME)
+                    .getMethod("detach")
                     .invoke(virtualMachineInstance);
         }
     }

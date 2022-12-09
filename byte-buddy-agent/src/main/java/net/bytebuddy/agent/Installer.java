@@ -95,7 +95,7 @@ public class Installer {
     }
 
     /**
-     * Allows the installation of this agent via the Attach API.
+     * Allows the installation of this agent via the attach API.
      *
      * @param arguments       The unused agent arguments.
      * @param instrumentation The instrumentation instance.
