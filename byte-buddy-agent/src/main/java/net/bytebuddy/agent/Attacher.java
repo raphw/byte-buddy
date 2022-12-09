@@ -74,7 +74,7 @@ public class Attacher {
                     }
                 }
             } catch (Throwable ignored) {
-                /* empty */
+                /* do nothing */
             }
             System.exit(1);
         }
