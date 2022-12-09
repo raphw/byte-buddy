@@ -66,7 +66,7 @@ public class Attacher {
             try {
                 String property = System.getProperty(DUMP_PROPERTY);
                 if (property != null && property.length() > 0) {
-                    PrintStream outputStream = new PrintStream(new FileOutputStream(property));
+                    PrintStream outputStream = new PrintStream(new FileOutputStream(property, true), false, "UTF-8");
                     try {
                         throwable.printStackTrace(outputStream);
                     } finally {
