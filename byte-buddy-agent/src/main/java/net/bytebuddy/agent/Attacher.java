@@ -65,7 +65,7 @@ public class Attacher {
         } catch (Throwable throwable) {
             try {
                 String property = System.getProperty(DUMP_PROPERTY);
-                if (property != null && !property.isEmpty()) {
+                if (property != null && property.length() > 0) {
                     PrintStream outputStream = new PrintStream(new FileOutputStream(property));
                     try {
                         throwable.printStackTrace(outputStream);
