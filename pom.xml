@@ -89,7 +89,7 @@
         <version.plugin.site>3.12.0</version.plugin.site>
         <version.plugin.exec>3.1.0</version.plugin.exec>
         <version.plugin.plugin>3.6.4</version.plugin.plugin>
-        <version.plugin.release>2.5.3</version.plugin.release>
+        <version.plugin.release>3.0.0-M7</version.plugin.release>
         <version.plugin.resources>3.2.0</version.plugin.resources>
         <version.plugin.assembly>3.4.2</version.plugin.assembly>
         <version.plugin.dependency>3.3.0</version.plugin.dependency>
