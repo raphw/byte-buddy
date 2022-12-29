@@ -20,10 +20,8 @@ maven-checksum-extension.jar
 
 # Gradle
 .gradle/
-byte-buddy-gradle-plugin/build/
-byte-buddy-gradle-plugin/**/build/
-byte-buddy-gradle-plugin/buildSrc/build/
-byte-buddy-gradle-plugin/gradle/build/
+build/
+!**/src/**/build/
 gradle-*-bin.zip
 gradle-wrapper.jar
 
