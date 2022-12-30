@@ -67,8 +67,8 @@ public abstract class AbstractByteBuddyTaskConfiguration<
      */
     public void execute(final Project project) {
         @SuppressWarnings("unchecked") final S extension = (S) project.getExtensions().getByName(name);
-        if (extension.getTransformations().isEmpty()) {
-            project.getLogger().debug("Not configuring task for source set '{}' as no transformations are defined", sourceSet.getName());
+        if (extension.getTransformations().isEmpty() && extension.getDiscovery() == Discovery.NONE) {
+            project.getLogger().debug("Not configuring task for source set '{}' as no transformations are defined and discovery is disabled", sourceSet.getName());
         } else {
             project.getLogger().debug("Configuring Byte Buddy task for source set '{}' as '{}'", sourceSet.getName(), name);
             final AbstractCompile compileTask = (AbstractCompile) project.getTasks().getByName(sourceSet.getCompileJavaTaskName());

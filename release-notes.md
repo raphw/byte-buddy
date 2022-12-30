@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 15. December 2022: version 1.12.20
+
+- Avoid stack overflow error when type variable cannot be resolve during error message generation.
+- Allow dumping error message to file when remote attach fails.
+
 ### 17. November 2022: version 1.12.19
 
 - Avoid possible lock through circular class loading of `TypeDescription` subtypes.
