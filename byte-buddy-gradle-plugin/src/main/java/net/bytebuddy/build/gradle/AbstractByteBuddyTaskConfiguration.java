@@ -65,14 +65,15 @@ public abstract class AbstractByteBuddyTaskConfiguration<
     /**
      * {@inheritDoc}
      */
-    public void execute(final Project project) {
-        @SuppressWarnings("unchecked") final S extension = (S) project.getExtensions().getByName(name);
+    public void execute(Project project) {
+        @SuppressWarnings("unchecked")
+        S extension = (S) project.getExtensions().getByName(name);
         if (extension.getTransformations().isEmpty() && extension.getDiscovery() == Discovery.NONE) {
             project.getLogger().debug("Not configuring task for source set '{}' as no transformations are defined and discovery is disabled", sourceSet.getName());
         } else {
             project.getLogger().debug("Configuring Byte Buddy task for source set '{}' as '{}'", sourceSet.getName(), name);
-            final AbstractCompile compileTask = (AbstractCompile) project.getTasks().getByName(sourceSet.getCompileJavaTaskName());
-            final T byteBuddyTask = project.getTasks().create(name, extension.toType());
+            AbstractCompile compileTask = (AbstractCompile) project.getTasks().getByName(sourceSet.getCompileJavaTaskName());
+            T byteBuddyTask = project.getTasks().create(name, extension.toType());
             byteBuddyTask.setGroup("Byte Buddy");
             byteBuddyTask.setDescription("Transforms the classes compiled by " + compileTask.getName());
             byteBuddyTask.dependsOn(compileTask);

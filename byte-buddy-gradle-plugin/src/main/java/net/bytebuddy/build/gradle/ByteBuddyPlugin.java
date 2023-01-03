@@ -57,9 +57,8 @@ public class ByteBuddyPlugin implements Plugin<Project> {
     /**
      * {@inheritDoc}
      */
-    public void apply(final Project project) {
-        Object androidExtension = project.getExtensions().findByName("android");
-        if (androidExtension != null) {
+    public void apply(Project project) {
+        if (project.getExtensions().findByName("android") != null) {
             project.getLogger().debug("Applying Byte Buddy Android plugin");
             try {
                 @SuppressWarnings("unchecked")
@@ -106,7 +105,6 @@ public class ByteBuddyPlugin implements Plugin<Project> {
                     String name = sourceSet.getName().equals(SourceSet.MAIN_SOURCE_SET_NAME)
                             ? "byteBuddy"
                             : (sourceSet.getName() + "ByteBuddy");
-
                     AbstractByteBuddyTaskExtension<?> extension = ObjectFactory.newInstance(project,
                             DISPATCHER.getExtensionType(),
                             project);
