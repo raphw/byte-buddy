@@ -371,7 +371,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
             throw new IllegalStateException("Source and target cannot be equal: " + source());
         }
         List<Transformation> transformations = new ArrayList<Transformation>(getTransformations());
-        ClassLoader classLoader = ByteBuddySkippingUrlClassLoader.of(getClass().getClassLoader(), discoverySet(), classPath());
+        ClassLoader classLoader = ByteBuddySkippingUrlClassLoader.of(getClass().getClassLoader(), discoverySet());
         Plugin.Engine.Summary summary;
         try {
             if (discovery.isDiscover(transformations)) {
@@ -465,7 +465,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                 classFileLocator.close();
             }
         } finally {
-            if (classLoader instanceof Closeable) {
+            if (classLoader instanceof Closeable && classLoader instanceof ByteBuddySkippingUrlClassLoader) {
                 ((Closeable) classLoader).close();
             }
         }
@@ -580,21 +580,23 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
          *
          * @param classLoader  The class loader of the Byte Buddy plugin.
          * @param discoverySet The source set to discover plugins from or {@code null} if no source set is used.
-         * @param classPath    The configured class path.
          * @return The resolved class loader.
          */
-        protected static ClassLoader of(ClassLoader classLoader, @MaybeNull Iterable<File> discoverySet, Iterable<File> classPath) {
+        protected static ClassLoader of(ClassLoader classLoader, @MaybeNull Iterable<File> discoverySet) {
+            if (discoverySet == null) {
+                return classLoader;
+            }
             List<URL> urls = new ArrayList<URL>();
-            for (File file : discoverySet == null
-                    ? classPath
-                    : discoverySet) {
+            for (File file : discoverySet) {
                 try {
                     urls.add(file.toURI().toURL());
                 } catch (MalformedURLException e) {
                     throw new IllegalStateException(e);
                 }
             }
-            return new ByteBuddySkippingUrlClassLoader(classLoader, urls.toArray(new URL[0]));
+            return urls.isEmpty()
+                    ? classLoader
+                    : new ByteBuddySkippingUrlClassLoader(classLoader, urls.toArray(new URL[0]));
         }
 
         @Override
