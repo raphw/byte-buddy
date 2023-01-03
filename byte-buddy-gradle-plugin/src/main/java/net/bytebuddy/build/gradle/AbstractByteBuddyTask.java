@@ -385,7 +385,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                     if (undiscoverable.add(name)) {
                         try {
                             @SuppressWarnings("unchecked")
-                            Class<? extends Plugin> plugin = (Class<? extends Plugin>) Class.forName(name);
+                            Class<? extends Plugin> plugin = (Class<? extends Plugin>) Class.forName(name, false, classLoader);
                             Transformation transformation = new Transformation();
                             transformation.setPlugin(plugin);
                             transformations.add(transformation);
