@@ -18,6 +18,7 @@ package net.bytebuddy.build.gradle;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
 import org.gradle.api.Project;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
 
@@ -45,16 +46,6 @@ public class ByteBuddyJarTaskExtension extends AbstractByteBuddyTaskExtension<By
         super(project);
     }
 
-    @Override
-    protected void doConfigure(ByteBuddyJarTask task) {
-        task.setDiscoverySet(discoverySet);
-    }
-
-    @Override
-    protected Class<ByteBuddyJarTask> toType() {
-        return ByteBuddyJarTask.class;
-    }
-
     /**
      * Returns the source set to resolve plugin names from or {@code null} if no such source set is used.
      *
@@ -74,5 +65,20 @@ public class ByteBuddyJarTaskExtension extends AbstractByteBuddyTaskExtension<By
      */
     public void setDiscoverySet(@MaybeNull Iterable<File> discoverySet) {
         this.discoverySet = discoverySet;
+    }
+
+    @Override
+    protected void doConfigure(ByteBuddyJarTask task) {
+        task.setDiscoverySet(discoverySet);
+    }
+
+    @Override
+    protected Class<ByteBuddyJarTask> toType() {
+        return ByteBuddyJarTask.class;
+    }
+
+    @Override
+    protected void discoverySet(FileCollection fileCollection) {
+        discoverySet = fileCollection;
     }
 }

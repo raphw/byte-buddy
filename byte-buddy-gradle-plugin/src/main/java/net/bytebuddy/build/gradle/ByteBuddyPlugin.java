@@ -112,6 +112,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
                         extension = DISPATCHER.toExtension(project);
                     }
                     extension.resolve(configuration.getTargetCompatibility());
+                    extension.discoverySet(project.getConfigurations().create(name));
                     project.getExtensions().add(name, extension);
                     project.afterEvaluate(DISPATCHER.toAction(name, sourceSet));
                 }

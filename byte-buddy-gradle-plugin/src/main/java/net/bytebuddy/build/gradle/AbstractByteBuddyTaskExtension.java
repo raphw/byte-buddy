@@ -24,6 +24,7 @@ import org.gradle.api.Action;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.file.FileCollection;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -445,6 +446,8 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
         task.setClassFileVersion(getClassFileVersion());
         doConfigure(task);
     }
+
+    protected abstract void discoverySet(FileCollection fileCollection);
 
     /**
      * Returns the type of the Byte Buddy task.

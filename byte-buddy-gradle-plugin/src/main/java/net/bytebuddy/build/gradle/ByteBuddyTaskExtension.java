@@ -119,6 +119,11 @@ public class ByteBuddyTaskExtension extends AbstractByteBuddyTaskExtension<ByteB
     }
 
     @Override
+    protected void discoverySet(FileCollection fileCollection) {
+        discoverySet = fileCollection;
+    }
+
+    @Override
     protected Class<? extends ByteBuddyTask> toType() {
         return incrementalClassPath
                 ? ByteBuddyTask.WithIncrementalClassPath.class
