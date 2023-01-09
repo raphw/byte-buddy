@@ -149,6 +149,17 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         assertThat(parameterBinding.isValid(), is(true));
     }
 
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testMethodHandlesLookupBinding() throws Exception {
+        when(genericTargetType.asErasure()).thenReturn(TypeDescription.ForLoadedType.of(JavaType.METHOD_HANDLES_LOOKUP.load()));
+        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
+        assertThat(parameterBinding.isValid(), is(true));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testIllegalBinding() throws Exception {
         when(targetType.getInternalName()).thenReturn(FOO);

@@ -2247,6 +2247,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected boolean isRepresentable(MethodDescription instrumentedMethod) {
                     return instrumentedMethod.isMethod();
                 }
+
+                @Override
+                protected Target resolve(MethodDescription.InDefinedShape methodDescription) {
+                    return Target.ForStackManipulation.of(methodDescription);
+                }
             },
 
             /**
@@ -2257,6 +2262,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected boolean isRepresentable(MethodDescription instrumentedMethod) {
                     return instrumentedMethod.isConstructor();
                 }
+
+                @Override
+                protected Target resolve(MethodDescription.InDefinedShape methodDescription) {
+                    return Target.ForStackManipulation.of(methodDescription);
+                }
             },
 
             /**
@@ -2266,6 +2276,42 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 protected boolean isRepresentable(MethodDescription instrumentedMethod) {
                     return true;
+                }
+
+                @Override
+                protected Target resolve(MethodDescription.InDefinedShape methodDescription) {
+                    return Target.ForStackManipulation.of(methodDescription);
+                }
+            },
+
+
+            /**
+             * A constant that must be a {@code java.lang.invoke.MethodHandle} instance.
+             */
+            METHOD_HANDLE {
+                @Override
+                protected boolean isRepresentable(MethodDescription instrumentedMethod) {
+                    return true;
+                }
+
+                @Override
+                protected Target resolve(MethodDescription.InDefinedShape methodDescription) {
+                    return new Target.ForStackManipulation(new JavaConstantValue(JavaConstant.MethodHandle.of(methodDescription)));
+                }
+            },
+
+            /**
+             * A constant that must be a {@code java.lang.invoke.MethodType} instance.
+             */
+            METHOD_TYPE {
+                @Override
+                protected boolean isRepresentable(MethodDescription instrumentedMethod) {
+                    return true;
+                }
+
+                @Override
+                protected Target resolve(MethodDescription.InDefinedShape methodDescription) {
+                    return new Target.ForStackManipulation(new JavaConstantValue(JavaConstant.MethodType.of(methodDescription)));
                 }
             };
 
@@ -2278,9 +2324,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   ArgumentHandler argumentHandler,
                                   Sort sort) {
                 if (!isRepresentable(instrumentedMethod)) {
-                    throw new IllegalStateException("Cannot represent " + instrumentedMethod + " as given method constant");
+                    throw new IllegalStateException("Cannot represent " + instrumentedMethod + " as the specified constant");
                 }
-                return Target.ForStackManipulation.of(instrumentedMethod.asDefined());
+                return resolve(instrumentedMethod.asDefined());
             }
 
             /**
@@ -2290,6 +2336,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @return {@code true} if this method is representable.
              */
             protected abstract boolean isRepresentable(MethodDescription instrumentedMethod);
+
+            /**
+             * Resolves the target for a given method description.
+             *
+             * @param methodDescription The method description for which to resolve a constant.
+             * @return A suitable target.
+             */
+            protected abstract Target resolve(MethodDescription.InDefinedShape methodDescription);
         }
 
         /**
@@ -3042,13 +3096,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           AnnotationDescription.Loadable<Origin> annotation,
                                           AdviceType adviceType) {
                     if (target.getType().asErasure().represents(Class.class)) {
-                        return OffsetMapping.ForInstrumentedType.INSTANCE;
+                        return ForInstrumentedType.INSTANCE;
                     } else if (target.getType().asErasure().represents(Method.class)) {
-                        return OffsetMapping.ForInstrumentedMethod.METHOD;
+                        return ForInstrumentedMethod.METHOD;
                     } else if (target.getType().asErasure().represents(Constructor.class)) {
-                        return OffsetMapping.ForInstrumentedMethod.CONSTRUCTOR;
+                        return ForInstrumentedMethod.CONSTRUCTOR;
                     } else if (JavaType.EXECUTABLE.getTypeStub().equals(target.getType().asErasure())) {
-                        return OffsetMapping.ForInstrumentedMethod.EXECUTABLE;
+                        return ForInstrumentedMethod.EXECUTABLE;
+                    } else if (JavaType.METHOD_HANDLE.getTypeStub().equals(target.getType().asErasure())) {
+                        return ForInstrumentedMethod.METHOD_HANDLE;
+                    } else if (JavaType.METHOD_TYPE.getTypeStub().equals(target.getType().asErasure())) {
+                        return ForInstrumentedMethod.METHOD_TYPE;
+                    } else if (JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().equals(target.getType().asErasure())) {
+                        return new OffsetMapping.ForStackManipulation(MethodInvocation.lookup(),
+                                JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().asGenericType(),
+                                target.getType(),
+                                Assigner.Typing.STATIC);
                     } else if (target.getType().asErasure().isAssignableFrom(String.class)) {
                         return ForOrigin.parse(annotation.getValue(ORIGIN_VALUE).resolve(String.class));
                     } else {
@@ -11757,7 +11820,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * <p>
      * Indicates that the annotated parameter should be mapped to a string representation of the instrumented method,
      * a constant representing the {@link Class} declaring the adviced method or a {@link Method}, {@link Constructor}
-     * or {@code java.lang.reflect.Executable} representing this method.
+     * or {@code java.lang.reflect.Executable} representing this method. It can also load the instrumented method's
+     * {@code java.lang.invoke.MethodType}, {@code java.lang.invoke.MethodHandle} or
+     * {@code java.lang.invoke.MethodHandles$Lookup}.
      * </p>
      * <p>
      * <b>Note</b>: A constant representing a {@link Method} or {@link Constructor} is not cached but is recreated for

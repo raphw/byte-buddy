@@ -632,6 +632,7 @@
                 </property>
             </activation>
             <properties>
+                <bytecode.main.version>1.7</bytecode.main.version>
                 <bytecode.test.version>1.7</bytecode.test.version>
             </properties>
             <build>

@@ -26,6 +26,7 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.implementation.bytecode.constant.JavaConstantValue;
 import net.bytebuddy.utility.JavaConstant;
+import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -143,6 +144,17 @@ public enum MethodInvocation {
         return declaredMethod.getReturnType().asErasure().equals(methodDescription.getReturnType().asErasure())
                 ? invoke(declaredMethod)
                 : OfGenericMethod.of(methodDescription, invoke(declaredMethod));
+    }
+
+    /**
+     * Returns a method invocation of {@code java.lang.invoke.MethodHandles#lookup()}.
+     *
+     * @return A method invocation for resolving the current lookup.
+     */
+    public static StackManipulation lookup() {
+        return invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLES.getTypeStub(), new MethodDescription.Token("lookup",
+                Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
+                JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().asGenericType())));
     }
 
     /**
