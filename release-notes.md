@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 5. January 2023: version 1.12.21
+
+- Create a Gradle source set for each JVM build automatically to reduce boilerplate.
+- Fix Gradle plugin class loading to use correct class loader.
+- Use updated release plugin to avoid outdated timestamp in jar.
+
 ### 15. December 2022: version 1.12.20
 
 - Avoid stack overflow error when type variable cannot be resolve during error message generation.

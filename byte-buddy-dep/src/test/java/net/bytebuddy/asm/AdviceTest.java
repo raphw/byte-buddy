@@ -1106,7 +1106,7 @@ public class AdviceTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(7)
+    @JavaVersionRule.Enforce(value = 7, target = Sample.class)
     public void testOriginMethodHandleAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -1120,7 +1120,7 @@ public class AdviceTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(7)
+    @JavaVersionRule.Enforce(value = 7, target = Sample.class)
     public void testOriginMethodTypeAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
