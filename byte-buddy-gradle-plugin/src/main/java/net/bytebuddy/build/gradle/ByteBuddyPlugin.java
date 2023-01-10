@@ -48,7 +48,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
             Class.forName("org.gradle.work.InputChanges"); // Make sure that at least Gradle 6 is available.
             dispatcher = new Dispatcher.ForApi6CapableGradle(SourceDirectorySet.class.getMethod("getDestinationDirectory"),
                     AbstractCompile.class.getMethod("setDestinationDir", Class.forName("org.gradle.api.provider.Provider")));
-        } catch (Exception ignored) {
+        } catch (Throwable ignored) {
             dispatcher = Dispatcher.ForLegacyGradle.INSTANCE;
         }
         DISPATCHER = dispatcher;

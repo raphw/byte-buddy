@@ -22,25 +22,23 @@ import com.android.build.api.instrumentation.InstrumentationScope;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.Variant;
 import com.android.build.gradle.BaseExtension;
+import com.android.build.gradle.internal.component.ComponentCreationConfig;
+import com.android.build.gradle.internal.publishing.AndroidArtifacts;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
-import net.bytebuddy.build.gradle.android.classpath.DependenciesClasspathProvider;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.attributes.Attribute;
-import org.gradle.api.attributes.AttributeCompatibilityRule;
-import org.gradle.api.attributes.AttributeContainer;
-import org.gradle.api.attributes.AttributeMatchingStrategy;
-import org.gradle.api.attributes.Category;
-import org.gradle.api.attributes.CompatibilityCheckDetails;
-import org.gradle.api.attributes.Usage;
+import org.gradle.api.attributes.*;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -52,7 +50,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     /**
      * The name of the artifact type attribute.
      */
-    public static final Attribute<String> ARTIFACT_TYPE_ATTRIBUTE = Attribute.of("artifactType", String.class);
+    protected static final Attribute<String> ARTIFACT_TYPE_ATTRIBUTE = Attribute.of("artifactType", String.class);
 
     /**
      * The name of the Byte Buddy jar type.
@@ -71,8 +69,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         }
         project.getDependencies().registerTransform(AarGradleTransformAction.class, new AarGradleTransformAction.ConfigurationAction());
         project.getDependencies().getAttributesSchema().attribute(ARTIFACT_TYPE_ATTRIBUTE, new AttributeMatchingStrategyConfigurationAction());
-        extension.onVariants(extension.selector().all(), new VariantAction(project, project.getConfigurations().create("byteBuddy", new ConfigurationConfigurationAction()),
-                DependenciesClasspathProvider.getInstance(currentAgpVersion)));
+        extension.onVariants(extension.selector().all(), new VariantAction(project, project.getConfigurations().create("byteBuddy", new ConfigurationConfigurationAction())));
     }
 
     /**
@@ -91,11 +88,6 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         private final Configuration configuration;
 
         /**
-         * The runtime classpath provider.
-         */
-        private final DependenciesClasspathProvider classpathProvider;
-
-        /**
          * A cache of configurations by built type name.
          */
         private final ConcurrentMap<String, Configuration> configurations;
@@ -103,14 +95,12 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         /**
          * Creates a new variant action.
          *
-         * @param project           The current Gradle project.
-         * @param configuration     The general Byte Buddy configuration.
-         * @param classpathProvider The runtime classpath provider.
+         * @param project       The current Gradle project.
+         * @param configuration The general Byte Buddy configuration.
          */
-        protected VariantAction(Project project, Configuration configuration, DependenciesClasspathProvider classpathProvider) {
+        protected VariantAction(Project project, Configuration configuration) {
             this.project = project;
             this.configuration = configuration;
-            this.classpathProvider = classpathProvider;
             configurations = new ConcurrentHashMap<String, Configuration>();
         }
 
@@ -134,19 +124,108 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     configuration = previous;
                 }
             }
-            FileCollection classPath = classpathProvider.getRuntimeClasspath(variant);
+            FileCollection classPath = RuntimeClassPathResolver.INSTANCE.apply(variant);
             variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, new ByteBuddyTransformationConfiguration(project,
                     configuration,
                     byteBuddyAndroidServiceProvider,
                     classPath));
-            TaskProvider<ByteBuddyLocalClassesEnhancerTask> localClassesTransformation = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform", ByteBuddyLocalClassesEnhancerTask.class,
-                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(
-                            configuration,
-                            project.getExtensions().getByType(BaseExtension.class),
-                            classPath));
+            TaskProvider<ByteBuddyLocalClassesEnhancerTask> localClassesTransformation = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
+                    ByteBuddyLocalClassesEnhancerTask.class,
+                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
             variant.getArtifacts().use(localClassesTransformation)
                     .wiredWith(ByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, ByteBuddyLocalClassesEnhancerTask::getOutputDir)
                     .toTransform(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE);
+        }
+    }
+
+    /**
+     * A dispatcher for resolving the runtime class path.
+     */
+    protected abstract static class RuntimeClassPathResolver {
+
+        /**
+         * The runtime class path resolver to use.
+         */
+        protected static final RuntimeClassPathResolver INSTANCE;
+
+        /*
+         * Creates the runtime class path resolver to use.
+         */
+        static {
+            RuntimeClassPathResolver instance;
+            try {
+                instance = new OfModernAgp(Variant.class.getMethod("getRuntimeConfiguration"));
+            } catch (Throwable ignored) {
+                instance = new OfLegacyAgp();
+            }
+            INSTANCE = instance;
+        }
+
+        /**
+         * Resolves the runtime class path.
+         *
+         * @param variant The variant for which to resolve the runtime class path.
+         * @return The runtime class path.
+         */
+        protected abstract FileCollection apply(Variant variant);
+
+        /**
+         * Before AGP 7.3, the {@code com.android.build.api.variant.Variant#getRuntimeConfiguration()} method is not available and an
+         * internal cast must be used to resolve the runtime class path.
+         */
+        protected static class OfLegacyAgp extends RuntimeClassPathResolver {
+
+            @Override
+            protected FileCollection apply(Variant variant) {
+                if (!(variant instanceof ComponentCreationConfig)) {
+                    throw new GradleException("Cannot resolve runtime class path for " + variant);
+                }
+                return ((ComponentCreationConfig) variant).getVariantDependencies().getArtifactFileCollection(AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
+                        AndroidArtifacts.ArtifactScope.ALL,
+                        AndroidArtifacts.ArtifactType.CLASSES_JAR);
+            }
+        }
+
+        /**
+         * From AGP 7.3, the runtime configuration can be queried from the {@link Variant}.
+         */
+        protected static class OfModernAgp extends RuntimeClassPathResolver implements Action<ArtifactView.ViewConfiguration> {
+
+            /**
+             * The {@code com.android.build.api.variant.Variant#getRuntimeConfiguration()} method.
+             */
+            private final Method getRuntimeConfiguration;
+
+            /**
+             * Creates a new resolver.
+             *
+             * @param getRuntimeConfiguration The {@code com.android.build.api.variant.Variant#getRuntimeConfiguration()} method.
+             */
+            protected OfModernAgp(Method getRuntimeConfiguration) {
+                this.getRuntimeConfiguration = getRuntimeConfiguration;
+            }
+
+            @Override
+            protected FileCollection apply(Variant variant) {
+                try {
+                    return ((Configuration) getRuntimeConfiguration.invoke(variant)).getIncoming()
+                            .artifactView(this)
+                            .getArtifacts()
+                            .getArtifactFiles();
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Failed to access runtime configuration", exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Failed to resolve runtime configuration", exception.getCause());
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void execute(ArtifactView.ViewConfiguration configuration) {
+                configuration.setLenient(false);
+                configuration.getAttributes().attribute(ARTIFACT_TYPE_ATTRIBUTE, "android-classes-jar");
+            }
         }
     }
 
