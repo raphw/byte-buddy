@@ -40,10 +40,10 @@ public interface DependenciesClasspathProvider {
         Logger logger = Logging.getLogger(DependenciesClasspathProvider.class);
         try {
             if (isLowerThan73) {
-                logger.lifecycle("Using legacy classpath provider implementation");
+                logger.debug("Using legacy classpath provider implementation");
                 return (DependenciesClasspathProvider) Class.forName("net.bytebuddy.build.gradle.android.classpath.impl.LegacyDependenciesClasspathProvider").getDeclaredConstructor().newInstance();
             } else {
-                logger.lifecycle("Using default classpath provider implementation");
+                logger.debug("Using default classpath provider implementation");
                 return (DependenciesClasspathProvider) Class.forName("net.bytebuddy.build.gradle.android.classpath.impl.DefaultDependenciesClasspathProvider").getDeclaredConstructor().newInstance();
             }
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
