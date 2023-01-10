@@ -3,6 +3,8 @@ package net.bytebuddy.build.gradle.android.classpath;
 import com.android.build.api.AndroidPluginVersion;
 import com.android.build.api.variant.Variant;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -20,10 +22,13 @@ public interface DependenciesClasspathProvider {
      */
     static DependenciesClasspathProvider getInstance(AndroidPluginVersion currentVersion) {
         boolean isLowerThan73 = currentVersion.compareTo(new AndroidPluginVersion(7, 3)) < 0;
+        Logger logger = Logging.getLogger(DependenciesClasspathProvider.class);
         try {
             if (isLowerThan73) {
+                logger.lifecycle("Using legacy classpath provider implementation");
                 return (DependenciesClasspathProvider) Class.forName("net.bytebuddy.build.gradle.android.classpath.impl.LegacyDependenciesClasspathProvider").getDeclaredConstructor().newInstance();
             } else {
+                logger.lifecycle("Using default classpath provider implementation");
                 return (DependenciesClasspathProvider) Class.forName("net.bytebuddy.build.gradle.android.classpath.impl.DefaultDependenciesClasspathProvider").getDeclaredConstructor().newInstance();
             }
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
