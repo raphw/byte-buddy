@@ -18,20 +18,25 @@ package net.bytebuddy.build.gradle.android;
 import com.android.build.api.AndroidPluginVersion;
 import com.android.build.api.artifact.MultipleArtifact;
 import com.android.build.api.attributes.BuildTypeAttr;
-import com.android.build.api.component.impl.ComponentImpl;
 import com.android.build.api.instrumentation.InstrumentationScope;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.Variant;
 import com.android.build.gradle.BaseExtension;
-import com.android.build.gradle.internal.publishing.AndroidArtifacts;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
+import net.bytebuddy.build.gradle.android.classpath.DependenciesClasspathProvider;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.attributes.*;
+import org.gradle.api.attributes.Attribute;
+import org.gradle.api.attributes.AttributeCompatibilityRule;
+import org.gradle.api.attributes.AttributeContainer;
+import org.gradle.api.attributes.AttributeMatchingStrategy;
+import org.gradle.api.attributes.Category;
+import org.gradle.api.attributes.CompatibilityCheckDetails;
+import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
@@ -47,7 +52,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     /**
      * The name of the artifact type attribute.
      */
-    protected static final Attribute<String> ARTIFACT_TYPE_ATTRIBUTE = Attribute.of("artifactType", String.class);
+    public static final Attribute<String> ARTIFACT_TYPE_ATTRIBUTE = Attribute.of("artifactType", String.class);
 
     /**
      * The name of the Byte Buddy jar type.
@@ -60,12 +65,14 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     public void apply(Project project) {
         @SuppressWarnings("unchecked")
         AndroidComponentsExtension<?, ?, Variant> extension = project.getExtensions().getByType(AndroidComponentsExtension.class);
-        if (extension.getPluginVersion().compareTo(new AndroidPluginVersion(7, 2)) < 0) {
-            throw new IllegalStateException("Byte Buddy requires at least Gradle Plugin version 7.2+, but found " + extension.getPluginVersion());
+        AndroidPluginVersion currentAgpVersion = extension.getPluginVersion();
+        if (currentAgpVersion.compareTo(new AndroidPluginVersion(7, 2)) < 0) {
+            throw new IllegalStateException("Byte Buddy requires at least Gradle Plugin version 7.2+, but found " + currentAgpVersion);
         }
         project.getDependencies().registerTransform(AarGradleTransformAction.class, new AarGradleTransformAction.ConfigurationAction());
         project.getDependencies().getAttributesSchema().attribute(ARTIFACT_TYPE_ATTRIBUTE, new AttributeMatchingStrategyConfigurationAction());
-        extension.onVariants(extension.selector().all(), new VariantAction(project, project.getConfigurations().create("byteBuddy", new ConfigurationConfigurationAction())));
+        extension.onVariants(extension.selector().all(), new VariantAction(project, project.getConfigurations().create("byteBuddy", new ConfigurationConfigurationAction()),
+                DependenciesClasspathProvider.getInstance(currentAgpVersion)));
     }
 
     /**
@@ -84,6 +91,11 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         private final Configuration configuration;
 
         /**
+         * The runtime classpath provider.
+         */
+        private final DependenciesClasspathProvider classpathProvider;
+
+        /**
          * A cache of configurations by built type name.
          */
         private final ConcurrentMap<String, Configuration> configurations;
@@ -91,12 +103,14 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         /**
          * Creates a new variant action.
          *
-         * @param project       The current Gradle project.
-         * @param configuration The general Byte Buddy configuration.
+         * @param project           The current Gradle project.
+         * @param configuration     The general Byte Buddy configuration.
+         * @param classpathProvider The runtime classpath provider.
          */
-        protected VariantAction(Project project, Configuration configuration) {
+        protected VariantAction(Project project, Configuration configuration, DependenciesClasspathProvider classpathProvider) {
             this.project = project;
             this.configuration = configuration;
+            this.classpathProvider = classpathProvider;
             configurations = new ConcurrentHashMap<String, Configuration>();
         }
 
@@ -120,12 +134,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     configuration = previous;
                 }
             }
-            if (!(variant instanceof ComponentImpl)) {
-                throw new GradleException("Expected " + variant + " to be of type " + ComponentImpl.class.getName());
-            }
-            FileCollection classPath = ((ComponentImpl) variant).getVariantDependencies().getArtifactFileCollection(AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
-                    AndroidArtifacts.ArtifactScope.ALL,
-                    AndroidArtifacts.ArtifactType.CLASSES_JAR);
+            FileCollection classPath = classpathProvider.getRuntimeClasspath(variant);
             variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, new ByteBuddyTransformationConfiguration(project,
                     configuration,
                     byteBuddyAndroidServiceProvider,
