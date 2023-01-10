@@ -31,7 +31,13 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.attributes.*;
+import org.gradle.api.attributes.Attribute;
+import org.gradle.api.attributes.AttributeCompatibilityRule;
+import org.gradle.api.attributes.AttributeContainer;
+import org.gradle.api.attributes.AttributeMatchingStrategy;
+import org.gradle.api.attributes.Category;
+import org.gradle.api.attributes.CompatibilityCheckDetails;
+import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
@@ -47,7 +53,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     /**
      * The name of the artifact type attribute.
      */
-    protected static final Attribute<String> ARTIFACT_TYPE_ATTRIBUTE = Attribute.of("artifactType", String.class);
+    public static final Attribute<String> ARTIFACT_TYPE_ATTRIBUTE = Attribute.of("artifactType", String.class);
 
     /**
      * The name of the Byte Buddy jar type.
