@@ -476,7 +476,29 @@ public interface ClassFileLocator extends Closeable {
              * {@inheritDoc}
              */
             public ClassLoader run() {
-                return new URLClassLoader(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER);
+                return new BootLoaderProxy(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER);
+            }
+
+            /**
+             * A URLClassLoader which exposes addURL to be used as a Bootloader Proxy.
+             */
+            class BootLoaderProxy extends URLClassLoader {
+                /**
+                  * Constructs a new BootLoaderProxy for the given URLs and parent ClassLoader.
+                  * @param      urls the URLs from which to load classes and resources
+                  * @param      parent the parent class loader for delegation
+                  */
+                BootLoaderProxy(URL[] urls, ClassLoader parent) {
+                    super(urls, parent);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public void addURL(URL url) {
+                    super.addURL(url);
+                }
             }
         }
 
