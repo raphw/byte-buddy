@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 12. January 2023: version 1.12.22
+
+- Support `MethodHandle` and `MethodType` in `Advice.Origin` annotation.
+- Support `MethodHandles.Lookup` in `Origin` and `Advice.Origin` annotations.
+- Use modern API for Gradle Android API, if available, to avoid now failing cast.
+
 ### 5. January 2023: version 1.12.21
 
 - Create a Gradle source set for each JVM build automatically to reduce boilerplate.
