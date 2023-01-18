@@ -13141,6 +13141,7 @@ public interface AgentBuilder {
              * @param poolStrategy                     The pool strategy to use.
              * @param typeStrategy                     The definition handler to use.
              * @param locationStrategy                 The location strategy to use.
+             * @param classFileLocator                 A class file locator to be used for additional lookup of globally available types.
              * @param nativeMethodStrategy             The native method strategy to apply.
              * @param warmupStrategy                   The warmup strategy to use.
              * @param transformerDecorator             A decorator to wrap the created class file transformer.
