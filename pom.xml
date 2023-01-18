@@ -1133,6 +1133,10 @@
                                         <ignoreMissingClasses>true</ignoreMissingClasses>
                                         <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
                                         <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
+                                        <excludes>
+                                            <exclude>net.bytebuddy.agent.builder.AgentBuilder$Default$ExecutingTransformer$Factory$ForJava9CapableVm</exclude>
+                                            <exclude>net.bytebuddy.agent.builder.AgentBuilder$Default$ExecutingTransformer$Factory$ForLegacyVm</exclude>
+                                        </excludes>
                                     </parameter>
                                 </configuration>
                             </execution>
