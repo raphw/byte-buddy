@@ -157,6 +157,14 @@ public interface AgentBuilder {
     AgentBuilder with(LocationStrategy locationStrategy);
 
     /**
+     * Registers an additional class file locator for types that are globally available but cannot be located
+     * otherwise. Typically, those types are injected classes into the boot loader.
+     * @param classFileLocator The class file locator to add.
+     * @return A new instance of this agent builder which uses the given class file locator for global type lookup.
+     */
+    AgentBuilder with(ClassFileLocator classFileLocator);
+
+    /**
      * Defines how types should be transformed, e.g. if they should be rebased or redefined by the created agent.
      *
      * @param typeStrategy The type strategy to use.
@@ -9994,6 +10002,11 @@ public interface AgentBuilder {
         protected final LocationStrategy locationStrategy;
 
         /**
+         * A class file locator to be used for additional lookup of globally available types.
+         */
+        protected final ClassFileLocator classFileLocator;
+
+        /**
          * The native method strategy to use.
          */
         protected final NativeMethodStrategy nativeMethodStrategy;
@@ -10101,6 +10114,7 @@ public interface AgentBuilder {
                     PoolStrategy.Default.FAST,
                     TypeStrategy.Default.REBASE,
                     LocationStrategy.ForClassLoader.STRONG,
+                    ClassFileLocator.NoOp.INSTANCE,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     WarmupStrategy.NoOp.INSTANCE,
                     TransformerDecorator.NoOp.INSTANCE,
@@ -10134,6 +10148,7 @@ public interface AgentBuilder {
          * @param poolStrategy                     The pool strategy to use.
          * @param typeStrategy                     The definition handler to use.
          * @param locationStrategy                 The location strategy to use.
+         * @param classFileLocator                 A class file locator to be used for additional lookup of globally available types.
          * @param nativeMethodStrategy             The native method strategy to apply.
          * @param warmupStrategy                   The warmup strategy to use.
          * @param transformerDecorator             A decorator to wrap the created class file transformer.
@@ -10159,6 +10174,7 @@ public interface AgentBuilder {
                           PoolStrategy poolStrategy,
                           TypeStrategy typeStrategy,
                           LocationStrategy locationStrategy,
+                          ClassFileLocator classFileLocator,
                           NativeMethodStrategy nativeMethodStrategy,
                           WarmupStrategy warmupStrategy,
                           TransformerDecorator transformerDecorator,
@@ -10182,6 +10198,7 @@ public interface AgentBuilder {
             this.poolStrategy = poolStrategy;
             this.typeStrategy = typeStrategy;
             this.locationStrategy = locationStrategy;
+            this.classFileLocator = classFileLocator;
             this.nativeMethodStrategy = nativeMethodStrategy;
             this.warmupStrategy = warmupStrategy;
             this.transformerDecorator = transformerDecorator;
@@ -10315,6 +10332,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy,
                     transformerDecorator,
@@ -10344,6 +10362,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy,
                     transformerDecorator,
@@ -10373,6 +10392,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy,
                     transformerDecorator,
@@ -10402,6 +10422,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy,
                     transformerDecorator,
@@ -10431,6 +10452,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy,
                     transformerDecorator,
@@ -10460,6 +10482,35 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
+                    nativeMethodStrategy,
+                    warmupStrategy,
+                    transformerDecorator,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
+                    redefinitionResubmissionStrategy,
+                    injectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    descriptionStrategy,
+                    fallbackStrategy,
+                    classFileBufferStrategy,
+                    installationListener,
+                    ignoreMatcher,
+                    transformations);
+        }
+
+        @Override
+        public AgentBuilder with(ClassFileLocator classFileLocator) {
+            return new Default(byteBuddy,
+                    listener,
+                    circularityLock,
+                    poolStrategy,
+                    typeStrategy,
+                    locationStrategy,
+                    new ClassFileLocator.Compound(this.classFileLocator, classFileLocator),
                     nativeMethodStrategy,
                     warmupStrategy,
                     transformerDecorator,
@@ -10489,6 +10540,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     NativeMethodStrategy.ForPrefix.of(prefix),
                     warmupStrategy,
                     transformerDecorator,
@@ -10518,6 +10570,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     warmupStrategy,
                     transformerDecorator,
@@ -10562,6 +10615,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy.with(types),
                     transformerDecorator,
@@ -10591,6 +10645,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy,
                     new TransformerDecorator.Compound(this.transformerDecorator, transformerDecorator),
@@ -10620,6 +10675,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy,
                     transformerDecorator,
@@ -10649,6 +10705,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy,
                     transformerDecorator,
@@ -10678,6 +10735,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy,
                     transformerDecorator,
@@ -10707,6 +10765,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy,
                     transformerDecorator,
@@ -10736,6 +10795,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy,
                     transformerDecorator,
@@ -10765,6 +10825,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy,
                     transformerDecorator,
@@ -10794,6 +10855,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy,
                     transformerDecorator,
@@ -10823,6 +10885,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     warmupStrategy,
                     transformerDecorator,
@@ -10854,6 +10917,7 @@ public interface AgentBuilder {
                             ? TypeStrategy.Default.DECORATE
                             : TypeStrategy.Default.REDEFINE_FROZEN,
                     locationStrategy,
+                    classFileLocator,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     warmupStrategy,
                     transformerDecorator,
@@ -11002,6 +11066,7 @@ public interface AgentBuilder {
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
+                    classFileLocator,
                     nativeMethodStrategy,
                     initializationStrategy,
                     injectionStrategy,
@@ -11813,6 +11878,11 @@ public interface AgentBuilder {
             private final LocationStrategy locationStrategy;
 
             /**
+             * A class file locator for locating globally available types.
+             */
+            private final ClassFileLocator classFileLocator;
+
+            /**
              * The fallback strategy to use.
              */
             private final FallbackStrategy fallbackStrategy;
@@ -11862,6 +11932,7 @@ public interface AgentBuilder {
              * @param poolStrategy                  The pool strategy to use.
              * @param typeStrategy                  The definition handler to use.
              * @param locationStrategy              The location strategy to use.
+             * @param classFileLocator              A class file locator for locating globally available types.
              * @param nativeMethodStrategy          The native method strategy to apply.
              * @param initializationStrategy        The initialization strategy to use for transformed types.
              * @param injectionStrategy             The injection strategy to use.
@@ -11880,6 +11951,7 @@ public interface AgentBuilder {
                                         PoolStrategy poolStrategy,
                                         TypeStrategy typeStrategy,
                                         LocationStrategy locationStrategy,
+                                        ClassFileLocator classFileLocator,
                                         NativeMethodStrategy nativeMethodStrategy,
                                         InitializationStrategy initializationStrategy,
                                         InjectionStrategy injectionStrategy,
@@ -11896,6 +11968,7 @@ public interface AgentBuilder {
                 this.typeStrategy = typeStrategy;
                 this.poolStrategy = poolStrategy;
                 this.locationStrategy = locationStrategy;
+                this.classFileLocator = classFileLocator;
                 this.listener = listener;
                 this.nativeMethodStrategy = nativeMethodStrategy;
                 this.initializationStrategy = initializationStrategy;
@@ -12035,7 +12108,7 @@ public interface AgentBuilder {
                             binaryRepresentation,
                             classLoader,
                             module,
-                            protectionDomain), locationStrategy.classFileLocator(classLoader, module));
+                            protectionDomain), this.classFileLocator, locationStrategy.classFileLocator(classLoader, module));
                     TypePool typePool = classFileBufferStrategy.typePool(poolStrategy, classFileLocator, classLoader, name);
                     try {
                         return doTransform(module, classLoader, name, classBeingRedefined, classBeingRedefined != null, protectionDomain, typePool, classFileLocator);
@@ -12166,6 +12239,7 @@ public interface AgentBuilder {
                  * @param poolStrategy                  The pool strategy to use.
                  * @param typeStrategy                  The definition handler to use.
                  * @param locationStrategy              The location strategy to use.
+                 * @param classFileLocator              A class file locator for locating globally available types.
                  * @param nativeMethodStrategy          The native method strategy to apply.
                  * @param initializationStrategy        The initialization strategy to use for transformed types.
                  * @param injectionStrategy             The injection strategy to use.
@@ -12185,6 +12259,7 @@ public interface AgentBuilder {
                                                     PoolStrategy poolStrategy,
                                                     TypeStrategy typeStrategy,
                                                     LocationStrategy locationStrategy,
+                                                    ClassFileLocator classFileLocator,
                                                     NativeMethodStrategy nativeMethodStrategy,
                                                     InitializationStrategy initializationStrategy,
                                                     InjectionStrategy injectionStrategy,
@@ -12235,6 +12310,7 @@ public interface AgentBuilder {
                                             PoolStrategy.class,
                                             TypeStrategy.class,
                                             LocationStrategy.class,
+                                            ClassFileLocator.class,
                                             NativeMethodStrategy.class,
                                             InitializationStrategy.class,
                                             InjectionStrategy.class,
@@ -12284,6 +12360,7 @@ public interface AgentBuilder {
                                                                PoolStrategy poolStrategy,
                                                                TypeStrategy typeStrategy,
                                                                LocationStrategy locationStrategy,
+                                                               ClassFileLocator classFileLocator,
                                                                NativeMethodStrategy nativeMethodStrategy,
                                                                InitializationStrategy initializationStrategy,
                                                                InjectionStrategy injectionStrategy,
@@ -12302,6 +12379,7 @@ public interface AgentBuilder {
                                     poolStrategy,
                                     typeStrategy,
                                     locationStrategy,
+                                    classFileLocator,
                                     nativeMethodStrategy,
                                     initializationStrategy,
                                     injectionStrategy,
@@ -12342,6 +12420,7 @@ public interface AgentBuilder {
                                                                PoolStrategy poolStrategy,
                                                                TypeStrategy typeStrategy,
                                                                LocationStrategy locationStrategy,
+                                                               ClassFileLocator classFileLocator,
                                                                NativeMethodStrategy nativeMethodStrategy,
                                                                InitializationStrategy initializationStrategy,
                                                                InjectionStrategy injectionStrategy,
@@ -12359,6 +12438,7 @@ public interface AgentBuilder {
                                 poolStrategy,
                                 typeStrategy,
                                 locationStrategy,
+                                classFileLocator,
                                 nativeMethodStrategy,
                                 initializationStrategy,
                                 injectionStrategy,
@@ -12580,6 +12660,11 @@ public interface AgentBuilder {
              */
             public AgentBuilder with(LocationStrategy locationStrategy) {
                 return materialize().with(locationStrategy);
+            }
+
+            @Override
+            public AgentBuilder with(ClassFileLocator classFileLocator) {
+                return materialize().with(classFileLocator);
             }
 
             /**
@@ -12914,6 +12999,7 @@ public interface AgentBuilder {
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
+                        classFileLocator,
                         nativeMethodStrategy,
                         warmupStrategy,
                         transformerDecorator,
@@ -12992,6 +13078,7 @@ public interface AgentBuilder {
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
+                        classFileLocator,
                         nativeMethodStrategy,
                         warmupStrategy,
                         transformerDecorator,
@@ -13079,6 +13166,7 @@ public interface AgentBuilder {
                                  PoolStrategy poolStrategy,
                                  TypeStrategy typeStrategy,
                                  LocationStrategy locationStrategy,
+                                 ClassFileLocator classFileLocator,
                                  NativeMethodStrategy nativeMethodStrategy,
                                  WarmupStrategy warmupStrategy,
                                  TransformerDecorator transformerDecorator,
@@ -13102,6 +13190,7 @@ public interface AgentBuilder {
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
+                        classFileLocator,
                         nativeMethodStrategy,
                         warmupStrategy,
                         transformerDecorator,
@@ -13134,6 +13223,7 @@ public interface AgentBuilder {
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
+                        classFileLocator,
                         nativeMethodStrategy,
                         warmupStrategy,
                         transformerDecorator,
@@ -13173,6 +13263,7 @@ public interface AgentBuilder {
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
+                        classFileLocator,
                         nativeMethodStrategy,
                         warmupStrategy,
                         transformerDecorator,
@@ -13205,6 +13296,7 @@ public interface AgentBuilder {
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
+                        classFileLocator,
                         nativeMethodStrategy,
                         warmupStrategy,
                         transformerDecorator,
@@ -13279,6 +13371,7 @@ public interface AgentBuilder {
                             poolStrategy,
                             typeStrategy,
                             locationStrategy,
+                            classFileLocator,
                             nativeMethodStrategy,
                             warmupStrategy,
                             transformerDecorator,
