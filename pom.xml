@@ -676,7 +676,7 @@
                 <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
-        <!-- Runs the build with compatibility for Java 15 JVMs. -->
+        <!-- Runs the build with compatibility for Java 17 JVMs. -->
         <profile>
             <id>java17-compatibility</id>
             <activation>
