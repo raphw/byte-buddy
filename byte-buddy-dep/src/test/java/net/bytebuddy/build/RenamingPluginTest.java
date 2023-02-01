@@ -52,7 +52,7 @@ public class RenamingPluginTest {
 
     private static class UniqueApplicationRenaming implements RenamingPlugin.Renaming {
 
-        private final Set<String> names = new HashSet<>();
+        private final Set<String> names = new HashSet<String>();
 
         public String apply(String name) {
             assertThat(names.add(name), is(true));
