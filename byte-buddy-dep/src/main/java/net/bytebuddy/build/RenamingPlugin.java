@@ -229,7 +229,7 @@ public class RenamingPlugin extends AsmVisitorWrapper.AbstractBase implements Pl
              * @param renamings The renamings to apply.
              */
             public Compound(List<? extends Renaming> renamings) {
-                this.renamings = new ArrayList<>(renamings.size());
+                this.renamings = new ArrayList<Renaming>(renamings.size());
                 for (Renaming remapping : renamings) {
                     if (remapping instanceof Compound) {
                         this.renamings.addAll(((Compound) remapping).renamings);
@@ -264,7 +264,7 @@ public class RenamingPlugin extends AsmVisitorWrapper.AbstractBase implements Pl
         /**
          * A cache of previously applied renamings.
          */
-        private final Map<String, String> cache = new HashMap<>();
+        private final Map<String, String> cache = new HashMap<String, String>();
 
         /**
          * Creates a new renaming remapper.
