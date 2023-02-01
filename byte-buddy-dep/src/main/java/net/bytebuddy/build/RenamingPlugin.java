@@ -48,7 +48,7 @@ public class RenamingPlugin extends AsmVisitorWrapper.AbstractBase implements Pl
     private final Renaming renaming;
 
     /**
-     * A matcher that determines what types to consider for renaming
+     * A matcher that determines what types to consider for renaming.
      */
     private final ElementMatcher<? super TypeDescription> matcher;
 
@@ -83,10 +83,10 @@ public class RenamingPlugin extends AsmVisitorWrapper.AbstractBase implements Pl
     }
 
     /**
-     * Creates a ewnaming plugin for the given renaming and type matcher.
+     * Creates a renaming plugin for the given renaming and type matcher.
      *
      * @param renaming The renaming to apply.
-     * @param matcher  A matcher that determines what types to consider.
+     * @param matcher  A matcher that determines what types to consider for renaming.
      */
     public RenamingPlugin(Renaming renaming, ElementMatcher<? super TypeDescription> matcher) {
         this.renaming = renaming;
