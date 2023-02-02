@@ -2925,6 +2925,7 @@ public interface AgentBuilder {
              * @param advice           The advice to wrap.
              * @return A visitor wrapper that represents the supplied advice.
              */
+            @SuppressWarnings("unused")
             protected AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper wrap(TypeDescription typeDescription,
                                                                                      @MaybeNull ClassLoader classLoader,
                                                                                      @MaybeNull JavaModule module,
