@@ -159,6 +159,7 @@ public interface AgentBuilder {
     /**
      * Registers an additional class file locator for types that are globally available but cannot be located
      * otherwise. Typically, those types are injected classes into the boot loader.
+     *
      * @param classFileLocator The class file locator to add.
      * @return A new instance of this agent builder which uses the given class file locator for global type lookup.
      */
@@ -2905,11 +2906,31 @@ public interface AgentBuilder {
                 TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
                 AsmVisitorWrapper.ForDeclaredMethods asmVisitorWrapper = new AsmVisitorWrapper.ForDeclaredMethods();
                 for (Entry entry : entries) {
-                    asmVisitorWrapper = asmVisitorWrapper.invokable(entry.getMatcher().resolve(typeDescription), entry.resolve(advice, typePool, classFileLocator)
-                            .withAssigner(assigner)
-                            .withExceptionHandler(exceptionHandler));
+                    asmVisitorWrapper = asmVisitorWrapper.invokable(entry.getMatcher().resolve(typeDescription), wrap(typeDescription,
+                            classLoader,
+                            module,
+                            protectionDomain,
+                            entry.resolve(advice, typePool, classFileLocator).withAssigner(assigner).withExceptionHandler(exceptionHandler)));
                 }
                 return builder.visit(asmVisitorWrapper);
+            }
+
+            /**
+             * Allows for decoration of advice for subclass implementations of this transformer.
+             *
+             * @param typeDescription  The description of the type currently being instrumented.
+             * @param classLoader      The class loader of the instrumented class. Might be {@code null} to represent the bootstrap class loader.
+             * @param module           The class's module or {@code null} if the current VM does not support modules.
+             * @param protectionDomain The protection domain of the transformed type.
+             * @param advice           The advice to wrap.
+             * @return A visitor wrapper that represents the supplied advice.
+             */
+            protected AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper wrap(TypeDescription typeDescription,
+                                                                                     @MaybeNull ClassLoader classLoader,
+                                                                                     @MaybeNull JavaModule module,
+                                                                                     ProtectionDomain protectionDomain,
+                                                                                     Advice advice) {
+                return advice;
             }
 
             /**
