@@ -2018,6 +2018,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
+                    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Field description always has declaring type.")
                     public Resolution resolve(TypeDescription targetType,
                                               ByteCodeElement target,
                                               TypeList.Generic parameters,
