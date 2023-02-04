@@ -909,12 +909,28 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
         }
 
+        /**
+         * A substitution that loads a fixed value.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
         class ForValue implements Substitution, Factory {
 
+            /**
+             * The stack manipulation to load the value that represents the substitution.
+             */
             private final StackManipulation stackManipulation;
 
+            /**
+             * The type of the represented stack manipulation.
+             */
             private final TypeDescription.Generic typeDescription;
 
+            /**
+             * Creates a new substitution for loading a constant value.
+             *
+             * @param stackManipulation The stack manipulation to load the value that represents the substitution.
+             * @param typeDescription   The type of the represented stack manipulation.
+             */
             public ForValue(StackManipulation stackManipulation, TypeDescription.Generic typeDescription) {
                 this.stackManipulation = stackManipulation;
                 this.typeDescription = typeDescription;
@@ -1966,6 +1982,216 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 }
 
                 /**
+                 * Creates a step for a field access.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                abstract class ForField implements Step {
+
+                    /**
+                     * The field description accessed in this step.
+                     */
+                    protected final FieldDescription fieldDescription;
+
+                    /**
+                     * The assigner to use.
+                     */
+                    protected final Assigner assigner;
+
+                    /**
+                     * The typing to use when assigning.
+                     */
+                    protected final Assigner.Typing typing;
+
+                    /**
+                     * Creates a new step for a field access.
+                     *
+                     * @param fieldDescription The field description accessed in this step.
+                     * @param assigner         The assigner to use.
+                     * @param typing           The typing to use when assigning.
+                     */
+                    protected ForField(FieldDescription fieldDescription, Assigner assigner, Assigner.Typing typing) {
+                        this.fieldDescription = fieldDescription;
+                        this.assigner = assigner;
+                        this.typing = typing;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Resolution resolve(TypeDescription targetType,
+                                              ByteCodeElement target,
+                                              TypeList.Generic parameters,
+                                              TypeDescription.Generic current,
+                                              Map<Integer, Integer> offsets,
+                                              int freeOffset) {
+                        List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(2);
+                        if (fieldDescription.isStatic()) {
+                            stackManipulations.add(Removal.of(current));
+                        } else {
+                            StackManipulation assignment = assigner.assign(current, fieldDescription.getDeclaringType().asGenericType(), typing);
+                            if (!assignment.isValid()) {
+                                throw new IllegalStateException("Cannot assign " + current + " to " + fieldDescription.getDeclaringType());
+                            }
+                            stackManipulations.add(assignment);
+                        }
+                        return doResolve(target, parameters, offsets, new StackManipulation.Compound(stackManipulations));
+                    }
+
+                    /**
+                     * Completes the resolution.
+                     *
+                     * @param target            The byte code element that is currently substituted.
+                     * @param parameters        The parameters of the substituted element.
+                     * @param offsets           The arguments of the substituted byte code element mapped to their local variable offsets.
+                     * @param stackManipulation A stack manipulation to prepare the field access.
+                     * @return A resolved substitution step for the supplied inputs.
+                     */
+                    protected abstract Resolution doResolve(ByteCodeElement target,
+                                                            TypeList.Generic parameters,
+                                                            Map<Integer, Integer> offsets,
+                                                            StackManipulation stackManipulation);
+
+                    /**
+                     * A step for reading a field.
+                     */
+                    @HashCodeAndEqualsPlugin.Enhance
+                    public static class Read extends ForField {
+
+                        /**
+                         * Creates a step for reading a field.
+                         *
+                         * @param fieldDescription A description of the field being read.
+                         * @param assigner         The assigner to use.
+                         * @param typing           The typing to use when assigning.
+                         */
+                        public Read(FieldDescription fieldDescription, Assigner assigner, Assigner.Typing typing) {
+                            super(fieldDescription, assigner, typing);
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        protected Resolution doResolve(ByteCodeElement target,
+                                                       TypeList.Generic parameters,
+                                                       Map<Integer, Integer> offsets,
+                                                       StackManipulation stackManipulation) {
+                            return new Simple(new StackManipulation.Compound(stackManipulation, FieldAccess.forField(fieldDescription).read()), fieldDescription.getType());
+                        }
+
+                        /**
+                         * A factory for creating a field read step in a chain.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
+                        public static class Factory implements Step.Factory {
+
+                            /**
+                             * A description of the field being read.
+                             */
+                            private final FieldDescription fieldDescription;
+
+                            /**
+                             * Creates a factory for a step reading a field.
+                             *
+                             * @param fieldDescription A description of the field being read.
+                             */
+                            public Factory(FieldDescription fieldDescription) {
+                                this.fieldDescription = fieldDescription;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return new Read(fieldDescription, assigner, typing);
+                            }
+                        }
+                    }
+
+                    /**
+                     * A step for writing to a field.
+                     */
+                    @HashCodeAndEqualsPlugin.Enhance
+                    public static class Write extends ForField {
+
+                        /**
+                         * The index of the parameter being accessed. If the targeted element is a non-static method, is increased by one.
+                         */
+                        private final int index;
+
+                        /**
+                         * Creates a step for writing to a field.
+                         *
+                         * @param fieldDescription A description of the field to write to.
+                         * @param assigner         The assigner to use.
+                         * @param typing           The typing to use when assigning.
+                         * @param index            The index of the parameter being accessed. If the targeted element is a non-static method, is increased by one.
+                         */
+                        public Write(FieldDescription fieldDescription, Assigner assigner, Assigner.Typing typing, int index) {
+                            super(fieldDescription, assigner, typing);
+                            this.index = index;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        protected Resolution doResolve(ByteCodeElement target,
+                                                       TypeList.Generic parameters,
+                                                       Map<Integer, Integer> offsets,
+                                                       StackManipulation stackManipulation) {
+                            int index = ((target.getModifiers() & Opcodes.ACC_STATIC) == 0) && !(target instanceof MethodDescription && ((MethodDescription) target).isConstructor())
+                                    ? this.index + 1
+                                    : this.index;
+                            if (index >= parameters.size()) {
+                                throw new IllegalStateException(target + " does not define an argument with index " + index);
+                            }
+                            StackManipulation assignment = assigner.assign(parameters.get(index), fieldDescription.getType(), typing);
+                            if (!assignment.isValid()) {
+                                throw new IllegalStateException("Cannot write " + parameters.get(index) + " to " + fieldDescription);
+                            }
+                            return new Simple(new StackManipulation.Compound(stackManipulation,
+                                    MethodVariableAccess.of(parameters.get(index)).loadFrom(offsets.get(index)),
+                                    assignment,
+                                    FieldAccess.forField(fieldDescription).write()), TypeDefinition.Sort.describe(void.class));
+                        }
+
+                        /**
+                         * A factory for creating a step to write to a field.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
+                        public static class Factory implements Step.Factory {
+
+                            /**
+                             * A description of the field to write to.
+                             */
+                            private final FieldDescription fieldDescription;
+
+                            /**
+                             * The index of the parameter being accessed. If the targeted element is a non-static method, is increased by one.
+                             */
+                            private final int index;
+
+                            /**
+                             * Creates a factory for writing to a field.
+                             *
+                             * @param fieldDescription A description of the field to write to.
+                             * @param index            The index of the parameter being accessed. If the targeted element is a non-static method, is increased by one.
+                             */
+                            public Factory(FieldDescription fieldDescription, int index) {
+                                this.fieldDescription = fieldDescription;
+                                this.index = index;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return new Write(fieldDescription, assigner, typing, index);
+                            }
+                        }
+                    }
+                }
+
+                /**
                  * A step for invoking a method or constructor. If non-static, a method is invoked upon a the current stack argument of the chain.
                  * Arguments are loaded from the intercepted byte code element with a possibility of substitution.
                  */
@@ -1978,7 +2204,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     private final MethodDescription methodDescription;
 
                     /**
-                     * A mapping of substituted indices.
+                     * A mapping of substituted parameter indices. For targets that are non-static methods, the targeted index is increased by one.
                      */
                     private final Map<Integer, Integer> substitutions;
 
@@ -1996,7 +2222,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * Creates a new step of an invocation.
                      *
                      * @param methodDescription The invoked method or constructor.
-                     * @param substitutions     A mapping of substituted indices.
+                     * @param substitutions     A mapping of substituted parameter indices. For targets that are non-static methods, the targeted index is increased by one.
                      * @param assigner          The assigner to use.
                      * @param typing            The typing to use when assigning.
                      */
@@ -2029,8 +2255,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                             stackManipulations.add(assignment);
                         }
+
+                        boolean shift = ((target.getModifiers() & Opcodes.ACC_STATIC) == 0) && !(target instanceof MethodDescription && ((MethodDescription) target).isConstructor());
                         for (int index = 0; index < methodDescription.getParameters().size(); index++) {
-                            Integer substitution = substitutions.getOrDefault(index, index + (methodDescription.isStatic() ? 0 : 1));
+                            Integer substitution = substitutions.getOrDefault(index + (shift ? 1 : 0), index + (shift ? 1 : 0));
                             if (substitution >= parameters.size()) {
                                 throw new IllegalStateException(target + " does not support an index " + substitution);
                             }
@@ -2057,7 +2285,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         private final MethodDescription methodDescription;
 
                         /**
-                         * A mapping of substituted parameter indices.
+                         * A mapping of substituted parameter indices. For targets that are non-static methods, the targeted index is increased by one.
                          */
                         private final Map<Integer, Integer> substitutions;
 
@@ -2074,7 +2302,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * Creates a factory for a method invocation.
                          *
                          * @param methodDescription The invoked method or constructor.
-                         * @param substitutions     A mapping of substituted parameter indices.
+                         * @param substitutions     A mapping of substituted parameter indices. For targets that are non-static methods,
+                         *                          the targeted index is increased by one.
                          */
                         public Factory(MethodDescription methodDescription, Map<Integer, Integer> substitutions) {
                             this.methodDescription = methodDescription;

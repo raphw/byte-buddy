@@ -1,6 +1,7 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
@@ -773,6 +774,77 @@ public class MemberSubstitutionTest {
         assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
         assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
         assertThat(type.getDeclaredField(BAR).get(instance), is((Object) FOO));
+    }
+
+    @Test
+    public void testSubstitutionChainFieldRead() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FieldAccessSample.class)
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(
+                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.Factory(0),
+                        new MemberSubstitution.Substitution.Chain.Step.ForField.Read.Factory(new FieldDescription.ForLoadedField(FieldAccessSample.class.getDeclaredField("qux")))).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) QUX));
+    }
+
+    @Test
+    public void testSubstitutionChainStaticFieldRead() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(StaticFieldAccessSample.class)
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(
+                        new MemberSubstitution.Substitution.Chain.Step.ForField.Read.Factory(new FieldDescription.ForLoadedField(StaticFieldAccessSample.class.getDeclaredField("qux")))).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) QUX));
+    }
+
+    @Test
+    public void testSubstitutionChainFieldWrite() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FieldAccessSample.class)
+                .visit(MemberSubstitution.strict().field(named(BAR)).replaceWithChain(
+                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.Factory(0),
+                        new MemberSubstitution.Substitution.Chain.Step.ForField.Write.Factory(new FieldDescription.ForLoadedField(FieldAccessSample.class.getDeclaredField("baz")), 0)).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+    }
+
+    @Test
+    public void testSubstitutionChainFieldStaticWrite() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(StaticFieldAccessSample.class)
+                .visit(MemberSubstitution.strict().field(named(BAR)).replaceWithChain(
+                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.Factory(0),
+                        new MemberSubstitution.Substitution.Chain.Step.ForField.Write.Factory(new FieldDescription.ForLoadedField(StaticFieldAccessSample.class.getDeclaredField("baz")), 0)).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
     }
 
     @Test
