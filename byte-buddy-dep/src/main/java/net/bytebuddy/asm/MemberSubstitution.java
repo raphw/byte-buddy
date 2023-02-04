@@ -1807,6 +1807,91 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         }
                     }
                 }
+
+                /**
+                 * A step that loads an argument to a method as the current chain value.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class ForArgumentLoading implements Step {
+
+                    /**
+                     * The index of the argument to substitute.
+                     */
+                    private final int index;
+
+                    /**
+                     * The assigner to use for assigning the argument.
+                     */
+                    private final Assigner assigner;
+
+                    /**
+                     * The typing to use for the argument assignment.
+                     */
+                    private final Assigner.Typing typing;
+
+                    /**
+                     * Creates an argument loading step.
+                     *
+                     * @param index             The index of the argument to load.
+                     * @param assigner          The assigner to use for assigning the argument.
+                     * @param typing            The typing to use for the argument assignment.
+                     */
+                    protected ForArgumentLoading(int index,
+                                                 Assigner assigner,
+                                                 Assigner.Typing typing) {
+                        this.index = index;
+                        this.assigner = assigner;
+                        this.typing = typing;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Resolution resolve(TypeDescription targetType,
+                                              ByteCodeElement target,
+                                              TypeList.Generic parameters,
+                                              TypeDescription.Generic current,
+                                              Map<Integer, Integer> offsets,
+                                              int freeOffset) {
+                        if (index >= parameters.size()) {
+                            throw new IllegalStateException(target + " has not " + index + " arguments");
+                        }
+                        StackManipulation stackManipulation = assigner.assign(parameters.get(index), current, typing);
+                        if (!stackManipulation.isValid()) {
+                            throw new IllegalStateException("Cannot assign " + parameters.get(index) + " to " + current);
+                        }
+                        return new Simple(new StackManipulation.Compound(Removal.of(current),
+                                MethodVariableAccess.of(parameters.get(index)).loadFrom(offsets.get(index)),
+                                stackManipulation), current);
+                    }
+
+
+                    /**
+                     * A factory to create an argument loading step.
+                     */
+                    @HashCodeAndEqualsPlugin.Enhance
+                    public static class Factory implements Step.Factory {
+
+                        /**
+                         * The index of the argument to load.
+                         */
+                        private final int index;
+
+                        public Factory(int index) {
+                            this.index = index;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Step make(Assigner assigner,
+                                         Assigner.Typing typing,
+                                         TypeDescription instrumentedType,
+                                         MethodDescription instrumentedMethod) {
+                            return new ForArgumentLoading(index, assigner, typing);
+                        }
+                    }
+                }
             }
 
             /**
