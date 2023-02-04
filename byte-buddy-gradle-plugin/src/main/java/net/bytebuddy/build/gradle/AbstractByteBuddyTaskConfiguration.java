@@ -37,9 +37,9 @@ public abstract class AbstractByteBuddyTaskConfiguration<
         S extends AbstractByteBuddyTaskExtension<T>> implements Action<Project> {
 
     /**
-     * The relative path to the raw folder.
+     * The folder name suffix for untransformed classes.
      */
-    protected static final String RAW_FOLDER = "../raw";
+    protected static final String RAW_FOLDER_SUFFIX = "ByteBuddyRaw";
 
     /**
      * The name of the task.
@@ -68,7 +68,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
     public void execute(Project project) {
         @SuppressWarnings("unchecked")
         S extension = (S) project.getExtensions().getByName(name);
-        if (extension.getTransformations().isEmpty() && extension.getDiscovery() == Discovery.NONE) {
+        if (extension.getTransformations().isEmpty() && (extension.getDiscovery() == Discovery.NONE || extension.isEmptyDiscovery())) {
             project.getLogger().debug("Not configuring task for source set '{}' as no transformations are defined and discovery is disabled", sourceSet.getName());
         } else {
             project.getLogger().debug("Configuring Byte Buddy task for source set '{}' as '{}'", sourceSet.getName(), name);

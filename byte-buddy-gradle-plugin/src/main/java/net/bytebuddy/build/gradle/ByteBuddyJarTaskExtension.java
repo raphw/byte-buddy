@@ -68,6 +68,11 @@ public class ByteBuddyJarTaskExtension extends AbstractByteBuddyTaskExtension<By
     }
 
     @Override
+    protected boolean isEmptyDiscovery() {
+        return discoverySet == null || !discoverySet.iterator().hasNext();
+    }
+
+    @Override
     protected void doConfigure(ByteBuddyJarTask task) {
         task.setDiscoverySet(discoverySet);
     }

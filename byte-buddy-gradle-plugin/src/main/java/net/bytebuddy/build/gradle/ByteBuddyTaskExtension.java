@@ -113,6 +113,11 @@ public class ByteBuddyTaskExtension extends AbstractByteBuddyTaskExtension<ByteB
     }
 
     @Override
+    protected boolean isEmptyDiscovery() {
+        return discoverySet == null || discoverySet.isEmpty();
+    }
+
+    @Override
     protected void doConfigure(ByteBuddyTask task) {
         task.setIncrementalResolver(getIncrementalResolver());
         task.setDiscoverySet(discoverySet);

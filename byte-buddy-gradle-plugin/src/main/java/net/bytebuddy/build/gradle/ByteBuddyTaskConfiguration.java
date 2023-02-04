@@ -59,8 +59,8 @@ public class ByteBuddyTaskConfiguration extends AbstractByteBuddyTaskConfigurati
     protected void configureDirectories(SourceDirectorySet source, AbstractCompile compileTask, ByteBuddyTask byteBuddyTask) {
         try {
             DirectoryProperty directory = (DirectoryProperty) getDestinationDirectory.invoke(source);
-            setDestinationDir.invoke(compileTask, directory.dir(RAW_FOLDER).map(ToFileMapper.INSTANCE));
-            byteBuddyTask.getSource().set(directory.dir(RAW_FOLDER));
+            setDestinationDir.invoke(compileTask, directory.dir("../" + source.getName() + RAW_FOLDER_SUFFIX).map(ToFileMapper.INSTANCE));
+            byteBuddyTask.getSource().set(directory.dir("../" + source.getName() + RAW_FOLDER_SUFFIX));
             byteBuddyTask.getTarget().set(directory);
             byteBuddyTask.getClassPath().from(compileTask.getClasspath());
         } catch (Exception exception) {

@@ -422,6 +422,13 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
     }
 
     /**
+     * Returns {@code true} if this extension defines an empty discovery.
+     *
+     * @return {@code true} if this extension defines an empty discovery.
+     */
+    protected abstract boolean isEmptyDiscovery();
+
+    /**
      * Applies any extension-specific properties.
      *
      * @param task The task to configure.
