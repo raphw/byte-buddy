@@ -806,7 +806,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * Resolves this substitution into a stack manipulation.
          *
          * @param targetType The target type on which a member is accessed.
-         * @param target     The target field, method or constructor that is substituted,
+         * @param target     The target field, method or constructor that is substituted.
          * @param parameters All parameters that serve as input to this access.
          * @param result     The result that is expected from the interaction or {@code void} if no result is expected.
          * @param freeOffset The first free offset of the local variable array that can be used for storing values.
@@ -1535,6 +1535,65 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      */
                     public TypeDescription.Generic getResultType() {
                         return resultType;
+                    }
+                }
+
+                /**
+                 * A step that executes the original method invocation or field access.
+                 */
+                enum OfOriginalExpression implements Step, Factory {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Resolution resolve(TypeDescription targetType,
+                                              ByteCodeElement target,
+                                              TypeList.Generic parameters,
+                                              TypeDescription.Generic current,
+                                              Map<Integer, Integer> offsets,
+                                              int freeOffset) {
+                        List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size() + 2);
+                        stackManipulations.add(Removal.of(current));
+                        for (int index = 0; index < parameters.size(); index++) {
+                            stackManipulations.add(MethodVariableAccess.of(parameters.get(index)).loadFrom(offsets.get(index)));
+                        }
+                        if (target instanceof MethodDescription) {
+                            stackManipulations.add(MethodInvocation.invoke((MethodDescription) target));
+                            return new Simple(new StackManipulation.Compound(stackManipulations), ((MethodDescription) target).getReturnType());
+                        } else if (target instanceof FieldDescription) {
+                            if (((FieldDescription) target).isStatic()) {
+                                if (parameters.isEmpty()) {
+                                    stackManipulations.add(FieldAccess.forField((FieldDescription) target).read());
+                                    return new Simple(new StackManipulation.Compound(stackManipulations), ((FieldDescription) target).getType());
+                                } else /* if (parameters.size() == 1) */ {
+                                    stackManipulations.add(FieldAccess.forField((FieldDescription) target).write());
+                                    return new Simple(new StackManipulation.Compound(stackManipulations), TypeDefinition.Sort.describe(void.class));
+                                }
+                            } else {
+                                if (parameters.size() == 1) {
+                                    stackManipulations.add(FieldAccess.forField((FieldDescription) target).read());
+                                    return new Simple(new StackManipulation.Compound(stackManipulations), ((FieldDescription) target).getType());
+                                } else /* if (parameters.size() == 2) */ {
+                                    stackManipulations.add(FieldAccess.forField((FieldDescription) target).write());
+                                    return new Simple(new StackManipulation.Compound(stackManipulations), TypeDefinition.Sort.describe(void.class));
+                                }
+                            }
+                        } else {
+                            throw new IllegalArgumentException("Unexpected target type: " + target);
+                        }
+                    }
+
+                    @Override
+                    public Step make(Assigner assigner,
+                                     Assigner.Typing typing,
+                                     TypeDescription instrumentedType,
+                                     MethodDescription instrumentedMethod) {
+                        return this;
                     }
                 }
             }
