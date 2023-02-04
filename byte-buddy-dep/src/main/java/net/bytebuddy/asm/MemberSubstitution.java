@@ -2258,7 +2258,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
                         boolean shift = ((target.getModifiers() & Opcodes.ACC_STATIC) == 0) && !(target instanceof MethodDescription && ((MethodDescription) target).isConstructor());
                         for (int index = 0; index < methodDescription.getParameters().size(); index++) {
-                            Integer substitution = substitutions.getOrDefault(index + (shift ? 1 : 0), index + (shift ? 1 : 0));
+                            int substitution = substitutions.containsKey(index + (shift ? 1 : 0))
+                                    ? substitutions.get(index + (shift ? 1 : 0))
+                                    : index + (shift ? 1 : 0);
                             if (substitution >= parameters.size()) {
                                 throw new IllegalStateException(target + " does not support an index " + substitution);
                             }
