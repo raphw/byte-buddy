@@ -34,7 +34,7 @@ import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
+import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
@@ -42,6 +42,8 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.JavaConstant;
+import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.visitor.LocalVariableAwareMethodVisitor;
@@ -1476,69 +1478,6 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 }
 
                 /**
-                 * A simple substitution step within a substitution chain.
-                 */
-                @HashCodeAndEqualsPlugin.Enhance
-                class Simple implements Step, Resolution, Factory {
-
-                    /**
-                     * The stack manipulation to apply.
-                     */
-                    private final StackManipulation stackManipulation;
-
-                    /**
-                     * The resulting type of applying the stack manipulation.
-                     */
-                    private final TypeDescription.Generic resultType;
-
-                    /**
-                     * Creates a new simple substitution step.
-                     *
-                     * @param stackManipulation The stack manipulation to apply.
-                     * @param resultType        The resulting type of applying the stack manipulation.
-                     */
-                    public Simple(StackManipulation stackManipulation, TypeDescription.Generic resultType) {
-                        this.stackManipulation = stackManipulation;
-                        this.resultType = resultType;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                        return this;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Resolution resolve(TypeDescription targetType,
-                                              ByteCodeElement target,
-                                              TypeList.Generic parameters,
-                                              TypeDescription.Generic current,
-                                              Map<Integer, Integer> offsets,
-                                              int freeOffset) {
-                        return targetType.represents(void.class)
-                                ? this
-                                : new Simple(new StackManipulation.Compound(Removal.of(targetType), stackManipulation), resultType);
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public StackManipulation getStackManipulation() {
-                        return stackManipulation;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public TypeDescription.Generic getResultType() {
-                        return resultType;
-                    }
-                }
-
-                /**
                  * A step that executes the original method invocation or field access.
                  */
                 enum OfOriginalExpression implements Step, Factory {
@@ -1594,6 +1533,278 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                      TypeDescription instrumentedType,
                                      MethodDescription instrumentedMethod) {
                         return this;
+                    }
+                }
+
+                /**
+                 * A simple substitution step within a substitution chain.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class Simple implements Step, Resolution, Factory {
+
+                    /**
+                     * The stack manipulation to apply.
+                     */
+                    private final StackManipulation stackManipulation;
+
+                    /**
+                     * The resulting type of applying the stack manipulation.
+                     */
+                    private final TypeDescription.Generic resultType;
+
+                    /**
+                     * Creates a new simple substitution step.
+                     *
+                     * @param stackManipulation The stack manipulation to apply.
+                     * @param resultType        The resulting type of applying the stack manipulation.
+                     */
+                    public Simple(StackManipulation stackManipulation, TypeDescription.Generic resultType) {
+                        this.stackManipulation = stackManipulation;
+                        this.resultType = resultType;
+                    }
+
+                    /**
+                     * Resolves a compile-time constant as the next step value.
+                     *
+                     * @param value The compile-time constant to resolve.
+                     * @return An appropriate step factory.
+                     */
+                    public static Step.Factory of(Object value) {
+                        if (value instanceof JavaConstant) {
+                            return new Simple(new JavaConstantValue((JavaConstant) value), ((JavaConstant) value).getTypeDescription().asGenericType());
+                        } else if (value instanceof TypeDescription) {
+                            return new Simple(ClassConstant.of((TypeDescription) value), TypeDefinition.Sort.describe(Class.class));
+                        } else {
+                            Class<?> type = value.getClass();
+                            if (type == String.class) {
+                                return new Simple(new TextConstant((String) value), TypeDefinition.Sort.describe(String.class));
+                            } else if (type == Class.class) {
+                                return new Simple(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)), TypeDefinition.Sort.describe(Class.class));
+                            } else if (type == Boolean.class) {
+                                return new Simple(IntegerConstant.forValue((Boolean) value), TypeDefinition.Sort.describe(boolean.class));
+                            } else if (type == Byte.class) {
+                                return new Simple(IntegerConstant.forValue((Byte) value), TypeDefinition.Sort.describe(byte.class));
+                            } else if (type == Short.class) {
+                                return new Simple(IntegerConstant.forValue((Short) value), TypeDefinition.Sort.describe(short.class));
+                            } else if (type == Character.class) {
+                                return new Simple(IntegerConstant.forValue((Character) value), TypeDefinition.Sort.describe(char.class));
+                            } else if (type == Integer.class) {
+                                return new Simple(IntegerConstant.forValue((Integer) value), TypeDefinition.Sort.describe(int.class));
+                            } else if (type == Long.class) {
+                                return new Simple(LongConstant.forValue((Long) value), TypeDefinition.Sort.describe(long.class));
+                            } else if (type == Float.class) {
+                                return new Simple(FloatConstant.forValue((Float) value), TypeDefinition.Sort.describe(float.class));
+                            } else if (type == Double.class) {
+                                return new Simple(DoubleConstant.forValue((Double) value), TypeDefinition.Sort.describe(double.class));
+                            } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
+                                return new Simple(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)), TypeDefinition.Sort.describe(type));
+                            } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
+                                return new Simple(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)), TypeDefinition.Sort.describe(type));
+                            } else {
+                                throw new IllegalArgumentException("Not a constant value: " + value);
+                            }
+                        }
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                        return this;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Resolution resolve(TypeDescription targetType,
+                                              ByteCodeElement target,
+                                              TypeList.Generic parameters,
+                                              TypeDescription.Generic current,
+                                              Map<Integer, Integer> offsets,
+                                              int freeOffset) {
+                        return targetType.represents(void.class)
+                                ? this
+                                : new Simple(new StackManipulation.Compound(Removal.of(targetType), stackManipulation), resultType);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public StackManipulation getStackManipulation() {
+                        return stackManipulation;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public TypeDescription.Generic getResultType() {
+                        return resultType;
+                    }
+                }
+
+                /**
+                 * A step that substitutes an argument of a given index with a compatible type.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class ForArgumentSubstitution implements Step {
+
+                    /**
+                     * The stack manipulation that loads the substituted argument.
+                     */
+                    private final StackManipulation stackManipulation;
+
+                    /**
+                     * The type of the substituted argument.
+                     */
+                    private final TypeDescription.Generic typeDescription;
+
+                    /**
+                     * The index of the argument to substitute.
+                     */
+                    private final int index;
+
+                    /**
+                     * The assigner to use for assigning the argument.
+                     */
+                    private final Assigner assigner;
+
+                    /**
+                     * The typing to use for the argument assignment.
+                     */
+                    private final Assigner.Typing typing;
+
+                    /**
+                     * Creates an argument substitution step.
+                     *
+                     * @param stackManipulation The stack manipulation that loads the substituted argument.
+                     * @param typeDescription   The type of the substituted argument.
+                     * @param index             The index of the argument to substitute.
+                     * @param assigner          The assigner to use for assigning the argument.
+                     * @param typing            The typing to use for the argument assignment.
+                     */
+                    protected ForArgumentSubstitution(StackManipulation stackManipulation,
+                                                      TypeDescription.Generic typeDescription,
+                                                      int index,
+                                                      Assigner assigner,
+                                                      Assigner.Typing typing) {
+                        this.stackManipulation = stackManipulation;
+                        this.typeDescription = typeDescription;
+                        this.index = index;
+                        this.assigner = assigner;
+                        this.typing = typing;
+                    }
+
+                    /**
+                     * Resolves a step substitution factory for a compile-time constant to replace an argument value at a given index.
+                     *
+                     * @param value The compile-time constant to replace.
+                     * @param index The index of the substituted argument.
+                     * @return An appropriate step factory.
+                     */
+                    public static Step.Factory of(Object value, int index) {
+                        if (index < 0) {
+                            throw new IllegalArgumentException("Index cannot be negative: " + index);
+                        }
+                        if (value instanceof JavaConstant) {
+                            return new Factory(new JavaConstantValue((JavaConstant) value), ((JavaConstant) value).getTypeDescription().asGenericType(), index);
+                        } else if (value instanceof TypeDescription) {
+                            return new Factory(ClassConstant.of((TypeDescription) value), TypeDefinition.Sort.describe(Class.class), index);
+                        } else {
+                            Class<?> type = value.getClass();
+                            if (type == String.class) {
+                                return new Factory(new TextConstant((String) value), TypeDefinition.Sort.describe(String.class), index);
+                            } else if (type == Class.class) {
+                                return new Factory(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)), TypeDefinition.Sort.describe(Class.class), index);
+                            } else if (type == Boolean.class) {
+                                return new Factory(IntegerConstant.forValue((Boolean) value), TypeDefinition.Sort.describe(boolean.class), index);
+                            } else if (type == Byte.class) {
+                                return new Factory(IntegerConstant.forValue((Byte) value), TypeDefinition.Sort.describe(byte.class), index);
+                            } else if (type == Short.class) {
+                                return new Factory(IntegerConstant.forValue((Short) value), TypeDefinition.Sort.describe(short.class), index);
+                            } else if (type == Character.class) {
+                                return new Factory(IntegerConstant.forValue((Character) value), TypeDefinition.Sort.describe(char.class), index);
+                            } else if (type == Integer.class) {
+                                return new Factory(IntegerConstant.forValue((Integer) value), TypeDefinition.Sort.describe(int.class), index);
+                            } else if (type == Long.class) {
+                                return new Factory(LongConstant.forValue((Long) value), TypeDefinition.Sort.describe(long.class), index);
+                            } else if (type == Float.class) {
+                                return new Factory(FloatConstant.forValue((Float) value), TypeDefinition.Sort.describe(float.class), index);
+                            } else if (type == Double.class) {
+                                return new Factory(DoubleConstant.forValue((Double) value), TypeDefinition.Sort.describe(double.class), index);
+                            } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
+                                return new Factory(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)), TypeDefinition.Sort.describe(type), index);
+                            } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
+                                return new Factory(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)), TypeDefinition.Sort.describe(type), index);
+                            } else {
+                                throw new IllegalArgumentException("Not a constant value: " + value);
+                            }
+                        }
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Resolution resolve(TypeDescription targetType,
+                                              ByteCodeElement target,
+                                              TypeList.Generic parameters,
+                                              TypeDescription.Generic current,
+                                              Map<Integer, Integer> offsets,
+                                              int freeOffset) {
+                        if (index >= parameters.size()) {
+                            throw new IllegalStateException(target + " has not " + index + " arguments");
+                        }
+                        StackManipulation stackManipulation = assigner.assign(typeDescription, parameters.get(index), typing);
+                        if (!stackManipulation.isValid()) {
+                            throw new IllegalStateException("Cannot assign " + typeDescription + " to " + parameters.get(index));
+                        }
+                        return new Simple(new StackManipulation.Compound(this.stackManipulation,
+                                stackManipulation,
+                                MethodVariableAccess.of(parameters.get(index)).storeAt(offsets.get(index))), current);
+                    }
+
+                    /**
+                     * A factory to create an argument substitution step.
+                     */
+                    @HashCodeAndEqualsPlugin.Enhance
+                    public static class Factory implements Step.Factory {
+
+                        /**
+                         * The stack manipulation that loads the substituted argument.
+                         */
+                        private final StackManipulation stackManipulation;
+
+                        /**
+                         * The type of the substituted argument.
+                         */
+                        private final TypeDescription.Generic typeDescription;
+
+                        /**
+                         * The index of the argument to substitute.
+                         */
+                        private final int index;
+
+                        /**
+                         * Creates a factory for an argument substitution step.
+                         *
+                         * @param stackManipulation The stack manipulation that loads the substituted argument.
+                         * @param typeDescription   The type of the substituted argument.
+                         * @param index             The index of the argument to substitute.
+                         */
+                        public Factory(StackManipulation stackManipulation, TypeDescription.Generic typeDescription, int index) {
+                            this.stackManipulation = stackManipulation;
+                            this.typeDescription = typeDescription;
+                            this.index = index;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Step make(Assigner assigner,
+                                         Assigner.Typing typing,
+                                         TypeDescription instrumentedType,
+                                         MethodDescription instrumentedMethod) {
+                            return new ForArgumentSubstitution(stackManipulation, typeDescription, index, assigner, typing);
+                        }
                     }
                 }
             }

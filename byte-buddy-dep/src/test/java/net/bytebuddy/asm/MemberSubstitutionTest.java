@@ -661,12 +661,10 @@ public class MemberSubstitutionTest {
     }
 
     @Test
-    public void testSubstitutionChainSimple() throws Exception {
+    public void testSubstitutionChainEmpty() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
-                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(new MemberSubstitution.Substitution.Chain.Step.Simple(
-                        NullConstant.INSTANCE,
-                        TypeDescription.Generic.Sort.describe(String.class))).on(named(RUN)))
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain().on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -679,10 +677,12 @@ public class MemberSubstitutionTest {
     }
 
     @Test
-    public void testSubstitutionChainEmpty() throws Exception {
+    public void testSubstitutionChainSimple() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
-                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain().on(named(RUN)))
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(new MemberSubstitution.Substitution.Chain.Step.Simple(
+                        NullConstant.INSTANCE,
+                        TypeDescription.Generic.Sort.describe(String.class))).on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -961,6 +961,21 @@ public class MemberSubstitutionTest {
                 .redefine(MatcherSample.class)
                 .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithMethod(none()).on(named(FOO)))
                 .make();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testChainSimpleNotACompileTimeConstant() {
+        MemberSubstitution.Substitution.Chain.Step.Simple.of(new Object());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testChainArgumentNotACompileTimeConstant() {
+        MemberSubstitution.Substitution.Chain.Step.ForArgumentSubstitution.of(new Object(), 0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testChainArgumentNegativeIndex() {
+        MemberSubstitution.Substitution.Chain.Step.ForArgumentSubstitution.of(FOO, -1);
     }
 
     public static class FieldAccessSample {

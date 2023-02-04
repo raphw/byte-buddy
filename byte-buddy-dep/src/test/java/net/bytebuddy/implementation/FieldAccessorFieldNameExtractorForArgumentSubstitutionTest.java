@@ -10,7 +10,7 @@ import org.mockito.junit.MockitoJUnit;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class FieldAccessorFieldNameExtractorForFixedValueTest {
+public class FieldAccessorFieldNameExtractorForArgumentSubstitutionTest {
 
     private static final String FOO = "foo", FOO_CAPITAL = "Foo";
 

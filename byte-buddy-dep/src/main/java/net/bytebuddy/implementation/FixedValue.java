@@ -83,45 +83,45 @@ public abstract class FixedValue implements Implementation {
      * type or an {@link IllegalAccessException} will be thrown at runtime.
      * </p>
      *
-     * @param fixedValue The fixed value to return from the method.
+     * @param value The fixed value to return from the method.
      * @return An implementation for the given {@code value}.
      * @see #value(JavaConstant)
      * @see #value(TypeDescription)
      * @see #nullValue()
      */
-    public static AssignerConfigurable value(Object fixedValue) {
-        if (fixedValue instanceof JavaConstant) {
-            return value((JavaConstant) fixedValue);
-        } else if (fixedValue instanceof TypeDescription) {
-            return value((TypeDescription) fixedValue);
+    public static AssignerConfigurable value(Object value) {
+        if (value instanceof JavaConstant) {
+            return value((JavaConstant) value);
+        } else if (value instanceof TypeDescription) {
+            return value((TypeDescription) value);
         } else {
-            Class<?> type = fixedValue.getClass();
+            Class<?> type = value.getClass();
             if (type == String.class) {
-                return new ForPoolValue(new TextConstant((String) fixedValue), TypeDescription.ForLoadedType.of(String.class));
+                return new ForPoolValue(new TextConstant((String) value), TypeDescription.ForLoadedType.of(String.class));
             } else if (type == Class.class) {
-                return new ForPoolValue(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) fixedValue)), TypeDescription.ForLoadedType.of(Class.class));
+                return new ForPoolValue(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)), TypeDescription.ForLoadedType.of(Class.class));
             } else if (type == Boolean.class) {
-                return new ForPoolValue(IntegerConstant.forValue((Boolean) fixedValue), boolean.class);
+                return new ForPoolValue(IntegerConstant.forValue((Boolean) value), boolean.class);
             } else if (type == Byte.class) {
-                return new ForPoolValue(IntegerConstant.forValue((Byte) fixedValue), byte.class);
+                return new ForPoolValue(IntegerConstant.forValue((Byte) value), byte.class);
             } else if (type == Short.class) {
-                return new ForPoolValue(IntegerConstant.forValue((Short) fixedValue), short.class);
+                return new ForPoolValue(IntegerConstant.forValue((Short) value), short.class);
             } else if (type == Character.class) {
-                return new ForPoolValue(IntegerConstant.forValue((Character) fixedValue), char.class);
+                return new ForPoolValue(IntegerConstant.forValue((Character) value), char.class);
             } else if (type == Integer.class) {
-                return new ForPoolValue(IntegerConstant.forValue((Integer) fixedValue), int.class);
+                return new ForPoolValue(IntegerConstant.forValue((Integer) value), int.class);
             } else if (type == Long.class) {
-                return new ForPoolValue(LongConstant.forValue((Long) fixedValue), long.class);
+                return new ForPoolValue(LongConstant.forValue((Long) value), long.class);
             } else if (type == Float.class) {
-                return new ForPoolValue(FloatConstant.forValue((Float) fixedValue), float.class);
+                return new ForPoolValue(FloatConstant.forValue((Float) value), float.class);
             } else if (type == Double.class) {
-                return new ForPoolValue(DoubleConstant.forValue((Double) fixedValue), double.class);
+                return new ForPoolValue(DoubleConstant.forValue((Double) value), double.class);
             } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
-                return new ForPoolValue(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(fixedValue)), type);
+                return new ForPoolValue(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)), type);
             } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
-                return new ForPoolValue(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(fixedValue)), type);
+                return new ForPoolValue(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)), type);
             } else {
-                return reference(fixedValue);
+                return reference(value);
             }
         }
     }
@@ -157,21 +157,21 @@ public abstract class FixedValue implements Implementation {
     /**
      * Returns the given type in form of a loaded type. The value is loaded from the written class's constant pool.
      *
-     * @param fixedValue The type to return from the method.
+     * @param type The type to return from the method.
      * @return An implementation for the given {@code value}.
      */
-    public static AssignerConfigurable value(TypeDescription fixedValue) {
-        return new ForPoolValue(ClassConstant.of(fixedValue), TypeDescription.ForLoadedType.of(Class.class));
+    public static AssignerConfigurable value(TypeDescription type) {
+        return new ForPoolValue(ClassConstant.of(type), TypeDescription.ForLoadedType.of(Class.class));
     }
 
     /**
      * Returns the loaded version of the given {@link JavaConstant}. The value is loaded from the written class's constant pool.
      *
-     * @param fixedValue The type to return from the method.
+     * @param constant The type to return from the method.
      * @return An implementation for the given {@code value}.
      */
-    public static AssignerConfigurable value(JavaConstant fixedValue) {
-        return new ForPoolValue(new JavaConstantValue(fixedValue), fixedValue.getTypeDescription());
+    public static AssignerConfigurable value(JavaConstant constant) {
+        return new ForPoolValue(new JavaConstantValue(constant), constant.getTypeDescription());
     }
 
     /**
@@ -217,26 +217,26 @@ public abstract class FixedValue implements Implementation {
     /**
      * Blueprint method that for applying the actual implementation.
      *
-     * @param methodVisitor           The method visitor to which the implementation is applied to.
-     * @param implementationContext   The implementation context for the given implementation.
-     * @param instrumentedMethod      The instrumented method that is target of the implementation.
-     * @param fixedValueType          A description of the type of the fixed value that is loaded by the
-     *                                {@code valueLoadingInstruction}.
-     * @param valueLoadingInstruction A stack manipulation that represents the loading of the fixed value onto the
-     *                                operand stack.
+     * @param methodVisitor         The method visitor to which the implementation is applied to.
+     * @param implementationContext The implementation context for the given implementation.
+     * @param instrumentedMethod    The instrumented method that is target of the implementation.
+     * @param typeDescription       A description of the type of the fixed value that is loaded by the
+     *                              {@code valueLoadingInstruction}.
+     * @param stackManipulation     A stack manipulation that represents the loading of the fixed value onto the
+     *                              operand stack.
      * @return A representation of the stack and variable array sized that are required for this implementation.
      */
     protected ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
                                           Context implementationContext,
                                           MethodDescription instrumentedMethod,
-                                          TypeDescription.Generic fixedValueType,
-                                          StackManipulation valueLoadingInstruction) {
-        StackManipulation assignment = assigner.assign(fixedValueType, instrumentedMethod.getReturnType(), typing);
+                                          TypeDescription.Generic typeDescription,
+                                          StackManipulation stackManipulation) {
+        StackManipulation assignment = assigner.assign(typeDescription, instrumentedMethod.getReturnType(), typing);
         if (!assignment.isValid()) {
-            throw new IllegalArgumentException("Cannot return value of type " + fixedValueType + " for " + instrumentedMethod);
+            throw new IllegalArgumentException("Cannot return value of type " + typeDescription + " for " + instrumentedMethod);
         }
         StackManipulation.Size stackSize = new StackManipulation.Compound(
-                valueLoadingInstruction,
+                stackManipulation,
                 assignment,
                 MethodReturn.of(instrumentedMethod.getReturnType())
         ).apply(methodVisitor, implementationContext);
