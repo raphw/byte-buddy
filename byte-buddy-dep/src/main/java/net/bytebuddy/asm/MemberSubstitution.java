@@ -296,6 +296,49 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         }
 
         /**
+         * Replaces any interaction with a matched byte code element with the provided compile-time constant.
+         *
+         * @param value The compile-time constant to set.
+         * @return A member substitution that replaces any interaction with the supplied compile-time constant.
+         */
+        public MemberSubstitution replaceWithConstant(Object value) {
+            if (value instanceof JavaConstant) {
+                return replaceWith(new Substitution.ForValue(new JavaConstantValue((JavaConstant) value), ((JavaConstant) value).getTypeDescription().asGenericType()));
+            } else if (value instanceof TypeDescription) {
+                return replaceWith(new Substitution.ForValue(ClassConstant.of((TypeDescription) value), TypeDefinition.Sort.describe(Class.class)));
+            } else {
+                Class<?> type = value.getClass();
+                if (type == String.class) {
+                    return replaceWith(new Substitution.ForValue(new TextConstant((String) value), TypeDefinition.Sort.describe(String.class)));
+                } else if (type == Class.class) {
+                    return replaceWith(new Substitution.ForValue(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)), TypeDefinition.Sort.describe(Class.class)));
+                } else if (type == Boolean.class) {
+                    return replaceWith(new Substitution.ForValue(IntegerConstant.forValue((Boolean) value), TypeDefinition.Sort.describe(boolean.class)));
+                } else if (type == Byte.class) {
+                    return replaceWith(new Substitution.ForValue(IntegerConstant.forValue((Byte) value), TypeDefinition.Sort.describe(byte.class)));
+                } else if (type == Short.class) {
+                    return replaceWith(new Substitution.ForValue(IntegerConstant.forValue((Short) value), TypeDefinition.Sort.describe(short.class)));
+                } else if (type == Character.class) {
+                    return replaceWith(new Substitution.ForValue(IntegerConstant.forValue((Character) value), TypeDefinition.Sort.describe(char.class)));
+                } else if (type == Integer.class) {
+                    return replaceWith(new Substitution.ForValue(IntegerConstant.forValue((Integer) value), TypeDefinition.Sort.describe(int.class)));
+                } else if (type == Long.class) {
+                    return replaceWith(new Substitution.ForValue(LongConstant.forValue((Long) value), TypeDefinition.Sort.describe(long.class)));
+                } else if (type == Float.class) {
+                    return replaceWith(new Substitution.ForValue(FloatConstant.forValue((Float) value), TypeDefinition.Sort.describe(float.class)));
+                } else if (type == Double.class) {
+                    return replaceWith(new Substitution.ForValue(DoubleConstant.forValue((Double) value), TypeDefinition.Sort.describe(double.class)));
+                } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
+                    return replaceWith(new Substitution.ForValue(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)), TypeDefinition.Sort.describe(type)));
+                } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
+                    return replaceWith(new Substitution.ForValue(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)), TypeDefinition.Sort.describe(type)));
+                } else {
+                    throw new IllegalArgumentException("Not a constant value: " + value);
+                }
+            }
+        }
+
+        /**
          * <p>
          * Replaces any interaction with a matched byte code element by an interaction with the specified field. If a field
          * is replacing a method or constructor invocation, it is treated as if it was a field getter or setter respectively.
@@ -866,6 +909,43 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     stackManipulations.add(Removal.of(parameters.get(index)));
                 }
                 return new StackManipulation.Compound(CompoundList.of(stackManipulations, DefaultValue.of(result.asErasure())));
+            }
+        }
+
+        class ForValue implements Substitution, Factory {
+
+            private final StackManipulation stackManipulation;
+
+            private final TypeDescription.Generic typeDescription;
+
+            public ForValue(StackManipulation stackManipulation, TypeDescription.Generic typeDescription) {
+                this.stackManipulation = stackManipulation;
+                this.typeDescription = typeDescription;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Substitution make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
+                return this;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public StackManipulation resolve(TypeDescription targetType,
+                                             ByteCodeElement target,
+                                             TypeList.Generic parameters,
+                                             TypeDescription.Generic result,
+                                             int freeOffset) {
+                List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size());
+                for (int index = parameters.size() - 1; index >= 0; index--) {
+                    stackManipulations.add(Removal.of(parameters.get(index)));
+                }
+                if (!typeDescription.asErasure().isAssignableTo(result.asErasure())) {
+                    throw new IllegalStateException("Cannot assign " + typeDescription + " to " + result);
+                }
+                return new StackManipulation.Compound(CompoundList.of(stackManipulations, stackManipulation));
             }
         }
 
@@ -1624,7 +1704,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                               int freeOffset) {
                         return targetType.represents(void.class)
                                 ? this
-                                : new Simple(new StackManipulation.Compound(Removal.of(targetType), stackManipulation), resultType);
+                                : new Simple(new StackManipulation.Compound(Removal.of(current), stackManipulation), resultType);
                     }
 
                     /**
@@ -1832,9 +1912,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * Creates an argument loading step.
                      *
-                     * @param index             The index of the argument to load.
-                     * @param assigner          The assigner to use for assigning the argument.
-                     * @param typing            The typing to use for the argument assignment.
+                     * @param index    The index of the argument to load.
+                     * @param assigner The assigner to use for assigning the argument.
+                     * @param typing   The typing to use for the argument assignment.
                      */
                     protected ForArgumentLoading(int index,
                                                  Assigner assigner,

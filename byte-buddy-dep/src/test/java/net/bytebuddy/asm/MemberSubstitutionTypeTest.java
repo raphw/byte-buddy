@@ -45,10 +45,10 @@ public class MemberSubstitutionTypeTest {
     }
 
     @Test
-    public void testSubstitutionChainSimple() throws Exception {
+    public void testSubstitutionReplacement() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(this.type)
-                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(MemberSubstitution.Substitution.Chain.Step.Simple.of(value)).on(named(RUN)))
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithConstant(replacement).on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -56,8 +56,24 @@ public class MemberSubstitutionTypeTest {
         assertThat(type.getDeclaredField(FOO).get(instance), is(value));
         assertThat(type.getDeclaredField(BAR).get(instance), is(value));
         assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
-        assertThat(type.getDeclaredField(FOO).get(instance), is(replacement));
+        assertThat(type.getDeclaredField(FOO).get(instance), is(value));
+        assertThat(type.getDeclaredField(BAR).get(instance), is(replacement));
+    }
+
+    @Test
+    public void testSubstitutionChainSimple() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(this.type)
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(MemberSubstitution.Substitution.Chain.Step.Simple.of(replacement)).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is(value));
         assertThat(type.getDeclaredField(BAR).get(instance), is(value));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is(value));
+        assertThat(type.getDeclaredField(BAR).get(instance), is(replacement));
     }
 
     @Test
