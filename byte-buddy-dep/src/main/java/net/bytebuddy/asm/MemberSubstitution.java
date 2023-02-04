@@ -29,10 +29,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.bytecode.Duplication;
-import net.bytebuddy.implementation.bytecode.Removal;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
@@ -1936,13 +1933,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         if (index >= parameters.size()) {
                             throw new IllegalStateException(target + " has not " + index + " arguments");
                         }
-                        StackManipulation stackManipulation = assigner.assign(parameters.get(index), current, typing);
-                        if (!stackManipulation.isValid()) {
-                            throw new IllegalStateException("Cannot assign " + parameters.get(index) + " to " + current);
-                        }
                         return new Simple(new StackManipulation.Compound(Removal.of(current),
-                                MethodVariableAccess.of(parameters.get(index)).loadFrom(offsets.get(index)),
-                                stackManipulation), current);
+                                MethodVariableAccess.of(parameters.get(index)).loadFrom(offsets.get(index))), parameters.get(index));
                     }
 
 
@@ -1969,6 +1961,134 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                          TypeDescription instrumentedType,
                                          MethodDescription instrumentedMethod) {
                             return new ForArgumentLoading(index, assigner, typing);
+                        }
+                    }
+                }
+
+                /**
+                 * A step for invoking a method or constructor. If non-static, a method is invoked upon a the current stack argument of the chain.
+                 * Arguments are loaded from the intercepted byte code element with a possibility of substitution.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class ForInvocation implements Step {
+
+                    /**
+                     * The invoked method or constructor.
+                     */
+                    private final MethodDescription methodDescription;
+
+                    /**
+                     * A mapping of substituted indices.
+                     */
+                    private final Map<Integer, Integer> substitutions;
+
+                    /**
+                     * The assigner to use.
+                     */
+                    private final Assigner assigner;
+
+                    /**
+                     * The typing to use when assigning.
+                     */
+                    private final Assigner.Typing typing;
+
+                    /**
+                     * Creates a new step of an invocation.
+                     *
+                     * @param methodDescription The invoked method or constructor.
+                     * @param substitutions     A mapping of substituted indices.
+                     * @param assigner          The assigner to use.
+                     * @param typing            The typing to use when assigning.
+                     */
+                    public ForInvocation(MethodDescription methodDescription, Map<Integer, Integer> substitutions, Assigner assigner, Assigner.Typing typing) {
+                        this.methodDescription = methodDescription;
+                        this.substitutions = substitutions;
+                        this.assigner = assigner;
+                        this.typing = typing;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Resolution resolve(TypeDescription targetType,
+                                              ByteCodeElement target,
+                                              TypeList.Generic parameters,
+                                              TypeDescription.Generic current,
+                                              Map<Integer, Integer> offsets,
+                                              int freeOffset) {
+                        List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(3 + parameters.size() * 2);
+                        if (methodDescription.isStatic()) {
+                            stackManipulations.add(Removal.of(current));
+                        } else if (methodDescription.isConstructor()) {
+                            stackManipulations.add(Removal.of(current));
+                            stackManipulations.add(TypeCreation.of(methodDescription.getDeclaringType().asErasure()));
+                        } else {
+                            StackManipulation assignment = assigner.assign(current, methodDescription.getDeclaringType().asGenericType(), typing);
+                            if (!assignment.isValid()) {
+                                throw new IllegalStateException("Cannot assign " + current + " to " + methodDescription.getDeclaringType());
+                            }
+                            stackManipulations.add(assignment);
+                        }
+                        for (int index = 0; index < methodDescription.getParameters().size(); index++) {
+                            Integer substitution = substitutions.getOrDefault(index, index + (methodDescription.isStatic() ? 0 : 1));
+                            if (substitution >= parameters.size()) {
+                                throw new IllegalStateException(target + " does not support an index " + substitution);
+                            }
+                            stackManipulations.add(MethodVariableAccess.of(parameters.get(substitution)).loadFrom(offsets.get(substitution)));
+                            StackManipulation assignment = assigner.assign(parameters.get(substitution), methodDescription.getParameters().get(index).getType(), typing);
+                            if (!assignment.isValid()) {
+                                throw new IllegalStateException("Cannot assign parameter with " + index + " of type " + parameters.get(substitution) + " to " + methodDescription);
+                            }
+                            stackManipulations.add(assignment);
+                        }
+                        stackManipulations.add(MethodInvocation.invoke(methodDescription));
+                        return new Simple(new StackManipulation.Compound(stackManipulations), methodDescription.getReturnType());
+                    }
+
+                    /**
+                     * A factory to create a step for a method invocation.
+                     */
+                    @HashCodeAndEqualsPlugin.Enhance
+                    public static class Factory implements Step.Factory {
+
+                        /**
+                         * The invoked method or constructor.
+                         */
+                        private final MethodDescription methodDescription;
+
+                        /**
+                         * A mapping of substituted parameter indices.
+                         */
+                        private final Map<Integer, Integer> substitutions;
+
+                        /**
+                         * Creates a factory for a method invocation without parameter substitutions.
+                         *
+                         * @param methodDescription The invoked method or constructor.
+                         */
+                        public Factory(MethodDescription methodDescription) {
+                            this(methodDescription, Collections.<Integer, Integer>emptyMap());
+                        }
+
+                        /**
+                         * Creates a factory for a method invocation.
+                         *
+                         * @param methodDescription The invoked method or constructor.
+                         * @param substitutions     A mapping of substituted parameter indices.
+                         */
+                        public Factory(MethodDescription methodDescription, Map<Integer, Integer> substitutions) {
+                            this.methodDescription = methodDescription;
+                            this.substitutions = substitutions;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Step make(Assigner assigner,
+                                         Assigner.Typing typing,
+                                         TypeDescription instrumentedType,
+                                         MethodDescription instrumentedMethod) {
+                            return new ForInvocation(methodDescription, substitutions, assigner, typing);
                         }
                     }
                 }

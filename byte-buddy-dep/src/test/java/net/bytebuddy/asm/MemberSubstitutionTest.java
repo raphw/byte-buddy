@@ -10,6 +10,7 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
+import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.MemberSubstitutionTestHelper;
 import org.junit.Test;
@@ -772,6 +773,41 @@ public class MemberSubstitutionTest {
         assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
         assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
         assertThat(type.getDeclaredField(BAR).get(instance), is((Object) FOO));
+    }
+
+    @Test
+    public void testSubstitutionChainMethodInvocation() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FieldAccessSample.class)
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(
+                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.Factory(0),
+                        new MemberSubstitution.Substitution.Chain.Step.ForInvocation.Factory(new MethodDescription.ForLoadedMethod(FieldAccessSample.class.getDeclaredMethod("baz")))).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAZ));
+    }
+
+    @Test
+    public void testSubstitutionChainStaticMethodInvocation() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(StaticFieldAccessSample.class)
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(
+                        new MemberSubstitution.Substitution.Chain.Step.ForInvocation.Factory(new MethodDescription.ForLoadedMethod(StaticFieldAccessSample.class.getDeclaredMethod("baz")))).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAZ));
     }
 
     @Test(expected = IllegalStateException.class)
