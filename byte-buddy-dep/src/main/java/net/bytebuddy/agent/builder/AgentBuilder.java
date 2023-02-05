@@ -2916,7 +2916,10 @@ public interface AgentBuilder {
             }
 
             /**
-             * Allows for decoration of advice for subclass implementations of this transformer.
+             * Allows for decoration of advice for subclass implementations of this transformer. Note that a subclass is not retained when
+             * using the builder methods of this class. Subclasses are expected to create their final state by invoking the
+             * {@link ForAdvice#ForAdvice(Advice.WithCustomMapping, Advice.ExceptionHandler, Assigner, ClassFileLocator, PoolStrategy, LocationStrategy, List)}
+             * constructor with the final state already during construction.
              *
              * @param typeDescription  The description of the type currently being instrumented.
              * @param classLoader      The class loader of the instrumented class. Might be {@code null} to represent the bootstrap class loader.
