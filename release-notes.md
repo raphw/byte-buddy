@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 5. February 2023: version 1.12.23
+
+- Allow using `ClassFileLocator` to `AgentBuilder` to append boot-injected types.
+- Add `RenamingPlugin` that allows for migration of names using the build plugin.
+- Add wrapper method to `ForAdvice` transformation to allow for easier wrapping.
+- Fix Gradle plugin *raw* folder and improve detection of unused configurations.
+- Add additional default `Step`s to `MemberSubstitution` to reduce need for custom bytecode generation.
+
 ### 12. January 2023: version 1.12.22
 
 - Support `MethodHandle` and `MethodType` in `Advice.Origin` annotation.
