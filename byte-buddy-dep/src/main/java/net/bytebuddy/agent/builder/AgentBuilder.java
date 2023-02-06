@@ -2917,8 +2917,8 @@ public interface AgentBuilder {
 
             /**
              * Allows for decoration of advice for subclass implementations of this transformer. Note that a subclass is not retained when
-             * using the builder methods of this class. Subclasses are expected to create their final state by invoking the protected constructor
-             * with the final state already during construction.
+             * using the builder methods of this class. Subclasses should also override the {@code make} method of this class to allow
+             * propagating the custom configuration.
              *
              * @param typeDescription  The description of the type currently being instrumented.
              * @param classLoader      The class loader of the instrumented class. Might be {@code null} to represent the bootstrap class loader.
@@ -2937,13 +2937,35 @@ public interface AgentBuilder {
             }
 
             /**
+             * Creates an advice transformer. This method is to be overridden when overriding the {@code wrap} method.
+             *
+             * @param advice           The configured advice to use.
+             * @param exceptionHandler The exception handler to use.
+             * @param assigner         The assigner to use.
+             * @param classFileLocator The class file locator to use.
+             * @param poolStrategy     The pool strategy to use for looking up an advice.
+             * @param locationStrategy The location strategy to use for class loaders when resolving advice classes.
+             * @param entries          The advice entries to apply.
+             * @return An appropriate advice transformer.
+             */
+            protected ForAdvice make(Advice.WithCustomMapping advice,
+                                     Advice.ExceptionHandler exceptionHandler,
+                                     Assigner assigner,
+                                     ClassFileLocator classFileLocator,
+                                     PoolStrategy poolStrategy,
+                                     LocationStrategy locationStrategy,
+                                     List<Entry> entries) {
+                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+            }
+
+            /**
              * Registers a pool strategy for creating a {@link TypePool} that should be used for creating the advice class.
              *
              * @param poolStrategy The pool strategy to use.
              * @return A new instance of this advice transformer that applies the supplied pool strategy.
              */
             public ForAdvice with(PoolStrategy poolStrategy) {
-                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
             }
 
             /**
@@ -2954,7 +2976,7 @@ public interface AgentBuilder {
              * @return A new instance of this advice transformer that applies the supplied location strategy.
              */
             public ForAdvice with(LocationStrategy locationStrategy) {
-                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
             }
 
             /**
@@ -2965,7 +2987,7 @@ public interface AgentBuilder {
              * @see Advice#withExceptionHandler(StackManipulation)
              */
             public ForAdvice withExceptionHandler(Advice.ExceptionHandler exceptionHandler) {
-                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
             }
 
             /**
@@ -2976,7 +2998,7 @@ public interface AgentBuilder {
              * @see Advice#withAssigner(Assigner)
              */
             public ForAdvice with(Assigner assigner) {
-                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+                return make(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
             }
 
             /**
@@ -3013,7 +3035,7 @@ public interface AgentBuilder {
              * @return A new instance of this advice transformer that considers the supplied class file locators as a lookup source.
              */
             public ForAdvice include(List<? extends ClassFileLocator> classFileLocators) {
-                return new ForAdvice(advice,
+                return make(advice,
                         exceptionHandler,
                         assigner,
                         new ClassFileLocator.Compound(CompoundList.of(classFileLocator, classFileLocators)),
@@ -3043,7 +3065,7 @@ public interface AgentBuilder {
              */
             @SuppressWarnings("overloads")
             public ForAdvice advice(LatentMatcher<? super MethodDescription> matcher, String name) {
-                return new ForAdvice(advice,
+                return make(advice,
                         exceptionHandler,
                         assigner,
                         classFileLocator,
@@ -3075,7 +3097,7 @@ public interface AgentBuilder {
              */
             @SuppressWarnings("overloads")
             public ForAdvice advice(LatentMatcher<? super MethodDescription> matcher, String enter, String exit) {
-                return new ForAdvice(advice,
+                return make(advice,
                         exceptionHandler,
                         assigner,
                         classFileLocator,
