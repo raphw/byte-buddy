@@ -560,6 +560,11 @@ public interface MethodGraph {
             private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
             /**
+             * A matcher to filter methods from the graph.
+             */
+            private final ElementMatcher<? super MethodDescription> matcher;
+
+            /**
              * Creates a new default method graph compiler.
              *
              * @param harmonizer The harmonizer to be used.
@@ -567,9 +572,22 @@ public interface MethodGraph {
              * @param visitor    A visitor to apply to all type descriptions before analyzing their methods or resolving super types.
              */
             protected Default(Harmonizer<T> harmonizer, Merger merger, TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                this(harmonizer, merger, visitor, any());
+            }
+
+            /**
+             * Creates a new default method graph compiler.
+             *
+             * @param harmonizer The harmonizer to be used.
+             * @param merger     The merger to be used.
+             * @param visitor    A visitor to apply to all type descriptions before analyzing their methods or resolving super types.
+             * @param matcher    A matcher to filter methods from the graph.
+             */
+            public Default(Harmonizer<T> harmonizer, Merger merger, TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor, ElementMatcher<? super MethodDescription> matcher) {
                 this.harmonizer = harmonizer;
                 this.merger = merger;
                 this.visitor = visitor;
+                this.matcher = matcher;
             }
 
             /**
@@ -582,6 +600,19 @@ public interface MethodGraph {
              */
             public static <S> Compiler of(Harmonizer<S> harmonizer, Merger merger) {
                 return new Default<S>(harmonizer, merger, TypeDescription.Generic.Visitor.Reifying.INITIATING);
+            }
+
+            /**
+             * Creates a default compiler using the given harmonizer and merger. All raw types are reified before analyzing their properties.
+             *
+             * @param harmonizer The harmonizer to be used for creating tokens that uniquely identify a method hierarchy.
+             * @param merger     The merger to be used for identifying a method to represent an ambiguous method resolution.
+             * @param matcher    A matcher to filter methods from the graph.
+             * @param <S>        The type of the harmonizer token.
+             * @return A default compiler for the given harmonizer and merger.
+             */
+            public static <S> Compiler of(Harmonizer<S> harmonizer, Merger merger, ElementMatcher<? super MethodDescription> matcher) {
+                return new Default<S>(harmonizer, merger, TypeDescription.Generic.Visitor.Reifying.INITIATING, matcher);
             }
 
             /**
@@ -634,7 +665,7 @@ public interface MethodGraph {
              */
             public MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
                 Map<TypeDefinition, Key.Store<T>> snapshots = new HashMap<TypeDefinition, Key.Store<T>>();
-                Key.Store<?> rootStore = doAnalyze(typeDefinition, snapshots, isVirtual().and(isVisibleTo(viewPoint)));
+                Key.Store<?> rootStore = doAnalyze(typeDefinition, snapshots, isVirtual().and(isVisibleTo(viewPoint)).and(matcher));
                 TypeDescription.Generic superClass = typeDefinition.getSuperClass();
                 List<TypeDescription.Generic> interfaceTypes = typeDefinition.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>();
