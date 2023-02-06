@@ -556,6 +556,7 @@ net.bytebuddy:byte-buddy-agent:jar:1.12.19 3a70240de7cdcde04e7c504c2327d7035b9c2
 net.bytebuddy:byte-buddy-agent:jar:1.12.20 e898463a5ac6964ec8847f44e43759a97580be26ceef1fd211dc888e73519c7b
 net.bytebuddy:byte-buddy-agent:jar:1.12.21 c33021a6d19391f6160ddcfd63b43d604af4a0989589c950cd9a16ee22281f61
 net.bytebuddy:byte-buddy-agent:jar:1.12.22 bff7cdac510692d1a0013eea87fb72ad686fbf97f45688708172dafae8decead
+net.bytebuddy:byte-buddy-agent:jar:1.12.23 5817228bb0ed87129e9e36fb38c8cba9c2a2d5ecccce30b7606440bccf6f79e0
 net.bytebuddy:byte-buddy-android:jar:1.12.19 bb73d3b9ace5a60a9a9aa1701761073b3df3baf79ff463aed6cd94b724fd3ba9
 net.bytebuddy:byte-buddy-android:jar:1.12.20 f43b8b7eb840f6140135066224f0e6b565b9becb05345fdc572a66bfb92df0aa
 net.bytebuddy:byte-buddy-android:jar:1.12.21 bf4ad1405c2fcaa8b179929f9a64c8ee66d04f34b0e3fe8a90b28c738f883fe9
