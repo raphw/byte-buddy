@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.matcher;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
@@ -2006,6 +2007,28 @@ public final class ElementMatchers {
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> hasAnnotation(ElementMatcher<? super AnnotationDescription> matcher) {
         return new InheritedAnnotationMatcher<T>(new CollectionItemMatcher<AnnotationDescription>(matcher));
+    }
+
+    /**
+     * Matches a type to have a minimal class file version. If a type description is not implying a class file version, it is not matched.
+     *
+     * @param classFileVersion The minimal class file version to match.
+     * @param <T>              The type of the matched object.
+     * @return A matcher that matches a type description by its class file version.
+     */
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> hasClassFileVersionAtLeast(ClassFileVersion classFileVersion) {
+        return new ClassFileVersionMatcher<T>(classFileVersion, false);
+    }
+
+    /**
+     * Matches a type to have a maximal class file version. If a type description is not implying a class file version, it is not matched.
+     *
+     * @param classFileVersion The maximal class file version to match.
+     * @param <T>              The type of the matched object.
+     * @return A matcher that matches a type description by its class file version.
+     */
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> hasClassFileVersionAtMost(ClassFileVersion classFileVersion) {
+        return new ClassFileVersionMatcher<T>(classFileVersion, true);
     }
 
     /**

@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
@@ -1271,6 +1272,24 @@ public class ElementMatchersTest {
     public void testSupportsModules() throws Exception {
         assertThat(ElementMatchers.supportsModules().matches(mock(JavaModule.class)), is(true));
         assertThat(ElementMatchers.supportsModules().matches(null), is(false));
+    }
+
+    @Test
+    public void testClassFileVersionAtLeast() throws Exception {
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.getClassFileVersion()).thenReturn(ClassFileVersion.JAVA_V6);
+        assertThat(ElementMatchers.hasClassFileVersionAtLeast(ClassFileVersion.JAVA_V5).matches(typeDescription), is(true));
+        assertThat(ElementMatchers.hasClassFileVersionAtLeast(ClassFileVersion.JAVA_V6).matches(typeDescription), is(true));
+        assertThat(ElementMatchers.hasClassFileVersionAtLeast(ClassFileVersion.JAVA_V7).matches(typeDescription), is(false));
+    }
+
+    @Test
+    public void testClassFileVersionAtMost() throws Exception {
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.getClassFileVersion()).thenReturn(ClassFileVersion.JAVA_V6);
+        assertThat(ElementMatchers.hasClassFileVersionAtMost(ClassFileVersion.JAVA_V5).matches(typeDescription), is(false));
+        assertThat(ElementMatchers.hasClassFileVersionAtMost(ClassFileVersion.JAVA_V6).matches(typeDescription), is(true));
+        assertThat(ElementMatchers.hasClassFileVersionAtMost(ClassFileVersion.JAVA_V7).matches(typeDescription), is(true));
     }
 
     @Test(expected = UnsupportedOperationException.class)
