@@ -22,6 +22,7 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.StreamDrainer;
@@ -1839,6 +1840,48 @@ public interface ClassFileLocator extends Closeable {
             for (ClassFileLocator classFileLocator : classFileLocators.values()) {
                 classFileLocator.close();
             }
+        }
+    }
+
+    /**
+     * A class file locator that only applies for matched names.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    class Filtering implements ClassFileLocator {
+
+        /**
+         * The matcher to determine if the delegate matcher is considered.
+         */
+        private final ElementMatcher<? super String> matcher;
+
+        /**
+         * The delegate class file locator.
+         */
+        private final ClassFileLocator delegate;
+
+        /**
+         * Creates a new filtering class file locator.
+         *
+         * @param matcher  The matcher to determine if the delegate matcher is considered.
+         * @param delegate The delegate class file locator.
+         */
+        public Filtering(ElementMatcher<? super String> matcher, ClassFileLocator delegate) {
+            this.matcher = matcher;
+            this.delegate = delegate;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Resolution locate(String name) throws IOException {
+            return matcher.matches(name) ? delegate.locate(name) : new Resolution.Illegal(name);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void close() throws IOException {
+            delegate.close();
         }
     }
 
