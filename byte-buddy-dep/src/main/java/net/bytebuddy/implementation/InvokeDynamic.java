@@ -41,10 +41,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
-import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.JavaConstant;
-import net.bytebuddy.utility.JavaType;
-import net.bytebuddy.utility.RandomString;
+import net.bytebuddy.utility.*;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -603,13 +600,13 @@ public class InvokeDynamic implements Implementation.Composable {
      * constant pool and is loaded at invocation time. For this to be possible, the created class's class loader must
      * be able to create the provided Java instance.
      *
-     * @param javaConstant The Java instance to provide to the bound method as an argument.
+     * @param constant The constants to provide to the bound method as an argument.
      * @return This invoke dynamic implementation where the bootstrapped method is passed the specified Java instance.
      */
-    public InvokeDynamic withInstance(JavaConstant... javaConstant) {
-        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(javaConstant.length);
-        for (JavaConstant aJavaConstant : javaConstant) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForJavaConstant(aJavaConstant));
+    public InvokeDynamic withInstance(ConstantValue... constant) {
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(constant.length);
+        for (ConstantValue aConstant : constant) {
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForJavaConstant(aConstant));
         }
         return new InvokeDynamic(bootstrap,
                 arguments,
@@ -617,6 +614,18 @@ public class InvokeDynamic implements Implementation.Composable {
                 terminationHandler,
                 assigner,
                 typing);
+    }
+
+    /**
+     * Hands the provided Java instance to the dynamically bound method. The instance is stored in the generated class's
+     * constant pool and is loaded at invocation time. For this to be possible, the created class's class loader must
+     * be able to create the provided Java instance.
+     *
+     * @param constant The constants to provide to the bound method as an argument.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified Java instance.
+     */
+    public InvokeDynamic withInstance(JavaConstant... constant) {
+        return withInstance((ConstantValue[]) constant);
     }
 
     /**
@@ -2138,22 +2147,22 @@ public class InvokeDynamic implements Implementation.Composable {
                 /**
                  * The Java instance to provide to the bootstrapped method.
                  */
-                private final JavaConstant javaConstant;
+                private final ConstantValue constant;
 
                 /**
                  * Creates a new argument provider for the given Java instance.
                  *
-                 * @param javaConstant The Java instance to provide to the bootstrapped method.
+                 * @param constant The Java instance to provide to the bootstrapped method.
                  */
-                protected ForJavaConstant(JavaConstant javaConstant) {
-                    this.javaConstant = javaConstant;
+                protected ForJavaConstant(ConstantValue constant) {
+                    this.constant = constant;
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(new JavaConstantValue(javaConstant), javaConstant.getTypeDescription());
+                    return new Resolved.Simple(constant.toStackManipulation(), constant.getTypeDescription());
                 }
 
                 /**

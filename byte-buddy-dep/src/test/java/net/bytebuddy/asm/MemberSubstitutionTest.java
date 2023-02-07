@@ -781,7 +781,7 @@ public class MemberSubstitutionTest {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
                 .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(
-                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.Factory(0),
+                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading(0),
                         new MemberSubstitution.Substitution.Chain.Step.ForField.Read.Factory(new FieldDescription.ForLoadedField(FieldAccessSample.class.getDeclaredField("qux")))).on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -816,7 +816,7 @@ public class MemberSubstitutionTest {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
                 .visit(MemberSubstitution.strict().field(named(BAR)).replaceWithChain(
-                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.Factory(0),
+                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading(0),
                         new MemberSubstitution.Substitution.Chain.Step.ForField.Write.Factory(new FieldDescription.ForLoadedField(FieldAccessSample.class.getDeclaredField("baz")), 0)).on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -834,7 +834,7 @@ public class MemberSubstitutionTest {
         Class<?> type = new ByteBuddy()
                 .redefine(StaticFieldAccessSample.class)
                 .visit(MemberSubstitution.strict().field(named(BAR)).replaceWithChain(
-                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.Factory(0),
+                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading(0),
                         new MemberSubstitution.Substitution.Chain.Step.ForField.Write.Factory(new FieldDescription.ForLoadedField(StaticFieldAccessSample.class.getDeclaredField("baz")), 0)).on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -852,7 +852,7 @@ public class MemberSubstitutionTest {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)
                 .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(
-                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading.Factory(0),
+                        new MemberSubstitution.Substitution.Chain.Step.ForArgumentLoading(0),
                         new MemberSubstitution.Substitution.Chain.Step.ForInvocation.Factory(new MethodDescription.ForLoadedMethod(FieldAccessSample.class.getDeclaredMethod("baz")))).on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)

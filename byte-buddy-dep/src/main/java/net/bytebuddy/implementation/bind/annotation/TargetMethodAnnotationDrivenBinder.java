@@ -18,7 +18,6 @@ package net.bytebuddy.implementation.bind.annotation;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -29,9 +28,8 @@ import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.*;
-import net.bytebuddy.implementation.bytecode.member.FieldAccess;
+import net.bytebuddy.utility.ConstantValue;
 import net.bytebuddy.utility.JavaConstant;
-import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.nullability.MaybeNull;
 
 import java.lang.annotation.Annotation;
@@ -236,67 +234,12 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 Object value = bind(annotation, source, target);
                 if (value == null) {
                     return new ParameterBinding.Anonymous(DefaultValue.of(target.getType()));
-                }
-                StackManipulation stackManipulation;
-                TypeDescription suppliedType;
-                if (value instanceof Boolean) {
-                    stackManipulation = IntegerConstant.forValue((Boolean) value);
-                    suppliedType = TypeDescription.ForLoadedType.of(boolean.class);
-                } else if (value instanceof Byte) {
-                    stackManipulation = IntegerConstant.forValue((Byte) value);
-                    suppliedType = TypeDescription.ForLoadedType.of(byte.class);
-                } else if (value instanceof Short) {
-                    stackManipulation = IntegerConstant.forValue((Short) value);
-                    suppliedType = TypeDescription.ForLoadedType.of(short.class);
-                } else if (value instanceof Character) {
-                    stackManipulation = IntegerConstant.forValue((Character) value);
-                    suppliedType = TypeDescription.ForLoadedType.of(char.class);
-                } else if (value instanceof Integer) {
-                    stackManipulation = IntegerConstant.forValue((Integer) value);
-                    suppliedType = TypeDescription.ForLoadedType.of(int.class);
-                } else if (value instanceof Long) {
-                    stackManipulation = LongConstant.forValue((Long) value);
-                    suppliedType = TypeDescription.ForLoadedType.of(long.class);
-                } else if (value instanceof Float) {
-                    stackManipulation = FloatConstant.forValue((Float) value);
-                    suppliedType = TypeDescription.ForLoadedType.of(float.class);
-                } else if (value instanceof Double) {
-                    stackManipulation = DoubleConstant.forValue((Double) value);
-                    suppliedType = TypeDescription.ForLoadedType.of(double.class);
-                } else if (value instanceof String) {
-                    stackManipulation = new TextConstant((String) value);
-                    suppliedType = TypeDescription.ForLoadedType.of(String.class);
-                } else if (value instanceof Class) {
-                    stackManipulation = ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value));
-                    suppliedType = TypeDescription.ForLoadedType.of(Class.class);
-                } else if (value instanceof TypeDescription) {
-                    stackManipulation = ClassConstant.of((TypeDescription) value);
-                    suppliedType = TypeDescription.ForLoadedType.of(Class.class);
-                } else if (value instanceof Enum<?>) {
-                    stackManipulation = FieldAccess.forEnumeration(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
-                    suppliedType = TypeDescription.ForLoadedType.of(((Enum<?>) value).getDeclaringClass());
-                } else if (value instanceof EnumerationDescription) {
-                    stackManipulation = FieldAccess.forEnumeration((EnumerationDescription) value);
-                    suppliedType = ((EnumerationDescription) value).getEnumerationType();
-                } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
-                    stackManipulation = new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value));
-                    suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
-                } else if (value instanceof JavaConstant.MethodHandle) {
-                    stackManipulation = new JavaConstantValue((JavaConstant.MethodHandle) value);
-                    suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
-                } else if (JavaType.METHOD_TYPE.isInstance(value)) {
-                    stackManipulation = new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value));
-                    suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
-                } else if (value instanceof JavaConstant) {
-                    stackManipulation = new JavaConstantValue((JavaConstant) value);
-                    suppliedType = ((JavaConstant) value).getTypeDescription();
                 } else {
-                    throw new IllegalStateException("Not able to save in class's constant pool: " + value);
+                    ConstantValue constant = ConstantValue.Simple.wrap(value);
+                    return new ParameterBinding.Anonymous(new StackManipulation.Compound(
+                            constant.toStackManipulation(),
+                            assigner.assign(constant.getTypeDescription().asGenericType(), target.getType(), typing)));
                 }
-                return new ParameterBinding.Anonymous(new StackManipulation.Compound(
-                        stackManipulation,
-                        assigner.assign(suppliedType.asGenericType(), target.getType(), typing)
-                ));
             }
 
             /**

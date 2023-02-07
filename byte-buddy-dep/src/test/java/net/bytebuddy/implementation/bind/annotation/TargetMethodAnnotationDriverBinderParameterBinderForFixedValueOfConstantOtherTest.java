@@ -139,7 +139,7 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
                 .foo()), is(JavaConstant.MethodType.ofLoaded(loadedMethodType)));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testIllegalArgument() throws Exception {
         new ByteBuddy()
                 .subclass(Foo.class)

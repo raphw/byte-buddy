@@ -49,10 +49,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.JavaConstant;
-import net.bytebuddy.utility.JavaType;
-import net.bytebuddy.utility.OpenedClassReader;
+import net.bytebuddy.utility.*;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.visitor.ExceptionTableSensitiveMethodVisitor;
@@ -1300,44 +1297,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param value The constant value to represent or {@code null}.
                  * @return An appropriate target for an offset mapping.
                  */
-                public static Target of(Object value) {
-                    if (value == null) {
-                        return new ForStackManipulation(NullConstant.INSTANCE);
-                    } else if (value instanceof Boolean) {
-                        return new ForStackManipulation(IntegerConstant.forValue((Boolean) value));
-                    } else if (value instanceof Byte) {
-                        return new ForStackManipulation(IntegerConstant.forValue((Byte) value));
-                    } else if (value instanceof Short) {
-                        return new ForStackManipulation(IntegerConstant.forValue((Short) value));
-                    } else if (value instanceof Character) {
-                        return new ForStackManipulation(IntegerConstant.forValue((Character) value));
-                    } else if (value instanceof Integer) {
-                        return new ForStackManipulation(IntegerConstant.forValue((Integer) value));
-                    } else if (value instanceof Long) {
-                        return new ForStackManipulation(LongConstant.forValue((Long) value));
-                    } else if (value instanceof Float) {
-                        return new ForStackManipulation(FloatConstant.forValue((Float) value));
-                    } else if (value instanceof Double) {
-                        return new ForStackManipulation(DoubleConstant.forValue((Double) value));
-                    } else if (value instanceof String) {
-                        return new ForStackManipulation(new TextConstant((String) value));
-                    } else if (value instanceof Enum<?>) {
-                        return new ForStackManipulation(FieldAccess.forEnumeration(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value)));
-                    } else if (value instanceof EnumerationDescription) {
-                        return new ForStackManipulation(FieldAccess.forEnumeration((EnumerationDescription) value));
-                    } else if (value instanceof Class<?>) {
-                        return new ForStackManipulation(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)));
-                    } else if (value instanceof TypeDescription) {
-                        return new ForStackManipulation(ClassConstant.of((TypeDescription) value));
-                    } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
-                        return new ForStackManipulation(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)));
-                    } else if (JavaType.METHOD_TYPE.isInstance(value)) {
-                        return new ForStackManipulation(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)));
-                    } else if (value instanceof JavaConstant) {
-                        return new ForStackManipulation(new JavaConstantValue((JavaConstant) value));
-                    } else {
-                        throw new IllegalArgumentException("Not a constant value: " + value);
-                    }
+                public static Target of(@MaybeNull Object value) {
+                    return new ForStackManipulation(value == null
+                            ? NullConstant.INSTANCE
+                            : ConstantValue.Simple.wrap(value).toStackManipulation());
                 }
 
                 /**
@@ -2296,7 +2259,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected Target resolve(MethodDescription.InDefinedShape methodDescription) {
-                    return new Target.ForStackManipulation(new JavaConstantValue(JavaConstant.MethodHandle.of(methodDescription)));
+                    return new Target.ForStackManipulation(JavaConstant.MethodHandle.of(methodDescription).toStackManipulation());
                 }
             },
 
@@ -2311,7 +2274,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected Target resolve(MethodDescription.InDefinedShape methodDescription) {
-                    return new Target.ForStackManipulation(new JavaConstantValue(JavaConstant.MethodType.of(methodDescription)));
+                    return new Target.ForStackManipulation(JavaConstant.MethodType.of(methodDescription).toStackManipulation());
                 }
             };
 
@@ -3988,6 +3951,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 /**
+                 * Creates a new factory for binding a Java constant.
+                 *
+                 * @param annotationType The annotation type.
+                 * @param constant       The bound constant value.
+                 */
+                public Factory(Class<T> annotationType, ConstantValue constant) {
+                    this(annotationType, constant.toStackManipulation(), constant.getTypeDescription().asGenericType());
+                }
+
+                /**
                  * Creates a new factory for binding a stack manipulation.
                  *
                  * @param annotationType    The annotation type.
@@ -4009,64 +3982,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @return A factory for creating an offset mapping that binds the supplied value.
                  */
                 public static <S extends Annotation> OffsetMapping.Factory<S> of(Class<S> annotationType, @MaybeNull Object value) {
-                    StackManipulation stackManipulation;
-                    TypeDescription typeDescription;
-                    if (value == null) {
-                        return new OfDefaultValue<S>(annotationType);
-                    } else if (value instanceof Boolean) {
-                        stackManipulation = IntegerConstant.forValue((Boolean) value);
-                        typeDescription = TypeDescription.ForLoadedType.of(boolean.class);
-                    } else if (value instanceof Byte) {
-                        stackManipulation = IntegerConstant.forValue((Byte) value);
-                        typeDescription = TypeDescription.ForLoadedType.of(byte.class);
-                    } else if (value instanceof Short) {
-                        stackManipulation = IntegerConstant.forValue((Short) value);
-                        typeDescription = TypeDescription.ForLoadedType.of(short.class);
-                    } else if (value instanceof Character) {
-                        stackManipulation = IntegerConstant.forValue((Character) value);
-                        typeDescription = TypeDescription.ForLoadedType.of(char.class);
-                    } else if (value instanceof Integer) {
-                        stackManipulation = IntegerConstant.forValue((Integer) value);
-                        typeDescription = TypeDescription.ForLoadedType.of(int.class);
-                    } else if (value instanceof Long) {
-                        stackManipulation = LongConstant.forValue((Long) value);
-                        typeDescription = TypeDescription.ForLoadedType.of(long.class);
-                    } else if (value instanceof Float) {
-                        stackManipulation = FloatConstant.forValue((Float) value);
-                        typeDescription = TypeDescription.ForLoadedType.of(float.class);
-                    } else if (value instanceof Double) {
-                        stackManipulation = DoubleConstant.forValue((Double) value);
-                        typeDescription = TypeDescription.ForLoadedType.of(double.class);
-                    } else if (value instanceof String) {
-                        stackManipulation = new TextConstant((String) value);
-                        typeDescription = TypeDescription.ForLoadedType.of(String.class);
-                    } else if (value instanceof Class<?>) {
-                        stackManipulation = ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value));
-                        typeDescription = TypeDescription.ForLoadedType.of(Class.class);
-                    } else if (value instanceof TypeDescription) {
-                        stackManipulation = ClassConstant.of((TypeDescription) value);
-                        typeDescription = TypeDescription.ForLoadedType.of(Class.class);
-                    } else if (value instanceof Enum<?>) {
-                        stackManipulation = FieldAccess.forEnumeration(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
-                        typeDescription = TypeDescription.ForLoadedType.of(((Enum<?>) value).getDeclaringClass());
-                    } else if (value instanceof EnumerationDescription) {
-                        stackManipulation = FieldAccess.forEnumeration((EnumerationDescription) value);
-                        typeDescription = ((EnumerationDescription) value).getEnumerationType();
-                    } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
-                        JavaConstant constant = JavaConstant.MethodHandle.ofLoaded(value);
-                        stackManipulation = new JavaConstantValue(constant);
-                        typeDescription = constant.getTypeDescription();
-                    } else if (JavaType.METHOD_TYPE.isInstance(value)) {
-                        JavaConstant constant = JavaConstant.MethodType.ofLoaded(value);
-                        stackManipulation = new JavaConstantValue(constant);
-                        typeDescription = constant.getTypeDescription();
-                    } else if (value instanceof JavaConstant) {
-                        stackManipulation = new JavaConstantValue((JavaConstant) value);
-                        typeDescription = ((JavaConstant) value).getTypeDescription();
-                    } else {
-                        throw new IllegalStateException("Not a constant value: " + value);
-                    }
-                    return new Factory<S>(annotationType, stackManipulation, typeDescription.asGenericType());
+                    return value == null
+                            ? new OfDefaultValue<S>(annotationType)
+                            : new Factory<S>(annotationType, ConstantValue.Simple.wrap(value));
                 }
 
                 /**
@@ -14040,13 +13958,24 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Binds the supplied annotation to the given Java constant.
          *
-         * @param type         The type of the annotation being bound.
-         * @param javaConstant The Java constant that is bound.
-         * @param <T>          The annotation type.
+         * @param type     The type of the annotation being bound.
+         * @param constant The Java constant that is bound.
+         * @param <T>      The annotation type.
          * @return A new builder for an advice that considers the supplied annotation during binding.
          */
-        public <T extends Annotation> WithCustomMapping bind(Class<T> type, JavaConstant javaConstant) {
-            return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, new JavaConstantValue(javaConstant), javaConstant.getTypeDescription().asGenericType()));
+        public <T extends Annotation> WithCustomMapping bind(Class<T> type, JavaConstant constant) {
+            return bind(type, (ConstantValue) constant);
+        }
+        /**
+         * Binds the supplied annotation to the given Java constant.
+         *
+         * @param type     The type of the annotation being bound.
+         * @param constant The constant value that is bound.
+         * @param <T>      The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bind(Class<T> type, ConstantValue constant) {
+            return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, constant.toStackManipulation(), constant.getTypeDescription().asGenericType()));
         }
 
         /**

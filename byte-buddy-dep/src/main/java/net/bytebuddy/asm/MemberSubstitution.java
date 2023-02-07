@@ -31,7 +31,7 @@ import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.implementation.bytecode.constant.*;
+import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
@@ -39,8 +39,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.JavaConstant;
-import net.bytebuddy.utility.JavaType;
+import net.bytebuddy.utility.ConstantValue;
 import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.visitor.LocalVariableAwareMethodVisitor;
@@ -299,40 +298,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @return A member substitution that replaces any interaction with the supplied compile-time constant.
          */
         public MemberSubstitution replaceWithConstant(Object value) {
-            if (value instanceof JavaConstant) {
-                return replaceWith(new Substitution.ForValue(new JavaConstantValue((JavaConstant) value), ((JavaConstant) value).getTypeDescription().asGenericType()));
-            } else if (value instanceof TypeDescription) {
-                return replaceWith(new Substitution.ForValue(ClassConstant.of((TypeDescription) value), TypeDefinition.Sort.describe(Class.class)));
-            } else {
-                Class<?> type = value.getClass();
-                if (type == String.class) {
-                    return replaceWith(new Substitution.ForValue(new TextConstant((String) value), TypeDefinition.Sort.describe(String.class)));
-                } else if (type == Class.class) {
-                    return replaceWith(new Substitution.ForValue(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)), TypeDefinition.Sort.describe(Class.class)));
-                } else if (type == Boolean.class) {
-                    return replaceWith(new Substitution.ForValue(IntegerConstant.forValue((Boolean) value), TypeDefinition.Sort.describe(boolean.class)));
-                } else if (type == Byte.class) {
-                    return replaceWith(new Substitution.ForValue(IntegerConstant.forValue((Byte) value), TypeDefinition.Sort.describe(byte.class)));
-                } else if (type == Short.class) {
-                    return replaceWith(new Substitution.ForValue(IntegerConstant.forValue((Short) value), TypeDefinition.Sort.describe(short.class)));
-                } else if (type == Character.class) {
-                    return replaceWith(new Substitution.ForValue(IntegerConstant.forValue((Character) value), TypeDefinition.Sort.describe(char.class)));
-                } else if (type == Integer.class) {
-                    return replaceWith(new Substitution.ForValue(IntegerConstant.forValue((Integer) value), TypeDefinition.Sort.describe(int.class)));
-                } else if (type == Long.class) {
-                    return replaceWith(new Substitution.ForValue(LongConstant.forValue((Long) value), TypeDefinition.Sort.describe(long.class)));
-                } else if (type == Float.class) {
-                    return replaceWith(new Substitution.ForValue(FloatConstant.forValue((Float) value), TypeDefinition.Sort.describe(float.class)));
-                } else if (type == Double.class) {
-                    return replaceWith(new Substitution.ForValue(DoubleConstant.forValue((Double) value), TypeDefinition.Sort.describe(double.class)));
-                } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
-                    return replaceWith(new Substitution.ForValue(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)), TypeDefinition.Sort.describe(type)));
-                } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
-                    return replaceWith(new Substitution.ForValue(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)), TypeDefinition.Sort.describe(type)));
-                } else {
-                    throw new IllegalArgumentException("Not a constant value: " + value);
-                }
-            }
+            ConstantValue constant = ConstantValue.Simple.wrap(value);
+            return replaceWith(new Substitution.ForValue(constant.toStackManipulation(), constant.getTypeDescription().asGenericType()));
         }
 
         /**
@@ -1663,40 +1630,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @return An appropriate step factory.
                      */
                     public static Step.Factory of(Object value) {
-                        if (value instanceof JavaConstant) {
-                            return new Simple(new JavaConstantValue((JavaConstant) value), ((JavaConstant) value).getTypeDescription().asGenericType());
-                        } else if (value instanceof TypeDescription) {
-                            return new Simple(ClassConstant.of((TypeDescription) value), TypeDefinition.Sort.describe(Class.class));
-                        } else {
-                            Class<?> type = value.getClass();
-                            if (type == String.class) {
-                                return new Simple(new TextConstant((String) value), TypeDefinition.Sort.describe(String.class));
-                            } else if (type == Class.class) {
-                                return new Simple(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)), TypeDefinition.Sort.describe(Class.class));
-                            } else if (type == Boolean.class) {
-                                return new Simple(IntegerConstant.forValue((Boolean) value), TypeDefinition.Sort.describe(boolean.class));
-                            } else if (type == Byte.class) {
-                                return new Simple(IntegerConstant.forValue((Byte) value), TypeDefinition.Sort.describe(byte.class));
-                            } else if (type == Short.class) {
-                                return new Simple(IntegerConstant.forValue((Short) value), TypeDefinition.Sort.describe(short.class));
-                            } else if (type == Character.class) {
-                                return new Simple(IntegerConstant.forValue((Character) value), TypeDefinition.Sort.describe(char.class));
-                            } else if (type == Integer.class) {
-                                return new Simple(IntegerConstant.forValue((Integer) value), TypeDefinition.Sort.describe(int.class));
-                            } else if (type == Long.class) {
-                                return new Simple(LongConstant.forValue((Long) value), TypeDefinition.Sort.describe(long.class));
-                            } else if (type == Float.class) {
-                                return new Simple(FloatConstant.forValue((Float) value), TypeDefinition.Sort.describe(float.class));
-                            } else if (type == Double.class) {
-                                return new Simple(DoubleConstant.forValue((Double) value), TypeDefinition.Sort.describe(double.class));
-                            } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
-                                return new Simple(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)), TypeDefinition.Sort.describe(type));
-                            } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
-                                return new Simple(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)), TypeDefinition.Sort.describe(type));
-                            } else {
-                                throw new IllegalArgumentException("Not a constant value: " + value);
-                            }
-                        }
+                        ConstantValue constant = ConstantValue.Simple.wrap(value);
+                        return new Simple(constant.toStackManipulation(), constant.getTypeDescription().asGenericType());
                     }
 
                     /**
@@ -1798,40 +1733,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         if (index < 0) {
                             throw new IllegalArgumentException("Index cannot be negative: " + index);
                         }
-                        if (value instanceof JavaConstant) {
-                            return new Factory(new JavaConstantValue((JavaConstant) value), ((JavaConstant) value).getTypeDescription().asGenericType(), index);
-                        } else if (value instanceof TypeDescription) {
-                            return new Factory(ClassConstant.of((TypeDescription) value), TypeDefinition.Sort.describe(Class.class), index);
-                        } else {
-                            Class<?> type = value.getClass();
-                            if (type == String.class) {
-                                return new Factory(new TextConstant((String) value), TypeDefinition.Sort.describe(String.class), index);
-                            } else if (type == Class.class) {
-                                return new Factory(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)), TypeDefinition.Sort.describe(Class.class), index);
-                            } else if (type == Boolean.class) {
-                                return new Factory(IntegerConstant.forValue((Boolean) value), TypeDefinition.Sort.describe(boolean.class), index);
-                            } else if (type == Byte.class) {
-                                return new Factory(IntegerConstant.forValue((Byte) value), TypeDefinition.Sort.describe(byte.class), index);
-                            } else if (type == Short.class) {
-                                return new Factory(IntegerConstant.forValue((Short) value), TypeDefinition.Sort.describe(short.class), index);
-                            } else if (type == Character.class) {
-                                return new Factory(IntegerConstant.forValue((Character) value), TypeDefinition.Sort.describe(char.class), index);
-                            } else if (type == Integer.class) {
-                                return new Factory(IntegerConstant.forValue((Integer) value), TypeDefinition.Sort.describe(int.class), index);
-                            } else if (type == Long.class) {
-                                return new Factory(LongConstant.forValue((Long) value), TypeDefinition.Sort.describe(long.class), index);
-                            } else if (type == Float.class) {
-                                return new Factory(FloatConstant.forValue((Float) value), TypeDefinition.Sort.describe(float.class), index);
-                            } else if (type == Double.class) {
-                                return new Factory(DoubleConstant.forValue((Double) value), TypeDefinition.Sort.describe(double.class), index);
-                            } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
-                                return new Factory(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)), TypeDefinition.Sort.describe(type), index);
-                            } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
-                                return new Factory(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)), TypeDefinition.Sort.describe(type), index);
-                            } else {
-                                throw new IllegalArgumentException("Not a constant value: " + value);
-                            }
-                        }
+                        ConstantValue constant = ConstantValue.Simple.wrap(value);
+                        return new Factory(constant.toStackManipulation(), constant.getTypeDescription().asGenericType(), index);
                     }
 
                     /**
@@ -1905,7 +1808,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * A step that loads an argument to a method as the current chain value.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
-                class ForArgumentLoading implements Step {
+                class ForArgumentLoading implements Step, Factory {
 
                     /**
                      * The index of the argument to substitute.
@@ -1913,28 +1816,22 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     private final int index;
 
                     /**
-                     * The assigner to use for assigning the argument.
-                     */
-                    private final Assigner assigner;
-
-                    /**
-                     * The typing to use for the argument assignment.
-                     */
-                    private final Assigner.Typing typing;
-
-                    /**
                      * Creates an argument loading step.
                      *
                      * @param index    The index of the argument to load.
-                     * @param assigner The assigner to use for assigning the argument.
-                     * @param typing   The typing to use for the argument assignment.
                      */
-                    protected ForArgumentLoading(int index,
-                                                 Assigner assigner,
-                                                 Assigner.Typing typing) {
+                    protected ForArgumentLoading(int index) {
                         this.index = index;
-                        this.assigner = assigner;
-                        this.typing = typing;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Step make(Assigner assigner,
+                                     Assigner.Typing typing,
+                                     TypeDescription instrumentedType,
+                                     MethodDescription instrumentedMethod) {
+                        return this;
                     }
 
                     /**
@@ -1951,33 +1848,6 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         }
                         return new Simple(new StackManipulation.Compound(Removal.of(current),
                                 MethodVariableAccess.of(parameters.get(index)).loadFrom(offsets.get(index))), parameters.get(index));
-                    }
-
-
-                    /**
-                     * A factory to create an argument loading step.
-                     */
-                    @HashCodeAndEqualsPlugin.Enhance
-                    public static class Factory implements Step.Factory {
-
-                        /**
-                         * The index of the argument to load.
-                         */
-                        private final int index;
-
-                        public Factory(int index) {
-                            this.index = index;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public Step make(Assigner assigner,
-                                         Assigner.Typing typing,
-                                         TypeDescription instrumentedType,
-                                         MethodDescription instrumentedMethod) {
-                            return new ForArgumentLoading(index, assigner, typing);
-                        }
                     }
                 }
 
@@ -2600,7 +2470,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         enum InvocationType {
 
             /**
-             * Desribes a virtual method invocation.
+             * Describes a virtual method invocation.
              */
             VIRTUAL,
 
@@ -2619,7 +2489,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              *
              * @param opcode            The opcode that is used for invoking the method.
              * @param methodDescription The method that is being invoked.
-             * @return The invokation type for the method given that opcode.
+             * @return The invocation type for the method given that opcode.
              */
             protected static InvocationType of(int opcode, MethodDescription methodDescription) {
                 switch (opcode) {
@@ -2636,7 +2506,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
 
             /**
-             * Checks if this invokation type matches the specified inputs.
+             * Checks if this invocation type matches the specified inputs.
              *
              * @param includeVirtualCalls {@code true} if a virtual method should be matched.
              * @param includeSuperCalls   {@code true} if a super method call should be matched.
@@ -2660,7 +2530,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         enum NoOp implements Replacement, Factory {
 
             /**
-             * The singelton instance.
+             * The singleton instance.
              */
             INSTANCE;
 

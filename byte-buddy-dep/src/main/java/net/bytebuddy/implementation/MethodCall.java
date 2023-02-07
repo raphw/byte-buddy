@@ -39,10 +39,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.JavaConstant;
-import net.bytebuddy.utility.JavaType;
-import net.bytebuddy.utility.RandomString;
+import net.bytebuddy.utility.*;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -334,15 +331,26 @@ public class MethodCall implements Implementation.Composable {
      * Defines the given Java instances to be provided as arguments to the invoked method where the given
      * instances are stored in the generated class's constant pool.
      *
-     * @param javaConstant The Java instances to provide as arguments.
+     * @param constant The constants to provide as arguments.
      * @return A method call that hands the provided arguments to the invoked method.
      */
-    public MethodCall with(JavaConstant... javaConstant) {
-        List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(javaConstant.length);
-        for (JavaConstant aJavaConstant : javaConstant) {
-            argumentLoaders.add(new ArgumentLoader.ForStackManipulation(new JavaConstantValue(aJavaConstant), aJavaConstant.getTypeDescription()));
+    public MethodCall with(ConstantValue... constant) {
+        List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(constant.length);
+        for (ConstantValue aConstant : constant) {
+            argumentLoaders.add(new ArgumentLoader.ForStackManipulation(aConstant.toStackManipulation(), aConstant.getTypeDescription()));
         }
         return with(argumentLoaders);
+    }
+
+    /**
+     * Defines the given Java instances to be provided as arguments to the invoked method where the given
+     * instances are stored in the generated class's constant pool.
+     *
+     * @param constant The constants to provide as arguments.
+     * @return A method call that hands the provided arguments to the invoked method.
+     */
+    public MethodCall with(JavaConstant... constant) {
+        return with((ConstantValue[]) constant);
     }
 
     /**
@@ -1828,41 +1836,11 @@ public class MethodCall implements Implementation.Composable {
             public static ArgumentLoader.Factory of(@MaybeNull Object value) {
                 if (value == null) {
                     return ForNullConstant.INSTANCE;
-                } else if (value instanceof Boolean) {
-                    return new ForStackManipulation(IntegerConstant.forValue((Boolean) value), boolean.class);
-                } else if (value instanceof Byte) {
-                    return new ForStackManipulation(IntegerConstant.forValue((Byte) value), byte.class);
-                } else if (value instanceof Short) {
-                    return new ForStackManipulation(IntegerConstant.forValue((Short) value), short.class);
-                } else if (value instanceof Character) {
-                    return new ForStackManipulation(IntegerConstant.forValue((Character) value), char.class);
-                } else if (value instanceof Integer) {
-                    return new ForStackManipulation(IntegerConstant.forValue((Integer) value), int.class);
-                } else if (value instanceof Long) {
-                    return new ForStackManipulation(LongConstant.forValue((Long) value), long.class);
-                } else if (value instanceof Float) {
-                    return new ForStackManipulation(FloatConstant.forValue((Float) value), float.class);
-                } else if (value instanceof Double) {
-                    return new ForStackManipulation(DoubleConstant.forValue((Double) value), double.class);
-                } else if (value instanceof String) {
-                    return new ForStackManipulation(new TextConstant((String) value), String.class);
-                } else if (value instanceof Class) {
-                    return new ForStackManipulation(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)), Class.class);
-                } else if (value instanceof TypeDescription) {
-                    return new ForStackManipulation(ClassConstant.of((TypeDescription) value), Class.class);
-                } else if (value instanceof Enum<?>) {
-                    EnumerationDescription enumerationDescription = new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value);
-                    return new ForStackManipulation(FieldAccess.forEnumeration(enumerationDescription), enumerationDescription.getEnumerationType());
-                } else if (value instanceof EnumerationDescription) {
-                    return new ForStackManipulation(FieldAccess.forEnumeration((EnumerationDescription) value), ((EnumerationDescription) value).getEnumerationType());
-                } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
-                    return new ForStackManipulation(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)), JavaType.METHOD_HANDLE.getTypeStub());
-                } else if (JavaType.METHOD_TYPE.isInstance(value)) {
-                    return new ForStackManipulation(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)), JavaType.METHOD_TYPE.getTypeStub());
-                } else if (value instanceof JavaConstant) {
-                    return new ForStackManipulation(new JavaConstantValue((JavaConstant) value), ((JavaConstant) value).getTypeDescription());
                 } else {
-                    return new ForInstance.Factory(value);
+                    ConstantValue constant = ConstantValue.Simple.wrapOrNull(value);
+                    return constant == null
+                            ? new ForInstance.Factory(value)
+                            : new ForStackManipulation(constant.toStackManipulation(), constant.getTypeDescription());
                 }
             }
 

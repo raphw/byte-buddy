@@ -29,8 +29,8 @@ import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.utility.ConstantValue;
 import net.bytebuddy.utility.JavaConstant;
-import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
@@ -461,6 +461,19 @@ public abstract class FieldAccessor implements Implementation {
          * @param constant The constant to set as a value.
          * @return An instrumentation that sets the field's value to the given constant.
          */
+        Composable setsValue(ConstantValue constant);
+
+        /**
+         * <p>
+         * Defines a setter of a given constant value for the described field.
+         * </p>
+         * <p>
+         * <b>Note</b>: If the instrumented method does not return {@code void}, a chained instrumentation must be supplied.
+         * </p>
+         *
+         * @param constant The constant to set as a value.
+         * @return An instrumentation that sets the field's value to the given constant.
+         */
         Composable setsValue(JavaConstant constant);
 
         /**
@@ -688,34 +701,10 @@ public abstract class FieldAccessor implements Implementation {
             if (value == null) {
                 return setsDefaultValue();
             }
-            Class<?> type = value.getClass();
-            if (type == String.class) {
-                return setsValue(new TextConstant((String) value), String.class);
-            } else if (type == Class.class) {
-                return setsValue(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)), Class.class);
-            } else if (type == Boolean.class) {
-                return setsValue(IntegerConstant.forValue((Boolean) value), boolean.class);
-            } else if (type == Byte.class) {
-                return setsValue(IntegerConstant.forValue((Byte) value), byte.class);
-            } else if (type == Short.class) {
-                return setsValue(IntegerConstant.forValue((Short) value), short.class);
-            } else if (type == Character.class) {
-                return setsValue(IntegerConstant.forValue((Character) value), char.class);
-            } else if (type == Integer.class) {
-                return setsValue(IntegerConstant.forValue((Integer) value), int.class);
-            } else if (type == Long.class) {
-                return setsValue(LongConstant.forValue((Long) value), long.class);
-            } else if (type == Float.class) {
-                return setsValue(FloatConstant.forValue((Float) value), float.class);
-            } else if (type == Double.class) {
-                return setsValue(DoubleConstant.forValue((Double) value), double.class);
-            } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
-                return setsValue(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)), type);
-            } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
-                return setsValue(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)), type);
-            } else {
-                return setsReference(value);
-            }
+            ConstantValue constant = ConstantValue.Simple.wrapOrNull(value);
+            return constant == null
+                    ? setsReference(value)
+                    : setsValue(constant.toStackManipulation(), constant.getTypeDescription().asGenericType());
         }
 
         /**
@@ -728,8 +717,15 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * {@inheritDoc}
          */
+        public Composable setsValue(ConstantValue constant) {
+            return setsValue(constant.toStackManipulation(), constant.getTypeDescription().asGenericType());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public Composable setsValue(JavaConstant constant) {
-            return setsValue(new JavaConstantValue(constant), constant.getTypeDescription().asGenericType());
+            return setsValue((ConstantValue) constant);
         }
 
         /**

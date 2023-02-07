@@ -19,6 +19,7 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.utility.ConstantValue;
 import net.bytebuddy.utility.JavaConstant;
 import org.objectweb.asm.ConstantDynamic;
 import org.objectweb.asm.Handle;
@@ -26,7 +27,9 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
 /**
- * A constant representing a {@link JavaConstant}.
+ * A constant representing a {@link JavaConstant}. By using this stack manipulation, a value is always
+ * represented as a constant pool value and no attempt is made to load the value via a specialized byte
+ * code instruction, in contrast to using {@link ConstantValue#toStackManipulation()}.
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class JavaConstantValue extends StackManipulation.AbstractBase {

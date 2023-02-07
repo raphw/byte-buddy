@@ -1677,7 +1677,7 @@ public class AdviceTest {
         assertThat(sample.getField(FOO).get(sample.getConstructor().newInstance()), is((Object) FOO));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testUserSerializableTypeValueNonAssignable() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
@@ -1685,7 +1685,7 @@ public class AdviceTest {
                 .make();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testIllegalUserValue() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
@@ -1717,7 +1717,7 @@ public class AdviceTest {
                 .make();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testNonAssignableSerializableValue() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)

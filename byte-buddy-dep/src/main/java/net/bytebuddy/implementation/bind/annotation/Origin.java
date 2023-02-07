@@ -181,9 +181,9 @@ public @interface Origin {
             } else if (parameterType.represents(int.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(IntegerConstant.forValue(source.getModifiers()));
             } else if (parameterType.equals(JavaType.METHOD_HANDLE.getTypeStub())) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(new JavaConstantValue(JavaConstant.MethodHandle.of(source.asDefined())));
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(JavaConstant.MethodHandle.of(source.asDefined()).toStackManipulation());
             } else if (parameterType.equals(JavaType.METHOD_TYPE.getTypeStub())) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(new JavaConstantValue(JavaConstant.MethodType.of(source.asDefined())));
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(JavaConstant.MethodType.of(source.asDefined()).toStackManipulation());
             } else if (parameterType.equals(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub())) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodInvocation.lookup());
             } else {

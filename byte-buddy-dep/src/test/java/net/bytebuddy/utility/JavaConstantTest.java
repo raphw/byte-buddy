@@ -19,7 +19,7 @@ public class JavaConstantTest {
     public MethodRule mockitoRule = MockitoJUnit.rule().silent();
 
     @Mock
-    private JavaConstant.Visitor<?> visitor;
+    private JavaConstant.Visitor<Object> visitor;
 
     @Mock
     private Object value;

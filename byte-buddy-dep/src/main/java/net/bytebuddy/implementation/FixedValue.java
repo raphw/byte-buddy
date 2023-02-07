@@ -28,8 +28,8 @@ import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.utility.ConstantValue;
 import net.bytebuddy.utility.JavaConstant;
-import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -90,40 +90,10 @@ public abstract class FixedValue implements Implementation {
      * @see #nullValue()
      */
     public static AssignerConfigurable value(Object value) {
-        if (value instanceof JavaConstant) {
-            return value((JavaConstant) value);
-        } else if (value instanceof TypeDescription) {
-            return value((TypeDescription) value);
-        } else {
-            Class<?> type = value.getClass();
-            if (type == String.class) {
-                return new ForPoolValue(new TextConstant((String) value), TypeDescription.ForLoadedType.of(String.class));
-            } else if (type == Class.class) {
-                return new ForPoolValue(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)), TypeDescription.ForLoadedType.of(Class.class));
-            } else if (type == Boolean.class) {
-                return new ForPoolValue(IntegerConstant.forValue((Boolean) value), boolean.class);
-            } else if (type == Byte.class) {
-                return new ForPoolValue(IntegerConstant.forValue((Byte) value), byte.class);
-            } else if (type == Short.class) {
-                return new ForPoolValue(IntegerConstant.forValue((Short) value), short.class);
-            } else if (type == Character.class) {
-                return new ForPoolValue(IntegerConstant.forValue((Character) value), char.class);
-            } else if (type == Integer.class) {
-                return new ForPoolValue(IntegerConstant.forValue((Integer) value), int.class);
-            } else if (type == Long.class) {
-                return new ForPoolValue(LongConstant.forValue((Long) value), long.class);
-            } else if (type == Float.class) {
-                return new ForPoolValue(FloatConstant.forValue((Float) value), float.class);
-            } else if (type == Double.class) {
-                return new ForPoolValue(DoubleConstant.forValue((Double) value), double.class);
-            } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
-                return new ForPoolValue(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)), type);
-            } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
-                return new ForPoolValue(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)), type);
-            } else {
-                return reference(value);
-            }
-        }
+        ConstantValue constant = ConstantValue.Simple.wrapOrNull(value);
+        return constant == null
+                ? reference(value)
+                : new ForConstantValue(constant.toStackManipulation(), constant.getTypeDescription());
     }
 
     /**
@@ -161,7 +131,17 @@ public abstract class FixedValue implements Implementation {
      * @return An implementation for the given {@code value}.
      */
     public static AssignerConfigurable value(TypeDescription type) {
-        return new ForPoolValue(ClassConstant.of(type), TypeDescription.ForLoadedType.of(Class.class));
+        return new ForConstantValue(ClassConstant.of(type), TypeDescription.ForLoadedType.of(Class.class));
+    }
+
+    /**
+     * Returns the loaded version of the given {@link JavaConstant}. The value is loaded from the written class's constant pool.
+     *
+     * @param constant The type to return from the method.
+     * @return An implementation for the given {@code value}.
+     */
+    public static AssignerConfigurable value(ConstantValue constant) {
+        return new ForConstantValue(constant.toStackManipulation(), constant.getTypeDescription());
     }
 
     /**
@@ -171,7 +151,7 @@ public abstract class FixedValue implements Implementation {
      * @return An implementation for the given {@code value}.
      */
     public static AssignerConfigurable value(JavaConstant constant) {
-        return new ForPoolValue(new JavaConstantValue(constant), constant.getTypeDescription());
+        return value((ConstantValue) constant);
     }
 
     /**
@@ -527,11 +507,10 @@ public abstract class FixedValue implements Implementation {
     }
 
     /**
-     * A fixed value implementation that represents its fixed value as a value that is written to the instrumented
-     * class's constant pool.
+     * A fixed value implementation that represents its fixed value as a constant pool value or a byte code instruction.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class ForPoolValue extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
+    protected static class ForConstantValue extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
 
         /**
          * The stack manipulation which is responsible for loading the fixed value onto the operand stack.
@@ -550,7 +529,7 @@ public abstract class FixedValue implements Implementation {
          *                             operand stack.
          * @param loadedType           A type description representing the loaded type.
          */
-        protected ForPoolValue(StackManipulation valueLoadInstruction, Class<?> loadedType) {
+        protected ForConstantValue(StackManipulation valueLoadInstruction, Class<?> loadedType) {
             this(valueLoadInstruction, TypeDescription.ForLoadedType.of(loadedType));
         }
 
@@ -561,7 +540,7 @@ public abstract class FixedValue implements Implementation {
          *                             operand stack.
          * @param loadedType           A type description representing the loaded type.
          */
-        protected ForPoolValue(StackManipulation valueLoadInstruction, TypeDescription loadedType) {
+        protected ForConstantValue(StackManipulation valueLoadInstruction, TypeDescription loadedType) {
             this(Assigner.DEFAULT, Assigner.Typing.STATIC, valueLoadInstruction, loadedType);
         }
 
@@ -575,7 +554,7 @@ public abstract class FixedValue implements Implementation {
          *                             instrumented value.
          * @param typing               Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
-        private ForPoolValue(Assigner assigner, Assigner.Typing typing, StackManipulation valueLoadInstruction, TypeDescription loadedType) {
+        private ForConstantValue(Assigner assigner, Assigner.Typing typing, StackManipulation valueLoadInstruction, TypeDescription loadedType) {
             super(assigner, typing);
             this.valueLoadInstruction = valueLoadInstruction;
             this.loadedType = loadedType;
@@ -585,7 +564,7 @@ public abstract class FixedValue implements Implementation {
          * {@inheritDoc}
          */
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return new ForPoolValue(assigner, typing, valueLoadInstruction, loadedType);
+            return new ForConstantValue(assigner, typing, valueLoadInstruction, loadedType);
         }
 
         /**
