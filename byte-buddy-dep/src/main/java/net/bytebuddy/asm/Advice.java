@@ -12913,8 +12913,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         /**
          * <p>
-         * Assigns the advice method's return value to the instrumented method's return value. This annotation can only be used
-         * with exit advice marked with {@link OnMethodExit}.
+         * Assigns the advice method's return value as the instrumented method's thrown exception. This annotation can only be used
+         * with exit advice marked with {@link OnMethodExit}. Note that a {@code null} value deactivates this handler and does not
+         * remove the exception that is thrown from a method.
          * </p>
          * <p>
          * <b>Important</b>: This annotation has no effect unless an {@link AssignReturned} post processor is explicitly registered.
