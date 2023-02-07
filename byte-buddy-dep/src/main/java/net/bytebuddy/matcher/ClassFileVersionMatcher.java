@@ -18,7 +18,6 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.utility.nullability.UnknownNull;
 
 /**
  * A matcher to consider if a class file version reaches a given boundary.
@@ -26,7 +25,7 @@ import net.bytebuddy.utility.nullability.UnknownNull;
  * @param <T> The exact type of the type description that is matched.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class ClassFileVersionMatcher<T extends TypeDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class ClassFileVersionMatcher<T extends TypeDescription> extends ElementMatcher.Junction.ForNonNullValues<T> {
 
     /**
      * The targeted class file version.
@@ -49,10 +48,8 @@ public class ClassFileVersionMatcher<T extends TypeDescription> extends ElementM
         this.atMost = atMost;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public boolean matches(@UnknownNull T target) {
+    @Override
+    protected boolean doMatch(T target) {
         ClassFileVersion classFileVersion = target.getClassFileVersion();
         return classFileVersion != null && (atMost ? classFileVersion.isAtMost(this.classFileVersion) : classFileVersion.isAtLeast(this.classFileVersion));
     }
