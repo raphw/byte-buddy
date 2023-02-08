@@ -777,6 +777,18 @@ public class MemberSubstitutionTest {
     }
 
     @Test
+    public void testSubstitutionChainConstructionOriginal() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ConstructorSubstitutionSample.class)
+                .visit(MemberSubstitution.strict().constructor(isDeclaredBy(Object.class)).replaceWithChain(MemberSubstitution.Substitution.Chain.Step.OfOriginalExpression.INSTANCE).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), instanceOf(Object.class));
+    }
+
+    @Test
     public void testSubstitutionChainFieldRead() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldAccessSample.class)

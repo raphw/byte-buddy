@@ -1470,7 +1470,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     stackManipulations.add(resolution.getStackManipulation());
                     current = resolution.getResultType();
                 }
-                stackManipulations.add(assigner.assign(current, result, typing));
+                StackManipulation assignment = assigner.assign(current, result, typing);
+                if (!assignment.isValid()) {
+                    throw new IllegalStateException("Failed to assign " + current + " to " + result);
+                }
+                stackManipulations.add(assignment);
                 return new StackManipulation.Compound(stackManipulations);
             }
 
@@ -1556,14 +1560,24 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
                                               int freeOffset) {
-                        List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size() + 2);
-                        stackManipulations.add(Removal.of(current));
+                        List<StackManipulation> stackManipulations;
+                        if (target instanceof MethodDescription && ((MethodDescription) target).isConstructor()) {
+                            stackManipulations = new ArrayList<StackManipulation>(parameters.size() + 4);
+                            stackManipulations.add(Removal.of(current));
+                            stackManipulations.add(TypeCreation.of(((MethodDescription) target).getDeclaringType().asErasure()));
+                            stackManipulations.add(Duplication.SINGLE);
+                        } else {
+                            stackManipulations = new ArrayList<StackManipulation>(parameters.size() + 4);
+                            stackManipulations.add(Removal.of(current));
+                        }
                         for (int index = 0; index < parameters.size(); index++) {
                             stackManipulations.add(MethodVariableAccess.of(parameters.get(index)).loadFrom(offsets.get(index)));
                         }
                         if (target instanceof MethodDescription) {
                             stackManipulations.add(MethodInvocation.invoke((MethodDescription) target));
-                            return new Simple(new StackManipulation.Compound(stackManipulations), ((MethodDescription) target).getReturnType());
+                            return new Simple(new StackManipulation.Compound(stackManipulations), ((MethodDescription) target).isConstructor()
+                                    ? ((MethodDescription) target).getDeclaringType().asGenericType()
+                                    : ((MethodDescription) target).getReturnType());
                         } else if (target instanceof FieldDescription) {
                             if (((FieldDescription) target).isStatic()) {
                                 if (parameters.isEmpty()) {
@@ -1818,7 +1832,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * Creates an argument loading step.
                      *
-                     * @param index    The index of the argument to load.
+                     * @param index The index of the argument to load.
                      */
                     protected ForArgumentLoading(int index) {
                         this.index = index;
