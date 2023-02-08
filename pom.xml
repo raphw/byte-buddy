@@ -1134,8 +1134,7 @@
                                         <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
                                         <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
                                         <excludes>
-                                            <exclude>net.bytebuddy.agent.builder.AgentBuilder$Default$ExecutingTransformer$Factory$ForJava9CapableVm</exclude>
-                                            <exclude>net.bytebuddy.agent.builder.AgentBuilder$Default$ExecutingTransformer$Factory$ForLegacyVm</exclude>
+                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Substitution$Chain$Step$ForArgumentLoading$Factory</exclude>
                                         </excludes>
                                     </parameter>
                                 </configuration>
