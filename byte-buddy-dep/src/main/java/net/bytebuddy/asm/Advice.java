@@ -12987,9 +12987,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  ArgumentHandler argumentHandler,
                                                  TypeDescription.Generic type,
                                                  StackManipulation value) {
-                    if (instrumentedMethod.getReturnType().represents(void.class)) {
-                        return StackManipulation.Trivial.INSTANCE;
-                    }
                     StackManipulation assignment = assigner.assign(type, TypeDefinition.Sort.describe(Throwable.class), typing);
                     if (!assignment.isValid()) {
                         throw new IllegalStateException("Cannot assign " + type + " to " + Throwable.class.getName());
