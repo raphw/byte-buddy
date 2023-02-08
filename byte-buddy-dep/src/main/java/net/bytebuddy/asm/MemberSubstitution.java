@@ -820,6 +820,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param target     The target field, method or constructor that is substituted.
          * @param parameters All parameters that serve as input to this access.
          * @param result     The result that is expected from the interaction or {@code void} if no result is expected.
+         * @param original   The original byte code expression that is being executed.
          * @param freeOffset The first free offset of the local variable array that can be used for storing values.
          * @return A stack manipulation that represents the access.
          */
@@ -827,6 +828,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                   ByteCodeElement target,
                                   TypeList.Generic parameters,
                                   TypeDescription.Generic result,
+                                  StackManipulation original,
                                   int freeOffset);
 
         /**
@@ -869,6 +871,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                              ByteCodeElement target,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
+                                             StackManipulation original,
                                              int freeOffset) {
                 List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size());
                 for (int index = parameters.size() - 1; index >= 0; index--) {
@@ -919,6 +922,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                              ByteCodeElement target,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
+                                             StackManipulation original,
                                              int freeOffset) {
                 List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size());
                 for (int index = parameters.size() - 1; index >= 0; index--) {
@@ -966,6 +970,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                              ByteCodeElement target,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
+                                             StackManipulation original,
                                              int freeOffset) {
                 FieldDescription fieldDescription = fieldResolver.resolve(targetType, target, parameters, result);
                 if (!fieldDescription.isAccessibleTo(instrumentedType)) {
@@ -1182,6 +1187,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                              ByteCodeElement target,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
+                                             StackManipulation original,
                                              int freeOffset) {
                 MethodDescription methodDescription = methodResolver.resolve(targetType, target, parameters, result);
                 if (!methodDescription.isAccessibleTo(instrumentedType)) {
@@ -1449,6 +1455,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                              ByteCodeElement target,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
+                                             StackManipulation original,
                                              int freeOffset) {
                 List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(1
                         + parameters.size()
@@ -1466,6 +1473,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     Step.Resolution resolution = step.resolve(targetType,
                             target,
                             parameters,
+                            original,
                             current,
                             offsets,
                             freeOffset);
@@ -1491,6 +1499,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param targetType The target result type of the substitution.
                  * @param target     The byte code element that is currently substituted.
                  * @param parameters The parameters of the substituted element.
+                 * @param original   The original byte code instruction that is being substituted.
                  * @param current    The current type of the applied substitution that is the top element on the operand stack.
                  * @param offsets    The arguments of the substituted byte code element mapped to their local variable offsets.
                  * @param freeOffset The first free offset in the local variable array.
@@ -1499,6 +1508,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 Resolution resolve(TypeDescription targetType,
                                    ByteCodeElement target,
                                    TypeList.Generic parameters,
+                                   StackManipulation original,
                                    TypeDescription.Generic current,
                                    Map<Integer, Integer> offsets,
                                    int freeOffset);
@@ -1559,6 +1569,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     public Resolution resolve(TypeDescription targetType,
                                               ByteCodeElement target,
                                               TypeList.Generic parameters,
+                                              StackManipulation original,
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
                                               int freeOffset) {
@@ -1576,17 +1587,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             stackManipulations.add(MethodVariableAccess.of(parameters.get(index)).loadFrom(offsets.get(index)));
                         }
                         if (target instanceof MethodDescription) {
-                            stackManipulations.add(MethodInvocation.invoke((MethodDescription) target));
+                            stackManipulations.add(original);
                             return new Simple(new StackManipulation.Compound(stackManipulations), ((MethodDescription) target).isConstructor()
                                     ? ((MethodDescription) target).getDeclaringType().asGenericType()
                                     : ((MethodDescription) target).getReturnType());
                         } else if (target instanceof FieldDescription) {
                             if (((FieldDescription) target).isStatic()) {
                                 if (parameters.isEmpty()) {
-                                    stackManipulations.add(FieldAccess.forField((FieldDescription) target).read());
+                                    stackManipulations.add(original);
                                     return new Simple(new StackManipulation.Compound(stackManipulations), ((FieldDescription) target).getType());
                                 } else /* if (parameters.size() == 1) */ {
-                                    stackManipulations.add(FieldAccess.forField((FieldDescription) target).write());
+                                    stackManipulations.add(original);
                                     return new Simple(new StackManipulation.Compound(stackManipulations), TypeDefinition.Sort.describe(void.class));
                                 }
                             } else {
@@ -1663,6 +1674,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     public Resolution resolve(TypeDescription targetType,
                                               ByteCodeElement target,
                                               TypeList.Generic parameters,
+                                              StackManipulation original,
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
                                               int freeOffset) {
@@ -1759,6 +1771,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     public Resolution resolve(TypeDescription targetType,
                                               ByteCodeElement target,
                                               TypeList.Generic parameters,
+                                              StackManipulation original,
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
                                               int freeOffset) {
@@ -1856,6 +1869,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     public Resolution resolve(TypeDescription targetType,
                                               ByteCodeElement target,
                                               TypeList.Generic parameters,
+                                              StackManipulation original,
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
                                               int freeOffset) {
@@ -1908,6 +1922,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     public Resolution resolve(TypeDescription targetType,
                                               ByteCodeElement target,
                                               TypeList.Generic parameters,
+                                              StackManipulation original,
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
                                               int freeOffset) {
@@ -2126,6 +2141,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     public Resolution resolve(TypeDescription targetType,
                                               ByteCodeElement target,
                                               TypeList.Generic parameters,
+                                              StackManipulation original,
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
                                               int freeOffset) {
@@ -2334,10 +2350,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              *
              * @param parameters The parameters that are accessible to the substitution target.
              * @param result     The result that is expected from the substitution target or {@code void} if none is expected.
+             * @param original   The original byte code expression that is being substituted.
              * @param freeOffset The first offset that can be used for storing local variables.
              * @return A stack manipulation that represents the replacement.
              */
-            StackManipulation make(TypeList.Generic parameters, TypeDescription.Generic result, int freeOffset);
+            StackManipulation make(TypeList.Generic parameters,
+                                   TypeDescription.Generic result,
+                                   StackManipulation original,
+                                   int freeOffset);
 
             /**
              * An unresolved binding.
@@ -2359,7 +2379,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * {@inheritDoc}
                  */
-                public StackManipulation make(TypeList.Generic parameters, TypeDescription.Generic result, int freeOffset) {
+                public StackManipulation make(TypeList.Generic parameters,
+                                              TypeDescription.Generic result,
+                                              StackManipulation original,
+                                              int freeOffset) {
                     throw new IllegalStateException("Cannot resolve unresolved binding");
                 }
             }
@@ -2410,8 +2433,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * {@inheritDoc}
                  */
-                public StackManipulation make(TypeList.Generic parameters, TypeDescription.Generic result, int freeOffset) {
-                    return substitution.resolve(targetType, target, parameters, result, freeOffset);
+                public StackManipulation make(TypeList.Generic parameters,
+                                              TypeDescription.Generic result,
+                                              StackManipulation original,
+                                              int freeOffset) {
+                    return substitution.resolve(targetType, target, parameters, result, original, freeOffset);
                 }
             }
         }
@@ -2958,27 +2984,35 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     if (binding.isBound()) {
                         TypeList.Generic parameters;
                         TypeDescription.Generic result;
+                        boolean read;
                         switch (opcode) {
                             case Opcodes.PUTFIELD:
                                 parameters = new TypeList.Generic.Explicit(candidates.getOnly().getDeclaringType(), candidates.getOnly().getType());
                                 result = TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class);
+                                read = false;
                                 break;
                             case Opcodes.PUTSTATIC:
                                 parameters = new TypeList.Generic.Explicit(candidates.getOnly().getType());
                                 result = TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class);
+                                read = false;
                                 break;
                             case Opcodes.GETFIELD:
                                 parameters = new TypeList.Generic.Explicit(candidates.getOnly().getDeclaringType());
                                 result = candidates.getOnly().getType();
+                                read = true;
                                 break;
                             case Opcodes.GETSTATIC:
                                 parameters = new TypeList.Generic.Empty();
                                 result = candidates.getOnly().getType();
+                                read = true;
                                 break;
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
-                        stackSizeBuffer = Math.max(stackSizeBuffer, binding.make(parameters, result, getFreeOffset())
+                        stackSizeBuffer = Math.max(stackSizeBuffer, binding.make(parameters,
+                                        result,
+                                        read ? FieldAccess.forField(candidates.getOnly()).read() : FieldAccess.forField(candidates.getOnly()).write(),
+                                        getFreeOffset())
                                 .apply(new LocalVariableTracingMethodVisitor(mv), implementationContext)
                                 .getMaximalSize() - result.getStackSize().getSize());
                         return;
@@ -3034,6 +3068,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                         candidates.getOnly().isConstructor()
                                                 ? candidates.getOnly().getDeclaringType().asGenericType()
                                                 : candidates.getOnly().getReturnType(),
+                                        opcode == Opcodes.INVOKESPECIAL && candidates.getOnly().isMethod() && !candidates.getOnly().isPrivate()
+                                                ? MethodInvocation.invoke(candidates.getOnly()).special(resolution.resolve())
+                                                : MethodInvocation.invoke(candidates.getOnly()),
                                         getFreeOffset())
                                 .apply(new LocalVariableTracingMethodVisitor(mv), implementationContext).getMaximalSize() - (candidates.getOnly().isConstructor()
                                 ? StackSize.SINGLE

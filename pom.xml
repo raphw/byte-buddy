@@ -4,7 +4,7 @@
 
     <groupId>net.bytebuddy</groupId>
     <artifactId>byte-buddy-parent</artifactId>
-    <version>1.12.24-SNAPSHOT</version>
+    <version>1.13.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -1134,6 +1134,11 @@
                                         <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
                                         <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
                                         <excludes>
+                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$Binding</exclude>
+                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Substitution</exclude>
+                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Substitution$Chain$Step</exclude>
+                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Substitution$Chain$Step$ForField$Read</exclude>
+                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Substitution$Chain$Step$ForField$Write</exclude>
                                             <exclude>net.bytebuddy.asm.MemberSubstitution$Substitution$Chain$Step$ForArgumentLoading$Factory</exclude>
                                         </excludes>
                                     </parameter>
