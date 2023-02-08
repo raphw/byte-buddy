@@ -761,7 +761,7 @@ public class MemberSubstitutionTest {
     }
 
     @Test
-    public void testSubstitutionChainMethodInvocationOriginal() throws Exception {
+    public void testSubstitutionChainVirtualMethodInvocationOriginal() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(MethodInvokeSample.class)
                 .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(MemberSubstitution.Substitution.Chain.Step.OfOriginalExpression.INSTANCE).on(named(RUN)))
@@ -774,6 +774,35 @@ public class MemberSubstitutionTest {
         assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
         assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
         assertThat(type.getDeclaredField(BAR).get(instance), is((Object) FOO));
+    }
+
+    @Test
+    public void testSubstitutionChainStaticMethodInvocationOriginal() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(StaticMethodInvokeSample.class)
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(MemberSubstitution.Substitution.Chain.Step.OfOriginalExpression.INSTANCE).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(null), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(null), is((Object) BAR));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(null), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(null), is((Object) FOO));
+    }
+
+    @Test
+    public void testSubstitutionChainSpecialMethodInvocationOriginal() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(VirtualMethodCallSubstitutionSample.Extension.class)
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(MemberSubstitution.Substitution.Chain.Step.OfOriginalExpression.INSTANCE).on(named(RUN)))
+                .make()
+                .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileLocator.ForClassLoader.readToNames(VirtualMethodCallSubstitutionSample.class)),
+                        ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) 3));
     }
 
     @Test
