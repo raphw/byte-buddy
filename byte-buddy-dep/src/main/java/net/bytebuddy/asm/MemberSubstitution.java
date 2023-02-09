@@ -56,7 +56,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * <p>
  * Substitutes field access, method invocations or constructor calls within a method's body.
  * </p>
- * <p>Note</p>: This substitution must not used to to match constructor calls to an instrumented class's super constructor invocation from
+ * <p>Note</p>: This substitution must not be used to match constructor calls to an instrumented class's super constructor invocation from
  * within a constructor. Matching such constructors will result in an invalid stack and a verification error.
  * <p>
  * <b>Important</b>: This component relies on using a {@link TypePool} for locating types within method bodies. Within a redefinition
