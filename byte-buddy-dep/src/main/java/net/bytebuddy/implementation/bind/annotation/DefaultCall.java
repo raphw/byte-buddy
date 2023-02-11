@@ -36,7 +36,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 /**
  * A parameter with this annotation is assigned a proxy for invoking a default method that fits the intercepted method.
  * If no suitable default method for the intercepted method can be identified, the target method with the annotated
- * parameter is considered to be unbindable.
+ * parameter is considered to be unbindable, unless a {@code null} value is requested by setting a property.
  *
  * @see net.bytebuddy.implementation.MethodDelegation
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
@@ -47,15 +47,14 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 public @interface DefaultCall {
 
     /**
-     * If this parameter is not explicitly set, a parameter with the
-     * {@link net.bytebuddy.implementation.bind.annotation.DefaultCall} is only bound to a
+     * If this parameter is not explicitly set, a parameter with the {@link DefaultCall} is only bound to a
      * source method if this source method directly represents an unambiguous, invokable default method. On the other
      * hand, if a method is not defined unambiguously by an interface, not setting this parameter will exclude
      * the target method with the annotated parameter from a binding to the source method.
      * <p>&nbsp;</p>
      * If this parameter is however set to an explicit interface type, a default method is always invoked on this given
      * type as long as this type defines a method with a compatible signature. If this is not the case, the target
-     * method with the annotated parameter is not longer considered as a possible binding candidate of a source method.
+     * method with the annotated parameter is no longer considered as a possible binding candidate of a source method.
      *
      * @return The target interface that a default method invocation is to be defined upon. If no such explicit target
      * is set, this parameter should not be defined as the predefined {@code void} type encodes an implicit resolution.
@@ -77,9 +76,7 @@ public @interface DefaultCall {
     boolean nullIfImpossible() default false;
 
     /**
-     * A binder for handling the
-     * {@link net.bytebuddy.implementation.bind.annotation.DefaultCall}
-     * annotation.
+     * A binder for handling the {@link DefaultCall} annotation.
      *
      * @see TargetMethodAnnotationDrivenBinder
      */

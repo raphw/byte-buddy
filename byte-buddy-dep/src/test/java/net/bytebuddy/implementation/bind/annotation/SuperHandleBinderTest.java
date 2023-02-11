@@ -8,13 +8,10 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.MethodRule;
 import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -22,9 +19,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperCallHandle> {
-
-    @Rule
-    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Mock
     private TypeDescription targetParameterType;
@@ -67,16 +61,8 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperCal
         return SuperCallHandle.Binder.INSTANCE;
     }
 
-    @Test(expected = IllegalStateException.class)
-    @JavaVersionRule.Enforce(atMost = 6)
-    public void testCannotApply() throws Exception {
-        when(targetParameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())).thenReturn(true);
-        when(specialMethodInvocation.isValid()).thenReturn(true);
-        SuperCallHandle.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
-    }
 
     @Test
-    @JavaVersionRule.Enforce(7)
     public void testValidSuperMethodCall() throws Exception {
         when(targetParameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(true);
@@ -88,7 +74,6 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperCal
     }
 
     @Test
-    @JavaVersionRule.Enforce(7)
     public void testInvalidSuperMethodCall() throws Exception {
         when(targetParameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(false);
@@ -100,7 +85,6 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperCal
     }
 
     @Test
-    @JavaVersionRule.Enforce(7)
     public void testInvalidSuperMethodCallNullFallback() throws Exception {
         when(targetParameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(false);
@@ -113,13 +97,11 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperCal
     }
 
     @Test(expected = IllegalStateException.class)
-    @JavaVersionRule.Enforce(7)
     public void testWrongTypeThrowsException() throws Exception {
         SuperCallHandle.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test
-    @JavaVersionRule.Enforce(7)
     public void testConstructorIsNotInvokeable() throws Exception {
         when(targetParameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())).thenReturn(true);
         when(source.isConstructor()).thenReturn(true);
@@ -130,7 +112,6 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperCal
     }
 
     @Test
-    @JavaVersionRule.Enforce(7)
     public void testConstructorNullFallback() throws Exception {
         when(targetParameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())).thenReturn(true);
         when(source.isConstructor()).thenReturn(true);

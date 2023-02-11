@@ -84,17 +84,20 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * source method is abstract, using this annotation excludes the method with this parameter annotation from being bound
  * to this source method.
  * </li>
- * <li>{@link net.bytebuddy.implementation.bind.annotation.DefaultCall}:
- * This annotation is similar to the {@link net.bytebuddy.implementation.bind.annotation.SuperCall}
+ * <li>{@link net.bytebuddy.implementation.bind.annotation.SuperCall}:
+ * This annotation is similar to the {@link net.bytebuddy.implementation.bind.annotation.DefaultCall}
  * annotation but it invokes a default method that is compatible to this method. If a source method does not represent
  * a default method, using this annotation excludes the method with this parameter annotation from being bound to this
- * source method.</li>
+ * source method. For using method handles, the {@link net.bytebuddy.implementation.bind.annotation.SuperCallHandle}
+ * and {@link net.bytebuddy.implementation.bind.annotation.DefaultCallHandle} annotations can be used.</li>
  * <li>The {@link net.bytebuddy.implementation.bind.annotation.SuperMethod} or
  * {@link net.bytebuddy.implementation.bind.annotation.DefaultMethod} annotations can be used on any parameter type
  * that is assignable from the {@link java.lang.reflect.Method} type. the parameter is bound a method instance that
  * allows for the reflective invocation of a super or default method. Note that this method is not equal to the intercepted
  * method but represents a synthetic accessor method. Using this annotation also causes this accessor to be {@code public}
- * which allows its outside invocation without any access checks by a security manager.</li>
+ * which allows its outside invocation without any access checks by a security manager. For using method handles, the
+ * {@link net.bytebuddy.implementation.bind.annotation.SuperCallHandle} and
+ * {@link net.bytebuddy.implementation.bind.annotation.DefaultCallHandle} annotations can be used.</li>
  * <li>{@link net.bytebuddy.implementation.bind.annotation.Origin}: A parameter of
  * {@code Qux#baz} that is annotated with {@code Origin} is assigned a reference to either a {@link java.lang.reflect.Method},
  * a {@link java.lang.reflect.Constructor}, a {@code java.lang.reflect.Executable} or a {@link java.lang.Class} instance.

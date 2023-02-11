@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.implementation.bind.annotation;
 
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -41,8 +42,9 @@ import java.util.List;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
- * Parameters that are annotated with this annotation will be assigned a {@code java.lang.invoke.MethodHandle} invoking
- * the {@code super} implementation.
+ * A parameter with this annotation is assigned a method handle for invoking a default method that fits the intercepted method.
+ * If no suitable default method for the intercepted method can be identified, the target method with the annotated
+ * parameter is considered to be unbindable, unless a {@code null} value is requested by setting a property.
  *
  * @see net.bytebuddy.implementation.MethodDelegation
  * @see TargetMethodAnnotationDrivenBinder
@@ -50,15 +52,22 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface SuperCallHandle {
+public @interface DefaultCallHandle {
 
     /**
-     * Determines if the method handle should invoke the default method to the intercepted method if a common
-     * super method invocation is not applicable. For this to be possible, the default method must not be ambiguous.
+     * If this parameter is not explicitly set, a parameter with the {@link DefaultCallHandle} is only bound to a
+     * source method if this source method directly represents an unambiguous, invokable default method. On the other
+     * hand, if a method is not defined unambiguously by an interface, not setting this parameter will exclude
+     * the target method with the annotated parameter from a binding to the source method.
+     * <p>&nbsp;</p>
+     * If this parameter is however set to an explicit interface type, a default method is always invoked on this given
+     * type as long as this type defines a method with a compatible signature. If this is not the case, the target
+     * method with the annotated parameter is no longer considered as a possible binding candidate of a source method.
      *
-     * @return {@code true} if the invocation should fall back to invoking the default method.
+     * @return The target interface that a default method invocation is to be defined upon. If no such explicit target
+     * is set, this parameter should not be defined as the predefined {@code void} type encodes an implicit resolution.
      */
-    boolean fallbackToDefault() default true;
+    Class<?> targetType() default void.class;
 
     /**
      * Assigns {@code null} to the parameter if it is impossible to invoke the super method or a possible dominant default method, if permitted.
@@ -68,11 +77,11 @@ public @interface SuperCallHandle {
     boolean nullIfImpossible() default false;
 
     /**
-     * A binder for handling the {@link SuperCallHandle} annotation.
+     * A binder for handling the {@link DefaultCallHandle} annotation.
      *
      * @see TargetMethodAnnotationDrivenBinder
      */
-    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<SuperCallHandle> {
+    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<DefaultCallHandle> {
 
         /**
          * The singleton instance.
@@ -80,50 +89,51 @@ public @interface SuperCallHandle {
         INSTANCE;
 
         /**
-         * A description of the {@link SuperCallHandle#fallbackToDefault()} method.
+         * A reference to the target type method of the default call annotation.
          */
-        private static final MethodDescription.InDefinedShape FALLBACK_TO_DEFAULT;
+        private static final MethodDescription.InDefinedShape TARGET_TYPE;
 
         /**
-         * A description of the {@link SuperCallHandle#nullIfImpossible()} method.
+         * A reference to the null if possible method of the default call annotation.
          */
         private static final MethodDescription.InDefinedShape NULL_IF_IMPOSSIBLE;
 
         /*
-         * Resolves annotation properties.
+         * Looks up method constants of the default call annotation.
          */
         static {
-            MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(SuperCallHandle.class).getDeclaredMethods();
-            FALLBACK_TO_DEFAULT = methods.filter(named("fallbackToDefault")).getOnly();
-            NULL_IF_IMPOSSIBLE = methods.filter(named("nullIfImpossible")).getOnly();
+            MethodList<MethodDescription.InDefinedShape> annotationProperties = TypeDescription.ForLoadedType.of(DefaultCallHandle.class).getDeclaredMethods();
+            TARGET_TYPE = annotationProperties.filter(named("targetType")).getOnly();
+            NULL_IF_IMPOSSIBLE = annotationProperties.filter(named("nullIfImpossible")).getOnly();
         }
 
         /**
          * {@inheritDoc}
          */
-        public Class<SuperCallHandle> getHandledType() {
-            return SuperCallHandle.class;
+        public Class<DefaultCallHandle> getHandledType() {
+            return DefaultCallHandle.class;
         }
 
         /**
          * {@inheritDoc}
          */
-        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<SuperCallHandle> annotation,
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<DefaultCallHandle> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner,
                                                                Assigner.Typing typing) {
             if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
-                throw new IllegalStateException("A method handle for a super method invocation cannot be assigned to " + target);
+                throw new IllegalStateException("Cannot assign MethodHandle type to " + target);
             } else if (source.isConstructor()) {
                 return annotation.getValue(NULL_IF_IMPOSSIBLE).resolve(Boolean.class)
                         ? new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE)
                         : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            Implementation.SpecialMethodInvocation specialMethodInvocation = (annotation.getValue(FALLBACK_TO_DEFAULT).resolve(Boolean.class)
-                    ? implementationTarget.invokeDominant(source.asSignatureToken())
-                    : implementationTarget.invokeSuper(source.asSignatureToken())).withCheckedCompatibilityTo(source.asTypeToken());
+            TypeDescription typeDescription = annotation.getValue(TARGET_TYPE).resolve(TypeDescription.class);
+            Implementation.SpecialMethodInvocation specialMethodInvocation = (typeDescription.represents(void.class)
+                    ? DefaultMethodLocator.Implicit.INSTANCE
+                    : new DefaultMethodLocator.Explicit(typeDescription)).resolve(implementationTarget, source).withCheckedCompatibilityTo(source.asTypeToken());
             StackManipulation stackManipulation;
             if (specialMethodInvocation.isValid()) {
                 List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(1
@@ -158,6 +168,73 @@ public @interface SuperCallHandle {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
             return new MethodDelegationBinder.ParameterBinding.Anonymous(stackManipulation);
+        }
+
+        /**
+         * A default method locator is responsible for looking up a default method to a given source method.
+         */
+        protected interface DefaultMethodLocator {
+
+            /**
+             * Locates the correct default method to a given source method.
+             *
+             * @param implementationTarget The current implementation target.
+             * @param source               The source method for which a default method should be looked up.
+             * @return A special method invocation of the default method or an illegal special method invocation,
+             * if no suitable invocation could be located.
+             */
+            Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source);
+
+            /**
+             * An implicit default method locator that only permits the invocation of a default method if the source
+             * method itself represents a method that was defined on a default method interface.
+             */
+            enum Implicit implements DefaultMethodLocator {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
+                    return implementationTarget.invokeDefault(source.asSignatureToken());
+                }
+            }
+
+            /**
+             * An explicit default method locator attempts to look up a default method in the specified interface type.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class Explicit implements DefaultMethodLocator {
+
+                /**
+                 * A description of the type on which the default method should be invoked.
+                 */
+                private final TypeDescription typeDescription;
+
+                /**
+                 * Creates a new explicit default method locator.
+                 *
+                 * @param typeDescription The actual target interface as explicitly defined by
+                 *                        {@link DefaultCallHandle#targetType()}.
+                 */
+                public Explicit(TypeDescription typeDescription) {
+                    this.typeDescription = typeDescription;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
+                    if (!typeDescription.isInterface()) {
+                        throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
+                    }
+                    return implementationTarget.invokeDefault(source.asSignatureToken(), typeDescription);
+                }
+            }
         }
     }
 }

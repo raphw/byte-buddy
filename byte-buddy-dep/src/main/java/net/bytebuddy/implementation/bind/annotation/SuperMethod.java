@@ -129,7 +129,7 @@ public @interface SuperMethod {
         /**
          * {@inheritDoc}
          */
-        public MethodDelegationBinder.ParameterBinding<?> bind(final AnnotationDescription.Loadable<SuperMethod> annotation,
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<SuperMethod> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
