@@ -26,6 +26,7 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.JavaConstant;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.ArrayList;
@@ -133,7 +134,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         /**
          * The method to invoke via a special method invocation.
          */
-        private final MethodDescription methodDescription;
+        private final MethodDescription.InDefinedShape methodDescription;
 
         /**
          * The instrumented type on which the method should be invoked on.
@@ -158,7 +159,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
          * @param stackManipulation   The stack manipulation to execute in order to invoke the rebased method.
          * @param prependedParameters Any additional arguments that are to be provided to the rebased method.
          */
-        protected RebasedMethodInvocation(MethodDescription methodDescription,
+        protected RebasedMethodInvocation(MethodDescription.InDefinedShape methodDescription,
                                           TypeDescription instrumentedType,
                                           StackManipulation stackManipulation,
                                           TypeList prependedParameters) {
@@ -176,7 +177,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
          * @param prependedParameters Any additional arguments that are to be provided to the rebased method.
          * @return A special method invocation of the rebased method.
          */
-        protected static Implementation.SpecialMethodInvocation of(MethodDescription resolvedMethod, TypeDescription instrumentedType, TypeList prependedParameters) {
+        protected static Implementation.SpecialMethodInvocation of(MethodDescription.InDefinedShape resolvedMethod, TypeDescription instrumentedType, TypeList prependedParameters) {
             StackManipulation stackManipulation = resolvedMethod.isStatic()
                     ? MethodInvocation.invoke(resolvedMethod)
                     : MethodInvocation.invoke(resolvedMethod).special(instrumentedType);
@@ -223,6 +224,13 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
             } else {
                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
             }
+        }
+
+        @Override
+        public JavaConstant.MethodHandle toMethodHandle() {
+            return  methodDescription.isStatic()
+                    ? JavaConstant.MethodHandle.of(methodDescription)
+                    : JavaConstant.MethodHandle.ofSpecial(methodDescription, instrumentedType);
         }
     }
 

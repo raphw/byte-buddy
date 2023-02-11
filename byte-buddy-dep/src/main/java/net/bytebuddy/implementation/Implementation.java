@@ -42,6 +42,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.RandomString;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.ClassVisitor;
@@ -104,7 +105,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
     }
 
     /**
-     * Represents an type-specific method invocation on the current instrumented type which is not legal from outside
+     * Represents a type-specific method invocation on the current instrumented type which is not legal from outside
      * the type such as a super method or default method invocation. Legal instances of special method invocations must
      * be equal to one another if they represent the same invocation target.
      */
@@ -112,7 +113,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
         /**
          * Returns the method that represents this special method invocation. This method can be different even for
-         * equal special method invocations, dependant on the method that was used to request such an invocation by the
+         * equal special method invocations, dependent on the method that was used to request such an invocation by the
          * means of a {@link Implementation.Target}.
          *
          * @return The method description that describes this instances invocation target.
@@ -133,6 +134,13 @@ public interface Implementation extends InstrumentedType.Prepareable {
          * @return This special method invocation or an illegal invocation if the method invocation is not applicable.
          */
         SpecialMethodInvocation withCheckedCompatibilityTo(MethodDescription.TypeToken token);
+
+        /**
+         * Returns a method handle representing this special method invocation.
+         *
+         * @return A method handle for this special method invocation.
+         */
+        JavaConstant.MethodHandle toMethodHandle();
 
         /**
          * A canonical implementation of an illegal {@link Implementation.SpecialMethodInvocation}.
@@ -177,6 +185,11 @@ public interface Implementation extends InstrumentedType.Prepareable {
              */
             public SpecialMethodInvocation withCheckedCompatibilityTo(MethodDescription.TypeToken token) {
                 return this;
+            }
+
+            @Override
+            public JavaConstant.MethodHandle toMethodHandle() {
+                throw new IllegalStateException("An illegal special method invocation must not be applied");
             }
         }
 
@@ -284,6 +297,13 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 } else {
                     return SpecialMethodInvocation.Illegal.INSTANCE;
                 }
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public JavaConstant.MethodHandle toMethodHandle() {
+                return JavaConstant.MethodHandle.ofSpecial(methodDescription.asDefined(), typeDescription);
             }
         }
     }

@@ -11,7 +11,7 @@ import static org.mockito.Mockito.mock;
 
 public class RebaseImplementationTargetSpecialMethodInvocationTest extends AbstractSpecialMethodInvocationTest {
 
-    protected Implementation.SpecialMethodInvocation make(MethodDescription methodDescription, TypeDescription typeDescription) {
+    protected Implementation.SpecialMethodInvocation make(MethodDescription.InDefinedShape methodDescription, TypeDescription typeDescription) {
         return new RebaseImplementationTarget.RebasedMethodInvocation(methodDescription,
                 typeDescription,
                 mock(StackManipulation.class),

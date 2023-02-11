@@ -4,24 +4,23 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
-import net.bytebuddy.implementation.bind.annotation.SuperCall;
+import net.bytebuddy.implementation.bind.annotation.SuperHandle;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import org.hamcrest.CoreMatchers;
+import net.bytebuddy.utility.JavaType;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
-import java.io.Serializable;
 import java.lang.reflect.Method;
-import java.util.concurrent.Callable;
+import java.util.Collections;
+import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class MethodDelegationSuperCallTest {
+public class MethodDelegationSuperHandleTest {
 
     private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.v8.SingleDefaultMethodInterface";
 
@@ -29,29 +28,18 @@ public class MethodDelegationSuperCallTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
+    private static final int QUX = 42, BAZ = 84;
+
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
-    public void testRunnableSuperCall() throws Exception {
-        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
-                .subclass(Foo.class)
-                .method(isDeclaredBy(Foo.class))
-                .intercept(MethodDelegation.to(RunnableClass.class))
-                .make()
-                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
-        Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
-        assertThat(instance.value, is(BAR));
-        instance.foo();
-        assertThat(instance.value, is(FOO));
-    }
-
-    @Test
-    public void testCallableSuperCall() throws Exception {
+    @JavaVersionRule.Enforce(7)
+    public void testMethodHandleCall() throws Exception {
         DynamicType.Loaded<Bar> loaded = new ByteBuddy()
                 .subclass(Bar.class)
                 .method(isDeclaredBy(Bar.class))
-                .intercept(MethodDelegation.to(CallableClass.class))
+                .intercept(MethodDelegation.to(ReferenceTarget.class))
                 .make()
                 .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Bar instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -59,18 +47,33 @@ public class MethodDelegationSuperCallTest {
     }
 
     @Test
-    public void testWithArgument() throws Exception {
+    @JavaVersionRule.Enforce(7)
+    public void testMethodHandleCallWithPrimitiveArgument() throws Exception {
         DynamicType.Loaded<Baz> loaded = new ByteBuddy()
                 .subclass(Baz.class)
                 .method(isDeclaredBy(Baz.class))
-                .intercept(MethodDelegation.to(CallableClass.class))
+                .intercept(MethodDelegation.to(PrimitiveTarget.class))
                 .make()
                 .load(Baz.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Baz instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
-        assertThat(instance.foo(FOO), is(FOO));
+        assertThat(instance.baz(BAZ), is((Object) (QUX + BAZ)));
     }
 
     @Test
+    @JavaVersionRule.Enforce(7)
+    public void testMethodHandleCallWithReferenceArgument() throws Exception {
+        DynamicType.Loaded<Foobar> loaded = new ByteBuddy()
+                .subclass(Foobar.class)
+                .method(isDeclaredBy(Foobar.class))
+                .intercept(MethodDelegation.to(ReferenceTarget.class))
+                .make()
+                .load(Foobar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        Foobar instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.baz(FOO), is((Object) (FOO + BAR)));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
     public void testVoidToNonVoidSuperCall() throws Exception {
         DynamicType.Loaded<VoidTest> loaded = new ByteBuddy()
                 .subclass(VoidTest.class)
@@ -84,6 +87,7 @@ public class MethodDelegationSuperCallTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(7)
     public void testRuntimeTypeSuperCall() throws Exception {
         DynamicType.Loaded<RuntimeTypeTest> loaded = new ByteBuddy()
                 .subclass(RuntimeTypeTest.class)
@@ -93,18 +97,6 @@ public class MethodDelegationSuperCallTest {
                 .load(RuntimeTypeTest.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         RuntimeTypeTest instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(), is(FOO));
-    }
-
-    @Test
-    public void testSerializableProxy() throws Exception {
-        DynamicType.Loaded<Bar> loaded = new ByteBuddy()
-                .subclass(Bar.class)
-                .method(isDeclaredBy(Bar.class))
-                .intercept(MethodDelegation.to(SerializationCheck.class))
-                .make()
-                .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
-        Bar instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
-        assertThat(instance.bar(), is(FOO));
     }
 
     @Test
@@ -142,15 +134,17 @@ public class MethodDelegationSuperCallTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @JavaVersionRule.Enforce(7)
     public void testAbstractMethodNonBindable() throws Exception {
         new ByteBuddy()
                 .subclass(Qux.class)
                 .method(isDeclaredBy(Qux.class))
-                .intercept(MethodDelegation.to(CallableClass.class))
+                .intercept(MethodDelegation.to(ReferenceTarget.class))
                 .make();
     }
 
     @Test(expected = IllegalStateException.class)
+    @JavaVersionRule.Enforce(7)
     public void testWrongTypeThrowsException() throws Exception {
         new ByteBuddy()
                 .subclass(Bar.class)
@@ -168,14 +162,6 @@ public class MethodDelegationSuperCallTest {
         }
     }
 
-    public static class RunnableClass {
-
-        public static void foo(@SuperCall Runnable runnable) {
-            assertThat(runnable, CoreMatchers.not(instanceOf(Serializable.class)));
-            runnable.run();
-        }
-    }
-
     public static class Bar {
 
         public String bar() {
@@ -183,17 +169,43 @@ public class MethodDelegationSuperCallTest {
         }
     }
 
-    public static class CallableClass {
+    public static class ReferenceTarget {
 
-        public static String bar(@SuperCall Callable<String> callable) throws Exception {
-            assertThat(callable, CoreMatchers.not(instanceOf(Serializable.class)));
-            return callable.call();
+        public static String bar(@SuperHandle Object handle) throws Exception {
+            Method method = Class.forName(JavaType.METHOD_HANDLE.getTypeStub().getName()).getMethod("invokeWithArguments", List.class);
+            return (String) method.invoke(handle, Collections.emptyList());
         }
     }
 
     public abstract static class Qux {
 
         public abstract String bar();
+    }
+
+    public static class Baz {
+
+        public int value = QUX;
+
+        public int baz(int value) {
+            return value + QUX;
+        }
+    }
+
+    public static class Foobar {
+
+        public String value = FOO;
+
+        public String baz(String value) {
+            return value + BAR;
+        }
+    }
+
+    public static class PrimitiveTarget {
+
+        public static int bar(@SuperHandle Object handle) throws Exception {
+            Method method = Class.forName(JavaType.METHOD_HANDLE.getTypeStub().getName()).getMethod("invokeWithArguments", List.class);
+            return (Integer) method.invoke(handle, Collections.emptyList());
+        }
     }
 
     public static class VoidTest extends CallTraceable {
@@ -203,17 +215,11 @@ public class MethodDelegationSuperCallTest {
         }
     }
 
-    public static class Baz {
-
-        public Object foo(Object value) {
-            return value;
-        }
-    }
-
     public static class NonVoidTarget {
 
-        public static Object foo(@SuperCall Callable<?> zuper) throws Exception {
-            return zuper.call();
+        public static Object foo(@SuperHandle Object handle) throws Exception {
+            Method method = Class.forName(JavaType.METHOD_HANDLE.getTypeStub().getName()).getMethod("invokeWithArguments", List.class);
+            return method.invoke(handle, Collections.emptyList());
         }
     }
 
@@ -227,23 +233,16 @@ public class MethodDelegationSuperCallTest {
     public static class RuntimeTypeTarget {
 
         @RuntimeType
-        public static Object foo(@SuperCall Callable<?> zuper) throws Exception {
-            return zuper.call();
+        public static Object foo(@SuperHandle Object handle) throws Exception {
+            Method method = Class.forName(JavaType.METHOD_HANDLE.getTypeStub().getName()).getMethod("invokeWithArguments", List.class);
+            return method.invoke(handle, Collections.emptyList());
         }
     }
 
     public static class IllegalAnnotation {
 
-        public static String bar(@SuperCall String value) throws Exception {
+        public static String bar(@SuperHandle String value) throws Exception {
             return value;
-        }
-    }
-
-    public static class SerializationCheck {
-
-        public static String bar(@SuperCall(serializableProxy = true) Callable<String> callable) throws Exception {
-            assertThat(callable, instanceOf(Serializable.class));
-            return callable.call();
         }
     }
 
@@ -251,7 +250,7 @@ public class MethodDelegationSuperCallTest {
     public static class NoFallback {
 
         @RuntimeType
-        public static Object foo(@SuperCall(fallbackToDefault = false) Callable<?> zuper) throws Exception {
+        public static Object foo(@SuperHandle(fallbackToDefault = false) Object handle) throws Exception {
             return null;
         }
     }
