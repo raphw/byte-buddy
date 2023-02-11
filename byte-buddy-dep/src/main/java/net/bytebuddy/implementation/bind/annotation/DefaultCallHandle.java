@@ -136,17 +136,13 @@ public @interface DefaultCallHandle {
                     : new DefaultMethodLocator.Explicit(typeDescription)).resolve(implementationTarget, source).withCheckedCompatibilityTo(source.asTypeToken());
             StackManipulation stackManipulation;
             if (specialMethodInvocation.isValid()) {
-                List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(1
-                        + (source.isStatic() ? 0 : 2)
-                        + source.getParameters().size() * 3);
+                List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(3 + source.getParameters().size() * 3);
                 stackManipulations.add(specialMethodInvocation.toMethodHandle().toStackManipulation());
-                if (!source.isStatic()) {
-                    stackManipulations.add(MethodVariableAccess.loadThis());
-                    stackManipulations.add(MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLE.getTypeStub(), new MethodDescription.Token("bindTo",
-                            Opcodes.ACC_PUBLIC,
-                            JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
-                            new TypeList.Generic.Explicit(TypeDefinition.Sort.describe(Object.class))))));
-                }
+                stackManipulations.add(MethodVariableAccess.loadThis());
+                stackManipulations.add(MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLE.getTypeStub(), new MethodDescription.Token("bindTo",
+                        Opcodes.ACC_PUBLIC,
+                        JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
+                        new TypeList.Generic.Explicit(TypeDefinition.Sort.describe(Object.class))))));
                 if (!source.getParameters().isEmpty()) {
                     List<StackManipulation> values = new ArrayList<StackManipulation>(source.getParameters().size());
                     for (ParameterDescription parameterDescription : source.getParameters()) {

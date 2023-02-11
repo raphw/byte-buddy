@@ -7,6 +7,7 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.InjectionClassLoader;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -32,9 +33,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static junit.framework.TestCase.fail;
@@ -1493,6 +1492,59 @@ public class AdviceTest {
     }
 
     @Test
+    public void testSelfCallHandle() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(SelfCallHandleSample.class)
+                .visit(Advice.to(SelfCallHandleSample.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getMethod(FOO, String.class).invoke(instance, FOO), is((Object) FOO));
+        assertThat(type.getField(FOO).get(null), is((Object) (FOO + BAR)));
+    }
+
+    @Test
+    public void testSelfCallHandleSubclass() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(SelfCallHandleSample.class)
+                .visit(Advice.to(SelfCallHandleSample.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.opened())
+                .getLoaded();
+        Object instance = ((InjectionClassLoader) type.getClassLoader()).defineClass(SelfCallHandleSubclass.class.getName(), ClassFileLocator.ForClassLoader.read(SelfCallHandleSubclass.class))
+                .getDeclaredConstructor()
+                .newInstance();
+        assertThat(type.getMethod(FOO, String.class).invoke(instance, FOO), is((Object) FOO));
+        assertThat(type.getField(FOO).get(null), is((Object) (FOO + BAR)));
+    }
+
+    @Test
+    public void testSelfCallHandleStatic() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(SelfCallHandleStaticSample.class)
+                .visit(Advice.to(SelfCallHandleStaticSample.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getMethod(FOO, String.class).invoke(null, FOO), is((Object) FOO));
+        assertThat(type.getField(FOO).get(null), is((Object) (FOO + BAR)));
+    }
+
+    @Test
+    public void testSelfCallHandlePrimitive() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(SelfCallHandlePrimitiveSample.class)
+                .visit(Advice.to(SelfCallHandlePrimitiveSample.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getMethod(FOO, int.class).invoke(instance, 42), is((Object) 42));
+        assertThat(type.getField(FOO).getInt(null), is((Object) (42 * 3)));
+    }
+
+    @Test
     public void testConstructorNoArgumentBackupAndNoFrames() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(NoBackupArguments.class)
@@ -2143,6 +2195,19 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(NoArgumentsCannotWrite.class).on(named(FOO)))
                 .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testSelfCallHandleNoConstructor() throws Exception {
+        new ByteBuddy()
+                .redefine(SelfCallHandleSample.class)
+                .visit(Advice.to(SelfCallHandleSample.class).on(isConstructor()))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testSelfCallHandleNotAssignable() throws Exception {
+        Advice.to(SelfCallHandleIllegalSample.class);
     }
 
     @SuppressWarnings("unused")
@@ -3218,6 +3283,93 @@ public class AdviceTest {
         @Retention(RetentionPolicy.RUNTIME)
         public @interface SampleParameter {
             /* empty */
+        }
+    }
+
+    public static class SelfCallHandleSample {
+
+        private static boolean checked;
+
+        public static String foo;
+
+        public String foo(String value) {
+            return value;
+        }
+
+        @Advice.OnMethodExit
+        public static void exit(@Advice.SelfCallHandle Object bound, @Advice.SelfCallHandle(bound = false) Object unbound) throws Throwable {
+            if (checked) {
+                return;
+            } else {
+                checked = true;
+            }
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            foo = method.invoke(bound, Collections.emptyList()).toString() + method.invoke(unbound, Arrays.asList(new SelfCallHandleSample(), BAR));
+        }
+    }
+
+    public static class SelfCallHandleSubclass extends SelfCallHandleSample {
+
+        private int check;
+
+        @Override
+        public String foo(String value) {
+            if (check++ != 0) {
+                throw new AssertionError();
+            }
+            return super.foo(value);
+        }
+    }
+
+    public static class SelfCallHandleStaticSample {
+
+        private static boolean checked;
+
+        public static String foo;
+
+        public static String foo(String value) {
+            return value;
+        }
+
+        @Advice.OnMethodExit
+        public static void exit(@Advice.SelfCallHandle Object bound, @Advice.SelfCallHandle(bound = false) Object unbound) throws Throwable {
+            if (checked) {
+                return;
+            } else {
+                checked = true;
+            }
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            foo = method.invoke(bound, Collections.emptyList()).toString() + method.invoke(unbound, Collections.singletonList(BAR));
+        }
+    }
+
+    public static class SelfCallHandlePrimitiveSample {
+
+        private static boolean checked;
+
+        public static int foo;
+
+        public int foo(int value) {
+            return value;
+        }
+
+        @Advice.OnMethodExit
+        public static void exit(@Advice.SelfCallHandle Object bound, @Advice.SelfCallHandle(bound = false) Object unbound) throws Throwable {
+            if (checked) {
+                return;
+            } else {
+                checked = true;
+            }
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            foo = (Integer) method.invoke(bound, Collections.emptyList()) + (Integer) method.invoke(unbound, Arrays.asList(new SelfCallHandlePrimitiveSample(), 84));
+        }
+    }
+
+    public static class SelfCallHandleIllegalSample {
+
+        @Advice.OnMethodExit
+        public static void exit(@Advice.SelfCallHandle String value) {
+            throw new AssertionError();
         }
     }
 

@@ -3085,6 +3085,123 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
+         * An offset mapping for assigning a method handle that invokes the instrumented method.
+         */
+        enum ForSelfCallHandle implements OffsetMapping {
+
+            /**
+             * A bound assignment that invokes the instrumented method as is.
+             */
+            BOUND {
+                @Override
+                protected StackManipulation decorate(MethodDescription methodDescription, StackManipulation stackManipulation) {
+                    List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(1
+                            + (methodDescription.isStatic() ? 0 : 2)
+                            + methodDescription.getParameters().size() * 3);
+                    stackManipulations.add(stackManipulation);
+                    if (!methodDescription.isStatic()) {
+                        stackManipulations.add(MethodVariableAccess.loadThis());
+                        stackManipulations.add(MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLE.getTypeStub(), new MethodDescription.Token("bindTo",
+                                Opcodes.ACC_PUBLIC,
+                                JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
+                                new TypeList.Generic.Explicit(TypeDefinition.Sort.describe(Object.class))))));
+                    }
+                    if (!methodDescription.getParameters().isEmpty()) {
+                        List<StackManipulation> values = new ArrayList<StackManipulation>(methodDescription.getParameters().size());
+                        for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
+                            values.add(parameterDescription.getType().isPrimitive() ? new StackManipulation.Compound(MethodVariableAccess.load(parameterDescription), Assigner.DEFAULT.assign(parameterDescription.getType(),
+                                    parameterDescription.getType().asErasure().asBoxed().asGenericType(),
+                                    Assigner.Typing.STATIC)) : MethodVariableAccess.load(parameterDescription));
+                        }
+                        stackManipulations.add(IntegerConstant.forValue(0));
+                        stackManipulations.add(ArrayFactory.forType(TypeDescription.ForLoadedType.of(Object.class).asGenericType()).withValues(values));
+                        stackManipulations.add(MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLES.getTypeStub(), new MethodDescription.Token("insertArguments",
+                                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+                                JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
+                                new TypeList.Generic.Explicit(JavaType.METHOD_HANDLE.getTypeStub(), TypeDefinition.Sort.describe(int.class), TypeDefinition.Sort.describe(Object[].class))))));
+                    }
+                    return new StackManipulation.Compound(stackManipulations);
+                }
+            },
+
+            /**
+             * An unbound self call handle which requires manual assignment of parameters.
+             */
+            UNBOUND {
+                @Override
+                protected StackManipulation decorate(MethodDescription methodDescription, StackManipulation stackManipulation) {
+                    return stackManipulation;
+                }
+            };
+
+            /**
+             * {@inheritDoc}
+             */
+            public Target resolve(TypeDescription instrumentedType,
+                                  MethodDescription instrumentedMethod,
+                                  Assigner assigner,
+                                  ArgumentHandler argumentHandler,
+                                  Sort sort) {
+                if (!instrumentedMethod.isMethod()) {
+                    throw new IllegalStateException();
+                }
+                StackManipulation stackManipulation = (instrumentedMethod.isStatic()
+                        ? JavaConstant.MethodHandle.of(instrumentedMethod.asDefined())
+                        : JavaConstant.MethodHandle.ofSpecial(instrumentedMethod.asDefined(), instrumentedType)).toStackManipulation();
+                return new Target.ForStackManipulation(decorate(instrumentedMethod, stackManipulation));
+            }
+
+            /**
+             * Resolves a stack manipulation.
+             *
+             * @param methodDescription The method description being represented.
+             * @param stackManipulation The stack manipulation for the current method handle.
+             * @return The decorated stack manipulation.
+             */
+            protected abstract StackManipulation decorate(MethodDescription methodDescription, StackManipulation stackManipulation);
+
+            /**
+             * A factory for a self call method handle.
+             */
+            protected enum Factory implements OffsetMapping.Factory<SelfCallHandle> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * The {@code bound} property of the {@link SelfCallHandle} annotation.
+                 */
+                private static final MethodDescription.InDefinedShape BOUND = TypeDescription.ForLoadedType.of(SelfCallHandle.class)
+                        .getDeclaredMethods()
+                        .filter(named("bound"))
+                        .getOnly();
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Class<SelfCallHandle> getAnnotationType() {
+                    return SelfCallHandle.class;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public OffsetMapping make(ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<SelfCallHandle> annotation,
+                                          AdviceType adviceType) {
+                    if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
+                        throw new IllegalStateException("Cannot assign a MethodHandle to " + target);
+                    }
+                    return annotation.getValue(BOUND).resolve(Boolean.class)
+                            ? ForSelfCallHandle.BOUND
+                            : ForSelfCallHandle.UNBOUND;
+                }
+            }
+        }
+
+        /**
          * An offset mapping for a parameter where assignments are fully ignored and that always return the parameter type's default value.
          */
         @HashCodeAndEqualsPlugin.Enhance
@@ -8581,6 +8698,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.INSTANCE,
                                         OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                        OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.INSTANCE,
@@ -8891,6 +9009,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.INSTANCE,
                                         OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                        OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForEnterValue.Factory.of(enterType),
@@ -10022,6 +10141,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.INSTANCE,
                                         OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                        OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForExitValue.Factory.of(exitType),
@@ -10272,6 +10392,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.INSTANCE,
                                         OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                        OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForEnterValue.Factory.of(enterType),
@@ -11658,6 +11779,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return The typing to apply when assigning the annotated parameter.
          */
         Assigner.Typing typing() default Assigner.Typing.DYNAMIC;
+    }
+
+    /**
+     * Indicates that the annotated parameter should load a {@code java.lang.invoke.MethodHandle} that represents an invocation of
+     * the current method. If the current method is virtual, it is bound to the current instance such that the virtual hierarchy
+     * is avoided. This annotation can only be used on methods, not constructors.
+     *
+     * @see Advice
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface SelfCallHandle {
+
+        /**
+         * Determines if the method is bound to the arguments and instance of the current invocation.
+         *
+         * @return {@code true} if the method should be bound to the current arguments.
+         */
+        boolean bound() default true;
     }
 
     /**
@@ -13965,6 +14106,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         public <T extends Annotation> WithCustomMapping bind(Class<T> type, JavaConstant constant) {
             return bind(type, (ConstantValue) constant);
         }
+
         /**
          * Binds the supplied annotation to the given Java constant.
          *
