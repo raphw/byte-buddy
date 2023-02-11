@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 13. February 2023: version 1.13.0
+
+- Complete `MemberSubstitution` API which now retains the original instruction for invocation.
+- Allow excluding methods from a `MethodGraph.Compiler` using an `ElementMatcher`.
+- Add a filtering `ClassFileLocator`.
+- Add a matcher for a type's `ClassFileVersion`.
+- Unify resolution of constant values by introducing a `ConstantValue` API.
+- Do not exclude `ToThrown` assignment on `void` methods.
+- Allow constructors as target in `MemberSubstitution`. 
+
 ### 5. February 2023: version 1.12.23
 
 - Allow using `ClassFileLocator` to `AgentBuilder` to append boot-injected types.
