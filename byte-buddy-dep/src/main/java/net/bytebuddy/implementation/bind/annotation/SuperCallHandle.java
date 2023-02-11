@@ -49,7 +49,7 @@ import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface SuperHandle {
+public @interface SuperCallHandle {
 
     /**
      * Determines if the method handle should invoke the default method to the intercepted method if a common
@@ -67,11 +67,11 @@ public @interface SuperHandle {
     boolean nullIfImpossible() default false;
 
     /**
-     * A binder for handling the {@link SuperHandle} annotation.
+     * A binder for handling the {@link SuperCallHandle} annotation.
      *
      * @see TargetMethodAnnotationDrivenBinder
      */
-    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<SuperHandle> {
+    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<SuperCallHandle> {
 
         /**
          * The singleton instance.
@@ -79,12 +79,12 @@ public @interface SuperHandle {
         INSTANCE;
 
         /**
-         * A description of the {@link SuperHandle#fallbackToDefault()} method.
+         * A description of the {@link SuperCallHandle#fallbackToDefault()} method.
          */
         private static final MethodDescription.InDefinedShape FALLBACK_TO_DEFAULT;
 
         /**
-         * A description of the {@link SuperHandle#nullIfImpossible()} method.
+         * A description of the {@link SuperCallHandle#nullIfImpossible()} method.
          */
         private static final MethodDescription.InDefinedShape NULL_IF_IMPOSSIBLE;
 
@@ -104,7 +104,7 @@ public @interface SuperHandle {
          * Resolves annotation properties.
          */
         static {
-            MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(SuperHandle.class).getDeclaredMethods();
+            MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(SuperCallHandle.class).getDeclaredMethods();
             FALLBACK_TO_DEFAULT = methods.filter(named("fallbackToDefault")).getOnly();
             NULL_IF_IMPOSSIBLE = methods.filter(named("nullIfImpossible")).getOnly();
             MethodDescription bindTo, insertArguments;
@@ -128,21 +128,25 @@ public @interface SuperHandle {
         /**
          * {@inheritDoc}
          */
-        public Class<SuperHandle> getHandledType() {
-            return SuperHandle.class;
+        public Class<SuperCallHandle> getHandledType() {
+            return SuperCallHandle.class;
         }
 
         /**
          * {@inheritDoc}
          */
-        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<SuperHandle> annotation,
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<SuperCallHandle> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner,
                                                                Assigner.Typing typing) {
             if (BIND_TO == null || INSERT_ARGUMENTS == null) {
-                throw new IllegalStateException("The current VM does not support method handles");
+                if (annotation.getValue(NULL_IF_IMPOSSIBLE).resolve(Boolean.class)) {
+                    return new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE);
+                } else {
+                    throw new IllegalStateException("The current VM does not support method handles");
+                }
             } else if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
                 throw new IllegalStateException("A method handle for a super method invocation cannot be assigned to " + target);
             } else if (source.isConstructor()) {

@@ -4,7 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
-import net.bytebuddy.implementation.bind.annotation.SuperHandle;
+import net.bytebuddy.implementation.bind.annotation.SuperCallHandle;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaType;
@@ -171,7 +171,7 @@ public class MethodDelegationSuperHandleTest {
 
     public static class ReferenceTarget {
 
-        public static String bar(@SuperHandle Object handle) throws Exception {
+        public static String bar(@SuperCallHandle Object handle) throws Exception {
             Method method = Class.forName(JavaType.METHOD_HANDLE.getTypeStub().getName()).getMethod("invokeWithArguments", List.class);
             return (String) method.invoke(handle, Collections.emptyList());
         }
@@ -202,7 +202,7 @@ public class MethodDelegationSuperHandleTest {
 
     public static class PrimitiveTarget {
 
-        public static int bar(@SuperHandle Object handle) throws Exception {
+        public static int bar(@SuperCallHandle Object handle) throws Exception {
             Method method = Class.forName(JavaType.METHOD_HANDLE.getTypeStub().getName()).getMethod("invokeWithArguments", List.class);
             return (Integer) method.invoke(handle, Collections.emptyList());
         }
@@ -217,7 +217,7 @@ public class MethodDelegationSuperHandleTest {
 
     public static class NonVoidTarget {
 
-        public static Object foo(@SuperHandle Object handle) throws Exception {
+        public static Object foo(@SuperCallHandle Object handle) throws Exception {
             Method method = Class.forName(JavaType.METHOD_HANDLE.getTypeStub().getName()).getMethod("invokeWithArguments", List.class);
             return method.invoke(handle, Collections.emptyList());
         }
@@ -233,7 +233,7 @@ public class MethodDelegationSuperHandleTest {
     public static class RuntimeTypeTarget {
 
         @RuntimeType
-        public static Object foo(@SuperHandle Object handle) throws Exception {
+        public static Object foo(@SuperCallHandle Object handle) throws Exception {
             Method method = Class.forName(JavaType.METHOD_HANDLE.getTypeStub().getName()).getMethod("invokeWithArguments", List.class);
             return method.invoke(handle, Collections.emptyList());
         }
@@ -241,7 +241,7 @@ public class MethodDelegationSuperHandleTest {
 
     public static class IllegalAnnotation {
 
-        public static String bar(@SuperHandle String value) throws Exception {
+        public static String bar(@SuperCallHandle String value) throws Exception {
             return value;
         }
     }
@@ -250,7 +250,7 @@ public class MethodDelegationSuperHandleTest {
     public static class NoFallback {
 
         @RuntimeType
-        public static Object foo(@SuperHandle(fallbackToDefault = false) Object handle) throws Exception {
+        public static Object foo(@SuperCallHandle(fallbackToDefault = false) Object handle) throws Exception {
             return null;
         }
     }

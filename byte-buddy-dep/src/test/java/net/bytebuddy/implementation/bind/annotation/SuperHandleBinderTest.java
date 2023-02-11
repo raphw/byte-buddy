@@ -21,7 +21,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperHandle> {
+public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperCallHandle> {
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
@@ -45,7 +45,7 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperHan
     private JavaConstant.MethodHandle methodHandle;
 
     public SuperHandleBinderTest() {
-        super(SuperHandle.class);
+        super(SuperCallHandle.class);
     }
 
     @Before
@@ -63,8 +63,8 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperHan
         when(methodHandle.toStackManipulation()).thenReturn(StackManipulation.Trivial.INSTANCE);
     }
 
-    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<SuperHandle> getSimpleBinder() {
-        return SuperHandle.Binder.INSTANCE;
+    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<SuperCallHandle> getSimpleBinder() {
+        return SuperCallHandle.Binder.INSTANCE;
     }
 
     @Test(expected = IllegalStateException.class)
@@ -72,7 +72,7 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperHan
     public void testCannotApply() throws Exception {
         when(targetParameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(true);
-        SuperHandle.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
+        SuperCallHandle.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test
@@ -80,7 +80,7 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperHan
     public void testValidSuperMethodCall() throws Exception {
         when(targetParameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperHandle.Binder.INSTANCE
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCallHandle.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         verify(implementationTarget).invokeSuper(sourceToken);
         verifyNoMoreInteractions(implementationTarget);
@@ -92,7 +92,7 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperHan
     public void testInvalidSuperMethodCall() throws Exception {
         when(targetParameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(false);
-        MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperHandle.Binder.INSTANCE
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCallHandle.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         verify(implementationTarget).invokeSuper(sourceToken);
         verifyNoMoreInteractions(implementationTarget);
@@ -105,7 +105,7 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperHan
         when(targetParameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(false);
         when(annotation.nullIfImpossible()).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperHandle.Binder.INSTANCE
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCallHandle.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         verify(implementationTarget).invokeSuper(sourceToken);
         verifyNoMoreInteractions(implementationTarget);
@@ -115,7 +115,7 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperHan
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(7)
     public void testWrongTypeThrowsException() throws Exception {
-        SuperHandle.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
+        SuperCallHandle.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test
@@ -123,7 +123,7 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperHan
     public void testConstructorIsNotInvokeable() throws Exception {
         when(targetParameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())).thenReturn(true);
         when(source.isConstructor()).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperHandle.Binder.INSTANCE
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCallHandle.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(false));
@@ -135,7 +135,7 @@ public class SuperHandleBinderTest extends AbstractAnnotationBinderTest<SuperHan
         when(targetParameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())).thenReturn(true);
         when(source.isConstructor()).thenReturn(true);
         when(annotation.nullIfImpossible()).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperHandle.Binder.INSTANCE
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCallHandle.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(true));
