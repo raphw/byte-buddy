@@ -2761,8 +2761,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected abstract FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
 
+            /**
+             * A description of the field handle's access type.
+             */
             public enum Access {
 
+                /**
+                 * Determines the resolution of a getter for the method handle.
+                 */
                 GETTER {
                     @Override
                     protected JavaConstant.MethodHandle resolve(FieldDescription.InDefinedShape fieldDescription) {
@@ -2770,6 +2776,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 },
 
+                /**
+                 * Determines the resolution of a setter for the method handle.
+                 */
                 SETTER {
                     @Override
                     protected JavaConstant.MethodHandle resolve(FieldDescription.InDefinedShape fieldDescription) {
@@ -2777,6 +2786,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 };
 
+                /**
+                 * Returns the appropriate method handle.
+                 *
+                 * @param fieldDescription The field description to resolve the handle for.
+                 * @return The appropriate method handle.
+                 */
                 protected abstract JavaConstant.MethodHandle resolve(FieldDescription.InDefinedShape fieldDescription);
             }
 
@@ -2863,8 +2878,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates an offset mapping for a field handle with an explicit declaring type.
                      *
-                     * @param access The access type of the represented handle.
-                     * @param name   The name of the field.
+                     * @param access        The access type of the represented handle.
+                     * @param name          The name of the field.
+                     * @param declaringType The type declaring the field.
                      */
                     public WithExplicitType(Access access, String name, TypeDescription declaringType) {
                         super(access, name);
@@ -2890,11 +2906,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     INSTANCE;
 
+                    /**
+                     * The {@link FieldGetterHandle#value()} method.
+                     */
                     private static final MethodDescription.InDefinedShape VALUE = TypeDescription.ForLoadedType.of(FieldGetterHandle.class)
                             .getDeclaredMethods()
                             .filter(named("value"))
                             .getOnly();
 
+                    /**
+                     * The {@link FieldGetterHandle#declaringType()} method.
+                     */
                     private static final MethodDescription.InDefinedShape DECLARING_TYPE = TypeDescription.ForLoadedType.of(FieldGetterHandle.class)
                             .getDeclaredMethods()
                             .filter(named("declaringType"))
@@ -2933,11 +2955,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     INSTANCE;
 
+                    /**
+                     * The {@link FieldSetterHandle#value()} method.
+                     */
                     private static final MethodDescription.InDefinedShape VALUE = TypeDescription.ForLoadedType.of(FieldSetterHandle.class)
                             .getDeclaredMethods()
                             .filter(named("value"))
                             .getOnly();
 
+                    /**
+                     * The {@link FieldSetterHandle#declaringType()} method.
+                     */
                     private static final MethodDescription.InDefinedShape DECLARING_TYPE = TypeDescription.ForLoadedType.of(FieldSetterHandle.class)
                             .getDeclaredMethods()
                             .filter(named("declaringType"))

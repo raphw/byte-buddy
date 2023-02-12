@@ -992,6 +992,19 @@ public class AdviceTest {
 
     @Test
     @JavaVersionRule.Enforce(7)
+    public void testFieldAdviceHandleSetterBean() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Bean.class)
+                .visit(Advice.to(FieldAdviceHandleSetterBean.class).on(ElementMatchers.isGetter()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod("getFoo").invoke(type.getDeclaredConstructor().newInstance()), is((Object) QUX));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
     public void testFieldAdviceHandleImplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldSample.class)
@@ -2086,6 +2099,38 @@ public class AdviceTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testFieldHandleIllegalExplicit() throws Exception {
+        new ByteBuddy()
+                .redefine(FieldSample.class)
+                .visit(Advice.to(FieldAdviceHandleIllegalExplicit.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldHandleNonExistent() throws Exception {
+        new ByteBuddy()
+                .redefine(FieldSample.class)
+                .visit(Advice.to(FieldAdviceHandleNonExistent.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldHandleGetterNonAssignable() throws Exception {
+        new ByteBuddy()
+                .redefine(FieldSample.class)
+                .visit(Advice.to(FieldAdviceGetterHandleNonAssignable.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldHandleSetterNonAssignable() throws Exception {
+        new ByteBuddy()
+                .redefine(FieldSample.class)
+                .visit(Advice.to(FieldAdviceSetterHandleNonAssignable.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testIllegalOriginType() throws Exception {
         Advice.to(IllegalOriginType.class);
     }
@@ -3059,6 +3104,17 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
+    public static class FieldAdviceHandleSetterBean {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.FieldSetterHandle Object setter) throws Throwable {
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            Bean.enter++;
+            method.invoke(setter, Collections.singletonList(QUX));
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static class FieldAdviceHandleImplicit {
 
         @Advice.OnMethodEnter
@@ -3507,6 +3563,42 @@ public class AdviceTest {
         @Advice.OnMethodEnter
         private static void enter(@Advice.FieldValue("foo") String foo) {
             foo = BAR;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FieldAdviceHandleIllegalExplicit {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.FieldGetterHandle(value = "bar", declaringType = Void.class) String bar) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FieldAdviceHandleNonExistent {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.FieldGetterHandle("bar") String bar) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FieldAdviceGetterHandleNonAssignable {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.FieldGetterHandle("foo") Void foo) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FieldAdviceSetterHandleNonAssignable {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.FieldSetterHandle("foo") Void foo) {
+            throw new AssertionError();
         }
     }
 

@@ -27,16 +27,13 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.implementation.bytecode.constant.*;
+import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import net.bytebuddy.utility.ConstantValue;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.nullability.MaybeNull;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
-
-import static net.bytebuddy.matcher.ElementMatchers.isGetter;
-import static net.bytebuddy.matcher.ElementMatchers.isSetter;
 
 /**
  * This {@link net.bytebuddy.implementation.bind.MethodDelegationBinder} binds
