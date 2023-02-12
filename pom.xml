@@ -1134,12 +1134,8 @@
                                         <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
                                         <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
                                         <excludes>
-                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$Binding</exclude>
-                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Substitution</exclude>
-                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Substitution$Chain$Step</exclude>
-                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Substitution$Chain$Step$ForField$Read</exclude>
-                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Substitution$Chain$Step$ForField$Write</exclude>
-                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Substitution$Chain$Step$ForArgumentLoading$Factory</exclude>
+                                            <exclude>net.bytebuddy.asm.Advice$OffsetMapping$ForField</exclude>
+                                            <exclude>net.bytebuddy.asm.Advice$OffsetMapping$ForField$Unresolved</exclude>
                                         </excludes>
                                     </parameter>
                                 </configuration>
