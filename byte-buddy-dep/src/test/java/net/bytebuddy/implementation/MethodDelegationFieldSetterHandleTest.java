@@ -6,7 +6,9 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.FieldSetterHandle;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaType;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -19,6 +21,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class MethodDelegationFieldSetterHandleTest {
 
     private static final String FOO = "foo";
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
     @JavaVersionRule.Enforce(value = 7, target = SimpleField.class)
