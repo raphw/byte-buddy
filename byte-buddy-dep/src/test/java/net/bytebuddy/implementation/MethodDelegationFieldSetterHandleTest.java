@@ -4,6 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.FieldSetterHandle;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Test;
 
@@ -20,6 +21,7 @@ public class MethodDelegationFieldSetterHandleTest {
     private static final String FOO = "foo";
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = SimpleField.class)
     public void testLegalFieldAccess() throws Exception {
         DynamicType.Loaded<SimpleField> loaded = new ByteBuddy()
                 .subclass(SimpleField.class)
@@ -33,6 +35,7 @@ public class MethodDelegationFieldSetterHandleTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = SimpleStaticField.class)
     public void testLegalFieldAccessStatic() throws Exception {
         DynamicType.Loaded<SimpleStaticField> loaded = new ByteBuddy()
                 .subclass(SimpleStaticField.class)
@@ -46,6 +49,7 @@ public class MethodDelegationFieldSetterHandleTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = SimpleField.class)
     public void testLegalFieldAccessExplicit() throws Exception {
         DynamicType.Loaded<SimpleField> loaded = new ByteBuddy()
                 .subclass(SimpleField.class)
@@ -59,6 +63,7 @@ public class MethodDelegationFieldSetterHandleTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = SimpleFieldAccessor.class)
     public void testLegalFieldAccessBean() throws Exception {
         DynamicType.Loaded<SimpleFieldAccessor> loaded = new ByteBuddy()
                 .subclass(SimpleFieldAccessor.class)

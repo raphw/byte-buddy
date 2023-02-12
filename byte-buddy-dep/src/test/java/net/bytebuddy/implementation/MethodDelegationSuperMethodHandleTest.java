@@ -38,6 +38,7 @@ public class MethodDelegationSuperMethodHandleTest {
     public MethodRule accessControllerRule = new AccessControllerRule();
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = Foo.class)
     public void testRunnableSuperCall() throws Exception {
         DynamicType.Loaded<Foo> loaded = new ByteBuddy()
                 .subclass(Foo.class)

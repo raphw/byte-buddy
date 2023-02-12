@@ -4,8 +4,10 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.FieldGetterHandle;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -17,9 +19,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MethodDelegationFieldGetterHandleTest {
 
+    public MethodRule javaVersionRule = new JavaVersionRule();
+
     private static final String FOO = "foo", BAR = "bar";
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = SimpleField.class)
     public void testLegalFieldAccess() throws Exception {
         DynamicType.Loaded<SimpleField> loaded = new ByteBuddy()
                 .subclass(SimpleField.class)
@@ -35,6 +40,7 @@ public class MethodDelegationFieldGetterHandleTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = SimpleStaticField.class)
     public void testLegalFieldAccessStatic() throws Exception {
         DynamicType.Loaded<SimpleStaticField> loaded = new ByteBuddy()
                 .subclass(SimpleStaticField.class)
@@ -59,6 +65,7 @@ public class MethodDelegationFieldGetterHandleTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = ExtendedField.class)
     public void testExtendedFieldMostSpecific() throws Exception {
         DynamicType.Loaded<ExtendedField> loaded = new ByteBuddy()
                 .subclass(ExtendedField.class)
@@ -74,6 +81,7 @@ public class MethodDelegationFieldGetterHandleTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = ExtendedPrivateField.class)
     public void testExtendedFieldSkipsNonVisible() throws Exception {
         DynamicType.Loaded<ExtendedPrivateField> loaded = new ByteBuddy()
                 .subclass(ExtendedPrivateField.class)
@@ -89,6 +97,7 @@ public class MethodDelegationFieldGetterHandleTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = ExtendedField.class)
     public void testExtendedFieldExplicitType() throws Exception {
         DynamicType.Loaded<ExtendedField> loaded = new ByteBuddy()
                 .subclass(ExtendedField.class)
@@ -104,6 +113,7 @@ public class MethodDelegationFieldGetterHandleTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = SimpleFieldAccessor.class)
     public void testAccessor() throws Exception {
         DynamicType.Loaded<SimpleFieldAccessor> loaded = new ByteBuddy()
                 .subclass(SimpleFieldAccessor.class)

@@ -102,13 +102,7 @@ public @interface SuperMethodHandle {
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner,
                                                                Assigner.Typing typing) {
-            if (!JavaType.METHOD_HANDLE.isAvailable()) {
-                if (annotation.getValue(NULL_IF_IMPOSSIBLE).resolve(Boolean.class)) {
-                    return new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE);
-                } else {
-                    throw new IllegalStateException("The current VM does not support method handles");
-                }
-            } else if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
+            if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
                 throw new IllegalStateException("Cannot assign MethodHandle type to " + target);
             } else if (source.isMethod()) {
                 Implementation.SpecialMethodInvocation specialMethodInvocation = (annotation.getValue(FALLBACK_TO_DEFAULT).resolve(Boolean.class)
