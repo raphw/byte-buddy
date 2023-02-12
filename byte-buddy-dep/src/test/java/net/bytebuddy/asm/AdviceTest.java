@@ -978,7 +978,7 @@ public class AdviceTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(7)
+    @JavaVersionRule.Enforce(value = 7, target = Bean.class)
     public void testFieldAdviceHandleBean() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Bean.class)
@@ -991,7 +991,7 @@ public class AdviceTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(7)
+    @JavaVersionRule.Enforce(value = 7, target = Bean.class)
     public void testFieldAdviceHandleSetterBean() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Bean.class)
@@ -1004,7 +1004,7 @@ public class AdviceTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(7)
+    @JavaVersionRule.Enforce(value = 7, target = FieldSample.class)
     public void testFieldAdviceHandleImplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldSample.class)
@@ -1018,7 +1018,7 @@ public class AdviceTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(7)
+    @JavaVersionRule.Enforce(value = 7, target = FieldSample.class)
     public void testFieldAdviceHandleExplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FieldSample.class)
@@ -1546,6 +1546,7 @@ public class AdviceTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = SelfCallHandleSample.class)
     public void testSelfCallHandle() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(SelfCallHandleSample.class)
@@ -1559,6 +1560,7 @@ public class AdviceTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = SelfCallHandleSample.class)
     public void testSelfCallHandleSubclass() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(SelfCallHandleSample.class)
@@ -1574,6 +1576,7 @@ public class AdviceTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = SelfCallHandleStaticSample.class)
     public void testSelfCallHandleStatic() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(SelfCallHandleStaticSample.class)
@@ -1586,6 +1589,7 @@ public class AdviceTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = SelfCallHandlePrimitiveSample.class)
     public void testSelfCallHandlePrimitive() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(SelfCallHandlePrimitiveSample.class)
