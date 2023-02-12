@@ -12260,7 +12260,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * {@link OnMethodEnter} and a non-static field where the {@code this} reference is not available.
      * </p>
      * <p>
-     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldValue}
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldGetterHandle}
      * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
      * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
      * annotation from <code>net.bytebuddy.implementation.bind</code> package.
@@ -12307,7 +12307,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * {@link OnMethodEnter} and a non-static field where the {@code this} reference is not available.
      * </p>
      * <p>
-     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldValue}
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldSetterHandle}
      * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
      * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
      * annotation from <code>net.bytebuddy.implementation.bind</code> package.

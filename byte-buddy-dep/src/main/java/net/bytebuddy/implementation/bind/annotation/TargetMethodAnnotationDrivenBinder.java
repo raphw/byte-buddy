@@ -175,6 +175,8 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 DefaultMethod.Binder.INSTANCE,
                 DefaultMethodHandle.Binder.INSTANCE,
                 FieldValue.Binder.INSTANCE,
+                FieldGetterHandle.Binder.INSTANCE,
+                FieldSetterHandle.Binder.INSTANCE,
                 StubValue.Binder.INSTANCE,
                 Empty.Binder.INSTANCE));
 
