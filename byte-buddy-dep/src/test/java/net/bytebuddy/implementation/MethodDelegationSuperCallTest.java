@@ -67,7 +67,7 @@ public class MethodDelegationSuperCallTest {
                 .make()
                 .load(Baz.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Baz instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
-        assertThat(instance.foo(FOO), is(FOO));
+        assertThat(instance.foo(FOO), is((Object) FOO));
     }
 
     @Test
