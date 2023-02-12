@@ -21,6 +21,7 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.utility.OpenedClassReader;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
@@ -32,7 +33,6 @@ import java.security.PrivilegedAction;
  * A wrapper object for representing a validated class file version in the format that is specified by the
  * <a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html">JVMS</a>.
  */
-@HashCodeAndEqualsPlugin.Enhance
 public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializable {
 
     /**
@@ -497,6 +497,21 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
         return Integer.signum(getMajorVersion() == other.getMajorVersion()
                 ? getMinorVersion() - other.getMinorVersion()
                 : getMajorVersion() - other.getMajorVersion());
+    }
+
+    @Override
+    public int hashCode() {
+        return versionNumber;
+    }
+
+    @Override
+    public boolean equals(@MaybeNull Object other) {
+        if (this == other) {
+            return true;
+        } else if (other == null || getClass() != other.getClass()) {
+            return false;
+        }
+        return versionNumber == ((ClassFileVersion) other).versionNumber;
     }
 
     @Override
