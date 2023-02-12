@@ -171,7 +171,7 @@ public @interface FieldGetterHandle {
                                                                       Implementation.Target implementationTarget,
                                                                       Assigner assigner) {
                 if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("Cannot assign method handle to " + target);
                 } else if (fieldDescription.isStatic()) {
                     return new MethodDelegationBinder.ParameterBinding.Anonymous(JavaConstant.MethodHandle.ofGetter(fieldDescription.asDefined()).toStackManipulation());
                 } else {
