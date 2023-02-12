@@ -336,25 +336,6 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             protected static final String BEAN_PROPERTY = "";
 
             /**
-             * Resolves a field locator for a potential accessor method.
-             *
-             * @param fieldLocator      The field locator to use.
-             * @param methodDescription The method description that is the potential accessor.
-             * @return A resolution for a field locator.
-             */
-            private static FieldLocator.Resolution resolveAccessor(FieldLocator fieldLocator, MethodDescription methodDescription) {
-                String fieldName;
-                if (isSetter().matches(methodDescription)) {
-                    fieldName = methodDescription.getInternalName().substring(3);
-                } else if (isGetter().matches(methodDescription)) {
-                    fieldName = methodDescription.getInternalName().substring(methodDescription.getInternalName().startsWith("is") ? 2 : 3);
-                } else {
-                    return FieldLocator.Resolution.Illegal.INSTANCE;
-                }
-                return fieldLocator.locate(Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1));
-            }
-
-            /**
              * {@inheritDoc}
              */
             public ParameterBinding<?> bind(AnnotationDescription.Loadable<S> annotation,
@@ -374,7 +355,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                         ? new FieldLocator.ForClassHierarchy(implementationTarget.getInstrumentedType())
                         : new FieldLocator.ForExactType(declaringType(annotation), implementationTarget.getInstrumentedType());
                 FieldLocator.Resolution resolution = fieldName(annotation).equals(BEAN_PROPERTY)
-                        ? resolveAccessor(fieldLocator, source)
+                        ? FieldLocator.Resolution.Simple.ofBeanAccessor(fieldLocator, source)
                         : fieldLocator.locate(fieldName(annotation));
                 return resolution.isResolved() && !(source.isStatic() && !resolution.getField().isStatic())
                         ? bind(resolution.getField(), annotation, source, target, implementationTarget, assigner)

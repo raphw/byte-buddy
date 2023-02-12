@@ -978,6 +978,47 @@ public class AdviceTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(7)
+    public void testFieldAdviceHandleBean() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Bean.class)
+                .visit(Advice.to(FieldAdviceHandleBean.class).on(ElementMatchers.isSetter()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        type.getDeclaredMethod("setFoo", String.class).invoke(type.getDeclaredConstructor().newInstance(), BAR);
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testFieldAdviceHandleImplicit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FieldSample.class)
+                .visit(Advice.to(FieldAdviceHandleImplicit.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testFieldAdviceHandleExplicit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FieldSample.class)
+                .visit(Advice.to(FieldAdviceHandleExplicit.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
     public void testAllArgumentsStackSizeAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -2996,6 +3037,66 @@ public class AdviceTest {
         private static void exit(@Advice.FieldValue(value = "foo", declaringType = FieldSample.class) String foo) {
             FieldSample.exit++;
             if (!foo.equals(FOO)) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FieldAdviceHandleBean {
+
+        @Advice.OnMethodExit
+        private static void enter(@Advice.FieldGetterHandle Object handle, @Advice.Origin("#p") String propertyName) throws Throwable {
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            Bean.enter++;
+            if (!method.invoke(handle, Collections.emptyList()).equals(BAR)) {
+                throw new AssertionError();
+            }
+            if (!propertyName.equals(FOO)) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FieldAdviceHandleImplicit {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.FieldGetterHandle("foo") Object handle) throws Throwable{
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            FieldSample.enter++;
+            if (!method.invoke(handle, Collections.emptyList()).equals(FOO)) {
+                throw new AssertionError();
+            }
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.FieldGetterHandle("foo") Object handle) throws Throwable {
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            FieldSample.exit++;
+            if (!method.invoke(handle, Collections.emptyList()).equals(FOO)) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FieldAdviceHandleExplicit {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.FieldGetterHandle(value = "foo", declaringType = FieldSample.class) Object handle) throws Throwable {
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            FieldSample.enter++;
+            if (!method.invoke(handle, Collections.emptyList()).equals(FOO)) {
+                throw new AssertionError();
+            }
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.FieldGetterHandle(value = "foo", declaringType = FieldSample.class) Object handle) throws Throwable {
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            FieldSample.exit++;
+            if (!method.invoke(handle, Collections.emptyList()).equals(FOO)) {
                 throw new AssertionError();
             }
         }

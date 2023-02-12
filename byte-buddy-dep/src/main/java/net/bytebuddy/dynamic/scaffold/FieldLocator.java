@@ -18,6 +18,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -109,6 +110,26 @@ public interface FieldLocator {
              */
             protected Simple(FieldDescription fieldDescription) {
                 this.fieldDescription = fieldDescription;
+            }
+
+            /**
+             * Resolves a field locator for a potential accessor method. If the provided method is not a bean accessor,
+             * an illegal resolution is returned.
+             *
+             * @param fieldLocator      The field locator to use.
+             * @param methodDescription The method description that is the potential accessor.
+             * @return A resolution for a field locator.
+             */
+            public static FieldLocator.Resolution ofBeanAccessor(FieldLocator fieldLocator, MethodDescription methodDescription) {
+                String name;
+                if (isSetter().matches(methodDescription)) {
+                    name = methodDescription.getInternalName().substring(3);
+                } else if (isGetter().matches(methodDescription)) {
+                    name = methodDescription.getInternalName().substring(methodDescription.getInternalName().startsWith("is") ? 2 : 3);
+                } else {
+                    return FieldLocator.Resolution.Illegal.INSTANCE;
+                }
+                return fieldLocator.locate(Character.toLowerCase(name.charAt(0)) + name.substring(1));
             }
 
             /**

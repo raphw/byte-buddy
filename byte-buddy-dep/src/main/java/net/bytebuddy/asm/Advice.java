@@ -65,7 +65,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * <p>
@@ -2368,7 +2369,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param readOnly {@code true} if this mapping is read-only.
              * @param typing   The typing to apply.
              */
-            public ForField(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
+            protected ForField(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
                 this.target = target;
                 this.readOnly = readOnly;
                 this.typing = typing;
@@ -2384,11 +2385,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   Sort sort) {
                 FieldDescription fieldDescription = resolve(instrumentedType, instrumentedMethod);
                 if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
-                    throw new IllegalStateException("Cannot read non-static field " + fieldDescription + " from static method " + instrumentedMethod);
+                    throw new IllegalStateException("Cannot access non-static field " + fieldDescription + " from static method " + instrumentedMethod);
                 }
                 if (sort.isPremature(instrumentedMethod) && !fieldDescription.isStatic()) {
                     if (readOnly) {
-                        throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + target);
+                        throw new IllegalStateException("Cannot read " + fieldDescription + " before super constructor call");
                     } else {
                         StackManipulation writeAssignment = assigner.assign(target, fieldDescription.getType(), typing);
                         if (!writeAssignment.isValid()) {
@@ -2445,7 +2446,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param typing   The typing to apply.
                  * @param name     The name of the field.
                  */
-                public Unresolved(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, String name) {
+                protected Unresolved(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, String name) {
                     super(target, readOnly, typing);
                     this.name = name;
                 }
@@ -2454,32 +2455,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                     FieldLocator locator = fieldLocator(instrumentedType);
                     FieldLocator.Resolution resolution = name.equals(BEAN_PROPERTY)
-                            ? resolveAccessor(locator, instrumentedMethod)
+                            ? FieldLocator.Resolution.Simple.ofBeanAccessor(locator, instrumentedMethod)
                             : locator.locate(name);
                     if (!resolution.isResolved()) {
                         throw new IllegalStateException("Cannot locate field named " + name + " for " + instrumentedType);
                     } else {
                         return resolution.getField();
                     }
-                }
-
-                /**
-                 * Resolves a field locator for a potential accessor method.
-                 *
-                 * @param fieldLocator      The field locator to use.
-                 * @param methodDescription The method description that is the potential accessor.
-                 * @return A resolution for a field locator.
-                 */
-                private static FieldLocator.Resolution resolveAccessor(FieldLocator fieldLocator, MethodDescription methodDescription) {
-                    String fieldName;
-                    if (isSetter().matches(methodDescription)) {
-                        fieldName = methodDescription.getInternalName().substring(3);
-                    } else if (isGetter().matches(methodDescription)) {
-                        fieldName = methodDescription.getInternalName().substring(methodDescription.getInternalName().startsWith("is") ? 2 : 3);
-                    } else {
-                        return FieldLocator.Resolution.Illegal.INSTANCE;
-                    }
-                    return fieldLocator.locate(Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1));
                 }
 
                 /**
@@ -2718,6 +2700,359 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                               AnnotationDescription.Loadable<T> annotation,
                                               AdviceType adviceType) {
                         return new Resolved(target.getType(), readOnly, typing, fieldDescription);
+                    }
+                }
+            }
+        }
+
+        /**
+         * An offset mapping for a field handle.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        abstract class ForFieldHandle implements OffsetMapping {
+
+            /**
+             * The access type of the represented handle.
+             */
+            private final Access access;
+
+            /**
+             * Creates an offset mapping for a field handle.
+             *
+             * @param access The access type of the represented handle.
+             */
+            protected ForFieldHandle(Access access) {
+                this.access = access;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Target resolve(TypeDescription instrumentedType,
+                                  MethodDescription instrumentedMethod,
+                                  Assigner assigner,
+                                  ArgumentHandler argumentHandler,
+                                  Sort sort) {
+                FieldDescription fieldDescription = resolve(instrumentedType, instrumentedMethod);
+                if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
+                    throw new IllegalStateException("Cannot access non-static field " + fieldDescription + " from static method " + instrumentedMethod);
+                }
+                if (sort.isPremature(instrumentedMethod) && !fieldDescription.isStatic()) {
+                    throw new IllegalStateException("Cannot access " + fieldDescription + " before super constructor call");
+                } else if (fieldDescription.isStatic()) {
+                    return new Target.ForStackManipulation(access.resolve(fieldDescription.asDefined()).toStackManipulation());
+                } else {
+                    return new Target.ForStackManipulation(new StackManipulation.Compound(
+                            access.resolve(fieldDescription.asDefined()).toStackManipulation(),
+                            MethodVariableAccess.REFERENCE.loadFrom(argumentHandler.argument(ArgumentHandler.THIS_REFERENCE)),
+                            MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLE.getTypeStub(), new MethodDescription.Token("bindTo",
+                                    Opcodes.ACC_PUBLIC,
+                                    JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
+                                    new TypeList.Generic.Explicit(TypeDefinition.Sort.describe(Object.class)))))));
+                }
+            }
+
+            /**
+             * Resolves the field being bound.
+             *
+             * @param instrumentedType   The instrumented type.
+             * @param instrumentedMethod The instrumented method.
+             * @return The field being bound.
+             */
+            protected abstract FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
+
+            public enum Access {
+
+                GETTER {
+                    @Override
+                    protected JavaConstant.MethodHandle resolve(FieldDescription.InDefinedShape fieldDescription) {
+                        return JavaConstant.MethodHandle.ofGetter(fieldDescription);
+                    }
+                },
+
+                SETTER {
+                    @Override
+                    protected JavaConstant.MethodHandle resolve(FieldDescription.InDefinedShape fieldDescription) {
+                        return JavaConstant.MethodHandle.ofSetter(fieldDescription);
+                    }
+                };
+
+                protected abstract JavaConstant.MethodHandle resolve(FieldDescription.InDefinedShape fieldDescription);
+            }
+
+            /**
+             * An offset mapping for a field handle that is resolved from the instrumented type by its name.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            public abstract static class Unresolved extends ForFieldHandle {
+
+                /**
+                 * Indicates that a name should be extracted from an accessor method.
+                 */
+                protected static final String BEAN_PROPERTY = "";
+
+                /**
+                 * The name of the field.
+                 */
+                private final String name;
+
+                /**
+                 * Creates an offset mapping for a field that is not yet resolved.
+                 *
+                 * @param access The access type of the represented handle.
+                 * @param name   The name of the field.
+                 */
+                public Unresolved(Access access, String name) {
+                    super(access);
+                    this.name = name;
+                }
+
+                @Override
+                protected FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                    FieldLocator locator = fieldLocator(instrumentedType);
+                    FieldLocator.Resolution resolution = name.equals(BEAN_PROPERTY)
+                            ? FieldLocator.Resolution.Simple.ofBeanAccessor(locator, instrumentedMethod)
+                            : locator.locate(name);
+                    if (!resolution.isResolved()) {
+                        throw new IllegalStateException("Cannot locate field named " + name + " for " + instrumentedType);
+                    } else {
+                        return resolution.getField();
+                    }
+                }
+
+                /**
+                 * Returns a field locator for this instance.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 * @return An appropriate field locator.
+                 */
+                protected abstract FieldLocator fieldLocator(TypeDescription instrumentedType);
+
+                /**
+                 * An offset mapping for a field handle with an implicit declaring type.
+                 */
+                public static class WithImplicitType extends Unresolved {
+
+                    /**
+                     * Creates an offset mapping for a field handle with an implicit declaring type.
+                     *
+                     * @param access The access type of the represented handle.
+                     * @param name   The name of the field.
+                     */
+                    public WithImplicitType(Access access, String name) {
+                        super(access, name);
+                    }
+
+                    @Override
+                    protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
+                        return new FieldLocator.ForClassHierarchy(instrumentedType);
+                    }
+                }
+
+                /**
+                 * An offset mapping for a field handle with an explicit declaring type.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                public static class WithExplicitType extends Unresolved {
+
+                    /**
+                     * The type declaring the field.
+                     */
+                    private final TypeDescription declaringType;
+
+                    /**
+                     * Creates an offset mapping for a field handle with an explicit declaring type.
+                     *
+                     * @param access The access type of the represented handle.
+                     * @param name   The name of the field.
+                     */
+                    public WithExplicitType(Access access, String name, TypeDescription declaringType) {
+                        super(access, name);
+                        this.declaringType = declaringType;
+                    }
+
+                    @Override
+                    protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
+                        if (!declaringType.represents(TargetType.class) && !instrumentedType.isAssignableTo(declaringType)) {
+                            throw new IllegalStateException(declaringType + " is no super type of " + instrumentedType);
+                        }
+                        return new FieldLocator.ForExactType(TargetType.resolve(declaringType, instrumentedType));
+                    }
+                }
+
+                /**
+                 * A factory for a {@link ForFieldHandle.Unresolved} offset mapping representing a getter.
+                 */
+                protected enum ReaderFactory implements OffsetMapping.Factory<FieldGetterHandle> {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    private static final MethodDescription.InDefinedShape VALUE = TypeDescription.ForLoadedType.of(FieldGetterHandle.class)
+                            .getDeclaredMethods()
+                            .filter(named("value"))
+                            .getOnly();
+
+                    private static final MethodDescription.InDefinedShape DECLARING_TYPE = TypeDescription.ForLoadedType.of(FieldGetterHandle.class)
+                            .getDeclaredMethods()
+                            .filter(named("declaringType"))
+                            .getOnly();
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Class<FieldGetterHandle> getAnnotationType() {
+                        return FieldGetterHandle.class;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public OffsetMapping make(ParameterDescription.InDefinedShape target,
+                                              AnnotationDescription.Loadable<FieldGetterHandle> annotation,
+                                              AdviceType adviceType) {
+                        if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
+                            throw new IllegalStateException("Cannot assign method handle to " + target);
+                        }
+                        TypeDescription declaringType = annotation.getValue(DECLARING_TYPE).resolve(TypeDescription.class);
+                        return declaringType.represents(void.class)
+                                ? new ForFieldHandle.Unresolved.WithImplicitType(Access.GETTER, annotation.getValue(VALUE).resolve(String.class))
+                                : new ForFieldHandle.Unresolved.WithExplicitType(Access.GETTER, annotation.getValue(VALUE).resolve(String.class), declaringType);
+                    }
+                }
+
+                /**
+                 * A factory for a {@link ForFieldHandle.Unresolved} offset mapping representing a setter.
+                 */
+                protected enum WriterFactory implements OffsetMapping.Factory<FieldSetterHandle> {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    private static final MethodDescription.InDefinedShape VALUE = TypeDescription.ForLoadedType.of(FieldSetterHandle.class)
+                            .getDeclaredMethods()
+                            .filter(named("value"))
+                            .getOnly();
+
+                    private static final MethodDescription.InDefinedShape DECLARING_TYPE = TypeDescription.ForLoadedType.of(FieldSetterHandle.class)
+                            .getDeclaredMethods()
+                            .filter(named("declaringType"))
+                            .getOnly();
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Class<FieldSetterHandle> getAnnotationType() {
+                        return FieldSetterHandle.class;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public OffsetMapping make(ParameterDescription.InDefinedShape target,
+                                              AnnotationDescription.Loadable<FieldSetterHandle> annotation,
+                                              AdviceType adviceType) {
+                        if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
+                            throw new IllegalStateException("Cannot assign method handle to " + target);
+                        }
+                        TypeDescription declaringType = annotation.getValue(DECLARING_TYPE).resolve(TypeDescription.class);
+                        return declaringType.represents(void.class)
+                                ? new ForFieldHandle.Unresolved.WithImplicitType(Access.SETTER, annotation.getValue(VALUE).resolve(String.class))
+                                : new ForFieldHandle.Unresolved.WithExplicitType(Access.SETTER, annotation.getValue(VALUE).resolve(String.class), declaringType);
+                    }
+                }
+            }
+
+            /**
+             * A binding for an offset mapping that represents a specific field.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            public static class Resolved extends ForFieldHandle {
+
+                /**
+                 * The accessed field.
+                 */
+                private final FieldDescription fieldDescription;
+
+                /**
+                 * Creates a resolved offset mapping for a field handle.
+                 *
+                 * @param access           The access type of the represented handle.
+                 * @param fieldDescription The accessed field.
+                 */
+                public Resolved(Access access, FieldDescription fieldDescription) {
+                    super(access);
+                    this.fieldDescription = fieldDescription;
+                }
+
+                @Override
+                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
+                protected FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                    if (!fieldDescription.isStatic() && !fieldDescription.getDeclaringType().asErasure().isAssignableFrom(instrumentedType)) {
+                        throw new IllegalStateException(fieldDescription + " is no member of " + instrumentedType);
+                    } else if (!fieldDescription.isVisibleTo(instrumentedType)) {
+                        throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
+                    }
+                    return fieldDescription;
+                }
+
+                /**
+                 * A factory that binds a field handle.
+                 *
+                 * @param <T> The annotation type this factory binds.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
+
+                    /**
+                     * The annotation type.
+                     */
+                    private final Class<T> annotationType;
+
+                    /**
+                     * The field to be bound.
+                     */
+                    private final FieldDescription fieldDescription;
+
+                    /**
+                     * The access type of the represented handle.
+                     */
+                    private final Access access;
+
+                    /**
+                     * Creates a new factory for binding a specific field handle.
+                     *
+                     * @param annotationType   The annotation type.
+                     * @param fieldDescription The field to bind.
+                     * @param access           The access type of the represented handle.
+                     */
+                    public Factory(Class<T> annotationType, FieldDescription fieldDescription, Access access) {
+                        this.annotationType = annotationType;
+                        this.fieldDescription = fieldDescription;
+                        this.access = access;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Class<T> getAnnotationType() {
+                        return annotationType;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public OffsetMapping make(ParameterDescription.InDefinedShape target,
+                                              AnnotationDescription.Loadable<T> annotation,
+                                              AdviceType adviceType) {
+                        if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
+                            throw new IllegalStateException("Cannot assign method handle to " + target);
+                        }
+                        return new Resolved(access, fieldDescription);
                     }
                 }
             }
@@ -8697,6 +9032,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
                                         OffsetMapping.ForThisReference.Factory.INSTANCE,
                                         OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
+                                        OffsetMapping.ForFieldHandle.Unresolved.ReaderFactory.INSTANCE,
+                                        OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
@@ -9008,6 +9345,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
                                         OffsetMapping.ForThisReference.Factory.INSTANCE,
                                         OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
+                                        OffsetMapping.ForFieldHandle.Unresolved.ReaderFactory.INSTANCE,
+                                        OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
@@ -10140,6 +10479,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
                                         OffsetMapping.ForThisReference.Factory.INSTANCE,
                                         OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
+                                        OffsetMapping.ForFieldHandle.Unresolved.ReaderFactory.INSTANCE,
+                                        OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
@@ -10391,6 +10732,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
                                         OffsetMapping.ForThisReference.Factory.INSTANCE,
                                         OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
+                                        OffsetMapping.ForFieldHandle.Unresolved.ReaderFactory.INSTANCE,
+                                        OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
@@ -11877,6 +12220,100 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
     /**
      * <p>
+     * Indicates that the annotated parameter should be mapped to a {@code java.lang.invoke.MethodHandle} representing a field getter.
+     * </p>
+     * <p>
+     * Setting {@link FieldValue#value()} is optional. If the value is not set, the field value attempts to bind a setter's
+     * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
+     * to be an illegal candidate for binding.
+     * </p>
+     * <p>
+     * <b>Important</b>: Parameters with this option must not be used when from a constructor in combination with
+     * {@link OnMethodEnter} and a non-static field where the {@code this} reference is not available.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldValue}
+     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
+     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
+     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * </p>
+     *
+     * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface FieldGetterHandle {
+
+        /**
+         * Returns the name of the field.
+         *
+         * @return The name of the field.
+         */
+        String value() default OffsetMapping.ForFieldHandle.Unresolved.BEAN_PROPERTY;
+
+        /**
+         * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
+         * is set to {@code void}, the field is looked up implicitly within the instrumented class's class hierarchy.
+         * The value can also be set to {@link TargetType} in order to look up the type on the instrumented type.
+         *
+         * @return The type that declares the field, {@code void} if this type should be determined implicitly or
+         * {@link TargetType} for the instrumented type.
+         */
+        Class<?> declaringType() default void.class;
+    }
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should be mapped to a {@code java.lang.invoke.MethodHandle} representing a field setter.
+     * </p>
+     * <p>
+     * Setting {@link FieldValue#value()} is optional. If the value is not set, the field value attempts to bind a setter's
+     * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
+     * to be an illegal candidate for binding.
+     * </p>
+     * <p>
+     * <b>Important</b>: Parameters with this option must not be used when from a constructor in combination with
+     * {@link OnMethodEnter} and a non-static field where the {@code this} reference is not available.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldValue}
+     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
+     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
+     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * </p>
+     *
+     * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface FieldSetterHandle {
+
+        /**
+         * Returns the name of the field.
+         *
+         * @return The name of the field.
+         */
+        String value() default OffsetMapping.ForFieldHandle.Unresolved.BEAN_PROPERTY;
+
+        /**
+         * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
+         * is set to {@code void}, the field is looked up implicitly within the instrumented class's class hierarchy.
+         * The value can also be set to {@link TargetType} in order to look up the type on the instrumented type.
+         *
+         * @return The type that declares the field, {@code void} if this type should be determined implicitly or
+         * {@link TargetType} for the instrumented type.
+         */
+        Class<?> declaringType() default void.class;
+    }
+
+    /**
+     * <p>
      * Indicates that the annotated parameter should be mapped to a string representation of the instrumented method,
      * a constant representing the {@link Class} declaring the adviced method or a {@link Method}, {@link Constructor}
      * or {@code java.lang.reflect.Executable} representing this method. It can also load the instrumented method's
@@ -12810,7 +13247,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             ? new FieldLocator.ForClassHierarchy(instrumentedType)
                             : new FieldLocator.ForExactType(declaringType);
                     FieldLocator.Resolution resolution = name.equals(OffsetMapping.ForField.Unresolved.BEAN_PROPERTY)
-                            ? OffsetMapping.ForField.Unresolved.resolveAccessor(locator, instrumentedMethod)
+                            ? FieldLocator.Resolution.Simple.ofBeanAccessor(locator, instrumentedMethod)
                             : locator.locate(name);
                     StackManipulation stackManipulation;
                     if (!resolution.isResolved()) {
