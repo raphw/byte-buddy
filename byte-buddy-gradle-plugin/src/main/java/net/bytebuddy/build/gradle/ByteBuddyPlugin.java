@@ -97,7 +97,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
          */
         public void execute(JavaPlugin plugin) {
             project.getLogger().debug("Java plugin was discovered for modification: {}", plugin);
-            ConventionConfiguration configuration = ConventionConfiguration.of(project);
+            JavaConventionConfiguration configuration = JavaConventionConfiguration.of(project);
             if (configuration == null) {
                 project.getLogger().warn("Skipping implicit Byte Buddy task configuration since Java plugin did not register Java plugin convention or extension");
             } else {
@@ -236,7 +236,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
     /**
      * Resolves the contextual configuration based on the project's Java plugin, if any.
      */
-    protected static class ConventionConfiguration {
+    protected static class JavaConventionConfiguration {
 
         /**
          * The {@code org.gradle.api.plugins.JavaPluginConvention} class or {@code null} if not available.
@@ -349,7 +349,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
          * @param sourceSets          The resolved source set container.
          * @param targetCompatibility The target Java version.
          */
-        protected ConventionConfiguration(SourceSetContainer sourceSets, JavaVersion targetCompatibility) {
+        protected JavaConventionConfiguration(SourceSetContainer sourceSets, JavaVersion targetCompatibility) {
             this.sourceSets = sourceSets;
             this.targetCompatibility = targetCompatibility;
         }
@@ -361,7 +361,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
          * @return The resolved convention configuration or {@code null} if not configured.
          */
         @MaybeNull
-        protected static ConventionConfiguration of(Project project) {
+        protected static ByteBuddyPlugin.JavaConventionConfiguration of(Project project) {
             if (JAVA_PLUGIN_EXTENSION != null
                     && GET_EXTENSIONS != null
                     && FIND_BY_TYPE != null
@@ -370,7 +370,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
                 try {
                     Object extension = FIND_BY_TYPE.invoke(GET_EXTENSIONS.invoke(project), JAVA_PLUGIN_EXTENSION);
                     if (extension != null) {
-                        return new ConventionConfiguration(
+                        return new JavaConventionConfiguration(
                                 (SourceSetContainer) GET_SOURCE_SETS_EXTENSION.invoke(extension),
                                 (JavaVersion) GET_TARGET_COMPATIBILITY_EXTENSION.invoke(extension));
                     }
@@ -385,7 +385,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
                 try {
                     Object convention = ((Convention) GET_CONVENTION.invoke(project)).findPlugin(JAVA_PLUGIN_CONVENTION);
                     if (convention != null) {
-                        return new ConventionConfiguration(
+                        return new JavaConventionConfiguration(
                                 (SourceSetContainer) GET_SOURCE_SETS_CONVENTION.invoke(convention),
                                 (JavaVersion) GET_TARGET_COMPATIBILITY_CONVENTION.invoke(convention));
                     }
