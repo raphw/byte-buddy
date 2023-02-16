@@ -1087,6 +1087,17 @@ public class AdviceTest {
     }
 
     @Test
+    public void testAllArgumentsIncludeSelf() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(AllArgumentsIncludeSelf.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
     public void testOriginAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -4013,6 +4024,16 @@ public class AdviceTest {
         @Advice.OnMethodEnter
         private static void enter(@Advice.AllArguments(nullIfEmpty = true) Object[] value) {
             value = new Object[0];
+        }
+    }
+
+    public static class AllArgumentsIncludeSelf {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.AllArguments(includeSelf = true) Object[] value) {
+            if (value.length != 1 || !(value[0] instanceof Sample)) {
+                throw new AssertionError();
+            }
         }
     }
 

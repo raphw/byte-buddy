@@ -2134,7 +2134,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   Assigner assigner,
                                   ArgumentHandler argumentHandler,
                                   Sort sort) {
-                if (nullIfEmpty && instrumentedMethod.getParameters().isEmpty() && (includeSelf || instrumentedMethod.isStatic())) {
+                if (nullIfEmpty && instrumentedMethod.getParameters().isEmpty() && (!includeSelf || instrumentedMethod.isStatic())) {
                     return readOnly
                         ? new Target.ForStackManipulation(NullConstant.INSTANCE)
                         : new Target.ForStackManipulation.Writable(NullConstant.INSTANCE, Removal.SINGLE);
@@ -2143,20 +2143,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     ? 1
                     : 0) + instrumentedMethod.getParameters().size());
                 if (includeSelf && !instrumentedMethod.isStatic()) {
+                    if (sort.isPremature(instrumentedMethod) && instrumentedMethod.isConstructor()) {
+                        throw new IllegalStateException("Cannot include self in all arguments array from " + instrumentedMethod);
+                    }
                     StackManipulation assignment = assigner.assign(instrumentedMethod.getDeclaringType().asGenericType(), target, typing);
                     if (!assignment.isValid()) {
                         throw new IllegalStateException("Cannot assign " + instrumentedMethod.getDeclaringType() + " to " + target);
                     }
-                    reads.add(MethodVariableAccess.REFERENCE.loadFrom(argumentHandler.argument(ArgumentHandler.THIS_REFERENCE)));
-                    reads.add(assignment);
+                    reads.add(new StackManipulation.Compound(
+                            MethodVariableAccess.REFERENCE.loadFrom(argumentHandler.argument(ArgumentHandler.THIS_REFERENCE)),
+                            assignment));
                 }
                 for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
                     StackManipulation assignment = assigner.assign(parameterDescription.getType(), target, typing);
                     if (!assignment.isValid()) {
                         throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target);
                     }
-                    reads.add(MethodVariableAccess.of(parameterDescription.getType()).loadFrom(argumentHandler.argument(parameterDescription.getOffset())));
-                    reads.add(assignment);
+                    reads.add(new StackManipulation.Compound(
+                            MethodVariableAccess.of(parameterDescription.getType()).loadFrom(argumentHandler.argument(parameterDescription.getOffset())),
+                            assignment));
                 }
                 if (readOnly) {
                     return new Target.ForArray.ReadOnly(target, reads);
@@ -2169,16 +2174,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (!assignment.isValid()) {
                             throw new IllegalStateException("Cannot assign " + target + " to " + instrumentedMethod.getDeclaringType());
                         }
-                        writes.add(assignment);
-                        writes.add(MethodVariableAccess.REFERENCE.storeAt(argumentHandler.argument(ArgumentHandler.THIS_REFERENCE)));
+                        writes.add(new StackManipulation.Compound(
+                                assignment,
+                                MethodVariableAccess.REFERENCE.storeAt(argumentHandler.argument(ArgumentHandler.THIS_REFERENCE))));
                     }
                     for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
                         StackManipulation assignment = assigner.assign(target, parameterDescription.getType(), typing);
                         if (!assignment.isValid()) {
                             throw new IllegalStateException("Cannot assign " + target + " to " + parameterDescription);
                         }
-                        writes.add(assignment);
-                        writes.add(MethodVariableAccess.of(parameterDescription.getType()).storeAt(argumentHandler.argument(parameterDescription.getOffset())));
+                        writes.add(new StackManipulation.Compound(
+                                assignment,
+                                MethodVariableAccess.of(parameterDescription.getType()).storeAt(argumentHandler.argument(parameterDescription.getOffset()))));
                     }
                     return new Target.ForArray.ReadWrite(target, reads, writes);
                 }

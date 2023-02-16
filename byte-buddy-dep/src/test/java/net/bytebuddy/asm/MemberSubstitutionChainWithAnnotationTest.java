@@ -177,7 +177,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
             qux = value;
         }
 
-        public static void method(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.Argument(value = 0, target = MemberSubstitution.Substitution.Chain.Step.ForDelegation.Source.ENCLOSING_METHOD) String value) {
+        public static void method(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.Argument(value = 0, source = MemberSubstitution.Substitution.Chain.Step.ForDelegation.Source.ENCLOSING_METHOD) String value) {
             qux = value;
         }
 
