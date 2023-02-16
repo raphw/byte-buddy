@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bytecode.member;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
@@ -114,7 +115,7 @@ public class MethodInvocationGenericTest {
     public void testGenericMethodDynamic() throws Exception {
         TypeDescription genericErasure = mock(TypeDescription.class);
         when(methodReturnType.asErasure()).thenReturn(genericErasure);
-        when(declaredMethod.isInvokeBootstrap()).thenReturn(true);
+        when(declaredMethod.isInvokeBootstrap(Collections.<TypeDefinition>emptyList())).thenReturn(true);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).dynamic(FOO,
                 otherType,
                 Collections.<TypeDescription>emptyList(),
@@ -129,7 +130,7 @@ public class MethodInvocationGenericTest {
     @Test
     public void testGenericMethodDynamicErasureEqual() throws Exception {
         when(methodReturnType.asErasure()).thenReturn(declaredErasure);
-        when(declaredMethod.isInvokeBootstrap()).thenReturn(true);
+        when(declaredMethod.isInvokeBootstrap(Collections.<TypeDefinition>emptyList())).thenReturn(true);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).dynamic(FOO,
                 otherType,
                 Collections.<TypeDescription>emptyList(),

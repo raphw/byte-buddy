@@ -49,6 +49,9 @@ public class MethodInvocationDynamicTest {
     private JavaConstant argument;
 
     @Mock
+    private TypeDescription typeDescription;
+
+    @Mock
     private Object provided;
 
     @Before
@@ -66,11 +69,12 @@ public class MethodInvocationDynamicTest {
         when(declaringType.getInternalName()).thenReturn(BAR);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, firstType, secondType));
         when(argument.accept(JavaConstantValue.Visitor.INSTANCE)).thenReturn(provided);
+        when(argument.getTypeDescription()).thenReturn(typeDescription);
     }
 
     @Test
     public void testDynamicStaticBootstrap() throws Exception {
-        when(methodDescription.isInvokeBootstrap()).thenReturn(true);
+        when(methodDescription.isInvokeBootstrap(Collections.singletonList(typeDescription))).thenReturn(true);
         when(methodDescription.isStatic()).thenReturn(true);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription)
                 .dynamic(FOO, returnType, Arrays.asList(firstType, secondType), Collections.singletonList(argument));
@@ -83,7 +87,7 @@ public class MethodInvocationDynamicTest {
 
     @Test
     public void testDynamicConstructorBootstrap() throws Exception {
-        when(methodDescription.isInvokeBootstrap()).thenReturn(true);
+        when(methodDescription.isInvokeBootstrap(Collections.singletonList(typeDescription))).thenReturn(true);
         when(methodDescription.isConstructor()).thenReturn(true);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription)
                 .dynamic(FOO, returnType, Arrays.asList(firstType, secondType), Collections.singletonList(argument));

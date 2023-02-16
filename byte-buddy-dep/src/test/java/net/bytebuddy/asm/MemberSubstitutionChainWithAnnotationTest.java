@@ -30,7 +30,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
         assertThat(type.getDeclaredMethod(RUN, String.class).invoke(instance, BAZ), nullValue(Object.class));
         assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
         assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
-        assertThat(type.getDeclaredField(QUX).get(null), is((Object) BAR));
+        assertThat(type.getDeclaredField(QUX).get(null), is((Object) BAZ));
     }
 
     @Test
@@ -157,7 +157,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
             .redefine(ThisReferenceSample.class)
             .visit(MemberSubstitution.strict()
                 .field(named(BAZ))
-                .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ThisReferenceSample.class.getMethod("optional", Object.class)))
+                .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ThisReferenceSample.class.getMethod("none", Object.class)))
                 .on(named(RUN)))
             .make();
     }
