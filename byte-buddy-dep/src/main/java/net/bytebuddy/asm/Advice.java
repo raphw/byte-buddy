@@ -15,6 +15,31 @@
  */
 package net.bytebuddy.asm;
 
+import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
+import static net.bytebuddy.matcher.ElementMatchers.named;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.lang.annotation.Annotation;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
@@ -39,34 +64,47 @@ import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.SuperMethodCall;
-import net.bytebuddy.implementation.bytecode.*;
+import net.bytebuddy.implementation.bytecode.Addition;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.Duplication;
+import net.bytebuddy.implementation.bytecode.Removal;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.implementation.bytecode.Throw;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.collection.ArrayAccess;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
-import net.bytebuddy.implementation.bytecode.constant.*;
+import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
+import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
+import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
+import net.bytebuddy.implementation.bytecode.constant.MethodConstant;
+import net.bytebuddy.implementation.bytecode.constant.NullConstant;
+import net.bytebuddy.implementation.bytecode.constant.SerializedConstant;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.utility.*;
+import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.ConstantValue;
+import net.bytebuddy.utility.JavaConstant;
+import net.bytebuddy.utility.JavaType;
+import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.visitor.ExceptionTableSensitiveMethodVisitor;
 import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
 import net.bytebuddy.utility.visitor.StackAwareMethodVisitor;
-import org.objectweb.asm.*;
-
-import java.io.IOException;
-import java.io.Serializable;
-import java.lang.annotation.*;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.*;
-
-import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Attribute;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
 
 /**
  * <p>
@@ -325,7 +363,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(TypeDescription advice, ClassFileLocator classFileLocator) {
-        return to(advice, PostProcessor.NoOp.INSTANCE, classFileLocator, Collections.<OffsetMapping.Factory<?>>emptyList(), Delegator.ForStaticInvocation.INSTANCE);
+        return to(advice, PostProcessor.NoOp.INSTANCE, classFileLocator, Collections.<OffsetMapping.Factory<?>>emptyList(), Delegator.ForRegularInvocation.Factory.INSTANCE);
     }
 
     /**
@@ -335,27 +373,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param postProcessorFactory The post processor factory to use.
      * @param classFileLocator     The class file locator for locating the advisory class's class file.
      * @param userFactories        A list of custom factories for user generated offset mappings.
-     * @param delegator            The delegator to use.
+     * @param delegatorFactory     The delegator factory to use.
      * @return A method visitor wrapper representing the supplied advice.
      */
     protected static Advice to(TypeDescription advice,
                                PostProcessor.Factory postProcessorFactory,
                                ClassFileLocator classFileLocator,
                                List<? extends OffsetMapping.Factory<?>> userFactories,
-                               Delegator delegator) {
+                               Delegator.Factory delegatorFactory) {
         Dispatcher.Unresolved methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
         for (MethodDescription.InDefinedShape methodDescription : advice.getDeclaredMethods()) {
-            methodEnter = locate(OnMethodEnter.class, INLINE_ENTER, methodEnter, methodDescription, delegator);
-            methodExit = locate(OnMethodExit.class, INLINE_EXIT, methodExit, methodDescription, delegator);
+            methodEnter = locate(OnMethodEnter.class, INLINE_ENTER, methodEnter, methodDescription, delegatorFactory);
+            methodExit = locate(OnMethodExit.class, INLINE_EXIT, methodExit, methodDescription, delegatorFactory);
         }
         if (!methodEnter.isAlive() && !methodExit.isAlive()) {
             throw new IllegalArgumentException("No advice defined by " + advice);
         }
         try {
             ClassReader classReader = methodEnter.isBinary() || methodExit.isBinary()
-                    ? OpenedClassReader.of(classFileLocator.locate(advice.getName()).resolve())
-                    : UNDEFINED;
-            return new Advice(methodEnter.asMethodEnter(userFactories, classReader, methodExit, postProcessorFactory), methodExit.asMethodExit(userFactories, classReader, methodEnter, postProcessorFactory));
+                ? OpenedClassReader.of(classFileLocator.locate(advice.getName()).resolve())
+                : UNDEFINED;
+            return new Advice(methodEnter.asMethodEnter(userFactories, classReader, methodExit, postProcessorFactory),
+                methodExit.asMethodExit(userFactories, classReader, methodEnter, postProcessorFactory));
         } catch (IOException exception) {
             throw new IllegalStateException("Error reading class file of " + advice, exception);
         }
@@ -372,8 +411,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public static Advice to(Class<?> enterAdvice, Class<?> exitAdvice) {
         ClassLoader enterLoader = enterAdvice.getClassLoader(), exitLoader = exitAdvice.getClassLoader();
         return to(enterAdvice, exitAdvice, enterLoader == exitLoader
-                ? ClassFileLocator.ForClassLoader.of(enterLoader)
-                : new ClassFileLocator.Compound(ClassFileLocator.ForClassLoader.of(enterLoader), ClassFileLocator.ForClassLoader.of(exitLoader)));
+            ? ClassFileLocator.ForClassLoader.of(enterLoader)
+            : new ClassFileLocator.Compound(ClassFileLocator.ForClassLoader.of(enterLoader), ClassFileLocator.ForClassLoader.of(exitLoader)));
     }
 
     /**
@@ -410,7 +449,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(TypeDescription enterAdvice, TypeDescription exitAdvice, ClassFileLocator classFileLocator) {
-        return to(enterAdvice, exitAdvice, PostProcessor.NoOp.INSTANCE, classFileLocator, Collections.<OffsetMapping.Factory<?>>emptyList(), Delegator.ForStaticInvocation.INSTANCE);
+        return to(enterAdvice, exitAdvice, PostProcessor.NoOp.INSTANCE, classFileLocator, Collections.<OffsetMapping.Factory<?>>emptyList(), Delegator.ForRegularInvocation.Factory.INSTANCE);
     }
 
     /**
@@ -421,7 +460,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param postProcessorFactory The post processor factory to use.
      * @param classFileLocator     The class file locator for locating the advisory class's class file.
      * @param userFactories        A list of custom factories for user generated offset mappings.
-     * @param delegator            The delegator to use.
+     * @param delegatorFactory     The delegator factory to use.
      * @return A method visitor wrapper representing the supplied advice.
      */
     protected static Advice to(TypeDescription enterAdvice,
@@ -429,26 +468,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                PostProcessor.Factory postProcessorFactory,
                                ClassFileLocator classFileLocator,
                                List<? extends OffsetMapping.Factory<?>> userFactories,
-                               Delegator delegator) {
+                               Delegator.Factory delegatorFactory) {
         Dispatcher.Unresolved methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
         for (MethodDescription.InDefinedShape methodDescription : enterAdvice.getDeclaredMethods()) {
-            methodEnter = locate(OnMethodEnter.class, INLINE_ENTER, methodEnter, methodDescription, delegator);
+            methodEnter = locate(OnMethodEnter.class, INLINE_ENTER, methodEnter, methodDescription, delegatorFactory);
         }
         if (!methodEnter.isAlive()) {
             throw new IllegalArgumentException("No enter advice defined by " + enterAdvice);
         }
         for (MethodDescription.InDefinedShape methodDescription : exitAdvice.getDeclaredMethods()) {
-            methodExit = locate(OnMethodExit.class, INLINE_EXIT, methodExit, methodDescription, delegator);
+            methodExit = locate(OnMethodExit.class, INLINE_EXIT, methodExit, methodDescription, delegatorFactory);
         }
         if (!methodExit.isAlive()) {
             throw new IllegalArgumentException("No exit advice defined by " + exitAdvice);
         }
         try {
             return new Advice(methodEnter.asMethodEnter(userFactories, methodEnter.isBinary()
-                    ? OpenedClassReader.of(classFileLocator.locate(enterAdvice.getName()).resolve())
-                    : UNDEFINED, methodExit, postProcessorFactory), methodExit.asMethodExit(userFactories, methodExit.isBinary()
-                    ? OpenedClassReader.of(classFileLocator.locate(exitAdvice.getName()).resolve())
-                    : UNDEFINED, methodEnter, postProcessorFactory));
+                ? OpenedClassReader.of(classFileLocator.locate(enterAdvice.getName()).resolve())
+                : UNDEFINED, methodExit, postProcessorFactory), methodExit.asMethodExit(userFactories, methodExit.isBinary()
+                ? OpenedClassReader.of(classFileLocator.locate(exitAdvice.getName()).resolve())
+                : UNDEFINED, methodEnter, postProcessorFactory));
         } catch (IOException exception) {
             throw new IllegalStateException("Error reading class file of " + enterAdvice + " or " + exitAdvice, exception);
         }
@@ -461,14 +500,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param property          An annotation property that indicates if the advice method should be inlined.
      * @param dispatcher        Any previous dispatcher that was discovered or the previous dispatcher if found.
      * @param methodDescription The method description that is considered as an advice method.
-     * @param delegator         The delegator to use.
+     * @param delegatorFactory  The delegator factory to use.
      * @return A resolved dispatcher or the previous dispatcher if none was found.
      */
     private static Dispatcher.Unresolved locate(Class<? extends Annotation> type,
                                                 MethodDescription.InDefinedShape property,
                                                 Dispatcher.Unresolved dispatcher,
                                                 MethodDescription.InDefinedShape methodDescription,
-                                                Delegator delegator) {
+                                                Delegator.Factory delegatorFactory) {
         AnnotationDescription annotation = methodDescription.getDeclaredAnnotations().ofType(type);
         if (annotation == null) {
             return dispatcher;
@@ -478,8 +517,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             throw new IllegalStateException("Advice for " + methodDescription + " is not static");
         } else {
             return annotation.getValue(property).resolve(Boolean.class)
-                    ? new Dispatcher.Inlining(methodDescription)
-                    : new Dispatcher.Delegating(methodDescription, delegator);
+                ? new Dispatcher.Inlining(methodDescription)
+                : new Dispatcher.Delegating(methodDescription, delegatorFactory);
         }
     }
 
@@ -514,8 +553,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                               int writerFlags,
                               int readerFlags) {
         return instrumentedMethod.isAbstract() || instrumentedMethod.isNative()
-                ? methodVisitor
-                : doWrap(instrumentedType, instrumentedMethod, methodVisitor, implementationContext, writerFlags, readerFlags);
+            ? methodVisitor
+            : doWrap(instrumentedType, instrumentedMethod, methodVisitor, implementationContext, writerFlags, readerFlags);
     }
 
     /**
@@ -540,39 +579,39 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
         if (!methodExit.isAlive()) {
             return new AdviceVisitor.WithoutExitAdvice(methodVisitor,
-                    implementationContext,
-                    assigner,
-                    exceptionHandler.resolve(instrumentedMethod, instrumentedType),
-                    instrumentedType,
-                    instrumentedMethod,
-                    methodEnter,
-                    writerFlags,
-                    readerFlags);
+                implementationContext,
+                assigner,
+                exceptionHandler.resolve(instrumentedMethod, instrumentedType),
+                instrumentedType,
+                instrumentedMethod,
+                methodEnter,
+                writerFlags,
+                readerFlags);
         } else if (methodExit.getThrowable().represents(NoExceptionHandler.class)) {
             return new AdviceVisitor.WithExitAdvice.WithoutExceptionHandling(methodVisitor,
-                    implementationContext,
-                    assigner,
-                    exceptionHandler.resolve(instrumentedMethod, instrumentedType),
-                    instrumentedType,
-                    instrumentedMethod,
-                    methodEnter,
-                    methodExit,
-                    writerFlags,
-                    readerFlags);
+                implementationContext,
+                assigner,
+                exceptionHandler.resolve(instrumentedMethod, instrumentedType),
+                instrumentedType,
+                instrumentedMethod,
+                methodEnter,
+                methodExit,
+                writerFlags,
+                readerFlags);
         } else if (instrumentedMethod.isConstructor()) {
             throw new IllegalStateException("Cannot catch exception during constructor call for " + instrumentedMethod);
         } else {
             return new AdviceVisitor.WithExitAdvice.WithExceptionHandling(methodVisitor,
-                    implementationContext,
-                    assigner,
-                    exceptionHandler.resolve(instrumentedMethod, instrumentedType),
-                    instrumentedType,
-                    instrumentedMethod,
-                    methodEnter,
-                    methodExit,
-                    writerFlags,
-                    readerFlags,
-                    methodExit.getThrowable());
+                implementationContext,
+                assigner,
+                exceptionHandler.resolve(instrumentedMethod, instrumentedType),
+                instrumentedType,
+                instrumentedMethod,
+                methodEnter,
+                methodExit,
+                writerFlags,
+                readerFlags,
+                methodExit.getThrowable());
         }
     }
 
@@ -951,8 +990,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public StackManipulation resolveIncrement(int value) {
                         return typeDefinition.represents(int.class)
-                                ? MethodVariableAccess.of(typeDefinition).increment(offset, value)
-                                : new StackManipulation.Compound(resolveRead(), IntegerConstant.forValue(1), Addition.INTEGER, resolveWrite());
+                            ? MethodVariableAccess.of(typeDefinition).increment(offset, value)
+                            : new StackManipulation.Compound(resolveRead(), IntegerConstant.forValue(1), Addition.INTEGER, resolveWrite());
                     }
                 }
             }
@@ -1087,8 +1126,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public StackManipulation resolveRead() {
                     return new StackManipulation.Compound(fieldDescription.isStatic()
-                            ? StackManipulation.Trivial.INSTANCE
-                            : MethodVariableAccess.loadThis(), FieldAccess.forField(fieldDescription).read(), readAssignment);
+                        ? StackManipulation.Trivial.INSTANCE
+                        : MethodVariableAccess.loadThis(), FieldAccess.forField(fieldDescription).read(), readAssignment);
                 }
 
                 /**
@@ -1173,9 +1212,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             preparation = StackManipulation.Trivial.INSTANCE;
                         } else {
                             preparation = new StackManipulation.Compound(
-                                    MethodVariableAccess.loadThis(),
-                                    Duplication.SINGLE.flipOver(fieldDescription.getType()),
-                                    Removal.SINGLE
+                                MethodVariableAccess.loadThis(),
+                                Duplication.SINGLE.flipOver(fieldDescription.getType()),
+                                Removal.SINGLE
                             );
                         }
                         return new StackManipulation.Compound(writeAssignment, preparation, FieldAccess.forField(fieldDescription).write());
@@ -1230,9 +1269,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             preparation = StackManipulation.Trivial.INSTANCE;
                         } else {
                             preparation = new StackManipulation.Compound(
-                                    MethodVariableAccess.loadThis(),
-                                    Duplication.SINGLE.flipOver(fieldDescription.getType()),
-                                    Removal.SINGLE
+                                MethodVariableAccess.loadThis(),
+                                Duplication.SINGLE.flipOver(fieldDescription.getType()),
+                                Removal.SINGLE
                             );
                         }
                         return new StackManipulation.Compound(writeAssignment, preparation, FieldAccess.forField(fieldDescription).write());
@@ -1243,10 +1282,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public StackManipulation resolveIncrement(int value) {
                         return new StackManipulation.Compound(
-                                resolveRead(),
-                                IntegerConstant.forValue(value),
-                                Addition.INTEGER,
-                                resolveWrite()
+                            resolveRead(),
+                            IntegerConstant.forValue(value),
+                            Addition.INTEGER,
+                            resolveWrite()
                         );
                     }
                 }
@@ -1300,8 +1339,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public static Target of(@MaybeNull Object value) {
                     return new ForStackManipulation(value == null
-                            ? NullConstant.INSTANCE
-                            : ConstantValue.Simple.wrap(value).toStackManipulation());
+                        ? NullConstant.INSTANCE
+                        : ConstantValue.Simple.wrap(value).toStackManipulation());
                 }
 
                 /**
@@ -1609,7 +1648,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!writeAssignment.isValid()) {
                         throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target);
                     }
-                    return new Target.ForVariable.ReadWrite(parameterDescription.getType(), argumentHandler.argument(parameterDescription.getOffset()), readAssignment, writeAssignment);
+                    return new Target.ForVariable.ReadWrite(parameterDescription.getType(), argumentHandler.argument(parameterDescription.getOffset()), readAssignment,
+                        writeAssignment);
                 }
             }
 
@@ -1645,9 +1685,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected Unresolved(TypeDescription.Generic target, AnnotationDescription.Loadable<Argument> annotation) {
                     this(target, annotation.getValue(Factory.ARGUMENT_READ_ONLY).resolve(Boolean.class),
-                            annotation.getValue(Factory.ARGUMENT_TYPING).load(Argument.class.getClassLoader()).resolve(Assigner.Typing.class),
-                            annotation.getValue(Factory.ARGUMENT_VALUE).resolve(Integer.class),
-                            annotation.getValue(Factory.ARGUMENT_OPTIONAL).resolve(Boolean.class));
+                        annotation.getValue(Factory.ARGUMENT_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                        annotation.getValue(Factory.ARGUMENT_VALUE).resolve(Integer.class),
+                        annotation.getValue(Factory.ARGUMENT_OPTIONAL).resolve(Boolean.class));
                 }
 
                 /**
@@ -1706,8 +1746,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                       Sort sort) {
                     if (optional && instrumentedMethod.getParameters().size() <= index) {
                         return readOnly
-                                ? new Target.ForDefaultValue.ReadOnly(target)
-                                : new Target.ForDefaultValue.ReadWrite(target);
+                            ? new Target.ForDefaultValue.ReadOnly(target)
+                            : new Target.ForDefaultValue.ReadWrite(target);
                     }
                     return super.resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler, sort);
                 }
@@ -1913,9 +1953,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected ForThisReference(TypeDescription.Generic target, AnnotationDescription.Loadable<This> annotation) {
                 this(target,
-                        annotation.getValue(Factory.THIS_READ_ONLY).resolve(Boolean.class),
-                        annotation.getValue(Factory.THIS_TYPING).load(This.class.getClassLoader()).resolve(Assigner.Typing.class),
-                        annotation.getValue(Factory.THIS_OPTIONAL).resolve(Boolean.class));
+                    annotation.getValue(Factory.THIS_READ_ONLY).resolve(Boolean.class),
+                    annotation.getValue(Factory.THIS_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                    annotation.getValue(Factory.THIS_OPTIONAL).resolve(Boolean.class));
             }
 
             /**
@@ -1944,8 +1984,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 if (instrumentedMethod.isStatic() || sort.isPremature(instrumentedMethod)) {
                     if (optional) {
                         return readOnly
-                                ? new Target.ForDefaultValue.ReadOnly(instrumentedType)
-                                : new Target.ForDefaultValue.ReadWrite(instrumentedType);
+                            ? new Target.ForDefaultValue.ReadOnly(instrumentedType)
+                            : new Target.ForDefaultValue.ReadWrite(instrumentedType);
                     } else {
                         throw new IllegalStateException("Cannot map this reference for static method or constructor start: " + instrumentedMethod);
                     }
@@ -1960,7 +2000,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!writeAssignment.isValid()) {
                         throw new IllegalStateException("Cannot assign " + target + " to " + instrumentedType);
                     }
-                    return new Target.ForVariable.ReadWrite(instrumentedType.asGenericType(), argumentHandler.argument(ArgumentHandler.THIS_REFERENCE), readAssignment, writeAssignment);
+                    return new Target.ForVariable.ReadWrite(instrumentedType.asGenericType(), argumentHandler.argument(ArgumentHandler.THIS_REFERENCE), readAssignment,
+                        writeAssignment);
                 }
             }
 
@@ -2043,6 +2084,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             private final Assigner.Typing typing;
 
             /**
+             * {@code true} if the method's target instance should be considered an element of the produced array.
+             */
+            private final boolean includeSelf;
+
+            /**
              * {@code true} if a {@code null} value should be assigned if the
              * instrumented method does not declare any parameters.
              */
@@ -2056,8 +2102,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected ForAllArguments(TypeDescription.Generic target, AnnotationDescription.Loadable<AllArguments> annotation) {
                 this(target, annotation.getValue(Factory.ALL_ARGUMENTS_READ_ONLY).resolve(Boolean.class),
-                        annotation.getValue(Factory.ALL_ARGUMENTS_TYPING).load(AllArguments.class.getClassLoader()).resolve(Assigner.Typing.class),
-                        annotation.getValue(Factory.ALL_ARGUMENTS_NULL_IF_EMPTY).resolve(Boolean.class));
+                    annotation.getValue(Factory.ALL_ARGUMENTS_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                    annotation.getValue(Factory.ALL_ARGUMENTS_INCLUDE_SELF).resolve(Boolean.class),
+                    annotation.getValue(Factory.ALL_ARGUMENTS_NULL_IF_EMPTY).resolve(Boolean.class));
             }
 
             /**
@@ -2066,13 +2113,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param target      The component target type.
              * @param readOnly    {@code true} if the array is read-only.
              * @param typing      The typing to apply.
+             * @param includeSelf {@code true} if the method's target instance should be considered
+             *                    an element of the produced array.
              * @param nullIfEmpty {@code true} if a {@code null} value should be assigned if the
              *                    instrumented method does not declare any parameters.
              */
-            public ForAllArguments(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, boolean nullIfEmpty) {
+            public ForAllArguments(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, boolean includeSelf, boolean nullIfEmpty) {
                 this.target = target;
                 this.readOnly = readOnly;
                 this.typing = typing;
+                this.includeSelf = includeSelf;
                 this.nullIfEmpty = nullIfEmpty;
             }
 
@@ -2084,33 +2134,53 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   Assigner assigner,
                                   ArgumentHandler argumentHandler,
                                   Sort sort) {
-                if (nullIfEmpty && instrumentedMethod.getParameters().isEmpty()) {
+                if (nullIfEmpty && instrumentedMethod.getParameters().isEmpty() && (includeSelf || instrumentedMethod.isStatic())) {
                     return readOnly
-                            ? new Target.ForStackManipulation(NullConstant.INSTANCE)
-                            : new Target.ForStackManipulation.Writable(NullConstant.INSTANCE, Removal.SINGLE);
+                        ? new Target.ForStackManipulation(NullConstant.INSTANCE)
+                        : new Target.ForStackManipulation.Writable(NullConstant.INSTANCE, Removal.SINGLE);
                 }
-                List<StackManipulation> valueReads = new ArrayList<StackManipulation>(instrumentedMethod.getParameters().size());
+                List<StackManipulation> reads = new ArrayList<StackManipulation>((includeSelf && !instrumentedMethod.isStatic()
+                    ? 1
+                    : 0) + instrumentedMethod.getParameters().size());
+                if (includeSelf && !instrumentedMethod.isStatic()) {
+                    StackManipulation assignment = assigner.assign(instrumentedMethod.getDeclaringType().asGenericType(), target, typing);
+                    if (!assignment.isValid()) {
+                        throw new IllegalStateException("Cannot assign " + instrumentedMethod.getDeclaringType() + " to " + target);
+                    }
+                    reads.add(MethodVariableAccess.REFERENCE.loadFrom(argumentHandler.argument(ArgumentHandler.THIS_REFERENCE)));
+                    reads.add(assignment);
+                }
                 for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
-                    StackManipulation readAssignment = assigner.assign(parameterDescription.getType(), target, typing);
-                    if (!readAssignment.isValid()) {
+                    StackManipulation assignment = assigner.assign(parameterDescription.getType(), target, typing);
+                    if (!assignment.isValid()) {
                         throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target);
                     }
-                    valueReads.add(new StackManipulation.Compound(MethodVariableAccess.of(parameterDescription.getType())
-                            .loadFrom(argumentHandler.argument(parameterDescription.getOffset())), readAssignment));
+                    reads.add(MethodVariableAccess.of(parameterDescription.getType()).loadFrom(argumentHandler.argument(parameterDescription.getOffset())));
+                    reads.add(assignment);
                 }
                 if (readOnly) {
-                    return new Target.ForArray.ReadOnly(target, valueReads);
+                    return new Target.ForArray.ReadOnly(target, reads);
                 } else {
-                    List<StackManipulation> valueWrites = new ArrayList<StackManipulation>(instrumentedMethod.getParameters().size());
+                    List<StackManipulation> writes = new ArrayList<StackManipulation>(2 * ((includeSelf && !instrumentedMethod.isStatic()
+                        ? 1
+                        : 0) + instrumentedMethod.getParameters().size()));
+                    if (includeSelf && !instrumentedMethod.isStatic()) {
+                        StackManipulation assignment = assigner.assign(target, instrumentedMethod.getDeclaringType().asGenericType(), typing);
+                        if (!assignment.isValid()) {
+                            throw new IllegalStateException("Cannot assign " + target + " to " + instrumentedMethod.getDeclaringType());
+                        }
+                        writes.add(assignment);
+                        writes.add(MethodVariableAccess.REFERENCE.storeAt(argumentHandler.argument(ArgumentHandler.THIS_REFERENCE)));
+                    }
                     for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
-                        StackManipulation writeAssignment = assigner.assign(target, parameterDescription.getType(), typing);
-                        if (!writeAssignment.isValid()) {
+                        StackManipulation assignment = assigner.assign(target, parameterDescription.getType(), typing);
+                        if (!assignment.isValid()) {
                             throw new IllegalStateException("Cannot assign " + target + " to " + parameterDescription);
                         }
-                        valueWrites.add(new StackManipulation.Compound(writeAssignment, MethodVariableAccess.of(parameterDescription.getType())
-                                .storeAt(argumentHandler.argument(parameterDescription.getOffset()))));
+                        writes.add(assignment);
+                        writes.add(MethodVariableAccess.of(parameterDescription.getType()).storeAt(argumentHandler.argument(parameterDescription.getOffset())));
                     }
-                    return new Target.ForArray.ReadWrite(target, valueReads, valueWrites);
+                    return new Target.ForArray.ReadWrite(target, reads, writes);
                 }
             }
 
@@ -2135,6 +2205,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_TYPING;
 
                 /**
+                 * A description of the {@link AllArguments#includeSelf()} method.
+                 */
+                private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_INCLUDE_SELF;
+
+                /**
                  * A description of the {@link AllArguments#nullIfEmpty()} method.
                  */
                 private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_NULL_IF_EMPTY;
@@ -2146,6 +2221,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(AllArguments.class).getDeclaredMethods();
                     ALL_ARGUMENTS_READ_ONLY = methods.filter(named("readOnly")).getOnly();
                     ALL_ARGUMENTS_TYPING = methods.filter(named("typing")).getOnly();
+                    ALL_ARGUMENTS_INCLUDE_SELF = methods.filter(named("includeSelf")).getOnly();
                     ALL_ARGUMENTS_NULL_IF_EMPTY = methods.filter(named("nullIfEmpty")).getOnly();
                 }
 
@@ -2169,8 +2245,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException("Cannot define writable field access for " + target);
                     } else {
                         return new ForAllArguments(target.getType().represents(Object.class)
-                                ? TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)
-                                : target.getType().getComponentType(), annotation);
+                            ? TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)
+                            : target.getType().getComponentType(), annotation);
                     }
                 }
             }
@@ -2319,32 +2395,32 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * The {@link FieldValue#value()} method.
              */
-            private static final MethodDescription.InDefinedShape VALUE;
+            private static final MethodDescription.InDefinedShape FIELD_VALUE;
 
             /**
              * The {@link FieldValue#declaringType()}} method.
              */
-            private static final MethodDescription.InDefinedShape DECLARING_TYPE;
+            private static final MethodDescription.InDefinedShape FIELD_DECLARING_TYPE;
 
             /**
              * The {@link FieldValue#readOnly()}} method.
              */
-            private static final MethodDescription.InDefinedShape READ_ONLY;
+            private static final MethodDescription.InDefinedShape FIELD_READ_ONLY;
 
             /**
              * The {@link FieldValue#typing()}} method.
              */
-            private static final MethodDescription.InDefinedShape TYPING;
+            private static final MethodDescription.InDefinedShape FIELD_TYPING;
 
             /*
              * Looks up all annotation properties to avoid loading of the declaring field type.
              */
             static {
                 MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(FieldValue.class).getDeclaredMethods();
-                VALUE = methods.filter(named("value")).getOnly();
-                DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
-                READ_ONLY = methods.filter(named("readOnly")).getOnly();
-                TYPING = methods.filter(named("typing")).getOnly();
+                FIELD_VALUE = methods.filter(named("value")).getOnly();
+                FIELD_DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
+                FIELD_READ_ONLY = methods.filter(named("readOnly")).getOnly();
+                FIELD_TYPING = methods.filter(named("typing")).getOnly();
             }
 
             /**
@@ -2455,8 +2531,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                     FieldLocator locator = fieldLocator(instrumentedType);
                     FieldLocator.Resolution resolution = name.equals(BEAN_PROPERTY)
-                            ? FieldLocator.Resolution.Simple.ofBeanAccessor(locator, instrumentedMethod)
-                            : locator.locate(name);
+                        ? FieldLocator.Resolution.Simple.ofBeanAccessor(locator, instrumentedMethod)
+                        : locator.locate(name);
                     if (!resolution.isResolved()) {
                         throw new IllegalStateException("Cannot locate field named " + name + " for " + instrumentedType);
                     } else {
@@ -2485,9 +2561,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected WithImplicitType(TypeDescription.Generic target, AnnotationDescription.Loadable<FieldValue> annotation) {
                         this(target,
-                                annotation.getValue(READ_ONLY).resolve(Boolean.class),
-                                annotation.getValue(TYPING).load(Assigner.Typing.class.getClassLoader()).resolve(Assigner.Typing.class),
-                                annotation.getValue(VALUE).resolve(String.class));
+                            annotation.getValue(FIELD_READ_ONLY).resolve(Boolean.class),
+                            annotation.getValue(FIELD_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                            annotation.getValue(FIELD_VALUE).resolve(String.class));
                     }
 
                     /**
@@ -2530,10 +2606,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                AnnotationDescription.Loadable<FieldValue> annotation,
                                                TypeDescription declaringType) {
                         this(target,
-                                annotation.getValue(READ_ONLY).resolve(Boolean.class),
-                                annotation.getValue(TYPING).load(Assigner.Typing.class.getClassLoader()).resolve(Assigner.Typing.class),
-                                annotation.getValue(VALUE).resolve(String.class),
-                                declaringType);
+                            annotation.getValue(FIELD_READ_ONLY).resolve(Boolean.class),
+                            annotation.getValue(FIELD_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                            annotation.getValue(FIELD_VALUE).resolve(String.class),
+                            declaringType);
                     }
 
                     /**
@@ -2586,13 +2662,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                               AnnotationDescription.Loadable<FieldValue> annotation,
                                               AdviceType adviceType) {
-                        if (adviceType.isDelegation() && !annotation.getValue(ForField.READ_ONLY).resolve(Boolean.class)) {
+                        if (adviceType.isDelegation() && !annotation.getValue(ForField.FIELD_READ_ONLY).resolve(Boolean.class)) {
                             throw new IllegalStateException("Cannot write to field for " + target + " in read-only context");
                         } else {
-                            TypeDescription declaringType = annotation.getValue(DECLARING_TYPE).resolve(TypeDescription.class);
+                            TypeDescription declaringType = annotation.getValue(FIELD_DECLARING_TYPE).resolve(TypeDescription.class);
                             return declaringType.represents(void.class)
-                                    ? new WithImplicitType(target.getType(), annotation)
-                                    : new WithExplicitType(target.getType(), annotation, declaringType);
+                                ? new WithImplicitType(target.getType(), annotation)
+                                : new WithExplicitType(target.getType(), annotation, declaringType);
                         }
                     }
                 }
@@ -2743,12 +2819,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return new Target.ForStackManipulation(access.resolve(fieldDescription.asDefined()).toStackManipulation());
                 } else {
                     return new Target.ForStackManipulation(new StackManipulation.Compound(
-                            access.resolve(fieldDescription.asDefined()).toStackManipulation(),
-                            MethodVariableAccess.REFERENCE.loadFrom(argumentHandler.argument(ArgumentHandler.THIS_REFERENCE)),
-                            MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLE.getTypeStub(), new MethodDescription.Token("bindTo",
-                                    Opcodes.ACC_PUBLIC,
-                                    JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
-                                    new TypeList.Generic.Explicit(TypeDefinition.Sort.describe(Object.class)))))));
+                        access.resolve(fieldDescription.asDefined()).toStackManipulation(),
+                        MethodVariableAccess.REFERENCE.loadFrom(argumentHandler.argument(ArgumentHandler.THIS_REFERENCE)),
+                        MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLE.getTypeStub(), new MethodDescription.Token("bindTo",
+                            Opcodes.ACC_PUBLIC,
+                            JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
+                            new TypeList.Generic.Explicit(TypeDefinition.Sort.describe(Object.class)))))));
                 }
             }
 
@@ -2826,8 +2902,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                     FieldLocator locator = fieldLocator(instrumentedType);
                     FieldLocator.Resolution resolution = name.equals(BEAN_PROPERTY)
-                            ? FieldLocator.Resolution.Simple.ofBeanAccessor(locator, instrumentedMethod)
-                            : locator.locate(name);
+                        ? FieldLocator.Resolution.Simple.ofBeanAccessor(locator, instrumentedMethod)
+                        : locator.locate(name);
                     if (!resolution.isResolved()) {
                         throw new IllegalStateException("Cannot locate field named " + name + " for " + instrumentedType);
                     } else {
@@ -2909,18 +2985,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * The {@link FieldGetterHandle#value()} method.
                      */
-                    private static final MethodDescription.InDefinedShape VALUE = TypeDescription.ForLoadedType.of(FieldGetterHandle.class)
-                            .getDeclaredMethods()
-                            .filter(named("value"))
-                            .getOnly();
+                    private static final MethodDescription.InDefinedShape FIELD_GETTER_HANDLE_VALUE;
 
                     /**
                      * The {@link FieldGetterHandle#declaringType()} method.
                      */
-                    private static final MethodDescription.InDefinedShape DECLARING_TYPE = TypeDescription.ForLoadedType.of(FieldGetterHandle.class)
-                            .getDeclaredMethods()
-                            .filter(named("declaringType"))
-                            .getOnly();
+                    private static final MethodDescription.InDefinedShape FIELD_GETTER_HANDLE_DECLARING_TYPE;
+
+                    /*
+                     * Resolves annotation properties.
+                     */
+                    static {
+                        MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(FieldGetterHandle.class).getDeclaredMethods();
+                        FIELD_GETTER_HANDLE_VALUE = methods.filter(named("value")).getOnly();
+                        FIELD_GETTER_HANDLE_DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
+                    }
 
                     /**
                      * {@inheritDoc}
@@ -2938,10 +3017,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
                             throw new IllegalStateException("Cannot assign method handle to " + target);
                         }
-                        TypeDescription declaringType = annotation.getValue(DECLARING_TYPE).resolve(TypeDescription.class);
+                        TypeDescription declaringType = annotation.getValue(FIELD_GETTER_HANDLE_DECLARING_TYPE).resolve(TypeDescription.class);
                         return declaringType.represents(void.class)
-                                ? new ForFieldHandle.Unresolved.WithImplicitType(Access.GETTER, annotation.getValue(VALUE).resolve(String.class))
-                                : new ForFieldHandle.Unresolved.WithExplicitType(Access.GETTER, annotation.getValue(VALUE).resolve(String.class), declaringType);
+                            ? new ForFieldHandle.Unresolved.WithImplicitType(Access.GETTER, annotation.getValue(FIELD_GETTER_HANDLE_VALUE).resolve(String.class))
+                            : new ForFieldHandle.Unresolved.WithExplicitType(Access.GETTER, annotation.getValue(FIELD_GETTER_HANDLE_VALUE).resolve(String.class), declaringType);
                     }
                 }
 
@@ -2958,18 +3037,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * The {@link FieldSetterHandle#value()} method.
                      */
-                    private static final MethodDescription.InDefinedShape VALUE = TypeDescription.ForLoadedType.of(FieldSetterHandle.class)
-                            .getDeclaredMethods()
-                            .filter(named("value"))
-                            .getOnly();
+                    private static final MethodDescription.InDefinedShape FIELD_SETTER_HANDLE_VALUE;
 
                     /**
                      * The {@link FieldSetterHandle#declaringType()} method.
                      */
-                    private static final MethodDescription.InDefinedShape DECLARING_TYPE = TypeDescription.ForLoadedType.of(FieldSetterHandle.class)
-                            .getDeclaredMethods()
-                            .filter(named("declaringType"))
-                            .getOnly();
+                    private static final MethodDescription.InDefinedShape FIELD_SETTER_HANDLE_DECLARING_TYPE;
+
+                    /*
+                     * Resolves annotation properties.
+                     */
+                    static {
+                        MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(FieldSetterHandle.class).getDeclaredMethods();
+                        FIELD_SETTER_HANDLE_VALUE = methods.filter(named("value")).getOnly();
+                        FIELD_SETTER_HANDLE_DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
+                    }
 
                     /**
                      * {@inheritDoc}
@@ -2987,10 +3069,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
                             throw new IllegalStateException("Cannot assign method handle to " + target);
                         }
-                        TypeDescription declaringType = annotation.getValue(DECLARING_TYPE).resolve(TypeDescription.class);
+                        TypeDescription declaringType = annotation.getValue(FIELD_SETTER_HANDLE_DECLARING_TYPE).resolve(TypeDescription.class);
                         return declaringType.represents(void.class)
-                                ? new ForFieldHandle.Unresolved.WithImplicitType(Access.SETTER, annotation.getValue(VALUE).resolve(String.class))
-                                : new ForFieldHandle.Unresolved.WithExplicitType(Access.SETTER, annotation.getValue(VALUE).resolve(String.class), declaringType);
+                            ? new ForFieldHandle.Unresolved.WithImplicitType(Access.SETTER, annotation.getValue(FIELD_SETTER_HANDLE_VALUE).resolve(String.class))
+                            : new ForFieldHandle.Unresolved.WithExplicitType(Access.SETTER, annotation.getValue(FIELD_SETTER_HANDLE_VALUE).resolve(String.class), declaringType);
                     }
                 }
             }
@@ -3138,26 +3220,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                         renderers.add(new Renderer.ForConstantValue(pattern.substring(from, to).replace("" + ESCAPE + ESCAPE, "" + ESCAPE)));
                         switch (pattern.charAt(to + 1)) {
-                            case Renderer.ForMethodName.SYMBOL:
-                                renderers.add(Renderer.ForMethodName.INSTANCE);
-                                break;
-                            case Renderer.ForTypeName.SYMBOL:
-                                renderers.add(Renderer.ForTypeName.INSTANCE);
-                                break;
-                            case Renderer.ForDescriptor.SYMBOL:
-                                renderers.add(Renderer.ForDescriptor.INSTANCE);
-                                break;
-                            case Renderer.ForReturnTypeName.SYMBOL:
-                                renderers.add(Renderer.ForReturnTypeName.INSTANCE);
-                                break;
-                            case Renderer.ForJavaSignature.SYMBOL:
-                                renderers.add(Renderer.ForJavaSignature.INSTANCE);
-                                break;
-                            case Renderer.ForPropertyName.SYMBOL:
-                                renderers.add(Renderer.ForPropertyName.INSTANCE);
-                                break;
-                            default:
-                                throw new IllegalStateException("Illegal sort descriptor " + pattern.charAt(to + 1) + " for " + pattern);
+                        case Renderer.ForMethodName.SYMBOL:
+                            renderers.add(Renderer.ForMethodName.INSTANCE);
+                            break;
+                        case Renderer.ForTypeName.SYMBOL:
+                            renderers.add(Renderer.ForTypeName.INSTANCE);
+                            break;
+                        case Renderer.ForDescriptor.SYMBOL:
+                            renderers.add(Renderer.ForDescriptor.INSTANCE);
+                            break;
+                        case Renderer.ForReturnTypeName.SYMBOL:
+                            renderers.add(Renderer.ForReturnTypeName.INSTANCE);
+                            break;
+                        case Renderer.ForJavaSignature.SYMBOL:
+                            renderers.add(Renderer.ForJavaSignature.INSTANCE);
+                            break;
+                        case Renderer.ForPropertyName.SYMBOL:
+                            renderers.add(Renderer.ForPropertyName.INSTANCE);
+                            break;
+                        default:
+                            throw new IllegalStateException("Illegal sort descriptor " + pattern.charAt(to + 1) + " for " + pattern);
                         }
                         from = to + 2;
                     }
@@ -3404,9 +3486,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A description of the {@link Origin#value()} method.
                  */
                 private static final MethodDescription.InDefinedShape ORIGIN_VALUE = TypeDescription.ForLoadedType.of(Origin.class)
-                        .getDeclaredMethods()
-                        .filter(named("value"))
-                        .getOnly();
+                    .getDeclaredMethods()
+                    .filter(named("value"))
+                    .getOnly();
 
                 /**
                  * {@inheritDoc}
@@ -3435,9 +3517,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return ForInstrumentedMethod.METHOD_TYPE;
                     } else if (JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().equals(target.getType().asErasure())) {
                         return new OffsetMapping.ForStackManipulation(MethodInvocation.lookup(),
-                                JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().asGenericType(),
-                                target.getType(),
-                                Assigner.Typing.STATIC);
+                            JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().asGenericType(),
+                            target.getType(),
+                            Assigner.Typing.STATIC);
                     } else if (target.getType().asErasure().isAssignableFrom(String.class)) {
                         return ForOrigin.parse(annotation.getValue(ORIGIN_VALUE).resolve(String.class));
                     } else {
@@ -3459,29 +3541,32 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 protected StackManipulation decorate(MethodDescription methodDescription, StackManipulation stackManipulation) {
                     List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(1
-                            + (methodDescription.isStatic() ? 0 : 2)
-                            + methodDescription.getParameters().size() * 3);
+                        + (methodDescription.isStatic() ? 0 : 2)
+                        + methodDescription.getParameters().size() * 3);
                     stackManipulations.add(stackManipulation);
                     if (!methodDescription.isStatic()) {
                         stackManipulations.add(MethodVariableAccess.loadThis());
                         stackManipulations.add(MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLE.getTypeStub(), new MethodDescription.Token("bindTo",
-                                Opcodes.ACC_PUBLIC,
-                                JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
-                                new TypeList.Generic.Explicit(TypeDefinition.Sort.describe(Object.class))))));
+                            Opcodes.ACC_PUBLIC,
+                            JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
+                            new TypeList.Generic.Explicit(TypeDefinition.Sort.describe(Object.class))))));
                     }
                     if (!methodDescription.getParameters().isEmpty()) {
                         List<StackManipulation> values = new ArrayList<StackManipulation>(methodDescription.getParameters().size());
                         for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
-                            values.add(parameterDescription.getType().isPrimitive() ? new StackManipulation.Compound(MethodVariableAccess.load(parameterDescription), Assigner.DEFAULT.assign(parameterDescription.getType(),
+                            values.add(parameterDescription.getType().isPrimitive() ?
+                                new StackManipulation.Compound(MethodVariableAccess.load(parameterDescription), Assigner.DEFAULT.assign(parameterDescription.getType(),
                                     parameterDescription.getType().asErasure().asBoxed().asGenericType(),
                                     Assigner.Typing.STATIC)) : MethodVariableAccess.load(parameterDescription));
                         }
                         stackManipulations.add(IntegerConstant.forValue(0));
                         stackManipulations.add(ArrayFactory.forType(TypeDescription.ForLoadedType.of(Object.class).asGenericType()).withValues(values));
-                        stackManipulations.add(MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLES.getTypeStub(), new MethodDescription.Token("insertArguments",
+                        stackManipulations.add(
+                            MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLES.getTypeStub(), new MethodDescription.Token("insertArguments",
                                 Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
                                 JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
-                                new TypeList.Generic.Explicit(JavaType.METHOD_HANDLE.getTypeStub(), TypeDefinition.Sort.describe(int.class), TypeDefinition.Sort.describe(Object[].class))))));
+                                new TypeList.Generic.Explicit(JavaType.METHOD_HANDLE.getTypeStub(), TypeDefinition.Sort.describe(int.class),
+                                    TypeDefinition.Sort.describe(Object[].class))))));
                     }
                     return new StackManipulation.Compound(stackManipulations);
                 }
@@ -3509,8 +3594,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     throw new IllegalStateException();
                 }
                 StackManipulation stackManipulation = (instrumentedMethod.isStatic()
-                        ? JavaConstant.MethodHandle.of(instrumentedMethod.asDefined())
-                        : JavaConstant.MethodHandle.ofSpecial(instrumentedMethod.asDefined(), instrumentedType)).toStackManipulation();
+                    ? JavaConstant.MethodHandle.of(instrumentedMethod.asDefined())
+                    : JavaConstant.MethodHandle.ofSpecial(instrumentedMethod.asDefined(), instrumentedType)).toStackManipulation();
                 return new Target.ForStackManipulation(decorate(instrumentedMethod, stackManipulation));
             }
 
@@ -3536,10 +3621,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * The {@code bound} property of the {@link SelfCallHandle} annotation.
                  */
-                private static final MethodDescription.InDefinedShape BOUND = TypeDescription.ForLoadedType.of(SelfCallHandle.class)
-                        .getDeclaredMethods()
-                        .filter(named("bound"))
-                        .getOnly();
+                private static final MethodDescription.InDefinedShape SELF_CALL_HANDLE_BOUND = TypeDescription.ForLoadedType.of(SelfCallHandle.class)
+                    .getDeclaredMethods()
+                    .filter(named("bound"))
+                    .getOnly();
 
                 /**
                  * {@inheritDoc}
@@ -3557,9 +3642,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
                         throw new IllegalStateException("Cannot assign a MethodHandle to " + target);
                     }
-                    return annotation.getValue(BOUND).resolve(Boolean.class)
-                            ? ForSelfCallHandle.BOUND
-                            : ForSelfCallHandle.UNBOUND;
+                    return annotation.getValue(SELF_CALL_HANDLE_BOUND).resolve(Boolean.class)
+                        ? ForSelfCallHandle.BOUND
+                        : ForSelfCallHandle.UNBOUND;
                 }
             }
         }
@@ -3643,8 +3728,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   ArgumentHandler argumentHandler,
                                   Sort sort) {
                 return new Target.ForDefaultValue.ReadOnly(instrumentedMethod.getReturnType(), assigner.assign(instrumentedMethod.getReturnType(),
-                        TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
-                        Assigner.Typing.DYNAMIC));
+                    TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class),
+                    Assigner.Typing.DYNAMIC));
             }
 
             /**
@@ -3703,9 +3788,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected ForEnterValue(TypeDescription.Generic target, TypeDescription.Generic enterType, AnnotationDescription.Loadable<Enter> annotation) {
                 this(target,
-                        enterType,
-                        annotation.getValue(Factory.ENTER_READ_ONLY).resolve(Boolean.class),
-                        annotation.getValue(Factory.ENTER_TYPING).load(Enter.class.getClassLoader()).resolve(Assigner.Typing.class));
+                    enterType,
+                    annotation.getValue(Factory.ENTER_READ_ONLY).resolve(Boolean.class),
+                    annotation.getValue(Factory.ENTER_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class));
             }
 
             /**
@@ -3761,9 +3846,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private static final MethodDescription.InDefinedShape ENTER_TYPING;
 
-                /*
-                 * Resolves annotation properties.
-                 */
                 static {
                     MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(Enter.class).getDeclaredMethods();
                     ENTER_READ_ONLY = methods.filter(named("readOnly")).getOnly();
@@ -3792,8 +3874,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected static OffsetMapping.Factory<Enter> of(TypeDefinition typeDefinition) {
                     return typeDefinition.represents(void.class)
-                            ? new Illegal<Enter>(Enter.class)
-                            : new Factory(typeDefinition);
+                        ? new Illegal<Enter>(Enter.class)
+                        : new Factory(typeDefinition);
                 }
 
                 /**
@@ -3853,9 +3935,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected ForExitValue(TypeDescription.Generic target, TypeDescription.Generic exitType, AnnotationDescription.Loadable<Exit> annotation) {
                 this(target,
-                        exitType,
-                        annotation.getValue(Factory.EXIT_READ_ONLY).resolve(Boolean.class),
-                        annotation.getValue(Factory.EXIT_TYPING).load(Exit.class.getClassLoader()).resolve(Assigner.Typing.class));
+                    exitType,
+                    annotation.getValue(Factory.EXIT_READ_ONLY).resolve(Boolean.class),
+                    annotation.getValue(Factory.EXIT_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class));
             }
 
             /**
@@ -3942,8 +4024,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected static OffsetMapping.Factory<Exit> of(TypeDefinition typeDefinition) {
                     return typeDefinition.represents(void.class)
-                            ? new Illegal<Exit>(Exit.class)
-                            : new Factory(typeDefinition);
+                        ? new Illegal<Exit>(Exit.class)
+                        : new Factory(typeDefinition);
                 }
 
                 /**
@@ -4029,9 +4111,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A description of the {@link Local#value()} method.
                  */
                 protected static final MethodDescription.InDefinedShape LOCAL_VALUE = TypeDescription.ForLoadedType.of(Local.class)
-                        .getDeclaredMethods()
-                        .filter(named("value"))
-                        .getOnly();
+                    .getDeclaredMethods()
+                    .filter(named("value"))
+                    .getOnly();
 
                 /**
                  * The mapping of type names to their type that are available.
@@ -4099,8 +4181,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected ForReturnValue(TypeDescription.Generic target, AnnotationDescription.Loadable<Return> annotation) {
                 this(target,
-                        annotation.getValue(Factory.RETURN_READ_ONLY).resolve(Boolean.class),
-                        annotation.getValue(Factory.RETURN_TYPING).load(Return.class.getClassLoader()).resolve(Assigner.Typing.class));
+                    annotation.getValue(Factory.RETURN_READ_ONLY).resolve(Boolean.class),
+                    annotation.getValue(Factory.RETURN_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class));
             }
 
             /**
@@ -4129,16 +4211,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     throw new IllegalStateException("Cannot assign " + instrumentedMethod.getReturnType() + " to " + target);
                 } else if (readOnly) {
                     return instrumentedMethod.getReturnType().represents(void.class)
-                            ? new Target.ForDefaultValue.ReadOnly(target)
-                            : new Target.ForVariable.ReadOnly(instrumentedMethod.getReturnType(), argumentHandler.returned(), readAssignment);
+                        ? new Target.ForDefaultValue.ReadOnly(target)
+                        : new Target.ForVariable.ReadOnly(instrumentedMethod.getReturnType(), argumentHandler.returned(), readAssignment);
                 } else {
                     StackManipulation writeAssignment = assigner.assign(target, instrumentedMethod.getReturnType(), typing);
                     if (!writeAssignment.isValid()) {
                         throw new IllegalStateException("Cannot assign " + target + " to " + instrumentedMethod.getReturnType());
                     }
                     return instrumentedMethod.getReturnType().represents(void.class)
-                            ? new Target.ForDefaultValue.ReadWrite(target)
-                            : new Target.ForVariable.ReadWrite(instrumentedMethod.getReturnType(), argumentHandler.returned(), readAssignment, writeAssignment);
+                        ? new Target.ForDefaultValue.ReadWrite(target)
+                        : new Target.ForVariable.ReadWrite(instrumentedMethod.getReturnType(), argumentHandler.returned(), readAssignment, writeAssignment);
                 }
             }
 
@@ -4163,7 +4245,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private static final MethodDescription.InDefinedShape RETURN_TYPING;
 
                 /*
-                 * Resolves annotation properties.
+                 * Resolves the annotation properties.
                  */
                 static {
                     MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(Return.class).getDeclaredMethods();
@@ -4222,8 +4304,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected ForThrowable(TypeDescription.Generic target, AnnotationDescription.Loadable<Thrown> annotation) {
                 this(target,
-                        annotation.getValue(Factory.THROWN_READ_ONLY).resolve(Boolean.class),
-                        annotation.getValue(Factory.THROWN_TYPING).load(Thrown.class.getClassLoader()).resolve(Assigner.Typing.class));
+                    annotation.getValue(Factory.THROWN_READ_ONLY).resolve(Boolean.class),
+                    annotation.getValue(Factory.THROWN_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class));
             }
 
             /**
@@ -4300,10 +4382,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming annotation for exit advice.")
                 protected static OffsetMapping.Factory<?> of(MethodDescription.InDefinedShape adviceMethod) {
                     return adviceMethod.getDeclaredAnnotations()
-                            .ofType(OnMethodExit.class)
-                            .getValue(ON_THROWABLE)
-                            .resolve(TypeDescription.class)
-                            .represents(NoExceptionHandler.class) ? new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class) : Factory.INSTANCE;
+                        .ofType(OnMethodExit.class)
+                        .getValue(ON_THROWABLE)
+                        .resolve(TypeDescription.class)
+                        .represents(NoExceptionHandler.class) ? new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class) : Factory.INSTANCE;
                 }
 
                 /**
@@ -4463,8 +4545,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public static <S extends Annotation> OffsetMapping.Factory<S> of(Class<S> annotationType, @MaybeNull Object value) {
                     return value == null
-                            ? new OfDefaultValue<S>(annotationType)
-                            : new Factory<S>(annotationType, ConstantValue.Simple.wrap(value));
+                        ? new OfDefaultValue<S>(annotationType)
+                        : new Factory<S>(annotationType, ConstantValue.Simple.wrap(value));
                 }
 
                 /**
@@ -4580,18 +4662,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * {@inheritDoc}
                  */
                 public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, AdviceType adviceType) {
-                    Object value = annotation.getValue(property).resolve();
-                    OffsetMapping.Factory<T> factory;
-                    if (value instanceof TypeDescription) {
-                        factory = new Factory<T>(annotationType, (TypeDescription) value);
-                    } else if (value instanceof EnumerationDescription) {
-                        factory = new Factory<T>(annotationType, (EnumerationDescription) value);
-                    } else if (value instanceof AnnotationDescription) {
-                        throw new IllegalStateException("Cannot bind annotation as fixed value for " + property);
-                    } else {
-                        factory = Factory.of(annotationType, value);
+                    ConstantValue value = ConstantValue.Simple.wrapOrNull(annotation.getValue(property).resolve());
+                    if (value == null) {
+                        throw new IllegalStateException("Property does not represent a constant value: " + property);
                     }
-                    return factory.make(target, annotation, adviceType);
+                    return new ForStackManipulation(value.toStackManipulation(),
+                        value.getTypeDescription().asGenericType(),
+                        target.getType(),
+                        Assigner.Typing.STATIC);
                 }
             }
 
@@ -4654,9 +4732,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalArgumentException(target.getType() + " must declare exactly one abstract method");
                     }
                     return new ForStackManipulation(MethodInvocation.invoke(bootstrapMethod).dynamic(methodCandidates.getOnly().getInternalName(),
-                            target.getType().asErasure(),
-                            Collections.<TypeDescription>emptyList(),
-                            arguments), target.getType(), target.getType(), Assigner.Typing.STATIC);
+                        target.getType().asErasure(),
+                        Collections.<TypeDescription>emptyList(),
+                        arguments), target.getType(), target.getType(), Assigner.Typing.STATIC);
                 }
             }
         }
@@ -4753,9 +4831,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param target         The instance representing the value to be deserialized.
                  * @param targetType     The target type as which to use the target value.
                  * @param <S>            The annotation type the created factory binds.
+                 * @param <U>            The type of the -represented constant.
                  * @return An appropriate offset mapping factory.
                  */
-                public static <S extends Annotation> OffsetMapping.Factory<S> of(Class<S> annotationType, Serializable target, Class<?> targetType) {
+                public static <S extends Annotation, U extends Serializable> OffsetMapping.Factory<S> of(Class<S> annotationType, U target, Class<? super U> targetType) {
                     if (!targetType.isInstance(target)) {
                         throw new IllegalArgumentException(target + " is no instance of " + targetType);
                     }
@@ -4940,8 +5019,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public int named(String name) {
                     return instrumentedMethod.getStackSize()
-                            + exitType.getStackSize().getSize()
-                            + StackSize.of(namedTypes.headMap(name).values());
+                        + exitType.getStackSize().getSize()
+                        + StackSize.of(namedTypes.headMap(name).values());
                 }
 
                 /**
@@ -4949,8 +5028,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public int enter() {
                     return instrumentedMethod.getStackSize()
-                            + exitType.getStackSize().getSize()
-                            + StackSize.of(namedTypes.values());
+                        + exitType.getStackSize().getSize()
+                        + StackSize.of(namedTypes.values());
                 }
 
                 /**
@@ -4958,9 +5037,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public int returned() {
                     return instrumentedMethod.getStackSize()
-                            + exitType.getStackSize().getSize()
-                            + StackSize.of(namedTypes.values())
-                            + enterType.getStackSize().getSize();
+                        + exitType.getStackSize().getSize()
+                        + StackSize.of(namedTypes.values())
+                        + enterType.getStackSize().getSize();
                 }
 
                 /**
@@ -4968,10 +5047,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public int thrown() {
                     return instrumentedMethod.getStackSize()
-                            + exitType.getStackSize().getSize()
-                            + StackSize.of(namedTypes.values())
-                            + enterType.getStackSize().getSize()
-                            + instrumentedMethod.getReturnType().getStackSize().getSize();
+                        + exitType.getStackSize().getSize()
+                        + StackSize.of(namedTypes.values())
+                        + enterType.getStackSize().getSize()
+                        + instrumentedMethod.getReturnType().getStackSize().getSize();
                 }
 
                 /**
@@ -4986,11 +5065,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public ForAdvice bindExit(MethodDescription adviceMethod, boolean skipThrowable) {
                     return new ForAdvice.Default.ForMethodExit(instrumentedMethod,
-                            adviceMethod,
-                            exitType,
-                            namedTypes,
-                            enterType,
-                            skipThrowable ? StackSize.ZERO : StackSize.SINGLE);
+                        adviceMethod,
+                        exitType,
+                        namedTypes,
+                        enterType,
+                        skipThrowable ? StackSize.ZERO : StackSize.SINGLE);
                 }
 
                 /**
@@ -5030,8 +5109,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public int argument(int offset) {
                         return offset < instrumentedMethod.getStackSize()
-                                ? offset
-                                : offset + exitType.getStackSize().getSize() + StackSize.of(namedTypes.values()) + enterType.getStackSize().getSize();
+                            ? offset
+                            : offset + exitType.getStackSize().getSize() + StackSize.of(namedTypes.values()) + enterType.getStackSize().getSize();
                     }
 
                     /**
@@ -5039,8 +5118,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public int variable(int index) {
                         return index < (instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size()
-                                ? index
-                                : index + (exitType.represents(void.class) ? 0 : 1) + namedTypes.size() + (enterType.represents(void.class) ? 0 : 1);
+                            ? index
+                            : index + (exitType.represents(void.class) ? 0 : 1) + namedTypes.size() + (enterType.represents(void.class) ? 0 : 1);
                     }
 
                     /**
@@ -5084,10 +5163,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public int argument(int offset) {
                         return instrumentedMethod.getStackSize()
-                                + exitType.getStackSize().getSize()
-                                + StackSize.of(namedTypes.values())
-                                + enterType.getStackSize().getSize()
-                                + offset;
+                            + exitType.getStackSize().getSize()
+                            + StackSize.of(namedTypes.values())
+                            + enterType.getStackSize().getSize()
+                            + offset;
                     }
 
                     /**
@@ -5095,11 +5174,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public int variable(int index) {
                         return (instrumentedMethod.isStatic() ? 0 : 1)
-                                + instrumentedMethod.getParameters().size()
-                                + (exitType.represents(void.class) ? 0 : 1)
-                                + namedTypes.size()
-                                + (enterType.represents(void.class) ? 0 : 1)
-                                + index;
+                            + instrumentedMethod.getParameters().size()
+                            + (exitType.represents(void.class) ? 0 : 1)
+                            + namedTypes.size()
+                            + (enterType.represents(void.class) ? 0 : 1)
+                            + index;
                     }
 
                     /**
@@ -5117,9 +5196,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (!instrumentedMethod.isStatic()) {
                             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
                             methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize()
-                                    + exitType.getStackSize().getSize()
-                                    + StackSize.of(namedTypes.values())
-                                    + enterType.getStackSize().getSize());
+                                + exitType.getStackSize().getSize()
+                                + StackSize.of(namedTypes.values())
+                                + enterType.getStackSize().getSize());
                             stackSize = StackSize.SINGLE;
                         } else {
                             stackSize = StackSize.ZERO;
@@ -5128,10 +5207,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             Type type = Type.getType(parameterDescription.getType().asErasure().getDescriptor());
                             methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), parameterDescription.getOffset());
                             methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize()
-                                    + exitType.getStackSize().getSize()
-                                    + StackSize.of(namedTypes.values())
-                                    + enterType.getStackSize().getSize()
-                                    + parameterDescription.getOffset());
+                                + exitType.getStackSize().getSize()
+                                + StackSize.of(namedTypes.values())
+                                + enterType.getStackSize().getSize()
+                                + parameterDescription.getOffset());
                             stackSize = stackSize.maximum(parameterDescription.getType().getStackSize());
                         }
                         return stackSize.getSize();
@@ -5215,8 +5294,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public int named(String name) {
                     return instrumentedMethod.getStackSize()
-                            + exitType.getStackSize().getSize()
-                            + StackSize.of(namedTypes.headMap(name).values());
+                        + exitType.getStackSize().getSize()
+                        + StackSize.of(namedTypes.headMap(name).values());
                 }
 
                 /**
@@ -5224,8 +5303,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public int enter() {
                     return instrumentedMethod.getStackSize()
-                            + exitType.getStackSize().getSize()
-                            + StackSize.of(namedTypes.values());
+                        + exitType.getStackSize().getSize()
+                        + StackSize.of(namedTypes.values());
                 }
 
                 /**
@@ -5268,9 +5347,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public int mapped(int offset) {
                         return instrumentedMethod.getStackSize()
-                                + exitType.getStackSize().getSize()
-                                + StackSize.of(namedTypes.values())
-                                - adviceMethod.getStackSize() + offset;
+                            + exitType.getStackSize().getSize()
+                            + StackSize.of(namedTypes.values())
+                            - adviceMethod.getStackSize() + offset;
                     }
                 }
 
@@ -5316,9 +5395,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public int returned() {
                         return instrumentedMethod.getStackSize()
-                                + exitType.getStackSize().getSize()
-                                + StackSize.of(namedTypes.values())
-                                + enterType.getStackSize().getSize();
+                            + exitType.getStackSize().getSize()
+                            + StackSize.of(namedTypes.values())
+                            + enterType.getStackSize().getSize();
                     }
 
                     /**
@@ -5326,10 +5405,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public int thrown() {
                         return instrumentedMethod.getStackSize()
-                                + exitType.getStackSize().getSize()
-                                + StackSize.of(namedTypes.values())
-                                + enterType.getStackSize().getSize()
-                                + instrumentedMethod.getReturnType().getStackSize().getSize();
+                            + exitType.getStackSize().getSize()
+                            + StackSize.of(namedTypes.values())
+                            + enterType.getStackSize().getSize()
+                            + instrumentedMethod.getReturnType().getStackSize().getSize();
                     }
 
                     /**
@@ -5337,13 +5416,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public int mapped(int offset) {
                         return instrumentedMethod.getStackSize()
-                                + exitType.getStackSize().getSize()
-                                + StackSize.of(namedTypes.values())
-                                + enterType.getStackSize().getSize()
-                                + instrumentedMethod.getReturnType().getStackSize().getSize()
-                                + throwableSize.getSize()
-                                - adviceMethod.getStackSize()
-                                + offset;
+                            + exitType.getStackSize().getSize()
+                            + StackSize.of(namedTypes.values())
+                            + enterType.getStackSize().getSize()
+                            + instrumentedMethod.getReturnType().getStackSize().getSize()
+                            + throwableSize.getSize()
+                            - adviceMethod.getStackSize()
+                            + offset;
                     }
                 }
             }
@@ -5364,9 +5443,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                         TypeDefinition exitType,
                                                         SortedMap<String, TypeDefinition> namedTypes) {
                     return new ForInstrumentedMethod.Default.Simple(instrumentedMethod,
-                            exitType,
-                            namedTypes,
-                            enterType);
+                        exitType,
+                        namedTypes,
+                        enterType);
                 }
             },
 
@@ -5380,9 +5459,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                         TypeDefinition exitType,
                                                         SortedMap<String, TypeDefinition> namedTypes) {
                     return new ForInstrumentedMethod.Default.Copying(instrumentedMethod,
-                            exitType,
-                            namedTypes,
-                            enterType);
+                        exitType,
+                        namedTypes,
+                        enterType);
                 }
             };
 
@@ -5564,11 +5643,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(postProcessors.size());
                 for (PostProcessor postProcessor : postProcessors) {
                     stackManipulations.add(postProcessor.resolve(instrumentedType,
-                            instrumentedMethod,
-                            assigner,
-                            argumentHandler,
-                            stackMapFrameHandler,
-                            exceptionHandler));
+                        instrumentedMethod,
+                        assigner,
+                        argumentHandler,
+                        stackMapFrameHandler,
+                        exceptionHandler));
                 }
                 return new StackManipulation.Compound(stackManipulations);
             }
@@ -5583,41 +5662,71 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Materializes an invocation.
          *
-         * @param methodVisitor      The method visitor to apply the materialization to.
-         * @param adviceMethod       The advice method to materialize.
          * @param instrumentedType   The instrumented type.
          * @param instrumentedMethod The instrumented method.
-         * @param exit               {@code true} if the materialization is exit advice.
+         * @return An appropriate stack manipulation which needs to consume all arguments for the advice
+         * method and needs to provide a compatible return type.
          */
-        void apply(MethodVisitor methodVisitor,
-                   MethodDescription.InDefinedShape adviceMethod,
-                   TypeDescription instrumentedType,
-                   MethodDescription instrumentedMethod,
-                   boolean exit);
+        StackManipulation apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
 
         /**
-         * Invokes an advice method using a static method call.
+         * A factory for creating a {@link Delegator}.
          */
-        enum ForStaticInvocation implements Delegator {
+        interface Factory {
 
             /**
-             * The singleton instance.
+             * Resolves a delegator.
+             *
+             * @param adviceMethod The advice method.
+             * @param exit         {@code true} if the advice is applied as exit advice.
+             * @return An appropriate delegator.
              */
-            INSTANCE;
+            Delegator make(MethodDescription.InDefinedShape adviceMethod, boolean exit);
+        }
+
+        /**
+         * Invokes an advice method using a regular method call.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class ForRegularInvocation implements Delegator {
+
+            /**
+             * The advice method.
+             */
+            private final MethodDescription.InDefinedShape adviceMethod;
+
+            /**
+             * Creates a delegator for a regular invocation.
+             *
+             * @param adviceMethod The advice method.
+             */
+            protected ForRegularInvocation(MethodDescription.InDefinedShape adviceMethod) {
+                this.adviceMethod = adviceMethod;
+            }
 
             /**
              * {@inheritDoc}
              */
-            public void apply(MethodVisitor methodVisitor,
-                              MethodDescription.InDefinedShape adviceMethod,
-                              TypeDescription instrumentedType,
-                              MethodDescription instrumentedMethod,
-                              boolean exit) {
-                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                        adviceMethod.getDeclaringType().getInternalName(),
-                        adviceMethod.getInternalName(),
-                        adviceMethod.getDescriptor(),
-                        false);
+            public StackManipulation apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                return MethodInvocation.invoke(adviceMethod);
+            }
+
+            /**
+             * A factory for a regular method invocation delegator.
+             */
+            protected enum Factory implements Delegator.Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Delegator make(MethodDescription.InDefinedShape adviceMethod, boolean exit) {
+                    return new ForRegularInvocation(adviceMethod);
+                }
             }
         }
 
@@ -5633,69 +5742,182 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             private final MethodDescription.InDefinedShape bootstrapMethod;
 
             /**
+             * The advice method.
+             */
+            private final MethodDescription.InDefinedShape adviceMethod;
+
+            /**
+             * A resolver to provide the arguments to the bootstrap method.
+             */
+            private final BootstrapArgumentResolver resolver;
+
+            /**
              * Creates a delegator for a dynamic method invocation.
              *
              * @param bootstrapMethod The bootstrap method.
+             * @param adviceMethod    The advice method.
+             * @param resolver        A resolver to provide the arguments to the bootstrap method.
              */
-            protected ForDynamicInvocation(MethodDescription.InDefinedShape bootstrapMethod) {
+            protected ForDynamicInvocation(MethodDescription.InDefinedShape bootstrapMethod,
+                                           MethodDescription.InDefinedShape adviceMethod,
+                                           BootstrapArgumentResolver resolver) {
                 this.bootstrapMethod = bootstrapMethod;
+                this.adviceMethod = adviceMethod;
+                this.resolver = resolver;
             }
 
             /**
              * Creates a new dynamic invocation delegator.
              *
              * @param bootstrapMethod The bootstrap method or constructor.
+             * @param resolverFactory A resolver factory to provide the arguments to the bootstrap method.
              * @return An appropriate delegator.
              */
-            protected static Delegator of(MethodDescription.InDefinedShape bootstrapMethod) {
+            protected static Delegator.Factory of(MethodDescription.InDefinedShape bootstrapMethod, BootstrapArgumentResolver.Factory resolverFactory) {
                 if (!bootstrapMethod.isInvokeBootstrap()) {
                     throw new IllegalArgumentException("Not a suitable bootstrap target: " + bootstrapMethod);
                 }
-                return new ForDynamicInvocation(bootstrapMethod);
+                return new Factory(bootstrapMethod, resolverFactory);
             }
 
             /**
              * {@inheritDoc}
              */
-            public void apply(MethodVisitor methodVisitor,
-                              MethodDescription.InDefinedShape adviceMethod,
-                              TypeDescription instrumentedType,
-                              MethodDescription instrumentedMethod,
-                              boolean exit) {
-                Object[] argument;
-                if (instrumentedMethod.isTypeInitializer()) {
-                    if (!bootstrapMethod.isInvokeBootstrap(Arrays.asList(TypeDescription.ForLoadedType.of(String.class),
-                            TypeDescription.ForLoadedType.of(int.class),
-                            TypeDescription.ForLoadedType.of(Class.class),
-                            TypeDescription.ForLoadedType.of(String.class)))) {
-                        throw new IllegalArgumentException(bootstrapMethod + " is not accepting advice bootstrap arguments");
-                    }
-                    argument = new Object[]{adviceMethod.getDeclaringType().getName(),
-                            exit ? 1 : 0,
-                            Type.getType(instrumentedType.getDescriptor()),
-                            instrumentedMethod.getInternalName()};
-                } else {
-                    if (!bootstrapMethod.isInvokeBootstrap(Arrays.asList(TypeDescription.ForLoadedType.of(String.class),
-                            TypeDescription.ForLoadedType.of(int.class),
-                            TypeDescription.ForLoadedType.of(Class.class),
-                            TypeDescription.ForLoadedType.of(String.class),
-                            JavaType.METHOD_HANDLE.getTypeStub()))) {
-                        throw new IllegalArgumentException(bootstrapMethod + " is not accepting advice bootstrap arguments");
-                    }
-                    argument = new Object[]{adviceMethod.getDeclaringType().getName(),
-                            exit ? 1 : 0,
-                            Type.getType(instrumentedType.getDescriptor()),
-                            instrumentedMethod.getInternalName(),
-                            JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()).accept(JavaConstantValue.Visitor.INSTANCE)};
+            public StackManipulation apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                List<JavaConstant> constants = resolver.resolve(instrumentedType, instrumentedMethod);
+                if (!bootstrapMethod.isInvokeBootstrap(TypeList.Explicit.of(constants))) {
+                    throw new IllegalStateException("Cannot invoke " + bootstrapMethod + " with arguments: " + constants);
                 }
-                methodVisitor.visitInvokeDynamicInsn(adviceMethod.getInternalName(),
-                        adviceMethod.getDescriptor(),
-                        new Handle(bootstrapMethod.isConstructor() ? Opcodes.H_NEWINVOKESPECIAL : Opcodes.H_INVOKESTATIC,
-                                bootstrapMethod.getDeclaringType().getInternalName(),
-                                bootstrapMethod.getInternalName(),
-                                bootstrapMethod.getDescriptor(),
-                                false),
-                        argument);
+                return MethodInvocation.invoke(bootstrapMethod).dynamic(adviceMethod.getInternalName(),
+                    adviceMethod.getReturnType().asErasure(),
+                    adviceMethod.getParameters().asTypeList().asErasures(),
+                    constants);
+            }
+
+            /**
+             * A factory for creating a dynamic invocation dispatcher.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            protected static class Factory implements Delegator.Factory {
+
+                /**
+                 * The bootstrap method.
+                 */
+                private final MethodDescription.InDefinedShape bootstrapMethod;
+
+                /**
+                 * A resolver factory to provide the arguments to the bootstrap method.
+                 */
+                private final BootstrapArgumentResolver.Factory resolverFactory;
+
+                /**
+                 * Creates a factory for a dynamic invocation dispatcher.
+                 *
+                 * @param bootstrapMethod The bootstrap method.
+                 * @param resolverFactory A resolver factory to provide the arguments to the bootstrap method.
+                 */
+                protected Factory(MethodDescription.InDefinedShape bootstrapMethod, BootstrapArgumentResolver.Factory resolverFactory) {
+                    this.bootstrapMethod = bootstrapMethod;
+                    this.resolverFactory = resolverFactory;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Delegator make(MethodDescription.InDefinedShape adviceMethod, boolean exit) {
+                    return new ForDynamicInvocation(bootstrapMethod, adviceMethod, resolverFactory.resolve(adviceMethod, exit));
+                }
+            }
+        }
+    }
+
+    /**
+     * A resolver for the arguments that are provided to a bootstrap method if dynamic dispatch is used.
+     */
+    public interface BootstrapArgumentResolver {
+
+        /**
+         * Resolves the constants that are provided as arguments to the bootstrap methods.
+         *
+         * @param instrumentedType   The instrumented type.
+         * @param instrumentedMethod The instrumented method.
+         * @return A list of constants to supply as arguments to the bootstrap method.
+         */
+        List<JavaConstant> resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
+
+        /**
+         * A factory for creating a {@link BootstrapArgumentResolver}.
+         */
+        interface Factory {
+
+            /**
+             * Creates a bootstrap argument resolver for a given advice.
+             *
+             * @param adviceMethod The advice method.
+             * @param exit         {@code true} if the method is bound as exit advice.
+             * @return An appropriate bootstrap argument resolver.
+             */
+            BootstrapArgumentResolver resolve(MethodDescription.InDefinedShape adviceMethod, boolean exit);
+        }
+
+        @HashCodeAndEqualsPlugin.Enhance
+        class ForDefaultValues implements BootstrapArgumentResolver {
+
+            /**
+             * The advice method.
+             */
+            private final MethodDescription.InDefinedShape adviceMethod;
+
+            /**
+             * {@code true} if the advice is applied as exit advice.
+             */
+            private final boolean exit;
+
+            /**
+             * Creates a bootstrap argument resolver with default values.
+             *
+             * @param adviceMethod The advice method.
+             * @param exit         {@code true} if the advice is applied as exit advice.
+             */
+            protected ForDefaultValues(MethodDescription.InDefinedShape adviceMethod, boolean exit) {
+                this.adviceMethod = adviceMethod;
+                this.exit = exit;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public List<JavaConstant> resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                if (instrumentedMethod.isTypeInitializer()) {
+                    return Arrays.asList(net.bytebuddy.utility.JavaConstant.Simple.ofLoaded(adviceMethod.getDeclaringType().getName()),
+                        net.bytebuddy.utility.JavaConstant.Simple.ofLoaded(exit ? 1 : 0),
+                        net.bytebuddy.utility.JavaConstant.Simple.of(instrumentedType),
+                        net.bytebuddy.utility.JavaConstant.Simple.ofLoaded(instrumentedMethod.getInternalName()));
+                } else {
+                    return Arrays.asList(net.bytebuddy.utility.JavaConstant.Simple.ofLoaded(adviceMethod.getDeclaringType().getName()),
+                        net.bytebuddy.utility.JavaConstant.Simple.ofLoaded(exit ? 1 : 0),
+                        net.bytebuddy.utility.JavaConstant.Simple.of(instrumentedType),
+                        net.bytebuddy.utility.JavaConstant.Simple.ofLoaded(instrumentedMethod.getInternalName()),
+                        net.bytebuddy.utility.JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()));
+                }
+            }
+
+            /**
+             * A factory for creating a {@link ForDefaultValues}.
+             */
+            public enum Factory implements BootstrapArgumentResolver.Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public BootstrapArgumentResolver resolve(MethodDescription.InDefinedShape adviceMethod, boolean exit) {
+                    return new ForDefaultValues(adviceMethod, exit);
+                }
             }
         }
     }
@@ -5977,9 +6199,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             public int compoundLocalVariableLength(int localVariableLength) {
                 return Math.max(this.localVariableLength, localVariableLength
-                        + StackSize.of(postMethodTypes)
-                        + StackSize.of(initialTypes)
-                        + StackSize.of(preMethodTypes));
+                    + StackSize.of(postMethodTypes)
+                    + StackSize.of(initialTypes)
+                    + StackSize.of(preMethodTypes));
             }
 
             /**
@@ -6007,9 +6229,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public MethodSizeHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
                     return new ForAdvice(adviceMethod, instrumentedMethod.getStackSize()
-                            + StackSize.of(postMethodTypes)
-                            + StackSize.of(initialTypes)
-                            + StackSize.of(preMethodTypes));
+                        + StackSize.of(postMethodTypes)
+                        + StackSize.of(initialTypes)
+                        + StackSize.of(preMethodTypes));
                 }
 
                 /**
@@ -6017,9 +6239,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public int compoundLocalVariableLength(int localVariableLength) {
                     return Math.max(this.localVariableLength, localVariableLength
-                            + StackSize.of(postMethodTypes)
-                            + StackSize.of(initialTypes)
-                            + StackSize.of(preMethodTypes));
+                        + StackSize.of(postMethodTypes)
+                        + StackSize.of(initialTypes)
+                        + StackSize.of(preMethodTypes));
                 }
             }
 
@@ -6048,9 +6270,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public MethodSizeHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
                     return new ForAdvice(adviceMethod, 2 * instrumentedMethod.getStackSize()
-                            + StackSize.of(initialTypes)
-                            + StackSize.of(preMethodTypes)
-                            + StackSize.of(postMethodTypes));
+                        + StackSize.of(initialTypes)
+                        + StackSize.of(preMethodTypes)
+                        + StackSize.of(postMethodTypes));
                 }
 
                 /**
@@ -6058,10 +6280,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public int compoundLocalVariableLength(int localVariableLength) {
                     return Math.max(this.localVariableLength, localVariableLength
-                            + instrumentedMethod.getStackSize()
-                            + StackSize.of(postMethodTypes)
-                            + StackSize.of(initialTypes)
-                            + StackSize.of(preMethodTypes));
+                        + instrumentedMethod.getStackSize()
+                        + StackSize.of(postMethodTypes)
+                        + StackSize.of(initialTypes)
+                        + StackSize.of(preMethodTypes));
                 }
             }
 
@@ -6136,9 +6358,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void recordMaxima(int stackSize, int localVariableLength) {
                     Default.this.requireStackSize(stackSize + stackSizePadding);
                     Default.this.requireLocalVariableLength(localVariableLength
-                            - adviceMethod.getStackSize()
-                            + baseLocalVariableLength
-                            + localVariableLengthPadding);
+                        - adviceMethod.getStackSize()
+                        + baseLocalVariableLength
+                        + localVariableLengthPadding);
                 }
             }
         }
@@ -6460,26 +6682,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return NoOp.INSTANCE;
                 } else if (!exitAdvice && initialTypes.isEmpty()) {
                     return new Trivial(instrumentedType,
-                            instrumentedMethod,
-                            latentTypes,
-                            (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
+                        instrumentedMethod,
+                        latentTypes,
+                        (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
                 } else if (copyArguments) {
                     return new WithPreservedArguments.WithArgumentCopy(instrumentedType,
-                            instrumentedMethod,
-                            initialTypes,
-                            latentTypes,
-                            preMethodTypes,
-                            postMethodTypes,
-                            (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
+                        instrumentedMethod,
+                        initialTypes,
+                        latentTypes,
+                        preMethodTypes,
+                        postMethodTypes,
+                        (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
                 } else {
                     return new WithPreservedArguments.WithoutArgumentCopy(instrumentedType,
-                            instrumentedMethod,
-                            initialTypes,
-                            latentTypes,
-                            preMethodTypes,
-                            postMethodTypes,
-                            (readerFlags & ClassReader.EXPAND_FRAMES) != 0,
-                            !instrumentedMethod.isConstructor());
+                        instrumentedMethod,
+                        initialTypes,
+                        latentTypes,
+                        preMethodTypes,
+                        postMethodTypes,
+                        (readerFlags & ClassReader.EXPAND_FRAMES) != 0,
+                        !instrumentedMethod.isConstructor());
                 }
             }
 
@@ -6488,8 +6710,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             public StackMapFrameHandler.ForAdvice bindEnter(MethodDescription.InDefinedShape adviceMethod) {
                 return new ForAdvice(adviceMethod, initialTypes, latentTypes, preMethodTypes, TranslationMode.ENTER, instrumentedMethod.isConstructor()
-                        ? Initialization.UNITIALIZED
-                        : Initialization.INITIALIZED);
+                    ? Initialization.UNITIALIZED
+                    : Initialization.INITIALIZED);
             }
 
             /**
@@ -6497,8 +6719,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             public int getReaderHint() {
                 return expandFrames
-                        ? ClassReader.EXPAND_FRAMES
-                        : AsmVisitorWrapper.NO_FLAGS;
+                    ? ClassReader.EXPAND_FRAMES
+                    : AsmVisitorWrapper.NO_FLAGS;
             }
 
             /**
@@ -6524,58 +6746,58 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           int stackSize,
                                           @MaybeNull Object[] stack) {
                 switch (type) {
-                    case Opcodes.F_SAME:
-                    case Opcodes.F_SAME1:
-                        break;
-                    case Opcodes.F_APPEND:
-                        currentFrameDivergence += localVariableLength;
-                        break;
-                    case Opcodes.F_CHOP:
-                        currentFrameDivergence -= localVariableLength;
-                        if (currentFrameDivergence < 0) {
-                            throw new IllegalStateException(methodDescription + " dropped " + Math.abs(currentFrameDivergence) + " implicit frames");
+                case Opcodes.F_SAME:
+                case Opcodes.F_SAME1:
+                    break;
+                case Opcodes.F_APPEND:
+                    currentFrameDivergence += localVariableLength;
+                    break;
+                case Opcodes.F_CHOP:
+                    currentFrameDivergence -= localVariableLength;
+                    if (currentFrameDivergence < 0) {
+                        throw new IllegalStateException(methodDescription + " dropped " + Math.abs(currentFrameDivergence) + " implicit frames");
+                    }
+                    break;
+                case Opcodes.F_FULL:
+                case Opcodes.F_NEW:
+                    if (methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1) > localVariableLength) {
+                        throw new IllegalStateException("Inconsistent frame length for " + methodDescription + ": " + localVariableLength);
+                    }
+                    int offset;
+                    if (methodDescription.isStatic()) {
+                        offset = 0;
+                    } else {
+                        if (!translationMode.isPossibleThisFrameValue(instrumentedType, instrumentedMethod, localVariable[0])) {
+                            throw new IllegalStateException(methodDescription + " is inconsistent for 'this' reference: " + localVariable[0]);
                         }
-                        break;
-                    case Opcodes.F_FULL:
-                    case Opcodes.F_NEW:
-                        if (methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1) > localVariableLength) {
-                            throw new IllegalStateException("Inconsistent frame length for " + methodDescription + ": " + localVariableLength);
+                        offset = 1;
+                    }
+                    for (int index = 0; index < methodDescription.getParameters().size(); index++) {
+                        if (!Initialization.INITIALIZED.toFrame(methodDescription.getParameters().get(index).getType().asErasure()).equals(localVariable[index + offset])) {
+                            throw new IllegalStateException(methodDescription + " is inconsistent at " + index + ": " + localVariable[index + offset]);
                         }
-                        int offset;
-                        if (methodDescription.isStatic()) {
-                            offset = 0;
-                        } else {
-                            if (!translationMode.isPossibleThisFrameValue(instrumentedType, instrumentedMethod, localVariable[0])) {
-                                throw new IllegalStateException(methodDescription + " is inconsistent for 'this' reference: " + localVariable[0]);
-                            }
-                            offset = 1;
-                        }
-                        for (int index = 0; index < methodDescription.getParameters().size(); index++) {
-                            if (!Initialization.INITIALIZED.toFrame(methodDescription.getParameters().get(index).getType().asErasure()).equals(localVariable[index + offset])) {
-                                throw new IllegalStateException(methodDescription + " is inconsistent at " + index + ": " + localVariable[index + offset]);
-                            }
-                        }
-                        Object[] translated = new Object[localVariableLength
-                                - (methodDescription.isStatic() ? 0 : 1)
-                                - methodDescription.getParameters().size()
-                                + (instrumentedMethod.isStatic() ? 0 : 1)
-                                + instrumentedMethod.getParameters().size()
-                                + additionalTypes.size()];
-                        int index = translationMode.copy(instrumentedType, instrumentedMethod, methodDescription, localVariable, translated);
-                        for (TypeDescription typeDescription : additionalTypes) {
-                            translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
-                        }
-                        System.arraycopy(localVariable,
-                                methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1),
-                                translated,
-                                index,
-                                translated.length - index);
-                        localVariableLength = translated.length;
-                        localVariable = translated;
-                        currentFrameDivergence = translated.length - index;
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Unexpected frame type: " + type);
+                    }
+                    Object[] translated = new Object[localVariableLength
+                        - (methodDescription.isStatic() ? 0 : 1)
+                        - methodDescription.getParameters().size()
+                        + (instrumentedMethod.isStatic() ? 0 : 1)
+                        + instrumentedMethod.getParameters().size()
+                        + additionalTypes.size()];
+                    int index = translationMode.copy(instrumentedType, instrumentedMethod, methodDescription, localVariable, translated);
+                    for (TypeDescription typeDescription : additionalTypes) {
+                        translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
+                    }
+                    System.arraycopy(localVariable,
+                        methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1),
+                        translated,
+                        index,
+                        translated.length - index);
+                    localVariableLength = translated.length;
+                    localVariable = translated;
+                    currentFrameDivergence = translated.length - index;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unexpected frame type: " + type);
                 }
                 methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
             }
@@ -6593,8 +6815,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                            List<? extends TypeDescription> typesInArray,
                                            List<? extends TypeDescription> typesOnStack) {
                 Object[] localVariable = new Object[instrumentedMethod.getParameters().size()
-                        + (instrumentedMethod.isStatic() ? 0 : 1)
-                        + typesInArray.size()];
+                    + (instrumentedMethod.isStatic() ? 0 : 1)
+                    + typesInArray.size()];
                 int index = 0;
                 if (!instrumentedMethod.isStatic()) {
                     localVariable[index++] = initialization.toFrame(instrumentedType);
@@ -6653,8 +6875,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         int index = 0;
                         if (!instrumentedMethod.isStatic()) {
                             translated[index++] = instrumentedMethod.isConstructor()
-                                    ? Opcodes.UNINITIALIZED_THIS
-                                    : Initialization.INITIALIZED.toFrame(instrumentedType);
+                                ? Opcodes.UNINITIALIZED_THIS
+                                : Initialization.INITIALIZED.toFrame(instrumentedType);
                         }
                         for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
                             translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
@@ -6665,8 +6887,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     protected boolean isPossibleThisFrameValue(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Object frame) {
                         return instrumentedMethod.isConstructor()
-                                ? Opcodes.UNINITIALIZED_THIS.equals(frame)
-                                : Initialization.INITIALIZED.toFrame(instrumentedType).equals(frame);
+                            ? Opcodes.UNINITIALIZED_THIS.equals(frame)
+                            : Initialization.INITIALIZED.toFrame(instrumentedType).equals(frame);
                     }
                 },
 
@@ -6752,10 +6974,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected Object toFrame(TypeDescription typeDescription) {
                         if (typeDescription.represents(boolean.class)
-                                || typeDescription.represents(byte.class)
-                                || typeDescription.represents(short.class)
-                                || typeDescription.represents(char.class)
-                                || typeDescription.represents(int.class)) {
+                            || typeDescription.represents(byte.class)
+                            || typeDescription.represents(short.class)
+                            || typeDescription.represents(char.class)
+                            || typeDescription.represents(int.class)) {
                             return Opcodes.INTEGER;
                         } else if (typeDescription.represents(long.class)) {
                             return Opcodes.LONG;
@@ -6793,12 +7015,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected Trivial(TypeDescription instrumentedType, MethodDescription instrumentedMethod, List<? extends TypeDescription> latentTypes, boolean expandFrames) {
                     super(instrumentedType,
-                            instrumentedMethod,
-                            Collections.<TypeDescription>emptyList(),
-                            latentTypes,
-                            Collections.<TypeDescription>emptyList(),
-                            Collections.<TypeDescription>emptyList(),
-                            expandFrames);
+                        instrumentedMethod,
+                        Collections.<TypeDescription>emptyList(),
+                        latentTypes,
+                        Collections.<TypeDescription>emptyList(),
+                        Collections.<TypeDescription>emptyList(),
+                        expandFrames);
                 }
 
                 /**
@@ -6919,11 +7141,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public StackMapFrameHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
                     return new ForAdvice(adviceMethod,
-                            CompoundList.of(initialTypes, preMethodTypes, postMethodTypes),
-                            Collections.<TypeDescription>emptyList(),
-                            Collections.<TypeDescription>emptyList(),
-                            TranslationMode.EXIT,
-                            Initialization.INITIALIZED);
+                        CompoundList.of(initialTypes, preMethodTypes, postMethodTypes),
+                        Collections.<TypeDescription>emptyList(),
+                        Collections.<TypeDescription>emptyList(),
+                        TranslationMode.EXIT,
+                        Initialization.INITIALIZED);
                 }
 
                 /**
@@ -6935,13 +7157,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
                             methodVisitor.visitFrame(Opcodes.F_SAME1,
-                                    EMPTY.length,
-                                    EMPTY,
-                                    1,
-                                    new Object[]{Initialization.INITIALIZED.toFrame(instrumentedMethod.getReturnType().asErasure())});
+                                EMPTY.length,
+                                EMPTY,
+                                1,
+                                new Object[] {Initialization.INITIALIZED.toFrame(instrumentedMethod.getReturnType().asErasure())});
                         }
                     } else {
-                        injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes), instrumentedMethod.getReturnType().represents(void.class)
+                        injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes),
+                            instrumentedMethod.getReturnType().represents(void.class)
                                 ? Collections.<TypeDescription>emptyList()
                                 : Collections.singletonList(instrumentedMethod.getReturnType().asErasure()));
                     }
@@ -6952,9 +7175,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public void injectExceptionFrame(MethodVisitor methodVisitor) {
                     if (!expandFrames && currentFrameDivergence == 0) {
-                        methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
+                        methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[] {Type.getInternalName(Throwable.class)});
                     } else {
-                        injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes), Collections.singletonList(TypeDescription.ForLoadedType.of(Throwable.class)));
+                        injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes),
+                            Collections.singletonList(TypeDescription.ForLoadedType.of(Throwable.class)));
                     }
                 }
 
@@ -6974,7 +7198,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
                         }
                     } else {
-                        injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes, postMethodTypes), Collections.<TypeDescription>emptyList());
+                        injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes, postMethodTypes),
+                            Collections.<TypeDescription>emptyList());
                     }
                 }
 
@@ -6985,7 +7210,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!expandFrames && currentFrameDivergence == 0) {
                         methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                     } else {
-                        injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes, postMethodTypes), Collections.<TypeDescription>emptyList());
+                        injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes, postMethodTypes),
+                            Collections.<TypeDescription>emptyList());
                     }
                 }
 
@@ -7003,8 +7229,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitFrame(Opcodes.F_APPEND, localVariable.length, localVariable, EMPTY.length, EMPTY);
                         } else {
                             Object[] localVariable = new Object[(instrumentedMethod.isStatic() ? 0 : 1)
-                                    + instrumentedMethod.getParameters().size()
-                                    + initialTypes.size()];
+                                + instrumentedMethod.getParameters().size()
+                                + initialTypes.size()];
                             int index = 0;
                             if (instrumentedMethod.isConstructor()) {
                                 localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
@@ -7067,14 +7293,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                int stackSize,
                                                @MaybeNull Object[] stack) {
                         translateFrame(methodVisitor,
-                                TranslationMode.COPY,
-                                instrumentedMethod,
-                                CompoundList.of(initialTypes, preMethodTypes),
-                                type,
-                                localVariableLength,
-                                localVariable,
-                                stackSize,
-                                stack);
+                            TranslationMode.COPY,
+                            instrumentedMethod,
+                            CompoundList.of(initialTypes, preMethodTypes),
+                            type,
+                            localVariableLength,
+                            localVariable,
+                            stackSize,
+                            stack);
                     }
                 }
 
@@ -7123,9 +7349,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodVisitor.visitFrame(Opcodes.F_APPEND, localVariable.length, localVariable, EMPTY.length, EMPTY);
                             } else {
                                 Object[] localVariable = new Object[(instrumentedMethod.isStatic() ? 0 : 2)
-                                        + instrumentedMethod.getParameters().size() * 2
-                                        + initialTypes.size()
-                                        + preMethodTypes.size()];
+                                    + instrumentedMethod.getParameters().size() * 2
+                                    + initialTypes.size()
+                                    + preMethodTypes.size()];
                                 int index = 0;
                                 if (instrumentedMethod.isConstructor()) {
                                     localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
@@ -7166,53 +7392,53 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                int stackSize,
                                                @MaybeNull Object[] stack) {
                         switch (type) {
-                            case Opcodes.F_SAME:
-                            case Opcodes.F_SAME1:
-                                break;
-                            case Opcodes.F_APPEND:
-                                currentFrameDivergence += localVariableLength;
-                                break;
-                            case Opcodes.F_CHOP:
-                                currentFrameDivergence -= localVariableLength;
-                                break;
-                            case Opcodes.F_FULL:
-                            case Opcodes.F_NEW:
-                                Object[] translated = new Object[localVariableLength
-                                        + (instrumentedMethod.isStatic() ? 0 : 1)
-                                        + instrumentedMethod.getParameters().size()
-                                        + initialTypes.size()
-                                        + preMethodTypes.size()];
-                                int index = 0;
-                                if (instrumentedMethod.isConstructor()) {
-                                    Initialization initialization = Initialization.INITIALIZED;
-                                    for (int variableIndex = 0; variableIndex < localVariableLength; variableIndex++) {
-                                        if (localVariable[variableIndex] == Opcodes.UNINITIALIZED_THIS) {
-                                            initialization = Initialization.UNITIALIZED;
-                                            break;
-                                        }
+                        case Opcodes.F_SAME:
+                        case Opcodes.F_SAME1:
+                            break;
+                        case Opcodes.F_APPEND:
+                            currentFrameDivergence += localVariableLength;
+                            break;
+                        case Opcodes.F_CHOP:
+                            currentFrameDivergence -= localVariableLength;
+                            break;
+                        case Opcodes.F_FULL:
+                        case Opcodes.F_NEW:
+                            Object[] translated = new Object[localVariableLength
+                                + (instrumentedMethod.isStatic() ? 0 : 1)
+                                + instrumentedMethod.getParameters().size()
+                                + initialTypes.size()
+                                + preMethodTypes.size()];
+                            int index = 0;
+                            if (instrumentedMethod.isConstructor()) {
+                                Initialization initialization = Initialization.INITIALIZED;
+                                for (int variableIndex = 0; variableIndex < localVariableLength; variableIndex++) {
+                                    if (localVariable[variableIndex] == Opcodes.UNINITIALIZED_THIS) {
+                                        initialization = Initialization.UNITIALIZED;
+                                        break;
                                     }
-                                    translated[index++] = initialization.toFrame(instrumentedType);
-                                } else if (!instrumentedMethod.isStatic()) {
-                                    translated[index++] = Initialization.INITIALIZED.toFrame(instrumentedType);
                                 }
-                                for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                                    translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
-                                }
-                                for (TypeDescription typeDescription : initialTypes) {
-                                    translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
-                                }
-                                for (TypeDescription typeDescription : preMethodTypes) {
-                                    translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
-                                }
-                                if (localVariableLength > 0) {
-                                    System.arraycopy(localVariable, 0, translated, index, localVariableLength);
-                                }
-                                localVariableLength = translated.length;
-                                localVariable = translated;
-                                currentFrameDivergence = localVariableLength;
-                                break;
-                            default:
-                                throw new IllegalArgumentException("Unexpected frame type: " + type);
+                                translated[index++] = initialization.toFrame(instrumentedType);
+                            } else if (!instrumentedMethod.isStatic()) {
+                                translated[index++] = Initialization.INITIALIZED.toFrame(instrumentedType);
+                            }
+                            for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                                translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
+                            }
+                            for (TypeDescription typeDescription : initialTypes) {
+                                translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
+                            }
+                            for (TypeDescription typeDescription : preMethodTypes) {
+                                translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
+                            }
+                            if (localVariableLength > 0) {
+                                System.arraycopy(localVariable, 0, translated, index, localVariableLength);
+                            }
+                            localVariableLength = translated.length;
+                            localVariable = translated;
+                            currentFrameDivergence = localVariableLength;
+                            break;
+                        default:
+                            throw new IllegalArgumentException("Unexpected frame type: " + type);
                         }
                         methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
                     }
@@ -7295,14 +7521,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                            int stackSize,
                                            @MaybeNull Object[] stack) {
                     Default.this.translateFrame(methodVisitor,
-                            translationMode,
-                            adviceMethod,
-                            startTypes,
-                            type,
-                            localVariableLength,
-                            localVariable,
-                            stackSize,
-                            stack);
+                        translationMode,
+                        adviceMethod,
+                        startTypes,
+                        type,
+                        localVariableLength,
+                        localVariable,
+                        stackSize,
+                        stack);
                 }
 
                 /**
@@ -7314,15 +7540,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
                             methodVisitor.visitFrame(Opcodes.F_SAME1,
-                                    EMPTY.length,
-                                    EMPTY,
-                                    1,
-                                    new Object[]{Initialization.INITIALIZED.toFrame(adviceMethod.getReturnType().asErasure())});
+                                EMPTY.length,
+                                EMPTY,
+                                1,
+                                new Object[] {Initialization.INITIALIZED.toFrame(adviceMethod.getReturnType().asErasure())});
                         }
                     } else {
                         injectFullFrame(methodVisitor, initialization, startTypes, adviceMethod.getReturnType().represents(void.class)
-                                ? Collections.<TypeDescription>emptyList()
-                                : Collections.singletonList(adviceMethod.getReturnType().asErasure()));
+                            ? Collections.<TypeDescription>emptyList()
+                            : Collections.singletonList(adviceMethod.getReturnType().asErasure()));
                     }
                 }
 
@@ -7331,7 +7557,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public void injectExceptionFrame(MethodVisitor methodVisitor) {
                     if (!expandFrames && currentFrameDivergence == 0) {
-                        methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
+                        methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[] {Type.getInternalName(Throwable.class)});
                     } else {
                         injectFullFrame(methodVisitor, initialization, startTypes, Collections.singletonList(TypeDescription.ForLoadedType.of(Throwable.class)));
                     }
@@ -7372,16 +7598,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (stack.isEmpty()) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
-                            methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Initialization.INITIALIZED.toFrame(stack.get(0))});
+                            methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[] {Initialization.INITIALIZED.toFrame(stack.get(0))});
                         }
                     } else if (currentFrameDivergence == 0
-                            && intermediateTypes.size() < 4
-                            && (stack.isEmpty() || stack.size() < 2 && intermediateTypes.isEmpty())) {
+                        && intermediateTypes.size() < 4
+                        && (stack.isEmpty() || stack.size() < 2 && intermediateTypes.isEmpty())) {
                         if (intermediateTypes.isEmpty()) {
                             if (stack.isEmpty()) {
                                 methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                             } else {
-                                methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Initialization.INITIALIZED.toFrame(stack.get(0))});
+                                methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[] {Initialization.INITIALIZED.toFrame(stack.get(0))});
                             }
                         } else {
                             Object[] local = new Object[intermediateTypes.size()];
@@ -7712,8 +7938,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected static SuppressionHandler of(TypeDescription suppressedType) {
                     return suppressedType.represents(NoExceptionHandler.class)
-                            ? NoOp.INSTANCE
-                            : new Suppressing(suppressedType);
+                        ? NoOp.INSTANCE
+                        : new Suppressing(suppressedType);
                 }
 
                 /**
@@ -7787,10 +8013,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         stackMapFrameHandler.injectExceptionFrame(methodVisitor);
                         methodSizeHandler.requireStackSize(1 + exceptionHandler.apply(methodVisitor, implementationContext).getMaximalSize());
                         if (returnType.represents(boolean.class)
-                                || returnType.represents(byte.class)
-                                || returnType.represents(short.class)
-                                || returnType.represents(char.class)
-                                || returnType.represents(int.class)) {
+                            || returnType.represents(byte.class)
+                            || returnType.represents(short.class)
+                            || returnType.represents(char.class)
+                            || returnType.represents(int.class)) {
                             methodVisitor.visitInsn(Opcodes.ICONST_0);
                         } else if (returnType.represents(long.class)) {
                             methodVisitor.visitInsn(Opcodes.LCONST_0);
@@ -8036,8 +8262,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         skipDispatcher = REFERENCE;
                     }
                     return inverted
-                            ? skipDispatcher.new Inverted()
-                            : skipDispatcher;
+                        ? skipDispatcher.new Inverted()
+                        : skipDispatcher;
                 }
 
                 /**
@@ -8113,8 +8339,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         convertValue(methodVisitor);
                         Label noSkip = new Label();
                         methodVisitor.visitJumpInsn(inverted
-                                ? nonDefaultJump
-                                : defaultJump, noSkip);
+                            ? nonDefaultJump
+                            : defaultJump, noSkip);
                         relocation.apply(methodVisitor);
                         methodVisitor.visitLabel(noSkip);
                         return requiredSize;
@@ -8356,8 +8582,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             if (factory != null) {
                                 @SuppressWarnings("unchecked")
                                 OffsetMapping current = factory.make(parameterDescription,
-                                        (AnnotationDescription.Loadable) annotationDescription.prepare(factory.getAnnotationType()),
-                                        adviceType);
+                                    (AnnotationDescription.Loadable) annotationDescription.prepare(factory.getAnnotationType()),
+                                    adviceType);
                                 if (offsetMapping == null) {
                                     offsetMapping = current;
                                 } else {
@@ -8366,8 +8592,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
                         }
                         this.offsetMappings.put(parameterDescription.getOffset(), offsetMapping == null
-                                ? new OffsetMapping.ForArgument.Unresolved(parameterDescription)
-                                : offsetMapping);
+                            ? new OffsetMapping.ForArgument.Unresolved(parameterDescription)
+                            : offsetMapping);
                     }
                     suppressionHandler = SuppressionHandler.Suppressing.of(throwableType);
                     relocationHandler = RelocationHandler.ForType.of(relocatableType, adviceMethod.getReturnType());
@@ -8602,12 +8828,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     throw new IllegalStateException("Class reader not expected null");
                 }
                 return Resolved.ForMethodEnter.of(adviceMethod,
-                        postProcessorFactory.make(adviceMethod, false),
-                        namedTypes,
-                        userFactories,
-                        methodExit.getAdviceType(),
-                        classReader,
-                        methodExit.isAlive());
+                    postProcessorFactory.make(adviceMethod, false),
+                    namedTypes,
+                    userFactories,
+                    methodExit.getAdviceType(),
+                    classReader,
+                    methodExit.isAlive());
             }
 
             /**
@@ -8627,7 +8853,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException("Local variable for " + entry.getKey() + " is defined with inconsistent types");
                     }
                 }
-                return Resolved.ForMethodExit.of(adviceMethod, postProcessorFactory.make(adviceMethod, true), namedTypes, uninitializedNamedTypes, userFactories, classReader, methodEnter.getAdviceType());
+                return Resolved.ForMethodExit.of(adviceMethod, postProcessorFactory.make(adviceMethod, true), namedTypes, uninitializedNamedTypes, userFactories, classReader,
+                    methodEnter.getAdviceType());
             }
 
             /**
@@ -8825,10 +9052,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public void initialize() {
                         for (Map.Entry<Integer, TypeDefinition> typeDefinition : resolveInitializationTypes(argumentHandler).entrySet()) {
                             if (typeDefinition.getValue().represents(boolean.class)
-                                    || typeDefinition.getValue().represents(byte.class)
-                                    || typeDefinition.getValue().represents(short.class)
-                                    || typeDefinition.getValue().represents(char.class)
-                                    || typeDefinition.getValue().represents(int.class)) {
+                                || typeDefinition.getValue().represents(byte.class)
+                                || typeDefinition.getValue().represents(short.class)
+                                || typeDefinition.getValue().represents(char.class)
+                                || typeDefinition.getValue().represents(int.class)) {
                                 methodVisitor.visitInsn(Opcodes.ICONST_0);
                                 methodVisitor.visitVarInsn(Opcodes.ISTORE, typeDefinition.getKey());
                             } else if (typeDefinition.getValue().represents(long.class)) {
@@ -8859,17 +9086,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @MaybeNull
                     public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull String[] exception) {
                         return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
-                                ? new ExceptionTableSubstitutor(Inlining.Resolved.this.apply(methodVisitor,
-                                implementationContext,
-                                assigner,
-                                argumentHandler,
-                                methodSizeHandler,
-                                stackMapFrameHandler,
-                                instrumentedType,
-                                instrumentedMethod,
-                                suppressionHandler,
-                                relocationHandler,
-                                exceptionHandler)) : IGNORE_METHOD;
+                            ? new ExceptionTableSubstitutor(Inlining.Resolved.this.apply(methodVisitor,
+                            implementationContext,
+                            assigner,
+                            argumentHandler,
+                            methodSizeHandler,
+                            stackMapFrameHandler,
+                            instrumentedType,
+                            instrumentedMethod,
+                            suppressionHandler,
+                            relocationHandler,
+                            exceptionHandler)) : IGNORE_METHOD;
                     }
 
                     /**
@@ -8888,8 +9115,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @MaybeNull
                         public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, @MaybeNull String signature, @MaybeNull String[] exception) {
                             return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
-                                    ? new ExceptionTableCollector(methodVisitor)
-                                    : IGNORE_METHOD;
+                                ? new ExceptionTableCollector(methodVisitor)
+                                : IGNORE_METHOD;
                         }
                     }
 
@@ -9014,8 +9241,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         private Label resolve(Label label) {
                             Label substitution = substitutions.get(label);
                             return substitution == null
-                                    ? label
-                                    : substitution;
+                                ? label
+                                : substitution;
                         }
                     }
                 }
@@ -9055,26 +9282,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              TypeDefinition exitType,
                                              ClassReader classReader) {
                         super(adviceMethod,
-                                postProcessor,
-                                CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
-                                        OffsetMapping.ForAllArguments.Factory.INSTANCE,
-                                        OffsetMapping.ForThisReference.Factory.INSTANCE,
-                                        OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
-                                        OffsetMapping.ForFieldHandle.Unresolved.ReaderFactory.INSTANCE,
-                                        OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
-                                        OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                        OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
-                                        OffsetMapping.ForUnusedValue.Factory.INSTANCE,
-                                        OffsetMapping.ForStubValue.INSTANCE,
-                                        OffsetMapping.ForThrowable.Factory.INSTANCE,
-                                        OffsetMapping.ForExitValue.Factory.of(exitType),
-                                        new OffsetMapping.ForLocalValue.Factory(namedTypes),
-                                        new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
-                                        new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
-                                        new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class),
-                                classReader);
+                            postProcessor,
+                            CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
+                                OffsetMapping.ForAllArguments.Factory.INSTANCE,
+                                OffsetMapping.ForThisReference.Factory.INSTANCE,
+                                OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
+                                OffsetMapping.ForFieldHandle.Unresolved.ReaderFactory.INSTANCE,
+                                OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
+                                OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
+                                OffsetMapping.ForUnusedValue.Factory.INSTANCE,
+                                OffsetMapping.ForStubValue.INSTANCE,
+                                OffsetMapping.ForThrowable.Factory.INSTANCE,
+                                OffsetMapping.ForExitValue.Factory.of(exitType),
+                                new OffsetMapping.ForLocalValue.Factory(namedTypes),
+                                new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
+                                new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
+                                new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
+                            adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class),
+                            adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class),
+                            classReader);
                         this.namedTypes = namedTypes;
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
                     }
@@ -9099,8 +9326,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                 ClassReader classReader,
                                                                 boolean methodExit) {
                         return methodExit
-                                ? new WithRetainedEnterType(adviceMethod, postProcessor, namedTypes, userFactories, exitType, classReader)
-                                : new WithDiscardedEnterType(adviceMethod, postProcessor, namedTypes, userFactories, exitType, classReader);
+                            ? new WithRetainedEnterType(adviceMethod, postProcessor, namedTypes, userFactories, exitType, classReader)
+                            : new WithDiscardedEnterType(adviceMethod, postProcessor, namedTypes, userFactories, exitType, classReader);
                     }
 
                     @Override
@@ -9126,17 +9353,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                       StackManipulation exceptionHandler,
                                       RelocationHandler.Relocation relocation) {
                         return new AdviceMethodInliner(instrumentedType,
-                                instrumentedMethod,
-                                methodVisitor,
-                                implementationContext,
-                                assigner,
-                                argumentHandler,
-                                methodSizeHandler,
-                                stackMapFrameHandler,
-                                suppressionHandler.bind(exceptionHandler),
-                                relocationHandler.bind(instrumentedMethod, relocation),
-                                exceptionHandler,
-                                classReader);
+                            instrumentedMethod,
+                            methodVisitor,
+                            implementationContext,
+                            assigner,
+                            argumentHandler,
+                            methodSizeHandler,
+                            stackMapFrameHandler,
+                            suppressionHandler.bind(exceptionHandler),
+                            relocationHandler.bind(instrumentedMethod, relocation),
+                            exceptionHandler,
+                            classReader);
                     }
 
                     /**
@@ -9173,16 +9400,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   RelocationHandler.Bound relocationHandler,
                                                   StackManipulation exceptionHandler) {
                         return doApply(methodVisitor,
-                                implementationContext,
-                                assigner,
-                                argumentHandler.bindEnter(adviceMethod),
-                                methodSizeHandler.bindEnter(adviceMethod),
-                                stackMapFrameHandler.bindEnter(adviceMethod),
-                                instrumentedType,
-                                instrumentedMethod,
-                                suppressionHandler,
-                                relocationHandler,
-                                exceptionHandler);
+                            implementationContext,
+                            assigner,
+                            argumentHandler.bindEnter(adviceMethod),
+                            methodSizeHandler.bindEnter(adviceMethod),
+                            stackMapFrameHandler.bindEnter(adviceMethod),
+                            instrumentedType,
+                            instrumentedMethod,
+                            suppressionHandler,
+                            relocationHandler,
+                            exceptionHandler);
                     }
 
                     /**
@@ -9215,26 +9442,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
                             offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedType,
-                                    instrumentedMethod,
-                                    assigner,
-                                    argumentHandler,
-                                    OffsetMapping.Sort.ENTER));
-                        }
-                        return new CodeTranslationVisitor(methodVisitor,
-                                implementationContext,
-                                argumentHandler,
-                                methodSizeHandler,
-                                stackMapFrameHandler,
-                                instrumentedType,
                                 instrumentedMethod,
                                 assigner,
-                                adviceMethod,
-                                offsetMappings,
-                                suppressionHandler,
-                                relocationHandler,
-                                exceptionHandler,
-                                postProcessor,
-                                false);
+                                argumentHandler,
+                                OffsetMapping.Sort.ENTER));
+                        }
+                        return new CodeTranslationVisitor(methodVisitor,
+                            implementationContext,
+                            argumentHandler,
+                            methodSizeHandler,
+                            stackMapFrameHandler,
+                            instrumentedType,
+                            instrumentedMethod,
+                            assigner,
+                            adviceMethod,
+                            offsetMappings,
+                            suppressionHandler,
+                            relocationHandler,
+                            exceptionHandler,
+                            postProcessor,
+                            false);
                     }
 
                     /**
@@ -9317,16 +9544,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                         StackManipulation exceptionHandler) {
                             methodSizeHandler.requireLocalVariableLengthPadding(adviceMethod.getReturnType().getStackSize().getSize());
                             return super.doApply(methodVisitor,
-                                    implementationContext,
-                                    assigner,
-                                    argumentHandler,
-                                    methodSizeHandler,
-                                    stackMapFrameHandler,
-                                    instrumentedType,
-                                    instrumentedMethod,
-                                    suppressionHandler,
-                                    relocationHandler,
-                                    exceptionHandler);
+                                implementationContext,
+                                assigner,
+                                argumentHandler,
+                                methodSizeHandler,
+                                stackMapFrameHandler,
+                                instrumentedType,
+                                instrumentedMethod,
+                                suppressionHandler,
+                                relocationHandler,
+                                exceptionHandler);
                         }
                     }
                 }
@@ -9368,26 +9595,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             ClassReader classReader,
                                             TypeDefinition enterType) {
                         super(adviceMethod,
-                                postProcessor,
-                                CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
-                                        OffsetMapping.ForAllArguments.Factory.INSTANCE,
-                                        OffsetMapping.ForThisReference.Factory.INSTANCE,
-                                        OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
-                                        OffsetMapping.ForFieldHandle.Unresolved.ReaderFactory.INSTANCE,
-                                        OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
-                                        OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                        OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
-                                        OffsetMapping.ForUnusedValue.Factory.INSTANCE,
-                                        OffsetMapping.ForStubValue.INSTANCE,
-                                        OffsetMapping.ForEnterValue.Factory.of(enterType),
-                                        OffsetMapping.ForExitValue.Factory.of(adviceMethod.getReturnType()),
-                                        new OffsetMapping.ForLocalValue.Factory(namedTypes),
-                                        OffsetMapping.ForReturnValue.Factory.INSTANCE,
-                                        OffsetMapping.ForThrowable.Factory.of(adviceMethod)
-                                ), userFactories),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(REPEAT_ON).resolve(TypeDescription.class),
-                                classReader);
+                            postProcessor,
+                            CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
+                                OffsetMapping.ForAllArguments.Factory.INSTANCE,
+                                OffsetMapping.ForThisReference.Factory.INSTANCE,
+                                OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
+                                OffsetMapping.ForFieldHandle.Unresolved.ReaderFactory.INSTANCE,
+                                OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
+                                OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
+                                OffsetMapping.ForUnusedValue.Factory.INSTANCE,
+                                OffsetMapping.ForStubValue.INSTANCE,
+                                OffsetMapping.ForEnterValue.Factory.of(enterType),
+                                OffsetMapping.ForExitValue.Factory.of(adviceMethod.getReturnType()),
+                                new OffsetMapping.ForLocalValue.Factory(namedTypes),
+                                OffsetMapping.ForReturnValue.Factory.INSTANCE,
+                                OffsetMapping.ForThrowable.Factory.of(adviceMethod)
+                            ), userFactories),
+                            adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class),
+                            adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(REPEAT_ON).resolve(TypeDescription.class),
+                            classReader);
                         this.uninitializedNamedTypes = uninitializedNamedTypes;
                         backupArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(BACKUP_ARGUMENTS).resolve(Boolean.class);
                     }
@@ -9413,11 +9640,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                ClassReader classReader,
                                                                TypeDefinition enterType) {
                         TypeDescription throwable = adviceMethod.getDeclaredAnnotations()
-                                .ofType(OnMethodExit.class)
-                                .getValue(ON_THROWABLE).resolve(TypeDescription.class);
+                            .ofType(OnMethodExit.class)
+                            .getValue(ON_THROWABLE).resolve(TypeDescription.class);
                         return throwable.represents(NoExceptionHandler.class)
-                                ? new WithoutExceptionHandler(adviceMethod, postProcessor, namedTypes, uninitializedNamedTypes, userFactories, classReader, enterType)
-                                : new WithExceptionHandler(adviceMethod, postProcessor, namedTypes, uninitializedNamedTypes, userFactories, classReader, enterType, throwable);
+                            ? new WithoutExceptionHandler(adviceMethod, postProcessor, namedTypes, uninitializedNamedTypes, userFactories, classReader, enterType)
+                            : new WithExceptionHandler(adviceMethod, postProcessor, namedTypes, uninitializedNamedTypes, userFactories, classReader, enterType, throwable);
                     }
 
                     /**
@@ -9452,16 +9679,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   RelocationHandler.Bound relocationHandler,
                                                   StackManipulation exceptionHandler) {
                         return doApply(methodVisitor,
-                                implementationContext,
-                                assigner,
-                                argumentHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
-                                methodSizeHandler.bindExit(adviceMethod),
-                                stackMapFrameHandler.bindExit(adviceMethod),
-                                instrumentedType,
-                                instrumentedMethod,
-                                suppressionHandler,
-                                relocationHandler,
-                                exceptionHandler);
+                            implementationContext,
+                            assigner,
+                            argumentHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
+                            methodSizeHandler.bindExit(adviceMethod),
+                            stackMapFrameHandler.bindExit(adviceMethod),
+                            instrumentedType,
+                            instrumentedMethod,
+                            suppressionHandler,
+                            relocationHandler,
+                            exceptionHandler);
                     }
 
                     /**
@@ -9494,26 +9721,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
                             offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedType,
-                                    instrumentedMethod,
-                                    assigner,
-                                    argumentHandler,
-                                    OffsetMapping.Sort.EXIT));
-                        }
-                        return new CodeTranslationVisitor(methodVisitor,
-                                implementationContext,
-                                argumentHandler,
-                                methodSizeHandler,
-                                stackMapFrameHandler,
-                                instrumentedType,
                                 instrumentedMethod,
                                 assigner,
-                                adviceMethod,
-                                offsetMappings,
-                                suppressionHandler,
-                                relocationHandler,
-                                exceptionHandler,
-                                postProcessor,
-                                true);
+                                argumentHandler,
+                                OffsetMapping.Sort.EXIT));
+                        }
+                        return new CodeTranslationVisitor(methodVisitor,
+                            implementationContext,
+                            argumentHandler,
+                            methodSizeHandler,
+                            stackMapFrameHandler,
+                            instrumentedType,
+                            instrumentedMethod,
+                            assigner,
+                            adviceMethod,
+                            offsetMappings,
+                            suppressionHandler,
+                            relocationHandler,
+                            exceptionHandler,
+                            postProcessor,
+                            true);
                     }
 
                     /**
@@ -9521,8 +9748,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public ArgumentHandler.Factory getArgumentHandlerFactory() {
                         return backupArguments
-                                ? ArgumentHandler.Factory.COPYING
-                                : ArgumentHandler.Factory.SIMPLE;
+                            ? ArgumentHandler.Factory.COPYING
+                            : ArgumentHandler.Factory.SIMPLE;
                     }
 
                     /**
@@ -9546,17 +9773,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                       StackManipulation exceptionHandler,
                                       RelocationHandler.Relocation relocation) {
                         return new AdviceMethodInliner(instrumentedType,
-                                instrumentedMethod,
-                                methodVisitor,
-                                implementationContext,
-                                assigner,
-                                argumentHandler,
-                                methodSizeHandler,
-                                stackMapFrameHandler,
-                                suppressionHandler.bind(exceptionHandler),
-                                relocationHandler.bind(instrumentedMethod, relocation),
-                                exceptionHandler,
-                                classReader);
+                            instrumentedMethod,
+                            methodVisitor,
+                            implementationContext,
+                            assigner,
+                            argumentHandler,
+                            methodSizeHandler,
+                            stackMapFrameHandler,
+                            suppressionHandler.bind(exceptionHandler),
+                            relocationHandler.bind(instrumentedMethod, relocation),
+                            exceptionHandler,
+                            classReader);
                     }
 
                     /**
@@ -9844,27 +10071,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         StackManipulation stackManipulation;
                         StackSize expectedGrowth;
                         switch (opcode) {
-                            case Opcodes.ILOAD:
-                            case Opcodes.FLOAD:
-                            case Opcodes.ALOAD:
-                                stackManipulation = target.resolveRead();
-                                expectedGrowth = StackSize.SINGLE;
-                                break;
-                            case Opcodes.DLOAD:
-                            case Opcodes.LLOAD:
-                                stackManipulation = target.resolveRead();
-                                expectedGrowth = StackSize.DOUBLE;
-                                break;
-                            case Opcodes.ISTORE:
-                            case Opcodes.FSTORE:
-                            case Opcodes.ASTORE:
-                            case Opcodes.LSTORE:
-                            case Opcodes.DSTORE:
-                                stackManipulation = target.resolveWrite();
-                                expectedGrowth = StackSize.ZERO;
-                                break;
-                            default:
-                                throw new IllegalStateException("Unexpected opcode: " + opcode);
+                        case Opcodes.ILOAD:
+                        case Opcodes.FLOAD:
+                        case Opcodes.ALOAD:
+                            stackManipulation = target.resolveRead();
+                            expectedGrowth = StackSize.SINGLE;
+                            break;
+                        case Opcodes.DLOAD:
+                        case Opcodes.LLOAD:
+                            stackManipulation = target.resolveRead();
+                            expectedGrowth = StackSize.DOUBLE;
+                            break;
+                        case Opcodes.ISTORE:
+                        case Opcodes.FSTORE:
+                        case Opcodes.ASTORE:
+                        case Opcodes.LSTORE:
+                        case Opcodes.DSTORE:
+                            stackManipulation = target.resolveWrite();
+                            expectedGrowth = StackSize.ZERO;
+                            break;
+                        default:
+                            throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
                         methodSizeHandler.requireStackSizePadding(stackManipulation.apply(mv, implementationContext).getMaximalSize() - expectedGrowth.getSize());
                     } else {
@@ -9885,27 +10112,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public void visitInsn(int opcode) {
                     switch (opcode) {
-                        case Opcodes.RETURN:
-                            ((StackAwareMethodVisitor) mv).drainStack();
-                            break;
-                        case Opcodes.IRETURN:
-                            methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.ISTORE, Opcodes.ILOAD, StackSize.SINGLE));
-                            break;
-                        case Opcodes.ARETURN:
-                            methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.ASTORE, Opcodes.ALOAD, StackSize.SINGLE));
-                            break;
-                        case Opcodes.FRETURN:
-                            methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.FSTORE, Opcodes.FLOAD, StackSize.SINGLE));
-                            break;
-                        case Opcodes.LRETURN:
-                            methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.LSTORE, Opcodes.LLOAD, StackSize.DOUBLE));
-                            break;
-                        case Opcodes.DRETURN:
-                            methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.DSTORE, Opcodes.DLOAD, StackSize.DOUBLE));
-                            break;
-                        default:
-                            mv.visitInsn(opcode);
-                            return;
+                    case Opcodes.RETURN:
+                        ((StackAwareMethodVisitor) mv).drainStack();
+                        break;
+                    case Opcodes.IRETURN:
+                        methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.ISTORE, Opcodes.ILOAD, StackSize.SINGLE));
+                        break;
+                    case Opcodes.ARETURN:
+                        methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.ASTORE, Opcodes.ALOAD, StackSize.SINGLE));
+                        break;
+                    case Opcodes.FRETURN:
+                        methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.FSTORE, Opcodes.FLOAD, StackSize.SINGLE));
+                        break;
+                    case Opcodes.LRETURN:
+                        methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.LSTORE, Opcodes.LLOAD, StackSize.DOUBLE));
+                        break;
+                    case Opcodes.DRETURN:
+                        methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.DSTORE, Opcodes.DLOAD, StackSize.DOUBLE));
+                        break;
+                    default:
+                        mv.visitInsn(opcode);
+                        return;
                     }
                     mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                 }
@@ -9915,10 +10142,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     suppressionHandler.onEnd(methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler, adviceMethod.getReturnType());
                     methodVisitor.visitLabel(endOfMethod);
                     if (adviceMethod.getReturnType().represents(boolean.class)
-                            || adviceMethod.getReturnType().represents(byte.class)
-                            || adviceMethod.getReturnType().represents(short.class)
-                            || adviceMethod.getReturnType().represents(char.class)
-                            || adviceMethod.getReturnType().represents(int.class)) {
+                        || adviceMethod.getReturnType().represents(byte.class)
+                        || adviceMethod.getReturnType().represents(short.class)
+                        || adviceMethod.getReturnType().represents(char.class)
+                        || adviceMethod.getReturnType().represents(int.class)) {
                         stackMapFrameHandler.injectReturnFrame(methodVisitor);
                         methodVisitor.visitVarInsn(Opcodes.ISTORE, exit ? argumentHandler.exit() : argumentHandler.enter());
                     } else if (adviceMethod.getReturnType().represents(long.class)) {
@@ -9935,8 +10162,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitVarInsn(Opcodes.ASTORE, exit ? argumentHandler.exit() : argumentHandler.enter());
                     }
                     methodSizeHandler.requireStackSize(postProcessor
-                            .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler, stackMapFrameHandler, exceptionHandler)
-                            .apply(methodVisitor, implementationContext).getMaximalSize());
+                        .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler, stackMapFrameHandler, exceptionHandler)
+                        .apply(methodVisitor, implementationContext).getMaximalSize());
                     methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, exit ? argumentHandler.exit() : argumentHandler.enter()));
                     stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                 }
@@ -9960,19 +10187,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected final MethodDescription.InDefinedShape adviceMethod;
 
             /**
-             * The delegator to use.
+             * The delegator factory to use.
              */
-            protected final Delegator delegator;
+            protected final Delegator.Factory delegatorFactory;
 
             /**
              * Creates a new delegating advice dispatcher.
              *
-             * @param adviceMethod The advice method.
-             * @param delegator    The delegator to use.
+             * @param adviceMethod     The advice method.
+             * @param delegatorFactory The delegator factory to use.
              */
-            protected Delegating(MethodDescription.InDefinedShape adviceMethod, Delegator delegator) {
+            protected Delegating(MethodDescription.InDefinedShape adviceMethod, Delegator.Factory delegatorFactory) {
                 this.adviceMethod = adviceMethod;
-                this.delegator = delegator;
+                this.delegatorFactory = delegatorFactory;
             }
 
             /**
@@ -10010,7 +10237,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                     @MaybeNull ClassReader classReader,
                                                                     Unresolved methodExit,
                                                                     PostProcessor.Factory postProcessorFactory) {
-                return Resolved.ForMethodEnter.of(adviceMethod, postProcessorFactory.make(adviceMethod, false), delegator, userFactories, methodExit.getAdviceType(), methodExit.isAlive());
+                return Resolved.ForMethodEnter.of(adviceMethod,
+                    postProcessorFactory.make(adviceMethod, false),
+                    delegatorFactory.make(adviceMethod, false),
+                    userFactories,
+                    methodExit.getAdviceType(),
+                    methodExit.isAlive());
             }
 
             /**
@@ -10033,7 +10265,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
                 }
-                return Resolved.ForMethodExit.of(adviceMethod, postProcessorFactory.make(adviceMethod, true), delegator, namedTypes, userFactories, methodEnter.getAdviceType());
+                return Resolved.ForMethodExit.of(adviceMethod,
+                    postProcessorFactory.make(adviceMethod, true),
+                    delegatorFactory.make(adviceMethod, true),
+                    namedTypes,
+                    userFactories,
+                    methodEnter.getAdviceType());
             }
 
             /**
@@ -10090,15 +10327,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException(adviceMethod + " is not visible to " + instrumentedMethod.getDeclaringType());
                     }
                     return resolve(instrumentedType,
-                            instrumentedMethod,
-                            methodVisitor,
-                            implementationContext,
-                            assigner,
-                            argumentHandler,
-                            methodSizeHandler,
-                            stackMapFrameHandler,
-                            exceptionHandler,
-                            relocation);
+                        instrumentedMethod,
+                        methodVisitor,
+                        implementationContext,
+                        assigner,
+                        argumentHandler,
+                        methodSizeHandler,
+                        stackMapFrameHandler,
+                        exceptionHandler,
+                        relocation);
                 }
 
                 /**
@@ -10275,20 +10512,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         for (OffsetMapping.Target offsetMapping : offsetMappings) {
                             currentStackSize += adviceMethod.getParameters().get(index++).getType().getStackSize().getSize();
                             maximumStackSize = Math.max(maximumStackSize, currentStackSize + offsetMapping.resolveRead()
-                                    .apply(methodVisitor, implementationContext)
-                                    .getMaximalSize());
+                                .apply(methodVisitor, implementationContext)
+                                .getMaximalSize());
                         }
-                        delegator.apply(methodVisitor, adviceMethod, instrumentedType, instrumentedMethod, isExitAdvice());
+                        maximumStackSize = Math.max(maximumStackSize, delegator.apply(instrumentedType, instrumentedMethod)
+                            .apply(methodVisitor, implementationContext)
+                            .getMaximalSize());
                         suppressionHandler.onEndWithSkip(methodVisitor,
-                                implementationContext,
-                                methodSizeHandler,
-                                stackMapFrameHandler,
-                                adviceMethod.getReturnType());
+                            implementationContext,
+                            methodSizeHandler,
+                            stackMapFrameHandler,
+                            adviceMethod.getReturnType());
                         if (adviceMethod.getReturnType().represents(boolean.class)
-                                || adviceMethod.getReturnType().represents(byte.class)
-                                || adviceMethod.getReturnType().represents(short.class)
-                                || adviceMethod.getReturnType().represents(char.class)
-                                || adviceMethod.getReturnType().represents(int.class)) {
+                            || adviceMethod.getReturnType().represents(byte.class)
+                            || adviceMethod.getReturnType().represents(short.class)
+                            || adviceMethod.getReturnType().represents(char.class)
+                            || adviceMethod.getReturnType().represents(int.class)) {
                             methodVisitor.visitVarInsn(Opcodes.ISTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
                         } else if (adviceMethod.getReturnType().represents(long.class)) {
                             methodVisitor.visitVarInsn(Opcodes.LSTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
@@ -10300,8 +10539,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitVarInsn(Opcodes.ASTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
                         }
                         methodSizeHandler.requireStackSize(postProcessor
-                                .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler, stackMapFrameHandler, exceptionHandler)
-                                .apply(methodVisitor, implementationContext).getMaximalSize());
+                            .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler, stackMapFrameHandler, exceptionHandler)
+                            .apply(methodVisitor, implementationContext).getMaximalSize());
                         methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter()));
                         stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                         methodSizeHandler.requireStackSize(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()));
@@ -10355,20 +10594,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  StackManipulation exceptionHandler,
                                                  Delegator delegator) {
                             super(adviceMethod,
-                                    instrumentedType,
-                                    instrumentedMethod,
-                                    assigner,
-                                    postProcessor,
-                                    offsetMappings,
-                                    methodVisitor,
-                                    implementationContext,
-                                    argumentHandler,
-                                    methodSizeHandler,
-                                    stackMapFrameHandler,
-                                    suppressionHandler,
-                                    relocationHandler,
-                                    exceptionHandler,
-                                    delegator);
+                                instrumentedType,
+                                instrumentedMethod,
+                                assigner,
+                                postProcessor,
+                                offsetMappings,
+                                methodVisitor,
+                                implementationContext,
+                                argumentHandler,
+                                methodSizeHandler,
+                                stackMapFrameHandler,
+                                suppressionHandler,
+                                relocationHandler,
+                                exceptionHandler,
+                                delegator);
                         }
 
                         /**
@@ -10424,20 +10663,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                 StackManipulation exceptionHandler,
                                                 Delegator delegator) {
                             super(adviceMethod,
-                                    instrumentedType,
-                                    instrumentedMethod,
-                                    assigner,
-                                    postProcessor,
-                                    offsetMappings,
-                                    methodVisitor,
-                                    implementationContext,
-                                    argumentHandler,
-                                    methodSizeHandler,
-                                    stackMapFrameHandler,
-                                    suppressionHandler,
-                                    relocationHandler,
-                                    exceptionHandler,
-                                    delegator);
+                                instrumentedType,
+                                instrumentedMethod,
+                                assigner,
+                                postProcessor,
+                                offsetMappings,
+                                methodVisitor,
+                                implementationContext,
+                                argumentHandler,
+                                methodSizeHandler,
+                                stackMapFrameHandler,
+                                suppressionHandler,
+                                relocationHandler,
+                                exceptionHandler,
+                                delegator);
                         }
 
                         /**
@@ -10445,10 +10684,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         public void initialize() {
                             if (adviceMethod.getReturnType().represents(boolean.class)
-                                    || adviceMethod.getReturnType().represents(byte.class)
-                                    || adviceMethod.getReturnType().represents(short.class)
-                                    || adviceMethod.getReturnType().represents(char.class)
-                                    || adviceMethod.getReturnType().represents(int.class)) {
+                                || adviceMethod.getReturnType().represents(byte.class)
+                                || adviceMethod.getReturnType().represents(short.class)
+                                || adviceMethod.getReturnType().represents(char.class)
+                                || adviceMethod.getReturnType().represents(int.class)) {
                                 methodVisitor.visitInsn(Opcodes.ICONST_0);
                                 methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.exit());
                             } else if (adviceMethod.getReturnType().represents(long.class)) {
@@ -10502,25 +10741,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              TypeDefinition exitType,
                                              Delegator delegator) {
                         super(adviceMethod,
-                                postProcessor,
-                                CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
-                                        OffsetMapping.ForAllArguments.Factory.INSTANCE,
-                                        OffsetMapping.ForThisReference.Factory.INSTANCE,
-                                        OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
-                                        OffsetMapping.ForFieldHandle.Unresolved.ReaderFactory.INSTANCE,
-                                        OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
-                                        OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                        OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
-                                        OffsetMapping.ForUnusedValue.Factory.INSTANCE,
-                                        OffsetMapping.ForStubValue.INSTANCE,
-                                        OffsetMapping.ForExitValue.Factory.of(exitType),
-                                        new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
-                                        new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
-                                        new OffsetMapping.Factory.Illegal<Local>(Local.class),
-                                        new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class),
-                                delegator);
+                            postProcessor,
+                            CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
+                                OffsetMapping.ForAllArguments.Factory.INSTANCE,
+                                OffsetMapping.ForThisReference.Factory.INSTANCE,
+                                OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
+                                OffsetMapping.ForFieldHandle.Unresolved.ReaderFactory.INSTANCE,
+                                OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
+                                OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
+                                OffsetMapping.ForUnusedValue.Factory.INSTANCE,
+                                OffsetMapping.ForStubValue.INSTANCE,
+                                OffsetMapping.ForExitValue.Factory.of(exitType),
+                                new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
+                                new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
+                                new OffsetMapping.Factory.Illegal<Local>(Local.class),
+                                new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
+                            adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class),
+                            adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class),
+                            delegator);
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
                     }
 
@@ -10542,8 +10781,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                 TypeDefinition exitType,
                                                                 boolean methodExit) {
                         return methodExit
-                                ? new WithRetainedEnterType(adviceMethod, postProcessor, userFactories, exitType, delegator)
-                                : new WithDiscardedEnterType(adviceMethod, postProcessor, userFactories, exitType, delegator);
+                            ? new WithRetainedEnterType(adviceMethod, postProcessor, userFactories, exitType, delegator)
+                            : new WithDiscardedEnterType(adviceMethod, postProcessor, userFactories, exitType, delegator);
                     }
 
                     /**
@@ -10572,16 +10811,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             StackManipulation exceptionHandler,
                                             RelocationHandler.Relocation relocation) {
                         return doResolve(instrumentedType,
-                                instrumentedMethod,
-                                methodVisitor,
-                                implementationContext,
-                                assigner,
-                                argumentHandler.bindEnter(adviceMethod),
-                                methodSizeHandler.bindEnter(adviceMethod),
-                                stackMapFrameHandler.bindEnter(adviceMethod),
-                                suppressionHandler.bind(exceptionHandler),
-                                relocationHandler.bind(instrumentedMethod, relocation),
-                                exceptionHandler);
+                            instrumentedMethod,
+                            methodVisitor,
+                            implementationContext,
+                            assigner,
+                            argumentHandler.bindEnter(adviceMethod),
+                            methodSizeHandler.bindEnter(adviceMethod),
+                            stackMapFrameHandler.bindEnter(adviceMethod),
+                            suppressionHandler.bind(exceptionHandler),
+                            relocationHandler.bind(instrumentedMethod, relocation),
+                            exceptionHandler);
                     }
 
                     /**
@@ -10614,26 +10853,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         List<OffsetMapping.Target> offsetMappings = new ArrayList<OffsetMapping.Target>(this.offsetMappings.size());
                         for (OffsetMapping offsetMapping : this.offsetMappings.values()) {
                             offsetMappings.add(offsetMapping.resolve(instrumentedType,
-                                    instrumentedMethod,
-                                    assigner,
-                                    argumentHandler,
-                                    OffsetMapping.Sort.ENTER));
-                        }
-                        return new AdviceMethodWriter.ForMethodEnter(adviceMethod,
-                                instrumentedType,
                                 instrumentedMethod,
                                 assigner,
-                                postProcessor,
-                                offsetMappings,
-                                methodVisitor,
-                                implementationContext,
                                 argumentHandler,
-                                methodSizeHandler,
-                                stackMapFrameHandler,
-                                suppressionHandler,
-                                relocationHandler,
-                                exceptionHandler,
-                                delegator);
+                                OffsetMapping.Sort.ENTER));
+                        }
+                        return new AdviceMethodWriter.ForMethodEnter(adviceMethod,
+                            instrumentedType,
+                            instrumentedMethod,
+                            assigner,
+                            postProcessor,
+                            offsetMappings,
+                            methodVisitor,
+                            implementationContext,
+                            argumentHandler,
+                            methodSizeHandler,
+                            stackMapFrameHandler,
+                            suppressionHandler,
+                            relocationHandler,
+                            exceptionHandler,
+                            delegator);
                     }
 
                     /**
@@ -10711,16 +10950,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   StackManipulation exceptionHandler) {
                             methodSizeHandler.requireLocalVariableLengthPadding(adviceMethod.getReturnType().getStackSize().getSize());
                             return super.doResolve(instrumentedType,
-                                    instrumentedMethod,
-                                    methodVisitor,
-                                    implementationContext,
-                                    assigner,
-                                    argumentHandler,
-                                    methodSizeHandler,
-                                    stackMapFrameHandler,
-                                    suppressionHandler,
-                                    relocationHandler,
-                                    exceptionHandler);
+                                instrumentedMethod,
+                                methodVisitor,
+                                implementationContext,
+                                assigner,
+                                argumentHandler,
+                                methodSizeHandler,
+                                stackMapFrameHandler,
+                                suppressionHandler,
+                                relocationHandler,
+                                exceptionHandler);
                         }
                     }
                 }
@@ -10755,26 +10994,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             TypeDefinition enterType,
                                             Delegator delegator) {
                         super(adviceMethod,
-                                postProcessor,
-                                CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
-                                        OffsetMapping.ForAllArguments.Factory.INSTANCE,
-                                        OffsetMapping.ForThisReference.Factory.INSTANCE,
-                                        OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
-                                        OffsetMapping.ForFieldHandle.Unresolved.ReaderFactory.INSTANCE,
-                                        OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
-                                        OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                        OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
-                                        OffsetMapping.ForUnusedValue.Factory.INSTANCE,
-                                        OffsetMapping.ForStubValue.INSTANCE,
-                                        OffsetMapping.ForEnterValue.Factory.of(enterType),
-                                        OffsetMapping.ForExitValue.Factory.of(adviceMethod.getReturnType()),
-                                        new OffsetMapping.ForLocalValue.Factory(namedTypes),
-                                        OffsetMapping.ForReturnValue.Factory.INSTANCE,
-                                        OffsetMapping.ForThrowable.Factory.of(adviceMethod)
-                                ), userFactories),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(REPEAT_ON).resolve(TypeDescription.class),
-                                delegator);
+                            postProcessor,
+                            CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
+                                OffsetMapping.ForAllArguments.Factory.INSTANCE,
+                                OffsetMapping.ForThisReference.Factory.INSTANCE,
+                                OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
+                                OffsetMapping.ForFieldHandle.Unresolved.ReaderFactory.INSTANCE,
+                                OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
+                                OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
+                                OffsetMapping.ForUnusedValue.Factory.INSTANCE,
+                                OffsetMapping.ForStubValue.INSTANCE,
+                                OffsetMapping.ForEnterValue.Factory.of(enterType),
+                                OffsetMapping.ForExitValue.Factory.of(adviceMethod.getReturnType()),
+                                new OffsetMapping.ForLocalValue.Factory(namedTypes),
+                                OffsetMapping.ForReturnValue.Factory.INSTANCE,
+                                OffsetMapping.ForThrowable.Factory.of(adviceMethod)
+                            ), userFactories),
+                            adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class),
+                            adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(REPEAT_ON).resolve(TypeDescription.class),
+                            delegator);
                         backupArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(BACKUP_ARGUMENTS).resolve(Boolean.class);
                     }
 
@@ -10797,12 +11036,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                TypeDefinition enterType) {
                         TypeDescription throwable = adviceMethod.getDeclaredAnnotations()
-                                .ofType(OnMethodExit.class)
-                                .getValue(ON_THROWABLE)
-                                .resolve(TypeDescription.class);
+                            .ofType(OnMethodExit.class)
+                            .getValue(ON_THROWABLE)
+                            .resolve(TypeDescription.class);
                         return throwable.represents(NoExceptionHandler.class)
-                                ? new WithoutExceptionHandler(adviceMethod, postProcessor, namedTypes, userFactories, enterType, delegator)
-                                : new WithExceptionHandler(adviceMethod, postProcessor, namedTypes, userFactories, enterType, throwable, delegator);
+                            ? new WithoutExceptionHandler(adviceMethod, postProcessor, namedTypes, userFactories, enterType, delegator)
+                            : new WithExceptionHandler(adviceMethod, postProcessor, namedTypes, userFactories, enterType, throwable, delegator);
                     }
 
                     @Override
@@ -10817,16 +11056,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             StackManipulation exceptionHandler,
                                             RelocationHandler.Relocation relocation) {
                         return doResolve(instrumentedType,
-                                instrumentedMethod,
-                                methodVisitor,
-                                implementationContext,
-                                assigner,
-                                argumentHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
-                                methodSizeHandler.bindExit(adviceMethod),
-                                stackMapFrameHandler.bindExit(adviceMethod),
-                                suppressionHandler.bind(exceptionHandler),
-                                relocationHandler.bind(instrumentedMethod, relocation),
-                                exceptionHandler);
+                            instrumentedMethod,
+                            methodVisitor,
+                            implementationContext,
+                            assigner,
+                            argumentHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
+                            methodSizeHandler.bindExit(adviceMethod),
+                            stackMapFrameHandler.bindExit(adviceMethod),
+                            suppressionHandler.bind(exceptionHandler),
+                            relocationHandler.bind(instrumentedMethod, relocation),
+                            exceptionHandler);
                     }
 
                     /**
@@ -10859,26 +11098,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         List<OffsetMapping.Target> offsetMappings = new ArrayList<OffsetMapping.Target>(this.offsetMappings.size());
                         for (OffsetMapping offsetMapping : this.offsetMappings.values()) {
                             offsetMappings.add(offsetMapping.resolve(instrumentedType,
-                                    instrumentedMethod,
-                                    assigner,
-                                    argumentHandler,
-                                    OffsetMapping.Sort.EXIT));
-                        }
-                        return new AdviceMethodWriter.ForMethodExit(adviceMethod,
-                                instrumentedType,
                                 instrumentedMethod,
                                 assigner,
-                                postProcessor,
-                                offsetMappings,
-                                methodVisitor,
-                                implementationContext,
                                 argumentHandler,
-                                methodSizeHandler,
-                                stackMapFrameHandler,
-                                suppressionHandler,
-                                relocationHandler,
-                                exceptionHandler,
-                                delegator);
+                                OffsetMapping.Sort.EXIT));
+                        }
+                        return new AdviceMethodWriter.ForMethodExit(adviceMethod,
+                            instrumentedType,
+                            instrumentedMethod,
+                            assigner,
+                            postProcessor,
+                            offsetMappings,
+                            methodVisitor,
+                            implementationContext,
+                            argumentHandler,
+                            methodSizeHandler,
+                            stackMapFrameHandler,
+                            suppressionHandler,
+                            relocationHandler,
+                            exceptionHandler,
+                            delegator);
                     }
 
                     /**
@@ -10886,8 +11125,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public ArgumentHandler.Factory getArgumentHandlerFactory() {
                         return backupArguments
-                                ? ArgumentHandler.Factory.COPYING
-                                : ArgumentHandler.Factory.SIMPLE;
+                            ? ArgumentHandler.Factory.COPYING
+                            : ArgumentHandler.Factory.SIMPLE;
                     }
 
                     /**
@@ -11059,55 +11298,55 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             namedTypes.putAll(methodEnter.getNamedTypes());
             namedTypes.putAll(methodExit.getNamedTypes());
             argumentHandler = methodExit.getArgumentHandlerFactory().resolve(instrumentedMethod,
-                    methodEnter.getAdviceType(),
-                    methodExit.getAdviceType(),
-                    namedTypes);
+                methodEnter.getAdviceType(),
+                methodExit.getAdviceType(),
+                namedTypes);
             List<TypeDescription> initialTypes = CompoundList.of(methodExit.getAdviceType().represents(void.class)
-                    ? Collections.<TypeDescription>emptyList()
-                    : Collections.singletonList(methodExit.getAdviceType().asErasure()), argumentHandler.getNamedTypes());
+                ? Collections.<TypeDescription>emptyList()
+                : Collections.singletonList(methodExit.getAdviceType().asErasure()), argumentHandler.getNamedTypes());
             List<TypeDescription> latentTypes = methodEnter.getActualAdviceType().represents(void.class)
-                    ? Collections.<TypeDescription>emptyList()
-                    : Collections.singletonList(methodEnter.getActualAdviceType().asErasure());
+                ? Collections.<TypeDescription>emptyList()
+                : Collections.singletonList(methodEnter.getActualAdviceType().asErasure());
             List<TypeDescription> preMethodTypes = methodEnter.getAdviceType().represents(void.class)
-                    ? Collections.<TypeDescription>emptyList()
-                    : Collections.singletonList(methodEnter.getAdviceType().asErasure());
+                ? Collections.<TypeDescription>emptyList()
+                : Collections.singletonList(methodEnter.getAdviceType().asErasure());
             methodSizeHandler = MethodSizeHandler.Default.of(instrumentedMethod,
-                    initialTypes,
-                    preMethodTypes,
-                    postMethodTypes,
-                    argumentHandler.isCopyingArguments(),
-                    writerFlags);
+                initialTypes,
+                preMethodTypes,
+                postMethodTypes,
+                argumentHandler.isCopyingArguments(),
+                writerFlags);
             stackMapFrameHandler = StackMapFrameHandler.Default.of(instrumentedType,
-                    instrumentedMethod,
-                    initialTypes,
-                    latentTypes,
-                    preMethodTypes,
-                    postMethodTypes,
-                    methodExit.isAlive(),
-                    argumentHandler.isCopyingArguments(),
-                    implementationContext.getClassFileVersion(),
-                    writerFlags,
-                    readerFlags);
+                instrumentedMethod,
+                initialTypes,
+                latentTypes,
+                preMethodTypes,
+                postMethodTypes,
+                methodExit.isAlive(),
+                argumentHandler.isCopyingArguments(),
+                implementationContext.getClassFileVersion(),
+                writerFlags,
+                readerFlags);
             this.methodEnter = methodEnter.bind(instrumentedType,
-                    instrumentedMethod,
-                    methodVisitor,
-                    implementationContext,
-                    assigner,
-                    argumentHandler,
-                    methodSizeHandler,
-                    stackMapFrameHandler,
-                    exceptionHandler,
-                    this);
+                instrumentedMethod,
+                methodVisitor,
+                implementationContext,
+                assigner,
+                argumentHandler,
+                methodSizeHandler,
+                stackMapFrameHandler,
+                exceptionHandler,
+                this);
             this.methodExit = methodExit.bind(instrumentedType,
-                    instrumentedMethod,
-                    methodVisitor,
-                    implementationContext,
-                    assigner,
-                    argumentHandler,
-                    methodSizeHandler,
-                    stackMapFrameHandler,
-                    exceptionHandler,
-                    new ForLabel(preparationStart));
+                instrumentedMethod,
+                methodVisitor,
+                implementationContext,
+                assigner,
+                argumentHandler,
+                methodSizeHandler,
+                stackMapFrameHandler,
+                exceptionHandler,
+                new ForLabel(preparationStart));
         }
 
         @Override
@@ -11161,8 +11400,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
             // The 'this' variable is exempt from remapping as it is assumed immutable and remapping it confuses debuggers to not display the variable.
             mv.visitLocalVariable(name, descriptor, signature, start, end, index == THIS_VARIABLE_INDEX && THIS_VARIABLE_NAME.equals(name)
-                    ? index
-                    : argumentHandler.variable(index));
+                ? index
+                : argumentHandler.variable(index));
         }
 
         @Override
@@ -11213,16 +11452,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         int writerFlags,
                                         int readerFlags) {
                 super(methodVisitor,
-                        implementationContext,
-                        assigner,
-                        exceptionHandler,
-                        instrumentedType,
-                        instrumentedMethod,
-                        methodEnter,
-                        Dispatcher.Inactive.INSTANCE,
-                        Collections.<TypeDescription>emptyList(),
-                        writerFlags,
-                        readerFlags);
+                    implementationContext,
+                    assigner,
+                    exceptionHandler,
+                    instrumentedType,
+                    instrumentedMethod,
+                    methodEnter,
+                    Dispatcher.Inactive.INSTANCE,
+                    Collections.<TypeDescription>emptyList(),
+                    writerFlags,
+                    readerFlags);
             }
 
             /**
@@ -11230,10 +11469,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             public void apply(MethodVisitor methodVisitor) {
                 if (instrumentedMethod.getReturnType().represents(boolean.class)
-                        || instrumentedMethod.getReturnType().represents(byte.class)
-                        || instrumentedMethod.getReturnType().represents(short.class)
-                        || instrumentedMethod.getReturnType().represents(char.class)
-                        || instrumentedMethod.getReturnType().represents(int.class)) {
+                    || instrumentedMethod.getReturnType().represents(byte.class)
+                    || instrumentedMethod.getReturnType().represents(short.class)
+                    || instrumentedMethod.getReturnType().represents(char.class)
+                    || instrumentedMethod.getReturnType().represents(int.class)) {
                     methodVisitor.visitInsn(Opcodes.ICONST_0);
                     methodVisitor.visitInsn(Opcodes.IRETURN);
                 } else if (instrumentedMethod.getReturnType().represents(long.class)) {
@@ -11306,16 +11545,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                      int writerFlags,
                                      int readerFlags) {
                 super(StackAwareMethodVisitor.of(methodVisitor, instrumentedMethod),
-                        implementationContext,
-                        assigner,
-                        exceptionHandler,
-                        instrumentedType,
-                        instrumentedMethod,
-                        methodEnter,
-                        methodExit,
-                        postMethodTypes,
-                        writerFlags,
-                        readerFlags);
+                    implementationContext,
+                    assigner,
+                    exceptionHandler,
+                    instrumentedType,
+                    instrumentedMethod,
+                    methodEnter,
+                    methodExit,
+                    postMethodTypes,
+                    writerFlags,
+                    readerFlags);
                 returnHandler = new Label();
             }
 
@@ -11324,10 +11563,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             public void apply(MethodVisitor methodVisitor) {
                 if (instrumentedMethod.getReturnType().represents(boolean.class)
-                        || instrumentedMethod.getReturnType().represents(byte.class)
-                        || instrumentedMethod.getReturnType().represents(short.class)
-                        || instrumentedMethod.getReturnType().represents(char.class)
-                        || instrumentedMethod.getReturnType().represents(int.class)) {
+                    || instrumentedMethod.getReturnType().represents(byte.class)
+                    || instrumentedMethod.getReturnType().represents(short.class)
+                    || instrumentedMethod.getReturnType().represents(char.class)
+                    || instrumentedMethod.getReturnType().represents(int.class)) {
                     methodVisitor.visitInsn(Opcodes.ICONST_0);
                 } else if (instrumentedMethod.getReturnType().represents(long.class)) {
                     methodVisitor.visitInsn(Opcodes.LCONST_0);
@@ -11344,27 +11583,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             protected void onVisitInsn(int opcode) {
                 switch (opcode) {
-                    case Opcodes.RETURN:
-                        ((StackAwareMethodVisitor) mv).drainStack();
-                        break;
-                    case Opcodes.IRETURN:
-                        methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.ISTORE, Opcodes.ILOAD, StackSize.SINGLE));
-                        break;
-                    case Opcodes.FRETURN:
-                        methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.FSTORE, Opcodes.FLOAD, StackSize.SINGLE));
-                        break;
-                    case Opcodes.DRETURN:
-                        methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.DSTORE, Opcodes.DLOAD, StackSize.DOUBLE));
-                        break;
-                    case Opcodes.LRETURN:
-                        methodSizeHandler.requireLocalVariableLength((((StackAwareMethodVisitor) mv).drainStack(Opcodes.LSTORE, Opcodes.LLOAD, StackSize.DOUBLE)));
-                        break;
-                    case Opcodes.ARETURN:
-                        methodSizeHandler.requireLocalVariableLength((((StackAwareMethodVisitor) mv).drainStack(Opcodes.ASTORE, Opcodes.ALOAD, StackSize.SINGLE)));
-                        break;
-                    default:
-                        mv.visitInsn(opcode);
-                        return;
+                case Opcodes.RETURN:
+                    ((StackAwareMethodVisitor) mv).drainStack();
+                    break;
+                case Opcodes.IRETURN:
+                    methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.ISTORE, Opcodes.ILOAD, StackSize.SINGLE));
+                    break;
+                case Opcodes.FRETURN:
+                    methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.FSTORE, Opcodes.FLOAD, StackSize.SINGLE));
+                    break;
+                case Opcodes.DRETURN:
+                    methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.DSTORE, Opcodes.DLOAD, StackSize.DOUBLE));
+                    break;
+                case Opcodes.LRETURN:
+                    methodSizeHandler.requireLocalVariableLength((((StackAwareMethodVisitor) mv).drainStack(Opcodes.LSTORE, Opcodes.LLOAD, StackSize.DOUBLE)));
+                    break;
+                case Opcodes.ARETURN:
+                    methodSizeHandler.requireLocalVariableLength((((StackAwareMethodVisitor) mv).drainStack(Opcodes.ASTORE, Opcodes.ALOAD, StackSize.SINGLE)));
+                    break;
+                default:
+                    mv.visitInsn(opcode);
+                    return;
                 }
                 mv.visitJumpInsn(Opcodes.GOTO, returnHandler);
             }
@@ -11377,10 +11616,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 methodExit.apply();
                 onExitAdviceReturn();
                 if (instrumentedMethod.getReturnType().represents(boolean.class)
-                        || instrumentedMethod.getReturnType().represents(byte.class)
-                        || instrumentedMethod.getReturnType().represents(short.class)
-                        || instrumentedMethod.getReturnType().represents(char.class)
-                        || instrumentedMethod.getReturnType().represents(int.class)) {
+                    || instrumentedMethod.getReturnType().represents(byte.class)
+                    || instrumentedMethod.getReturnType().represents(short.class)
+                    || instrumentedMethod.getReturnType().represents(char.class)
+                    || instrumentedMethod.getReturnType().represents(int.class)) {
                     mv.visitVarInsn(Opcodes.ILOAD, argumentHandler.returned());
                     mv.visitInsn(Opcodes.IRETURN);
                 } else if (instrumentedMethod.getReturnType().represents(long.class)) {
@@ -11441,18 +11680,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                    int writerFlags,
                                                    int readerFlags) {
                     super(methodVisitor,
-                            implementationContext,
-                            assigner,
-                            exceptionHandler,
-                            instrumentedType,
-                            instrumentedMethod,
-                            methodEnter,
-                            methodExit,
-                            instrumentedMethod.getReturnType().represents(void.class)
-                                    ? Collections.<TypeDescription>emptyList()
-                                    : Collections.singletonList(instrumentedMethod.getReturnType().asErasure()),
-                            writerFlags,
-                            readerFlags);
+                        implementationContext,
+                        assigner,
+                        exceptionHandler,
+                        instrumentedType,
+                        instrumentedMethod,
+                        methodEnter,
+                        methodExit,
+                        instrumentedMethod.getReturnType().represents(void.class)
+                            ? Collections.<TypeDescription>emptyList()
+                            : Collections.singletonList(instrumentedMethod.getReturnType().asErasure()),
+                        writerFlags,
+                        readerFlags);
                 }
 
                 @Override
@@ -11468,10 +11707,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 protected void onUserReturn() {
                     if (instrumentedMethod.getReturnType().represents(boolean.class)
-                            || instrumentedMethod.getReturnType().represents(byte.class)
-                            || instrumentedMethod.getReturnType().represents(short.class)
-                            || instrumentedMethod.getReturnType().represents(char.class)
-                            || instrumentedMethod.getReturnType().represents(int.class)) {
+                        || instrumentedMethod.getReturnType().represents(byte.class)
+                        || instrumentedMethod.getReturnType().represents(short.class)
+                        || instrumentedMethod.getReturnType().represents(char.class)
+                        || instrumentedMethod.getReturnType().represents(int.class)) {
                         stackMapFrameHandler.injectReturnFrame(mv);
                         mv.visitVarInsn(Opcodes.ISTORE, argumentHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(long.class)) {
@@ -11542,18 +11781,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                 int readerFlags,
                                                 TypeDescription throwable) {
                     super(methodVisitor,
-                            implementationContext,
-                            assigner,
-                            exceptionHandler,
-                            instrumentedType,
-                            instrumentedMethod,
-                            methodEnter,
-                            methodExit,
-                            instrumentedMethod.getReturnType().represents(void.class)
-                                    ? Collections.singletonList(TypeDescription.ForLoadedType.of(Throwable.class))
-                                    : Arrays.asList(instrumentedMethod.getReturnType().asErasure(), TypeDescription.ForLoadedType.of(Throwable.class)),
-                            writerFlags,
-                            readerFlags);
+                        implementationContext,
+                        assigner,
+                        exceptionHandler,
+                        instrumentedType,
+                        instrumentedMethod,
+                        methodEnter,
+                        methodExit,
+                        instrumentedMethod.getReturnType().represents(void.class)
+                            ? Collections.singletonList(TypeDescription.ForLoadedType.of(Throwable.class))
+                            : Arrays.asList(instrumentedMethod.getReturnType().asErasure(), TypeDescription.ForLoadedType.of(Throwable.class)),
+                        writerFlags,
+                        readerFlags);
                     this.throwable = throwable;
                     this.exceptionHandler = new Label();
                     userStart = new Label();
@@ -11573,10 +11812,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected void onUserReturn() {
                     stackMapFrameHandler.injectReturnFrame(mv);
                     if (instrumentedMethod.getReturnType().represents(boolean.class)
-                            || instrumentedMethod.getReturnType().represents(byte.class)
-                            || instrumentedMethod.getReturnType().represents(short.class)
-                            || instrumentedMethod.getReturnType().represents(char.class)
-                            || instrumentedMethod.getReturnType().represents(int.class)) {
+                        || instrumentedMethod.getReturnType().represents(byte.class)
+                        || instrumentedMethod.getReturnType().represents(short.class)
+                        || instrumentedMethod.getReturnType().represents(char.class)
+                        || instrumentedMethod.getReturnType().represents(int.class)) {
                         mv.visitVarInsn(Opcodes.ISTORE, argumentHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(long.class)) {
                         mv.visitVarInsn(Opcodes.LSTORE, argumentHandler.returned());
@@ -11595,10 +11834,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     stackMapFrameHandler.injectExceptionFrame(mv);
                     mv.visitVarInsn(Opcodes.ASTORE, argumentHandler.thrown());
                     if (instrumentedMethod.getReturnType().represents(boolean.class)
-                            || instrumentedMethod.getReturnType().represents(byte.class)
-                            || instrumentedMethod.getReturnType().represents(short.class)
-                            || instrumentedMethod.getReturnType().represents(char.class)
-                            || instrumentedMethod.getReturnType().represents(int.class)) {
+                        || instrumentedMethod.getReturnType().represents(byte.class)
+                        || instrumentedMethod.getReturnType().represents(short.class)
+                        || instrumentedMethod.getReturnType().represents(char.class)
+                        || instrumentedMethod.getReturnType().represents(int.class)) {
                         mv.visitInsn(Opcodes.ICONST_0);
                         mv.visitVarInsn(Opcodes.ISTORE, argumentHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(long.class)) {
@@ -11672,11 +11911,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             EmulatingMethodVisitor emulatingMethodVisitor = new EmulatingMethodVisitor(methodVisitor, delegate);
             methodVisitor = advice.doWrap(implementationTarget.getInstrumentedType(),
-                    instrumentedMethod,
-                    emulatingMethodVisitor,
-                    implementationContext,
-                    AsmVisitorWrapper.NO_FLAGS,
-                    AsmVisitorWrapper.NO_FLAGS);
+                instrumentedMethod,
+                emulatingMethodVisitor,
+                implementationContext,
+                AsmVisitorWrapper.NO_FLAGS,
+                AsmVisitorWrapper.NO_FLAGS);
             return emulatingMethodVisitor.resolve(methodVisitor, implementationContext, instrumentedMethod);
         }
 
@@ -11920,10 +12159,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * {@link OnMethodEnter} where the {@code this} reference is not available.
      * </p>
      * <p>
-     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.This}
-     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
-     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
-     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.This} or
+     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.This}. This annotation should
+     * be used only in combination with {@link Advice}.
      * </p>
      *
      * @see Advice
@@ -11970,10 +12208,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * the instrumented method.
      * </p>
      * <p>
-     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Argument}
-     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
-     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
-     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Argument} or
+     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.Argument}. This annotation should
+     * be used only in combination with {@link Advice}.
      * </p>
      *
      * @see Advice
@@ -12029,11 +12266,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * instrumented method or an {@link ArrayIndexOutOfBoundsException} is thrown.
      * </p>
      * <p>
-     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.AllArguments}
-     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
-     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
-     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.AllArguments} or
+     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.AllArguments}. This annotation should
+     * be used only in combination with {@link Advice}.
      * </p>
+     *
+     * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
      */
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
@@ -12062,6 +12302,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         Assigner.Typing typing() default Assigner.Typing.STATIC;
 
         /**
+         * Determines if the produced array should include the instrumented method's target reference within the array, if
+         * the instrumented method is non-static.
+         *
+         * @return {@code true} if the method's target instance should be considered an element of the produced array.
+         */
+        boolean includeSelf() default false;
+
+        /**
          * Determines if a {@code null} value should be assigned if the instrumented method does not declare any parameters.
          * If this option is set and a value is written to annotated parameter, the operation remains without effect.
          *
@@ -12078,7 +12326,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * {@link Return#typing()} is set to {@link Assigner.Typing#DYNAMIC}.
      * </p>
      * <p>
-     * <b>Note</b>: This annotation must only be used on exit advice methods.
+     * <b>Note</b>: This annotation must only be used on {@link OnMethodExit} advice methods.
      * </p>
      *
      * @see Advice
@@ -12119,7 +12367,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * suppressed.
      * </p>
      * <p>
-     * <b>Note</b>: This annotation must only be used on exit advice methods.
+     * <b>Note</b>: This annotation must only be used on {@link OnMethodExit} advice methods.
      * </p>
      *
      * @see Advice
@@ -12153,11 +12401,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
+     * <p>
      * Indicates that the annotated parameter should load a {@code java.lang.invoke.MethodHandle} that represents an invocation of
      * the current method. If the current method is virtual, it is bound to the current instance such that the virtual hierarchy
      * is avoided. This annotation can only be used on methods, not constructors.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with
+     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.SelfCallHandle}. This annotation should
+     * be used only in combination with {@link Advice}.
+     * </p>
      *
      * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
      */
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
@@ -12167,14 +12424,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Determines if the method is bound to the arguments and instance of the current invocation.
          *
-         * @return {@code true} if the method should be bound to the current arguments.
+         * @return {@code true} if the handle should be bound to the current arguments.
          */
         boolean bound() default true;
     }
 
     /**
      * <p>
-     * Indicates that the annotated parameter should be mapped to a field in the scope of the instrumented method.
+     * Indicates that the annotated parameter should be mapped to a field in the scope of the instrumented type.
      * </p>
      * <p>
      * Setting {@link FieldValue#value()} is optional. If the value is not set, the field value attempts to bind a setter's
@@ -12192,10 +12449,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * setting {@link ClassWriter#COMPUTE_MAXS}. This is however only relevant when writing to a non-static field.
      * </p>
      * <p>
-     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldValue}
-     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
-     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
-     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldValue} or
+     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldValue}. This annotation should
+     * be used only in combination with {@link Advice}.
      * </p>
      *
      * @see Advice
@@ -12260,10 +12516,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * {@link OnMethodEnter} and a non-static field where the {@code this} reference is not available.
      * </p>
      * <p>
-     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldGetterHandle}
-     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
-     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
-     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldGetterHandle} or
+     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldGetterHandle}. This annotation should
+     * be used only in combination with {@link Advice}.
      * </p>
      *
      * @see Advice
@@ -12307,10 +12562,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * {@link OnMethodEnter} and a non-static field where the {@code this} reference is not available.
      * </p>
      * <p>
-     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldSetterHandle}
-     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
-     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
-     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldSetterHandle} or
+     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldSetterHandle}. This annotation should
+     * be used only in combination with {@link Advice}.
      * </p>
      *
      * @see Advice
@@ -12353,10 +12607,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * every read.
      * </p>
      * <p>
-     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Origin}
-     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
-     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
-     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Origin} or
+     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.Origin}. This annotation should
+     * be used only in combination with {@link Advice}.
      * </p>
      *
      * @see Advice
@@ -12397,7 +12650,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * Indicates that the annotated parameter should be mapped to the value that is returned by the advice method that is annotated
      * by {@link OnMethodEnter}.
      * </p>
-     * <p><b>Note</b></p>: This annotation must only be used within an exit advice and is only meaningful in combination with an enter advice.
+     * <p><b>Note</b></p>: This annotation must only be used within an {@link OnMethodExit} advice and is only meaningful in
+     * combination with an {@link OnMethodEnter} advice.
      *
      * @see Advice
      * @see OnMethodExit
@@ -12486,15 +12740,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
     /**
      * <p>
-     * Indicates that the annotated parameter should always return a default a boxed version of the instrumented methods return value
+     * Indicates that the annotated parameter should always return a boxed version of the instrumented method's return value
      * (i.e. {@code 0} for numeric values, {@code false} for {@code boolean} types and {@code null} for reference types). The annotated
      * parameter must be of type {@link Object} and cannot be assigned a value.
      * </p>
      * <p>
-     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.StubValue}
-     * annotation. This annotation should be used only in combination with {@link Advice} ASM visitor. For method
-     * delegation ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}) use alternative
-     * annotation from <code>net.bytebuddy.implementation.bind</code> package.
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.StubValue} or
+     * {@link MemberSubstitution.Substitution.Chain.Step.ForDelegation.Unused}. This annotation should
+     * be used only in combination with {@link Advice}.
      * </p>
      *
      * @see Advice
@@ -12602,18 +12855,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(getHandlers().size());
             for (Handler handler : getHandlers()) {
                 stackManipulations.add(handler.resolve(instrumentedType,
-                        instrumentedMethod,
-                        assigner,
-                        argumentHandler,
-                        getType(),
-                        toLoadInstruction(handler, exit ? argumentHandler.exit() : argumentHandler.enter())));
+                    instrumentedMethod,
+                    assigner,
+                    argumentHandler,
+                    getType(),
+                    toLoadInstruction(handler, exit ? argumentHandler.exit() : argumentHandler.enter())));
             }
             StackManipulation stackManipulation = exceptionHandlerFactory.wrap(new StackManipulation.Compound(stackManipulations),
-                    exceptionHandler,
-                    stackMapFrameHandler);
+                exceptionHandler,
+                stackMapFrameHandler);
             return skipOnDefaultValue
-                    ? DefaultValueSkip.of(stackManipulation, stackMapFrameHandler, exit ? argumentHandler.exit() : argumentHandler.enter(), type)
-                    : stackManipulation;
+                ? DefaultValueSkip.of(stackManipulation, stackMapFrameHandler, exit ? argumentHandler.exit() : argumentHandler.enter(), type)
+                : stackManipulation;
         }
 
         /**
@@ -12764,15 +13017,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException(instrumentedMethod + " declares less then " + this.value + " parameters");
                     }
                     StackManipulation assignment = assigner.assign(type,
-                            instrumentedMethod.getParameters().get(this.value).getType(),
-                            typing);
+                        instrumentedMethod.getParameters().get(this.value).getType(),
+                        typing);
                     if (!assignment.isValid()) {
                         throw new IllegalStateException("Cannot assign " + type + " to " + instrumentedMethod.getParameters().get(this.value).getType());
                     }
                     return new StackManipulation.Compound(value,
-                            assignment,
-                            MethodVariableAccess.of(instrumentedMethod.getParameters().get(this.value).getType())
-                                    .storeAt(argumentHandler.argument(instrumentedMethod.getParameters().get(this.value).getOffset())));
+                        assignment,
+                        MethodVariableAccess.of(instrumentedMethod.getParameters().get(this.value).getType())
+                            .storeAt(argumentHandler.argument(instrumentedMethod.getParameters().get(this.value).getOffset())));
                 }
 
                 /**
@@ -12810,9 +13063,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     static {
                         TO_ARGUMENTS_VALUE = TypeDescription.ForLoadedType.of(ToArguments.class)
-                                .getDeclaredMethods()
-                                .filter(named("value"))
-                                .getOnly();
+                            .getDeclaredMethods()
+                            .filter(named("value"))
+                            .getOnly();
                         MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(ToArgument.class).getDeclaredMethods();
                         TO_ARGUMENT_VALUE = methods.filter(named("value")).getOnly();
                         TO_ARGUMENT_INDEX = methods.filter(named("index")).getOnly();
@@ -12839,8 +13092,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 throw new IllegalStateException("An argument cannot have a negative index for " + advice);
                             }
                             handlers.add(new Handler(value,
-                                    argument.getValue(TO_ARGUMENT_INDEX).resolve(Integer.class),
-                                    argument.getValue(TO_ARGUMENT_TYPING).load(ToArguments.class.getClassLoader()).resolve(Assigner.Typing.class)));
+                                argument.getValue(TO_ARGUMENT_INDEX).resolve(Integer.class),
+                                argument.getValue(TO_ARGUMENT_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class)));
                         }
                         return handlers;
                     }
@@ -12942,7 +13195,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             throw new IllegalStateException("Cannot assign " + type.getComponentType() + " to " + parameterDescription);
                         }
                         stackManipulations.add(new StackManipulation.Compound(assignment, MethodVariableAccess.of(parameterDescription.getType())
-                                .storeAt(argumentHandler.argument(parameterDescription.getOffset()))));
+                            .storeAt(argumentHandler.argument(parameterDescription.getOffset()))));
                     }
                     return new StackManipulation.Compound(value, ArrayAccess.of(type.getComponentType()).forEach(stackManipulations), Removal.SINGLE);
                 }
@@ -12990,7 +13243,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                              boolean exit,
                                                              AnnotationDescription.Loadable<? extends ToAllArguments> annotation) {
                         return Collections.<AssignReturned.Handler>singletonList(new Handler(annotation.getValue(TO_ALL_ARGUMENTS_INDEX).resolve(Integer.class),
-                                annotation.getValue(TO_ALL_ARGUMENTS_TYPING).load(ToAllArguments.class.getClassLoader()).resolve(Assigner.Typing.class)));
+                            annotation.getValue(TO_ALL_ARGUMENTS_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class)));
                     }
                 }
             }
@@ -13082,14 +13335,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException("Cannot assign this reference in constructor prior to initialization for " + instrumentedMethod);
                     }
                     StackManipulation assignment = assigner.assign(type,
-                            instrumentedType.asGenericType(),
-                            typing);
+                        instrumentedType.asGenericType(),
+                        typing);
                     if (!assignment.isValid()) {
                         throw new IllegalStateException("Cannot assign " + type + " to " + instrumentedType);
                     }
                     return new StackManipulation.Compound(value,
-                            assignment,
-                            MethodVariableAccess.REFERENCE.storeAt(argumentHandler.argument(0)));
+                        assignment,
+                        MethodVariableAccess.REFERENCE.storeAt(argumentHandler.argument(0)));
                 }
 
                 /**
@@ -13136,8 +13389,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                              boolean exit,
                                                              AnnotationDescription.Loadable<? extends ToThis> annotation) {
                         return Collections.<AssignReturned.Handler>singletonList(new Handler(annotation.getValue(TO_THIS_INDEX).resolve(Integer.class),
-                                annotation.getValue(TO_THIS_TYPING).load(ToThis.class.getClassLoader()).resolve(Assigner.Typing.class),
-                                exit));
+                            annotation.getValue(TO_THIS_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                            exit));
                     }
                 }
             }
@@ -13272,11 +13525,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  TypeDescription.Generic type,
                                                  StackManipulation value) {
                     FieldLocator locator = declaringType.represents(void.class)
-                            ? new FieldLocator.ForClassHierarchy(instrumentedType)
-                            : new FieldLocator.ForExactType(declaringType);
+                        ? new FieldLocator.ForClassHierarchy(instrumentedType)
+                        : new FieldLocator.ForExactType(declaringType);
                     FieldLocator.Resolution resolution = name.equals(OffsetMapping.ForField.Unresolved.BEAN_PROPERTY)
-                            ? FieldLocator.Resolution.Simple.ofBeanAccessor(locator, instrumentedMethod)
-                            : locator.locate(name);
+                        ? FieldLocator.Resolution.Simple.ofBeanAccessor(locator, instrumentedMethod)
+                        : locator.locate(name);
                     StackManipulation stackManipulation;
                     if (!resolution.isResolved()) {
                         throw new IllegalStateException("Cannot resolve field " + name + " for " + instrumentedType);
@@ -13292,15 +13545,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         stackManipulation = MethodVariableAccess.loadThis();
                     }
                     StackManipulation assignment = assigner.assign(type,
-                            resolution.getField().getType(),
-                            typing);
+                        resolution.getField().getType(),
+                        typing);
                     if (!assignment.isValid()) {
                         throw new IllegalStateException("Cannot assign " + type + " to " + resolution.getField());
                     }
                     return new StackManipulation.Compound(stackManipulation,
-                            value,
-                            assignment,
-                            FieldAccess.forField(resolution.getField()).write());
+                        value,
+                        assignment,
+                        FieldAccess.forField(resolution.getField()).write());
                 }
 
                 /**
@@ -13343,9 +13596,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     static {
                         TO_FIELDS_VALUE = TypeDescription.ForLoadedType.of(ToFields.class)
-                                .getDeclaredMethods()
-                                .filter(named("value"))
-                                .getOnly();
+                            .getDeclaredMethods()
+                            .filter(named("value"))
+                            .getOnly();
                         MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(ToField.class).getDeclaredMethods();
                         TO_FIELD_VALUE = methods.filter(named("value")).getOnly();
                         TO_FIELD_INDEX = methods.filter(named("index")).getOnly();
@@ -13369,9 +13622,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         List<AssignReturned.Handler> handlers = new ArrayList<AssignReturned.Handler>();
                         for (AnnotationDescription field : annotation.getValue(TO_FIELDS_VALUE).resolve(AnnotationDescription[].class)) {
                             handlers.add(new Handler(field.getValue(TO_FIELD_INDEX).resolve(Integer.class),
-                                    field.getValue(TO_FIELD_VALUE).resolve(String.class),
-                                    field.getValue(TO_FIELD_DECLARING_TYPE).resolve(TypeDescription.class),
-                                    field.getValue(TO_FIELD_TYPING).load(ToFields.class.getClassLoader()).resolve(Assigner.Typing.class)));
+                                field.getValue(TO_FIELD_VALUE).resolve(String.class),
+                                field.getValue(TO_FIELD_DECLARING_TYPE).resolve(TypeDescription.class),
+                                field.getValue(TO_FIELD_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class)));
                         }
                         return handlers;
                     }
@@ -13461,8 +13714,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException("Cannot assign " + type + " to " + instrumentedMethod.getReturnType());
                     }
                     return new StackManipulation.Compound(value,
-                            assignment,
-                            MethodVariableAccess.of(instrumentedMethod.getReturnType()).storeAt(argumentHandler.returned()));
+                        assignment,
+                        MethodVariableAccess.of(instrumentedMethod.getReturnType()).storeAt(argumentHandler.returned()));
                 }
 
                 /**
@@ -13511,7 +13764,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             throw new IllegalStateException("Cannot write returned value from enter advice " + advice);
                         }
                         return Collections.<AssignReturned.Handler>singletonList(new ToReturned.Handler(annotation.getValue(TO_RETURNED_INDEX).resolve(Integer.class),
-                                annotation.getValue(TO_RETURNED_TYPING).load(ToReturned.class.getClassLoader()).resolve(Assigner.Typing.class)));
+                            annotation.getValue(TO_RETURNED_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class)));
                     }
                 }
             }
@@ -13598,8 +13851,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException("Cannot assign " + type + " to " + Throwable.class.getName());
                     }
                     return new StackManipulation.Compound(value,
-                            assignment,
-                            MethodVariableAccess.REFERENCE.storeAt(argumentHandler.thrown()));
+                        assignment,
+                        MethodVariableAccess.REFERENCE.storeAt(argumentHandler.thrown()));
                 }
 
                 /**
@@ -13647,11 +13900,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                              AnnotationDescription.Loadable<? extends ToThrown> annotation) {
                         if (!exit) {
                             throw new IllegalStateException("Cannot assign thrown value from enter advice " + advice);
-                        } else if (advice.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE).resolve(TypeDescription.class).represents(NoExceptionHandler.class)) {
+                        } else if (advice.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE).resolve(TypeDescription.class)
+                            .represents(NoExceptionHandler.class)) {
                             throw new IllegalStateException("Cannot assign thrown value for non-catching exit advice " + advice);
                         }
                         return Collections.<AssignReturned.Handler>singletonList(new ToThrown.Handler(annotation.getValue(TO_THROWN_INDEX).resolve(Integer.class),
-                                annotation.getValue(TO_THROWN_TYPING).load(ToThrown.class.getClassLoader()).resolve(Assigner.Typing.class)));
+                            annotation.getValue(TO_THROWN_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class)));
                     }
                 }
             }
@@ -13708,8 +13962,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
             protected StackManipulation toLoadInstruction(Handler handler, int offset) {
                 return new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadFrom(offset),
-                        IntegerConstant.forValue(handlers.get(handler)),
-                        ArrayAccess.of(type.getComponentType()).load());
+                    IntegerConstant.forValue(handlers.get(handler)),
+                    ArrayAccess.of(type.getComponentType()).load());
             }
         }
 
@@ -13828,10 +14082,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 Dispatcher dispatcher;
                 if (typeDefinition.isPrimitive()) {
                     if (typeDefinition.represents(boolean.class)
-                            || typeDefinition.represents(byte.class)
-                            || typeDefinition.represents(short.class)
-                            || typeDefinition.represents(char.class)
-                            || typeDefinition.represents(int.class)) {
+                        || typeDefinition.represents(byte.class)
+                        || typeDefinition.represents(short.class)
+                        || typeDefinition.represents(char.class)
+                        || typeDefinition.represents(int.class)) {
                         dispatcher = Dispatcher.INTEGER;
                     } else if (typeDefinition.represents(long.class)) {
                         dispatcher = Dispatcher.LONG;
@@ -14205,9 +14459,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * A description of the {@link AsScalar#skipOnDefaultValue()} method.
              */
             private static final MethodDescription.InDefinedShape SKIP_ON_DEFAULT_VALUE = TypeDescription.ForLoadedType.of(AsScalar.class)
-                    .getDeclaredMethods()
-                    .filter(named("skipOnDefaultValue"))
-                    .getOnly();
+                .getDeclaredMethods()
+                .filter(named("skipOnDefaultValue"))
+                .getOnly();
 
             /**
              * The handler factories to apply.
@@ -14225,11 +14479,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @SuppressWarnings("unchecked")
             public Factory() {
                 this(Arrays.asList(ToArguments.Handler.Factory.INSTANCE,
-                        ToAllArguments.Handler.Factory.INSTANCE,
-                        ToThis.Handler.Factory.INSTANCE,
-                        ToFields.Handler.Factory.INSTANCE,
-                        ToReturned.Handler.Factory.INSTANCE,
-                        ToThrown.Handler.Factory.INSTANCE), ExceptionHandler.Factory.NoOp.INSTANCE);
+                    ToAllArguments.Handler.Factory.INSTANCE,
+                    ToThis.Handler.Factory.INSTANCE,
+                    ToFields.Handler.Factory.INSTANCE,
+                    ToReturned.Handler.Factory.INSTANCE,
+                    ToThrown.Handler.Factory.INSTANCE), ExceptionHandler.Factory.NoOp.INSTANCE);
             }
 
             /**
@@ -14324,8 +14578,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     Handler.Factory<?> factory = factories.get(annotation.getAnnotationType().getName());
                     if (factory != null) {
                         if (handlers.put(factory.getAnnotationType(), factory.make(advice,
-                                exit,
-                                (AnnotationDescription.Loadable) annotation.prepare(factory.getAnnotationType()))) != null) {
+                            exit,
+                            (AnnotationDescription.Loadable) annotation.prepare(factory.getAnnotationType()))) != null) {
                             throw new IllegalStateException("Duplicate handler registration for " + annotation.getAnnotationType());
                         }
                     }
@@ -14334,8 +14588,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return NoOp.INSTANCE;
                 } else {
                     return !scalar && advice.getReturnType().isArray()
-                            ? new ForArray(advice.getReturnType(), exceptionHandlerFactory, exit, handlers.values())
-                            : new ForScalar(advice.getReturnType(), exceptionHandlerFactory, exit, skipOnDefaultValue, handlers.values());
+                        ? new ForArray(advice.getReturnType(), exceptionHandlerFactory, exit, handlers.values())
+                        : new ForScalar(advice.getReturnType(), exceptionHandlerFactory, exit, skipOnDefaultValue, handlers.values());
                 }
             }
         }
@@ -14353,9 +14607,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         private final PostProcessor.Factory postProcessorFactory;
 
         /**
-         * The delegator to use.
+         * The delegator factory to use.
          */
-        private final Delegator delegator;
+        private final Delegator.Factory delegatorFactory;
 
         /**
          * A map containing dynamically computed constant pool values that are mapped by their triggering annotation type.
@@ -14366,7 +14620,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Creates a new custom mapping builder step without including any custom mappings.
          */
         protected WithCustomMapping() {
-            this(PostProcessor.NoOp.INSTANCE, Collections.<Class<? extends Annotation>, OffsetMapping.Factory<?>>emptyMap(), Delegator.ForStaticInvocation.INSTANCE);
+            this(PostProcessor.NoOp.INSTANCE, Collections.<Class<? extends Annotation>, OffsetMapping.Factory<?>>emptyMap(), Delegator.ForRegularInvocation.Factory.INSTANCE);
         }
 
         /**
@@ -14374,14 +14628,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          *
          * @param postProcessorFactory The post processor factory to apply.
          * @param offsetMappings       A map containing dynamically computed constant pool values that are mapped by their triggering annotation type.
-         * @param delegator            The delegator to use.
+         * @param delegatorFactory     The delegator factory to use.
          */
         protected WithCustomMapping(PostProcessor.Factory postProcessorFactory,
                                     Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings,
-                                    Delegator delegator) {
+                                    Delegator.Factory delegatorFactory) {
             this.postProcessorFactory = postProcessorFactory;
             this.offsetMappings = offsetMappings;
-            this.delegator = delegator;
+            this.delegatorFactory = delegatorFactory;
         }
 
         /**
@@ -14623,8 +14877,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                    Constructor<?> constructor,
                                                                    Class<?> functionalInterface) {
             return bindLambda(type,
-                    new MethodDescription.ForLoadedConstructor(constructor),
-                    TypeDescription.ForLoadedType.of(functionalInterface));
+                new MethodDescription.ForLoadedConstructor(constructor),
+                TypeDescription.ForLoadedType.of(functionalInterface));
         }
 
         /**
@@ -14642,9 +14896,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                    Class<?> functionalInterface,
                                                                    MethodGraph.Compiler methodGraphCompiler) {
             return bindLambda(type,
-                    new MethodDescription.ForLoadedConstructor(constructor),
-                    TypeDescription.ForLoadedType.of(functionalInterface),
-                    methodGraphCompiler);
+                new MethodDescription.ForLoadedConstructor(constructor),
+                TypeDescription.ForLoadedType.of(functionalInterface),
+                methodGraphCompiler);
         }
 
         /**
@@ -14660,8 +14914,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                    Method method,
                                                                    Class<?> functionalInterface) {
             return bindLambda(type,
-                    new MethodDescription.ForLoadedMethod(method),
-                    TypeDescription.ForLoadedType.of(functionalInterface));
+                new MethodDescription.ForLoadedMethod(method),
+                TypeDescription.ForLoadedType.of(functionalInterface));
         }
 
         /**
@@ -14679,9 +14933,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                    Class<?> functionalInterface,
                                                                    MethodGraph.Compiler methodGraphCompiler) {
             return bindLambda(type,
-                    new MethodDescription.ForLoadedMethod(method),
-                    TypeDescription.ForLoadedType.of(functionalInterface),
-                    methodGraphCompiler);
+                new MethodDescription.ForLoadedMethod(method),
+                TypeDescription.ForLoadedType.of(functionalInterface),
+                methodGraphCompiler);
         }
 
         /**
@@ -14717,32 +14971,32 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 throw new IllegalArgumentException(functionalInterface + " is not an interface type");
             }
             MethodList<?> methods = methodGraphCompiler.compile((TypeDefinition) functionalInterface)
-                    .listNodes()
-                    .asMethodList()
-                    .filter(isAbstract());
+                .listNodes()
+                .asMethodList()
+                .filter(isAbstract());
             if (methods.size() != 1) {
                 throw new IllegalArgumentException(functionalInterface + " does not define exactly one abstract method: " + methods);
             }
             return bindDynamic(type, new MethodDescription.Latent(new TypeDescription.Latent("java.lang.invoke.LambdaMetafactory",
-                            Opcodes.ACC_PUBLIC,
-                            TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)),
-                            "metafactory",
-                            Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
-                            Collections.<TypeVariableToken>emptyList(),
-                            JavaType.CALL_SITE.getTypeStub().asGenericType(),
-                            Arrays.asList(new ParameterDescription.Token(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().asGenericType()),
-                                    new ParameterDescription.Token(TypeDescription.ForLoadedType.of(String.class).asGenericType()),
-                                    new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
-                                    new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
-                                    new ParameterDescription.Token(JavaType.METHOD_HANDLE.getTypeStub().asGenericType()),
-                                    new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType())),
-                            Collections.<TypeDescription.Generic>emptyList(),
-                            Collections.<AnnotationDescription>emptyList(),
-                            AnnotationValue.UNDEFINED,
-                            TypeDescription.Generic.UNDEFINED),
-                    JavaConstant.MethodType.of(methods.asDefined().getOnly()),
-                    JavaConstant.MethodHandle.of(methodDescription),
-                    JavaConstant.MethodType.of(methods.asDefined().getOnly()));
+                    Opcodes.ACC_PUBLIC,
+                    TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)),
+                    "metafactory",
+                    Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
+                    Collections.<TypeVariableToken>emptyList(),
+                    JavaType.CALL_SITE.getTypeStub().asGenericType(),
+                    Arrays.asList(new ParameterDescription.Token(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().asGenericType()),
+                        new ParameterDescription.Token(TypeDescription.ForLoadedType.of(String.class).asGenericType()),
+                        new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
+                        new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
+                        new ParameterDescription.Token(JavaType.METHOD_HANDLE.getTypeStub().asGenericType()),
+                        new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType())),
+                    Collections.<TypeDescription.Generic>emptyList(),
+                    Collections.<AnnotationDescription>emptyList(),
+                    AnnotationValue.UNDEFINED,
+                    TypeDescription.Generic.UNDEFINED),
+                JavaConstant.MethodType.of(methods.asDefined().getOnly()),
+                JavaConstant.MethodHandle.of(methodDescription),
+                JavaConstant.MethodType.of(methods.asDefined().getOnly()));
         }
 
         /**
@@ -14847,13 +15101,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
         public WithCustomMapping bind(OffsetMapping.Factory<?> offsetMapping) {
-            Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings = new HashMap<Class<? extends Annotation>, OffsetMapping.Factory<?>>(this.offsetMappings);
+            Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings = new LinkedHashMap<Class<? extends Annotation>, OffsetMapping.Factory<?>>(this.offsetMappings);
             if (!offsetMapping.getAnnotationType().isAnnotation()) {
                 throw new IllegalArgumentException("Not an annotation type: " + offsetMapping.getAnnotationType());
             } else if (offsetMappings.put(offsetMapping.getAnnotationType(), offsetMapping) != null) {
                 throw new IllegalArgumentException("Annotation type already mapped: " + offsetMapping.getAnnotationType());
             }
-            return new WithCustomMapping(postProcessorFactory, offsetMappings, delegator);
+            return new WithCustomMapping(postProcessorFactory, offsetMappings, delegatorFactory);
         }
 
         /**
@@ -14878,6 +15132,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
+         * Defines the supplied constructor as a dynamic invocation bootstrap target for delegating advice methods. The bootstrap
+         * method arguments are provided explicitly by the supplied resolver.
+         *
+         * @param constructor     The bootstrap constructor.
+         * @param resolverFactory A resolver factory to provide the arguments to the bootstrap method.
+         * @return A new builder for an advice that uses the supplied constructor for bootstrapping.
+         */
+        public WithCustomMapping bootstrap(Constructor<?> constructor, BootstrapArgumentResolver.Factory resolverFactory) {
+            return bootstrap(new MethodDescription.ForLoadedConstructor(constructor), resolverFactory);
+        }
+
+        /**
          * Defines the supplied method as an dynamic invocation bootstrap target for delegating advice methods. The bootstrap
          * method arguments are:
          * <ul>
@@ -14899,6 +15165,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
+         * Defines the supplied method as an dynamic invocation bootstrap target for delegating advice methods. The bootstrap
+         * method arguments are provided explicitly by the supplied resolver.
+         *
+         * @param method   The bootstrap method.
+         * @param resolver A resolver to provide the arguments to the bootstrap method.
+         * @return A new builder for an advice that uses the supplied method for bootstrapping.
+         */
+        public WithCustomMapping bootstrap(Method method, BootstrapArgumentResolver.Factory resolver) {
+            return bootstrap(new MethodDescription.ForLoadedMethod(method), resolver);
+        }
+
+        /**
          * Defines the supplied method or constructor as an dynamic invocation bootstrap target for delegating advice methods. The bootstrap
          * method arguments are:
          * <ul>
@@ -14916,7 +15194,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that uses the supplied method or constructor for bootstrapping.
          */
         public WithCustomMapping bootstrap(MethodDescription.InDefinedShape bootstrap) {
-            return new WithCustomMapping(postProcessorFactory, offsetMappings, Delegator.ForDynamicInvocation.of(bootstrap));
+            return bootstrap(bootstrap, BootstrapArgumentResolver.ForDefaultValues.Factory.INSTANCE);
+        }
+
+        /**
+         * Defines the supplied method or constructor as an dynamic invocation bootstrap target for delegating advice methods. The bootstrap
+         * method arguments are provided explicitly by the supplied resolver.
+         *
+         * @param bootstrap       The bootstrap method or constructor.
+         * @param resolverFactory A factory for a resolver to provide arguments to the bootstrap method.
+         * @return A new builder for an advice that uses the supplied method or constructor for bootstrapping.
+         */
+        public WithCustomMapping bootstrap(MethodDescription.InDefinedShape bootstrap, BootstrapArgumentResolver.Factory resolverFactory) {
+            return new WithCustomMapping(postProcessorFactory, offsetMappings, Delegator.ForDynamicInvocation.of(bootstrap, resolverFactory));
         }
 
         /**
@@ -14926,7 +15216,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that applies the supplied post processor factory.
          */
         public WithCustomMapping with(PostProcessor.Factory postProcessorFactory) {
-            return new WithCustomMapping(new PostProcessor.Factory.Compound(this.postProcessorFactory, postProcessorFactory), offsetMappings, delegator);
+            return new WithCustomMapping(new PostProcessor.Factory.Compound(this.postProcessorFactory, postProcessorFactory), offsetMappings, delegatorFactory);
         }
 
         /**
@@ -14959,7 +15249,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A method visitor wrapper representing the supplied advice.
          */
         public Advice to(TypeDescription advice, ClassFileLocator classFileLocator) {
-            return Advice.to(advice, postProcessorFactory, classFileLocator, new ArrayList<OffsetMapping.Factory<?>>(offsetMappings.values()), delegator);
+            return Advice.to(advice, postProcessorFactory, classFileLocator, new ArrayList<OffsetMapping.Factory<?>>(offsetMappings.values()), delegatorFactory);
         }
 
         /**
@@ -14973,8 +15263,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         public Advice to(Class<?> enterAdvice, Class<?> exitAdvice) {
             ClassLoader enterLoader = enterAdvice.getClassLoader(), exitLoader = exitAdvice.getClassLoader();
             return to(enterAdvice, exitAdvice, enterLoader == exitLoader
-                    ? ClassFileLocator.ForClassLoader.of(enterLoader)
-                    : new ClassFileLocator.Compound(ClassFileLocator.ForClassLoader.of(enterLoader), ClassFileLocator.ForClassLoader.of(exitLoader)));
+                ? ClassFileLocator.ForClassLoader.of(enterLoader)
+                : new ClassFileLocator.Compound(ClassFileLocator.ForClassLoader.of(enterLoader), ClassFileLocator.ForClassLoader.of(exitLoader)));
         }
 
         /**
@@ -15011,7 +15301,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A method visitor wrapper representing the supplied advice.
          */
         public Advice to(TypeDescription enterAdvice, TypeDescription exitAdvice, ClassFileLocator classFileLocator) {
-            return Advice.to(enterAdvice, exitAdvice, postProcessorFactory, classFileLocator, new ArrayList<OffsetMapping.Factory<?>>(offsetMappings.values()), delegator);
+            return Advice.to(enterAdvice, exitAdvice, postProcessorFactory, classFileLocator, new ArrayList<OffsetMapping.Factory<?>>(offsetMappings.values()), delegatorFactory);
         }
     }
 

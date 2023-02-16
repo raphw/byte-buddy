@@ -29,7 +29,7 @@ import java.util.List;
  */
 public interface ByteCodeElement extends NamedElement.WithRuntimeName,
         NamedElement.WithDescriptor,
-        ModifierReviewable,
+        ModifierReviewable.OfByteCodeElement,
         DeclaredByType,
         AnnotationSource {
 
@@ -100,6 +100,15 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName,
          * @return A token representative of this type dependant.
          */
         S asToken(ElementMatcher<? super TypeDescription> matcher);
+    }
+
+    /**
+     * A byte code element that is declared by a type.
+     */
+    interface Member extends ByteCodeElement,
+            NamedElement.WithGenericName,
+            DeclaredByType.WithMandatoryDeclaration {
+        /* empty */
     }
 
     /**

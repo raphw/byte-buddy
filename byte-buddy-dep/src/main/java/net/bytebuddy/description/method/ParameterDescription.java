@@ -167,6 +167,7 @@ public interface ParameterDescription extends AnnotationSource,
         /**
          * {@inheritDoc}
          */
+        @CachedReturnPlugin.Enhance("offset")
         public int getOffset() {
             TypeList parameterType = getDeclaringMethod().getParameters().asTypeList().asErasures();
             int offset = getDeclaringMethod().isStatic()

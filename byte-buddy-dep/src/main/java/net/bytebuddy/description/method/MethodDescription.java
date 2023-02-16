@@ -31,6 +31,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.AlwaysNull;
@@ -53,10 +54,8 @@ import static net.bytebuddy.matcher.ElementMatchers.ofSort;
  * interface must provide meaningful {@code equal(Object)} and {@code hashCode()} implementations.
  */
 public interface MethodDescription extends TypeVariableSource,
-        DeclaredByType.WithMandatoryDeclaration,
         ModifierReviewable.ForMethodDescription,
-        NamedElement.WithGenericName,
-        ByteCodeElement,
+        ByteCodeElement.Member,
         ByteCodeElement.TypeDependant<MethodDescription.InDefinedShape, MethodDescription.Token> {
 
     /**
@@ -250,7 +249,7 @@ public interface MethodDescription extends TypeVariableSource,
     boolean isConstantBootstrap();
 
     /**
-     * Checks if this method is a valid bootstrap method for an constantdynamic call.
+     * Checks if this method is a valid bootstrap method for a constantdynamic call.
      *
      * @param arguments The types of the explicit arguments that are supplied to the bootstrap method.
      * @return {@code true} if this method is a valid bootstrap method for an <i>constantdynamic</i> call.

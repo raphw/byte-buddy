@@ -19,33 +19,42 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationValue;
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.TargetType;
+import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
+import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
+import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.ConstantValue;
-import net.bytebuddy.utility.OpenedClassReader;
+import net.bytebuddy.utility.*;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.visitor.LocalVariableAwareMethodVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.io.Serializable;
+import java.lang.annotation.*;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -105,10 +114,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
      * @param replacementFactory  The replacement factory to use.
      */
-    protected MemberSubstitution(MethodGraph.Compiler methodGraphCompiler,
-                                 TypePoolResolver typePoolResolver,
-                                 boolean strict,
-                                 Replacement.Factory replacementFactory) {
+    protected MemberSubstitution(MethodGraph.Compiler methodGraphCompiler, TypePoolResolver typePoolResolver, boolean strict, Replacement.Factory replacementFactory) {
         this.methodGraphCompiler = methodGraphCompiler;
         this.typePoolResolver = typePoolResolver;
         this.strict = strict;
@@ -272,10 +278,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
          * @param replacementFactory  The replacement factory to use for creating substitutions.
          */
-        protected WithoutSpecification(MethodGraph.Compiler methodGraphCompiler,
-                                       TypePoolResolver typePoolResolver,
-                                       boolean strict,
-                                       Replacement.Factory replacementFactory) {
+        protected WithoutSpecification(MethodGraph.Compiler methodGraphCompiler, TypePoolResolver typePoolResolver, boolean strict, Replacement.Factory replacementFactory) {
             this.methodGraphCompiler = methodGraphCompiler;
             this.typePoolResolver = typePoolResolver;
             this.strict = strict;
@@ -499,9 +502,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 return new MemberSubstitution(methodGraphCompiler,
                         typePoolResolver,
                         strict,
-                        new Replacement.Factory.Compound(
-                                this.replacementFactory,
-                                Replacement.ForElementMatchers.Factory.of(matcher, substitutionFactory)));
+                        new Replacement.Factory.Compound(this.replacementFactory, Replacement.ForElementMatchers.Factory.of(matcher, substitutionFactory)));
             }
         }
 
@@ -592,9 +593,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 return new MemberSubstitution(methodGraphCompiler,
                         typePoolResolver,
                         strict,
-                        new Replacement.Factory.Compound(
-                                this.replacementFactory,
-                                Replacement.ForElementMatchers.Factory.ofField(matcher, matchRead, matchWrite, substitutionFactory)));
+                        new Replacement.Factory.Compound(this.replacementFactory, Replacement.ForElementMatchers.Factory.ofField(matcher, matchRead, matchWrite, substitutionFactory)));
             }
         }
 
@@ -666,7 +665,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @return This specification where only virtual methods are matched if they are not invoked as a virtual call.
              */
             public WithoutSpecification onVirtualCall() {
-                return new ForMatchedMethod(methodGraphCompiler, typePoolResolver, strict, replacementFactory, isVirtual().and(matcher), true, false);
+                return new ForMatchedMethod(methodGraphCompiler,
+                        typePoolResolver,
+                        strict,
+                        replacementFactory,
+                        isVirtual().and(matcher),
+                        true,
+                        false);
             }
 
             /**
@@ -675,7 +680,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @return This specification where only virtual methods are matched if they are not invoked as a super call.
              */
             public WithoutSpecification onSuperCall() {
-                return new ForMatchedMethod(methodGraphCompiler, typePoolResolver, strict, replacementFactory, isVirtual().and(matcher), false, true);
+                return new ForMatchedMethod(methodGraphCompiler,
+                        typePoolResolver,
+                        strict,
+                        replacementFactory,
+                        isVirtual().and(matcher),
+                        false,
+                        true);
             }
 
             /**
@@ -685,9 +696,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 return new MemberSubstitution(methodGraphCompiler,
                         typePoolResolver,
                         strict,
-                        new Replacement.Factory.Compound(
-                                this.replacementFactory,
-                                Replacement.ForElementMatchers.Factory.ofMethod(matcher, includeVirtualCalls, includeSuperCalls, substitutionFactory)));
+                        new Replacement.Factory.Compound(this.replacementFactory, Replacement.ForElementMatchers.Factory.ofMethod(matcher, includeVirtualCalls, includeSuperCalls, substitutionFactory)));
             }
         }
     }
@@ -816,19 +825,20 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         /**
          * Resolves this substitution into a stack manipulation.
          *
-         * @param targetType The target type on which a member is accessed.
-         * @param target     The target field, method or constructor that is substituted.
-         * @param parameters All parameters that serve as input to this access.
-         * @param result     The result that is expected from the interaction or {@code void} if no result is expected.
-         * @param original   The original byte code expression that is being executed.
-         * @param freeOffset The first free offset of the local variable array that can be used for storing values.
+         * @param receiver          The target type on which a member is accessed.
+         * @param original          The field, method or constructor that is substituted.
+         * @param parameters        All parameters that serve as input to this access.
+         * @param result            The result that is expected from the interaction or {@code void} if no result is expected.
+         * @param stackManipulation The original byte code expression that is being executed.
+         * @param freeOffset        The first free offset of the local variable array that can be used for storing values.
          * @return A stack manipulation that represents the access.
          */
-        StackManipulation resolve(TypeDescription targetType,
-                                  ByteCodeElement target,
+        StackManipulation resolve(TypeDescription receiver,
+                                  ByteCodeElement original,
                                   TypeList.Generic parameters,
                                   TypeDescription.Generic result,
-                                  StackManipulation original,
+                                  JavaConstant.MethodHandle methodHandle,
+                                  StackManipulation stackManipulation,
                                   int freeOffset);
 
         /**
@@ -848,7 +858,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         }
 
         /**
-         * A substitution that drops any field or method access and returns the expected return type's default value, i.e {@code null} or zero for primitive types.
+         * A substitution that drops any field or method access and returns the expected return
+         * type's default value, i.e {@code null} or zero for primitive types.
          */
         enum Stubbing implements Substitution, Factory {
 
@@ -867,12 +878,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(TypeDescription targetType,
-                                             ByteCodeElement target,
-                                             TypeList.Generic parameters,
-                                             TypeDescription.Generic result,
-                                             StackManipulation original,
-                                             int freeOffset) {
+            public StackManipulation resolve(TypeDescription receiver, ByteCodeElement original, TypeList.Generic parameters, TypeDescription.Generic result, JavaConstant.MethodHandle methodHandle, StackManipulation stackManipulation, int freeOffset) {
                 List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size());
                 for (int index = parameters.size() - 1; index >= 0; index--) {
                     stackManipulations.add(Removal.of(parameters.get(index)));
@@ -918,11 +924,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(TypeDescription targetType,
-                                             ByteCodeElement target,
+            public StackManipulation resolve(TypeDescription receiver,
+                                             ByteCodeElement original,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
-                                             StackManipulation original,
+                                             JavaConstant.MethodHandle methodHandle,
+                                             StackManipulation stackManipulation,
                                              int freeOffset) {
                 List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size());
                 for (int index = parameters.size() - 1; index >= 0; index--) {
@@ -931,7 +938,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 if (!typeDescription.asErasure().isAssignableTo(result.asErasure())) {
                     throw new IllegalStateException("Cannot assign " + typeDescription + " to " + result);
                 }
-                return new StackManipulation.Compound(CompoundList.of(stackManipulations, stackManipulation));
+                return new StackManipulation.Compound(CompoundList.of(stackManipulations, this.stackManipulation));
             }
         }
 
@@ -966,13 +973,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * {@inheritDoc}
              */
             @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
-            public StackManipulation resolve(TypeDescription targetType,
-                                             ByteCodeElement target,
+            public StackManipulation resolve(TypeDescription receiver,
+                                             ByteCodeElement original,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
-                                             StackManipulation original,
+                                             JavaConstant.MethodHandle methodHandle,
+                                             StackManipulation stackManipulation,
                                              int freeOffset) {
-                FieldDescription fieldDescription = fieldResolver.resolve(targetType, target, parameters, result);
+                FieldDescription fieldDescription = fieldResolver.resolve(receiver, original, parameters, result);
                 if (!fieldDescription.isAccessibleTo(instrumentedType)) {
                     throw new IllegalStateException(instrumentedType + " cannot access " + fieldDescription);
                 } else if (result.represents(void.class)) {
@@ -1004,13 +1012,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * Resolves the field to substitute with.
                  *
-                 * @param targetType The target type on which a member is accessed.
-                 * @param target     The target field, method or constructor that is substituted,
+                 * @param receiver   The target type on which a member is accessed.
+                 * @param original   The target field, method or constructor that is substituted,
                  * @param parameters All parameters that serve as input to this access.
                  * @param result     The result that is expected from the interaction or {@code void} if no result is expected.
                  * @return The field to substitute with.
                  */
-                FieldDescription resolve(TypeDescription targetType, ByteCodeElement target, TypeList.Generic parameters, TypeDescription.Generic result);
+                FieldDescription resolve(TypeDescription receiver, ByteCodeElement original, TypeList.Generic parameters, TypeDescription.Generic result);
 
                 /**
                  * A simple field resolver that returns a specific field.
@@ -1035,7 +1043,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public FieldDescription resolve(TypeDescription targetType, ByteCodeElement target, TypeList.Generic parameters, TypeDescription.Generic result) {
+                    public FieldDescription resolve(TypeDescription receiver, ByteCodeElement original, TypeList.Generic parameters, TypeDescription.Generic result) {
                         return fieldDescription;
                     }
                 }
@@ -1070,11 +1078,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public FieldDescription resolve(TypeDescription targetType, ByteCodeElement target, TypeList.Generic parameters, TypeDescription.Generic result) {
+                    public FieldDescription resolve(TypeDescription receiver, ByteCodeElement original, TypeList.Generic parameters, TypeDescription.Generic result) {
                         if (parameters.isEmpty()) {
-                            throw new IllegalStateException("Cannot substitute parameterless instruction with " + target);
+                            throw new IllegalStateException("Cannot substitute parameterless instruction with " + original);
                         } else if (parameters.get(0).isPrimitive() || parameters.get(0).isArray()) {
-                            throw new IllegalStateException("Cannot access field on primitive or array type for " + target);
+                            throw new IllegalStateException("Cannot access field on primitive or array type for " + original);
                         }
                         TypeDefinition current = parameters.get(0).accept(new TypeDescription.Generic.Visitor.Substitutor.ForReplacement(instrumentedType));
                         do {
@@ -1086,7 +1094,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                             current = current.getSuperClass();
                         } while (current != null);
-                        throw new IllegalStateException("Cannot locate field matching " + matcher + " on " + targetType);
+                        throw new IllegalStateException("Cannot locate field matching " + matcher + " on " + receiver);
                     }
                 }
             }
@@ -1183,13 +1191,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(TypeDescription targetType,
-                                             ByteCodeElement target,
+            public StackManipulation resolve(TypeDescription receiver,
+                                             ByteCodeElement original,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
-                                             StackManipulation original,
+                                             JavaConstant.MethodHandle methodHandle,
+                                             StackManipulation stackManipulation,
                                              int freeOffset) {
-                MethodDescription methodDescription = methodResolver.resolve(targetType, target, parameters, result);
+                MethodDescription methodDescription = methodResolver.resolve(receiver, original, parameters, result);
                 if (!methodDescription.isAccessibleTo(instrumentedType)) {
                     throw new IllegalStateException(instrumentedType + " cannot access " + methodDescription);
                 }
@@ -1206,9 +1215,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         throw new IllegalStateException("Cannot invoke " + methodDescription + " on parameter " + index + " of type " + parameters.get(index));
                     }
                 }
-                return methodDescription.isVirtual()
-                        ? MethodInvocation.invoke(methodDescription).virtual(mapped.get(THIS_REFERENCE).asErasure())
-                        : MethodInvocation.invoke(methodDescription);
+                return methodDescription.isVirtual() ? MethodInvocation.invoke(methodDescription).virtual(mapped.get(THIS_REFERENCE).asErasure()) : MethodInvocation.invoke(methodDescription);
             }
 
             /**
@@ -1219,13 +1226,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * Resolves the method to substitute with.
                  *
-                 * @param targetType The target type on which a member is accessed.
-                 * @param target     The target field, method or constructor that is substituted,
+                 * @param receiver   The target type on which a member is accessed.
+                 * @param original   The target field, method or constructor that is substituted,
                  * @param parameters All parameters that serve as input to this access.
                  * @param result     The result that is expected from the interaction or {@code void} if no result is expected.
                  * @return The field to substitute with.
                  */
-                MethodDescription resolve(TypeDescription targetType, ByteCodeElement target, TypeList.Generic parameters, TypeDescription.Generic result);
+                MethodDescription resolve(TypeDescription receiver, ByteCodeElement original, TypeList.Generic parameters, TypeDescription.Generic result);
 
                 /**
                  * A simple method resolver that returns a given method.
@@ -1250,7 +1257,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public MethodDescription resolve(TypeDescription targetType, ByteCodeElement target, TypeList.Generic parameters, TypeDescription.Generic result) {
+                    public MethodDescription resolve(TypeDescription receiver, ByteCodeElement original, TypeList.Generic parameters, TypeDescription.Generic result) {
                         return methodDescription;
                     }
                 }
@@ -1292,15 +1299,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public MethodDescription resolve(TypeDescription targetType, ByteCodeElement target, TypeList.Generic parameters, TypeDescription.Generic result) {
+                    public MethodDescription resolve(TypeDescription receiver, ByteCodeElement original, TypeList.Generic parameters, TypeDescription.Generic result) {
                         if (parameters.isEmpty()) {
-                            throw new IllegalStateException("Cannot substitute parameterless instruction with " + target);
+                            throw new IllegalStateException("Cannot substitute parameterless instruction with " + original);
                         } else if (parameters.get(0).isPrimitive() || parameters.get(0).isArray()) {
-                            throw new IllegalStateException("Cannot invoke method on primitive or array type for " + target);
+                            throw new IllegalStateException("Cannot invoke method on primitive or array type for " + original);
                         }
                         TypeDefinition typeDefinition = parameters.get(0).accept(new TypeDescription.Generic.Visitor.Substitutor.ForReplacement(instrumentedType));
-                        List<MethodDescription> candidates = CompoundList.<MethodDescription>of(methodGraphCompiler.compile(typeDefinition, instrumentedType)
-                                .listNodes()
+                        List<MethodDescription> candidates = CompoundList.<MethodDescription>of(methodGraphCompiler.compile(typeDefinition, instrumentedType).listNodes()
                                 .asMethodList()
                                 .filter(matcher), typeDefinition.getDeclaredMethods().filter(isPrivate().<MethodDescription>and(isVisibleTo(instrumentedType)).and(matcher)));
                         if (candidates.size() == 1) {
@@ -1451,15 +1457,15 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(TypeDescription targetType,
-                                             ByteCodeElement target,
+            public StackManipulation resolve(TypeDescription receiver,
+                                             ByteCodeElement original,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
-                                             StackManipulation original,
+                                             JavaConstant.MethodHandle methodHandle,
+                                             StackManipulation stackManipulation,
                                              int freeOffset) {
                 List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(1
-                        + parameters.size()
-                        + steps.size() * 2
+                        + parameters.size() + steps.size() * 2
                         + (result.represents(void.class) ? 0 : 2));
                 Map<Integer, Integer> offsets = new HashMap<Integer, Integer>();
                 for (int index = parameters.size() - 1; index >= 0; index--) {
@@ -1470,13 +1476,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 stackManipulations.add(DefaultValue.of(result));
                 TypeDescription.Generic current = result;
                 for (Step step : steps) {
-                    Step.Resolution resolution = step.resolve(targetType,
-                            target,
-                            parameters,
-                            original,
-                            current,
-                            offsets,
-                            freeOffset);
+                    Step.Resolution resolution = step.resolve(receiver, original, parameters, result, methodHandle, stackManipulation, current, offsets, freeOffset);
                     stackManipulations.add(resolution.getStackManipulation());
                     current = resolution.getResultType();
                 }
@@ -1496,19 +1496,23 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * Resolves this step of a substitution chain.
                  *
-                 * @param targetType The target result type of the substitution.
-                 * @param target     The byte code element that is currently substituted.
-                 * @param parameters The parameters of the substituted element.
-                 * @param original   The original byte code instruction that is being substituted.
-                 * @param current    The current type of the applied substitution that is the top element on the operand stack.
-                 * @param offsets    The arguments of the substituted byte code element mapped to their local variable offsets.
-                 * @param freeOffset The first free offset in the local variable array.
+                 * @param receiver          The target result type of the substitution.
+                 * @param original          The byte code element that is currently substituted.
+                 * @param parameters        The parameters of the substituted element.
+                 * @param result            The resulting type of the substituted element.
+                 * @param methodHandle      A method handle of the stackManipulation invocation that is being substituted.
+                 * @param stackManipulation The byte code instruction that is being substituted.
+                 * @param current           The current type of the applied substitution that is the top element on the operand stack.
+                 * @param offsets           The arguments of the substituted byte code element mapped to their local variable offsets.
+                 * @param freeOffset        The first free offset in the local variable array.
                  * @return A resolved substitution step for the supplied inputs.
                  */
-                Resolution resolve(TypeDescription targetType,
-                                   ByteCodeElement target,
+                Resolution resolve(TypeDescription receiver,
+                                   ByteCodeElement original,
                                    TypeList.Generic parameters,
-                                   StackManipulation original,
+                                   TypeDescription.Generic result,
+                                   JavaConstant.MethodHandle methodHandle,
+                                   StackManipulation stackManipulation,
                                    TypeDescription.Generic current,
                                    Map<Integer, Integer> offsets,
                                    int freeOffset);
@@ -1547,10 +1551,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param instrumentedMethod The instrumented method.
                      * @return The substitution step to apply.
                      */
-                    Step make(Assigner assigner,
-                              Assigner.Typing typing,
-                              TypeDescription instrumentedType,
-                              MethodDescription instrumentedMethod);
+                    Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod);
                 }
 
                 /**
@@ -1566,18 +1567,20 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public Resolution resolve(TypeDescription targetType,
-                                              ByteCodeElement target,
+                    public Resolution resolve(TypeDescription receiver,
+                                              ByteCodeElement original,
                                               TypeList.Generic parameters,
-                                              StackManipulation original,
+                                              TypeDescription.Generic result,
+                                              JavaConstant.MethodHandle methodHandle,
+                                              StackManipulation stackManipulation,
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
                                               int freeOffset) {
                         List<StackManipulation> stackManipulations;
-                        if (target instanceof MethodDescription && ((MethodDescription) target).isConstructor()) {
+                        if (original instanceof MethodDescription && ((MethodDescription) original).isConstructor()) {
                             stackManipulations = new ArrayList<StackManipulation>(parameters.size() + 4);
                             stackManipulations.add(Removal.of(current));
-                            stackManipulations.add(TypeCreation.of(((MethodDescription) target).getDeclaringType().asErasure()));
+                            stackManipulations.add(TypeCreation.of(((MethodDescription) original).getDeclaringType().asErasure()));
                             stackManipulations.add(Duplication.SINGLE);
                         } else {
                             stackManipulations = new ArrayList<StackManipulation>(parameters.size() + 4);
@@ -1586,39 +1589,38 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         for (int index = 0; index < parameters.size(); index++) {
                             stackManipulations.add(MethodVariableAccess.of(parameters.get(index)).loadFrom(offsets.get(index)));
                         }
-                        if (target instanceof MethodDescription) {
-                            stackManipulations.add(original);
-                            return new Simple(new StackManipulation.Compound(stackManipulations), ((MethodDescription) target).isConstructor()
-                                    ? ((MethodDescription) target).getDeclaringType().asGenericType()
-                                    : ((MethodDescription) target).getReturnType());
-                        } else if (target instanceof FieldDescription) {
-                            if (((FieldDescription) target).isStatic()) {
+                        if (original instanceof MethodDescription) {
+                            stackManipulations.add(stackManipulation);
+                            return new Simple(new StackManipulation.Compound(stackManipulations), ((MethodDescription) original).isConstructor()
+                                    ? ((MethodDescription) original).getDeclaringType().asGenericType()
+                                    : ((MethodDescription) original).getReturnType());
+                        } else if (original instanceof FieldDescription) {
+                            if (original.isStatic()) {
                                 if (parameters.isEmpty()) {
-                                    stackManipulations.add(original);
-                                    return new Simple(new StackManipulation.Compound(stackManipulations), ((FieldDescription) target).getType());
+                                    stackManipulations.add(stackManipulation);
+                                    return new Simple(new StackManipulation.Compound(stackManipulations), ((FieldDescription) original).getType());
                                 } else /* if (parameters.size() == 1) */ {
-                                    stackManipulations.add(original);
+                                    stackManipulations.add(stackManipulation);
                                     return new Simple(new StackManipulation.Compound(stackManipulations), TypeDefinition.Sort.describe(void.class));
                                 }
                             } else {
                                 if (parameters.size() == 1) {
-                                    stackManipulations.add(FieldAccess.forField((FieldDescription) target).read());
-                                    return new Simple(new StackManipulation.Compound(stackManipulations), ((FieldDescription) target).getType());
+                                    stackManipulations.add(FieldAccess.forField((FieldDescription) original).read());
+                                    return new Simple(new StackManipulation.Compound(stackManipulations), ((FieldDescription) original).getType());
                                 } else /* if (parameters.size() == 2) */ {
-                                    stackManipulations.add(FieldAccess.forField((FieldDescription) target).write());
+                                    stackManipulations.add(FieldAccess.forField((FieldDescription) original).write());
                                     return new Simple(new StackManipulation.Compound(stackManipulations), TypeDefinition.Sort.describe(void.class));
                                 }
                             }
                         } else {
-                            throw new IllegalArgumentException("Unexpected target type: " + target);
+                            throw new IllegalArgumentException("Unexpected target type: " + original);
                         }
                     }
 
-                    @Override
-                    public Step make(Assigner assigner,
-                                     Assigner.Typing typing,
-                                     TypeDescription instrumentedType,
-                                     MethodDescription instrumentedMethod) {
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                         return this;
                     }
                 }
@@ -1671,16 +1673,18 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public Resolution resolve(TypeDescription targetType,
-                                              ByteCodeElement target,
+                    public Resolution resolve(TypeDescription receiver,
+                                              ByteCodeElement original,
                                               TypeList.Generic parameters,
-                                              StackManipulation original,
+                                              TypeDescription.Generic result,
+                                              JavaConstant.MethodHandle methodHandle,
+                                              StackManipulation stackManipulation,
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
                                               int freeOffset) {
-                        return targetType.represents(void.class)
+                        return receiver.represents(void.class)
                                 ? this
-                                : new Simple(new StackManipulation.Compound(Removal.of(current), stackManipulation), resultType);
+                                : new Simple(new StackManipulation.Compound(Removal.of(current), this.stackManipulation), resultType);
                     }
 
                     /**
@@ -1738,11 +1742,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param assigner          The assigner to use for assigning the argument.
                      * @param typing            The typing to use for the argument assignment.
                      */
-                    protected ForArgumentSubstitution(StackManipulation stackManipulation,
-                                                      TypeDescription.Generic typeDescription,
-                                                      int index,
-                                                      Assigner assigner,
-                                                      Assigner.Typing typing) {
+                    protected ForArgumentSubstitution(StackManipulation stackManipulation, TypeDescription.Generic typeDescription, int index, Assigner assigner, Assigner.Typing typing) {
                         this.stackManipulation = stackManipulation;
                         this.typeDescription = typeDescription;
                         this.index = index;
@@ -1768,9 +1768,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public Resolution resolve(TypeDescription targetType,
+                    public Resolution resolve(TypeDescription receiver,
                                               ByteCodeElement target,
                                               TypeList.Generic parameters,
+                                              TypeDescription.Generic result,
+                                              JavaConstant.MethodHandle methodHandle,
                                               StackManipulation original,
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
@@ -1782,9 +1784,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         if (!stackManipulation.isValid()) {
                             throw new IllegalStateException("Cannot assign " + typeDescription + " to " + parameters.get(index));
                         }
-                        return new Simple(new StackManipulation.Compound(this.stackManipulation,
-                                stackManipulation,
-                                MethodVariableAccess.of(parameters.get(index)).storeAt(offsets.get(index))), current);
+                        return new Simple(new StackManipulation.Compound(this.stackManipulation, stackManipulation, MethodVariableAccess.of(parameters.get(index)).storeAt(offsets.get(index))), current);
                     }
 
                     /**
@@ -1824,10 +1824,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * {@inheritDoc}
                          */
-                        public Step make(Assigner assigner,
-                                         Assigner.Typing typing,
-                                         TypeDescription instrumentedType,
-                                         MethodDescription instrumentedMethod) {
+                        public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return new ForArgumentSubstitution(stackManipulation, typeDescription, index, assigner, typing);
                         }
                     }
@@ -1856,28 +1853,26 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public Step make(Assigner assigner,
-                                     Assigner.Typing typing,
-                                     TypeDescription instrumentedType,
-                                     MethodDescription instrumentedMethod) {
+                    public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                         return this;
                     }
 
                     /**
                      * {@inheritDoc}
                      */
-                    public Resolution resolve(TypeDescription targetType,
-                                              ByteCodeElement target,
+                    public Resolution resolve(TypeDescription receiver,
+                                              ByteCodeElement original,
                                               TypeList.Generic parameters,
-                                              StackManipulation original,
+                                              TypeDescription.Generic result,
+                                              JavaConstant.MethodHandle methodHandle,
+                                              StackManipulation stackManipulation,
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
                                               int freeOffset) {
                         if (index >= parameters.size()) {
-                            throw new IllegalStateException(target + " has not " + index + " arguments");
+                            throw new IllegalStateException(original + " has not " + index + " arguments");
                         }
-                        return new Simple(new StackManipulation.Compound(Removal.of(current),
-                                MethodVariableAccess.of(parameters.get(index)).loadFrom(offsets.get(index))), parameters.get(index));
+                        return new Simple(new StackManipulation.Compound(Removal.of(current), MethodVariableAccess.of(parameters.get(index)).loadFrom(offsets.get(index))), parameters.get(index));
                     }
                 }
 
@@ -1919,10 +1914,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * {@inheritDoc}
                      */
                     @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Field description always has declaring type.")
-                    public Resolution resolve(TypeDescription targetType,
-                                              ByteCodeElement target,
+                    public Resolution resolve(TypeDescription receiver,
+                                              ByteCodeElement original,
                                               TypeList.Generic parameters,
-                                              StackManipulation original,
+                                              TypeDescription.Generic result,
+                                              JavaConstant.MethodHandle methodHandle,
+                                              StackManipulation stackManipulation,
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
                                               int freeOffset) {
@@ -1936,7 +1933,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                             stackManipulations.add(assignment);
                         }
-                        return doResolve(target, parameters, offsets, new StackManipulation.Compound(stackManipulations));
+                        return doResolve(original, parameters, offsets, new StackManipulation.Compound(stackManipulations));
                     }
 
                     /**
@@ -1948,10 +1945,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param stackManipulation A stack manipulation to prepare the field access.
                      * @return A resolved substitution step for the supplied inputs.
                      */
-                    protected abstract Resolution doResolve(ByteCodeElement target,
-                                                            TypeList.Generic parameters,
-                                                            Map<Integer, Integer> offsets,
-                                                            StackManipulation stackManipulation);
+                    protected abstract Resolution doResolve(ByteCodeElement target, TypeList.Generic parameters, Map<Integer, Integer> offsets, StackManipulation stackManipulation);
 
                     /**
                      * A step for reading a field.
@@ -1973,10 +1967,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * {@inheritDoc}
                          */
-                        protected Resolution doResolve(ByteCodeElement target,
-                                                       TypeList.Generic parameters,
-                                                       Map<Integer, Integer> offsets,
-                                                       StackManipulation stackManipulation) {
+                        protected Resolution doResolve(ByteCodeElement target, TypeList.Generic parameters, Map<Integer, Integer> offsets, StackManipulation stackManipulation) {
                             return new Simple(new StackManipulation.Compound(stackManipulation, FieldAccess.forField(fieldDescription).read()), fieldDescription.getType());
                         }
 
@@ -2036,13 +2027,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * {@inheritDoc}
                          */
-                        protected Resolution doResolve(ByteCodeElement target,
-                                                       TypeList.Generic parameters,
-                                                       Map<Integer, Integer> offsets,
-                                                       StackManipulation stackManipulation) {
-                            int index = ((target.getModifiers() & Opcodes.ACC_STATIC) == 0) && !(target instanceof MethodDescription && ((MethodDescription) target).isConstructor())
-                                    ? this.index + 1
-                                    : this.index;
+                        protected Resolution doResolve(ByteCodeElement target, TypeList.Generic parameters, Map<Integer, Integer> offsets, StackManipulation stackManipulation) {
+                            int index = ((target.getModifiers() & Opcodes.ACC_STATIC) == 0)
+                                    && !(target instanceof MethodDescription
+                                    && ((MethodDescription) target).isConstructor()) ? this.index + 1 : this.index;
                             if (index >= parameters.size()) {
                                 throw new IllegalStateException(target + " does not define an argument with index " + index);
                             }
@@ -2138,10 +2126,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public Resolution resolve(TypeDescription targetType,
-                                              ByteCodeElement target,
+                    public Resolution resolve(TypeDescription receiver,
+                                              ByteCodeElement original,
                                               TypeList.Generic parameters,
-                                              StackManipulation original,
+                                              TypeDescription.Generic result,
+                                              JavaConstant.MethodHandle methodHandle,
+                                              StackManipulation stackManipulation,
                                               TypeDescription.Generic current,
                                               Map<Integer, Integer> offsets,
                                               int freeOffset) {
@@ -2159,13 +2149,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             stackManipulations.add(assignment);
                         }
 
-                        boolean shift = ((target.getModifiers() & Opcodes.ACC_STATIC) == 0) && !(target instanceof MethodDescription && ((MethodDescription) target).isConstructor());
+                        boolean shift = ((original.getModifiers() & Opcodes.ACC_STATIC) == 0) && !(original instanceof MethodDescription && ((MethodDescription) original).isConstructor());
                         for (int index = 0; index < methodDescription.getParameters().size(); index++) {
-                            int substitution = substitutions.containsKey(index + (shift ? 1 : 0))
-                                    ? substitutions.get(index + (shift ? 1 : 0))
-                                    : index + (shift ? 1 : 0);
+                            int substitution = substitutions.containsKey(index + (shift ? 1 : 0)) ? substitutions.get(index + (shift ? 1 : 0)) : index + (shift ? 1 : 0);
                             if (substitution >= parameters.size()) {
-                                throw new IllegalStateException(target + " does not support an index " + substitution);
+                                throw new IllegalStateException(original + " does not support an index " + substitution);
                             }
                             stackManipulations.add(MethodVariableAccess.of(parameters.get(substitution)).loadFrom(offsets.get(substitution)));
                             StackManipulation assignment = assigner.assign(parameters.get(substitution), methodDescription.getParameters().get(index).getType(), typing);
@@ -2218,11 +2206,3492 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * {@inheritDoc}
                          */
-                        public Step make(Assigner assigner,
-                                         Assigner.Typing typing,
-                                         TypeDescription instrumentedType,
-                                         MethodDescription instrumentedMethod) {
+                        public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return new ForInvocation(methodDescription, substitutions, assigner, typing);
+                        }
+                    }
+                }
+
+                /**
+                 * A step that invokes a delegation method based on annotations on the parameters of the targeted method.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class ForDelegation implements Step {
+
+                    /**
+                     * A stack manipulation to execute prior to the delegation.
+                     */
+                    private final StackManipulation initialization;
+
+                    /**
+                     * The type on top of the stack after the delegation is complete.
+                     */
+                    private final TypeDescription.Generic returned;
+
+                    /**
+                     * The dispatcher to use.
+                     */
+                    private final Dispatcher.Resolved dispatcher;
+
+                    /**
+                     * A list of offset mappings to execute prior to delegation.
+                     */
+                    private final List<OffsetMapping.Resolved> offsetMappings;
+
+                    /**
+                     * @param initialization A stack manipulation to execute prior to the delegation.
+                     * @param returned       The type on top of the stack after the delegation is complete.
+                     * @param dispatcher     The dispatcher to use.
+                     * @param offsetMappings A list of offset mappings to execute prior to delegation.
+                     */
+                    protected ForDelegation(StackManipulation initialization, TypeDescription.Generic returned, Dispatcher.Resolved dispatcher, List<OffsetMapping.Resolved> offsetMappings) {
+                        this.initialization = initialization;
+                        this.returned = returned;
+                        this.dispatcher = dispatcher;
+                        this.offsetMappings = offsetMappings;
+                    }
+
+                    /**
+                     * Returns a delegating step factory for the supplied method.
+                     *
+                     * @param method The method to delegate to.
+                     * @return An appropriate step factory.
+                     */
+                    public static Step.Factory of(Method method) {
+                        return of(new MethodDescription.ForLoadedMethod(method));
+                    }
+
+                    /**
+                     * Returns a delegating step factory for the supplied constructor.
+                     *
+                     * @param constructor The constructor to delegate to.
+                     * @return An appropriate step factory.
+                     */
+                    public static Step.Factory of(Constructor<?> constructor) {
+                        return of(new MethodDescription.ForLoadedConstructor(constructor));
+                    }
+
+                    /**
+                     * Returns a delegating step factory for the supplied method description..
+                     *
+                     * @param methodDescription A description of the method or constructor to delegate to.
+                     * @return An appropriate step factory.
+                     */
+                    public static Step.Factory of(MethodDescription.InDefinedShape methodDescription) {
+                        if (methodDescription.isTypeInitializer()) {
+                            throw new IllegalArgumentException("Cannot delegate to a type initializer: " + methodDescription);
+                        }
+                        return of(methodDescription, Dispatcher.ForRegularInvocation.Factory.INSTANCE, Collections.<OffsetMapping.Factory<?>>emptyList());
+                    }
+
+                    /**
+                     * Creates an appropriate step factory for the given delegate method, dispatcher factory and user factories.
+                     *
+                     * @param delegate          A description of the method or constructor to delegate to.
+                     * @param dispatcherFactory The dispatcher factory to use.
+                     * @param userFactories     Factories for custom annotation bindings.
+                     * @return An appropriate step factory.
+                     */
+                    private static Step.Factory of(MethodDescription.InDefinedShape delegate, Dispatcher.Factory dispatcherFactory, List<? extends OffsetMapping.Factory<?>> userFactories) {
+                        return new Factory(delegate, dispatcherFactory.make(delegate), CompoundList.of(Arrays.asList(
+                                OffsetMapping.ForArgument.Factory.INSTANCE,
+                                OffsetMapping.ForThisReference.Factory.INSTANCE,
+                                OffsetMapping.ForAllArguments.Factory.INSTANCE,
+                                OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
+                                OffsetMapping.ForFieldHandle.Unresolved.ReaderFactory.INSTANCE,
+                                OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
+                                OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                new OffsetMapping.ForStackManipulation.OfDefaultValue<Unused>(Unused.class),
+                                OffsetMapping.ForCurrent.Factory.INSTANCE), userFactories));
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Resolution resolve(TypeDescription receiver,
+                                              ByteCodeElement original,
+                                              TypeList.Generic parameters,
+                                              TypeDescription.Generic result,
+                                              JavaConstant.MethodHandle methodHandle,
+                                              StackManipulation stackManipulation,
+                                              TypeDescription.Generic current,
+                                              Map<Integer, Integer> offsets,
+                                              int freeOffset) {
+                        List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(offsetMappings.size() + 3);
+                        stackManipulations.add(current.represents(void.class)
+                                ? StackManipulation.Trivial.INSTANCE
+                                : MethodVariableAccess.of(current).storeAt(freeOffset));
+                        stackManipulations.add(initialization);
+                        for (OffsetMapping.Resolved offsetMapping : offsetMappings) {
+                            stackManipulations.add(offsetMapping.apply(receiver, original, parameters, result, current, methodHandle, offsets, freeOffset));
+                        }
+                        stackManipulations.add(dispatcher.resolve(receiver, original, methodHandle));
+                        return new Simple(new StackManipulation.Compound(stackManipulations), returned);
+                    }
+
+                    /**
+                     * A factory for creating a delegating step during a member substitution.
+                     */
+                    @HashCodeAndEqualsPlugin.Enhance
+                    protected static class Factory implements Step.Factory {
+
+                        /**
+                         * A description of the method or constructor to delegate to.
+                         */
+                        private final MethodDescription.InDefinedShape delegate;
+
+                        /**
+                         * The dispatcher to use for invoking the delegate.
+                         */
+                        private final Dispatcher dispatcher;
+
+                        /**
+                         * The offset mappings to use.
+                         */
+                        private final List<OffsetMapping> offsetMappings;
+
+                        /**
+                         * Creates a new factory for a delegating step.
+                         *
+                         * @param delegate   A description of the method or constructor to delegate to.
+                         * @param dispatcher The dispatcher to use for invoking the delegate.
+                         * @param factories  The dispatcher to use for invoking the delegate.
+                         */
+                        protected Factory(MethodDescription.InDefinedShape delegate, Dispatcher dispatcher, List<? extends OffsetMapping.Factory<?>> factories) {
+                            Map<TypeDescription, OffsetMapping.Factory<?>> offsetMappings = new HashMap<TypeDescription, OffsetMapping.Factory<?>>();
+                            for (OffsetMapping.Factory<?> factory : factories) {
+                                offsetMappings.put(net.bytebuddy.description.type.TypeDescription.ForLoadedType.of(factory.getAnnotationType()), factory);
+                            }
+                            this.offsetMappings = new ArrayList<OffsetMapping>(factories.size());
+                            if (delegate.isMethod() && !delegate.isStatic()) {
+                                OffsetMapping offsetMapping = null;
+                                for (AnnotationDescription annotationDescription : delegate.getDeclaredAnnotations()) {
+                                    OffsetMapping.Factory<?> factory = offsetMappings.get(annotationDescription.getAnnotationType());
+                                    if (factory != null) {
+                                        @SuppressWarnings("unchecked") OffsetMapping current = factory.make(delegate, (AnnotationDescription.Loadable) annotationDescription.prepare(factory.getAnnotationType()));
+                                        if (offsetMapping == null) {
+                                            offsetMapping = current;
+                                        } else {
+                                            throw new IllegalStateException(delegate + " is bound to both " + current + " and " + offsetMapping);
+                                        }
+                                    }
+                                }
+                                this.offsetMappings.add(offsetMapping == null
+                                        ? new OffsetMapping.ForThisReference(delegate.getDeclaringType().asGenericType(), null, Source.SUBSTITUTED_ELEMENT, false)
+                                        : offsetMapping);
+                            }
+                            for (int index = 0; index < delegate.getParameters().size(); index++) {
+                                ParameterDescription.InDefinedShape parameterDescription = delegate.getParameters().get(index);
+                                OffsetMapping offsetMapping = null;
+                                for (AnnotationDescription annotationDescription : parameterDescription.getDeclaredAnnotations()) {
+                                    OffsetMapping.Factory<?> factory = offsetMappings.get(annotationDescription.getAnnotationType());
+                                    if (factory != null) {
+                                        @SuppressWarnings("unchecked") OffsetMapping current = factory.make(parameterDescription, (AnnotationDescription.Loadable) annotationDescription.prepare(factory.getAnnotationType()));
+                                        if (offsetMapping == null) {
+                                            offsetMapping = current;
+                                        } else {
+                                            throw new IllegalStateException(parameterDescription + " is bound to both " + current + " and " + offsetMapping);
+                                        }
+                                    }
+                                }
+                                this.offsetMappings.add(offsetMapping == null
+                                        ? new OffsetMapping.ForArgument(parameterDescription.getType(), index, null, Source.SUBSTITUTED_ELEMENT, false)
+                                        : offsetMapping);
+                            }
+                            this.delegate = delegate;
+                            this.dispatcher = dispatcher;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                            List<OffsetMapping.Resolved> targets = new ArrayList<OffsetMapping.Resolved>(offsetMappings.size());
+                            for (OffsetMapping offsetMapping : offsetMappings) {
+                                targets.add(offsetMapping.resolve(assigner, typing, instrumentedType, instrumentedMethod));
+                            }
+                            return new ForDelegation(delegate.isConstructor()
+                                    ? new StackManipulation.Compound(TypeCreation.of(delegate.getDeclaringType()), Duplication.SINGLE)
+                                    : net.bytebuddy.implementation.bytecode.StackManipulation.Trivial.INSTANCE, delegate.getReturnType(), dispatcher.resolve(instrumentedType, instrumentedMethod), targets);
+                        }
+                    }
+
+                    /**
+                     * An offset mapping for binding a parameter or dispatch target for the method or constructor that is delegated to.
+                     */
+                    public interface OffsetMapping {
+
+                        /**
+                         * Resolves an offset mapping for a given instrumented method.
+                         *
+                         * @param assigner           The assigner to use.
+                         * @param typing             The typing to use if no explicit typing is specified.
+                         * @param instrumentedType   The instrumented type.
+                         * @param instrumentedMethod The instrumented method.
+                         * @return A resolved version of this offset mapping.
+                         */
+                        OffsetMapping.Resolved resolve(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod);
+
+                        /**
+                         * An offset mapping that was resolved for a given instrumented type and method.
+                         */
+                        interface Resolved {
+
+                            /**
+                             * Applies this offset mapping.
+                             *
+                             * @param receiver     The target type of the invoked delegate.
+                             * @param original     The substituted element.
+                             * @param parameters   The parameters that are supplied to the substituted expression.
+                             * @param result       The resulting type of the substituted expression.
+                             * @param current      The type of the value that was produced by the previous step in the substitution chain.
+                             * @param methodHandle A method handle that represents the substituted element.
+                             * @param offsets      The offsets of the supplied parameters.
+                             * @param offset       The offset of the value that was produced by the previous step.
+                             * @return An appropriate stack manipulation.
+                             */
+                            StackManipulation apply(TypeDescription receiver,
+                                                    ByteCodeElement original,
+                                                    TypeList.Generic parameters,
+                                                    TypeDescription.Generic result,
+                                                    TypeDescription.Generic current,
+                                                    JavaConstant.MethodHandle methodHandle,
+                                                    Map<Integer, Integer> offsets,
+                                                    int offset);
+
+                            /**
+                             * An offset mapping that loads a stack manipulation.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
+                            class ForStackManipulation implements OffsetMapping.Resolved {
+
+                                /**
+                                 * The stack manipulation to load.
+                                 */
+                                private final StackManipulation stackManipulation;
+
+                                /**
+                                 * Creates a resolved offset mapping for a stack manipulation.
+                                 *
+                                 * @param stackManipulation The stack manipulation to load.
+                                 */
+                                public ForStackManipulation(StackManipulation stackManipulation) {
+                                    this.stackManipulation = stackManipulation;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public StackManipulation apply(TypeDescription receiver,
+                                                               ByteCodeElement original,
+                                                               TypeList.Generic parameters,
+                                                               TypeDescription.Generic result,
+                                                               TypeDescription.Generic current,
+                                                               JavaConstant.MethodHandle methodHandle,
+                                                               Map<Integer, Integer> offsets,
+                                                               int offset) {
+                                    return stackManipulation;
+                                }
+                            }
+                        }
+
+                        /**
+                         * A factory for creating an offset mapping based on an annotation on a parameter, method or constructor.
+                         *
+                         * @param <T>
+                         */
+                        interface Factory<T extends Annotation> {
+
+                            /**
+                             * Returns the type of the annotation for this factory.
+                             *
+                             * @return The type of the annotation for this factory.
+                             */
+                            Class<T> getAnnotationType();
+
+                            /**
+                             * Creates an offset mapping for an annotation that was found on a non-static method.
+                             *
+                             * @param target     The method that is the delegated to.
+                             * @param annotation The annotation that was found on the method.
+                             * @return An appropriate offset mapping.
+                             */
+                            OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation);
+
+                            /**
+                             * Creates an offset mapping for a parameter of the method or constructor that is the delegation target.
+                             *
+                             * @param target     The parameter that is bound to an expression.
+                             * @param annotation The annotation that was found on the parameter.
+                             * @return An appropriate offset mapping.
+                             */
+                            OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation);
+
+                            /**
+                             * An abstract base implementation of a factory for an offset mapping.
+                             *
+                             * @param <S> The type of the represented annotation.
+                             */
+                            abstract class AbstractBase<S extends Annotation> implements OffsetMapping.Factory<S> {
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<S> annotation) {
+                                    return make(target.getDeclaringType().asGenericType(), annotation);
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<S> annotation) {
+                                    return make(target.getType(), annotation);
+                                }
+
+                                /**
+                                 * Returns an offset mapping for the bound method target or parameter.
+                                 *
+                                 * @param target     The declaring type of a non-static method or a parameter type.
+                                 * @param annotation The annotation that was found on the method or parameter.
+                                 * @return An appropriate offset mapping.
+                                 */
+                                protected abstract OffsetMapping make(TypeDescription.Generic target, AnnotationDescription.Loadable<S> annotation);
+                            }
+
+                            /**
+                             * A factory for an offset mapping that does not support binding a method target.
+                             *
+                             * @param <S> The type of the represented annotation.
+                             */
+                            abstract class WithParameterSupportOnly<S extends Annotation> implements OffsetMapping.Factory<S> {
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<S> annotation) {
+                                    throw new UnsupportedOperationException();
+                                }
+                            }
+
+                            /**
+                             * A simple factory for an offset mapping.
+                             *
+                             * @param <S> The type of the represented annotation.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
+                            class Simple<S extends Annotation> extends OffsetMapping.Factory.AbstractBase<S> {
+
+                                /**
+                                 * The type of the bound annotation.
+                                 */
+                                private final Class<S> annotationType;
+
+                                /**
+                                 * The offset mapping to return.
+                                 */
+                                private final OffsetMapping offsetMapping;
+
+                                /**
+                                 * Creates a simple factory for an offset mapping.
+                                 *
+                                 * @param annotationType The type of the bound annotation.
+                                 * @param offsetMapping  The offset mapping to return.
+                                 */
+                                public Simple(Class<S> annotationType, OffsetMapping offsetMapping) {
+                                    this.annotationType = annotationType;
+                                    this.offsetMapping = offsetMapping;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public Class<S> getAnnotationType() {
+                                    return annotationType;
+                                }
+
+                                @Override
+                                protected OffsetMapping make(TypeDescription.Generic target, AnnotationDescription.Loadable<S> annotation) {
+                                    return offsetMapping;
+                                }
+                            }
+                        }
+
+                        /**
+                         * An offset mapping that resolves a given stack manipulation.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
+                        class ForStackManipulation implements OffsetMapping {
+
+                            /**
+                             * The stack manipulation to apply.
+                             */
+                            private final StackManipulation stackManipulation;
+
+                            /**
+                             * The type of the value that is produced by the stack manipulation.
+                             */
+                            private final TypeDescription.Generic typeDescription;
+
+                            /**
+                             * The type of the parameter or method target that is bound by this mapping.
+                             */
+                            private final TypeDescription.Generic targetType;
+
+                            /**
+                             * Creates a new offset mapping for a stack manipulation.
+                             *
+                             * @param stackManipulation The stack manipulation to apply.
+                             * @param typeDescription   The type of the value that is produced by the stack manipulation.
+                             * @param targetType        The type of the parameter or method target that is bound by this mapping.
+                             */
+                            public ForStackManipulation(StackManipulation stackManipulation, TypeDescription.Generic typeDescription, TypeDescription.Generic targetType) {
+                                this.targetType = targetType;
+                                this.stackManipulation = stackManipulation;
+                                this.typeDescription = typeDescription;
+                            }
+
+                            /**
+                             * Resolves an offset mapping that binds the provided annotation type to a given constant value.
+                             *
+                             * @param annotationType The annotation type to bind.
+                             * @param value          The constant value being bound or {@code null}.
+                             * @param <S>            The type of the annotation.
+                             * @return An appropriate factory for an offset mapping.
+                             */
+                            public static <S extends Annotation> OffsetMapping.Factory<S> of(Class<S> annotationType, @MaybeNull Object value) {
+                                return value == null
+                                        ? new OffsetMapping.ForStackManipulation.OfDefaultValue<S>(annotationType)
+                                        : new OffsetMapping.ForStackManipulation.Factory<S>(annotationType, ConstantValue.Simple.wrap(value));
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public OffsetMapping.Resolved resolve(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return new ForStackManipulation.Resolved(assigner, typing, stackManipulation, typeDescription, targetType);
+                            }
+
+                            /**
+                             * A resolved offset mapping for a stack manipulation.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
+                            protected static class Resolved implements OffsetMapping.Resolved {
+
+                                /**
+                                 * The assigner to use.
+                                 */
+                                private final Assigner assigner;
+
+                                /**
+                                 * The typing to apply.
+                                 */
+                                private final Assigner.Typing typing;
+
+                                /**
+                                 * The stack manipulation to apply.
+                                 */
+                                private final StackManipulation stackManipulation;
+
+                                /**
+                                 * The type of the value that is produced by the stack manipulation.
+                                 */
+                                private final TypeDescription.Generic typeDescription;
+
+                                /**
+                                 * The type of the parameter or method target that is bound by this mapping.
+                                 */
+                                private final TypeDescription.Generic targetType;
+
+                                /**
+                                 * Creates a resolved offset mapping for a given stack manipulation.
+                                 *
+                                 * @param assigner          The assigner to use.
+                                 * @param typing            The typing to apply.
+                                 * @param stackManipulation The stack manipulation to apply.
+                                 * @param typeDescription   The type of the value that is produced by the stack manipulation.
+                                 * @param targetType        The type of the parameter or method target that is bound by this mapping.
+                                 */
+                                protected Resolved(Assigner assigner,
+                                                   Assigner.Typing typing,
+                                                   StackManipulation stackManipulation,
+                                                   TypeDescription.Generic typeDescription,
+                                                   TypeDescription.Generic targetType) {
+                                    this.assigner = assigner;
+                                    this.typing = typing;
+                                    this.stackManipulation = stackManipulation;
+                                    this.typeDescription = typeDescription;
+                                    this.targetType = targetType;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public StackManipulation apply(TypeDescription receiver,
+                                                               ByteCodeElement original,
+                                                               TypeList.Generic parameters,
+                                                               TypeDescription.Generic result,
+                                                               TypeDescription.Generic current,
+                                                               JavaConstant.MethodHandle methodHandle,
+                                                               Map<Integer, Integer> offsets,
+                                                               int offset) {
+                                    StackManipulation assignment = assigner.assign(typeDescription, targetType, typing);
+                                    if (!assignment.isValid()) {
+                                        throw new IllegalStateException();
+                                    }
+                                    return new StackManipulation.Compound(stackManipulation, assignment);
+                                }
+                            }
+
+                            /**
+                             * A factory that binds the default value of the annotated parameter, i.e. {@code null} for reference types
+                             * or the specific version of {@code 0} for primitive types.
+                             *
+                             * @param <T> The type of the annotation.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
+                            public static class OfDefaultValue<T extends Annotation> implements OffsetMapping.Factory<T> {
+
+                                /**
+                                 * The annotation type.
+                                 */
+                                private final Class<T> annotationType;
+
+                                /**
+                                 * Creates a new factory for binding a default value.
+                                 *
+                                 * @param annotationType The annotation type.
+                                 */
+                                public OfDefaultValue(Class<T> annotationType) {
+                                    this.annotationType = annotationType;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public Class<T> getAnnotationType() {
+                                    return annotationType;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation) {
+                                    throw new UnsupportedOperationException();
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation) {
+                                    return new ForStackManipulation(DefaultValue.of(target.getType()), target.getType(), target.getType());
+                                }
+                            }
+
+                            /**
+                             * A factory that binds a given annotation property to the parameter.
+                             *
+                             * @param <T> The type of the annotation.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
+                            public static class OfAnnotationProperty<T extends Annotation> extends OffsetMapping.Factory.WithParameterSupportOnly<T> {
+
+                                /**
+                                 * The annotation type.
+                                 */
+                                private final Class<T> annotationType;
+
+                                /**
+                                 * The annotation property to resolve.
+                                 */
+                                private final MethodDescription.InDefinedShape property;
+
+                                /**
+                                 * Creates a factory for assigning an annotation property to the annotated parameter.
+                                 *
+                                 * @param annotationType The annotation type.
+                                 * @param property       The annotation property to resolve.
+                                 */
+                                protected OfAnnotationProperty(Class<T> annotationType, MethodDescription.InDefinedShape property) {
+                                    this.annotationType = annotationType;
+                                    this.property = property;
+                                }
+
+                                /**
+                                 * Resolves an offset mapping factory where the provided property is assigned to any parameter that
+                                 * is annotated with the given annotation.
+                                 *
+                                 * @param annotationType The annotation type.
+                                 * @param property       The name of the property on the
+                                 * @param <S>            The type of the annotation from which the property is read.
+                                 * @return An appropriate factory for an offset mapping.
+                                 */
+                                public static <S extends Annotation> OffsetMapping.Factory<S> of(Class<S> annotationType, String property) {
+                                    if (!annotationType.isAnnotation()) {
+                                        throw new IllegalArgumentException("Not an annotation type: " + annotationType);
+                                    }
+                                    try {
+                                        return new ForStackManipulation.OfAnnotationProperty<S>(annotationType, new MethodDescription.ForLoadedMethod(annotationType.getMethod(property)));
+                                    } catch (NoSuchMethodException exception) {
+                                        throw new IllegalArgumentException("Cannot find a property " + property + " on " + annotationType, exception);
+                                    }
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public Class<T> getAnnotationType() {
+                                    return annotationType;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation) {
+                                    ConstantValue value = ConstantValue.Simple.wrapOrNull(annotation.getValue(property).resolve());
+                                    if (value == null) {
+                                        throw new IllegalStateException("Not a constant value property: " + property);
+                                    }
+                                    return new ForStackManipulation(value.toStackManipulation(), value.getTypeDescription().asGenericType(), target.getType());
+                                }
+                            }
+
+                            /**
+                             * Assigns a value to the annotated parameter that is deserialized from a given input.
+                             *
+                             * @param <T>
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
+                            public static class OfSerializedConstant<T extends Annotation> extends OffsetMapping.Factory.AbstractBase<T> {
+
+                                /**
+                                 * The annotation type.
+                                 */
+                                private final Class<T> annotationType;
+
+                                /**
+                                 * A stack manipulation that represents the deserialization.
+                                 */
+                                private final StackManipulation deserialization;
+
+                                /**
+                                 * A description of the type that is returned as a result of the deserialization.
+                                 */
+                                private final TypeDescription.Generic typeDescription;
+
+                                /**
+                                 * Creates a factory that creates an offset mapping for a value that is deserialized.
+                                 *
+                                 * @param annotationType  The annotation type.
+                                 * @param deserialization A stack manipulation that represents the deserialization.
+                                 * @param typeDescription A description of the type that is returned as a result of the deserialization.
+                                 */
+                                protected OfSerializedConstant(Class<T> annotationType, StackManipulation deserialization, TypeDescription.Generic typeDescription) {
+                                    this.annotationType = annotationType;
+                                    this.deserialization = deserialization;
+                                    this.typeDescription = typeDescription;
+                                }
+
+                                /**
+                                 * Creates a factory for an offset mapping that deserializes a given value that is then assigned to the annotated parameter or used as a method target.
+                                 *
+                                 * @param type       The annotation type.
+                                 * @param value      The serialized value.
+                                 * @param targetType The type of the value that is deserialized.
+                                 * @param <S>        The type of the annotation.
+                                 * @param <U>        The type of the serialized value.
+                                 * @return An appropriate factory for an offset mapping.
+                                 */
+                                public static <S extends Annotation, U extends Serializable> OffsetMapping.Factory<S> of(Class<S> type, U value, Class<? super U> targetType) {
+                                    if (!targetType.isInstance(value)) {
+                                        throw new IllegalArgumentException(value + " is no instance of " + targetType);
+                                    }
+                                    return new ForStackManipulation.OfSerializedConstant<S>(type, SerializedConstant.of(value), net.bytebuddy.description.type.TypeDescription.ForLoadedType.of(targetType).asGenericType());
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public Class<T> getAnnotationType() {
+                                    return annotationType;
+                                }
+
+                                @Override
+                                protected OffsetMapping make(TypeDescription.Generic target, AnnotationDescription.Loadable<T> annotation) {
+                                    return new ForStackManipulation(deserialization, typeDescription, target);
+                                }
+                            }
+
+                            /**
+                             * A factory that invokes a method dynamically and assignes the result to the annotated parameter.
+                             *
+                             * @param <T> The type of the annotation.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
+                            public static class OfDynamicInvocation<T extends Annotation> extends OffsetMapping.Factory.AbstractBase<T> {
+
+                                /**
+                                 * The annotation type.
+                                 */
+                                private final Class<T> annotationType;
+
+                                /**
+                                 * The bootstrap method to use.
+                                 */
+                                private final MethodDescription.InDefinedShape bootstrapMethod;
+
+                                /**
+                                 * The constants to provide to the bootstrap method.
+                                 */
+                                private final List<? extends JavaConstant> arguments;
+
+                                /**
+                                 * Creates a factory for an offset mapping that assigns the result of a dynamic method invocation.
+                                 *
+                                 * @param annotationType  The annotation type.
+                                 * @param bootstrapMethod The bootstrap method to use.
+                                 * @param arguments       The constants to provide to the bootstrap method.
+                                 */
+                                public OfDynamicInvocation(Class<T> annotationType, MethodDescription.InDefinedShape bootstrapMethod, List<? extends JavaConstant> arguments) {
+                                    this.annotationType = annotationType;
+                                    this.bootstrapMethod = bootstrapMethod;
+                                    this.arguments = arguments;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public Class<T> getAnnotationType() {
+                                    return annotationType;
+                                }
+
+                                @Override
+                                protected OffsetMapping make(TypeDescription.Generic target, AnnotationDescription.Loadable<T> annotation) {
+                                    if (!target.isInterface()) {
+                                        throw new IllegalArgumentException(target + " is not an interface");
+                                    } else if (!target.getInterfaces().isEmpty()) {
+                                        throw new IllegalArgumentException(target + " must not extend other interfaces");
+                                    } else if (!target.isPublic()) {
+                                        throw new IllegalArgumentException(target + " is mot public");
+                                    }
+                                    MethodList<?> methodCandidates = target.getDeclaredMethods().filter(isAbstract());
+                                    if (methodCandidates.size() != 1) {
+                                        throw new IllegalArgumentException(target + " must declare exactly one abstract method");
+                                    }
+                                    return new OffsetMapping.ForStackManipulation(MethodInvocation.invoke(bootstrapMethod).dynamic(methodCandidates.getOnly().getInternalName(),
+                                            target.asErasure(),
+                                            Collections.<TypeDescription>emptyList(),
+                                            arguments), target, target);
+                                }
+                            }
+
+                            /**
+                             * A factory to produce an offset mapping based upon a stack manipulation..
+                             *
+                             * @param <T> The type of the annotation.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
+                            public static class Factory<T extends Annotation> extends OffsetMapping.Factory.AbstractBase<T> {
+
+                                /**
+                                 * The annotation type.
+                                 */
+                                private final Class<T> annotationType;
+
+                                /**
+                                 * The stack manipulation that produces the assigned value.
+                                 */
+                                private final StackManipulation stackManipulation;
+
+                                /**
+                                 * The type of the value that is produced by the stack manipulation.
+                                 */
+                                private final TypeDescription.Generic typeDescription;
+
+                                /**
+                                 * Creates a factory for a given constant value.
+                                 *
+                                 * @param annotationType The value to assign to the parameter.
+                                 * @param value          The value that is bound.
+                                 */
+                                public Factory(Class<T> annotationType, ConstantValue value) {
+                                    this(annotationType, value.toStackManipulation(), value.getTypeDescription().asGenericType());
+                                }
+
+                                /**
+                                 * Creates a factory for a given stack manipulation.
+                                 *
+                                 * @param annotationType    The value to assign to the parameter.
+                                 * @param stackManipulation The stack manipulation that produces the assigned value.
+                                 * @param typeDescription   The type of the value that is produced by the stack manipulation.
+                                 */
+                                public Factory(Class<T> annotationType, StackManipulation stackManipulation, TypeDescription.Generic typeDescription) {
+                                    this.annotationType = annotationType;
+                                    this.stackManipulation = stackManipulation;
+                                    this.typeDescription = typeDescription;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public Class<T> getAnnotationType() {
+                                    return annotationType;
+                                }
+
+                                @Override
+                                protected OffsetMapping make(TypeDescription.Generic target, AnnotationDescription.Loadable<T> annotation) {
+                                    return new ForStackManipulation(stackManipulation, typeDescription, target);
+                                }
+                            }
+                        }
+
+                        /**
+                         * An offset mapping that assigns an argument of either the instrumented
+                         * method or the substituted expression.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
+                        class ForArgument implements OffsetMapping {
+
+                            /**
+                             * A description of the targeted type.
+                             */
+                            private final TypeDescription.Generic targetType;
+
+                            /**
+                             * The index of the parameter.
+                             */
+                            private final int index;
+
+                            /**
+                             * The typing to use or {@code null} if the global typing setting should be applied.
+                             */
+                            @MaybeNull
+                            @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
+                            private final Assigner.Typing typing;
+
+                            /**
+                             * The source providing the argument.
+                             */
+                            private final Source source;
+
+                            /**
+                             * {@code true} if {@code null} or a primitive {@code 0} should be assigned to the parameter
+                             * if the provided index is not available.
+                             */
+                            private final boolean optional;
+
+                            /**
+                             * Creates a new offset mapping for an argument to either the substituted expression or the instrumented method.
+                             *
+                             * @param targetType A description of the targeted type.
+                             * @param index      The index of the parameter.
+                             * @param typing     The typing to use or {@code null} if the global typing setting should be applied.
+                             * @param source     The source providing the argument.
+                             * @param optional   {@code true} if {@code null} or a primitive {@code 0} should be assigned to the parameter
+                             *                   if the provided index is not available.
+                             */
+                            public ForArgument(TypeDescription.Generic targetType, int index, @MaybeNull Assigner.Typing typing, Source source, boolean optional) {
+                                this.targetType = targetType;
+                                this.index = index;
+                                this.typing = typing;
+                                this.source = source;
+                                this.optional = optional;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public OffsetMapping.Resolved resolve(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return new ForArgument.Resolved(targetType, index, this.typing == null ? typing : this.typing, source, optional, assigner, instrumentedMethod);
+                            }
+
+                            /**
+                             * A factory for creating an offset mapping for a parameter value of either the instrumented
+                             * method or the substituted element.
+                             */
+                            public enum Factory implements OffsetMapping.Factory<Argument> {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                /**
+                                 * The {@link Argument#value()} property.
+                                 */
+                                private static final MethodDescription.InDefinedShape ARGUMENT_VALUE;
+
+                                /**
+                                 * The {@link Argument#typing()} property.
+                                 */
+                                private static final MethodDescription.InDefinedShape ARGUMENT_TYPING;
+
+                                /**
+                                 * The {@link Argument#source()} property.
+                                 */
+                                private static final MethodDescription.InDefinedShape ARGUMENT_SOURCE;
+
+                                /**
+                                 * The {@link Argument#optional()} property.
+                                 */
+                                private static final MethodDescription.InDefinedShape ARGUMENT_OPTIONAL;
+
+                                /*
+                                 * Resolves all annotation properties.
+                                 */
+                                static {
+                                    MethodList<MethodDescription.InDefinedShape> methods = net.bytebuddy.description.type.TypeDescription.ForLoadedType.of(Argument.class).getDeclaredMethods();
+                                    ARGUMENT_VALUE = methods.filter(named("value")).getOnly();
+                                    ARGUMENT_TYPING = methods.filter(named("typing")).getOnly();
+                                    ARGUMENT_SOURCE = methods.filter(named("source")).getOnly();
+                                    ARGUMENT_OPTIONAL = methods.filter(named("optional")).getOnly();
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public Class<Argument> getAnnotationType() {
+                                    return Argument.class;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<Argument> annotation) {
+                                    return new ForArgument(target.getDeclaringType().asGenericType(),
+                                            annotation.getValue(ARGUMENT_VALUE).resolve(Integer.class),
+                                            annotation.getValue(ARGUMENT_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                                            annotation.getValue(ARGUMENT_SOURCE).resolve(EnumerationDescription.class).load(Source.class),
+                                            annotation.getValue(ARGUMENT_OPTIONAL).resolve(Boolean.class));
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<Argument> annotation) {
+                                    return new ForArgument(target.getType(),
+                                            annotation.getValue(ARGUMENT_VALUE).resolve(Integer.class),
+                                            annotation.getValue(ARGUMENT_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                                            annotation.getValue(ARGUMENT_SOURCE).resolve(EnumerationDescription.class).load(Source.class),
+                                            annotation.getValue(ARGUMENT_OPTIONAL).resolve(Boolean.class));
+                                }
+                            }
+
+                            /**
+                             * A resolved offset mapping to the parameter of either the instrumented method or
+                             * the substituted element.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
+                            protected static class Resolved implements OffsetMapping.Resolved {
+
+                                /**
+                                 * The targeted type.
+                                 */
+                                private final TypeDescription.Generic targetType;
+
+                                /**
+                                 * The index of the parameter.
+                                 */
+                                private final int index;
+
+                                /**
+                                 * The typing to use when assigning.
+                                 */
+                                private final Assigner.Typing typing;
+
+                                /**
+                                 * The source providing the argument.
+                                 */
+                                private final Source source;
+
+                                /**
+                                 * {@code true} if {@code null} or a primitive {@code 0} should be assigned to the parameter
+                                 * if the provided index is not available.
+                                 */
+                                private final boolean optional;
+
+                                /**
+                                 * The assigner to use.
+                                 */
+                                private final Assigner assigner;
+
+                                /**
+                                 * The instrumented method.
+                                 */
+                                private final MethodDescription instrumentedMethod;
+
+                                /**
+                                 * Creates a resolved offset mapping for assigning a parameter.
+                                 *
+                                 * @param targetType         The targeted type.
+                                 * @param index              The index of the parameter.
+                                 * @param typing             The typing to use when assigning.
+                                 * @param source             The source providing the argument.
+                                 * @param optional           {@code true} if {@code null} or a primitive {@code 0} should be assigned
+                                 *                           to the parameter if the provided index is not available.
+                                 * @param assigner           The assigner to use.
+                                 * @param instrumentedMethod The instrumented method.
+                                 */
+                                protected Resolved(TypeDescription.Generic targetType,
+                                                   int index,
+                                                   Assigner.Typing typing,
+                                                   Source source,
+                                                   boolean optional,
+                                                   Assigner assigner,
+                                                   MethodDescription instrumentedMethod) {
+                                    this.targetType = targetType;
+                                    this.index = index;
+                                    this.typing = typing;
+                                    this.source = source;
+                                    this.optional = optional;
+                                    this.assigner = assigner;
+                                    this.instrumentedMethod = instrumentedMethod;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public StackManipulation apply(TypeDescription receiver,
+                                                               ByteCodeElement original,
+                                                               TypeList.Generic parameters,
+                                                               TypeDescription.Generic result,
+                                                               TypeDescription.Generic current,
+                                                               JavaConstant.MethodHandle methodHandle,
+                                                               Map<Integer, Integer> offsets,
+                                                               int offset) {
+                                    Source.Value value = source.argument(index, parameters, offsets, original, instrumentedMethod);
+                                    if (value != null) {
+                                        StackManipulation assignment = assigner.assign(value.getTypeDescription(), targetType, typing);
+                                        if (!assignment.isValid()) {
+                                            throw new IllegalStateException(); // TODO
+                                        }
+                                        return new StackManipulation.Compound(MethodVariableAccess.of(value.getTypeDescription()).loadFrom(value.getOffset()), assignment);
+                                    } else if (optional) {
+                                        return DefaultValue.of(targetType);
+                                    } else {
+                                        throw new IllegalStateException(); // TODO
+                                    }
+                                }
+                            }
+                        }
+
+                        /**
+                         * An offset mapping that assigns the {@code this} reference.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
+                        class ForThisReference implements OffsetMapping {
+
+                            /**
+                             * The targeted type.
+                             */
+                            private final TypeDescription.Generic targetType;
+
+                            /**
+                             * The typing to use or {@code null} if implicit typing.
+                             */
+                            @MaybeNull
+                            @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
+                            private final Assigner.Typing typing;
+
+                            /**
+                             * The source providing the reference.
+                             */
+                            private final Source source;
+
+                            /**
+                             * {@code true} if {@code null} or a primitive {@code 0} should be assigned to the parameter
+                             * if no {@code this} reference is available.
+                             */
+                            private final boolean optional;
+
+                            /**
+                             * Creates an offset mapping that resolves the {@code this} reference.
+                             *
+                             * @param targetType The targeted type.
+                             * @param typing     The typing to use or {@code null} if implicit typing.
+                             * @param source     The source providing the reference.
+                             * @param optional   {@code true} if {@code null} or a primitive {@code 0} should be assigned
+                             *                   to the parameter if no {@code this} reference is available.
+                             */
+                            public ForThisReference(TypeDescription.Generic targetType, @MaybeNull Assigner.Typing typing, Source source, boolean optional) {
+                                this.targetType = targetType;
+                                this.typing = typing;
+                                this.source = source;
+                                this.optional = optional;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public ForThisReference.Resolved resolve(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return new ForThisReference.Resolved(targetType, this.typing == null ? typing : this.typing, source, optional, assigner, instrumentedMethod);
+                            }
+
+                            /**
+                             * A resolved offset mapping for resolving the {@code this} reference.
+                             */
+                            protected static class Resolved implements OffsetMapping.Resolved {
+
+                                /**
+                                 * The targeted type.
+                                 */
+                                private final TypeDescription.Generic targetType;
+
+                                /**
+                                 * The typing to use..
+                                 */
+                                private final Assigner.Typing typing;
+
+                                /**
+                                 * The source providing the reference.
+                                 */
+                                private final Source source;
+
+                                /**
+                                 * {@code true} if {@code null} or a primitive {@code 0} should be assigned to the parameter
+                                 * if no {@code this} reference is available.
+                                 */
+                                private final boolean optional;
+
+                                /**
+                                 * The assigner to use.
+                                 */
+                                private final Assigner assigner;
+
+                                /**
+                                 * The instrumented method.
+                                 */
+                                private final MethodDescription instrumentedMethod;
+
+                                /**
+                                 * Creates a resolved offset mapping for assigning the {@code this} reference.
+                                 *
+                                 * @param targetType         The targeted type.
+                                 * @param typing             The typing to use.
+                                 * @param source             The source providing the reference.
+                                 * @param optional           {@code true} if {@code null} or a primitive {@code 0} should be assigned
+                                 *                           to the parameter if no {@code this} reference is available.
+                                 * @param assigner           The assigner to use.
+                                 * @param instrumentedMethod The instrumented method.
+                                 */
+                                protected Resolved(TypeDescription.Generic targetType,
+                                                   Assigner.Typing typing,
+                                                   Source source,
+                                                   boolean optional,
+                                                   Assigner assigner,
+                                                   MethodDescription instrumentedMethod) {
+                                    this.targetType = targetType;
+                                    this.typing = typing;
+                                    this.source = source;
+                                    this.optional = optional;
+                                    this.assigner = assigner;
+                                    this.instrumentedMethod = instrumentedMethod;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public StackManipulation apply(TypeDescription receiver,
+                                                               ByteCodeElement original,
+                                                               TypeList.Generic parameters,
+                                                               TypeDescription.Generic result,
+                                                               TypeDescription.Generic current,
+                                                               JavaConstant.MethodHandle methodHandle,
+                                                               Map<Integer, Integer> offsets,
+                                                               int offset) {
+                                    Source.Value value = source.self(parameters, offsets, original, instrumentedMethod);
+                                    if (value != null) {
+                                        StackManipulation assignment = assigner.assign(value.getTypeDescription(), targetType, typing);
+                                        if (!assignment.isValid()) {
+                                            throw new IllegalStateException(); // TODO
+                                        }
+                                        return new StackManipulation.Compound(MethodVariableAccess.of(value.getTypeDescription()).loadFrom(value.getOffset()), assignment);
+                                    } else if (optional) {
+                                        return DefaultValue.of(targetType);
+                                    } else {
+                                        throw new IllegalStateException(); // TODO
+                                    }
+                                }
+                            }
+
+                            /**
+                             * A factory for creating an offset mapping for binding a {@link This} reference.
+                             */
+                            public enum Factory implements OffsetMapping.Factory<This> {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                /**
+                                 * The {@link This#typing()} property.
+                                 */
+                                private static final MethodDescription.InDefinedShape THIS_TYPING;
+
+                                /**
+                                 * The {@link This#source()} reference.
+                                 */
+                                private static final MethodDescription.InDefinedShape THIS_SOURCE;
+
+                                /**
+                                 * The {@link This#optional()} property.
+                                 */
+                                private static final MethodDescription.InDefinedShape THIS_OPTIONAL;
+
+                                /*
+                                 * Resolves the annotation properties.
+                                 */
+                                static {
+                                    MethodList<MethodDescription.InDefinedShape> methods = net.bytebuddy.description.type.TypeDescription.ForLoadedType.of(This.class).getDeclaredMethods();
+                                    THIS_TYPING = methods.filter(named("typing")).getOnly();
+                                    THIS_SOURCE = methods.filter(named("source")).getOnly();
+                                    THIS_OPTIONAL = methods.filter(named("optional")).getOnly();
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public Class<This> getAnnotationType() {
+                                    return This.class;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<This> annotation) {
+                                    return new ForThisReference(target.getDeclaringType().asGenericType(),
+                                            annotation.getValue(THIS_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                                            annotation.getValue(THIS_SOURCE).resolve(EnumerationDescription.class).load(Source.class),
+                                            annotation.getValue(THIS_OPTIONAL).resolve(Boolean.class));
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<This> annotation) {
+                                    return new ForThisReference(target.getType(),
+                                            annotation.getValue(THIS_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                                            annotation.getValue(THIS_SOURCE).resolve(EnumerationDescription.class).load(Source.class),
+                                            annotation.getValue(THIS_OPTIONAL).resolve(Boolean.class));
+                                }
+                            }
+                        }
+
+                        class ForAllArguments implements OffsetMapping {
+
+                            private final TypeDescription.Generic targetComponentType;
+
+                            @MaybeNull
+                            private final Assigner.Typing typing;
+
+                            private final Source source;
+
+                            private final boolean includeSelf;
+
+                            private final boolean nullIfEmpty;
+
+                            public ForAllArguments(TypeDescription.Generic targetComponentType, @MaybeNull Assigner.Typing typing, Source source, boolean includeSelf, boolean nullIfEmpty) {
+                                this.targetComponentType = targetComponentType;
+                                this.typing = typing;
+                                this.source = source;
+                                this.includeSelf = includeSelf;
+                                this.nullIfEmpty = nullIfEmpty;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public OffsetMapping.Resolved resolve(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return new ForAllArguments.Resolved(targetComponentType, this.typing == null ? typing : this.typing, source, includeSelf, nullIfEmpty, assigner, instrumentedMethod);
+                            }
+
+                            public enum Factory implements OffsetMapping.Factory<AllArguments> {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_TYPING;
+
+                                private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_SOURCE;
+
+                                private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_INCLUDE_SELF;
+
+                                private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_NULL_IF_EMPTY;
+
+                                static {
+                                    MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(AllArguments.class).getDeclaredMethods();
+                                    ALL_ARGUMENTS_TYPING = methods.filter(named("typing")).getOnly();
+                                    ALL_ARGUMENTS_SOURCE = methods.filter(named("source")).getOnly();
+                                    ALL_ARGUMENTS_INCLUDE_SELF = methods.filter(named("includeSelf")).getOnly();
+                                    ALL_ARGUMENTS_NULL_IF_EMPTY = methods.filter(named("nullIfEmpty")).getOnly();
+                                }
+
+                                public Class<AllArguments> getAnnotationType() {
+                                    return AllArguments.class;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<AllArguments> annotation) {
+                                    throw new UnsupportedOperationException();
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<AllArguments> annotation) {
+                                    if (!target.getType().isArray()) {
+                                        throw new IllegalStateException(); // TODO
+                                    }
+                                    return new ForAllArguments(target.getType().getComponentType(),
+                                            annotation.getValue(ALL_ARGUMENTS_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                                            annotation.getValue(ALL_ARGUMENTS_SOURCE).resolve(EnumerationDescription.class).load(Source.class),
+                                            annotation.getValue(ALL_ARGUMENTS_INCLUDE_SELF).resolve(Boolean.class),
+                                            annotation.getValue(ALL_ARGUMENTS_NULL_IF_EMPTY).resolve(Boolean.class));
+                                }
+                            }
+
+                            protected static class Resolved implements OffsetMapping.Resolved {
+
+                                private final TypeDescription.Generic targetComponentType;
+
+                                private final Assigner.Typing typing;
+
+                                private final Source source;
+
+                                private final boolean includeSelf;
+
+                                private final boolean nullIfEmpty;
+
+                                private final Assigner assigner;
+
+                                private final MethodDescription instrumentedMethod;
+
+                                public Resolved(TypeDescription.Generic targetComponentType,
+                                                Assigner.Typing typing,
+                                                Source source,
+                                                boolean includeSelf,
+                                                boolean nullIfEmpty,
+                                                Assigner assigner,
+                                                MethodDescription instrumentedMethod) {
+                                    this.targetComponentType = targetComponentType;
+                                    this.typing = typing;
+                                    this.source = source;
+                                    this.includeSelf = includeSelf;
+                                    this.nullIfEmpty = nullIfEmpty;
+                                    this.assigner = assigner;
+                                    this.instrumentedMethod = instrumentedMethod;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public StackManipulation apply(TypeDescription receiver,
+                                                               ByteCodeElement original,
+                                                               TypeList.Generic parameters,
+                                                               TypeDescription.Generic result,
+                                                               TypeDescription.Generic current,
+                                                               JavaConstant.MethodHandle methodHandle,
+                                                               Map<Integer, Integer> offsets,
+                                                               int offset) {
+                                    List<Source.Value> values = source.arguments(includeSelf, parameters, offsets, original, instrumentedMethod);
+                                    if (nullIfEmpty && values.isEmpty()) {
+                                        return NullConstant.INSTANCE;
+                                    } else {
+                                        List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>();
+                                        for (Source.Value value : values) {
+                                            StackManipulation assignment = assigner.assign(value.getTypeDescription(), targetComponentType, typing);
+                                            if (!assignment.isValid()) {
+                                                throw new IllegalStateException();
+                                            }
+                                            stackManipulations.add(new StackManipulation.Compound(MethodVariableAccess.of(value.getTypeDescription()).loadFrom(value.getOffset()), assignment));
+                                        }
+                                        return ArrayFactory.forType(targetComponentType).withValues(stackManipulations);
+                                    }
+                                }
+                            }
+                        }
+
+                        class ForSelfCallHandle implements OffsetMapping {
+
+                            private final Source source;
+
+                            private final boolean bound;
+
+                            public ForSelfCallHandle(Source source, boolean bound) {
+                                this.source = source;
+                                this.bound = bound;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public OffsetMapping.Resolved resolve(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return bound ? new ForSelfCallHandle.Bound(source, instrumentedMethod) : new ForSelfCallHandle.Unbound(source, instrumentedMethod);
+                            }
+
+                            public enum Factory implements OffsetMapping.Factory<SelfCallHandle> {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_SOURCE;
+
+                                private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_BOUND;
+
+                                static {
+                                    MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(SelfCallHandle.class).getDeclaredMethods();
+                                    ALL_ARGUMENTS_SOURCE = methods.filter(named("source")).getOnly();
+                                    ALL_ARGUMENTS_BOUND = methods.filter(named("bound")).getOnly();
+                                }
+
+                                public Class<SelfCallHandle> getAnnotationType() {
+                                    return SelfCallHandle.class;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<SelfCallHandle> annotation) {
+                                    throw new UnsupportedOperationException();
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<SelfCallHandle> annotation) {
+                                    if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
+                                        throw new IllegalStateException(); // TODO
+                                    }
+                                    return new ForSelfCallHandle(
+                                            annotation.getValue(ALL_ARGUMENTS_SOURCE).resolve(EnumerationDescription.class).load(Source.class),
+                                            annotation.getValue(ALL_ARGUMENTS_BOUND).resolve(Boolean.class));
+                                }
+                            }
+
+                            protected static class Bound implements OffsetMapping.Resolved {
+
+                                private final Source source;
+
+                                private final MethodDescription instrumentedMethod;
+
+                                protected Bound(Source source, MethodDescription instrumentedMethod) {
+                                    this.source = source;
+                                    this.instrumentedMethod = instrumentedMethod;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public StackManipulation apply(TypeDescription receiver,
+                                                               ByteCodeElement original,
+                                                               TypeList.Generic parameters,
+                                                               TypeDescription.Generic result,
+                                                               TypeDescription.Generic current,
+                                                               JavaConstant.MethodHandle methodHandle,
+                                                               Map<Integer, Integer> offsets,
+                                                               int offset) {
+                                    Source.Value dispatched = this.source.self(parameters, offsets, original, instrumentedMethod);
+                                    List<Source.Value> values = this.source.arguments(false, parameters, offsets, original, instrumentedMethod);
+                                    List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(1 + (values.size()
+                                            + (dispatched == null ? 0 : 2))
+                                            + (values.isEmpty() ? 0 : 1));
+                                    stackManipulations.add(this.source.handle(methodHandle, instrumentedMethod).toStackManipulation());
+                                    if (dispatched != null) {
+                                        stackManipulations.add(MethodVariableAccess.of(dispatched.getTypeDescription()).loadFrom(dispatched.getOffset()));
+                                        stackManipulations.add(MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLE.getTypeStub(), new MethodDescription.Token("bindTo",
+                                                Opcodes.ACC_PUBLIC, JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
+                                                new TypeList.Generic.Explicit(TypeDefinition.Sort.describe(Object.class))))));
+                                    }
+                                    if (!values.isEmpty()) {
+                                        for (Source.Value value : values) {
+                                            stackManipulations.add(MethodVariableAccess.of(value.getTypeDescription()).loadFrom(value.getOffset()));
+                                        }
+                                        stackManipulations.add(MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLES.getTypeStub(), new MethodDescription.Token("insertArguments",
+                                                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
+                                                new TypeList.Generic.Explicit(JavaType.METHOD_HANDLE.getTypeStub(), TypeDefinition.Sort.describe(int.class), TypeDefinition.Sort.describe(Object[].class))))));
+                                    }
+                                    return new StackManipulation.Compound(stackManipulations);
+                                }
+                            }
+
+                            protected static class Unbound implements OffsetMapping.Resolved {
+
+                                private final Source source;
+
+                                private final MethodDescription instrumentedMethod;
+
+                                protected Unbound(Source source, MethodDescription instrumentedMethod) {
+                                    this.source = source;
+                                    this.instrumentedMethod = instrumentedMethod;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public StackManipulation apply(TypeDescription receiver,
+                                                               ByteCodeElement original,
+                                                               TypeList.Generic parameters,
+                                                               TypeDescription.Generic result,
+                                                               TypeDescription.Generic current,
+                                                               JavaConstant.MethodHandle methodHandle,
+                                                               Map<Integer, Integer> offsets,
+                                                               int offset) {
+                                    return this.source.handle(methodHandle, instrumentedMethod).toStackManipulation();
+                                }
+                            }
+                        }
+
+                        abstract class ForField implements OffsetMapping {
+
+                            private static final MethodDescription.InDefinedShape FIELD_VALUE;
+
+                            private static final MethodDescription.InDefinedShape FIELD_DECLARING_TYPE;
+
+                            private static final MethodDescription.InDefinedShape FIELD_TYPING;
+
+                            static {
+                                MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(FieldValue.class).getDeclaredMethods();
+                                FIELD_VALUE = methods.filter(named("value")).getOnly();
+                                FIELD_DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
+                                FIELD_TYPING = methods.filter(named("typing")).getOnly();
+                            }
+
+                            private final TypeDescription.Generic target;
+
+                            @MaybeNull
+                            private final Assigner.Typing typing;
+
+                            protected ForField(TypeDescription.Generic target, @MaybeNull Assigner.Typing typing) {
+                                this.target = target;
+                                this.typing = typing;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public OffsetMapping.Resolved resolve(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                FieldDescription fieldDescription = resolve(instrumentedType, instrumentedMethod);
+                                if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
+                                    throw new IllegalStateException("Cannot access non-static field " + fieldDescription + " from static method " + instrumentedMethod);
+                                }
+                                StackManipulation assignment = assigner.assign(fieldDescription.getType(), target, this.typing == null ? typing : this.typing);
+                                if (!assignment.isValid()) {
+                                    throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + target);
+                                }
+                                return new OffsetMapping.Resolved.ForStackManipulation(new StackManipulation.Compound(FieldAccess.forField(fieldDescription).read(), assignment));
+                            }
+
+                            protected abstract FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
+
+                            public abstract static class Unresolved extends ForField {
+
+                                protected static final String BEAN_PROPERTY = "";
+
+                                private final String name;
+
+                                protected Unresolved(TypeDescription.Generic target, Assigner.Typing typing, String name) {
+                                    super(target, typing);
+                                    this.name = name;
+                                }
+
+                                @Override
+                                protected FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                    FieldLocator locator = fieldLocator(instrumentedType);
+                                    FieldLocator.Resolution resolution = name.equals(BEAN_PROPERTY)
+                                            ? FieldLocator.Resolution.Simple.ofBeanAccessor(locator, instrumentedMethod)
+                                            : locator.locate(name);
+                                    if (!resolution.isResolved()) {
+                                        throw new IllegalStateException("Cannot locate field named " + name + " for " + instrumentedType);
+                                    } else {
+                                        return resolution.getField();
+                                    }
+                                }
+
+                                protected abstract FieldLocator fieldLocator(TypeDescription instrumentedType);
+
+                                public static class WithImplicitType extends Unresolved {
+
+                                    protected WithImplicitType(TypeDescription.Generic target, AnnotationDescription.Loadable<FieldValue> annotation) {
+                                        this(target,
+                                                annotation.getValue(FIELD_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                                                annotation.getValue(FIELD_VALUE).resolve(String.class));
+                                    }
+
+                                    public WithImplicitType(TypeDescription.Generic target, Assigner.Typing typing, String name) {
+                                        super(target, typing, name);
+                                    }
+
+                                    @Override
+                                    protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
+                                        return new FieldLocator.ForClassHierarchy(instrumentedType);
+                                    }
+                                }
+
+                                public static class WithExplicitType extends Unresolved {
+
+                                    private final TypeDescription declaringType;
+
+                                    protected WithExplicitType(TypeDescription.Generic target, AnnotationDescription.Loadable<FieldValue> annotation, TypeDescription declaringType) {
+                                        this(target,
+                                                annotation.getValue(FIELD_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                                                annotation.getValue(FIELD_VALUE).resolve(String.class),
+                                                declaringType);
+                                    }
+
+                                    public WithExplicitType(TypeDescription.Generic target, Assigner.Typing typing, String name, TypeDescription declaringType) {
+                                        super(target, typing, name);
+                                        this.declaringType = declaringType;
+                                    }
+
+                                    @Override
+                                    protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
+                                        if (!declaringType.represents(TargetType.class) && !instrumentedType.isAssignableTo(declaringType)) {
+                                            throw new IllegalStateException(declaringType + " is no super type of " + instrumentedType);
+                                        }
+                                        return new FieldLocator.ForExactType(TargetType.resolve(declaringType, instrumentedType));
+                                    }
+                                }
+
+                                protected enum Factory implements OffsetMapping.Factory<FieldValue> {
+
+                                    /**
+                                     * The singleton instance.
+                                     */
+                                    INSTANCE;
+
+                                    public Class<FieldValue> getAnnotationType() {
+                                        return FieldValue.class;
+                                    }
+
+                                    /**
+                                     * {@inheritDoc}
+                                     */
+                                    public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<FieldValue> annotation) {
+                                        TypeDescription declaringType = annotation.getValue(FIELD_DECLARING_TYPE).resolve(TypeDescription.class);
+                                        return declaringType.represents(void.class)
+                                                ? new Unresolved.WithImplicitType(target.getDeclaringType().asGenericType(), annotation)
+                                                : new Unresolved.WithExplicitType(target.getDeclaringType().asGenericType(), annotation, declaringType);
+                                    }
+
+                                    public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<FieldValue> annotation) {
+                                        TypeDescription declaringType = annotation.getValue(FIELD_DECLARING_TYPE).resolve(TypeDescription.class);
+                                        return declaringType.represents(void.class)
+                                                ? new Unresolved.WithImplicitType(target.getType(), annotation)
+                                                : new Unresolved.WithExplicitType(target.getType(), annotation, declaringType);
+                                    }
+                                }
+                            }
+
+                            public static class Resolved extends ForField {
+
+                                private final FieldDescription fieldDescription;
+
+                                public Resolved(TypeDescription.Generic target, Assigner.Typing typing, FieldDescription fieldDescription) {
+                                    super(target, typing);
+                                    this.fieldDescription = fieldDescription;
+                                }
+
+                                @Override
+                                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
+                                protected FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                    if (!fieldDescription.isStatic() && !fieldDescription.getDeclaringType().asErasure().isAssignableFrom(instrumentedType)) {
+                                        throw new IllegalStateException(fieldDescription + " is no member of " + instrumentedType);
+                                    } else if (!fieldDescription.isVisibleTo(instrumentedType)) {
+                                        throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
+                                    }
+                                    return fieldDescription;
+                                }
+
+                                public static class Factory<T extends Annotation> extends OffsetMapping.Factory.AbstractBase<T> {
+
+                                    private final Class<T> annotationType;
+
+                                    private final FieldDescription fieldDescription;
+
+                                    private final Assigner.Typing typing;
+
+                                    public Factory(Class<T> annotationType, FieldDescription fieldDescription) {
+                                        this(annotationType, fieldDescription, Assigner.Typing.STATIC);
+                                    }
+
+                                    public Factory(Class<T> annotationType, FieldDescription fieldDescription, Assigner.Typing typing) {
+                                        this.annotationType = annotationType;
+                                        this.fieldDescription = fieldDescription;
+                                        this.typing = typing;
+                                    }
+
+                                    public Class<T> getAnnotationType() {
+                                        return annotationType;
+                                    }
+
+                                    @Override
+                                    protected OffsetMapping make(TypeDescription.Generic target, AnnotationDescription.Loadable<T> annotation) {
+                                        return new ForField.Resolved(target, typing, fieldDescription);
+                                    }
+                                }
+                            }
+                        }
+
+                        abstract class ForFieldHandle implements OffsetMapping {
+
+                            private final ForFieldHandle.Access access;
+
+                            protected ForFieldHandle(ForFieldHandle.Access access) {
+                                this.access = access;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public OffsetMapping.Resolved resolve(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                FieldDescription fieldDescription = resolve(instrumentedType, instrumentedMethod);
+                                if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
+                                    throw new IllegalStateException("Cannot access non-static field " + fieldDescription + " from static method " + instrumentedMethod);
+                                }
+                                if (fieldDescription.isStatic()) {
+                                    return new OffsetMapping.Resolved.ForStackManipulation(access.resolve(fieldDescription.asDefined()).toStackManipulation());
+                                } else {
+                                    return new OffsetMapping.Resolved.ForStackManipulation(new StackManipulation.Compound(
+                                            access.resolve(fieldDescription.asDefined()).toStackManipulation(), MethodVariableAccess.REFERENCE.loadFrom(0), // TODO: constant
+                                            MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLE.getTypeStub(), new MethodDescription.Token("bindTo",
+                                                    Opcodes.ACC_PUBLIC, JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
+                                                    new TypeList.Generic.Explicit(TypeDefinition.Sort.describe(Object.class)))))));
+                                }
+                            }
+
+                            protected abstract FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
+
+                            public enum Access {
+
+                                GETTER {
+                                    @Override
+                                    protected JavaConstant.MethodHandle resolve(FieldDescription.InDefinedShape fieldDescription) {
+                                        return JavaConstant.MethodHandle.ofGetter(fieldDescription);
+                                    }
+                                },
+
+                                SETTER {
+                                    @Override
+                                    protected JavaConstant.MethodHandle resolve(FieldDescription.InDefinedShape fieldDescription) {
+                                        return JavaConstant.MethodHandle.ofSetter(fieldDescription);
+                                    }
+                                };
+
+                                protected abstract JavaConstant.MethodHandle resolve(FieldDescription.InDefinedShape fieldDescription);
+                            }
+
+
+                            public abstract static class Unresolved extends ForFieldHandle {
+
+                                protected static final String BEAN_PROPERTY = "";
+
+                                private final String name;
+
+                                public Unresolved(Access access, String name) {
+                                    super(access);
+                                    this.name = name;
+                                }
+
+                                @Override
+                                protected FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                    FieldLocator locator = fieldLocator(instrumentedType);
+                                    FieldLocator.Resolution resolution = name.equals(BEAN_PROPERTY)
+                                            ? FieldLocator.Resolution.Simple.ofBeanAccessor(locator, instrumentedMethod)
+                                            : locator.locate(name);
+                                    if (!resolution.isResolved()) {
+                                        throw new IllegalStateException("Cannot locate field named " + name + " for " + instrumentedType);
+                                    } else {
+                                        return resolution.getField();
+                                    }
+                                }
+
+                                protected abstract FieldLocator fieldLocator(TypeDescription instrumentedType);
+
+                                public static class WithImplicitType extends Unresolved {
+
+                                    public WithImplicitType(Access access, String name) {
+                                        super(access, name);
+                                    }
+
+                                    @Override
+                                    protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
+                                        return new FieldLocator.ForClassHierarchy(instrumentedType);
+                                    }
+                                }
+
+                                public static class WithExplicitType extends Unresolved {
+
+                                    private final TypeDescription declaringType;
+
+                                    public WithExplicitType(Access access, String name, TypeDescription declaringType) {
+                                        super(access, name);
+                                        this.declaringType = declaringType;
+                                    }
+
+                                    @Override
+                                    protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
+                                        if (!declaringType.represents(TargetType.class) && !instrumentedType.isAssignableTo(declaringType)) {
+                                            throw new IllegalStateException(declaringType + " is no super type of " + instrumentedType);
+                                        }
+                                        return new FieldLocator.ForExactType(TargetType.resolve(declaringType, instrumentedType));
+                                    }
+                                }
+
+                                protected enum ReaderFactory implements OffsetMapping.Factory<FieldGetterHandle> {
+
+                                    /**
+                                     * The singleton instance.
+                                     */
+                                    INSTANCE;
+
+                                    /**
+                                     * The {@link FieldGetterHandle#value()} method.
+                                     */
+                                    private static final MethodDescription.InDefinedShape FIELD_GETTER_HANDLE_VALUE;
+
+                                    /**
+                                     * The {@link FieldGetterHandle#declaringType()} method.
+                                     */
+                                    private static final MethodDescription.InDefinedShape FIELD_GETTER_HANDLE_DECLARING_TYPE;
+
+                                    static {
+                                        MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(FieldGetterHandle.class).getDeclaredMethods();
+                                        FIELD_GETTER_HANDLE_VALUE = methods.filter(named("value")).getOnly();
+                                        FIELD_GETTER_HANDLE_DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
+                                    }
+
+                                    public Class<FieldGetterHandle> getAnnotationType() {
+                                        return FieldGetterHandle.class;
+                                    }
+
+                                    /**
+                                     * {@inheritDoc}
+                                     */
+                                    public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<FieldGetterHandle> annotation) {
+                                        throw new UnsupportedOperationException(); // TODO
+                                    }
+
+                                    public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<FieldGetterHandle> annotation) {
+                                        if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
+                                            throw new IllegalStateException("Cannot assign method handle to " + target);
+                                        }
+                                        TypeDescription declaringType = annotation.getValue(FIELD_GETTER_HANDLE_DECLARING_TYPE).resolve(TypeDescription.class);
+                                        return declaringType.represents(void.class)
+                                                ? new ForFieldHandle.Unresolved.WithImplicitType(Access.GETTER, annotation.getValue(FIELD_GETTER_HANDLE_VALUE).resolve(String.class))
+                                                : new ForFieldHandle.Unresolved.WithExplicitType(Access.GETTER, annotation.getValue(FIELD_GETTER_HANDLE_VALUE).resolve(String.class), declaringType);
+                                    }
+                                }
+
+                                protected enum WriterFactory implements OffsetMapping.Factory<FieldSetterHandle> {
+
+                                    /**
+                                     * The singleton instance.
+                                     */
+                                    INSTANCE;
+
+                                    private static final MethodDescription.InDefinedShape FIELD_SETTER_HANDLE_VALUE;
+
+                                    private static final MethodDescription.InDefinedShape FIELD_SETTER_HANDLE_DECLARING_TYPE;
+
+                                    static {
+                                        MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(FieldSetterHandle.class).getDeclaredMethods();
+                                        FIELD_SETTER_HANDLE_VALUE = methods.filter(named("value")).getOnly();
+                                        FIELD_SETTER_HANDLE_DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
+                                    }
+
+                                    public Class<FieldSetterHandle> getAnnotationType() {
+                                        return FieldSetterHandle.class;
+                                    }
+
+                                    /**
+                                     * {@inheritDoc}
+                                     */
+                                    public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<FieldSetterHandle> annotation) {
+                                        throw new UnsupportedOperationException();
+                                    }
+
+
+                                    /**
+                                     * {@inheritDoc}
+                                     */
+                                    public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<FieldSetterHandle> annotation) {
+                                        if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
+                                            throw new IllegalStateException("Cannot assign method handle to " + target);
+                                        }
+                                        TypeDescription declaringType = annotation.getValue(FIELD_SETTER_HANDLE_DECLARING_TYPE).resolve(TypeDescription.class);
+                                        return declaringType.represents(void.class)
+                                                ? new ForFieldHandle.Unresolved.WithImplicitType(Access.SETTER, annotation.getValue(FIELD_SETTER_HANDLE_VALUE).resolve(String.class))
+                                                : new ForFieldHandle.Unresolved.WithExplicitType(Access.SETTER, annotation.getValue(FIELD_SETTER_HANDLE_VALUE).resolve(String.class), declaringType);
+                                    }
+                                }
+                            }
+
+                            @HashCodeAndEqualsPlugin.Enhance
+                            public static class Resolved extends OffsetMapping.ForFieldHandle {
+
+                                private final FieldDescription fieldDescription;
+
+                                public Resolved(Access access, FieldDescription fieldDescription) {
+                                    super(access);
+                                    this.fieldDescription = fieldDescription;
+                                }
+
+                                @Override
+                                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
+                                protected FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                    if (!fieldDescription.isStatic() && !fieldDescription.getDeclaringType().asErasure().isAssignableFrom(instrumentedType)) {
+                                        throw new IllegalStateException(fieldDescription + " is no member of " + instrumentedType);
+                                    } else if (!fieldDescription.isVisibleTo(instrumentedType)) {
+                                        throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
+                                    }
+                                    return fieldDescription;
+                                }
+
+                                public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
+
+                                    private final Class<T> annotationType;
+
+                                    private final FieldDescription fieldDescription;
+
+                                    private final Access access;
+
+                                    public Factory(Class<T> annotationType, FieldDescription fieldDescription, Access access) {
+                                        this.annotationType = annotationType;
+                                        this.fieldDescription = fieldDescription;
+                                        this.access = access;
+                                    }
+
+                                    public Class<T> getAnnotationType() {
+                                        return annotationType;
+                                    }
+
+                                    /**
+                                     * {@inheritDoc}
+                                     */
+                                    public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation) {
+                                        throw new UnsupportedOperationException(); // TODO
+                                    }
+
+                                    /**
+                                     * {@inheritDoc}
+                                     */
+                                    public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation) {
+                                        if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
+                                            throw new IllegalStateException("Cannot assign method handle to " + target);
+                                        }
+                                        return new ForFieldHandle.Resolved(access, fieldDescription);
+                                    }
+                                }
+                            }
+                        }
+
+                        class ForOrigin implements OffsetMapping {
+
+                            private final ForOrigin.Sort sort;
+
+                            private final Source source;
+
+                            protected ForOrigin(ForOrigin.Sort sort, Source source) {
+                                this.sort = sort;
+                                this.source = source;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public OffsetMapping.Resolved resolve(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return new ForOrigin.Resolved(sort, source, instrumentedMethod);
+                            }
+
+                            protected enum Sort {
+
+                                METHOD {
+                                    @Override
+                                    protected boolean isRepresentable(ByteCodeElement target) {
+                                        return target instanceof MethodDescription && ((MethodDescription) target).isMethod();
+                                    }
+
+                                    @Override
+                                    protected StackManipulation resolve(ByteCodeElement original, TypeList parameterTypes, TypeDescription returnType) {
+                                        return MethodConstant.of(((MethodDescription) original).asDefined());
+                                    }
+                                }, CONSTRUCTOR {
+                                    @Override
+                                    protected boolean isRepresentable(ByteCodeElement target) {
+                                        return target instanceof MethodDescription && ((MethodDescription) target).isConstructor();
+                                    }
+
+                                    @Override
+                                    protected StackManipulation resolve(ByteCodeElement original, TypeList parameterTypes, TypeDescription returnType) {
+                                        return MethodConstant.of(((MethodDescription) original).asDefined());
+                                    }
+                                }, FIELD {
+                                    @Override
+                                    protected boolean isRepresentable(ByteCodeElement target) {
+                                        return target instanceof FieldDescription;
+                                    }
+
+                                    @Override
+                                    protected StackManipulation resolve(ByteCodeElement original, TypeList parameterTypes, TypeDescription returnType) {
+                                        return new FieldConstant(((FieldDescription) original).asDefined());
+                                    }
+                                }, EXECUTABLE {
+                                    @Override
+                                    protected boolean isRepresentable(ByteCodeElement target) {
+                                        return target instanceof MethodDescription;
+                                    }
+
+                                    @Override
+                                    protected StackManipulation resolve(ByteCodeElement original, TypeList parameterTypes, TypeDescription returnType) {
+                                        return MethodConstant.of(((MethodDescription) original).asDefined());
+                                    }
+                                }, TYPE {
+                                    @Override
+                                    protected boolean isRepresentable(ByteCodeElement target) {
+                                        return true;
+                                    }
+
+                                    @Override
+                                    protected StackManipulation resolve(ByteCodeElement original, TypeList parameterTypes, TypeDescription returnType) {
+                                        return ClassConstant.of(original.getDeclaringType().asErasure());
+                                    }
+                                }, LOOKUP {
+                                    @Override
+                                    protected boolean isRepresentable(ByteCodeElement target) {
+                                        return true;
+                                    }
+
+                                    @Override
+                                    protected StackManipulation resolve(ByteCodeElement original, TypeList parameterTypes, TypeDescription returnType) {
+                                        return MethodInvocation.lookup();
+                                    }
+                                }, HANDLE {
+                                    @Override
+                                    protected boolean isRepresentable(ByteCodeElement target) {
+                                        return true;
+                                    }
+
+                                    @Override
+                                    protected StackManipulation resolve(ByteCodeElement original, TypeList parameterTypes, TypeDescription returnType) {
+                                        JavaConstant.MethodHandle handle;
+                                        if (original instanceof MethodDescription) {
+                                            handle = JavaConstant.MethodHandle.of(((MethodDescription) original).asDefined());
+                                        } else if (original instanceof FieldDescription) {
+                                            handle = returnType.represents(void.class) // TODO: false
+                                                    ? JavaConstant.MethodHandle.ofSetter(((FieldDescription) original).asDefined())
+                                                    : JavaConstant.MethodHandle.ofGetter(((FieldDescription) original).asDefined());
+                                        } else {
+                                            throw new IllegalStateException(); // TODO
+                                        }
+                                        return handle.toStackManipulation();
+                                    }
+                                }, METHOD_TYPE {
+                                    @Override
+                                    protected boolean isRepresentable(ByteCodeElement target) {
+                                        return true;
+                                    }
+
+                                    @Override
+                                    protected StackManipulation resolve(ByteCodeElement original, TypeList parameterTypes, TypeDescription returnType) {
+                                        return JavaConstant.MethodType.of(returnType, parameterTypes).toStackManipulation();
+                                    }
+                                }, STRING {
+                                    @Override
+                                    protected boolean isRepresentable(ByteCodeElement target) {
+                                        return true;
+                                    }
+
+                                    @Override
+                                    protected StackManipulation resolve(ByteCodeElement original, TypeList parameterTypes, TypeDescription returnType) {
+                                        return new TextConstant(original.toString());
+                                    }
+                                };
+
+                                protected abstract boolean isRepresentable(ByteCodeElement target);
+
+                                protected abstract StackManipulation resolve(ByteCodeElement original, TypeList parameterTypes, TypeDescription returnType);
+                            }
+
+                            public enum Factory implements OffsetMapping.Factory<Origin> {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                private static final MethodDescription.InDefinedShape ORIGIN_TYPE = TypeDescription.ForLoadedType.of(Origin.class)
+                                        .getDeclaredMethods()
+                                        .filter(named("source"))
+                                        .getOnly();
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public Class<Origin> getAnnotationType() {
+                                    return Origin.class;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<Origin> annotation) {
+                                    throw new UnsupportedOperationException();
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<Origin> annotation) {
+                                    ForOrigin.Sort sort;
+                                    if (target.getType().asErasure().represents(Class.class)) {
+                                        sort = ForOrigin.Sort.TYPE;
+                                    } else if (target.getType().asErasure().represents(Method.class)) {
+                                        sort = ForOrigin.Sort.METHOD;
+                                    } else if (target.getType().asErasure().represents(Constructor.class)) {
+                                        sort = ForOrigin.Sort.CONSTRUCTOR;
+                                    } else if (JavaType.EXECUTABLE.getTypeStub().equals(target.getType().asErasure())) {
+                                        sort = ForOrigin.Sort.EXECUTABLE;
+                                    } else if (JavaType.METHOD_HANDLE.getTypeStub().equals(target.getType().asErasure())) {
+                                        sort = ForOrigin.Sort.HANDLE;
+                                    } else if (JavaType.METHOD_TYPE.getTypeStub().equals(target.getType().asErasure())) {
+                                        sort = ForOrigin.Sort.METHOD_TYPE;
+                                    } else if (JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().equals(target.getType().asErasure())) {
+                                        sort = ForOrigin.Sort.LOOKUP;
+                                    } else if (target.getType().asErasure().isAssignableFrom(String.class)) {
+                                        sort = ForOrigin.Sort.STRING;
+                                    } else {
+                                        throw new IllegalStateException("Non-supported type " + target.getType() + " for @Origin annotation");
+                                    }
+                                    return new ForOrigin(sort, annotation.getValue(ORIGIN_TYPE).resolve(EnumerationDescription.class).load(Source.class));
+                                }
+                            }
+
+                            protected static class Resolved implements OffsetMapping.Resolved {
+
+                                private final ForOrigin.Sort sort;
+
+                                private final Source source;
+
+                                private final MethodDescription instrumentedMethod;
+
+                                public Resolved(ForOrigin.Sort sort, Source source, MethodDescription instrumentedMethod) {
+                                    this.sort = sort;
+                                    this.source = source;
+                                    this.instrumentedMethod = instrumentedMethod;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public StackManipulation apply(TypeDescription receiver,
+                                                               ByteCodeElement original,
+                                                               TypeList.Generic parameters,
+                                                               TypeDescription.Generic result,
+                                                               TypeDescription.Generic current,
+                                                               JavaConstant.MethodHandle methodHandle,
+                                                               Map<Integer, Integer> offsets,
+                                                               int offset) {
+                                    if (!this.source.isRepresentable(sort, original, instrumentedMethod)) {
+                                        throw new IllegalStateException();
+                                    }
+                                    return this.source.resolve(sort, original, parameters, result, instrumentedMethod);
+                                }
+                            }
+                        }
+
+                        class ForStubValue implements OffsetMapping {
+
+                            private final Source source;
+
+                            protected ForStubValue(Source source) {
+                                this.source = source;
+                            }
+
+                            public OffsetMapping.Resolved resolve(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return new Resolved(source, instrumentedMethod);
+                            }
+
+                            protected static class Resolved implements OffsetMapping.Resolved {
+
+                                private final Source source;
+
+                                private final MethodDescription instrumentedMethod;
+
+                                public Resolved(Source source, MethodDescription instrumentedMethod) {
+                                    this.source = source;
+                                    this.instrumentedMethod = instrumentedMethod;
+                                }
+
+                                public StackManipulation apply(TypeDescription receiver,
+                                                               ByteCodeElement original,
+                                                               TypeList.Generic parameters,
+                                                               TypeDescription.Generic result,
+                                                               TypeDescription.Generic current,
+                                                               JavaConstant.MethodHandle methodHandle,
+                                                               Map<Integer, Integer> offsets,
+                                                               int offset) {
+                                    return DefaultValue.of(source.handle(methodHandle, instrumentedMethod).getReturnType());
+                                }
+                            }
+
+                            public class Factory implements OffsetMapping.Factory<StubValue> {
+
+                                private final Source source;
+
+                                public Factory(Source source) {
+                                    this.source = source;
+                                }
+
+                                public Class<StubValue> getAnnotationType() {
+                                    return StubValue.class;
+                                }
+
+                                public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<StubValue> annotation) {
+                                    throw new UnsupportedOperationException();
+                                }
+
+                                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<StubValue> annotation) {
+                                    if (!target.getType().represents(Object.class)) {
+                                        throw new IllegalStateException();
+                                    }
+                                    return new ForStubValue(source);
+                                }
+                            }
+                        }
+
+                        class ForCurrent implements OffsetMapping {
+
+                            private final TypeDescription.Generic targetType;
+
+                            @MaybeNull
+                            private final Assigner.Typing typing;
+
+                            public ForCurrent(TypeDescription.Generic targetType, @MaybeNull Assigner.Typing typing) {
+                                this.targetType = targetType;
+                                this.typing = typing;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public OffsetMapping.Resolved resolve(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return new ForCurrent.Resolved(targetType, assigner, this.typing == null ? typing : this.typing);
+                            }
+
+                            public enum Factory implements OffsetMapping.Factory<Current> {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                private static final MethodDescription.InDefinedShape CURRENT_TYPING = TypeDescription.ForLoadedType.of(Current.class)
+                                        .getDeclaredMethods()
+                                        .filter(named("typing"))
+                                        .getOnly();
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public Class<Current> getAnnotationType() {
+                                    return Current.class;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<Current> annotation) {
+                                    return new ForCurrent(target.getDeclaringType().asGenericType(),
+                                            annotation.getValue(CURRENT_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class));
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<Current> annotation) {
+                                    return new ForCurrent(target.getType(), annotation.getValue(CURRENT_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class));
+                                }
+                            }
+
+                            protected static class Resolved implements OffsetMapping.Resolved {
+
+                                private final TypeDescription.Generic targetType;
+
+                                private final Assigner assigner;
+
+                                private final Assigner.Typing typing;
+
+                                public Resolved(TypeDescription.Generic targetType, Assigner assigner, Assigner.Typing typing) {
+                                    this.targetType = targetType;
+                                    this.assigner = assigner;
+                                    this.typing = typing;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public StackManipulation apply(TypeDescription receiver,
+                                                               ByteCodeElement original,
+                                                               TypeList.Generic parameters,
+                                                               TypeDescription.Generic result,
+                                                               TypeDescription.Generic current,
+                                                               JavaConstant.MethodHandle methodHandle,
+                                                               Map<Integer, Integer> offsets,
+                                                               int offset) {
+                                    StackManipulation assignment = assigner.assign(current, targetType, typing);
+                                    if (!assignment.isValid()) {
+                                        throw new IllegalStateException(); // TODO
+                                    }
+                                    return new StackManipulation.Compound(MethodVariableAccess.of(current).loadFrom(offset), assignment);
+                                }
+                            }
+                        }
+                    }
+
+                    /**
+                     * A dispatcher for invoking a delegation method.
+                     */
+                    protected interface Dispatcher {
+
+                        /**
+                         * Resolves a dispatcher for a given instrumented type and method.
+                         *
+                         * @param instrumentedType   The instrumented type.
+                         * @param instrumentedMethod The instrumented method.
+                         * @return A resolved version of this dispatcher.
+                         */
+                        Dispatcher.Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
+
+                        /**
+                         * A dispatcher that has been resolved for a given instrumented type and method.
+                         */
+                        interface Resolved {
+
+                            /**
+                             * Creates a stack manipulation for a given substitution target.
+                             *
+                             * @param receiver     The type upon which the substituted element is invoked upon.
+                             * @param original     The substituted element.
+                             * @param methodHandle A method handle that describes the invocation.
+                             * @return A stack manipulation that executes the represented delegation.
+                             */
+                            StackManipulation resolve(TypeDescription receiver, ByteCodeElement original, JavaConstant.MethodHandle methodHandle);
+                        }
+
+                        /**
+                         * A factory for creating a dispatcher.
+                         */
+                        interface Factory {
+
+                            /**
+                             * Creates a dispatcher for a given delegation method.
+                             *
+                             * @param delegate The method or constructor to delegate to.
+                             * @return An appropriate dispatcher.
+                             */
+                            Dispatcher make(MethodDescription.InDefinedShape delegate);
+                        }
+
+                        /**
+                         * A dispatcher that invokes a delegate method directly.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
+                        class ForRegularInvocation implements Dispatcher, Dispatcher.Resolved {
+
+                            /**
+                             * The delegation method.
+                             */
+                            private final MethodDescription delegate;
+
+                            /**
+                             * Creates a dispatcher for a regular method invocation.
+                             *
+                             * @param delegate The delegation method.
+                             */
+                            protected ForRegularInvocation(MethodDescription delegate) {
+                                this.delegate = delegate;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return this;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public StackManipulation resolve(TypeDescription receiver, ByteCodeElement original, JavaConstant.MethodHandle methodHandle) {
+                                return MethodInvocation.invoke(delegate);
+                            }
+
+                            /**
+                             * A factory for creating a dispatcher for a regular method invocation.
+                             */
+                            protected enum Factory implements Dispatcher.Factory {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public Dispatcher make(MethodDescription.InDefinedShape delegate) {
+                                    return new ForRegularInvocation(delegate);
+                                }
+                            }
+                        }
+
+                        /**
+                         * A method dispatcher that is using a dynamic method invocation.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
+                        class ForDynamicInvocation implements Dispatcher {
+
+                            /**
+                             * The bootstrap method.
+                             */
+                            private final MethodDescription.InDefinedShape bootstrapMethod;
+
+                            /**
+                             * The delegation method.
+                             */
+                            private final MethodDescription.InDefinedShape delegate;
+
+                            /**
+                             * A resolver for supplying arguments to the bootstrap method.
+                             */
+                            private final BootstrapArgumentResolver resolver;
+
+                            /**
+                             * Creates a dispatcher for a dynamic method invocation.
+                             *
+                             * @param bootstrapMethod The bootstrap method.
+                             * @param delegate        The delegation method.
+                             * @param resolver        A resolver for supplying arguments to the bootstrap method.
+                             */
+                            protected ForDynamicInvocation(MethodDescription.InDefinedShape bootstrapMethod, MethodDescription.InDefinedShape delegate, BootstrapArgumentResolver resolver) {
+                                this.bootstrapMethod = bootstrapMethod;
+                                this.delegate = delegate;
+                                this.resolver = resolver;
+                            }
+
+                            /**
+                             * Creates a dispatcher factory for a dynamic method invocation.
+                             *
+                             * @param bootstrapMethod The bootstrap method.
+                             * @param resolverFactory A resolver for supplying arguments to the bootstrap method.
+                             * @return An appropriate dispatcher factory.
+                             */
+                            protected static Dispatcher.Factory of(MethodDescription.InDefinedShape bootstrapMethod, BootstrapArgumentResolver.Factory resolverFactory) {
+                                if (!bootstrapMethod.isInvokeBootstrap()) {
+                                    throw new IllegalStateException();
+                                }
+                                return new ForDynamicInvocation.Factory(bootstrapMethod, resolverFactory);
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public Dispatcher.Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return new ForDynamicInvocation.Resolved(bootstrapMethod, delegate, resolver.resolve(instrumentedType, instrumentedMethod));
+                            }
+
+                            /**
+                             * A resolved dispatcher for a dynamically bound method invocation.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
+                            protected static class Resolved implements Dispatcher.Resolved {
+
+                                /**
+                                 * The bootstrap method.
+                                 */
+                                private final MethodDescription.InDefinedShape bootstrapMethod;
+
+                                /**
+                                 * The delegation target.
+                                 */
+                                private final MethodDescription.InDefinedShape delegate;
+
+                                /**
+                                 * The bootstrap argument resolver to use.
+                                 */
+                                private final BootstrapArgumentResolver.Resolved resolver;
+
+                                /**
+                                 * Creates a resolved dispatcher of a dynamic method dispatcher.
+                                 *
+                                 * @param bootstrapMethod The bootstrap method.
+                                 * @param delegate        The delegation target.
+                                 * @param resolver        The bootstrap argument resolver to use.
+                                 */
+                                protected Resolved(MethodDescription.InDefinedShape bootstrapMethod, MethodDescription.InDefinedShape delegate, BootstrapArgumentResolver.Resolved resolver) {
+                                    this.bootstrapMethod = bootstrapMethod;
+                                    this.delegate = delegate;
+                                    this.resolver = resolver;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public StackManipulation resolve(TypeDescription receiver, ByteCodeElement original, JavaConstant.MethodHandle methodHandle) {
+                                    List<JavaConstant> constants = resolver.make(receiver, original, methodHandle);
+                                    if (!bootstrapMethod.isInvokeBootstrap(TypeList.Explicit.of(constants))) {
+                                        throw new IllegalArgumentException(bootstrapMethod + " is not accepting advice bootstrap arguments: " + constants);
+                                    }
+                                    return MethodInvocation.invoke(bootstrapMethod).dynamic(delegate.getDeclaringType().asErasure().getName(),
+                                            delegate.getReturnType().asErasure(),
+                                            delegate.getParameters().asTypeList().asErasures(),
+                                            constants);
+                                }
+                            }
+
+                            /**
+                             * A factory for a dynamic method invocation of the dispatcher method or constructor.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
+                            protected static class Factory implements Dispatcher.Factory {
+
+                                /**
+                                 * The bootstrap method.
+                                 */
+                                private final MethodDescription.InDefinedShape bootstrapMethod;
+
+                                /**
+                                 * A factory for a bootstrap argument resolver.
+                                 */
+                                private final BootstrapArgumentResolver.Factory resolverFactory;
+
+                                /**
+                                 * Creates a new factory for a dispatcher using a dynamic method invocation.
+                                 *
+                                 * @param bootstrapMethod The bootstrap method.
+                                 * @param resolverFactory A factory for a bootstrap argument resolver.
+                                 */
+                                protected Factory(MethodDescription.InDefinedShape bootstrapMethod, BootstrapArgumentResolver.Factory resolverFactory) {
+                                    this.bootstrapMethod = bootstrapMethod;
+                                    this.resolverFactory = resolverFactory;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public Dispatcher make(MethodDescription.InDefinedShape delegate) {
+                                    return new ForDynamicInvocation(bootstrapMethod, delegate, resolverFactory.make(delegate));
+                                }
+                            }
+                        }
+                    }
+
+                    /**
+                     * A resolver for supplying arguments to a bootstrap method which is binding the delegation method's invocation.
+                     */
+                    public interface BootstrapArgumentResolver {
+
+                        /**
+                         * Resolves this resolver for a given instrumented type and method.
+                         *
+                         * @param instrumentedType   The instrumented type.
+                         * @param instrumentedMethod The instrumented method.
+                         * @return A resolved version of this argument resolver.
+                         */
+                        BootstrapArgumentResolver.Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
+
+                        /**
+                         * A resolved version of a bootstrap argument handler.
+                         */
+                        interface Resolved {
+
+                            /**
+                             * Returns the constant values to supply to the bootstrap method.
+                             *
+                             * @param receiver     The type upon which the substituted element is applied.
+                             * @param original     The substituted element.
+                             * @param methodHandle A method handle that represents the substituted element.
+                             * @return A list of constant values to supply to the bootstrap method.
+                             */
+                            List<JavaConstant> make(TypeDescription receiver, ByteCodeElement original, JavaConstant.MethodHandle methodHandle);
+                        }
+
+                        /**
+                         * A factory for a bootstrap argument resolver.
+                         */
+                        interface Factory {
+
+                            /**
+                             * Creates a bootstrap argument resolver for a given delegation method.
+                             *
+                             * @param delegate The method or constructor to which to delegate.
+                             * @return An appropriate bootstrap argument resolver.
+                             */
+                            BootstrapArgumentResolver make(MethodDescription.InDefinedShape delegate);
+                        }
+
+                        /**
+                         * An implementation that supplies a default set of arguments to a bootstrap method.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
+                        class ForDefaultValues implements BootstrapArgumentResolver, BootstrapArgumentResolver.Resolved {
+
+                            private final MethodDescription.InDefinedShape delegate;
+
+                            public ForDefaultValues(MethodDescription.InDefinedShape delegate) {
+                                this.delegate = delegate;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return this;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public List<JavaConstant> make(TypeDescription receiver, ByteCodeElement original, JavaConstant.MethodHandle methodHandle) {
+                                return Arrays.asList(JavaConstant.Simple.ofLoaded(delegate.getDeclaringType().asErasure().getName()),
+                                        JavaConstant.Simple.of(delegate.getReturnType().asErasure()),
+                                        JavaConstant.Simple.ofLoaded(delegate.getInternalName()),
+                                        JavaConstant.MethodHandle.of(delegate.asDefined()), methodHandle);
+                            }
+
+                            public enum Factory implements BootstrapArgumentResolver.Factory {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public BootstrapArgumentResolver make(MethodDescription.InDefinedShape delegate) {
+                                    return new ForDefaultValues(delegate);
+                                }
+                            }
+                        }
+                    }
+
+                    /**
+                     * <p>
+                     * Indicates that the annotated parameter should be mapped to the {@code this} reference of the substituted field,
+                     * method, constructor or of the instrumented method.
+                     * </p>
+                     * <p>
+                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.This} or
+                     * {@link net.bytebuddy.asm.Advice.This}. This annotation should be used only in combination with {@link ForDelegation}.
+                     * </p>
+                     *
+                     * @see ForDelegation
+                     */
+                    @Documented
+                    @Retention(RetentionPolicy.RUNTIME)
+                    @java.lang.annotation.Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.CONSTRUCTOR})
+                    public @interface This {
+
+                        /**
+                         * The typing that should be applied when assigning the {@code this} value.
+                         *
+                         * @return The typing to apply upon assignment.
+                         */
+                        Assigner.Typing typing() default Assigner.Typing.STATIC;
+
+                        /**
+                         * Determines the source that is considered for this annotation which can be either the substituted method,
+                         * constructor or field, or the instrumented method.
+                         *
+                         * @return The source that is considered for this annotation.
+                         */
+                        Source source() default Source.SUBSTITUTED_ELEMENT;
+
+                        /**
+                         * Determines if the parameter should be assigned {@code null} if no {@code this} parameter is available.
+                         *
+                         * @return {@code true} if the value assignment is optional.
+                         */
+                        boolean optional() default false;
+                    }
+
+                    /**
+                     * <p>
+                     * Indicates that the annotated parameter should be mapped to the parameter with index {@link Argument#value()}.
+                     * </p>
+                     * <p>
+                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Argument} or
+                     * {@link net.bytebuddy.asm.Advice.Argument}. This annotation should be used only in combination with {@link ForDelegation}.
+                     * </p>
+                     *
+                     * @see ForDelegation
+                     */
+                    @Documented
+                    @Retention(RetentionPolicy.RUNTIME)
+                    @java.lang.annotation.Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.CONSTRUCTOR})
+                    public @interface Argument {
+
+                        /**
+                         * Determines the index of the parameter that is being assigned.
+                         *
+                         * @return The index of the parameter that is being assigned.
+                         */
+                        int value();
+
+                        /**
+                         * The typing that should be applied when assigning the argument.
+                         *
+                         * @return The typing to apply upon assignment.
+                         */
+                        Assigner.Typing typing() default Assigner.Typing.STATIC;
+
+                        /**
+                         * Determines the source that is considered for this annotation which can be either the substituted method,
+                         * constructor or field, or the instrumented method.
+                         *
+                         * @return The source that is considered for this annotation.
+                         */
+                        Source source() default Source.SUBSTITUTED_ELEMENT;
+
+                        /**
+                         * Determines if the parameter should be assigned {@code null} if no argument with the specified index is available.
+                         *
+                         * @return {@code true} if the value assignment is optional.
+                         */
+                        boolean optional() default false;
+                    }
+
+                    /**
+                     * <p>
+                     * Assigns an array containing all arguments of the targeted element to the annotated parameter. The annotated parameter must
+                     * be an array type.
+                     * </p>
+                     * <p>
+                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.AllArguments} or
+                     * {@link net.bytebuddy.asm.Advice.AllArguments}. This annotation should be used only in combination with {@link ForDelegation}.
+                     * </p>
+                     *
+                     * @see ForDelegation
+                     */
+                    @Documented
+                    @Retention(RetentionPolicy.RUNTIME)
+                    @java.lang.annotation.Target(ElementType.PARAMETER)
+                    public @interface AllArguments {
+
+                        /**
+                         * The typing that should be applied when assigning the arguments to an array element.
+                         *
+                         * @return The typing to apply upon assignment.
+                         */
+                        Assigner.Typing typing() default Assigner.Typing.STATIC;
+
+                        /**
+                         * Determines the source that is considered for this annotation which can be either the substituted method,
+                         * constructor or field, or the instrumented method.
+                         *
+                         * @return The source that is considered for this annotation.
+                         */
+                        Source source() default Source.SUBSTITUTED_ELEMENT;
+
+                        /**
+                         * Determines if the produced array should include the instrumented method's target reference within the array, if
+                         * the targeted element is non-static.
+                         *
+                         * @return {@code true} if a possible {@code this} reference should be included in the assigned array.
+                         */
+                        boolean includeSelf() default false;
+
+                        /**
+                         * Determines if {@code null} should be assigned to the annotated parameter to the annotated parameter.
+                         *
+                         * @return {@code true} if {@code null} should be assigned to the annotated parameter to the annotated parameter.
+                         */
+                        boolean nullIfEmpty() default false;
+                    }
+
+                    /**
+                     * <p>
+                     * Indicates that the annotated parameter should load a {@code java.lang.invoke.MethodHandle} that represents an invocation of
+                     * the substituted expression or instrumented method. If the current method is virtual, it is bound to the current instance such
+                     * that the virtual hierarchy is avoided. This annotation cannot be used to acquire a handle on enclosing constructors.
+                     * </p>
+                     * <p>
+                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.SelfCallHandle}. This annotation should
+                     * be used only in combination with {@link ForDelegation}.
+                     * </p>
+                     *
+                     * @see Advice
+                     * @see Advice.OnMethodEnter
+                     * @see Advice.OnMethodExit
+                     */
+                    @Documented
+                    @Retention(RetentionPolicy.RUNTIME)
+                    @java.lang.annotation.Target(ElementType.PARAMETER)
+                    public @interface SelfCallHandle {
+
+                        /**
+                         * Determines the source that is considered for this annotation which can be either the substituted method,
+                         * constructor or field, or the instrumented method.
+                         *
+                         * @return The source that is considered for this annotation.
+                         */
+                        Source source() default Source.SUBSTITUTED_ELEMENT;
+
+                        /**
+                         * Determines if the method is bound to the arguments and instance of the represented invocation.
+                         *
+                         * @return {@code true} if the handle should be bound to the current arguments.
+                         */
+                        boolean bound() default true;
+                    }
+
+                    /**
+                     * <p>
+                     * Indicates that the annotated parameter should be mapped to a field in the scope of the instrumented type.
+                     * </p>
+                     * <p>
+                     * Setting {@link FieldValue#value()} is optional. If the value is not set, the field value attempts to bind a setter's
+                     * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
+                     * to be an illegal candidate for binding.
+                     * </p>
+                     * <p>
+                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldValue} or
+                     * {@link net.bytebuddy.asm.Advice.FieldValue}. This annotation should be used only in combination with {@link ForDelegation}.
+                     * </p>
+                     *
+                     * @see Advice
+                     * @see Advice.OnMethodEnter
+                     * @see Advice.OnMethodExit
+                     */
+                    @Documented
+                    @Retention(RetentionPolicy.RUNTIME)
+                    @java.lang.annotation.Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.CONSTRUCTOR})
+                    public @interface FieldValue {
+
+                        /**
+                         * Returns the name of the field.
+                         *
+                         * @return The name of the field.
+                         */
+                        String value() default Advice.OffsetMapping.ForField.Unresolved.BEAN_PROPERTY;
+
+                        /**
+                         * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
+                         * is set to {@code void}, the field is looked up implicitly within the instrumented class's class hierarchy.
+                         * The value can also be set to {@link TargetType} in order to look up the type on the instrumented type.
+                         *
+                         * @return The type that declares the field, {@code void} if this type should be determined implicitly or
+                         * {@link TargetType} for the instrumented type.
+                         */
+                        Class<?> declaringType() default void.class;
+
+                        /**
+                         * The typing that should be applied when assigning the field value.
+                         *
+                         * @return The typing to apply upon assignment.
+                         */
+                        Assigner.Typing typing() default Assigner.Typing.STATIC;
+                    }
+
+                    /**
+                     * <p>
+                     * Indicates that the annotated parameter should be mapped to a {@code java.lang.invoke.MethodHandle} representing a field getter.
+                     * </p>
+                     * <p>
+                     * Setting {@link FieldValue#value()} is optional. If the value is not set, the field value attempts to bind a setter's
+                     * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
+                     * to be an illegal candidate for binding.
+                     * </p>
+                     * <p>
+                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldGetterHandle} or
+                     * {@link net.bytebuddy.asm.Advice.FieldGetterHandle}. This annotation should be used only in combination with {@link ForDelegation}.
+                     * </p>
+                     *
+                     * @see Advice
+                     * @see Advice.OnMethodEnter
+                     * @see Advice.OnMethodExit
+                     */
+                    @Documented
+                    @Retention(RetentionPolicy.RUNTIME)
+                    @java.lang.annotation.Target(ElementType.PARAMETER)
+                    public @interface FieldGetterHandle {
+
+                        /**
+                         * Returns the name of the field.
+                         *
+                         * @return The name of the field.
+                         */
+                        String value() default OffsetMapping.ForFieldHandle.Unresolved.BEAN_PROPERTY;
+
+                        /**
+                         * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
+                         * is set to {@code void}, the field is looked up implicitly within the instrumented class's class hierarchy.
+                         * The value can also be set to {@link TargetType} in order to look up the type on the instrumented type.
+                         *
+                         * @return The type that declares the field, {@code void} if this type should be determined implicitly or
+                         * {@link TargetType} for the instrumented type.
+                         */
+                        Class<?> declaringType() default void.class;
+                    }
+
+                    /**
+                     * <p>
+                     * Indicates that the annotated parameter should be mapped to a {@code java.lang.invoke.MethodHandle} representing a field setter.
+                     * </p>
+                     * <p>
+                     * Setting {@link FieldValue#value()} is optional. If the value is not set, the field value attempts to bind a setter's
+                     * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
+                     * to be an illegal candidate for binding.
+                     * </p>
+                     * <p>
+                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldSetterHandle} or
+                     * {@link net.bytebuddy.asm.Advice.FieldSetterHandle}. This annotation should be used only in combination with {@link ForDelegation}.
+                     * </p>
+                     *
+                     * @see Advice
+                     * @see Advice.OnMethodEnter
+                     * @see Advice.OnMethodExit
+                     */
+                    @Documented
+                    @Retention(RetentionPolicy.RUNTIME)
+                    @java.lang.annotation.Target(ElementType.PARAMETER)
+                    public @interface FieldSetterHandle {
+
+                        /**
+                         * Returns the name of the field.
+                         *
+                         * @return The name of the field.
+                         */
+                        String value() default OffsetMapping.ForFieldHandle.Unresolved.BEAN_PROPERTY;
+
+                        /**
+                         * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
+                         * is set to {@code void}, the field is looked up implicitly within the instrumented class's class hierarchy.
+                         * The value can also be set to {@link TargetType} in order to look up the type on the instrumented type.
+                         *
+                         * @return The type that declares the field, {@code void} if this type should be determined implicitly or
+                         * {@link TargetType} for the instrumented type.
+                         */
+                        Class<?> declaringType() default void.class;
+                    }
+
+                    @Documented
+                    @Retention(RetentionPolicy.RUNTIME)
+                    @java.lang.annotation.Target(ElementType.PARAMETER)
+                    public @interface Origin {
+
+                        /**
+                         * Determines the source that is considered for this annotation which can be either the substituted method,
+                         * constructor or field, or the instrumented method.
+                         *
+                         * @return The source that is considered for this annotation.
+                         */
+                        Source source() default Source.SUBSTITUTED_ELEMENT;
+                    }
+
+                    /**
+                     * <p>
+                     * Indicates that the annotated parameter should always return a default a boxed version of the instrumented methods return value
+                     * (i.e. {@code 0} for numeric values, {@code false} for {@code boolean} types and {@code null} for reference types). The annotated
+                     * parameter must be of type {@link Object} and cannot be assigned a value.
+                     * </p>
+                     * <p>
+                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.StubValue} or
+                     * {@link Unused}. This annotation should
+                     * be used only in combination with {@link Advice}.
+                     * </p>
+                     *
+                     * @see Advice
+                     * @see Advice.OnMethodEnter
+                     * @see Advice.OnMethodExit
+                     */
+                    @Documented
+                    @Retention(RetentionPolicy.RUNTIME)
+                    @java.lang.annotation.Target(ElementType.PARAMETER)
+                    public @interface Unused {
+                        /* empty */
+                    }
+
+                    @Documented
+                    @Retention(RetentionPolicy.RUNTIME)
+                    @java.lang.annotation.Target(ElementType.PARAMETER)
+                    public @interface StubValue {
+                        /* empty */
+                    }
+
+                    /**
+                     * Indicates that the annotated parameter should be assigned the value of the result yielded by the previous chain
+                     * expression.
+                     *
+                     * @see ForDelegation
+                     */
+                    @Documented
+                    @Retention(RetentionPolicy.RUNTIME)
+                    @java.lang.annotation.Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.CONSTRUCTOR})
+                    public @interface Current {
+
+                        /**
+                         * The typing that should be applied when assigning the latest stack value.
+                         *
+                         * @return The typing to apply upon assignment.
+                         */
+                        Assigner.Typing typing() default Assigner.Typing.STATIC;
+                    }
+
+                    /**
+                     * Identifies the source of an instruction that might describe a value of the substituted element
+                     * or the instrumented method.
+                     */
+                    public enum Source {
+
+                        /**
+                         * Indicates that an element should be loaded in context of the substituted method, constructor or field.
+                         */
+                        SUBSTITUTED_ELEMENT {
+                            @Override
+                            protected ByteCodeElement element(ByteCodeElement original, MethodDescription instrumentedMethod) {
+                                return original;
+                            }
+
+                            @Override
+                            @MaybeNull
+                            protected Source.Value self(TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement original, MethodDescription instrumentedMethod) {
+                                return original.isStatic()
+                                        ? null
+                                        : new Source.Value(parameters.get(0), offsets.get(0)); // TODO: constant
+                            }
+
+                            @Override
+                            @MaybeNull
+                            protected Source.Value argument(int index, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement original, MethodDescription instrumentedMethod) {
+                                return index < parameters.size() - (original.isStatic() ? 0 : 1)
+                                        ? new Source.Value(parameters.get(index + (original.isStatic() ? 0 : 1)), offsets.get(index + (original.isStatic() ? 0 : 1)))
+                                        : null;
+                            }
+
+                            @Override
+                            protected List<Source.Value> arguments(boolean includesSelf,
+                                                                   TypeList.Generic parameters,
+                                                                   Map<Integer, Integer> offsets,
+                                                                   ByteCodeElement original,
+                                                                   MethodDescription instrumentedMethod) {
+                                List<Source.Value> values = new ArrayList<Source.Value>(parameters.size() - (!includesSelf && !original.isStatic() ? 1 : 0));
+                                for (int index = original.isStatic() || includesSelf ? 0 : 1; index < parameters.size(); index++) {
+                                    values.add(new Source.Value(parameters.get(index), offsets.get(index)));
+                                }
+                                return values;
+                            }
+
+                            @Override
+                            protected JavaConstant.MethodHandle handle(JavaConstant.MethodHandle methodHandle, MethodDescription instrumentedMethod) {
+                                return methodHandle;
+                            }
+
+                            @Override
+                            protected boolean isRepresentable(OffsetMapping.ForOrigin.Sort sort, ByteCodeElement original, MethodDescription instrumentedMethod) {
+                                return sort.isRepresentable(original);
+                            }
+
+                            @Override
+                            protected StackManipulation resolve(OffsetMapping.ForOrigin.Sort sort,
+                                                                ByteCodeElement original,
+                                                                TypeList.Generic parameters,
+                                                                TypeDescription.Generic result,
+                                                                MethodDescription instrumentedMethod) {
+                                return sort.resolve(original, parameters.asErasures(), result.asErasure());
+                            }
+                        },
+
+                        /**
+                         * Indicates that an element should be loaded in context of the instrumented method.
+                         */
+                        ENCLOSING_METHOD {
+                            @Override
+                            protected ByteCodeElement element(ByteCodeElement original, MethodDescription instrumentedMethod) {
+                                return instrumentedMethod;
+                            }
+
+                            @Override
+                            @MaybeNull
+                            protected Source.Value self(TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement original, MethodDescription instrumentedMethod) {
+                                return instrumentedMethod.isStatic() ? null : new Source.Value(instrumentedMethod.getDeclaringType().asGenericType(), 0); // TODO: constant
+                            }
+
+                            @Override
+                            @MaybeNull
+                            protected Source.Value argument(int index, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement original, MethodDescription instrumentedMethod) {
+                                if (index < instrumentedMethod.getParameters().size()) {
+                                    ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(index);
+                                    return new Source.Value(parameterDescription.getType(), parameterDescription.getOffset());
+                                } else {
+                                    return null;
+                                }
+                            }
+
+                            @Override
+                            protected List<Source.Value> arguments(boolean includesSelf, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement original, MethodDescription instrumentedMethod) {
+                                List<Source.Value> values;
+                                if (includesSelf && !instrumentedMethod.isStatic()) {
+                                    values = new ArrayList<Source.Value>(instrumentedMethod.getParameters().size() + 1);
+                                    values.add(new Source.Value(instrumentedMethod.getDeclaringType().asGenericType(), 0)); // TODO: constant
+                                } else {
+                                    values = new ArrayList<Source.Value>(instrumentedMethod.getParameters().size());
+                                }
+                                for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
+                                    values.add(new Source.Value(parameterDescription.getType(), parameterDescription.getOffset()));
+                                }
+                                return values;
+                            }
+
+                            @Override
+                            protected JavaConstant.MethodHandle handle(JavaConstant.MethodHandle methodHandle, MethodDescription instrumentedMethod) {
+                                return JavaConstant.MethodHandle.of(instrumentedMethod.asDefined());
+                            }
+
+                            @Override
+                            protected boolean isRepresentable(OffsetMapping.ForOrigin.Sort sort, ByteCodeElement original, MethodDescription instrumentedMethod) {
+                                return sort.isRepresentable(instrumentedMethod);
+                            }
+
+                            @Override
+                            protected StackManipulation resolve(OffsetMapping.ForOrigin.Sort sort,
+                                                                ByteCodeElement original,
+                                                                TypeList.Generic parameters,
+                                                                TypeDescription.Generic result,
+                                                                MethodDescription instrumentedMethod) {
+                                return sort.resolve(instrumentedMethod, instrumentedMethod.getParameters().asTypeList().asErasures(), instrumentedMethod.getReturnType().asErasure());
+                            }
+                        };
+
+                        /**
+                         * Resolves the targeted byte code element.
+                         *
+                         * @param original           The substituted element.
+                         * @param instrumentedMethod The instrumented element.
+                         * @return The byte code element that is represented by this source.
+                         */
+                        protected abstract ByteCodeElement element(ByteCodeElement original, MethodDescription instrumentedMethod);
+
+                        /**
+                         * Resolves a value representation of the {@code this} reference or {@code null} if no such reference is available.
+                         *
+                         * @param parameters         The list of parameters of the substituted element.
+                         * @param offsets            A mapping of offsets of parameter indices to offsets.
+                         * @param original           The substituted element.
+                         * @param instrumentedMethod The instrumented method.
+                         * @return A representation of the {@code this} reference or {@code null} if no such reference is available.
+                         */
+                        @MaybeNull
+                        protected abstract Source.Value self(TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement original, MethodDescription instrumentedMethod);
+
+                        /**
+                         * Resolves a value representation of the parameter of the specified index or {@code null} if no such parameter is available.
+                         *
+                         * @param index              The index of the targeted parameter.
+                         * @param parameters         The list of parameters of the substituted element.
+                         * @param offsets            A mapping of offsets of parameter indices to offsets.
+                         * @param original           The substituted element.
+                         * @param instrumentedMethod The instrumented method.
+                         * @return A representation of the parameter of the specified index or {@code null} if no such parameter is available.
+                         */
+                        @MaybeNull
+                        protected abstract Source.Value argument(int index, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement original, MethodDescription instrumentedMethod);
+
+                        /**
+                         * Resolves a list of value representation of all parameters.
+                         *
+                         * @param includesSelf       {@code true} if the {@code this} reference should be included if available.
+                         * @param parameters         The list of parameters of the substituted element.
+                         * @param offsets            A mapping of offsets of parameter indices to offsets.
+                         * @param original           The substituted element.
+                         * @param instrumentedMethod The instrumented method.
+                         * @return A list of representation of all values of all parameters.
+                         */
+                        protected abstract List<Source.Value> arguments(boolean includesSelf, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement original, MethodDescription instrumentedMethod);
+
+                        /**
+                         * Resolves a method handle.
+                         *
+                         * @param methodHandle       A method handle of the substituted element.
+                         * @param instrumentedMethod The instrumented method.
+                         * @return An appropriate method handle.
+                         */
+                        protected abstract JavaConstant.MethodHandle handle(JavaConstant.MethodHandle methodHandle, MethodDescription instrumentedMethod);
+
+                        /**
+                         * Validates if the supplied origin sort is representable.
+                         *
+                         * @param sort               The sort of origin.
+                         * @param original           The substituted element.
+                         * @param instrumentedMethod The instrumented method.
+                         * @return {@code true} if the supplied sort of origin is representable.
+                         */
+                        protected abstract boolean isRepresentable(OffsetMapping.ForOrigin.Sort sort, ByteCodeElement original, MethodDescription instrumentedMethod);
+
+                        /**
+                         * Resolves a stack manipulation that loads the supplied sort of origin onto the operand stack.
+                         *
+                         * @param sort               The sort of origin.
+                         * @param original           The substituted element.
+                         * @param parameters         The parameters to the substituted element.
+                         * @param result           The type upon which the substituted element is invoked.
+                         * @param instrumentedMethod The instrumented method.
+                         * @return A stack manipulation loading the supplied sort of origin onto the operand stack.
+                         */
+                        protected abstract StackManipulation resolve(OffsetMapping.ForOrigin.Sort sort,
+                                                                     ByteCodeElement original,
+                                                                     TypeList.Generic parameters,
+                                                                     TypeDescription.Generic result,
+                                                                     MethodDescription instrumentedMethod);
+
+                        /**
+                         * Represents a value that can be loaded from a given offset.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
+                        protected static class Value {
+
+                            /**
+                             * The type of the loaded value.
+                             */
+                            private final TypeDescription.Generic typeDescription;
+
+                            /**
+                             * The offset of the loaded value.
+                             */
+                            private final int offset;
+
+                            /**
+                             * Creates a value representation.
+                             *
+                             * @param typeDescription The type of the loaded value.
+                             * @param offset          The offset of the loaded value.
+                             */
+                            protected Value(TypeDescription.Generic typeDescription, int offset) {
+                                this.typeDescription = typeDescription;
+                                this.offset = offset;
+                            }
+
+                            /**
+                             * Returns the type of the loaded value.
+                             *
+                             * @return The type of the loaded value.
+                             */
+                            protected TypeDescription.Generic getTypeDescription() {
+                                return typeDescription;
+                            }
+
+                            /**
+                             * Returns the offset of the loaded value.
+                             *
+                             * @return The offset of the loaded value.
+                             */
+                            protected int getOffset() {
+                                return offset;
+                            }
+                        }
+                    }
+
+                    public static class WithCustomMapping {
+
+                        private final Dispatcher.Factory dispatcherFactory;
+
+                        private final Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings;
+
+                        protected WithCustomMapping(Dispatcher.Factory dispatcherFactory, Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings) {
+                            this.dispatcherFactory = dispatcherFactory;
+                            this.offsetMappings = offsetMappings;
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bind(Class<T> type, @MaybeNull Object value) {
+                            return bind(OffsetMapping.ForStackManipulation.of(type, value));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bind(Class<T> type, Field field) {
+                            return bind(type, new FieldDescription.ForLoadedField(field));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bind(Class<T> type, FieldDescription fieldDescription) {
+                            return bind(new OffsetMapping.ForField.Resolved.Factory<T>(type, fieldDescription));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bind(Class<T> type, Class<?> value) {
+                            return bind(type, TypeDescription.ForLoadedType.of(value));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bind(Class<T> type, TypeDescription value) {
+                            return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, ConstantValue.Simple.wrap(value)));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bind(Class<T> type, Enum<?> value) {
+                            return bind(type, new EnumerationDescription.ForLoadedEnumeration(value));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bind(Class<T> type, EnumerationDescription value) {
+                            return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, ConstantValue.Simple.wrap(value)));
+                        }
+
+                        @SuppressWarnings("unchecked")
+                        public <T extends Annotation> WithCustomMapping bindSerialized(Class<T> type, Serializable value) {
+                            return bindSerialized(type, value, (Class<Serializable>) value.getClass());
+                        }
+
+                        public <T extends Annotation, S extends Serializable> WithCustomMapping bindSerialized(Class<T> type, S value, Class<? super S> targetType) {
+                            return bind(OffsetMapping.ForStackManipulation.OfSerializedConstant.of(type, value, targetType));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bindProperty(Class<T> type, String property) {
+                            return bind(OffsetMapping.ForStackManipulation.OfAnnotationProperty.of(type, property));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bind(Class<T> type, ConstantValue constant) {
+                            return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, constant.toStackManipulation(), constant.getTypeDescription().asGenericType()));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bind(Class<T> type, StackManipulation stackManipulation, java.lang.reflect.Type targetType) {
+                            return bind(type, stackManipulation, TypeDefinition.Sort.describe(targetType));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bind(Class<T> type, StackManipulation stackManipulation, TypeDescription.Generic targetType) {
+                            return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, stackManipulation, targetType));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type, Constructor<?> constructor, Class<?> functionalInterface) {
+                            return bindLambda(type, new MethodDescription.ForLoadedConstructor(constructor), TypeDescription.ForLoadedType.of(functionalInterface));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type, Constructor<?> constructor, Class<?> functionalInterface, MethodGraph.Compiler methodGraphCompiler) {
+                            return bindLambda(type, new MethodDescription.ForLoadedConstructor(constructor), TypeDescription.ForLoadedType.of(functionalInterface), methodGraphCompiler);
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type, Method method, Class<?> functionalInterface) {
+                            return bindLambda(type, new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type, Method method, Class<?> functionalInterface, MethodGraph.Compiler methodGraphCompiler) {
+                            return bindLambda(type, new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface), methodGraphCompiler);
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type, MethodDescription.InDefinedShape methodDescription, TypeDescription functionalInterface) {
+                            return bindLambda(type, methodDescription, functionalInterface, MethodGraph.Compiler.DEFAULT);
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type,
+                                                                                   MethodDescription.InDefinedShape methodDescription,
+                                                                                   TypeDescription functionalInterface,
+                                                                                   MethodGraph.Compiler methodGraphCompiler) {
+                            if (!functionalInterface.isInterface()) {
+                                throw new IllegalArgumentException(functionalInterface + " is not an interface type");
+                            }
+                            MethodList<?> methods = methodGraphCompiler.compile((TypeDefinition) functionalInterface).listNodes().asMethodList().filter(isAbstract());
+                            if (methods.size() != 1) {
+                                throw new IllegalArgumentException(functionalInterface + " does not define exactly one abstract method: " + methods);
+                            }
+                            return bindDynamic(type, new MethodDescription.Latent(new TypeDescription.Latent("java.lang.invoke.LambdaMetafactory",
+                                            Opcodes.ACC_PUBLIC,
+                                            TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)),
+                                            "metafactory",
+                                            Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
+                                            Collections.<TypeVariableToken>emptyList(),
+                                            JavaType.CALL_SITE.getTypeStub().asGenericType(),
+                                            Arrays.asList(
+                                                    new ParameterDescription.Token(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().asGenericType()),
+                                                    new ParameterDescription.Token(TypeDescription.ForLoadedType.of(String.class).asGenericType()),
+                                                    new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
+                                                    new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
+                                                    new ParameterDescription.Token(JavaType.METHOD_HANDLE.getTypeStub().asGenericType()),
+                                                    new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType())),
+                                            Collections.<TypeDescription.Generic>emptyList(),
+                                            Collections.<AnnotationDescription>emptyList(),
+                                            AnnotationValue.UNDEFINED,
+                                            TypeDescription.Generic.UNDEFINED),
+                                    JavaConstant.MethodType.of(methods.asDefined().getOnly()),
+                                    JavaConstant.MethodHandle.of(methodDescription),
+                                    JavaConstant.MethodType.of(methods.asDefined().getOnly()));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Method bootstrapMethod, Object... constant) {
+                            return bindDynamic(type, bootstrapMethod, Arrays.asList(constant));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Method bootstrapMethod, List<?> constants) {
+                            return bindDynamic(type, new MethodDescription.ForLoadedMethod(bootstrapMethod), constants);
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Constructor<?> bootstrapMethod, Object... constant) {
+                            return bindDynamic(type, bootstrapMethod, Arrays.asList(constant));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Constructor<?> bootstrapMethod, List<?> constants) {
+                            return bindDynamic(type, new MethodDescription.ForLoadedConstructor(bootstrapMethod), constants);
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, MethodDescription.InDefinedShape bootstrapMethod, Object... constant) {
+                            return bindDynamic(type, bootstrapMethod, Arrays.asList(constant));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, MethodDescription.InDefinedShape bootstrapMethod, List<?> constants) {
+                            List<JavaConstant> arguments = JavaConstant.Simple.wrap(constants);
+                            if (!bootstrapMethod.isInvokeBootstrap(TypeList.Explicit.of(arguments))) {
+                                throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrapMethod + " for " + arguments);
+                            }
+                            return bind(new OffsetMapping.ForStackManipulation.OfDynamicInvocation<T>(type, bootstrapMethod, arguments));
+                        }
+
+                        public <T extends Annotation> WithCustomMapping bind(Class<T> type, OffsetMapping offsetMapping) {
+                            return bind(new OffsetMapping.Factory.Simple<T>(type, offsetMapping));
+                        }
+
+                        public WithCustomMapping bind(OffsetMapping.Factory<?> offsetMapping) {
+                            Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings = new LinkedHashMap<Class<? extends Annotation>, OffsetMapping.Factory<?>>(this.offsetMappings);
+                            if (!offsetMapping.getAnnotationType().isAnnotation()) {
+                                throw new IllegalArgumentException("Not an annotation type: " + offsetMapping.getAnnotationType());
+                            } else if (offsetMappings.put(offsetMapping.getAnnotationType(), offsetMapping) != null) {
+                                throw new IllegalArgumentException("Annotation type already mapped: " + offsetMapping.getAnnotationType());
+                            }
+                            return new WithCustomMapping(dispatcherFactory, offsetMappings);
+                        }
+
+                        public WithCustomMapping bootstrap(Constructor<?> constructor) {
+                            return bootstrap(new MethodDescription.ForLoadedConstructor(constructor));
+                        }
+
+                        public WithCustomMapping bootstrap(Constructor<?> constructor, BootstrapArgumentResolver.Factory resolverFactory) {
+                            return bootstrap(new MethodDescription.ForLoadedConstructor(constructor), resolverFactory);
+                        }
+
+                        public WithCustomMapping bootstrap(Method method) {
+                            return bootstrap(new MethodDescription.ForLoadedMethod(method));
+                        }
+
+                        public WithCustomMapping bootstrap(Method method, BootstrapArgumentResolver.Factory resolver) {
+                            return bootstrap(new MethodDescription.ForLoadedMethod(method), resolver);
+                        }
+
+                        public WithCustomMapping bootstrap(MethodDescription.InDefinedShape bootstrap) {
+                            return bootstrap(bootstrap, BootstrapArgumentResolver.ForDefaultValues.Factory.INSTANCE);
+                        }
+
+                        public WithCustomMapping bootstrap(MethodDescription.InDefinedShape bootstrap, BootstrapArgumentResolver.Factory resolverFactory) {
+                            return new WithCustomMapping(Dispatcher.ForDynamicInvocation.of(bootstrap, resolverFactory), offsetMappings);
+                        }
+
+                        public Step.Factory of(Method method) {
+                            return of(new MethodDescription.ForLoadedMethod(method));
+                        }
+
+                        public Step.Factory of(Constructor<?> constructor) {
+                            return of(new MethodDescription.ForLoadedConstructor(constructor));
+                        }
+
+                        public Step.Factory of(MethodDescription.InDefinedShape delegate) {
+                            return ForDelegation.of(delegate, dispatcherFactory, new ArrayList<OffsetMapping.Factory<?>>(offsetMappings.values()));
                         }
                     }
                 }
@@ -2231,6 +5700,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * A factory for creating a substitution chain.
              */
+            @HashCodeAndEqualsPlugin.Enhance
             public static class Factory implements Substitution.Factory {
 
                 /**
@@ -2312,10 +5782,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param writeAccess        {@code true} if this field was written to.
          * @return A binding for the discovered field access.
          */
-        Binding bind(TypeDescription instrumentedType,
-                     MethodDescription instrumentedMethod,
-                     FieldDescription.InDefinedShape fieldDescription,
-                     boolean writeAccess);
+        Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, FieldDescription.InDefinedShape fieldDescription, boolean writeAccess);
 
         /**
          * Binds this replacement for a field that was discovered.
@@ -2327,11 +5794,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param invocationType     The invocation type for this method.
          * @return A binding for the discovered method invocation.
          */
-        Binding bind(TypeDescription instrumentedType,
-                     MethodDescription instrumentedMethod,
-                     TypeDescription typeDescription,
-                     MethodDescription methodDescription,
-                     InvocationType invocationType);
+        Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, MethodDescription methodDescription, InvocationType invocationType);
 
         /**
          * A binding for a replacement of a field or method access within another method.
@@ -2348,15 +5811,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * Creates a stack manipulation that represents the substitution. This method can only be called for actually bound bindings.
              *
-             * @param parameters The parameters that are accessible to the substitution target.
-             * @param result     The result that is expected from the substitution target or {@code void} if none is expected.
-             * @param original   The original byte code expression that is being substituted.
-             * @param freeOffset The first offset that can be used for storing local variables.
+             * @param parameters        The parameters that are accessible to the substitution target.
+             * @param result            The result that is expected from the substitution target or {@code void} if none is expected.
+             * @param methodHandle      A method handle that represents the original expression that is being substituted.
+             * @param stackManipulation The original byte code expression that is being substituted.
+             * @param freeOffset        The first offset that can be used for storing local variables.
              * @return A stack manipulation that represents the replacement.
              */
             StackManipulation make(TypeList.Generic parameters,
                                    TypeDescription.Generic result,
-                                   StackManipulation original,
+                                   JavaConstant.MethodHandle methodHandle,
+                                   StackManipulation stackManipulation,
                                    int freeOffset);
 
             /**
@@ -2379,10 +5844,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * {@inheritDoc}
                  */
-                public StackManipulation make(TypeList.Generic parameters,
-                                              TypeDescription.Generic result,
-                                              StackManipulation original,
-                                              int freeOffset) {
+                public StackManipulation make(TypeList.Generic parameters, TypeDescription.Generic result, JavaConstant.MethodHandle methodHandle, StackManipulation stackManipulation, int freeOffset) {
                     throw new IllegalStateException("Cannot resolve unresolved binding");
                 }
             }
@@ -2396,12 +5858,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * The type on which a field or method was accessed.
                  */
-                private final TypeDescription targetType;
+                private final TypeDescription receiver;
 
                 /**
                  * The field or method that was accessed.
                  */
-                private final ByteCodeElement target;
+                private final ByteCodeElement original;
 
                 /**
                  * The substitution to apply.
@@ -2411,15 +5873,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * Creates a new resolved binding.
                  *
-                 * @param targetType   The type on which a field or method was accessed.
-                 * @param target       The field or method that was accessed.
+                 * @param receiver     The type on which a field or method was accessed.
+                 * @param original     The field or method that was accessed.
                  * @param substitution The substitution to apply.
                  */
-                protected Resolved(TypeDescription targetType,
-                                   ByteCodeElement target,
-                                   Substitution substitution) {
-                    this.targetType = targetType;
-                    this.target = target;
+                protected Resolved(TypeDescription receiver, ByteCodeElement original, Substitution substitution) {
+                    this.receiver = receiver;
+                    this.original = original;
                     this.substitution = substitution;
                 }
 
@@ -2433,11 +5893,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * {@inheritDoc}
                  */
-                public StackManipulation make(TypeList.Generic parameters,
-                                              TypeDescription.Generic result,
-                                              StackManipulation original,
-                                              int freeOffset) {
-                    return substitution.resolve(targetType, target, parameters, result, original, freeOffset);
+                public StackManipulation make(TypeList.Generic parameters, TypeDescription.Generic result, JavaConstant.MethodHandle methodHandle, StackManipulation stackManipulation, int freeOffset) {
+                    return substitution.resolve(receiver, original, parameters, result, methodHandle, stackManipulation, freeOffset);
                 }
             }
         }
@@ -2539,9 +5996,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     case Opcodes.INVOKEINTERFACE:
                         return InvocationType.VIRTUAL;
                     case Opcodes.INVOKESPECIAL:
-                        return methodDescription.isVirtual()
-                                ? SUPER
-                                : OTHER;
+                        return methodDescription.isVirtual() ? SUPER : OTHER;
                     default:
                         return OTHER;
                 }
@@ -2586,10 +6041,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Binding bind(TypeDescription instrumentedType,
-                                MethodDescription instrumentedMethod,
-                                FieldDescription.InDefinedShape fieldDescription,
-                                boolean writeAccess) {
+            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, FieldDescription.InDefinedShape fieldDescription, boolean writeAccess) {
                 return Binding.Unresolved.INSTANCE;
             }
 
@@ -2676,10 +6128,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Binding bind(TypeDescription instrumentedType,
-                                MethodDescription instrumentedMethod,
-                                FieldDescription.InDefinedShape fieldDescription,
-                                boolean writeAccess) {
+            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, FieldDescription.InDefinedShape fieldDescription, boolean writeAccess) {
                 return (writeAccess ? matchFieldWrite : matchFieldRead) && fieldMatcher.matches(fieldDescription)
                         ? new Binding.Resolved(fieldDescription.getDeclaringType(), fieldDescription, substitution)
                         : Binding.Unresolved.INSTANCE;
@@ -2688,11 +6137,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Binding bind(TypeDescription instrumentedType,
-                                MethodDescription instrumentedMethod,
-                                TypeDescription typeDescription,
-                                MethodDescription methodDescription,
-                                InvocationType invocationType) {
+            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, MethodDescription methodDescription, InvocationType invocationType) {
                 return invocationType.matches(includeVirtualCalls, includeSuperCalls) && methodMatcher.matches(methodDescription)
                         ? new Binding.Resolved(typeDescription, methodDescription, substitution)
                         : Binding.Unresolved.INSTANCE;
@@ -2786,10 +6231,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param factory         The substitution factory to apply for fields that match the specified criteria.
                  * @return An appropriate replacement factory.
                  */
-                protected static Replacement.Factory ofField(ElementMatcher<? super FieldDescription.InDefinedShape> matcher,
-                                                             boolean matchFieldRead,
-                                                             boolean matchFieldWrite,
-                                                             Substitution.Factory factory) {
+                protected static Replacement.Factory ofField(ElementMatcher<? super FieldDescription.InDefinedShape> matcher, boolean matchFieldRead, boolean matchFieldWrite, Substitution.Factory factory) {
                     return new Factory(matcher, none(), matchFieldRead, matchFieldWrite, false, false, factory);
                 }
 
@@ -2802,10 +6244,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param factory             The substitution factory to apply for methods and constructors that match the specified criteria.
                  * @return An appropriate replacement factory.
                  */
-                protected static Replacement.Factory ofMethod(ElementMatcher<? super MethodDescription> matcher,
-                                                              boolean includeVirtualCalls,
-                                                              boolean includeSuperCalls,
-                                                              Substitution.Factory factory) {
+                protected static Replacement.Factory ofMethod(ElementMatcher<? super MethodDescription> matcher, boolean includeVirtualCalls, boolean includeSuperCalls, Substitution.Factory factory) {
                     return new Factory(none(), matcher, false, false, includeVirtualCalls, includeSuperCalls, factory);
                 }
 
@@ -2847,10 +6286,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Binding bind(TypeDescription instrumentedType,
-                                MethodDescription instrumentedMethod,
-                                FieldDescription.InDefinedShape fieldDescription,
-                                boolean writeAccess) {
+            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, FieldDescription.InDefinedShape fieldDescription, boolean writeAccess) {
                 for (Replacement replacement : replacements) {
                     Binding binding = replacement.bind(instrumentedType, instrumentedMethod, fieldDescription, writeAccess);
                     if (binding.isBound()) {
@@ -2863,11 +6299,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Binding bind(TypeDescription instrumentedType,
-                                MethodDescription instrumentedMethod,
-                                TypeDescription typeDescription,
-                                MethodDescription methodDescription,
-                                InvocationType invocationType) {
+            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, MethodDescription methodDescription, InvocationType invocationType) {
                 for (Replacement replacement : replacements) {
                     Binding binding = replacement.bind(instrumentedType, instrumentedMethod, typeDescription, methodDescription, invocationType);
                     if (binding.isBound()) {
@@ -2977,10 +6409,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         ? ElementMatchers.<FieldDescription>named(internalName).and(hasDescriptor(descriptor))
                         : ElementMatchers.<FieldDescription>failSafe(named(internalName).and(hasDescriptor(descriptor))));
                 if (!candidates.isEmpty()) {
-                    Replacement.Binding binding = replacement.bind(instrumentedType,
-                            instrumentedMethod,
-                            candidates.getOnly(),
-                            opcode == Opcodes.PUTFIELD || opcode == Opcodes.PUTSTATIC);
+                    Replacement.Binding binding = replacement.bind(instrumentedType, instrumentedMethod, candidates.getOnly(), opcode == Opcodes.PUTFIELD || opcode == Opcodes.PUTSTATIC);
                     if (binding.isBound()) {
                         TypeList.Generic parameters;
                         TypeDescription.Generic result;
@@ -3010,16 +6439,18 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
                         stackSizeBuffer = Math.max(stackSizeBuffer, binding.make(parameters,
-                                        result,
-                                        read ? FieldAccess.forField(candidates.getOnly()).read() : FieldAccess.forField(candidates.getOnly()).write(),
-                                        getFreeOffset())
-                                .apply(new LocalVariableTracingMethodVisitor(mv), implementationContext)
-                                .getMaximalSize() - result.getStackSize().getSize());
+                                result,
+                                read
+                                        ? JavaConstant.MethodHandle.ofGetter(candidates.getOnly())
+                                        : JavaConstant.MethodHandle.ofSetter(candidates.getOnly()),
+                                read
+                                        ? FieldAccess.forField(candidates.getOnly()).read()
+                                        : FieldAccess.forField(candidates.getOnly()).write(),
+                                getFreeOffset()).apply(new LocalVariableTracingMethodVisitor(mv), implementationContext).getMaximalSize() - result.getStackSize().getSize());
                         return;
                     }
                 } else if (strict) {
-                    throw new IllegalStateException("Could not resolve " + owner.replace('/', '.')
-                            + "." + internalName + descriptor + " using " + typePool);
+                    throw new IllegalStateException("Could not resolve " + owner.replace('/', '.') + "." + internalName + descriptor + " using " + typePool);
                 }
             } else if (strict) {
                 throw new IllegalStateException("Could not resolve " + owner.replace('/', '.') + " using " + typePool);
@@ -3062,34 +6493,32 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             Replacement.InvocationType.of(opcode, candidates.getOnly()));
                     if (binding.isBound()) {
                         stackSizeBuffer = Math.max(stackSizeBuffer, binding.make(
-                                        candidates.getOnly().isStatic() || candidates.getOnly().isConstructor()
-                                                ? candidates.getOnly().getParameters().asTypeList()
-                                                : new TypeList.Generic.Explicit(CompoundList.of(resolution.resolve(), candidates.getOnly().getParameters().asTypeList())),
-                                        candidates.getOnly().isConstructor()
-                                                ? candidates.getOnly().getDeclaringType().asGenericType()
-                                                : candidates.getOnly().getReturnType(),
-                                        opcode == Opcodes.INVOKESPECIAL && candidates.getOnly().isMethod() && !candidates.getOnly().isPrivate()
-                                                ? MethodInvocation.invoke(candidates.getOnly()).special(resolution.resolve())
-                                                : MethodInvocation.invoke(candidates.getOnly()),
-                                        getFreeOffset())
-                                .apply(new LocalVariableTracingMethodVisitor(mv), implementationContext).getMaximalSize() - (candidates.getOnly().isConstructor()
+                                candidates.getOnly().isStatic() || candidates.getOnly().isConstructor()
+                                        ? candidates.getOnly().getParameters().asTypeList()
+                                        : new TypeList.Generic.Explicit(CompoundList.of(resolution.resolve(), candidates.getOnly().getParameters().asTypeList())),
+                                candidates.getOnly().isConstructor()
+                                        ? candidates.getOnly().getDeclaringType().asGenericType()
+                                        : candidates.getOnly().getReturnType(),
+                                opcode == Opcodes.INVOKESPECIAL && candidates.getOnly().isMethod() && !candidates.getOnly().isPrivate()
+                                        ? JavaConstant.MethodHandle.ofSpecial(candidates.getOnly().asDefined(), resolution.resolve())
+                                        : JavaConstant.MethodHandle.of(candidates.getOnly().asDefined()),
+                                opcode == Opcodes.INVOKESPECIAL && candidates.getOnly().isMethod() && !candidates.getOnly().isPrivate()
+                                        ? MethodInvocation.invoke(candidates.getOnly()).special(resolution.resolve())
+                                        : MethodInvocation.invoke(candidates.getOnly()), getFreeOffset()).apply(new LocalVariableTracingMethodVisitor(mv), implementationContext).getMaximalSize() - (candidates.getOnly().isConstructor()
                                 ? StackSize.SINGLE
                                 : candidates.getOnly().getReturnType().getStackSize()).getSize());
                         if (candidates.getOnly().isConstructor()) {
-                            stackSizeBuffer = Math.max(stackSizeBuffer, new StackManipulation.Compound(
-                                    Duplication.SINGLE.flipOver(TypeDescription.ForLoadedType.of(Object.class)),
+                            stackSizeBuffer = Math.max(stackSizeBuffer, new StackManipulation.Compound(Duplication.SINGLE.flipOver(TypeDescription.ForLoadedType.of(Object.class)),
                                     Removal.SINGLE,
                                     Removal.SINGLE,
                                     Duplication.SINGLE.flipOver(TypeDescription.ForLoadedType.of(Object.class)),
                                     Removal.SINGLE,
-                                    Removal.SINGLE
-                            ).apply(mv, implementationContext).getMaximalSize() + StackSize.SINGLE.getSize());
+                                    Removal.SINGLE).apply(mv, implementationContext).getMaximalSize() + StackSize.SINGLE.getSize());
                         }
                         return;
                     }
                 } else if (strict) {
-                    throw new IllegalStateException("Could not resolve " + owner.replace('/', '.')
-                            + "." + internalName + descriptor + " using " + typePool);
+                    throw new IllegalStateException("Could not resolve " + owner.replace('/', '.') + "." + internalName + descriptor + " using " + typePool);
                 }
             } else if (strict) {
                 throw new IllegalStateException("Could not resolve " + owner.replace('/', '.') + " using " + typePool);

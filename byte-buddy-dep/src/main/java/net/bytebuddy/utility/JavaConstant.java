@@ -2219,23 +2219,20 @@ public interface JavaConstant extends ConstantValue {
          *
          * @param name      The name of the bootstrap constant that is provided to the bootstrap method or constructor.
          * @param bootstrap The bootstrap method or constructor to invoke.
-         * @param constants The constant values passed to the bootstrap method. Values can be represented either
+         * @param arguments The constant values passed to the bootstrap method. Values can be represented either
          *                  as {@link TypeDescription}, as {@link JavaConstant}, as {@link String} or a primitive
          *                  {@code int}, {@code long}, {@code float} or {@code double} represented as wrapper type.
          * @return A dynamic constant that represents the bootstrapped method's or constructor's result.
          */
-        public static Dynamic bootstrap(String name, MethodDescription.InDefinedShape bootstrap, List<?> constants) {
+        public static Dynamic bootstrap(String name, MethodDescription.InDefinedShape bootstrap, List<?> arguments) {
             if (name.length() == 0 || name.contains(".")) {
                 throw new IllegalArgumentException("Not a valid field name: " + name);
             }
-            List<JavaConstant> arguments = new ArrayList<JavaConstant>(constants.size());
-            List<TypeDescription> types = new ArrayList<TypeDescription>(constants.size());
-            for (Object constant : constants) {
-                JavaConstant argument = JavaConstant.Simple.wrap(constant);
-                arguments.add(argument);
-                types.add(argument.getTypeDescription());
+            List<JavaConstant> constants = new ArrayList<JavaConstant>(arguments.size());
+            for (Object argument : arguments) {
+                constants.add(JavaConstant.Simple.wrap(argument));
             }
-            if (!bootstrap.isConstantBootstrap(types)) {
+            if (!bootstrap.isConstantBootstrap(TypeList.Explicit.of(constants))) {
                 throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrap + " for " + arguments);
             }
             return new Dynamic(name,
@@ -2247,7 +2244,7 @@ public interface JavaConstant extends ConstantValue {
                             bootstrap.getInternalName(),
                             bootstrap.getReturnType().asErasure(),
                             bootstrap.getParameters().asTypeList().asErasures()),
-                    arguments);
+                    constants);
         }
 
         /**

@@ -42,9 +42,8 @@ import java.util.List;
  * {@code equal(Object)} and {@code hashCode()} implementations.
  */
 public interface FieldDescription extends ByteCodeElement,
-        DeclaredByType.WithMandatoryDeclaration,
         ModifierReviewable.ForFieldDescription,
-        NamedElement.WithGenericName,
+        ByteCodeElement.Member,
         ByteCodeElement.TypeDependant<FieldDescription.InDefinedShape, FieldDescription.Token> {
 
     /**
