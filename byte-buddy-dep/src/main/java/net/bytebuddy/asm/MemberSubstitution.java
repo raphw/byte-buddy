@@ -3697,12 +3697,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                                JavaConstant.MethodHandle methodHandle,
                                                                Map<Integer, Integer> offsets,
                                                                int offset) {
-                                    Source.Value dispatched = this.source.self(parameters, offsets, original, instrumentedMethod);
-                                    List<Source.Value> values = this.source.arguments(false, parameters, offsets, original, instrumentedMethod);
+                                    Source.Value dispatched = source.self(parameters, offsets, original, instrumentedMethod);
+                                    List<Source.Value> values = source.arguments(false, parameters, offsets, original, instrumentedMethod);
                                     List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(1 + (values.size()
                                             + (dispatched == null ? 0 : 2))
                                             + (values.isEmpty() ? 0 : 1));
-                                    stackManipulations.add(this.source.handle(methodHandle, instrumentedMethod).toStackManipulation());
+                                    stackManipulations.add(source.handle(methodHandle, instrumentedMethod).toStackManipulation());
                                     if (dispatched != null) {
                                         stackManipulations.add(MethodVariableAccess.of(dispatched.getTypeDescription()).loadFrom(dispatched.getOffset()));
                                         stackManipulations.add(MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLE.getTypeStub(), new MethodDescription.Token("bindTo",
@@ -3743,7 +3743,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                                JavaConstant.MethodHandle methodHandle,
                                                                Map<Integer, Integer> offsets,
                                                                int offset) {
-                                    return this.source.handle(methodHandle, instrumentedMethod).toStackManipulation();
+                                    return source.handle(methodHandle, instrumentedMethod).toStackManipulation();
                                 }
                             }
                         }
@@ -4398,10 +4398,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                                JavaConstant.MethodHandle methodHandle,
                                                                Map<Integer, Integer> offsets,
                                                                int offset) {
-                                    if (!this.source.isRepresentable(sort, original, instrumentedMethod)) {
+                                    if (!source.isRepresentable(sort, original, instrumentedMethod)) {
                                         throw new IllegalStateException("Cannot represent " + sort + " for " + source + " in " + instrumentedMethod);
                                     }
-                                    return this.source.resolve(sort, original, parameters, result, instrumentedMethod);
+                                    return source.resolve(sort, original, parameters, result, instrumentedMethod);
                                 }
                             }
                         }
