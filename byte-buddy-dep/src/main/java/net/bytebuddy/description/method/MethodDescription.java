@@ -57,8 +57,8 @@ import static net.bytebuddy.matcher.ElementMatchers.ofSort;
  */
 public interface MethodDescription extends TypeVariableSource,
         ModifierReviewable.ForMethodDescription,
-        ByteCodeElement.Member,
         DeclaredByType.WithMandatoryDeclaration,
+        ByteCodeElement.Member,
         ByteCodeElement.TypeDependant<MethodDescription.InDefinedShape, MethodDescription.Token> {
 
     /**

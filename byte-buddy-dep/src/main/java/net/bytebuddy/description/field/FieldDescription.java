@@ -42,8 +42,8 @@ import java.util.List;
  */
 public interface FieldDescription extends ByteCodeElement,
         ModifierReviewable.ForFieldDescription,
-        ByteCodeElement.Member,
         DeclaredByType.WithMandatoryDeclaration,
+        ByteCodeElement.Member,
         ByteCodeElement.TypeDependant<FieldDescription.InDefinedShape, FieldDescription.Token> {
 
     /**
