@@ -3666,6 +3666,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * The typing to use or {@code null} if implicit typing.
                              */
                             @MaybeNull
+                            @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                             private final Assigner.Typing typing;
 
                             /**
@@ -4112,6 +4113,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * The typing to use or {@code null} if implicit typing.
                              */
                             @MaybeNull
+                            @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                             private final Assigner.Typing typing;
 
                             /**
@@ -5257,6 +5259,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * The typing to use or {@code null} if implicit typing.
                              */
                             @MaybeNull
+                            @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                             private final Assigner.Typing typing;
 
                             /**
