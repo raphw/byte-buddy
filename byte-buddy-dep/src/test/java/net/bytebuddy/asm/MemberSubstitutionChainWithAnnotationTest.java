@@ -2,7 +2,11 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
+
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -12,17 +16,20 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz", RUN = "run";
 
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
+
     @Test
     public void testMemberSubstitutionArgumentToElement() throws Exception {
         Class<?> type = new ByteBuddy()
-            .redefine(ArgumentSample.class)
-            .visit(MemberSubstitution.strict()
-                .field(named(FOO))
-                .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ArgumentSample.class.getMethod("element", String.class)))
-                .on(named(RUN)))
-            .make()
-            .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-            .getLoaded();
+                .redefine(ArgumentSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ArgumentSample.class.getMethod("element", String.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance();
         assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
         assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
@@ -36,14 +43,14 @@ public class MemberSubstitutionChainWithAnnotationTest {
     @Test
     public void testMemberSubstitutionArgumentToMethod() throws Exception {
         Class<?> type = new ByteBuddy()
-            .redefine(ArgumentSample.class)
-            .visit(MemberSubstitution.strict()
-                .field(named(FOO))
-                .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ArgumentSample.class.getMethod("method", String.class)))
-                .on(named(RUN)))
-            .make()
-            .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-            .getLoaded();
+                .redefine(ArgumentSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ArgumentSample.class.getMethod("method", String.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance();
         assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
         assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
@@ -57,14 +64,14 @@ public class MemberSubstitutionChainWithAnnotationTest {
     @Test
     public void testMemberSubstitutionArgumentOptional() throws Exception {
         Class<?> type = new ByteBuddy()
-            .redefine(ArgumentSample.class)
-            .visit(MemberSubstitution.strict()
-                .field(named(FOO))
-                .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ArgumentSample.class.getMethod("optional", String.class)))
-                .on(named(RUN)))
-            .make()
-            .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-            .getLoaded();
+                .redefine(ArgumentSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ArgumentSample.class.getMethod("optional", String.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance();
         assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
         assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
@@ -75,17 +82,28 @@ public class MemberSubstitutionChainWithAnnotationTest {
         assertThat(type.getDeclaredField(QUX).get(null), nullValue(Object.class));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testMemberSubstitutionArgumentNone() throws Exception {
+        new ByteBuddy()
+                .redefine(ArgumentSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ArgumentSample.class.getMethod("none", String.class)))
+                        .on(named(RUN)))
+                .make();
+    }
+
     @Test
     public void testMemberSubstitutionThisReferenceToElement() throws Exception {
         Class<?> type = new ByteBuddy()
-            .redefine(ThisReferenceSample.class)
-            .visit(MemberSubstitution.strict()
-                .field(named(FOO))
-                .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ThisReferenceSample.class.getMethod("element", Object.class)))
-                .on(named(RUN)))
-            .make()
-            .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-            .getLoaded();
+                .redefine(ThisReferenceSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ThisReferenceSample.class.getMethod("element", Object.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance(), argument = type.getDeclaredConstructor().newInstance();
         assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
         assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
@@ -99,14 +117,14 @@ public class MemberSubstitutionChainWithAnnotationTest {
     @Test
     public void testMemberSubstitutionThisReferenceToMethod() throws Exception {
         Class<?> type = new ByteBuddy()
-            .redefine(ThisReferenceSample.class)
-            .visit(MemberSubstitution.strict()
-                .field(named(FOO))
-                .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ThisReferenceSample.class.getMethod("method", Object.class)))
-                .on(named(RUN)))
-            .make()
-            .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-            .getLoaded();
+                .redefine(ThisReferenceSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ThisReferenceSample.class.getMethod("method", Object.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance(), argument = type.getDeclaredConstructor().newInstance();
         assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
         assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
@@ -120,14 +138,14 @@ public class MemberSubstitutionChainWithAnnotationTest {
     @Test
     public void testMemberSubstitutionThisReferenceOptional() throws Exception {
         Class<?> type = new ByteBuddy()
-            .redefine(ThisReferenceSample.class)
-            .visit(MemberSubstitution.strict()
-                .field(named(BAZ))
-                .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ThisReferenceSample.class.getMethod("optional", Object.class)))
-                .on(named(RUN)))
-            .make()
-            .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-            .getLoaded();
+                .redefine(ThisReferenceSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(BAZ))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ThisReferenceSample.class.getMethod("optional", Object.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance(), argument = type.getDeclaredConstructor().newInstance();
         assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
         assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
@@ -141,25 +159,111 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testMemberSubstitutionArgumentNone() throws Exception {
+    public void testMemberSubstitutionThisReferenceNone() throws Exception {
         new ByteBuddy()
-            .redefine(ArgumentSample.class)
-            .visit(MemberSubstitution.strict()
-                .field(named(FOO))
-                .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ArgumentSample.class.getMethod("none", String.class)))
-                .on(named(RUN)))
-            .make();
+                .redefine(ThisReferenceSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(BAZ))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ThisReferenceSample.class.getMethod("none", Object.class)))
+                        .on(named(RUN)))
+                .make();
+    }
+
+    @Test
+    public void testMemberSubstitutionAllArgumentsToElement() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(AllArgumentsSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(AllArgumentsSample.class.getMethod("element", String[].class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredField(QUX).get(null), is((Object) QUX));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredField(QUX).get(null), is((Object) BAR));
+    }
+
+    @Test
+    public void testMemberSubstitutionAllArgumentsToMethod() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(AllArgumentsSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(AllArgumentsSample.class.getMethod("method", String[].class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredField(QUX).get(null), is((Object) QUX));
+        assertThat(type.getDeclaredMethod(RUN, String.class).invoke(instance, BAZ), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredField(QUX).get(null), is((Object) BAZ));
+    }
+
+    @Test
+    public void testMemberSubstitutionAllArgumentsSelf() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(AllArgumentsSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(AllArgumentsSample.class.getMethod("self", Object[].class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredField(QUX).get(null), is((Object) QUX));
+        assertThat(type.getDeclaredField(BAZ).get(null), nullValue(Object.class));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredField(QUX).get(null), is((Object) BAR));
+        assertThat(type.getDeclaredField(BAZ).get(null), is(instance));
+    }
+
+    @Test
+    public void testMemberSubstitutionAllArgumentsEmpty() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(AllArgumentsSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(BAR))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(AllArgumentsSample.class.getMethod("empty", String[].class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredField(QUX).get(null), is((Object) QUX));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredField(QUX).get(null), is((Object) QUX));
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testMemberSubstitutionThisReferenceNone() throws Exception {
+    public void testMemberSubstitutionAllArgumentsIllegal() throws Exception {
         new ByteBuddy()
-            .redefine(ThisReferenceSample.class)
-            .visit(MemberSubstitution.strict()
-                .field(named(BAZ))
-                .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ThisReferenceSample.class.getMethod("none", Object.class)))
-                .on(named(RUN)))
-            .make();
+                .redefine(ThisReferenceSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(BAZ))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(AllArgumentsSample.class.getMethod("illegal", Void.class)))
+                        .on(named(RUN)))
+                .make();
     }
 
     public static class ArgumentSample {
@@ -228,7 +332,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
         @SuppressWarnings("unused")
         public void run(String value) {
-            foo = bar;
+            foo = value;
         }
 
         public void run() {
@@ -236,21 +340,30 @@ public class MemberSubstitutionChainWithAnnotationTest {
         }
 
         public static void element(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.AllArguments String[] value) {
-            assertThat(value.length, is(1));
+            if (value.length != 1) {
+                throw new AssertionError();
+            }
             qux = value[0];
         }
 
-        public static void empty(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.AllArguments(nullIfEmpty = true) String[] value) {
-            assertThat(value, nullValue(String[].class));
+        public static String empty(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.AllArguments(nullIfEmpty = true) String[] value) {
+            if (value != null) {
+                throw new AssertionError();
+            }
+            return null;
         }
 
         public static void method(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.AllArguments(source = MemberSubstitution.Substitution.Chain.Step.ForDelegation.Source.ENCLOSING_METHOD) String[] value) {
-            assertThat(value.length, is(1));
+            if (value.length != 1) {
+                throw new AssertionError();
+            }
             qux = value[0];
         }
 
         public static void self(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.AllArguments(includeSelf = true) Object[] value) {
-            assertThat(value.length, is(1));
+            if (value.length != 2) {
+                throw new AssertionError();
+            }
             qux = (String) value[1];
             baz = value[0];
         }
