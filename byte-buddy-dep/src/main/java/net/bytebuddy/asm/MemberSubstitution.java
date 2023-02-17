@@ -3323,6 +3323,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             /**
                              * A resolved offset mapping for resolving the {@code this} reference.
                              */
+                            @HashCodeAndEqualsPlugin.Enhance
                             protected static class Resolved implements OffsetMapping.Resolved {
 
                                 /**
@@ -3474,6 +3475,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * An offset mapping that assigns an array containing all arguments to the annotated parameter.
                          */
+                        @HashCodeAndEqualsPlugin.Enhance
                         class ForAllArguments implements OffsetMapping {
 
                             /**
@@ -3481,15 +3483,36 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              */
                             private final TypeDescription.Generic targetComponentType;
 
+                            /**
+                             * The typing to use or {@code null} if implicit typing.
+                             */
                             @MaybeNull
                             private final Assigner.Typing typing;
 
+                            /**
+                             * The source providing the reference.
+                             */
                             private final Source source;
 
+                            /**
+                             * {@code true} if the {@code this} reference should be included in the created array, if available.
+                             */
                             private final boolean includeSelf;
 
+                            /**
+                             * {@code true} if {@code null} should be assigned to the parameter if no arguments are available.
+                             */
                             private final boolean nullIfEmpty;
 
+                            /**
+                             * Creates a new offset mapping for an array containing all supplied arguments.
+                             *
+                             * @param targetComponentType The component type of the annotated parameter.
+                             * @param typing              The typing to use or {@code null} if implicit typing.
+                             * @param source              The source providing the reference.
+                             * @param includeSelf         {@code true} if the {@code this} reference should be included in the created array, if available.
+                             * @param nullIfEmpty         {@code true} if {@code null} should be assigned to the parameter if no arguments are available.
+                             */
                             public ForAllArguments(TypeDescription.Generic targetComponentType, @MaybeNull Assigner.Typing typing, Source source, boolean includeSelf, boolean nullIfEmpty) {
                                 this.targetComponentType = targetComponentType;
                                 this.typing = typing;
@@ -3505,6 +3528,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 return new ForAllArguments.Resolved(targetComponentType, this.typing == null ? typing : this.typing, source, includeSelf, nullIfEmpty, assigner, instrumentedMethod);
                             }
 
+                            /**
+                             * A factory for creating an offset mapping containing all supplies arguments.
+                             */
                             public enum Factory implements OffsetMapping.Factory<AllArguments> {
 
                                 /**
@@ -3512,14 +3538,29 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  */
                                 INSTANCE;
 
+                                /**
+                                 * The {@link AllArguments#typing()} property.
+                                 */
                                 private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_TYPING;
 
+                                /**
+                                 * The {@link AllArguments#source()} property.
+                                 */
                                 private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_SOURCE;
 
+                                /**
+                                 * The {@link AllArguments#includeSelf()} property.
+                                 */
                                 private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_INCLUDE_SELF;
 
+                                /**
+                                 * The {@link AllArguments#nullIfEmpty()} property.
+                                 */
                                 private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_NULL_IF_EMPTY;
 
+                                /*
+                                 * Resolves all annotation properties.
+                                 */
                                 static {
                                     MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(AllArguments.class).getDeclaredMethods();
                                     ALL_ARGUMENTS_TYPING = methods.filter(named("typing")).getOnly();
@@ -3528,6 +3569,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     ALL_ARGUMENTS_NULL_IF_EMPTY = methods.filter(named("nullIfEmpty")).getOnly();
                                 }
 
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public Class<AllArguments> getAnnotationType() {
                                     return AllArguments.class;
                                 }
@@ -3555,29 +3599,65 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 }
                             }
 
+                            /**
+                             * A resolves offset mapping for an array containing all arguments.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
                             protected static class Resolved implements OffsetMapping.Resolved {
 
+                                /**
+                                 * The component type of the annotated parameter.
+                                 */
                                 private final TypeDescription.Generic targetComponentType;
 
+                                /**
+                                 * The typing to use.
+                                 */
                                 private final Assigner.Typing typing;
 
+                                /**
+                                 * The source providing the reference.
+                                 */
                                 private final Source source;
 
+                                /**
+                                 * {@code true} if the {@code this} reference should be included in the created array, if available.
+                                 */
                                 private final boolean includeSelf;
 
+                                /**
+                                 * {@code true} if {@code null} should be assigned to the parameter if no arguments are available.
+                                 */
                                 private final boolean nullIfEmpty;
 
+                                /**
+                                 * The assigner to use.
+                                 */
                                 private final Assigner assigner;
 
+                                /**
+                                 * The instrumented method.
+                                 */
                                 private final MethodDescription instrumentedMethod;
 
-                                public Resolved(TypeDescription.Generic targetComponentType,
-                                                Assigner.Typing typing,
-                                                Source source,
-                                                boolean includeSelf,
-                                                boolean nullIfEmpty,
-                                                Assigner assigner,
-                                                MethodDescription instrumentedMethod) {
+                                /**
+                                 * Creates a resolved version for an offset mapping of all arguments.
+                                 *
+                                 * @param targetComponentType The component type of the annotated parameter.
+                                 * @param typing              The typing to use.
+                                 * @param source              The source providing the reference.
+                                 * @param includeSelf         {@code true} if the {@code this} reference should be included in the created array, if available.
+                                 * @param nullIfEmpty         {@code true} if {@code null} should be assigned to the parameter if no arguments are available.
+                                 * @param assigner            The assigner to use.
+                                 * @param instrumentedMethod  The instrumented method.
+                                 */
+                                protected Resolved(TypeDescription.Generic targetComponentType,
+                                                   Assigner.Typing typing,
+                                                   Source source,
+                                                   boolean includeSelf,
+                                                   boolean nullIfEmpty,
+                                                   Assigner assigner,
+                                                   MethodDescription instrumentedMethod) {
                                     this.targetComponentType = targetComponentType;
                                     this.typing = typing;
                                     this.source = source;
@@ -3616,12 +3696,28 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                         }
 
+                        /**
+                         * An offset mapping resolving a method handle to invoke the original expression or the instrumented method.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
                         class ForSelfCallHandle implements OffsetMapping {
 
+                            /**
+                             * The source providing the reference.
+                             */
                             private final Source source;
 
+                            /**
+                             * {@code true} if the handle should be bound to the original arguments.
+                             */
                             private final boolean bound;
 
+                            /**
+                             * Creates a new offset mapping for a self call handle.
+                             *
+                             * @param source The source providing the reference.
+                             * @param bound  {@code true} if the handle should be bound to the original arguments.
+                             */
                             public ForSelfCallHandle(Source source, boolean bound) {
                                 this.source = source;
                                 this.bound = bound;
@@ -3634,6 +3730,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 return bound ? new ForSelfCallHandle.Bound(source, instrumentedMethod) : new ForSelfCallHandle.Unbound(source, instrumentedMethod);
                             }
 
+                            /**
+                             * A factory for creating an offset mapping for binding a self call handle.
+                             */
                             public enum Factory implements OffsetMapping.Factory<SelfCallHandle> {
 
                                 /**
@@ -3641,16 +3740,28 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  */
                                 INSTANCE;
 
+                                /**
+                                 * The {@link SelfCallHandle#source()} property.
+                                 */
                                 private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_SOURCE;
 
+                                /**
+                                 * The {@link SelfCallHandle#bound()} property.
+                                 */
                                 private static final MethodDescription.InDefinedShape ALL_ARGUMENTS_BOUND;
 
+                                /*
+                                 * Resolves all annotation properties.
+                                 */
                                 static {
                                     MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(SelfCallHandle.class).getDeclaredMethods();
                                     ALL_ARGUMENTS_SOURCE = methods.filter(named("source")).getOnly();
                                     ALL_ARGUMENTS_BOUND = methods.filter(named("bound")).getOnly();
                                 }
 
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public Class<SelfCallHandle> getAnnotationType() {
                                     return SelfCallHandle.class;
                                 }
@@ -3675,12 +3786,28 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 }
                             }
 
+                            /**
+                             * Resolves a bound self call handle for an offset mapping.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
                             protected static class Bound implements OffsetMapping.Resolved {
 
+                                /**
+                                 * The source providing the reference.
+                                 */
                                 private final Source source;
 
+                                /**
+                                 * The instrumented method.
+                                 */
                                 private final MethodDescription instrumentedMethod;
 
+                                /**
+                                 * Creates an offset mapping for a bound version of a self call handle.
+                                 *
+                                 * @param source             The source providing the reference.
+                                 * @param instrumentedMethod The instrumented method.
+                                 */
                                 protected Bound(Source source, MethodDescription instrumentedMethod) {
                                     this.source = source;
                                     this.instrumentedMethod = instrumentedMethod;
@@ -3706,7 +3833,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     if (dispatched != null) {
                                         stackManipulations.add(MethodVariableAccess.of(dispatched.getTypeDescription()).loadFrom(dispatched.getOffset()));
                                         stackManipulations.add(MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLE.getTypeStub(), new MethodDescription.Token("bindTo",
-                                                Opcodes.ACC_PUBLIC, JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
+                                                Opcodes.ACC_PUBLIC,
+                                                JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
                                                 new TypeList.Generic.Explicit(TypeDefinition.Sort.describe(Object.class))))));
                                     }
                                     if (!values.isEmpty()) {
@@ -3714,19 +3842,36 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                             stackManipulations.add(MethodVariableAccess.of(value.getTypeDescription()).loadFrom(value.getOffset()));
                                         }
                                         stackManipulations.add(MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLES.getTypeStub(), new MethodDescription.Token("insertArguments",
-                                                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
+                                                Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+                                                JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
                                                 new TypeList.Generic.Explicit(JavaType.METHOD_HANDLE.getTypeStub(), TypeDefinition.Sort.describe(int.class), TypeDefinition.Sort.describe(Object[].class))))));
                                     }
                                     return new StackManipulation.Compound(stackManipulations);
                                 }
                             }
 
+                            /**
+                             * Resolves an unbound self call handle for an offset mapping.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
                             protected static class Unbound implements OffsetMapping.Resolved {
 
+                                /**
+                                 * The source providing the reference.
+                                 */
                                 private final Source source;
 
+                                /**
+                                 * The instrumented method.
+                                 */
                                 private final MethodDescription instrumentedMethod;
 
+                                /**
+                                 * Creates an offset mapping for an unbound version of a self call handle.
+                                 *
+                                 * @param source             The source providing the reference.
+                                 * @param instrumentedMethod The instrumented method.
+                                 */
                                 protected Unbound(Source source, MethodDescription instrumentedMethod) {
                                     this.source = source;
                                     this.instrumentedMethod = instrumentedMethod;
@@ -3748,6 +3893,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                         }
 
+                        @HashCodeAndEqualsPlugin.Enhance
                         abstract class ForField implements OffsetMapping {
 
                             private static final MethodDescription.InDefinedShape FIELD_VALUE;
@@ -3756,6 +3902,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
                             private static final MethodDescription.InDefinedShape FIELD_TYPING;
 
+                            /*
+                             * Resolves all annotation properties.
+                             */
                             static {
                                 MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(FieldValue.class).getDeclaredMethods();
                                 FIELD_VALUE = methods.filter(named("value")).getOnly();
@@ -3763,8 +3912,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 FIELD_TYPING = methods.filter(named("typing")).getOnly();
                             }
 
+                            /**
+                             * A description of the targeted type.
+                             */
                             private final TypeDescription.Generic target;
 
+                            /**
+                             * The typing to use or {@code null} if implicit typing.
+                             */
                             @MaybeNull
                             private final Assigner.Typing typing;
 
@@ -3790,6 +3945,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
                             protected abstract FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
 
+                            @HashCodeAndEqualsPlugin.Enhance
                             public abstract static class Unresolved extends ForField {
 
                                 protected static final String BEAN_PROPERTY = "";
@@ -3816,6 +3972,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
                                 protected abstract FieldLocator fieldLocator(TypeDescription instrumentedType);
 
+                                @HashCodeAndEqualsPlugin.Enhance
                                 public static class WithImplicitType extends Unresolved {
 
                                     protected WithImplicitType(TypeDescription.Generic target, AnnotationDescription.Loadable<FieldValue> annotation) {
@@ -3834,6 +3991,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
                                 }
 
+                                @HashCodeAndEqualsPlugin.Enhance
                                 public static class WithExplicitType extends Unresolved {
 
                                     private final TypeDescription declaringType;
@@ -3889,6 +4047,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 }
                             }
 
+                            @HashCodeAndEqualsPlugin.Enhance
                             public static class Resolved extends ForField {
 
                                 private final FieldDescription fieldDescription;
@@ -3909,6 +4068,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     return fieldDescription;
                                 }
 
+                                @HashCodeAndEqualsPlugin.Enhance
                                 public static class Factory<T extends Annotation> extends OffsetMapping.Factory.AbstractBase<T> {
 
                                     private final Class<T> annotationType;
@@ -3939,11 +4099,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                         }
 
+                        @HashCodeAndEqualsPlugin.Enhance
                         abstract class ForFieldHandle implements OffsetMapping {
 
-                            private final ForFieldHandle.Access access;
+                            private final Access access;
 
-                            protected ForFieldHandle(ForFieldHandle.Access access) {
+                            protected ForFieldHandle(Access access) {
                                 this.access = access;
                             }
 
@@ -3961,7 +4122,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     return new OffsetMapping.Resolved.ForStackManipulation(new StackManipulation.Compound(
                                             access.resolve(fieldDescription.asDefined()).toStackManipulation(), MethodVariableAccess.REFERENCE.loadFrom(THIS_REFERENCE),
                                             MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLE.getTypeStub(), new MethodDescription.Token("bindTo",
-                                                    Opcodes.ACC_PUBLIC, JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
+                                                    Opcodes.ACC_PUBLIC,
+                                                    JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
                                                     new TypeList.Generic.Explicit(TypeDefinition.Sort.describe(Object.class)))))));
                                 }
                             }
@@ -3987,7 +4149,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 protected abstract JavaConstant.MethodHandle resolve(FieldDescription.InDefinedShape fieldDescription);
                             }
 
-
+                            @HashCodeAndEqualsPlugin.Enhance
                             public abstract static class Unresolved extends ForFieldHandle {
 
                                 protected static final String BEAN_PROPERTY = "";
@@ -4061,6 +4223,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                      */
                                     private static final MethodDescription.InDefinedShape FIELD_GETTER_HANDLE_DECLARING_TYPE;
 
+                                    /*
+                                     * Resolves all annotation properties.
+                                     */
                                     static {
                                         MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(FieldGetterHandle.class).getDeclaredMethods();
                                         FIELD_GETTER_HANDLE_VALUE = methods.filter(named("value")).getOnly();
@@ -4192,13 +4357,29 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                         }
 
+                        /**
+                         * An offset mapping for describing a representation of the substituted element or the instrumented method.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
                         class ForOrigin implements OffsetMapping {
 
-                            private final ForOrigin.Sort sort;
+                            /**
+                             * The sort of the origin representation.
+                             */
+                            private final Sort sort;
 
+                            /**
+                             * The source providing the reference.
+                             */
                             private final Source source;
 
-                            protected ForOrigin(ForOrigin.Sort sort, Source source) {
+                            /**
+                             * Creates an offset mapping a representation of the substituted element or instrumented method.
+                             *
+                             * @param sort   The sort of the origin representation.
+                             * @param source The source providing the reference.
+                             */
+                            protected ForOrigin(Sort sort, Source source) {
                                 this.sort = sort;
                                 this.source = source;
                             }
@@ -4210,8 +4391,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 return new ForOrigin.Resolved(sort, source, instrumentedMethod);
                             }
 
+                            /**
+                             * The sort of the origin expression.
+                             */
                             protected enum Sort {
 
+                                /**
+                                 * Represents the supplied value as a {@link Method}.
+                                 */
                                 METHOD {
                                     @Override
                                     protected boolean isRepresentable(ByteCodeElement.Member original) {
@@ -4222,7 +4409,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
                                         return MethodConstant.of(((MethodDescription) original).asDefined());
                                     }
-                                }, CONSTRUCTOR {
+                                },
+
+                                /**
+                                 * Represents the supplied value as a {@link Constructor}.
+                                 */
+                                CONSTRUCTOR {
                                     @Override
                                     protected boolean isRepresentable(ByteCodeElement.Member original) {
                                         return original instanceof MethodDescription && ((MethodDescription) original).isConstructor();
@@ -4232,7 +4424,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
                                         return MethodConstant.of(((MethodDescription) original).asDefined());
                                     }
-                                }, FIELD {
+                                },
+
+                                /**
+                                 * Represents the supplied value as a {@link Field}.
+                                 */
+                                FIELD {
                                     @Override
                                     protected boolean isRepresentable(ByteCodeElement.Member original) {
                                         return original instanceof FieldDescription;
@@ -4242,7 +4439,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
                                         return new FieldConstant(((FieldDescription) original).asDefined());
                                     }
-                                }, EXECUTABLE {
+                                },
+
+                                /**
+                                 * Represents the supplied value as a {@code java.lang.reflect.Executable}.
+                                 */
+                                EXECUTABLE {
                                     @Override
                                     protected boolean isRepresentable(ByteCodeElement.Member original) {
                                         return original instanceof MethodDescription;
@@ -4252,7 +4454,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
                                         return MethodConstant.of(((MethodDescription) original).asDefined());
                                     }
-                                }, TYPE {
+                                },
+
+                                /**
+                                 * Represents the supplied value as a {@link Class}.
+                                 */
+                                TYPE {
                                     @Override
                                     protected boolean isRepresentable(ByteCodeElement.Member original) {
                                         return true;
@@ -4262,7 +4469,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
                                         return ClassConstant.of(original.getDeclaringType().asErasure());
                                     }
-                                }, LOOKUP {
+                                },
+
+                                /**
+                                 * Represents the supplied value as a {@code java.lang.invoke.MethodHandles.Lookup}.
+                                 */
+                                LOOKUP {
                                     @Override
                                     protected boolean isRepresentable(ByteCodeElement.Member original) {
                                         return true;
@@ -4272,7 +4484,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
                                         return MethodInvocation.lookup();
                                     }
-                                }, HANDLE {
+                                },
+
+                                /**
+                                 * Represents the supplied value as a {@code java.lang.invoke.MethodHandle}.
+                                 */
+                                METHOD_HANDLE {
                                     @Override
                                     protected boolean isRepresentable(ByteCodeElement.Member original) {
                                         return true;
@@ -4292,7 +4509,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                         }
                                         return handle.toStackManipulation();
                                     }
-                                }, METHOD_TYPE {
+                                },
+
+                                /**
+                                 * Represents the supplied value as a {@code java.lang.invoke.MethodType}.
+                                 */
+                                METHOD_TYPE {
                                     @Override
                                     protected boolean isRepresentable(ByteCodeElement.Member original) {
                                         return true;
@@ -4302,7 +4524,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
                                         return JavaConstant.MethodType.of(returnType, parameterTypes).toStackManipulation();
                                     }
-                                }, STRING {
+                                },
+
+                                /**
+                                 * Represents the supplied value as its {@link Object#toString()} representation.
+                                 */
+                                STRING {
                                     @Override
                                     protected boolean isRepresentable(ByteCodeElement.Member original) {
                                         return true;
@@ -4314,11 +4541,28 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
                                 };
 
+                                /**
+                                 * Checks if the supplied member can be represented by this sort.
+                                 *
+                                 * @param original The byte code element to check.
+                                 * @return {@code true} if the supplied element can be represented.
+                                 */
                                 protected abstract boolean isRepresentable(ByteCodeElement.Member original);
 
+                                /**
+                                 * Creates a stack manipulation for the supplied byte code element.
+                                 *
+                                 * @param original       The substituted element.
+                                 * @param parameterTypes The parameter types.
+                                 * @param returnType     The return type.
+                                 * @return A stack manipulation loading the supplied byte code element's representation onto the stack.
+                                 */
                                 protected abstract StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType);
                             }
 
+                            /**
+                             * A factory for an offset mapping that describes a representation of the substituted element or instrumented method.
+                             */
                             public enum Factory implements OffsetMapping.Factory<Origin> {
 
                                 /**
@@ -4326,6 +4570,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  */
                                 INSTANCE;
 
+                                /**
+                                 * The {@link Origin#source()} property.
+                                 */
                                 private static final MethodDescription.InDefinedShape ORIGIN_TYPE = TypeDescription.ForLoadedType.of(Origin.class)
                                         .getDeclaredMethods()
                                         .filter(named("source"))
@@ -4359,7 +4606,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     } else if (JavaType.EXECUTABLE.getTypeStub().equals(target.getType().asErasure())) {
                                         sort = ForOrigin.Sort.EXECUTABLE;
                                     } else if (JavaType.METHOD_HANDLE.getTypeStub().equals(target.getType().asErasure())) {
-                                        sort = ForOrigin.Sort.HANDLE;
+                                        sort = ForOrigin.Sort.METHOD_HANDLE;
                                     } else if (JavaType.METHOD_TYPE.getTypeStub().equals(target.getType().asErasure())) {
                                         sort = ForOrigin.Sort.METHOD_TYPE;
                                     } else if (JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().equals(target.getType().asErasure())) {
@@ -4373,15 +4620,35 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 }
                             }
 
+                            /**
+                             * A resolved offset mapping for a representation of the substituted expression or instrumented method.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
                             protected static class Resolved implements OffsetMapping.Resolved {
 
-                                private final ForOrigin.Sort sort;
+                                /**
+                                 * The sort of the origin representation.
+                                 */
+                                private final Sort sort;
 
+                                /**
+                                 * The source providing the reference.
+                                 */
                                 private final Source source;
 
+                                /**
+                                 * The instrumented method.
+                                 */
                                 private final MethodDescription instrumentedMethod;
 
-                                public Resolved(ForOrigin.Sort sort, Source source, MethodDescription instrumentedMethod) {
+                                /**
+                                 * Creates a resolved version of an offset mapping for describing the substituted expression or instrumented method.
+                                 *
+                                 * @param sort               The sort of the origin representation.
+                                 * @param source             The source providing the reference.
+                                 * @param instrumentedMethod The instrumented method.
+                                 */
+                                protected Resolved(Sort sort, Source source, MethodDescription instrumentedMethod) {
                                     this.sort = sort;
                                     this.source = source;
                                     this.instrumentedMethod = instrumentedMethod;
@@ -4406,29 +4673,63 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                         }
 
+                        /**
+                         * An offset mapping that assigns a stub value.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
                         class ForStubValue implements OffsetMapping {
 
+                            /**
+                             * The source providing the reference.
+                             */
                             private final Source source;
 
+                            /**
+                             * Creates an offset mapping for a stub value.
+                             *
+                             * @param source The source providing the reference.
+                             */
                             protected ForStubValue(Source source) {
                                 this.source = source;
                             }
 
+                            /**
+                             * {@inheritDoc}
+                             */
                             public OffsetMapping.Resolved resolve(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                                 return new Resolved(source, instrumentedMethod);
                             }
 
+                            /**
+                             * A resolved offset mapping for an offset mapping of a stub value.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
                             protected static class Resolved implements OffsetMapping.Resolved {
 
+                                /**
+                                 * The source providing the reference.
+                                 */
                                 private final Source source;
 
+                                /**
+                                 * The instrumented method.
+                                 */
                                 private final MethodDescription instrumentedMethod;
 
-                                public Resolved(Source source, MethodDescription instrumentedMethod) {
+                                /**
+                                 * Creates a resolved version of an offset mapping for a stub value.
+                                 *
+                                 * @param source             The source providing the reference.
+                                 * @param instrumentedMethod The instrumented method.
+                                 */
+                                protected Resolved(Source source, MethodDescription instrumentedMethod) {
                                     this.source = source;
                                     this.instrumentedMethod = instrumentedMethod;
                                 }
 
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public StackManipulation apply(TypeDescription receiver,
                                                                ByteCodeElement.Member original,
                                                                TypeList.Generic parameters,
@@ -4441,22 +4742,43 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 }
                             }
 
+                            /**
+                             * A factory for creating an offset mapping for a stub value.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
                             public static class Factory implements OffsetMapping.Factory<StubValue> {
 
+                                /**
+                                 * The source providing the reference.
+                                 */
                                 private final Source source;
 
+                                /**
+                                 * Creates a factory for creating an offset mapping for a stub value.
+                                 *
+                                 * @param source The source providing the reference.
+                                 */
                                 public Factory(Source source) {
                                     this.source = source;
                                 }
 
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public Class<StubValue> getAnnotationType() {
                                     return StubValue.class;
                                 }
 
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<StubValue> annotation) {
                                     throw new UnsupportedOperationException("This factory does not support binding a method receiver");
                                 }
 
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<StubValue> annotation) {
                                     if (!target.getType().represents(Object.class)) {
                                         throw new IllegalStateException("Expected " + target + " to declare an Object type");
@@ -4466,13 +4788,29 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                         }
 
+                        /**
+                         * An offset mapping that assigns the value of the previous chain instruction.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
                         class ForCurrent implements OffsetMapping {
 
+                            /**
+                             * The type of the targeted expression.
+                             */
                             private final TypeDescription.Generic targetType;
 
+                            /**
+                             * The typing to use or {@code null} if implicit typing.
+                             */
                             @MaybeNull
                             private final Assigner.Typing typing;
 
+                            /**
+                             * Creates an offset mapping for the previous chain instruction.
+                             *
+                             * @param targetType The type of the targeted expression.
+                             * @param typing     The typing to use or {@code null} if implicit typing.
+                             */
                             public ForCurrent(TypeDescription.Generic targetType, @MaybeNull Assigner.Typing typing) {
                                 this.targetType = targetType;
                                 this.typing = typing;
@@ -4485,6 +4823,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 return new ForCurrent.Resolved(targetType, assigner, this.typing == null ? typing : this.typing);
                             }
 
+                            /**
+                             * A factory for creating an offset mapping for assigning the result of the previous chain instruction.
+                             */
                             public enum Factory implements OffsetMapping.Factory<Current> {
 
                                 /**
@@ -4492,6 +4833,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  */
                                 INSTANCE;
 
+                                /**
+                                 * The {@link Current#typing()} property.
+                                 */
                                 private static final MethodDescription.InDefinedShape CURRENT_TYPING = TypeDescription.ForLoadedType.of(Current.class)
                                         .getDeclaredMethods()
                                         .filter(named("typing"))
@@ -4520,14 +4864,34 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 }
                             }
 
+                            /**
+                             * A resolved offset mapping for assigning the previous chain instruction.
+                             */
+                            @HashCodeAndEqualsPlugin.Enhance
                             protected static class Resolved implements OffsetMapping.Resolved {
 
+                                /**
+                                 * The type of the targeted expression.
+                                 */
                                 private final TypeDescription.Generic targetType;
 
+                                /**
+                                 * The assigner to use.
+                                 */
                                 private final Assigner assigner;
 
+                                /**
+                                 * The typing to use.
+                                 */
                                 private final Assigner.Typing typing;
 
+                                /**
+                                 * Creates a resolved offset mapping for assigning the previous chain instruction.
+                                 *
+                                 * @param targetType The type of the targeted expression.
+                                 * @param assigner   The assigner to use.
+                                 * @param typing     The typing to use.
+                                 */
                                 public Resolved(TypeDescription.Generic targetType, Assigner assigner, Assigner.Typing typing) {
                                     this.targetType = targetType;
                                     this.assigner = assigner;
@@ -5243,6 +5607,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     public @interface Unused {
                         /* empty */
                     }
+
                     /**
                      * <p>
                      * Indicates that the annotated parameter should always return a boxed version of the instrumented method's return value
