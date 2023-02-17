@@ -41,8 +41,8 @@ import java.util.List;
  */
 public interface FieldDescription extends ByteCodeElement,
         ModifierReviewable.ForFieldDescription,
-        ByteCodeElement.Member,
-        ByteCodeElement.TypeDependant<FieldDescription.InDefinedShape, FieldDescription.Token> {
+        ByteCodeElement.TypeDependant<FieldDescription.InDefinedShape, FieldDescription.Token>,
+        ByteCodeElement.Member {
 
     /**
      * A representative of a field's non-set default value.

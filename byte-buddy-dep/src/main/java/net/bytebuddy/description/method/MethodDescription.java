@@ -56,8 +56,8 @@ import static net.bytebuddy.matcher.ElementMatchers.ofSort;
  */
 public interface MethodDescription extends TypeVariableSource,
         ModifierReviewable.ForMethodDescription,
-        ByteCodeElement.Member,
-        ByteCodeElement.TypeDependant<MethodDescription.InDefinedShape, MethodDescription.Token> {
+        ByteCodeElement.TypeDependant<MethodDescription.InDefinedShape, MethodDescription.Token>,
+        ByteCodeElement.Member {
 
     /**
      * The internal name of a Java constructor.
