@@ -50,8 +50,8 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * </p>
  * <p>
  * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.AllArguments} or
- * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.AllArguments}. This
- * annotation should be used with {@link net.bytebuddy.implementation.MethodDelegation} only.
+ * {@link net.bytebuddy.asm.MemberSubstitution.AllArguments}. This annotation should be used with
+ * {@link net.bytebuddy.implementation.MethodDelegation} only.
  * </p>
  *
  * @see net.bytebuddy.implementation.MethodDelegation

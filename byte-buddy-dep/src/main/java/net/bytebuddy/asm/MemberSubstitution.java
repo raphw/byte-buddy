@@ -5049,23 +5049,25 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<Origin> annotation) {
-                                    ForOrigin.Sort sort;
+                                    Sort sort;
                                     if (target.getType().asErasure().represents(Class.class)) {
-                                        sort = ForOrigin.Sort.TYPE;
+                                        sort = Sort.TYPE;
                                     } else if (target.getType().asErasure().represents(Method.class)) {
-                                        sort = ForOrigin.Sort.METHOD;
+                                        sort = Sort.METHOD;
                                     } else if (target.getType().asErasure().represents(Constructor.class)) {
-                                        sort = ForOrigin.Sort.CONSTRUCTOR;
+                                        sort = Sort.CONSTRUCTOR;
+                                    } else if (target.getType().asErasure().represents(Field.class)) {
+                                        sort = Sort.FIELD;
                                     } else if (JavaType.EXECUTABLE.getTypeStub().equals(target.getType().asErasure())) {
-                                        sort = ForOrigin.Sort.EXECUTABLE;
+                                        sort = Sort.EXECUTABLE;
                                     } else if (JavaType.METHOD_HANDLE.getTypeStub().equals(target.getType().asErasure())) {
-                                        sort = ForOrigin.Sort.METHOD_HANDLE;
+                                        sort = Sort.METHOD_HANDLE;
                                     } else if (JavaType.METHOD_TYPE.getTypeStub().equals(target.getType().asErasure())) {
-                                        sort = ForOrigin.Sort.METHOD_TYPE;
+                                        sort = Sort.METHOD_TYPE;
                                     } else if (JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().equals(target.getType().asErasure())) {
-                                        sort = ForOrigin.Sort.LOOKUP;
+                                        sort = Sort.LOOKUP;
                                     } else if (target.getType().asErasure().isAssignableFrom(String.class)) {
-                                        sort = ForOrigin.Sort.STRING;
+                                        sort = Sort.STRING;
                                     } else {
                                         throw new IllegalStateException("Non-supported type " + target.getType() + " for @Origin annotation");
                                     }
@@ -5780,650 +5782,6 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 public BootstrapArgumentResolver make(MethodDescription.InDefinedShape delegate) {
                                     return new ForDefaultValues(delegate);
                                 }
-                            }
-                        }
-                    }
-
-                    /**
-                     * <p>
-                     * Indicates that the annotated parameter should be mapped to the {@code this} reference of the substituted field,
-                     * method, constructor or of the instrumented method.
-                     * </p>
-                     * <p>
-                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.This} or
-                     * {@link net.bytebuddy.asm.Advice.This}. This annotation should be used only in combination with {@link ForDelegation}.
-                     * </p>
-                     *
-                     * @see ForDelegation
-                     */
-                    @Documented
-                    @Retention(RetentionPolicy.RUNTIME)
-                    @java.lang.annotation.Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.CONSTRUCTOR})
-                    public @interface This {
-
-                        /**
-                         * The typing that should be applied when assigning the {@code this} value.
-                         *
-                         * @return The typing to apply upon assignment.
-                         */
-                        Assigner.Typing typing() default Assigner.Typing.STATIC;
-
-                        /**
-                         * Determines the source that is considered for this annotation which can be either the substituted method,
-                         * constructor or field, or the instrumented method.
-                         *
-                         * @return The source that is considered for this annotation.
-                         */
-                        Source source() default Source.SUBSTITUTED_ELEMENT;
-
-                        /**
-                         * Determines if the parameter should be assigned {@code null} if no {@code this} parameter is available.
-                         *
-                         * @return {@code true} if the value assignment is optional.
-                         */
-                        boolean optional() default false;
-                    }
-
-                    /**
-                     * <p>
-                     * Indicates that the annotated parameter should be mapped to the parameter with index {@link Argument#value()}.
-                     * </p>
-                     * <p>
-                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Argument} or
-                     * {@link net.bytebuddy.asm.Advice.Argument}. This annotation should be used only in combination with {@link ForDelegation}.
-                     * </p>
-                     *
-                     * @see ForDelegation
-                     */
-                    @Documented
-                    @Retention(RetentionPolicy.RUNTIME)
-                    @java.lang.annotation.Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.CONSTRUCTOR})
-                    public @interface Argument {
-
-                        /**
-                         * Determines the index of the parameter that is being assigned.
-                         *
-                         * @return The index of the parameter that is being assigned.
-                         */
-                        int value();
-
-                        /**
-                         * The typing that should be applied when assigning the argument.
-                         *
-                         * @return The typing to apply upon assignment.
-                         */
-                        Assigner.Typing typing() default Assigner.Typing.STATIC;
-
-                        /**
-                         * Determines the source that is considered for this annotation which can be either the substituted method,
-                         * constructor or field, or the instrumented method.
-                         *
-                         * @return The source that is considered for this annotation.
-                         */
-                        Source source() default Source.SUBSTITUTED_ELEMENT;
-
-                        /**
-                         * Determines if the parameter should be assigned {@code null} if no argument with the specified index is available.
-                         *
-                         * @return {@code true} if the value assignment is optional.
-                         */
-                        boolean optional() default false;
-                    }
-
-                    /**
-                     * <p>
-                     * Assigns an array containing all arguments of the targeted element to the annotated parameter. The annotated parameter must
-                     * be an array type.
-                     * </p>
-                     * <p>
-                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.AllArguments} or
-                     * {@link net.bytebuddy.asm.Advice.AllArguments}. This annotation should be used only in combination with {@link ForDelegation}.
-                     * </p>
-                     *
-                     * @see ForDelegation
-                     */
-                    @Documented
-                    @Retention(RetentionPolicy.RUNTIME)
-                    @java.lang.annotation.Target(ElementType.PARAMETER)
-                    public @interface AllArguments {
-
-                        /**
-                         * The typing that should be applied when assigning the arguments to an array element.
-                         *
-                         * @return The typing to apply upon assignment.
-                         */
-                        Assigner.Typing typing() default Assigner.Typing.STATIC;
-
-                        /**
-                         * Determines the source that is considered for this annotation which can be either the substituted method,
-                         * constructor or field, or the instrumented method.
-                         *
-                         * @return The source that is considered for this annotation.
-                         */
-                        Source source() default Source.SUBSTITUTED_ELEMENT;
-
-                        /**
-                         * Determines if the produced array should include the instrumented method's target reference within the array, if
-                         * the targeted element is non-static.
-                         *
-                         * @return {@code true} if a possible {@code this} reference should be included in the assigned array.
-                         */
-                        boolean includeSelf() default false;
-
-                        /**
-                         * Determines if {@code null} should be assigned to the annotated parameter to the annotated parameter.
-                         *
-                         * @return {@code true} if {@code null} should be assigned to the annotated parameter to the annotated parameter.
-                         */
-                        boolean nullIfEmpty() default false;
-                    }
-
-                    /**
-                     * <p>
-                     * Indicates that the annotated parameter should load a {@code java.lang.invoke.MethodHandle} that represents an invocation of
-                     * the substituted expression or instrumented method. If the current method is virtual, it is bound to the current instance such
-                     * that the virtual hierarchy is avoided. This annotation cannot be used to acquire a handle on enclosing constructors.
-                     * </p>
-                     * <p>
-                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.SelfCallHandle}. This annotation should
-                     * be used only in combination with {@link ForDelegation}.
-                     * </p>
-                     *
-                     * @see ForDelegation
-                     */
-                    @Documented
-                    @Retention(RetentionPolicy.RUNTIME)
-                    @java.lang.annotation.Target(ElementType.PARAMETER)
-                    public @interface SelfCallHandle {
-
-                        /**
-                         * Determines the source that is considered for this annotation which can be either the substituted method,
-                         * constructor or field, or the instrumented method.
-                         *
-                         * @return The source that is considered for this annotation.
-                         */
-                        Source source() default Source.SUBSTITUTED_ELEMENT;
-
-                        /**
-                         * Determines if the method is bound to the arguments and instance of the represented invocation.
-                         *
-                         * @return {@code true} if the handle should be bound to the current arguments.
-                         */
-                        boolean bound() default true;
-                    }
-
-                    /**
-                     * <p>
-                     * Indicates that the annotated parameter should be mapped to a field in the scope of the instrumented type.
-                     * </p>
-                     * <p>
-                     * Setting {@link FieldValue#value()} is optional. If the value is not set, the field value attempts to bind a setter's
-                     * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
-                     * to be an illegal candidate for binding.
-                     * </p>
-                     * <p>
-                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldValue} or
-                     * {@link net.bytebuddy.asm.Advice.FieldValue}. This annotation should be used only in combination with {@link ForDelegation}.
-                     * </p>
-                     *
-                     * @see ForDelegation
-                     */
-                    @Documented
-                    @Retention(RetentionPolicy.RUNTIME)
-                    @java.lang.annotation.Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.CONSTRUCTOR})
-                    public @interface FieldValue {
-
-                        /**
-                         * Returns the name of the field.
-                         *
-                         * @return The name of the field.
-                         */
-                        String value() default OffsetMapping.ForField.Unresolved.BEAN_PROPERTY;
-
-                        /**
-                         * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
-                         * is set to {@code void}, the field is looked up implicitly within the instrumented class's class hierarchy.
-                         * The value can also be set to {@link TargetType} in order to look up the type on the instrumented type.
-                         *
-                         * @return The type that declares the field, {@code void} if this type should be determined implicitly or
-                         * {@link TargetType} for the instrumented type.
-                         */
-                        Class<?> declaringType() default void.class;
-
-                        /**
-                         * The typing that should be applied when assigning the field value.
-                         *
-                         * @return The typing to apply upon assignment.
-                         */
-                        Assigner.Typing typing() default Assigner.Typing.STATIC;
-                    }
-
-                    /**
-                     * <p>
-                     * Indicates that the annotated parameter should be mapped to a {@code java.lang.invoke.MethodHandle} representing a field getter.
-                     * </p>
-                     * <p>
-                     * Setting {@link FieldValue#value()} is optional. If the value is not set, the field value attempts to bind a setter's
-                     * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
-                     * to be an illegal candidate for binding.
-                     * </p>
-                     * <p>
-                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldGetterHandle} or
-                     * {@link net.bytebuddy.asm.Advice.FieldGetterHandle}. This annotation should be used only in combination with {@link ForDelegation}.
-                     * </p>
-                     *
-                     * @see ForDelegation
-                     */
-                    @Documented
-                    @Retention(RetentionPolicy.RUNTIME)
-                    @java.lang.annotation.Target(ElementType.PARAMETER)
-                    public @interface FieldGetterHandle {
-
-                        /**
-                         * Returns the name of the field.
-                         *
-                         * @return The name of the field.
-                         */
-                        String value() default OffsetMapping.ForFieldHandle.Unresolved.BEAN_PROPERTY;
-
-                        /**
-                         * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
-                         * is set to {@code void}, the field is looked up implicitly within the instrumented class's class hierarchy.
-                         * The value can also be set to {@link TargetType} in order to look up the type on the instrumented type.
-                         *
-                         * @return The type that declares the field, {@code void} if this type should be determined implicitly or
-                         * {@link TargetType} for the instrumented type.
-                         */
-                        Class<?> declaringType() default void.class;
-                    }
-
-                    /**
-                     * <p>
-                     * Indicates that the annotated parameter should be mapped to a {@code java.lang.invoke.MethodHandle} representing a field setter.
-                     * </p>
-                     * <p>
-                     * Setting {@link FieldValue#value()} is optional. If the value is not set, the field value attempts to bind a setter's
-                     * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
-                     * to be an illegal candidate for binding.
-                     * </p>
-                     * <p>
-                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldSetterHandle} or
-                     * {@link net.bytebuddy.asm.Advice.FieldSetterHandle}. This annotation should be used only in combination with {@link ForDelegation}.
-                     * </p>
-                     *
-                     * @see ForDelegation
-                     */
-                    @Documented
-                    @Retention(RetentionPolicy.RUNTIME)
-                    @java.lang.annotation.Target(ElementType.PARAMETER)
-                    public @interface FieldSetterHandle {
-
-                        /**
-                         * Returns the name of the field.
-                         *
-                         * @return The name of the field.
-                         */
-                        String value() default OffsetMapping.ForFieldHandle.Unresolved.BEAN_PROPERTY;
-
-                        /**
-                         * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
-                         * is set to {@code void}, the field is looked up implicitly within the instrumented class's class hierarchy.
-                         * The value can also be set to {@link TargetType} in order to look up the type on the instrumented type.
-                         *
-                         * @return The type that declares the field, {@code void} if this type should be determined implicitly or
-                         * {@link TargetType} for the instrumented type.
-                         */
-                        Class<?> declaringType() default void.class;
-                    }
-
-                    /**
-                     * <p>
-                     * Indicates that the annotated parameter should be mapped to a representation of the substituted element or
-                     * instrumented method. This representation can be a string representation, a constant representing
-                     * the {@link Class}, a {@link Method}, {@link Constructor} or {@code java.lang.reflect.Executable}. It can also load
-                     * a {@code java.lang.invoke.MethodType}, a {@code java.lang.invoke.MethodHandle} or a {@code java.lang.invoke.MethodHandles$Lookup}.
-                     * </p>
-                     * <p>
-                     * <b>Note</b>: A constant representing a {@link Method} or {@link Constructor} is not cached but is recreated for
-                     * every delegation.
-                     * </p>
-                     * <p>
-                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Origin} or
-                     * {@link Advice.Origin}. This annotation should be used only in combination with {@link ForDelegation}.
-                     * </p>
-                     *
-                     * @see ForDelegation
-                     */
-                    @Documented
-                    @Retention(RetentionPolicy.RUNTIME)
-                    @java.lang.annotation.Target(ElementType.PARAMETER)
-                    public @interface Origin {
-
-                        /**
-                         * Determines the source that is considered for this annotation which can be either the substituted method,
-                         * constructor or field, or the instrumented method.
-                         *
-                         * @return The source that is considered for this annotation.
-                         */
-                        Source source() default Source.SUBSTITUTED_ELEMENT;
-                    }
-
-                    /**
-                     * <p>
-                     * Indicates that the annotated parameter should always return a default value (i.e. {@code 0} for numeric values, {@code false}
-                     * for {@code boolean} types and {@code null} for reference types).
-                     * </p>
-                     * <p>
-                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Empty} or
-                     * {@link Advice.Unused}. This annotation should be used only in combination with {@link ForDelegation}.
-                     * </p>
-                     *
-                     * @see ForDelegation
-                     */
-                    @Documented
-                    @Retention(RetentionPolicy.RUNTIME)
-                    @java.lang.annotation.Target(ElementType.PARAMETER)
-                    public @interface Unused {
-                        /* empty */
-                    }
-
-                    /**
-                     * <p>
-                     * Indicates that the annotated parameter should always return a boxed version of the instrumented method's return value
-                     * (i.e. {@code 0} for numeric values, {@code false} for {@code boolean} types and {@code null} for reference types). The annotated
-                     * parameter must be of type {@link Object}.
-                     * </p>
-                     * <p>
-                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.StubValue} or
-                     * {@link Advice.StubValue}. This annotation should be used only in combination with {@link ForDelegation}.
-                     * </p>
-                     *
-                     * @see ForDelegation
-                     */
-                    @Documented
-                    @Retention(RetentionPolicy.RUNTIME)
-                    @java.lang.annotation.Target(ElementType.PARAMETER)
-                    public @interface StubValue {
-
-                        /**
-                         * Determines the source that is considered for this annotation which can be either the substituted method,
-                         * constructor or field, or the instrumented method.
-                         *
-                         * @return The source that is considered for this annotation.
-                         */
-                        Source source() default Source.SUBSTITUTED_ELEMENT;
-                    }
-
-                    /**
-                     * Indicates that the annotated parameter should be assigned the value of the result that was
-                     * yielded by the previous chain expression.
-                     *
-                     * @see ForDelegation
-                     */
-                    @Documented
-                    @Retention(RetentionPolicy.RUNTIME)
-                    @java.lang.annotation.Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.CONSTRUCTOR})
-                    public @interface Current {
-
-                        /**
-                         * The typing that should be applied when assigning the latest stack value.
-                         *
-                         * @return The typing to apply upon assignment.
-                         */
-                        Assigner.Typing typing() default Assigner.Typing.STATIC;
-                    }
-
-                    /**
-                     * Identifies the source of an instruction that might describe a value of the substituted element
-                     * or the instrumented method.
-                     */
-                    public enum Source {
-
-                        /**
-                         * Indicates that an element should be loaded in context of the substituted method, constructor or field.
-                         */
-                        SUBSTITUTED_ELEMENT {
-                            @Override
-                            protected ByteCodeElement.Member element(ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
-                                return original;
-                            }
-
-                            @Override
-                            @MaybeNull
-                            protected Source.Value self(TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
-                                return original.isStatic()
-                                        ? null
-                                        : new Source.Value(parameters.get(THIS_REFERENCE), offsets.get(THIS_REFERENCE));
-                            }
-
-                            @Override
-                            @MaybeNull
-                            protected Source.Value argument(int index, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
-                                return index < parameters.size() - (original.isStatic() ? 0 : 1)
-                                        ? new Source.Value(parameters.get(index + (original.isStatic() ? 0 : 1)), offsets.get(index + (original.isStatic() ? 0 : 1)))
-                                        : null;
-                            }
-
-                            @Override
-                            protected List<Source.Value> arguments(boolean includesSelf,
-                                                                   TypeList.Generic parameters,
-                                                                   Map<Integer, Integer> offsets,
-                                                                   ByteCodeElement.Member original,
-                                                                   MethodDescription instrumentedMethod) {
-                                List<Source.Value> values = new ArrayList<Source.Value>(parameters.size() - (!includesSelf && !original.isStatic() ? 1 : 0));
-                                for (int index = original.isStatic() || includesSelf ? 0 : 1; index < parameters.size(); index++) {
-                                    values.add(new Source.Value(parameters.get(index), offsets.get(index)));
-                                }
-                                return values;
-                            }
-
-                            @Override
-                            protected JavaConstant.MethodHandle handle(JavaConstant.MethodHandle methodHandle, MethodDescription instrumentedMethod) {
-                                return methodHandle;
-                            }
-
-                            @Override
-                            protected boolean isRepresentable(OffsetMapping.ForOrigin.Sort sort, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
-                                return sort.isRepresentable(original);
-                            }
-
-                            @Override
-                            protected StackManipulation resolve(OffsetMapping.ForOrigin.Sort sort,
-                                                                ByteCodeElement.Member original,
-                                                                TypeList.Generic parameters,
-                                                                TypeDescription.Generic result,
-                                                                MethodDescription instrumentedMethod) {
-                                return sort.resolve(original, parameters.asErasures(), result.asErasure());
-                            }
-                        },
-
-                        /**
-                         * Indicates that an element should be loaded in context of the instrumented method.
-                         */
-                        ENCLOSING_METHOD {
-                            @Override
-                            protected ByteCodeElement.Member element(ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
-                                return instrumentedMethod;
-                            }
-
-                            @Override
-                            @MaybeNull
-                            protected Source.Value self(TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
-                                return instrumentedMethod.isStatic()
-                                        ? null
-                                        : new Source.Value(instrumentedMethod.getDeclaringType().asGenericType(), THIS_REFERENCE);
-                            }
-
-                            @Override
-                            @MaybeNull
-                            protected Source.Value argument(int index, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
-                                if (index < instrumentedMethod.getParameters().size()) {
-                                    ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(index);
-                                    return new Source.Value(parameterDescription.getType(), parameterDescription.getOffset());
-                                } else {
-                                    return null;
-                                }
-                            }
-
-                            @Override
-                            protected List<Source.Value> arguments(boolean includesSelf, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
-                                List<Source.Value> values;
-                                if (includesSelf && !instrumentedMethod.isStatic()) {
-                                    values = new ArrayList<Source.Value>(instrumentedMethod.getParameters().size() + 1);
-                                    values.add(new Source.Value(instrumentedMethod.getDeclaringType().asGenericType(), THIS_REFERENCE));
-                                } else {
-                                    values = new ArrayList<Source.Value>(instrumentedMethod.getParameters().size());
-                                }
-                                for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
-                                    values.add(new Source.Value(parameterDescription.getType(), parameterDescription.getOffset()));
-                                }
-                                return values;
-                            }
-
-                            @Override
-                            protected JavaConstant.MethodHandle handle(JavaConstant.MethodHandle methodHandle, MethodDescription instrumentedMethod) {
-                                return JavaConstant.MethodHandle.of(instrumentedMethod.asDefined());
-                            }
-
-                            @Override
-                            protected boolean isRepresentable(OffsetMapping.ForOrigin.Sort sort, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
-                                return sort.isRepresentable(instrumentedMethod);
-                            }
-
-                            @Override
-                            protected StackManipulation resolve(OffsetMapping.ForOrigin.Sort sort,
-                                                                ByteCodeElement.Member original,
-                                                                TypeList.Generic parameters,
-                                                                TypeDescription.Generic result,
-                                                                MethodDescription instrumentedMethod) {
-                                return sort.resolve(instrumentedMethod, instrumentedMethod.getParameters().asTypeList().asErasures(), instrumentedMethod.getReturnType().asErasure());
-                            }
-                        };
-
-                        /**
-                         * Resolves the targeted byte code element.
-                         *
-                         * @param original           The substituted element.
-                         * @param instrumentedMethod The instrumented element.
-                         * @return The byte code element that is represented by this source.
-                         */
-                        protected abstract ByteCodeElement.Member element(ByteCodeElement.Member original, MethodDescription instrumentedMethod);
-
-                        /**
-                         * Resolves a value representation of the {@code this} reference or {@code null} if no such reference is available.
-                         *
-                         * @param parameters         The list of parameters of the substituted element.
-                         * @param offsets            A mapping of offsets of parameter indices to offsets.
-                         * @param original           The substituted element.
-                         * @param instrumentedMethod The instrumented method.
-                         * @return A representation of the {@code this} reference or {@code null} if no such reference is available.
-                         */
-                        @MaybeNull
-                        protected abstract Source.Value self(TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod);
-
-                        /**
-                         * Resolves a value representation of the parameter of the specified index or {@code null} if no such parameter is available.
-                         *
-                         * @param index              The index of the targeted parameter.
-                         * @param parameters         The list of parameters of the substituted element.
-                         * @param offsets            A mapping of offsets of parameter indices to offsets.
-                         * @param original           The substituted element.
-                         * @param instrumentedMethod The instrumented method.
-                         * @return A representation of the parameter of the specified index or {@code null} if no such parameter is available.
-                         */
-                        @MaybeNull
-                        protected abstract Source.Value argument(int index, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod);
-
-                        /**
-                         * Resolves a list of value representation of all parameters.
-                         *
-                         * @param includesSelf       {@code true} if the {@code this} reference should be included if available.
-                         * @param parameters         The list of parameters of the substituted element.
-                         * @param offsets            A mapping of offsets of parameter indices to offsets.
-                         * @param original           The substituted element.
-                         * @param instrumentedMethod The instrumented method.
-                         * @return A list of representation of all values of all parameters.
-                         */
-                        protected abstract List<Source.Value> arguments(boolean includesSelf, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod);
-
-                        /**
-                         * Resolves a method handle.
-                         *
-                         * @param methodHandle       A method handle of the substituted element.
-                         * @param instrumentedMethod The instrumented method.
-                         * @return An appropriate method handle.
-                         */
-                        protected abstract JavaConstant.MethodHandle handle(JavaConstant.MethodHandle methodHandle, MethodDescription instrumentedMethod);
-
-                        /**
-                         * Validates if the supplied origin sort is representable.
-                         *
-                         * @param sort               The sort of origin.
-                         * @param original           The substituted element.
-                         * @param instrumentedMethod The instrumented method.
-                         * @return {@code true} if the supplied sort of origin is representable.
-                         */
-                        protected abstract boolean isRepresentable(OffsetMapping.ForOrigin.Sort sort, ByteCodeElement.Member original, MethodDescription instrumentedMethod);
-
-                        /**
-                         * Resolves a stack manipulation that loads the supplied sort of origin onto the operand stack.
-                         *
-                         * @param sort               The sort of origin.
-                         * @param original           The substituted element.
-                         * @param parameters         The parameters to the substituted element.
-                         * @param result             The type upon which the substituted element is invoked.
-                         * @param instrumentedMethod The instrumented method.
-                         * @return A stack manipulation loading the supplied sort of origin onto the operand stack.
-                         */
-                        protected abstract StackManipulation resolve(OffsetMapping.ForOrigin.Sort sort,
-                                                                     ByteCodeElement.Member original,
-                                                                     TypeList.Generic parameters,
-                                                                     TypeDescription.Generic result,
-                                                                     MethodDescription instrumentedMethod);
-
-                        /**
-                         * Represents a value that can be loaded from a given offset.
-                         */
-                        @HashCodeAndEqualsPlugin.Enhance
-                        protected static class Value {
-
-                            /**
-                             * The type of the loaded value.
-                             */
-                            private final TypeDescription.Generic typeDescription;
-
-                            /**
-                             * The offset of the loaded value.
-                             */
-                            private final int offset;
-
-                            /**
-                             * Creates a value representation.
-                             *
-                             * @param typeDescription The type of the loaded value.
-                             * @param offset          The offset of the loaded value.
-                             */
-                            protected Value(TypeDescription.Generic typeDescription, int offset) {
-                                this.typeDescription = typeDescription;
-                                this.offset = offset;
-                            }
-
-                            /**
-                             * Returns the type of the loaded value.
-                             *
-                             * @return The type of the loaded value.
-                             */
-                            protected TypeDescription.Generic getTypeDescription() {
-                                return typeDescription;
-                            }
-
-                            /**
-                             * Returns the offset of the loaded value.
-                             *
-                             * @return The offset of the loaded value.
-                             */
-                            protected int getOffset() {
-                                return offset;
                             }
                         }
                     }
@@ -7840,6 +7198,651 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         break;
                 }
                 super.visitVarInsn(opcode, offset);
+            }
+        }
+    }
+
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should be mapped to the {@code this} reference of the substituted field,
+     * method, constructor or of the instrumented method.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.This} or
+     * {@link net.bytebuddy.asm.Advice.This}. This annotation should be used only in combination with {@link Substitution.Chain.Step.ForDelegation}.
+     * </p>
+     *
+     * @see Substitution.Chain.Step.ForDelegation
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.CONSTRUCTOR})
+    public @interface This {
+
+        /**
+         * The typing that should be applied when assigning the {@code this} value.
+         *
+         * @return The typing to apply upon assignment.
+         */
+        Assigner.Typing typing() default Assigner.Typing.STATIC;
+
+        /**
+         * Determines the source that is considered for this annotation which can be either the substituted method,
+         * constructor or field, or the instrumented method.
+         *
+         * @return The source that is considered for this annotation.
+         */
+        Source source() default Source.SUBSTITUTED_ELEMENT;
+
+        /**
+         * Determines if the parameter should be assigned {@code null} if no {@code this} parameter is available.
+         *
+         * @return {@code true} if the value assignment is optional.
+         */
+        boolean optional() default false;
+    }
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should be mapped to the parameter with index {@link Argument#value()}.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Argument} or
+     * {@link net.bytebuddy.asm.Advice.Argument}. This annotation should be used only in combination with {@link Substitution.Chain.Step.ForDelegation}.
+     * </p>
+     *
+     * @see Substitution.Chain.Step.ForDelegation
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.CONSTRUCTOR})
+    public @interface Argument {
+
+        /**
+         * Determines the index of the parameter that is being assigned.
+         *
+         * @return The index of the parameter that is being assigned.
+         */
+        int value();
+
+        /**
+         * The typing that should be applied when assigning the argument.
+         *
+         * @return The typing to apply upon assignment.
+         */
+        Assigner.Typing typing() default Assigner.Typing.STATIC;
+
+        /**
+         * Determines the source that is considered for this annotation which can be either the substituted method,
+         * constructor or field, or the instrumented method.
+         *
+         * @return The source that is considered for this annotation.
+         */
+        Source source() default Source.SUBSTITUTED_ELEMENT;
+
+        /**
+         * Determines if the parameter should be assigned {@code null} if no argument with the specified index is available.
+         *
+         * @return {@code true} if the value assignment is optional.
+         */
+        boolean optional() default false;
+    }
+
+    /**
+     * <p>
+     * Assigns an array containing all arguments of the targeted element to the annotated parameter. The annotated parameter must
+     * be an array type.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.AllArguments} or
+     * {@link net.bytebuddy.asm.Advice.AllArguments}. This annotation should be used only in combination with {@link Substitution.Chain.Step.ForDelegation}.
+     * </p>
+     *
+     * @see Substitution.Chain.Step.ForDelegation
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface AllArguments {
+
+        /**
+         * The typing that should be applied when assigning the arguments to an array element.
+         *
+         * @return The typing to apply upon assignment.
+         */
+        Assigner.Typing typing() default Assigner.Typing.STATIC;
+
+        /**
+         * Determines the source that is considered for this annotation which can be either the substituted method,
+         * constructor or field, or the instrumented method.
+         *
+         * @return The source that is considered for this annotation.
+         */
+        Source source() default Source.SUBSTITUTED_ELEMENT;
+
+        /**
+         * Determines if the produced array should include the instrumented method's target reference within the array, if
+         * the targeted element is non-static.
+         *
+         * @return {@code true} if a possible {@code this} reference should be included in the assigned array.
+         */
+        boolean includeSelf() default false;
+
+        /**
+         * Determines if {@code null} should be assigned to the annotated parameter to the annotated parameter.
+         *
+         * @return {@code true} if {@code null} should be assigned to the annotated parameter to the annotated parameter.
+         */
+        boolean nullIfEmpty() default false;
+    }
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should load a {@code java.lang.invoke.MethodHandle} that represents an invocation of
+     * the substituted expression or instrumented method. If the current method is virtual, it is bound to the current instance such
+     * that the virtual hierarchy is avoided. This annotation cannot be used to acquire a handle on enclosing constructors.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.SelfCallHandle}. This annotation should
+     * be used only in combination with {@link Substitution.Chain.Step.ForDelegation}.
+     * </p>
+     *
+     * @see Substitution.Chain.Step.ForDelegation
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface SelfCallHandle {
+
+        /**
+         * Determines the source that is considered for this annotation which can be either the substituted method,
+         * constructor or field, or the instrumented method.
+         *
+         * @return The source that is considered for this annotation.
+         */
+        Source source() default Source.SUBSTITUTED_ELEMENT;
+
+        /**
+         * Determines if the method is bound to the arguments and instance of the represented invocation.
+         *
+         * @return {@code true} if the handle should be bound to the current arguments.
+         */
+        boolean bound() default true;
+    }
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should be mapped to a field in the scope of the instrumented type.
+     * </p>
+     * <p>
+     * Setting {@link FieldValue#value()} is optional. If the value is not set, the field value attempts to bind a setter's
+     * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
+     * to be an illegal candidate for binding.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldValue} or
+     * {@link net.bytebuddy.asm.Advice.FieldValue}. This annotation should be used only in combination with {@link Substitution.Chain.Step.ForDelegation}.
+     * </p>
+     *
+     * @see Substitution.Chain.Step.ForDelegation
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.CONSTRUCTOR})
+    public @interface FieldValue {
+
+        /**
+         * Returns the name of the field.
+         *
+         * @return The name of the field.
+         */
+        String value() default Substitution.Chain.Step.ForDelegation.OffsetMapping.ForField.Unresolved.BEAN_PROPERTY;
+
+        /**
+         * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
+         * is set to {@code void}, the field is looked up implicitly within the instrumented class's class hierarchy.
+         * The value can also be set to {@link TargetType} in order to look up the type on the instrumented type.
+         *
+         * @return The type that declares the field, {@code void} if this type should be determined implicitly or
+         * {@link TargetType} for the instrumented type.
+         */
+        Class<?> declaringType() default void.class;
+
+        /**
+         * The typing that should be applied when assigning the field value.
+         *
+         * @return The typing to apply upon assignment.
+         */
+        Assigner.Typing typing() default Assigner.Typing.STATIC;
+    }
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should be mapped to a {@code java.lang.invoke.MethodHandle} representing a field getter.
+     * </p>
+     * <p>
+     * Setting {@link FieldValue#value()} is optional. If the value is not set, the field value attempts to bind a setter's
+     * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
+     * to be an illegal candidate for binding.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldGetterHandle} or
+     * {@link net.bytebuddy.asm.Advice.FieldGetterHandle}. This annotation should be used only in combination with {@link Substitution.Chain.Step.ForDelegation}.
+     * </p>
+     *
+     * @see Substitution.Chain.Step.ForDelegation
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface FieldGetterHandle {
+
+        /**
+         * Returns the name of the field.
+         *
+         * @return The name of the field.
+         */
+        String value() default Substitution.Chain.Step.ForDelegation.OffsetMapping.ForFieldHandle.Unresolved.BEAN_PROPERTY;
+
+        /**
+         * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
+         * is set to {@code void}, the field is looked up implicitly within the instrumented class's class hierarchy.
+         * The value can also be set to {@link TargetType} in order to look up the type on the instrumented type.
+         *
+         * @return The type that declares the field, {@code void} if this type should be determined implicitly or
+         * {@link TargetType} for the instrumented type.
+         */
+        Class<?> declaringType() default void.class;
+    }
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should be mapped to a {@code java.lang.invoke.MethodHandle} representing a field setter.
+     * </p>
+     * <p>
+     * Setting {@link FieldValue#value()} is optional. If the value is not set, the field value attempts to bind a setter's
+     * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
+     * to be an illegal candidate for binding.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldSetterHandle} or
+     * {@link net.bytebuddy.asm.Advice.FieldSetterHandle}. This annotation should be used only in combination with {@link Substitution.Chain.Step.ForDelegation}.
+     * </p>
+     *
+     * @see Substitution.Chain.Step.ForDelegation
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface FieldSetterHandle {
+
+        /**
+         * Returns the name of the field.
+         *
+         * @return The name of the field.
+         */
+        String value() default Substitution.Chain.Step.ForDelegation.OffsetMapping.ForFieldHandle.Unresolved.BEAN_PROPERTY;
+
+        /**
+         * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
+         * is set to {@code void}, the field is looked up implicitly within the instrumented class's class hierarchy.
+         * The value can also be set to {@link TargetType} in order to look up the type on the instrumented type.
+         *
+         * @return The type that declares the field, {@code void} if this type should be determined implicitly or
+         * {@link TargetType} for the instrumented type.
+         */
+        Class<?> declaringType() default void.class;
+    }
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should be mapped to a representation of the substituted element or
+     * instrumented method. This representation can be a string representation, a constant representing
+     * the {@link Class}, a {@link Method}, {@link Constructor} or {@code java.lang.reflect.Executable}. It can also load
+     * a {@code java.lang.invoke.MethodType}, a {@code java.lang.invoke.MethodHandle} or a {@code java.lang.invoke.MethodHandles$Lookup}.
+     * </p>
+     * <p>
+     * <b>Note</b>: A constant representing a {@link Method} or {@link Constructor} is not cached but is recreated for
+     * every delegation.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Origin} or
+     * {@link Advice.Origin}. This annotation should be used only in combination with {@link Substitution.Chain.Step.ForDelegation}.
+     * </p>
+     *
+     * @see Substitution.Chain.Step.ForDelegation
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface Origin {
+
+        /**
+         * Determines the source that is considered for this annotation which can be either the substituted method,
+         * constructor or field, or the instrumented method.
+         *
+         * @return The source that is considered for this annotation.
+         */
+        Source source() default Source.SUBSTITUTED_ELEMENT;
+    }
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should always return a default value (i.e. {@code 0} for numeric values, {@code false}
+     * for {@code boolean} types and {@code null} for reference types).
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Empty} or
+     * {@link Advice.Unused}. This annotation should be used only in combination with {@link Substitution.Chain.Step.ForDelegation}.
+     * </p>
+     *
+     * @see Substitution.Chain.Step.ForDelegation
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface Unused {
+        /* empty */
+    }
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should always return a boxed version of the instrumented method's return value
+     * (i.e. {@code 0} for numeric values, {@code false} for {@code boolean} types and {@code null} for reference types). The annotated
+     * parameter must be of type {@link Object}.
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.StubValue} or
+     * {@link Advice.StubValue}. This annotation should be used only in combination with {@link Substitution.Chain.Step.ForDelegation}.
+     * </p>
+     *
+     * @see Substitution.Chain.Step.ForDelegation
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface StubValue {
+
+        /**
+         * Determines the source that is considered for this annotation which can be either the substituted method,
+         * constructor or field, or the instrumented method.
+         *
+         * @return The source that is considered for this annotation.
+         */
+        Source source() default Source.SUBSTITUTED_ELEMENT;
+    }
+
+    /**
+     * Indicates that the annotated parameter should be assigned the value of the result that was
+     * yielded by the previous chain expression.
+     *
+     * @see Substitution.Chain.Step.ForDelegation
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.CONSTRUCTOR})
+    public @interface Current {
+
+        /**
+         * The typing that should be applied when assigning the latest stack value.
+         *
+         * @return The typing to apply upon assignment.
+         */
+        Assigner.Typing typing() default Assigner.Typing.STATIC;
+    }
+
+    /**
+     * Identifies the source of an instruction that might describe a value of the substituted element
+     * or the instrumented method.
+     */
+    public enum Source {
+
+        /**
+         * Indicates that an element should be loaded in context of the substituted method, constructor or field.
+         */
+        SUBSTITUTED_ELEMENT {
+            @Override
+            protected ByteCodeElement.Member element(ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+                return original;
+            }
+
+            @Override
+            @MaybeNull
+            protected Source.Value self(TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+                return original.isStatic()
+                        ? null
+                        : new Source.Value(parameters.get(THIS_REFERENCE), offsets.get(THIS_REFERENCE));
+            }
+
+            @Override
+            @MaybeNull
+            protected Source.Value argument(int index, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+                return index < parameters.size() - (original.isStatic() ? 0 : 1)
+                        ? new Source.Value(parameters.get(index + (original.isStatic() ? 0 : 1)), offsets.get(index + (original.isStatic() ? 0 : 1)))
+                        : null;
+            }
+
+            @Override
+            protected List<Source.Value> arguments(boolean includesSelf,
+                                                   TypeList.Generic parameters,
+                                                   Map<Integer, Integer> offsets,
+                                                   ByteCodeElement.Member original,
+                                                   MethodDescription instrumentedMethod) {
+                List<Source.Value> values = new ArrayList<Source.Value>(parameters.size() - (!includesSelf && !original.isStatic() ? 1 : 0));
+                for (int index = original.isStatic() || includesSelf ? 0 : 1; index < parameters.size(); index++) {
+                    values.add(new Source.Value(parameters.get(index), offsets.get(index)));
+                }
+                return values;
+            }
+
+            @Override
+            protected JavaConstant.MethodHandle handle(JavaConstant.MethodHandle methodHandle, MethodDescription instrumentedMethod) {
+                return methodHandle;
+            }
+
+            @Override
+            protected boolean isRepresentable(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+                return sort.isRepresentable(original);
+            }
+
+            @Override
+            protected StackManipulation resolve(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort,
+                                                ByteCodeElement.Member original,
+                                                TypeList.Generic parameters,
+                                                TypeDescription.Generic result,
+                                                MethodDescription instrumentedMethod) {
+                return sort.resolve(original, parameters.asErasures(), result.asErasure());
+            }
+        },
+
+        /**
+         * Indicates that an element should be loaded in context of the instrumented method.
+         */
+        ENCLOSING_METHOD {
+            @Override
+            protected ByteCodeElement.Member element(ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+                return instrumentedMethod;
+            }
+
+            @Override
+            @MaybeNull
+            protected Source.Value self(TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+                return instrumentedMethod.isStatic()
+                        ? null
+                        : new Source.Value(instrumentedMethod.getDeclaringType().asGenericType(), THIS_REFERENCE);
+            }
+
+            @Override
+            @MaybeNull
+            protected Source.Value argument(int index, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+                if (index < instrumentedMethod.getParameters().size()) {
+                    ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(index);
+                    return new Source.Value(parameterDescription.getType(), parameterDescription.getOffset());
+                } else {
+                    return null;
+                }
+            }
+
+            @Override
+            protected List<Source.Value> arguments(boolean includesSelf, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+                List<Source.Value> values;
+                if (includesSelf && !instrumentedMethod.isStatic()) {
+                    values = new ArrayList<Source.Value>(instrumentedMethod.getParameters().size() + 1);
+                    values.add(new Source.Value(instrumentedMethod.getDeclaringType().asGenericType(), THIS_REFERENCE));
+                } else {
+                    values = new ArrayList<Source.Value>(instrumentedMethod.getParameters().size());
+                }
+                for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
+                    values.add(new Source.Value(parameterDescription.getType(), parameterDescription.getOffset()));
+                }
+                return values;
+            }
+
+            @Override
+            protected JavaConstant.MethodHandle handle(JavaConstant.MethodHandle methodHandle, MethodDescription instrumentedMethod) {
+                return JavaConstant.MethodHandle.of(instrumentedMethod.asDefined());
+            }
+
+            @Override
+            protected boolean isRepresentable(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
+                return sort.isRepresentable(instrumentedMethod);
+            }
+
+            @Override
+            protected StackManipulation resolve(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort,
+                                                ByteCodeElement.Member original,
+                                                TypeList.Generic parameters,
+                                                TypeDescription.Generic result,
+                                                MethodDescription instrumentedMethod) {
+                return sort.resolve(instrumentedMethod, instrumentedMethod.getParameters().asTypeList().asErasures(), instrumentedMethod.getReturnType().asErasure());
+            }
+        };
+
+        /**
+         * Resolves the targeted byte code element.
+         *
+         * @param original           The substituted element.
+         * @param instrumentedMethod The instrumented element.
+         * @return The byte code element that is represented by this source.
+         */
+        protected abstract ByteCodeElement.Member element(ByteCodeElement.Member original, MethodDescription instrumentedMethod);
+
+        /**
+         * Resolves a value representation of the {@code this} reference or {@code null} if no such reference is available.
+         *
+         * @param parameters         The list of parameters of the substituted element.
+         * @param offsets            A mapping of offsets of parameter indices to offsets.
+         * @param original           The substituted element.
+         * @param instrumentedMethod The instrumented method.
+         * @return A representation of the {@code this} reference or {@code null} if no such reference is available.
+         */
+        @MaybeNull
+        protected abstract Source.Value self(TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod);
+
+        /**
+         * Resolves a value representation of the parameter of the specified index or {@code null} if no such parameter is available.
+         *
+         * @param index              The index of the targeted parameter.
+         * @param parameters         The list of parameters of the substituted element.
+         * @param offsets            A mapping of offsets of parameter indices to offsets.
+         * @param original           The substituted element.
+         * @param instrumentedMethod The instrumented method.
+         * @return A representation of the parameter of the specified index or {@code null} if no such parameter is available.
+         */
+        @MaybeNull
+        protected abstract Source.Value argument(int index, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod);
+
+        /**
+         * Resolves a list of value representation of all parameters.
+         *
+         * @param includesSelf       {@code true} if the {@code this} reference should be included if available.
+         * @param parameters         The list of parameters of the substituted element.
+         * @param offsets            A mapping of offsets of parameter indices to offsets.
+         * @param original           The substituted element.
+         * @param instrumentedMethod The instrumented method.
+         * @return A list of representation of all values of all parameters.
+         */
+        protected abstract List<Source.Value> arguments(boolean includesSelf, TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod);
+
+        /**
+         * Resolves a method handle.
+         *
+         * @param methodHandle       A method handle of the substituted element.
+         * @param instrumentedMethod The instrumented method.
+         * @return An appropriate method handle.
+         */
+        protected abstract JavaConstant.MethodHandle handle(JavaConstant.MethodHandle methodHandle, MethodDescription instrumentedMethod);
+
+        /**
+         * Validates if the supplied origin sort is representable.
+         *
+         * @param sort               The sort of origin.
+         * @param original           The substituted element.
+         * @param instrumentedMethod The instrumented method.
+         * @return {@code true} if the supplied sort of origin is representable.
+         */
+        protected abstract boolean isRepresentable(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort, ByteCodeElement.Member original, MethodDescription instrumentedMethod);
+
+        /**
+         * Resolves a stack manipulation that loads the supplied sort of origin onto the operand stack.
+         *
+         * @param sort               The sort of origin.
+         * @param original           The substituted element.
+         * @param parameters         The parameters to the substituted element.
+         * @param result             The type upon which the substituted element is invoked.
+         * @param instrumentedMethod The instrumented method.
+         * @return A stack manipulation loading the supplied sort of origin onto the operand stack.
+         */
+        protected abstract StackManipulation resolve(Substitution.Chain.Step.ForDelegation.OffsetMapping.ForOrigin.Sort sort,
+                                                     ByteCodeElement.Member original,
+                                                     TypeList.Generic parameters,
+                                                     TypeDescription.Generic result,
+                                                     MethodDescription instrumentedMethod);
+
+        /**
+         * Represents a value that can be loaded from a given offset.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        protected static class Value {
+
+            /**
+             * The type of the loaded value.
+             */
+            private final TypeDescription.Generic typeDescription;
+
+            /**
+             * The offset of the loaded value.
+             */
+            private final int offset;
+
+            /**
+             * Creates a value representation.
+             *
+             * @param typeDescription The type of the loaded value.
+             * @param offset          The offset of the loaded value.
+             */
+            protected Value(TypeDescription.Generic typeDescription, int offset) {
+                this.typeDescription = typeDescription;
+                this.offset = offset;
+            }
+
+            /**
+             * Returns the type of the loaded value.
+             *
+             * @return The type of the loaded value.
+             */
+            protected TypeDescription.Generic getTypeDescription() {
+                return typeDescription;
+            }
+
+            /**
+             * Returns the offset of the loaded value.
+             *
+             * @return The offset of the loaded value.
+             */
+            protected int getOffset() {
+                return offset;
             }
         }
     }

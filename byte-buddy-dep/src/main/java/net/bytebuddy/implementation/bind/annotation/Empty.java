@@ -32,8 +32,8 @@ import java.lang.annotation.*;
  * </p>
  * <p>
  * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.Unused} or
- * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.Unused}. This
- * annotation should be used with {@link net.bytebuddy.implementation.MethodDelegation} only.
+ * {@link net.bytebuddy.asm.MemberSubstitution.Unused}. This annotation should be used with
+ * {@link net.bytebuddy.implementation.MethodDelegation} only.
  * </p>
  *
  * @see net.bytebuddy.implementation.MethodDelegation

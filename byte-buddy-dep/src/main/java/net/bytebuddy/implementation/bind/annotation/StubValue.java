@@ -39,8 +39,8 @@ import java.lang.annotation.*;
  * </p>
  * <p>
  * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.StubValue} or
- * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.StubValue}. This
- * annotation should be used with {@link net.bytebuddy.implementation.MethodDelegation} only.
+ * {@link net.bytebuddy.asm.MemberSubstitution.StubValue}. This annotation should be used with
+ * {@link net.bytebuddy.implementation.MethodDelegation} only.
  * </p>
  *
  * @see net.bytebuddy.implementation.MethodDelegation

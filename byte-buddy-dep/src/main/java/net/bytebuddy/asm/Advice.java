@@ -12425,7 +12425,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * </p>
      * <p>
      * <b>Important</b>: Don't confuse this annotation with
-     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.SelfCallHandle}. This annotation should
+     * {@link net.bytebuddy.asm.MemberSubstitution.SelfCallHandle}. This annotation should
      * be used only in combination with {@link Advice}.
      * </p>
      *
@@ -12467,7 +12467,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * </p>
      * <p>
      * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldValue} or
-     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldValue}. This annotation should
+     * {@link net.bytebuddy.asm.MemberSubstitution.FieldValue}. This annotation should
      * be used only in combination with {@link Advice}.
      * </p>
      *
@@ -12534,7 +12534,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * </p>
      * <p>
      * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldGetterHandle} or
-     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldGetterHandle}. This annotation should
+     * {@link net.bytebuddy.asm.MemberSubstitution.FieldGetterHandle}. This annotation should
      * be used only in combination with {@link Advice}.
      * </p>
      *
@@ -12580,7 +12580,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * </p>
      * <p>
      * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.FieldSetterHandle} or
-     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldSetterHandle}. This annotation should
+     * {@link net.bytebuddy.asm.MemberSubstitution.FieldSetterHandle}. This annotation should
      * be used only in combination with {@link Advice}.
      * </p>
      *
@@ -12625,7 +12625,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * </p>
      * <p>
      * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Origin} or
-     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.Origin}. This annotation should
+     * {@link net.bytebuddy.asm.MemberSubstitution.Origin}. This annotation should
      * be used only in combination with {@link Advice}.
      * </p>
      *
@@ -12763,7 +12763,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * </p>
      * <p>
      * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.StubValue} or
-     * {@link MemberSubstitution.Substitution.Chain.Step.ForDelegation.StubValue}. This annotation should
+     * {@link MemberSubstitution.StubValue}. This annotation should
      * be used only in combination with {@link Advice}.
      * </p>
      *
@@ -12785,7 +12785,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * </p>
      * <p>
      * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Empty} or
-     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.Unused}. This annotation should be
+     * {@link net.bytebuddy.asm.MemberSubstitution.Unused}. This annotation should be
      * used only in combination with {@link Advice}.
      * </p>
      *

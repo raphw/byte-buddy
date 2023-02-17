@@ -9,6 +9,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
@@ -496,6 +497,96 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    public void testOriginElementString() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(OriginTest.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(OriginTest.class.getDeclaredMethod("stringElement", String.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(OriginTest.class.getName()).getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) OriginTest.class.getDeclaredField(FOO).toString()));
+    }
+
+    @Test
+    public void testOriginMethodString() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(OriginTest.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(OriginTest.class.getDeclaredMethod("stringMethod", String.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(OriginTest.class.getName()).getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) OriginTest.class.getDeclaredMethod(RUN).toString()));
+    }
+
+    @Test
+    public void testOriginElementField() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(OriginTest.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(OriginTest.class.getDeclaredMethod("fieldElement", Field.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(OriginTest.class.getName()).getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance).toString(), is((Object) OriginTest.class.getDeclaredField(FOO).toString()));
+    }
+
+    @Test
+    public void testOriginMethodMethod() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(OriginTest.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(OriginTest.class.getDeclaredMethod("methodMethod", Method.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(OriginTest.class.getName()).getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance).toString(), is((Object) OriginTest.class.getDeclaredMethod(RUN).toString()));
+    }
+
+    @Test
+    public void testOriginElementType() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(OriginTest.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(OriginTest.class.getDeclaredMethod("typeElement", Class.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(OriginTest.class.getName()).getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance).toString(), is((Object) OriginTest.class.toString()));
+    }
+
+    @Test
+    public void testOriginMethodType() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(OriginTest.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(OriginTest.class.getDeclaredMethod("typeMethod", Class.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(OriginTest.class.getName()).getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance).toString(), is((Object) OriginTest.class.toString()));
+    }
+
+    @Test
     public void testCurrent() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(CurrentTest.class)
@@ -524,19 +615,19 @@ public class MemberSubstitutionChainWithAnnotationTest {
             foo = value;
         }
 
-        public static void element(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.Argument(0) String value) {
+        public static void element(@MemberSubstitution.Argument(0) String value) {
             qux = value;
         }
 
-        public static void method(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.Argument(value = 0, source = MemberSubstitution.Substitution.Chain.Step.ForDelegation.Source.ENCLOSING_METHOD) String value) {
+        public static void method(@MemberSubstitution.Argument(value = 0, source = MemberSubstitution.Source.ENCLOSING_METHOD) String value) {
             qux = value;
         }
 
-        public static void optional(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.Argument(value = 1, optional = true) String value) {
+        public static void optional(@MemberSubstitution.Argument(value = 1, optional = true) String value) {
             qux = value;
         }
 
-        public static void none(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.Argument(value = 1) String value) {
+        public static void none(@MemberSubstitution.Argument(value = 1) String value) {
             qux = value;
         }
     }
@@ -553,19 +644,19 @@ public class MemberSubstitutionChainWithAnnotationTest {
             baz = sample.bar;
         }
 
-        public static void element(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.This Object value) {
+        public static void element(@MemberSubstitution.This Object value) {
             qux = value;
         }
 
-        public static void method(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.This(source = MemberSubstitution.Substitution.Chain.Step.ForDelegation.Source.ENCLOSING_METHOD) Object value) {
+        public static void method(@MemberSubstitution.This(source = MemberSubstitution.Source.ENCLOSING_METHOD) Object value) {
             qux = value;
         }
 
-        public static void optional(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.This(optional = true) Object value) {
+        public static void optional(@MemberSubstitution.This(optional = true) Object value) {
             qux = value;
         }
 
-        public static void none(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.This Object value) {
+        public static void none(@MemberSubstitution.This Object value) {
             qux = value;
         }
     }
@@ -586,28 +677,28 @@ public class MemberSubstitutionChainWithAnnotationTest {
             foo = bar;
         }
 
-        public static void element(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.AllArguments String[] value) {
+        public static void element(@MemberSubstitution.AllArguments String[] value) {
             if (value.length != 1) {
                 throw new AssertionError();
             }
             qux = value[0];
         }
 
-        public static String empty(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.AllArguments(nullIfEmpty = true) String[] value) {
+        public static String empty(@MemberSubstitution.AllArguments(nullIfEmpty = true) String[] value) {
             if (value != null) {
                 throw new AssertionError();
             }
             return null;
         }
 
-        public static void method(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.AllArguments(source = MemberSubstitution.Substitution.Chain.Step.ForDelegation.Source.ENCLOSING_METHOD) String[] value) {
+        public static void method(@MemberSubstitution.AllArguments(source = MemberSubstitution.Source.ENCLOSING_METHOD) String[] value) {
             if (value.length != 1) {
                 throw new AssertionError();
             }
             qux = value[0];
         }
 
-        public static void self(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.AllArguments(includeSelf = true) Object[] value) {
+        public static void self(@MemberSubstitution.AllArguments(includeSelf = true) Object[] value) {
             if (value.length != 2) {
                 throw new AssertionError();
             }
@@ -615,7 +706,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
             baz = value[0];
         }
 
-        public static void illegal(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.AllArguments Void ignored) {
+        public static void illegal(@MemberSubstitution.AllArguments Void ignored) {
             throw new AssertionError();
         }
     }
@@ -633,8 +724,8 @@ public class MemberSubstitutionChainWithAnnotationTest {
         }
 
         public static String handle(
-                @MemberSubstitution.Substitution.Chain.Step.ForDelegation.SelfCallHandle Object bound,
-                @MemberSubstitution.Substitution.Chain.Step.ForDelegation.SelfCallHandle(bound = false) Object unbound) throws Throwable {
+                @MemberSubstitution.SelfCallHandle Object bound,
+                @MemberSubstitution.SelfCallHandle(bound = false) Object unbound) throws Throwable {
             Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
             return method.invoke(bound, Collections.emptyList()).toString() + method.invoke(unbound, Collections.singletonList(new SelfCallHandleSample(BAR)));
         }
@@ -657,8 +748,8 @@ public class MemberSubstitutionChainWithAnnotationTest {
         }
 
         public static String handle(
-                @MemberSubstitution.Substitution.Chain.Step.ForDelegation.SelfCallHandle Object bound,
-                @MemberSubstitution.Substitution.Chain.Step.ForDelegation.SelfCallHandle(bound = false) Object unbound) throws Throwable {
+                @MemberSubstitution.SelfCallHandle Object bound,
+                @MemberSubstitution.SelfCallHandle(bound = false) Object unbound) throws Throwable {
             Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
             return method.invoke(bound, Collections.emptyList()).toString() + method.invoke(unbound, Collections.singletonList(new SelfCallHandleSubclass(BAR)));
         }
@@ -676,15 +767,15 @@ public class MemberSubstitutionChainWithAnnotationTest {
             return bar;
         }
 
-        public String implicit(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldValue(FOO) String value) {
+        public String implicit(@MemberSubstitution.FieldValue(FOO) String value) {
             return value;
         }
 
-        public String accessor(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldValue String value) {
+        public String accessor(@MemberSubstitution.FieldValue String value) {
             return value;
         }
 
-        public String explicit(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldValue(value = FOO, declaringType = FieldValueTest.class) String value) {
+        public String explicit(@MemberSubstitution.FieldValue(value = FOO, declaringType = FieldValueTest.class) String value) {
             return value;
         }
     }
@@ -701,17 +792,17 @@ public class MemberSubstitutionChainWithAnnotationTest {
             return bar;
         }
 
-        public String implicit(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldGetterHandle(FOO) Object handle) throws Throwable {
+        public String implicit(@MemberSubstitution.FieldGetterHandle(FOO) Object handle) throws Throwable {
             Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
             return (String) method.invoke(handle, Collections.emptyList());
         }
 
-        public String accessor(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldGetterHandle Object handle) throws Throwable {
+        public String accessor(@MemberSubstitution.FieldGetterHandle Object handle) throws Throwable {
             Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
             return (String) method.invoke(handle, Collections.emptyList());
         }
 
-        public String explicit(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldGetterHandle(value = FOO, declaringType = FieldGetterHandlerTest.class) Object handle) throws Throwable {
+        public String explicit(@MemberSubstitution.FieldGetterHandle(value = FOO, declaringType = FieldGetterHandlerTest.class) Object handle) throws Throwable {
             Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
             return (String) method.invoke(handle, Collections.emptyList());
         }
@@ -729,19 +820,19 @@ public class MemberSubstitutionChainWithAnnotationTest {
             return bar;
         }
 
-        public String implicit(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldSetterHandle(FOO) Object handle) throws Throwable {
+        public String implicit(@MemberSubstitution.FieldSetterHandle(FOO) Object handle) throws Throwable {
             Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
             method.invoke(handle, Collections.singletonList(QUX));
             return BAZ;
         }
 
-        public String accessor(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldSetterHandle Object handle) throws Throwable {
+        public String accessor(@MemberSubstitution.FieldSetterHandle Object handle) throws Throwable {
             Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
             method.invoke(handle, Collections.singletonList(QUX));
             return BAZ;
         }
 
-        public String explicit(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldSetterHandle(value = FOO, declaringType = FieldSetterHandlerTest.class) Object handle) throws Throwable {
+        public String explicit(@MemberSubstitution.FieldSetterHandle(value = FOO, declaringType = FieldSetterHandlerTest.class) Object handle) throws Throwable {
             Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
             method.invoke(handle, Collections.singletonList(QUX));
             return BAZ;
@@ -756,7 +847,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
             return foo;
         }
 
-        public String unused(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.Unused Object value) {
+        public String unused(@MemberSubstitution.Unused Object value) {
             if (value != null) {
                 throw new AssertionError();
             }
@@ -772,15 +863,48 @@ public class MemberSubstitutionChainWithAnnotationTest {
             return foo;
         }
 
-        public String stubbed(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.StubValue Object value) {
+        public String stubbed(@MemberSubstitution.StubValue Object value) {
             if (value != null) {
                 throw new AssertionError();
             }
             return BAR;
         }
 
-        public String illegal(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.StubValue String value) {
+        public String illegal(@MemberSubstitution.StubValue String value) {
             throw new AssertionError();
+        }
+    }
+
+    public static class OriginTest {
+
+        public Object foo;
+
+        public Object run() {
+            return foo;
+        }
+
+        private Object stringElement(@MemberSubstitution.Origin String origin) {
+            return origin;
+        }
+
+        private Object stringMethod(@MemberSubstitution.Origin(source = MemberSubstitution.Source.ENCLOSING_METHOD) String origin) {
+            return origin;
+        }
+
+        private Object fieldElement(@MemberSubstitution.Origin Field origin) {
+            return origin;
+        }
+
+        private Object methodMethod(@MemberSubstitution.Origin(source = MemberSubstitution.Source.ENCLOSING_METHOD) Method origin) {
+            return origin;
+        }
+
+        private Object typeElement(@MemberSubstitution.Origin Class<?> origin) {
+            return origin;
+        }
+
+        private Object typeMethod(@MemberSubstitution.Origin(source = MemberSubstitution.Source.ENCLOSING_METHOD) Class<?> origin) {
+            return origin;
         }
     }
 
@@ -792,14 +916,14 @@ public class MemberSubstitutionChainWithAnnotationTest {
             return foo;
         }
 
-        public String first(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.Current String value) {
+        public String first(@MemberSubstitution.Current String value) {
             if (value != null) {
                 throw new AssertionError();
             }
             return BAR;
         }
 
-        public String second(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.Current String value) {
+        public String second(@MemberSubstitution.Current String value) {
             if (!value.equals(BAR)) {
                 throw new AssertionError();
             }
