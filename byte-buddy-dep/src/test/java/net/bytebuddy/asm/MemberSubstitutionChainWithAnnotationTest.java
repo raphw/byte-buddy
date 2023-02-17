@@ -1,11 +1,18 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
@@ -25,7 +32,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .redefine(ArgumentSample.class)
                 .visit(MemberSubstitution.strict()
                         .field(named(FOO))
-                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ArgumentSample.class.getMethod("element", String.class)))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(ArgumentSample.class.getMethod("element", String.class)))
                         .on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -46,7 +53,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .redefine(ArgumentSample.class)
                 .visit(MemberSubstitution.strict()
                         .field(named(FOO))
-                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ArgumentSample.class.getMethod("method", String.class)))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(ArgumentSample.class.getMethod("method", String.class)))
                         .on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -67,7 +74,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .redefine(ArgumentSample.class)
                 .visit(MemberSubstitution.strict()
                         .field(named(FOO))
-                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ArgumentSample.class.getMethod("optional", String.class)))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(ArgumentSample.class.getMethod("optional", String.class)))
                         .on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -88,7 +95,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .redefine(ArgumentSample.class)
                 .visit(MemberSubstitution.strict()
                         .field(named(FOO))
-                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ArgumentSample.class.getMethod("none", String.class)))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(ArgumentSample.class.getMethod("none", String.class)))
                         .on(named(RUN)))
                 .make();
     }
@@ -99,7 +106,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .redefine(ThisReferenceSample.class)
                 .visit(MemberSubstitution.strict()
                         .field(named(FOO))
-                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ThisReferenceSample.class.getMethod("element", Object.class)))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(ThisReferenceSample.class.getMethod("element", Object.class)))
                         .on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -120,7 +127,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .redefine(ThisReferenceSample.class)
                 .visit(MemberSubstitution.strict()
                         .field(named(FOO))
-                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ThisReferenceSample.class.getMethod("method", Object.class)))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(ThisReferenceSample.class.getMethod("method", Object.class)))
                         .on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -141,7 +148,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .redefine(ThisReferenceSample.class)
                 .visit(MemberSubstitution.strict()
                         .field(named(BAZ))
-                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ThisReferenceSample.class.getMethod("optional", Object.class)))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(ThisReferenceSample.class.getMethod("optional", Object.class)))
                         .on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -164,7 +171,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .redefine(ThisReferenceSample.class)
                 .visit(MemberSubstitution.strict()
                         .field(named(BAZ))
-                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(ThisReferenceSample.class.getMethod("none", Object.class)))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(ThisReferenceSample.class.getMethod("none", Object.class)))
                         .on(named(RUN)))
                 .make();
     }
@@ -175,7 +182,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .redefine(AllArgumentsSample.class)
                 .visit(MemberSubstitution.strict()
                         .field(named(FOO))
-                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(AllArgumentsSample.class.getMethod("element", String[].class)))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(AllArgumentsSample.class.getMethod("element", String[].class)))
                         .on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -196,7 +203,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .redefine(AllArgumentsSample.class)
                 .visit(MemberSubstitution.strict()
                         .field(named(FOO))
-                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(AllArgumentsSample.class.getMethod("method", String[].class)))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(AllArgumentsSample.class.getMethod("method", String[].class)))
                         .on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -217,7 +224,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .redefine(AllArgumentsSample.class)
                 .visit(MemberSubstitution.strict()
                         .field(named(FOO))
-                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(AllArgumentsSample.class.getMethod("self", Object[].class)))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(AllArgumentsSample.class.getMethod("self", Object[].class)))
                         .on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -240,7 +247,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .redefine(AllArgumentsSample.class)
                 .visit(MemberSubstitution.strict()
                         .field(named(BAR))
-                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(AllArgumentsSample.class.getMethod("empty", String[].class)))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(AllArgumentsSample.class.getMethod("empty", String[].class)))
                         .on(named(RUN)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -261,9 +268,42 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .redefine(ThisReferenceSample.class)
                 .visit(MemberSubstitution.strict()
                         .field(named(BAZ))
-                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.of(AllArgumentsSample.class.getMethod("illegal", Void.class)))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(AllArgumentsSample.class.getMethod("illegal", Void.class)))
                         .on(named(RUN)))
                 .make();
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(value = 7, target = SelfCallHandleSample.class)
+    public void testMemberSubstitutionSelfCallHandle() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(SelfCallHandleSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(SelfCallHandleSample.class.getMethod("handle", Object.class, Object.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor(String.class).newInstance(FOO);
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) (FOO + BAR)));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(value = 7, target = SelfCallHandleSample.class)
+    public void testMemberSubstitutionSelfCallHandleHierarchy() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(SelfCallHandleSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(SelfCallHandleSample.class.getMethod("handle", Object.class, Object.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, Collections.singletonMap(SelfCallHandleSubclass.class.getName(),
+                        ClassFileLocator.ForClassLoader.read(SelfCallHandleSubclass.class))), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(SelfCallHandleSubclass.class.getName()).getDeclaredConstructor(String.class).newInstance(FOO);
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) (FOO + BAR)));
     }
 
     public static class ArgumentSample {
@@ -370,6 +410,43 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
         public static void illegal(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.AllArguments Void ignored) {
             throw new AssertionError();
+        }
+    }
+
+    public static class SelfCallHandleSample {
+
+        public final String foo;
+
+        public SelfCallHandleSample(String foo) {
+            this.foo = foo;
+        }
+
+        public String run() {
+            return foo;
+        }
+
+        public static String handle(
+                @MemberSubstitution.Substitution.Chain.Step.ForDelegation.SelfCallHandle Object bound,
+                @MemberSubstitution.Substitution.Chain.Step.ForDelegation.SelfCallHandle(bound = false) Object unbound) throws Throwable {
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            return method.invoke(bound, Collections.emptyList()).toString() + method.invoke(unbound, Collections.singletonList(new SelfCallHandleSample(BAR)));
+        }
+    }
+
+    public static class SelfCallHandleSubclass extends SelfCallHandleSample {
+
+        private int check;
+
+        public SelfCallHandleSubclass(String foo) {
+            super(foo);
+        }
+
+        @Override
+        public String run() {
+            if (check++ != 0) {
+                throw new AssertionError();
+            }
+            return super.run();
         }
     }
 }

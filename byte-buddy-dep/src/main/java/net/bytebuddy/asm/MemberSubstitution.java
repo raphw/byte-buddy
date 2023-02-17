@@ -2250,8 +2250,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param method The method to delegate to.
                      * @return An appropriate step factory.
                      */
-                    public static Step.Factory of(Method method) {
-                        return of(new MethodDescription.ForLoadedMethod(method));
+                    public static Step.Factory to(Method method) {
+                        return to(new MethodDescription.ForLoadedMethod(method));
                     }
 
                     /**
@@ -2260,8 +2260,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param constructor The constructor to delegate to.
                      * @return An appropriate step factory.
                      */
-                    public static Step.Factory of(Constructor<?> constructor) {
-                        return of(new MethodDescription.ForLoadedConstructor(constructor));
+                    public static Step.Factory to(Constructor<?> constructor) {
+                        return to(new MethodDescription.ForLoadedConstructor(constructor));
                     }
 
                     /**
@@ -2270,11 +2270,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param methodDescription A description of the method or constructor to delegate to.
                      * @return An appropriate step factory.
                      */
-                    public static Step.Factory of(MethodDescription.InDefinedShape methodDescription) {
+                    public static Step.Factory to(MethodDescription.InDefinedShape methodDescription) {
                         if (methodDescription.isTypeInitializer()) {
                             throw new IllegalArgumentException("Cannot delegate to a type initializer: " + methodDescription);
                         }
-                        return of(methodDescription, Dispatcher.ForRegularInvocation.Factory.INSTANCE, Collections.<OffsetMapping.Factory<?>>emptyList());
+                        return to(methodDescription, Dispatcher.ForRegularInvocation.Factory.INSTANCE, Collections.<OffsetMapping.Factory<?>>emptyList());
                     }
 
                     /**
@@ -2285,7 +2285,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param userFactories     Factories for custom annotation bindings.
                      * @return An appropriate step factory.
                      */
-                    private static Step.Factory of(MethodDescription.InDefinedShape delegate, Dispatcher.Factory dispatcherFactory, List<? extends OffsetMapping.Factory<?>> userFactories) {
+                    private static Step.Factory to(MethodDescription.InDefinedShape delegate, Dispatcher.Factory dispatcherFactory, List<? extends OffsetMapping.Factory<?>> userFactories) {
                         if (delegate.isTypeInitializer()) {
                             throw new IllegalArgumentException("Cannot delegate to type initializer: " + delegate);
                         }
@@ -6766,8 +6766,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * @param method The method to delegate to.
                          * @return An appropriate step factory.
                          */
-                        public Step.Factory of(Method method) {
-                            return of(new MethodDescription.ForLoadedMethod(method));
+                        public Step.Factory to(Method method) {
+                            return to(new MethodDescription.ForLoadedMethod(method));
                         }
 
                         /**
@@ -6776,8 +6776,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * @param constructor the constructor to delegate to.
                          * @return An appropriate step factory.
                          */
-                        public Step.Factory of(Constructor<?> constructor) {
-                            return of(new MethodDescription.ForLoadedConstructor(constructor));
+                        public Step.Factory to(Constructor<?> constructor) {
+                            return to(new MethodDescription.ForLoadedConstructor(constructor));
                         }
 
                         /**
@@ -6786,8 +6786,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * @param methodDescription A description of the method or constructor to delegate to.
                          * @return An appropriate step factory.
                          */
-                        public Step.Factory of(MethodDescription.InDefinedShape methodDescription) {
-                            return ForDelegation.of(methodDescription, dispatcherFactory, new ArrayList<OffsetMapping.Factory<?>>(offsetMappings.values()));
+                        public Step.Factory to(MethodDescription.InDefinedShape methodDescription) {
+                            return ForDelegation.to(methodDescription, dispatcherFactory, new ArrayList<OffsetMapping.Factory<?>>(offsetMappings.values()));
                         }
                     }
                 }
