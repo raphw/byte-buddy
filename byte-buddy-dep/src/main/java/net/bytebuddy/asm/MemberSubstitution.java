@@ -65,8 +65,14 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * <p>
  * Substitutes field access, method invocations or constructor calls within a method's body.
  * </p>
- * <p>Note</p>: This substitution must not be used to match constructor calls to an instrumented class's super constructor invocation from
+ * <p>
+ * <b>Note</b>: This substitution must not be used to match constructor calls to an instrumented class's super constructor invocation from
  * within a constructor. Matching such constructors will result in an invalid stack and a verification error.
+ * </p>
+ * <p>
+ * <b>Note</b>: This visitor will compute the required stack size on a best effort basis. For allocating an optimal stack size, ASM needs
+ * to be configured to compute the stack size.
+ * </p>
  * <p>
  * <b>Important</b>: This component relies on using a {@link TypePool} for locating types within method bodies. Within a redefinition
  * or a rebasement, this type pool normally resolved correctly by Byte Buddy. When subclassing a type, the type pool must be set
@@ -5802,7 +5808,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          *
                          * @return The name of the field.
                          */
-                        String value() default Advice.OffsetMapping.ForField.Unresolved.BEAN_PROPERTY;
+                        String value() default OffsetMapping.ForField.Unresolved.BEAN_PROPERTY;
 
                         /**
                          * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
@@ -7542,7 +7548,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 read
                                         ? FieldAccess.forField(candidates.getOnly()).read()
                                         : FieldAccess.forField(candidates.getOnly()).write(),
-                                getFreeOffset()).apply(new LocalVariableTracingMethodVisitor(mv), implementationContext).getMaximalSize() - result.getStackSize().getSize());
+                                getFreeOffset()).apply(new LocalVariableTracingMethodVisitor(mv), implementationContext).getMaximalSize());
                         return;
                     }
                 } else if (strict) {
@@ -7588,28 +7594,29 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             candidates.getOnly(),
                             Replacement.InvocationType.of(opcode, candidates.getOnly()));
                     if (binding.isBound()) {
-                        stackSizeBuffer = Math.max(stackSizeBuffer, binding.make(
-                                candidates.getOnly().isStatic() || candidates.getOnly().isConstructor()
-                                        ? candidates.getOnly().getParameters().asTypeList()
-                                        : new TypeList.Generic.Explicit(CompoundList.of(resolution.resolve(), candidates.getOnly().getParameters().asTypeList())),
-                                candidates.getOnly().isConstructor()
-                                        ? candidates.getOnly().getDeclaringType().asGenericType()
-                                        : candidates.getOnly().getReturnType(),
-                                opcode == Opcodes.INVOKESPECIAL && candidates.getOnly().isMethod() && !candidates.getOnly().isPrivate()
-                                        ? JavaConstant.MethodHandle.ofSpecial(candidates.getOnly().asDefined(), resolution.resolve())
-                                        : JavaConstant.MethodHandle.of(candidates.getOnly().asDefined()),
-                                opcode == Opcodes.INVOKESPECIAL && candidates.getOnly().isMethod() && !candidates.getOnly().isPrivate()
-                                        ? MethodInvocation.invoke(candidates.getOnly()).special(resolution.resolve())
-                                        : MethodInvocation.invoke(candidates.getOnly()), getFreeOffset()).apply(new LocalVariableTracingMethodVisitor(mv), implementationContext).getMaximalSize() - (candidates.getOnly().isConstructor()
-                                ? StackSize.SINGLE
-                                : candidates.getOnly().getReturnType().getStackSize()).getSize());
+                        StackManipulation.Size size = binding.make(
+                                        candidates.getOnly().isStatic() || candidates.getOnly().isConstructor()
+                                                ? candidates.getOnly().getParameters().asTypeList()
+                                                : new TypeList.Generic.Explicit(CompoundList.of(resolution.resolve(), candidates.getOnly().getParameters().asTypeList())),
+                                        candidates.getOnly().isConstructor()
+                                                ? candidates.getOnly().getDeclaringType().asGenericType()
+                                                : candidates.getOnly().getReturnType(),
+                                        opcode == Opcodes.INVOKESPECIAL && candidates.getOnly().isMethod() && !candidates.getOnly().isPrivate()
+                                                ? JavaConstant.MethodHandle.ofSpecial(candidates.getOnly().asDefined(), resolution.resolve())
+                                                : JavaConstant.MethodHandle.of(candidates.getOnly().asDefined()),
+                                        opcode == Opcodes.INVOKESPECIAL && candidates.getOnly().isMethod() && !candidates.getOnly().isPrivate()
+                                                ? MethodInvocation.invoke(candidates.getOnly()).special(resolution.resolve())
+                                                : MethodInvocation.invoke(candidates.getOnly()), getFreeOffset()).apply(new LocalVariableTracingMethodVisitor(mv), implementationContext);
                         if (candidates.getOnly().isConstructor()) {
+                            stackSizeBuffer = Math.max(stackSizeBuffer, size.getMaximalSize() + 2);
                             stackSizeBuffer = Math.max(stackSizeBuffer, new StackManipulation.Compound(Duplication.SINGLE.flipOver(TypeDescription.ForLoadedType.of(Object.class)),
                                     Removal.SINGLE,
                                     Removal.SINGLE,
                                     Duplication.SINGLE.flipOver(TypeDescription.ForLoadedType.of(Object.class)),
                                     Removal.SINGLE,
                                     Removal.SINGLE).apply(mv, implementationContext).getMaximalSize() + StackSize.SINGLE.getSize());
+                        } else {
+                            stackSizeBuffer = Math.max(stackSizeBuffer, size.getMaximalSize());
                         }
                         return;
                     }

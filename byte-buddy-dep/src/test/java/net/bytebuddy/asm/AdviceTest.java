@@ -1575,7 +1575,7 @@ public class AdviceTest {
     public void testSelfCallHandleSubclass() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(SelfCallHandleSample.class)
-                .visit(Advice.to(SelfCallHandleSample.class).on(named(FOO)))
+                .visit(Advice.to(SelfCallHandleSubclass.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.opened())
                 .getLoaded();
@@ -1640,10 +1640,8 @@ public class AdviceTest {
         Class<?> type = new ByteBuddy()
                 .redefine(PostProcessorInlineTest.class)
                 .visit(Advice.withCustomMapping().with(new Advice.PostProcessor.Factory() {
-                    @Override
                     public Advice.PostProcessor make(final MethodDescription.InDefinedShape advice, boolean exit) {
                         return new Advice.PostProcessor() {
-                            @Override
                             public StackManipulation resolve(TypeDescription instrumentedType,
                                                              MethodDescription instrumentedMethod,
                                                              Assigner assigner,
@@ -1669,10 +1667,8 @@ public class AdviceTest {
         Class<?> type = new ByteBuddy()
                 .redefine(PostProcessorDelegateTest.class)
                 .visit(Advice.withCustomMapping().with(new Advice.PostProcessor.Factory() {
-                    @Override
                     public Advice.PostProcessor make(final MethodDescription.InDefinedShape advice, boolean exit) {
                         return new Advice.PostProcessor() {
-                            @Override
                             public StackManipulation resolve(TypeDescription instrumentedType,
                                                              MethodDescription instrumentedMethod,
                                                              Assigner assigner,
@@ -1711,7 +1707,6 @@ public class AdviceTest {
                 .defineField(FOO, boolean.class, Ownership.STATIC)
                 .defineMethod(BAR, boolean.class, Visibility.PUBLIC)
                 .intercept(new Implementation.Simple(new ByteCodeAppender() {
-                    @Override
                     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                         methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, implementationContext.getInstrumentedType().getInternalName(), FOO, Type.getDescriptor(boolean.class));
                         methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, implementationContext.getInstrumentedType().getInternalName(), FOO, Type.getDescriptor(boolean.class));
@@ -3460,7 +3455,7 @@ public class AdviceTest {
 
     public static class SelfCallHandleSample {
 
-        private static boolean checked;
+        protected static boolean checked;
 
         public static String foo;
 
@@ -3490,6 +3485,17 @@ public class AdviceTest {
                 throw new AssertionError();
             }
             return super.foo(value);
+        }
+
+        @Advice.OnMethodExit
+        public static void exit(@Advice.SelfCallHandle Object bound, @Advice.SelfCallHandle(bound = false) Object unbound) throws Throwable {
+            if (SelfCallHandleSample.checked) {
+                return;
+            } else {
+                SelfCallHandleSample.checked = true;
+            }
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            foo = method.invoke(bound, Collections.emptyList()).toString() + method.invoke(unbound, Arrays.asList(new SelfCallHandleSubclass(), BAR));
         }
     }
 
