@@ -402,6 +402,57 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 7, target = FieldSetterHandlerTest.class)
+    public void testFieldSetterHandleNamedImplicit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FieldSetterHandlerTest.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(BAR))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(FieldSetterHandlerTest.class.getMethod("implicit", Object.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(FieldSetterHandlerTest.class.getName()).getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) BAZ));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) QUX));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(value = 7, target = FieldSetterHandlerTest.class)
+    public void testFieldSetterHandleNamedExplicit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FieldSetterHandlerTest.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(BAR))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(FieldSetterHandlerTest.class.getMethod("explicit", Object.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(FieldSetterHandlerTest.class.getName()).getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) BAZ));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) QUX));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(value = 7, target = FieldSetterHandlerTest.class)
+    public void testFieldSetterHandleAccessor() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FieldSetterHandlerTest.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(BAR))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(FieldSetterHandlerTest.class.getMethod("accessor", Object.class)))
+                        .on(named("getFoo")))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(FieldSetterHandlerTest.class.getName()).getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod("getFoo").invoke(instance), is((Object) BAZ));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) QUX));
+    }
+
+    @Test
     public void testUnused() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(UnusedTest.class)
@@ -640,7 +691,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
     public static class FieldGetterHandlerTest {
 
-        public String foo = FOO, bar = "BAR";
+        public String foo = FOO, bar = BAR;
 
         public String run() {
             return bar;
@@ -663,6 +714,37 @@ public class MemberSubstitutionChainWithAnnotationTest {
         public String explicit(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldGetterHandle(value = FOO, declaringType = FieldGetterHandlerTest.class) Object handle) throws Throwable {
             Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
             return (String) method.invoke(handle, Collections.emptyList());
+        }
+    }
+
+    public static class FieldSetterHandlerTest {
+
+        public String foo = FOO, bar = BAR;
+
+        public String run() {
+            return bar;
+        }
+
+        public String getFoo() {
+            return bar;
+        }
+
+        public String implicit(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldSetterHandle(FOO) Object handle) throws Throwable {
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            method.invoke(handle, Collections.singletonList(QUX));
+            return BAZ;
+        }
+
+        public String accessor(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldSetterHandle Object handle) throws Throwable {
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            method.invoke(handle, Collections.singletonList(QUX));
+            return BAZ;
+        }
+
+        public String explicit(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.FieldSetterHandle(value = FOO, declaringType = FieldSetterHandlerTest.class) Object handle) throws Throwable {
+            Method method = Class.forName("java.lang.invoke.MethodHandle").getMethod("invokeWithArguments", List.class);
+            method.invoke(handle, Collections.singletonList(QUX));
+            return BAZ;
         }
     }
 
