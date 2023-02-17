@@ -834,6 +834,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param original          The field, method or constructor that is substituted.
          * @param parameters        All parameters that serve as input to this access.
          * @param result            The result that is expected from the interaction or {@code void} if no result is expected.
+         * @param methodHandle      A method handle describing the substituted expression.
          * @param stackManipulation The original byte code expression that is being executed.
          * @param freeOffset        The first free offset of the local variable array that can be used for storing values.
          * @return A stack manipulation that represents the access.
@@ -3101,7 +3102,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * A factory for creating an offset mapping for a parameter value of either the instrumented
                              * method or the substituted element.
                              */
-                            public enum Factory implements OffsetMapping.Factory<Argument> {
+                            protected enum Factory implements OffsetMapping.Factory<Argument> {
 
                                 /**
                                  * The singleton instance.
@@ -3414,7 +3415,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             /**
                              * A factory for creating an offset mapping for binding a {@link This} reference.
                              */
-                            public enum Factory implements OffsetMapping.Factory<This> {
+                            protected enum Factory implements OffsetMapping.Factory<This> {
 
                                 /**
                                  * The singleton instance.
@@ -3534,7 +3535,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             /**
                              * A factory for creating an offset mapping containing all supplies arguments.
                              */
-                            public enum Factory implements OffsetMapping.Factory<AllArguments> {
+                            protected enum Factory implements OffsetMapping.Factory<AllArguments> {
 
                                 /**
                                  * The singleton instance.
@@ -3736,7 +3737,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             /**
                              * A factory for creating an offset mapping for binding a self call handle.
                              */
-                            public enum Factory implements OffsetMapping.Factory<SelfCallHandle> {
+                            protected enum Factory implements OffsetMapping.Factory<SelfCallHandle> {
 
                                 /**
                                  * The singleton instance.
@@ -4542,8 +4543,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             @HashCodeAndEqualsPlugin.Enhance
                             public static class Resolved extends OffsetMapping.ForFieldHandle {
 
+                                /**
+                                 * The field that is being accessed.
+                                 */
                                 private final FieldDescription fieldDescription;
 
+                                /**
+                                 * Creates a resolved mapping for a field access handle.
+                                 *
+                                 * @param access           The type of access.
+                                 * @param fieldDescription The field that is being accessed.
+                                 */
                                 public Resolved(Access access, FieldDescription fieldDescription) {
                                     super(access);
                                     this.fieldDescription = fieldDescription;
@@ -4560,20 +4570,45 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     return fieldDescription;
                                 }
 
+                                /**
+                                 * A factory to create an offset mapping for a resolved field handle.
+                                 *
+                                 * @param <T> The type of the annotation.
+                                 */
+                                @HashCodeAndEqualsPlugin.Enhance
                                 public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
+                                    /**
+                                     * The annotation type.
+                                     */
                                     private final Class<T> annotationType;
 
+                                    /**
+                                     * The field being accessed.
+                                     */
                                     private final FieldDescription fieldDescription;
 
+                                    /**
+                                     * The type of access.
+                                     */
                                     private final Access access;
 
+                                    /**
+                                     * Creates a new factory for a field access handle.
+                                     *
+                                     * @param annotationType   The annotation type.
+                                     * @param fieldDescription The field being accessed.
+                                     * @param access           The type of access.
+                                     */
                                     public Factory(Class<T> annotationType, FieldDescription fieldDescription, Access access) {
                                         this.annotationType = annotationType;
                                         this.fieldDescription = fieldDescription;
                                         this.access = access;
                                     }
 
+                                    /**
+                                     * {@inheritDoc}
+                                     */
                                     public Class<T> getAnnotationType() {
                                         return annotationType;
                                     }
@@ -4804,7 +4839,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             /**
                              * A factory for an offset mapping that describes a representation of the substituted element or instrumented method.
                              */
-                            public enum Factory implements OffsetMapping.Factory<Origin> {
+                            protected enum Factory implements OffsetMapping.Factory<Origin> {
 
                                 /**
                                  * The singleton instance.
@@ -4987,7 +5022,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * A factory for creating an offset mapping for a stub value.
                              */
                             @HashCodeAndEqualsPlugin.Enhance
-                            public static class Factory implements OffsetMapping.Factory<StubValue> {
+                            protected static class Factory implements OffsetMapping.Factory<StubValue> {
 
                                 /**
                                  * The source providing the reference.
@@ -5067,7 +5102,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             /**
                              * A factory for creating an offset mapping for assigning the result of the previous chain instruction.
                              */
-                            public enum Factory implements OffsetMapping.Factory<Current> {
+                            protected enum Factory implements OffsetMapping.Factory<Current> {
 
                                 /**
                                  * The singleton instance.
@@ -6236,79 +6271,248 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             this.offsetMappings = offsetMappings;
                         }
 
+                        /**
+                         * Binds the supplied annotation to a type constant of the supplied value. Constants can be strings, method handles, method types
+                         * and any primitive or the value {@code null}.
+                         *
+                         * @param type  The type of the annotation being bound.
+                         * @param value The value to bind to the annotation or {@code null} to bind the parameter type's default value.
+                         * @param <T>   The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation type during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bind(Class<T> type, @MaybeNull Object value) {
                             return bind(OffsetMapping.ForStackManipulation.of(type, value));
                         }
 
+                        /**
+                         * Binds the supplied annotation to the value of the supplied field. The field must be visible by the
+                         * instrumented type and must be declared by a super type of the instrumented field.
+                         *
+                         * @param type  The type of the annotation being bound.
+                         * @param field The field to bind to this annotation.
+                         * @param <T>   The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation type during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bind(Class<T> type, Field field) {
                             return bind(type, new FieldDescription.ForLoadedField(field));
                         }
 
+                        /**
+                         * Binds the supplied annotation to the value of the supplied field. The field must be visible by the
+                         * instrumented type and must be declared by a super type of the instrumented field. The binding is defined
+                         * as read-only and applied static typing.
+                         *
+                         * @param type             The type of the annotation being bound.
+                         * @param fieldDescription The field to bind to this annotation.
+                         * @param <T>              The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation type during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bind(Class<T> type, FieldDescription fieldDescription) {
                             return bind(new OffsetMapping.ForField.Resolved.Factory<T>(type, fieldDescription));
                         }
 
+                        /**
+                         * Binds the supplied annotation to the supplied type constant.
+                         *
+                         * @param type  The type of the annotation being bound.
+                         * @param value The type constant to bind.
+                         * @param <T>   The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation type during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bind(Class<T> type, Class<?> value) {
                             return bind(type, TypeDescription.ForLoadedType.of(value));
                         }
 
+                        /**
+                         * Binds the supplied annotation to the supplied type constant.
+                         *
+                         * @param type  The type of the annotation being bound.
+                         * @param value The type constant to bind.
+                         * @param <T>   The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation type during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bind(Class<T> type, TypeDescription value) {
                             return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, ConstantValue.Simple.wrap(value)));
                         }
 
+                        /**
+                         * Binds the supplied annotation to the supplied enumeration constant.
+                         *
+                         * @param type  The type of the annotation being bound.
+                         * @param value The enumeration constant to bind.
+                         * @param <T>   The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation type during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bind(Class<T> type, Enum<?> value) {
                             return bind(type, new EnumerationDescription.ForLoadedEnumeration(value));
                         }
 
+                        /**
+                         * Binds the supplied annotation to the supplied enumeration constant.
+                         *
+                         * @param type  The type of the annotation being bound.
+                         * @param value The enumeration constant to bind.
+                         * @param <T>   The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation type during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bind(Class<T> type, EnumerationDescription value) {
                             return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, ConstantValue.Simple.wrap(value)));
                         }
 
+                        /**
+                         * Binds the supplied annotation to the supplied fixed value.
+                         *
+                         * @param type  The type of the annotation being bound.
+                         * @param value The value to bind to this annotation.
+                         * @param <T>   The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation type during binding.
+                         */
                         @SuppressWarnings("unchecked")
                         public <T extends Annotation> WithCustomMapping bindSerialized(Class<T> type, Serializable value) {
                             return bindSerialized(type, value, (Class<Serializable>) value.getClass());
                         }
 
+                        /**
+                         * Binds the supplied annotation to the supplied fixed value.
+                         *
+                         * @param type       The type of the annotation being bound.
+                         * @param value      The value to bind to this annotation.
+                         * @param targetType The type of {@code value} as which the instance should be treated.
+                         * @param <T>        The annotation type.
+                         * @param <S>        The type of the serialized instance.
+                         * @return A new builder for a delegate that considers the supplied annotation type during binding.
+                         */
                         public <T extends Annotation, S extends Serializable> WithCustomMapping bindSerialized(Class<T> type, S value, Class<? super S> targetType) {
                             return bind(OffsetMapping.ForStackManipulation.OfSerializedConstant.of(type, value, targetType));
                         }
 
+                        /**
+                         * Binds the supplied annotation to the annotation's property of the specified name.
+                         *
+                         * @param type     The type of the annotation being bound.
+                         * @param property The name of the annotation property to be bound.
+                         * @param <T>      The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bindProperty(Class<T> type, String property) {
                             return bind(OffsetMapping.ForStackManipulation.OfAnnotationProperty.of(type, property));
                         }
 
+                        /**
+                         * Binds the supplied annotation to the given Java constant.
+                         *
+                         * @param type     The type of the annotation being bound.
+                         * @param constant The constant value that is bound.
+                         * @param <T>      The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bind(Class<T> type, ConstantValue constant) {
                             return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, constant.toStackManipulation(), constant.getTypeDescription().asGenericType()));
                         }
 
+                        /**
+                         * Binds the supplied annotation to the annotation's property of the specified name.
+                         *
+                         * @param type              The type of the annotation being bound.
+                         * @param stackManipulation The stack manipulation loading the bound value.
+                         * @param targetType        The type of the loaded value.
+                         * @param <T>               The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bind(Class<T> type, StackManipulation stackManipulation, java.lang.reflect.Type targetType) {
                             return bind(type, stackManipulation, TypeDefinition.Sort.describe(targetType));
                         }
 
+                        /**
+                         * Binds the supplied annotation to the annotation's property of the specified name.
+                         *
+                         * @param type              The type of the annotation being bound.
+                         * @param stackManipulation The stack manipulation loading the bound value.
+                         * @param targetType        The type of the loaded value.
+                         * @param <T>               The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bind(Class<T> type, StackManipulation stackManipulation, TypeDescription.Generic targetType) {
                             return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, stackManipulation, targetType));
                         }
 
+                        /**
+                         * Binds the supplied annotation as a lambda expression via the JVM's lambda metafactory.
+                         *
+                         * @param type                The type of the annotation being bound.
+                         * @param constructor         The constructor being bound as the lambda expression's implementation.
+                         * @param functionalInterface The functional interface that represents the lambda expression.
+                         * @param <T>                 The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type, Constructor<?> constructor, Class<?> functionalInterface) {
                             return bindLambda(type, new MethodDescription.ForLoadedConstructor(constructor), TypeDescription.ForLoadedType.of(functionalInterface));
                         }
 
+                        /**
+                         * Binds the supplied annotation as a lambda expression via the JVM's lambda metafactory.
+                         *
+                         * @param type                The type of the annotation being bound.
+                         * @param constructor         The constructor being bound as the lambda expression's implementation.
+                         * @param functionalInterface The functional interface that represents the lambda expression.
+                         * @param methodGraphCompiler The method graph compiler that resolves the functional method of the function interface.
+                         * @param <T>                 The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type, Constructor<?> constructor, Class<?> functionalInterface, MethodGraph.Compiler methodGraphCompiler) {
                             return bindLambda(type, new MethodDescription.ForLoadedConstructor(constructor), TypeDescription.ForLoadedType.of(functionalInterface), methodGraphCompiler);
                         }
 
+                        /**
+                         * Binds the supplied annotation as a lambda expression via the JVM's lambda metafactory.
+                         *
+                         * @param type                The type of the annotation being bound.
+                         * @param method              The method being bound as the lambda expression's implementation.
+                         * @param functionalInterface The functional interface that represents the lambda expression.
+                         * @param <T>                 The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type, Method method, Class<?> functionalInterface) {
                             return bindLambda(type, new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface));
                         }
 
+                        /**
+                         * Binds the supplied annotation as a lambda expression via the JVM's lambda metafactory.
+                         *
+                         * @param type                The type of the annotation being bound.
+                         * @param method              The method being bound as the lambda expression's implementation.
+                         * @param functionalInterface The functional interface that represents the lambda expression.
+                         * @param methodGraphCompiler The method graph compiler that resolves the functional method of the function interface.
+                         * @param <T>                 The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type, Method method, Class<?> functionalInterface, MethodGraph.Compiler methodGraphCompiler) {
                             return bindLambda(type, new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface), methodGraphCompiler);
                         }
 
+                        /**
+                         * Binds the supplied annotation as a lambda expression via the JVM's lambda metafactory.
+                         *
+                         * @param type                The type of the annotation being bound.
+                         * @param methodDescription   The method or constructor being bound as the lambda expression's implementation.
+                         * @param functionalInterface The functional interface that represents the lambda expression.
+                         * @param <T>                 The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type, MethodDescription.InDefinedShape methodDescription, TypeDescription functionalInterface) {
                             return bindLambda(type, methodDescription, functionalInterface, MethodGraph.Compiler.DEFAULT);
                         }
 
+                        /**
+                         * Binds the supplied annotation as a lambda expression via the JVM's lambda metafactory.
+                         *
+                         * @param type                The type of the annotation being bound.
+                         * @param methodDescription   The method or constuctor being bound as the lambda expression's implementation.
+                         * @param functionalInterface The functional interface that represents the lambda expression.
+                         * @param methodGraphCompiler The method graph compiler that resolves the functional method of the function interface.
+                         * @param <T>                 The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bindLambda(Class<T> type,
                                                                                    MethodDescription.InDefinedShape methodDescription,
                                                                                    TypeDescription functionalInterface,
@@ -6343,26 +6547,80 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     JavaConstant.MethodType.of(methods.asDefined().getOnly()));
                         }
 
+                        /**
+                         * Binds the supplied annotation to a dynamically bootstrapped value.
+                         *
+                         * @param type            The type of the annotation being bound.
+                         * @param bootstrapMethod The bootstrap method returning the call site.
+                         * @param constant        The arguments supplied to the bootstrap method.
+                         * @param <T>             The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Method bootstrapMethod, Object... constant) {
                             return bindDynamic(type, bootstrapMethod, Arrays.asList(constant));
                         }
 
+                        /**
+                         * Binds the supplied annotation to a dynamically bootstrapped value.
+                         *
+                         * @param type            The type of the annotation being bound.
+                         * @param bootstrapMethod The bootstrap method returning the call site.
+                         * @param constants       The arguments supplied to the bootstrap method.
+                         * @param <T>             The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Method bootstrapMethod, List<?> constants) {
                             return bindDynamic(type, new MethodDescription.ForLoadedMethod(bootstrapMethod), constants);
                         }
 
+                        /**
+                         * Binds the supplied annotation to a dynamically bootstrapped value.
+                         *
+                         * @param type            The type of the annotation being bound.
+                         * @param bootstrapMethod The bootstrap constructor returning the call site.
+                         * @param constant        The arguments supplied to the bootstrap method.
+                         * @param <T>             The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Constructor<?> bootstrapMethod, Object... constant) {
                             return bindDynamic(type, bootstrapMethod, Arrays.asList(constant));
                         }
 
+                        /**
+                         * Binds the supplied annotation to a dynamically bootstrapped value.
+                         *
+                         * @param type            The type of the annotation being bound.
+                         * @param bootstrapMethod The bootstrap constructor returning the call site.
+                         * @param constants       The arguments supplied to the bootstrap method.
+                         * @param <T>             The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, Constructor<?> bootstrapMethod, List<?> constants) {
                             return bindDynamic(type, new MethodDescription.ForLoadedConstructor(bootstrapMethod), constants);
                         }
 
+                        /**
+                         * Binds the supplied annotation to a dynamically bootstrapped value.
+                         *
+                         * @param type            The type of the annotation being bound.
+                         * @param bootstrapMethod The bootstrap method or constructor returning the call site.
+                         * @param constant        The arguments supplied to the bootstrap method.
+                         * @param <T>             The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, MethodDescription.InDefinedShape bootstrapMethod, Object... constant) {
                             return bindDynamic(type, bootstrapMethod, Arrays.asList(constant));
                         }
 
+                        /**
+                         * Binds the supplied annotation to a dynamically bootstrapped value.
+                         *
+                         * @param type            The type of the annotation being bound.
+                         * @param bootstrapMethod The bootstrap method or constructor returning the call site.
+                         * @param constants       The arguments supplied to the bootstrap method.
+                         * @param <T>             The annotation type.
+                         * @return A new builder for a delegate that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bindDynamic(Class<T> type, MethodDescription.InDefinedShape bootstrapMethod, List<?> constants) {
                             List<JavaConstant> arguments = JavaConstant.Simple.wrap(constants);
                             if (!bootstrapMethod.isInvokeBootstrap(TypeList.Explicit.of(arguments))) {
@@ -6371,10 +6629,25 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             return bind(new OffsetMapping.ForStackManipulation.OfDynamicInvocation<T>(type, bootstrapMethod, arguments));
                         }
 
+                        /**
+                         * Binds the supplied annotation to the annotation's property of the specified name.
+                         *
+                         * @param type          The type of the annotation being bound.
+                         * @param offsetMapping The offset mapping being bound.
+                         * @param <T>           The annotation type.
+                         * @return A new builder for a delegation that considers the supplied annotation during binding.
+                         */
                         public <T extends Annotation> WithCustomMapping bind(Class<T> type, OffsetMapping offsetMapping) {
                             return bind(new OffsetMapping.Factory.Simple<T>(type, offsetMapping));
                         }
 
+                        /**
+                         * Binds an annotation to a dynamically computed value. Whenever the {@link ForDelegation} target discovers the given annotation on
+                         * a parameter of an advice method, the dynamic value is asked to provide a value that is then assigned to the parameter in question.
+                         *
+                         * @param offsetMapping The dynamic value that is computed for binding the parameter to a value.
+                         * @return A new builder for a delegation that considers the supplied annotation type during binding.
+                         */
                         public WithCustomMapping bind(OffsetMapping.Factory<?> offsetMapping) {
                             Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings = new LinkedHashMap<Class<? extends Annotation>, OffsetMapping.Factory<?>>(this.offsetMappings);
                             if (!offsetMapping.getAnnotationType().isAnnotation()) {
@@ -6402,7 +6675,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * </ul>
                          *
                          * @param constructor The bootstrap constructor.
-                         * @return A new builder for an advice that uses the supplied constructor for bootstrapping.
+                         * @return A new builder for a delegation within a member substitution that uses the supplied constructor for bootstrapping.
                          */
                         public WithCustomMapping bootstrap(Constructor<?> constructor) {
                             return bootstrap(new MethodDescription.ForLoadedConstructor(constructor));
@@ -6413,7 +6686,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          *
                          * @param constructor     The bootstrap method or constructor.
                          * @param resolverFactory A factory for resolving the arguments to the bootstrap method.
-                         * @return A new builder for an advice that uses the supplied constructor for bootstrapping.
+                         * @return A new builder for a delegation within a member substitution that uses the supplied constructor for bootstrapping.
                          */
                         public WithCustomMapping bootstrap(Constructor<?> constructor, BootstrapArgumentResolver.Factory resolverFactory) {
                             return bootstrap(new MethodDescription.ForLoadedConstructor(constructor), resolverFactory);
@@ -6436,7 +6709,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * </ul>
                          *
                          * @param method The bootstrap method.
-                         * @return A new builder for an advice that uses the supplied constructor for bootstrapping.
+                         * @return A new builder for a delegation within a member substitution that uses the supplied method for bootstrapping.
                          */
                         public WithCustomMapping bootstrap(Method method) {
                             return bootstrap(new MethodDescription.ForLoadedMethod(method));
@@ -6447,7 +6720,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          *
                          * @param method          The bootstrap method or constructor.
                          * @param resolverFactory A factory for resolving the arguments to the bootstrap method.
-                         * @return A new builder for an advice that uses the supplied constructor for bootstrapping.
+                         * @return A new builder for a delegation within a member substitution that uses the supplied method for bootstrapping.
                          */
                         public WithCustomMapping bootstrap(Method method, BootstrapArgumentResolver.Factory resolverFactory) {
                             return bootstrap(new MethodDescription.ForLoadedMethod(method), resolverFactory);
@@ -6470,7 +6743,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * </ul>
                          *
                          * @param bootstrap The bootstrap method or constructor.
-                         * @return A new builder for an advice that uses the supplied constructor for bootstrapping.
+                         * @return A new builder for a delegation within a member substitution that uses the supplied method or constructor for bootstrapping.
                          */
                         public WithCustomMapping bootstrap(MethodDescription.InDefinedShape bootstrap) {
                             return bootstrap(bootstrap, BootstrapArgumentResolver.ForDefaultValues.Factory.INSTANCE);
@@ -6481,7 +6754,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          *
                          * @param bootstrap       The bootstrap method or constructor.
                          * @param resolverFactory A factory for resolving the arguments to the bootstrap method.
-                         * @return A new builder for an advice that uses the supplied constructor for bootstrapping.
+                         * @return A new builder for a delegation within a member substitution that uses the supplied method or constructor for bootstrapping.
                          */
                         public WithCustomMapping bootstrap(MethodDescription.InDefinedShape bootstrap, BootstrapArgumentResolver.Factory resolverFactory) {
                             return new WithCustomMapping(Dispatcher.ForDynamicInvocation.of(bootstrap, resolverFactory), offsetMappings);
