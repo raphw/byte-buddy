@@ -78,6 +78,11 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
 
     /**
+     * The index of the this reference within a non-static method.
+     */
+    protected static final int THIS_REFERENCE = 0;
+
+    /**
      * The method graph compiler to use.
      */
     private final MethodGraph.Compiler methodGraphCompiler;
@@ -1161,11 +1166,6 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForMethodInvocation implements Substitution {
-
-            /**
-             * The index of the this reference within a non-static method.
-             */
-            private static final int THIS_REFERENCE = 0;
 
             /**
              * The instrumented type.
@@ -2559,7 +2559,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<S> annotation) {
-                                    throw new UnsupportedOperationException();
+                                    throw new UnsupportedOperationException("This factory does not support binding a method receiver");
                                 }
                             }
 
@@ -2726,7 +2726,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                                int offset) {
                                     StackManipulation assignment = assigner.assign(typeDescription, targetType, typing);
                                     if (!assignment.isValid()) {
-                                        throw new IllegalStateException();
+                                        throw new IllegalStateException("Cannot assign " + typeDescription + " to " + targetType);
                                     }
                                     return new StackManipulation.Compound(stackManipulation, assignment);
                                 }
@@ -2766,7 +2766,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation) {
-                                    throw new UnsupportedOperationException();
+                                    throw new UnsupportedOperationException("This factory does not support binding a method receiver");
                                 }
 
                                 /**
@@ -3158,8 +3158,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<Argument> annotation) {
+                                    int index = annotation.getValue(ARGUMENT_VALUE).resolve(Integer.class);
+                                    if (index < 0) {
+                                        throw new IllegalStateException("Cannot assign negative parameter index " + index + " for " + target);
+                                    }
                                     return new ForArgument(target.getType(),
-                                            annotation.getValue(ARGUMENT_VALUE).resolve(Integer.class),
+                                            index,
                                             annotation.getValue(ARGUMENT_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
                                             annotation.getValue(ARGUMENT_SOURCE).resolve(EnumerationDescription.class).load(Source.class),
                                             annotation.getValue(ARGUMENT_OPTIONAL).resolve(Boolean.class));
@@ -3252,13 +3256,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     if (value != null) {
                                         StackManipulation assignment = assigner.assign(value.getTypeDescription(), targetType, typing);
                                         if (!assignment.isValid()) {
-                                            throw new IllegalStateException(); // TODO
+                                            throw new IllegalStateException("Cannot assign " + value.getTypeDescription() + " to " + targetType);
                                         }
                                         return new StackManipulation.Compound(MethodVariableAccess.of(value.getTypeDescription()).loadFrom(value.getOffset()), assignment);
                                     } else if (optional) {
                                         return DefaultValue.of(targetType);
                                     } else {
-                                        throw new IllegalStateException(); // TODO
+                                        throw new IllegalStateException("No argument with index " + index + " available for " + original);
                                     }
                                 }
                             }
@@ -3392,13 +3396,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     if (value != null) {
                                         StackManipulation assignment = assigner.assign(value.getTypeDescription(), targetType, typing);
                                         if (!assignment.isValid()) {
-                                            throw new IllegalStateException(); // TODO
+                                            throw new IllegalStateException("Cannot assign " + value.getTypeDescription() + " to " + targetType);
                                         }
                                         return new StackManipulation.Compound(MethodVariableAccess.of(value.getTypeDescription()).loadFrom(value.getOffset()), assignment);
                                     } else if (optional) {
                                         return DefaultValue.of(targetType);
                                     } else {
-                                        throw new IllegalStateException(); // TODO
+                                        throw new IllegalStateException("No this reference available for " + original);
                                     }
                                 }
                             }
@@ -3467,8 +3471,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                         }
 
+                        /**
+                         * An offset mapping that assigns an array containing all arguments to the annotated parameter.
+                         */
                         class ForAllArguments implements OffsetMapping {
 
+                            /**
+                             * The component type of the annotated parameter.
+                             */
                             private final TypeDescription.Generic targetComponentType;
 
                             @MaybeNull
@@ -3526,15 +3536,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<AllArguments> annotation) {
-                                    throw new UnsupportedOperationException();
+                                    throw new UnsupportedOperationException("This factory does not support binding a method receiver");
                                 }
 
                                 /**
                                  * {@inheritDoc}
                                  */
+                                @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
                                 public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<AllArguments> annotation) {
                                     if (!target.getType().isArray()) {
-                                        throw new IllegalStateException(); // TODO
+                                        throw new IllegalStateException("Expected array as parameter type for " + target);
                                     }
                                     return new ForAllArguments(target.getType().getComponentType(),
                                             annotation.getValue(ALL_ARGUMENTS_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
@@ -3595,7 +3606,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                         for (Source.Value value : values) {
                                             StackManipulation assignment = assigner.assign(value.getTypeDescription(), targetComponentType, typing);
                                             if (!assignment.isValid()) {
-                                                throw new IllegalStateException();
+                                                throw new IllegalStateException("Cannot assign " + value.getTypeDescription() + " to " + targetComponentType);
                                             }
                                             stackManipulations.add(new StackManipulation.Compound(MethodVariableAccess.of(value.getTypeDescription()).loadFrom(value.getOffset()), assignment));
                                         }
@@ -3648,7 +3659,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<SelfCallHandle> annotation) {
-                                    throw new UnsupportedOperationException();
+                                    throw new UnsupportedOperationException("This factory does not support binding a method receiver");
                                 }
 
                                 /**
@@ -3656,7 +3667,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  */
                                 public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<SelfCallHandle> annotation) {
                                     if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
-                                        throw new IllegalStateException(); // TODO
+                                        throw new IllegalStateException("Cannot assign method handle to " + target);
                                     }
                                     return new ForSelfCallHandle(
                                             annotation.getValue(ALL_ARGUMENTS_SOURCE).resolve(EnumerationDescription.class).load(Source.class),
@@ -3948,7 +3959,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     return new OffsetMapping.Resolved.ForStackManipulation(access.resolve(fieldDescription.asDefined()).toStackManipulation());
                                 } else {
                                     return new OffsetMapping.Resolved.ForStackManipulation(new StackManipulation.Compound(
-                                            access.resolve(fieldDescription.asDefined()).toStackManipulation(), MethodVariableAccess.REFERENCE.loadFrom(0), // TODO: constant
+                                            access.resolve(fieldDescription.asDefined()).toStackManipulation(), MethodVariableAccess.REFERENCE.loadFrom(THIS_REFERENCE),
                                             MethodInvocation.invoke(new MethodDescription.Latent(JavaType.METHOD_HANDLE.getTypeStub(), new MethodDescription.Token("bindTo",
                                                     Opcodes.ACC_PUBLIC, JavaType.METHOD_HANDLE.getTypeStub().asGenericType(),
                                                     new TypeList.Generic.Explicit(TypeDefinition.Sort.describe(Object.class)))))));
@@ -4064,7 +4075,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                      * {@inheritDoc}
                                      */
                                     public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<FieldGetterHandle> annotation) {
-                                        throw new UnsupportedOperationException(); // TODO
+                                        throw new UnsupportedOperationException("This factory does not support binding a method receiver");
                                     }
 
                                     public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<FieldGetterHandle> annotation) {
@@ -4103,7 +4114,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                      * {@inheritDoc}
                                      */
                                     public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<FieldSetterHandle> annotation) {
-                                        throw new UnsupportedOperationException();
+                                        throw new UnsupportedOperationException("This factory does not support binding a method receiver");
                                     }
 
 
@@ -4165,7 +4176,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                      * {@inheritDoc}
                                      */
                                     public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation) {
-                                        throw new UnsupportedOperationException(); // TODO
+                                        throw new UnsupportedOperationException("This factory does not support binding a method receiver");
                                     }
 
                                     /**
@@ -4273,11 +4284,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                         if (original instanceof MethodDescription) {
                                             handle = JavaConstant.MethodHandle.of(((MethodDescription) original).asDefined());
                                         } else if (original instanceof FieldDescription) {
-                                            handle = returnType.represents(void.class) // TODO: false
+                                            handle = returnType.represents(void.class)
                                                     ? JavaConstant.MethodHandle.ofSetter(((FieldDescription) original).asDefined())
                                                     : JavaConstant.MethodHandle.ofGetter(((FieldDescription) original).asDefined());
                                         } else {
-                                            throw new IllegalStateException(); // TODO
+                                            throw new IllegalStateException("Unexpected byte code element: " + original);
                                         }
                                         return handle.toStackManipulation();
                                     }
@@ -4331,7 +4342,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * {@inheritDoc}
                                  */
                                 public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<Origin> annotation) {
-                                    throw new UnsupportedOperationException();
+                                    throw new UnsupportedOperationException("This factory does not support binding a method receiver");
                                 }
 
                                 /**
@@ -4388,7 +4399,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                                Map<Integer, Integer> offsets,
                                                                int offset) {
                                     if (!this.source.isRepresentable(sort, original, instrumentedMethod)) {
-                                        throw new IllegalStateException();
+                                        throw new IllegalStateException("Cannot represent " + sort + " for " + source + " in " + instrumentedMethod);
                                     }
                                     return this.source.resolve(sort, original, parameters, result, instrumentedMethod);
                                 }
@@ -4443,12 +4454,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 }
 
                                 public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<StubValue> annotation) {
-                                    throw new UnsupportedOperationException();
+                                    throw new UnsupportedOperationException("This factory does not support binding a method receiver");
                                 }
 
                                 public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<StubValue> annotation) {
                                     if (!target.getType().represents(Object.class)) {
-                                        throw new IllegalStateException();
+                                        throw new IllegalStateException("Expected " + target + " to declare an Object type");
                                     }
                                     return new ForStubValue(source);
                                 }
@@ -4536,7 +4547,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                                int offset) {
                                     StackManipulation assignment = assigner.assign(current, targetType, typing);
                                     if (!assignment.isValid()) {
-                                        throw new IllegalStateException(); // TODO
+                                        throw new IllegalStateException("Cannot assign " + current + " to " + targetType);
                                     }
                                     return new StackManipulation.Compound(MethodVariableAccess.of(current).loadFrom(offset), assignment);
                                 }
@@ -4695,7 +4706,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              */
                             protected static Dispatcher.Factory of(MethodDescription.InDefinedShape bootstrapMethod, BootstrapArgumentResolver.Factory resolverFactory) {
                                 if (!bootstrapMethod.isInvokeBootstrap()) {
-                                    throw new IllegalStateException();
+                                    throw new IllegalStateException("Not a bootstrap method: " + bootstrapMethod);
                                 }
                                 return new ForDynamicInvocation.Factory(bootstrapMethod, resolverFactory);
                             }
@@ -5291,7 +5302,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             protected Source.Value self(TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
                                 return original.isStatic()
                                         ? null
-                                        : new Source.Value(parameters.get(0), offsets.get(0)); // TODO: constant
+                                        : new Source.Value(parameters.get(THIS_REFERENCE), offsets.get(THIS_REFERENCE));
                             }
 
                             @Override
@@ -5347,7 +5358,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             @Override
                             @MaybeNull
                             protected Source.Value self(TypeList.Generic parameters, Map<Integer, Integer> offsets, ByteCodeElement.Member original, MethodDescription instrumentedMethod) {
-                                return instrumentedMethod.isStatic() ? null : new Source.Value(instrumentedMethod.getDeclaringType().asGenericType(), 0); // TODO: constant
+                                return instrumentedMethod.isStatic()
+                                        ? null
+                                        : new Source.Value(instrumentedMethod.getDeclaringType().asGenericType(), THIS_REFERENCE);
                             }
 
                             @Override
@@ -5366,7 +5379,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 List<Source.Value> values;
                                 if (includesSelf && !instrumentedMethod.isStatic()) {
                                     values = new ArrayList<Source.Value>(instrumentedMethod.getParameters().size() + 1);
-                                    values.add(new Source.Value(instrumentedMethod.getDeclaringType().asGenericType(), 0)); // TODO: constant
+                                    values.add(new Source.Value(instrumentedMethod.getDeclaringType().asGenericType(), THIS_REFERENCE));
                                 } else {
                                     values = new ArrayList<Source.Value>(instrumentedMethod.getParameters().size());
                                 }
