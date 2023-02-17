@@ -2303,6 +2303,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 OffsetMapping.ForFieldHandle.Unresolved.GetterFactory.INSTANCE,
                                 OffsetMapping.ForFieldHandle.Unresolved.SetterFactory.INSTANCE,
                                 OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                OffsetMapping.ForStubValue.Factory.INSTANCE,
                                 new OffsetMapping.ForStackManipulation.OfDefaultValue<Unused>(Unused.class),
                                 OffsetMapping.ForCurrent.Factory.INSTANCE), userFactories));
                     }
@@ -5028,21 +5029,20 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * A factory for creating an offset mapping for a stub value.
                              */
                             @HashCodeAndEqualsPlugin.Enhance
-                            protected static class Factory implements OffsetMapping.Factory<StubValue> {
+                            protected enum Factory implements OffsetMapping.Factory<StubValue> {
 
                                 /**
-                                 * The source providing the reference.
+                                 * The singleton instance.
                                  */
-                                private final Source source;
+                                INSTANCE;
 
                                 /**
-                                 * Creates a factory for creating an offset mapping for a stub value.
-                                 *
-                                 * @param source The source providing the reference.
+                                 * The {@link StubValue#source()} property.
                                  */
-                                public Factory(Source source) {
-                                    this.source = source;
-                                }
+                                private static final MethodDescription.InDefinedShape STUB_VALUE_SOURCE = TypeDescription.ForLoadedType.of(StubValue.class)
+                                        .getDeclaredMethods()
+                                        .filter(named("source"))
+                                        .getOnly();
 
                                 /**
                                  * {@inheritDoc}
@@ -5065,7 +5065,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     if (!target.getType().represents(Object.class)) {
                                         throw new IllegalStateException("Expected " + target + " to declare an Object type");
                                     }
-                                    return new ForStubValue(source);
+                                    return new ForStubValue(annotation.getValue(STUB_VALUE_SOURCE).resolve(EnumerationDescription.class).load(Source.class));
                                 }
                             }
                         }
@@ -5974,7 +5974,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     @Retention(RetentionPolicy.RUNTIME)
                     @java.lang.annotation.Target(ElementType.PARAMETER)
                     public @interface StubValue {
-                        /* empty */
+
+                        /**
+                         * Determines the source that is considered for this annotation which can be either the substituted method,
+                         * constructor or field, or the instrumented method.
+                         *
+                         * @return The source that is considered for this annotation.
+                         */
+                        Source source() default Source.SUBSTITUTED_ELEMENT;
                     }
 
                     /**

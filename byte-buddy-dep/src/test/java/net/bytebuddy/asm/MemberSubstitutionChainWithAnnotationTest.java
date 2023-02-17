@@ -373,6 +373,33 @@ public class MemberSubstitutionChainWithAnnotationTest {
         assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) BAR));
     }
 
+    @Test
+    public void testStubValue() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(StubValueTest.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(StubValueTest.class.getMethod("stubbed", Object.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(StubValueTest.class.getName()).getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) BAR));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testStubValueIllegal() throws Exception {
+        new ByteBuddy()
+                .redefine(StubValueTest.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(StubValueTest.class.getMethod("illegal", String.class)))
+                        .on(named(RUN)))
+                .make();
+    }
+
     public static class ArgumentSample {
 
         public String foo = FOO, bar = BAR;
@@ -562,6 +589,26 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 throw new AssertionError();
             }
             return BAR;
+        }
+    }
+
+    public static class StubValueTest {
+
+        public String foo = FOO;
+
+        public String run() {
+            return foo;
+        }
+
+        public String stubbed(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.StubValue Object value) {
+            if (value != null) {
+                throw new AssertionError();
+            }
+            return BAR;
+        }
+
+        public String illegal(@MemberSubstitution.Substitution.Chain.Step.ForDelegation.StubValue String value) {
+            throw new AssertionError();
         }
     }
 }
