@@ -5867,6 +5867,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             BootstrapArgumentResolver resolve(MethodDescription.InDefinedShape adviceMethod, boolean exit);
         }
 
+        /**
+         * An argument resolver that supplies a default selection of arguments. The explicitly resolved constant values are:
+         * <ul>
+         * <li>A {@link String} of the target's binary class name.</li>
+         * <li>A {@code int} with value {@code 0} for an enter advice and {code 1} for an exist advice.</li>
+         * <li>A {@link Class} representing the class implementing the instrumented method.</li>
+         * <li>A {@link String} with the name of the instrumented method.</li>
+         * <li>A {@code java.lang.invoke.MethodHandle} representing the instrumented method unless the target is the type's static initializer.</li>
+         * </ul>
+         */
         @HashCodeAndEqualsPlugin.Enhance
         class ForDefaultValues implements BootstrapArgumentResolver {
 
@@ -15125,13 +15135,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * Defines the supplied constructor as an dynamic invocation bootstrap target for delegating advice methods. The bootstrap
+         * Defines the supplied constructor as a dynamic invocation bootstrap target for delegating advice methods. The bootstrap
          * method arguments are:
          * <ul>
          * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
          * <li>A {@link String} representing the constructor's internal name {@code <init>}.</li>
          * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
-         * <li>A {@link String} of the binary target class name.</li>
+         * <li>A {@link String} of the target's binary class name.</li>
          * <li>A {@code int} with value {@code 0} for an enter advice and {code 1} for an exist advice.</li>
          * <li>A {@link Class} representing the class implementing the instrumented method.</li>
          * <li>A {@link String} with the name of the instrumented method.</li>
@@ -15158,13 +15168,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * Defines the supplied method as an dynamic invocation bootstrap target for delegating advice methods. The bootstrap
+         * Defines the supplied method as a dynamic invocation bootstrap target for delegating advice methods. The bootstrap
          * method arguments are:
          * <ul>
          * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
          * <li>A {@link String} representing the method's name.</li>
          * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
-         * <li>A {@link String} of the binary target class name.</li>
+         * <li>A {@link String} of the target's binary class name.</li>
          * <li>A {@code int} with value {@code 0} for an enter advice and {code 1} for an exist advice.</li>
          * <li>A {@link Class} representing the class implementing the instrumented method.</li>
          * <li>A {@link String} with the name of the instrumented method.</li>
@@ -15179,7 +15189,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * Defines the supplied method as an dynamic invocation bootstrap target for delegating advice methods. The bootstrap
+         * Defines the supplied method as a dynamic invocation bootstrap target for delegating advice methods. The bootstrap
          * method arguments are provided explicitly by the supplied resolver.
          *
          * @param method   The bootstrap method.
@@ -15191,13 +15201,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * Defines the supplied method or constructor as an dynamic invocation bootstrap target for delegating advice methods. The bootstrap
+         * Defines the supplied method or constructor as a dynamic invocation bootstrap target for delegating advice methods. The bootstrap
          * method arguments are:
          * <ul>
          * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
          * <li>A {@link String} representing the method's name or constructor's internal name {@code <init>}.</li>
          * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
-         * <li>A {@link String} of the binary target class name.</li>
+         * <li>A {@link String} of the target's binary class name.</li>
          * <li>A {@code int} with value {@code 0} for an enter advice and {code 1} for an exist advice.</li>
          * <li>A {@link Class} representing the class implementing the instrumented method.</li>
          * <li>A {@link String} with the name of the instrumented method.</li>
@@ -15212,7 +15222,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * Defines the supplied method or constructor as an dynamic invocation bootstrap target for delegating advice methods. The bootstrap
+         * Defines the supplied method or constructor as a dynamic invocation bootstrap target for delegating advice methods. The bootstrap
          * method arguments are provided explicitly by the supplied resolver.
          *
          * @param bootstrap       The bootstrap method or constructor.

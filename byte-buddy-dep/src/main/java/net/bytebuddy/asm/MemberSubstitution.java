@@ -2285,13 +2285,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @return An appropriate step factory.
                      */
                     private static Step.Factory of(MethodDescription.InDefinedShape delegate, Dispatcher.Factory dispatcherFactory, List<? extends OffsetMapping.Factory<?>> userFactories) {
+                        if (delegate.isTypeInitializer()) {
+                            throw new IllegalArgumentException("Cannot delegate to type initializer: " + delegate);
+                        }
                         return new Factory(delegate, dispatcherFactory.make(delegate), CompoundList.of(Arrays.asList(
                                 OffsetMapping.ForArgument.Factory.INSTANCE,
                                 OffsetMapping.ForThisReference.Factory.INSTANCE,
                                 OffsetMapping.ForAllArguments.Factory.INSTANCE,
                                 OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
-                                OffsetMapping.ForFieldHandle.Unresolved.ReaderFactory.INSTANCE,
-                                OffsetMapping.ForFieldHandle.Unresolved.WriterFactory.INSTANCE,
+                                OffsetMapping.ForFieldHandle.Unresolved.GetterFactory.INSTANCE,
+                                OffsetMapping.ForFieldHandle.Unresolved.SetterFactory.INSTANCE,
                                 OffsetMapping.ForOrigin.Factory.INSTANCE,
                                 new OffsetMapping.ForStackManipulation.OfDefaultValue<Unused>(Unused.class),
                                 OffsetMapping.ForCurrent.Factory.INSTANCE), userFactories));
@@ -3893,23 +3896,35 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                         }
 
+                        /**
+                         * An offset mapping for a field value.
+                         */
                         @HashCodeAndEqualsPlugin.Enhance
                         abstract class ForField implements OffsetMapping {
 
-                            private static final MethodDescription.InDefinedShape FIELD_VALUE;
+                            /**
+                             * The {@link FieldValue#value()} property.
+                             */
+                            private static final MethodDescription.InDefinedShape FIELD_VALUE_VALUE;
 
-                            private static final MethodDescription.InDefinedShape FIELD_DECLARING_TYPE;
+                            /**
+                             * The {@link FieldValue#declaringType()} property.
+                             */
+                            private static final MethodDescription.InDefinedShape FIELD_VALUE_DECLARING_TYPE;
 
-                            private static final MethodDescription.InDefinedShape FIELD_TYPING;
+                            /**
+                             * The {@link FieldValue#typing()} property.
+                             */
+                            private static final MethodDescription.InDefinedShape FIELD_VALUE_TYPING;
 
                             /*
                              * Resolves all annotation properties.
                              */
                             static {
                                 MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(FieldValue.class).getDeclaredMethods();
-                                FIELD_VALUE = methods.filter(named("value")).getOnly();
-                                FIELD_DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
-                                FIELD_TYPING = methods.filter(named("typing")).getOnly();
+                                FIELD_VALUE_VALUE = methods.filter(named("value")).getOnly();
+                                FIELD_VALUE_DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
+                                FIELD_VALUE_TYPING = methods.filter(named("typing")).getOnly();
                             }
 
                             /**
@@ -3923,6 +3938,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             @MaybeNull
                             private final Assigner.Typing typing;
 
+                            /**
+                             * Creates an offset mapping for a field value.
+                             *
+                             * @param target A description of the targeted type.
+                             * @param typing The typing to use or {@code null} if implicit typing.
+                             */
                             protected ForField(TypeDescription.Generic target, @MaybeNull Assigner.Typing typing) {
                                 this.target = target;
                                 this.typing = typing;
@@ -3943,15 +3964,38 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 return new OffsetMapping.Resolved.ForStackManipulation(new StackManipulation.Compound(FieldAccess.forField(fieldDescription).read(), assignment));
                             }
 
+                            /**
+                             * Resolves a description of the field being accessed.
+                             *
+                             * @param instrumentedType   The instrumented type.
+                             * @param instrumentedMethod The instrumented method.
+                             * @return A description of the field being accessed.
+                             */
                             protected abstract FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
 
+                            /**
+                             * An offset mapping for an unresolved field value.
+                             */
                             @HashCodeAndEqualsPlugin.Enhance
                             public abstract static class Unresolved extends ForField {
 
+                                /**
+                                 * Indicates that the name of the field should be inferred from the instrumented method's name as a bean property.
+                                 */
                                 protected static final String BEAN_PROPERTY = "";
 
+                                /**
+                                 * The name of the field being accessed or an empty string if the name of the field should be inferred.
+                                 */
                                 private final String name;
 
+                                /**
+                                 * Creates an offset mapping for the value of an unresolved field.
+                                 *
+                                 * @param target A description of the targeted type.
+                                 * @param typing The typing to use.
+                                 * @param name   The name of the field being accessed or an empty string if the name of the field should be inferred.
+                                 */
                                 protected Unresolved(TypeDescription.Generic target, Assigner.Typing typing, String name) {
                                     super(target, typing);
                                     this.name = name;
@@ -3970,17 +4014,38 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
                                 }
 
+                                /**
+                                 * Creates a field locator for the instrumented type.
+                                 *
+                                 * @param instrumentedType The instrumented type.
+                                 * @return An appropriate field locator.
+                                 */
                                 protected abstract FieldLocator fieldLocator(TypeDescription instrumentedType);
 
-                                @HashCodeAndEqualsPlugin.Enhance
+                                /**
+                                 * An offset mapping for an unresolved field with an implicit declaring type.
+                                 */
                                 public static class WithImplicitType extends Unresolved {
 
+                                    /**
+                                     * Creates an offset mapping for an unresolved field value with an implicit declaring type.
+                                     *
+                                     * @param target     A description of the targeted type.
+                                     * @param annotation The annotation describing the access.
+                                     */
                                     protected WithImplicitType(TypeDescription.Generic target, AnnotationDescription.Loadable<FieldValue> annotation) {
                                         this(target,
-                                                annotation.getValue(FIELD_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
-                                                annotation.getValue(FIELD_VALUE).resolve(String.class));
+                                                annotation.getValue(FIELD_VALUE_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                                                annotation.getValue(FIELD_VALUE_VALUE).resolve(String.class));
                                     }
 
+                                    /**
+                                     * Creates an offset mapping for the value of an unresolved field with an implicit declaring type.
+                                     *
+                                     * @param target A description of the targeted type.
+                                     * @param typing The typing to use.
+                                     * @param name   The name of the field being accessed or an empty string if the name of the field should be inferred.
+                                     */
                                     public WithImplicitType(TypeDescription.Generic target, Assigner.Typing typing, String name) {
                                         super(target, typing, name);
                                     }
@@ -3991,18 +4056,39 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
                                 }
 
+                                /**
+                                 * An offset mapping for an unresolved field value with an explicit declaring type.
+                                 */
                                 @HashCodeAndEqualsPlugin.Enhance
                                 public static class WithExplicitType extends Unresolved {
 
+                                    /**
+                                     * The field's declaring type.
+                                     */
                                     private final TypeDescription declaringType;
 
+                                    /**
+                                     * Creates an offset mapping for the value of an unresolved field with an explicit declaring type.
+                                     *
+                                     * @param target        A description of the targeted type.
+                                     * @param annotation    The annotation describing the field access.
+                                     * @param declaringType The field's declaring type.
+                                     */
                                     protected WithExplicitType(TypeDescription.Generic target, AnnotationDescription.Loadable<FieldValue> annotation, TypeDescription declaringType) {
                                         this(target,
-                                                annotation.getValue(FIELD_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
-                                                annotation.getValue(FIELD_VALUE).resolve(String.class),
+                                                annotation.getValue(FIELD_VALUE_TYPING).resolve(EnumerationDescription.class).load(Assigner.Typing.class),
+                                                annotation.getValue(FIELD_VALUE_VALUE).resolve(String.class),
                                                 declaringType);
                                     }
 
+                                    /**
+                                     * Creates an offset mapping for the value of an unresolved field with an explicit declaring type.
+                                     *
+                                     * @param target        A description of the targeted type.
+                                     * @param typing        The typing to use.
+                                     * @param name          The name of the field being accessed or an empty string if the name of the field should be inferred.
+                                     * @param declaringType The field's declaring type.
+                                     */
                                     public WithExplicitType(TypeDescription.Generic target, Assigner.Typing typing, String name, TypeDescription declaringType) {
                                         super(target, typing, name);
                                         this.declaringType = declaringType;
@@ -4017,6 +4103,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
                                 }
 
+                                /**
+                                 * A factory for creating an offset mapping for a field value.
+                                 */
                                 protected enum Factory implements OffsetMapping.Factory<FieldValue> {
 
                                     /**
@@ -4024,6 +4113,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                      */
                                     INSTANCE;
 
+                                    /**
+                                     * {@inheritDoc}
+                                     */
                                     public Class<FieldValue> getAnnotationType() {
                                         return FieldValue.class;
                                     }
@@ -4032,14 +4124,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                      * {@inheritDoc}
                                      */
                                     public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<FieldValue> annotation) {
-                                        TypeDescription declaringType = annotation.getValue(FIELD_DECLARING_TYPE).resolve(TypeDescription.class);
+                                        TypeDescription declaringType = annotation.getValue(FIELD_VALUE_DECLARING_TYPE).resolve(TypeDescription.class);
                                         return declaringType.represents(void.class)
                                                 ? new Unresolved.WithImplicitType(target.getDeclaringType().asGenericType(), annotation)
                                                 : new Unresolved.WithExplicitType(target.getDeclaringType().asGenericType(), annotation, declaringType);
                                     }
 
+                                    /**
+                                     * {@inheritDoc}
+                                     */
                                     public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<FieldValue> annotation) {
-                                        TypeDescription declaringType = annotation.getValue(FIELD_DECLARING_TYPE).resolve(TypeDescription.class);
+                                        TypeDescription declaringType = annotation.getValue(FIELD_VALUE_DECLARING_TYPE).resolve(TypeDescription.class);
                                         return declaringType.represents(void.class)
                                                 ? new Unresolved.WithImplicitType(target.getType(), annotation)
                                                 : new Unresolved.WithExplicitType(target.getType(), annotation, declaringType);
@@ -4047,11 +4142,24 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 }
                             }
 
+                            /**
+                             * An offset mapping for a resolved field access.
+                             */
                             @HashCodeAndEqualsPlugin.Enhance
                             public static class Resolved extends ForField {
 
+                                /**
+                                 * A description of the field being accessed.
+                                 */
                                 private final FieldDescription fieldDescription;
 
+                                /**
+                                 * Creates a resolved offset mapping for a field access.
+                                 *
+                                 * @param target           A description of the targeted type.
+                                 * @param typing           The typing to use or {@code null} if implicit typing.
+                                 * @param fieldDescription A description of the field accessed.
+                                 */
                                 public Resolved(TypeDescription.Generic target, Assigner.Typing typing, FieldDescription fieldDescription) {
                                     super(target, typing);
                                     this.fieldDescription = fieldDescription;
@@ -4068,25 +4176,55 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     return fieldDescription;
                                 }
 
+                                /**
+                                 * A factory for creating a resolved offset mapping of a field value.
+                                 *
+                                 * @param <T> The type of the annotation.
+                                 */
                                 @HashCodeAndEqualsPlugin.Enhance
                                 public static class Factory<T extends Annotation> extends OffsetMapping.Factory.AbstractBase<T> {
 
+                                    /**
+                                     * The annotation type.
+                                     */
                                     private final Class<T> annotationType;
 
+                                    /**
+                                     * The field being accessed.
+                                     */
                                     private final FieldDescription fieldDescription;
 
+                                    /**
+                                     * The typing to use.
+                                     */
                                     private final Assigner.Typing typing;
 
+                                    /**
+                                     * Creates a factory for reading a given field.
+                                     *
+                                     * @param annotationType   The annotation type.
+                                     * @param fieldDescription The field being accessed.
+                                     */
                                     public Factory(Class<T> annotationType, FieldDescription fieldDescription) {
                                         this(annotationType, fieldDescription, Assigner.Typing.STATIC);
                                     }
 
+                                    /**
+                                     * Creates a factory for reading a given field.
+                                     *
+                                     * @param annotationType   The annotation type.
+                                     * @param fieldDescription The field being accessed.
+                                     * @param typing           The typing to use.
+                                     */
                                     public Factory(Class<T> annotationType, FieldDescription fieldDescription, Assigner.Typing typing) {
                                         this.annotationType = annotationType;
                                         this.fieldDescription = fieldDescription;
                                         this.typing = typing;
                                     }
 
+                                    /**
+                                     * {@inheritDoc}
+                                     */
                                     public Class<T> getAnnotationType() {
                                         return annotationType;
                                     }
@@ -4099,11 +4237,22 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
                         }
 
+                        /**
+                         * An offset mapping for a method handle representing a field getter or setter.
+                         */
                         @HashCodeAndEqualsPlugin.Enhance
                         abstract class ForFieldHandle implements OffsetMapping {
 
+                            /**
+                             * The type of access to the field.
+                             */
                             private final Access access;
 
+                            /**
+                             * Creates an offset mapping for a field getter or setter.
+                             *
+                             * @param access The type of access to the field.
+                             */
                             protected ForFieldHandle(Access access) {
                                 this.access = access;
                             }
@@ -4128,10 +4277,23 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 }
                             }
 
+                            /**
+                             * Resolves a description of the field being accessed.
+                             *
+                             * @param instrumentedType   The instrumented type.
+                             * @param instrumentedMethod The instrumented method.
+                             * @return A description of the field being accessed.
+                             */
                             protected abstract FieldDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
 
+                            /**
+                             * The type of access to the field.
+                             */
                             public enum Access {
 
+                                /**
+                                 * Describes a field getter.
+                                 */
                                 GETTER {
                                     @Override
                                     protected JavaConstant.MethodHandle resolve(FieldDescription.InDefinedShape fieldDescription) {
@@ -4139,6 +4301,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
                                 },
 
+                                /**
+                                 * Describes a field setter.
+                                 */
                                 SETTER {
                                     @Override
                                     protected JavaConstant.MethodHandle resolve(FieldDescription.InDefinedShape fieldDescription) {
@@ -4146,16 +4311,37 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
                                 };
 
+                                /**
+                                 * Resolves a handle for the represented field access.
+                                 *
+                                 * @param fieldDescription The field that is being accessed.
+                                 * @return An appropriate method handle.
+                                 */
                                 protected abstract JavaConstant.MethodHandle resolve(FieldDescription.InDefinedShape fieldDescription);
                             }
 
+                            /**
+                             * An offset mapping for an unresolved field handle.
+                             */
                             @HashCodeAndEqualsPlugin.Enhance
                             public abstract static class Unresolved extends ForFieldHandle {
 
+                                /**
+                                 * Indicates that the field's name should be resolved as a bean property.
+                                 */
                                 protected static final String BEAN_PROPERTY = "";
 
+                                /**
+                                 * The name of the field or an empty string if the name should be resolved from the instrumented method.
+                                 */
                                 private final String name;
 
+                                /**
+                                 * Creates an offset mapping for an unresolved field handle.
+                                 *
+                                 * @param access The type of access to the field.
+                                 * @param name   The name of the field or an empty string if the name should be resolved from the instrumented method.
+                                 */
                                 public Unresolved(Access access, String name) {
                                     super(access);
                                     this.name = name;
@@ -4174,10 +4360,25 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
                                 }
 
+                                /**
+                                 * Resolves a field locator for the instrumented type.
+                                 *
+                                 * @param instrumentedType The instrumented type.
+                                 * @return Returns an appropriate field locator.
+                                 */
                                 protected abstract FieldLocator fieldLocator(TypeDescription instrumentedType);
 
+                                /**
+                                 * An offset mapping for an unresolved field handle with an implicit declaring type.
+                                 */
                                 public static class WithImplicitType extends Unresolved {
 
+                                    /**
+                                     * Creates an offset mapping for an unresolved field handle with an implicit declaring type.
+                                     *
+                                     * @param access The type of access to the field.
+                                     * @param name   The name of the field or an empty string if the name should be resolved from the instrumented method.
+                                     */
                                     public WithImplicitType(Access access, String name) {
                                         super(access, name);
                                     }
@@ -4188,10 +4389,24 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
                                 }
 
+                                /**
+                                 * An offset mapping for an unresolved field handle with an explicit declaring type.
+                                 */
+                                @HashCodeAndEqualsPlugin.Enhance
                                 public static class WithExplicitType extends Unresolved {
 
+                                    /**
+                                     * The field's declaring type.
+                                     */
                                     private final TypeDescription declaringType;
 
+                                    /**
+                                     * Creates an offset mapping for an unresolved field handle with an explicit declaring type.
+                                     *
+                                     * @param access        The type of access to the field.
+                                     * @param name          The name of the field or an empty string if the name should be resolved from the instrumented method.
+                                     * @param declaringType The field's declaring type.
+                                     */
                                     public WithExplicitType(Access access, String name, TypeDescription declaringType) {
                                         super(access, name);
                                         this.declaringType = declaringType;
@@ -4206,7 +4421,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
                                 }
 
-                                protected enum ReaderFactory implements OffsetMapping.Factory<FieldGetterHandle> {
+                                /**
+                                 * A factory for creating a method handle representing a getter for the targeted field.
+                                 */
+                                protected enum GetterFactory implements OffsetMapping.Factory<FieldGetterHandle> {
 
                                     /**
                                      * The singleton instance.
@@ -4232,6 +4450,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                         FIELD_GETTER_HANDLE_DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
                                     }
 
+                                    /**
+                                     * {@inheritDoc}
+                                     */
                                     public Class<FieldGetterHandle> getAnnotationType() {
                                         return FieldGetterHandle.class;
                                     }
@@ -4243,6 +4464,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                         throw new UnsupportedOperationException("This factory does not support binding a method receiver");
                                     }
 
+                                    /**
+                                     * {@inheritDoc}
+                                     */
                                     public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<FieldGetterHandle> annotation) {
                                         if (!target.getType().asErasure().isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub())) {
                                             throw new IllegalStateException("Cannot assign method handle to " + target);
@@ -4254,23 +4478,38 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
                                 }
 
-                                protected enum WriterFactory implements OffsetMapping.Factory<FieldSetterHandle> {
+                                /**
+                                 * A factory for creating a method handle representing a setter for the targeted field.
+                                 */
+                                protected enum SetterFactory implements OffsetMapping.Factory<FieldSetterHandle> {
 
                                     /**
                                      * The singleton instance.
                                      */
                                     INSTANCE;
 
+                                    /**
+                                     * The {@link FieldGetterHandle#value()} method.
+                                     */
                                     private static final MethodDescription.InDefinedShape FIELD_SETTER_HANDLE_VALUE;
 
+                                    /**
+                                     * The {@link FieldGetterHandle#declaringType()} method.
+                                     */
                                     private static final MethodDescription.InDefinedShape FIELD_SETTER_HANDLE_DECLARING_TYPE;
 
+                                    /*
+                                     * Resolves the annotation properties.
+                                     */
                                     static {
                                         MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(FieldSetterHandle.class).getDeclaredMethods();
                                         FIELD_SETTER_HANDLE_VALUE = methods.filter(named("value")).getOnly();
                                         FIELD_SETTER_HANDLE_DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
                                     }
 
+                                    /**
+                                     * {@inheritDoc}
+                                     */
                                     public Class<FieldSetterHandle> getAnnotationType() {
                                         return FieldSetterHandle.class;
                                     }
@@ -4281,7 +4520,6 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     public OffsetMapping make(MethodDescription.InDefinedShape target, AnnotationDescription.Loadable<FieldSetterHandle> annotation) {
                                         throw new UnsupportedOperationException("This factory does not support binding a method receiver");
                                     }
-
 
                                     /**
                                      * {@inheritDoc}
@@ -4298,6 +4536,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 }
                             }
 
+                            /**
+                             * An offset mapping for a resolved field handle.
+                             */
                             @HashCodeAndEqualsPlugin.Enhance
                             public static class Resolved extends OffsetMapping.ForFieldHandle {
 
@@ -5223,31 +5464,98 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * An implementation that supplies a default set of arguments to a bootstrap method.
                          */
                         @HashCodeAndEqualsPlugin.Enhance
-                        class ForDefaultValues implements BootstrapArgumentResolver, BootstrapArgumentResolver.Resolved {
+                        class ForDefaultValues implements BootstrapArgumentResolver {
 
+                            /**
+                             * The delegation target.
+                             */
                             private final MethodDescription.InDefinedShape delegate;
 
-                            public ForDefaultValues(MethodDescription.InDefinedShape delegate) {
+                            /**
+                             * Creates a default bootstrap argument resolver.
+                             *
+                             * @param delegate The delegation target.
+                             */
+                            protected ForDefaultValues(MethodDescription.InDefinedShape delegate) {
                                 this.delegate = delegate;
                             }
 
                             /**
                              * {@inheritDoc}
                              */
-                            public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                                return this;
+                            public BootstrapArgumentResolver.Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                return new Resolved(delegate, instrumentedType, instrumentedMethod);
                             }
 
                             /**
-                             * {@inheritDoc}
+                             * A resolved default bootstrap argument resolver. The explicitly provided arguments are:
+                             * <ul>
+                             * <li>A string representation of the delegate's binary class name.</li>
+                             * <li>A method handle of the substituted expression.</li>
+                             * <li>A {@link Class} representing the type upon which the substituted expression is executed upon.</li>
+                             * <li>The name of the field, method or constructor that is being substituted.</li>
+                             * <li>A {@link Class} describing the instrumented type.</li>
+                             * <li>The name of the instrumented method or constructor.</li>
+                             * <li>A method handle of the instrumented method or constructor, only if the instrumented method is not a type initializer.</li>
+                             * </ul>
                              */
-                            public List<JavaConstant> make(TypeDescription receiver, ByteCodeElement.Member original, JavaConstant.MethodHandle methodHandle) {
-                                return Arrays.asList(JavaConstant.Simple.ofLoaded(delegate.getDeclaringType().asErasure().getName()),
-                                        JavaConstant.Simple.of(delegate.getReturnType().asErasure()),
-                                        JavaConstant.Simple.ofLoaded(delegate.getInternalName()),
-                                        JavaConstant.MethodHandle.of(delegate.asDefined()), methodHandle);
+                            @HashCodeAndEqualsPlugin.Enhance
+                            protected static class Resolved implements BootstrapArgumentResolver.Resolved {
+
+                                /**
+                                 * The delegation target.
+                                 */
+                                private final MethodDescription.InDefinedShape delegate;
+
+                                /**
+                                 * The instrumented type.
+                                 */
+                                private final TypeDescription instrumentedType;
+
+                                /**
+                                 * The instrumented method.
+                                 */
+                                private final MethodDescription instrumentedMethod;
+
+                                /**
+                                 * Creates a resolved version of a bootstrap argument resolver.
+                                 *
+                                 * @param delegate           The delegation target.
+                                 * @param instrumentedType   The instrumented type.
+                                 * @param instrumentedMethod The instrumented method.
+                                 */
+                                protected Resolved(MethodDescription.InDefinedShape delegate, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                                    this.delegate = delegate;
+                                    this.instrumentedType = instrumentedType;
+                                    this.instrumentedMethod = instrumentedMethod;
+                                }
+
+                                /**
+                                 * {@inheritDoc}
+                                 */
+                                public List<JavaConstant> make(TypeDescription receiver, ByteCodeElement.Member original, JavaConstant.MethodHandle methodHandle) {
+                                    if (instrumentedMethod.isTypeInitializer()) {
+                                        return Arrays.asList(JavaConstant.Simple.ofLoaded(delegate.getDeclaringType().getName()),
+                                                methodHandle,
+                                                JavaConstant.Simple.of(receiver),
+                                                JavaConstant.Simple.ofLoaded(original.getInternalName()),
+                                                JavaConstant.Simple.of(instrumentedType),
+                                                JavaConstant.Simple.ofLoaded(instrumentedMethod.getInternalName()));
+                                    } else {
+                                        return Arrays.asList(JavaConstant.Simple.ofLoaded(delegate.getDeclaringType().getName()),
+                                                methodHandle,
+                                                JavaConstant.Simple.of(receiver),
+                                                JavaConstant.Simple.ofLoaded(original.getInternalName()),
+                                                JavaConstant.Simple.of(instrumentedType),
+                                                JavaConstant.Simple.ofLoaded(instrumentedMethod.getInternalName()),
+                                                JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()));
+                                    }
+                                }
                             }
 
+                            /**
+                             * A factory for creating a default bootstrap argument resolver.
+                             */
                             public enum Factory implements BootstrapArgumentResolver.Factory {
 
                                 /**
@@ -5902,12 +6210,27 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         }
                     }
 
+                    /**
+                     * A factory for a {@link ForDelegation} which allows for a custom configuration.
+                     */
                     public static class WithCustomMapping {
 
+                        /**
+                         * The dispatcher factory to use.
+                         */
                         private final Dispatcher.Factory dispatcherFactory;
 
+                        /**
+                         * A mapping of offset mapping factories by their respective annotation type.
+                         */
                         private final Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings;
 
+                        /**
+                         * Creates a factory for a {@link ForDelegation} with a custom value.
+                         *
+                         * @param dispatcherFactory The dispatcher factory to use.
+                         * @param offsetMappings    A mapping of offset mapping factories by their respective annotation type.
+                         */
                         protected WithCustomMapping(Dispatcher.Factory dispatcherFactory, Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings) {
                             this.dispatcherFactory = dispatcherFactory;
                             this.offsetMappings = offsetMappings;
@@ -6062,40 +6385,136 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             return new WithCustomMapping(dispatcherFactory, offsetMappings);
                         }
 
+                        /**
+                         * Defines the supplied constructor as a dynamic invocation bootstrap target for delegating advice methods. The bootstrap
+                         * method arguments are:
+                         * <ul>
+                         * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
+                         * <li>A {@link String} representing the constructor's internal name {@code <init>}.</li>
+                         * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
+                         * <li>A string representation of the delegate's binary class name.</li>
+                         * <li>A method handle of the substituted expression.</li>
+                         * <li>A {@link Class} representing the type upon which the substituted expression is executed upon.</li>
+                         * <li>The name of the field, method or constructor that is being substituted.</li>
+                         * <li>A {@link Class} describing the instrumented type.</li>
+                         * <li>The name of the instrumented method or constructor.</li>
+                         * <li>A method handle of the instrumented method or constructor, only if the instrumented method is not a type initializer.</li>
+                         * </ul>
+                         *
+                         * @param constructor The bootstrap constructor.
+                         * @return A new builder for an advice that uses the supplied constructor for bootstrapping.
+                         */
                         public WithCustomMapping bootstrap(Constructor<?> constructor) {
                             return bootstrap(new MethodDescription.ForLoadedConstructor(constructor));
                         }
 
+                        /**
+                         * Defines the supplied constructor as a dynamic invocation bootstrap target for delegating advice methods.
+                         *
+                         * @param constructor     The bootstrap method or constructor.
+                         * @param resolverFactory A factory for resolving the arguments to the bootstrap method.
+                         * @return A new builder for an advice that uses the supplied constructor for bootstrapping.
+                         */
                         public WithCustomMapping bootstrap(Constructor<?> constructor, BootstrapArgumentResolver.Factory resolverFactory) {
                             return bootstrap(new MethodDescription.ForLoadedConstructor(constructor), resolverFactory);
                         }
 
+                        /**
+                         * Defines the supplied method as a dynamic invocation bootstrap target for delegating advice methods. The bootstrap
+                         * method arguments are:
+                         * <ul>
+                         * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
+                         * <li>A {@link String} representing the constructor's internal name {@code <init>}.</li>
+                         * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
+                         * <li>A string representation of the delegate's binary class name.</li>
+                         * <li>A method handle of the substituted expression.</li>
+                         * <li>A {@link Class} representing the type upon which the substituted expression is executed upon.</li>
+                         * <li>The name of the field, method or constructor that is being substituted.</li>
+                         * <li>A {@link Class} describing the instrumented type.</li>
+                         * <li>The name of the instrumented method or constructor.</li>
+                         * <li>A method handle of the instrumented method or constructor, only if the instrumented method is not a type initializer.</li>
+                         * </ul>
+                         *
+                         * @param method The bootstrap method.
+                         * @return A new builder for an advice that uses the supplied constructor for bootstrapping.
+                         */
                         public WithCustomMapping bootstrap(Method method) {
                             return bootstrap(new MethodDescription.ForLoadedMethod(method));
                         }
 
-                        public WithCustomMapping bootstrap(Method method, BootstrapArgumentResolver.Factory resolver) {
-                            return bootstrap(new MethodDescription.ForLoadedMethod(method), resolver);
+                        /**
+                         * Defines the supplied method as a dynamic invocation bootstrap target for delegating advice methods.
+                         *
+                         * @param method          The bootstrap method or constructor.
+                         * @param resolverFactory A factory for resolving the arguments to the bootstrap method.
+                         * @return A new builder for an advice that uses the supplied constructor for bootstrapping.
+                         */
+                        public WithCustomMapping bootstrap(Method method, BootstrapArgumentResolver.Factory resolverFactory) {
+                            return bootstrap(new MethodDescription.ForLoadedMethod(method), resolverFactory);
                         }
 
+                        /**
+                         * Defines the supplied method description as a dynamic invocation bootstrap target for delegating advice methods. The bootstrap
+                         * method arguments are:
+                         * <ul>
+                         * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
+                         * <li>A {@link String} representing the constructor's internal name {@code <init>}.</li>
+                         * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
+                         * <li>A string representation of the delegate's binary class name.</li>
+                         * <li>A method handle of the substituted expression.</li>
+                         * <li>A {@link Class} representing the type upon which the substituted expression is executed upon.</li>
+                         * <li>The name of the field, method or constructor that is being substituted.</li>
+                         * <li>A {@link Class} describing the instrumented type.</li>
+                         * <li>The name of the instrumented method or constructor.</li>
+                         * <li>A method handle of the instrumented method or constructor, only if the instrumented method is not a type initializer.</li>
+                         * </ul>
+                         *
+                         * @param bootstrap The bootstrap method or constructor.
+                         * @return A new builder for an advice that uses the supplied constructor for bootstrapping.
+                         */
                         public WithCustomMapping bootstrap(MethodDescription.InDefinedShape bootstrap) {
                             return bootstrap(bootstrap, BootstrapArgumentResolver.ForDefaultValues.Factory.INSTANCE);
                         }
 
+                        /**
+                         * Defines the supplied method description as a dynamic invocation bootstrap target for delegating advice methods.
+                         *
+                         * @param bootstrap       The bootstrap method or constructor.
+                         * @param resolverFactory A factory for resolving the arguments to the bootstrap method.
+                         * @return A new builder for an advice that uses the supplied constructor for bootstrapping.
+                         */
                         public WithCustomMapping bootstrap(MethodDescription.InDefinedShape bootstrap, BootstrapArgumentResolver.Factory resolverFactory) {
                             return new WithCustomMapping(Dispatcher.ForDynamicInvocation.of(bootstrap, resolverFactory), offsetMappings);
                         }
 
+                        /**
+                         * Returns a delegating step factory for the supplied method.
+                         *
+                         * @param method The method to delegate to.
+                         * @return An appropriate step factory.
+                         */
                         public Step.Factory of(Method method) {
                             return of(new MethodDescription.ForLoadedMethod(method));
                         }
 
+                        /**
+                         * Returns a delegating step factory for the supplied constructor.
+                         *
+                         * @param constructor the constructor to delegate to.
+                         * @return An appropriate step factory.
+                         */
                         public Step.Factory of(Constructor<?> constructor) {
                             return of(new MethodDescription.ForLoadedConstructor(constructor));
                         }
 
-                        public Step.Factory of(MethodDescription.InDefinedShape delegate) {
-                            return ForDelegation.of(delegate, dispatcherFactory, new ArrayList<OffsetMapping.Factory<?>>(offsetMappings.values()));
+                        /**
+                         * Returns a delegating step factory for the supplied method description.
+                         *
+                         * @param methodDescription A description of the method or constructor to delegate to.
+                         * @return An appropriate step factory.
+                         */
+                        public Step.Factory of(MethodDescription.InDefinedShape methodDescription) {
+                            return ForDelegation.of(methodDescription, dispatcherFactory, new ArrayList<OffsetMapping.Factory<?>>(offsetMappings.values()));
                         }
                     }
                 }
