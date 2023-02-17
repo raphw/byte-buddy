@@ -57,6 +57,7 @@ import java.lang.annotation.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -1654,6 +1655,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param stackManipulation The stack manipulation to apply.
                      * @param resultType        The resulting type of applying the stack manipulation.
                      */
+                    public Simple(StackManipulation stackManipulation, Type resultType) {
+                        this(stackManipulation, TypeDefinition.Sort.describe(resultType));
+                    }
+
+                    /**
+                     * Creates a new simple substitution step.
+                     *
+                     * @param stackManipulation The stack manipulation to apply.
+                     * @param resultType        The resulting type of applying the stack manipulation.
+                     */
                     public Simple(StackManipulation stackManipulation, TypeDescription.Generic resultType) {
                         this.stackManipulation = stackManipulation;
                         this.resultType = resultType;
@@ -1736,6 +1747,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     protected ForAssignment(@MaybeNull TypeDescription.Generic result, Assigner assigner) {
                         this.result = result;
                         this.assigner = assigner;
+                    }
+
+                    /**
+                     * Creates a step factory that casts the current stack top value to the specified type.
+                     *
+                     * @param type The type that should be cast to.
+                     * @return An appropriate step factory.
+                     */
+                    public static Step.Factory castTo(Type type) {
+                        return new Factory(TypeDefinition.Sort.describe(type));
                     }
 
                     /**
@@ -1917,6 +1938,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * Creates a factory for an argument substitution step.
                          *
                          * @param stackManipulation The stack manipulation that loads the substituted argument.
+                         * @param type              The type of the substituted argument.
+                         * @param index             The index of the argument to substitute.
+                         */
+                        public Factory(StackManipulation stackManipulation, Type type, int index) {
+                            this(stackManipulation, TypeDefinition.Sort.describe(type), index);
+                        }
+
+                        /**
+                         * Creates a factory for an argument substitution step.
+                         *
+                         * @param stackManipulation The stack manipulation that loads the substituted argument.
                          * @param typeDescription   The type of the substituted argument.
                          * @param index             The index of the argument to substitute.
                          */
@@ -2065,7 +2097,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * @param assigner         The assigner to use.
                          * @param typing           The typing to use when assigning.
                          */
-                        public Read(FieldDescription fieldDescription, Assigner assigner, Assigner.Typing typing) {
+                        protected Read(FieldDescription fieldDescription, Assigner assigner, Assigner.Typing typing) {
                             super(fieldDescription, assigner, typing);
                         }
 
@@ -2086,6 +2118,15 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * A description of the field being read.
                              */
                             private final FieldDescription fieldDescription;
+
+                            /**
+                             * Creates a factory for a step reading a field.
+                             *
+                             * @param field The field being read.
+                             */
+                            public Factory(Field field) {
+                                this(new FieldDescription.ForLoadedField(field));
+                            }
 
                             /**
                              * Creates a factory for a step reading a field.
@@ -2124,7 +2165,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * @param typing           The typing to use when assigning.
                          * @param index            The index of the parameter being accessed. If the targeted element is a non-static method, is increased by one.
                          */
-                        public Write(FieldDescription fieldDescription, Assigner assigner, Assigner.Typing typing, int index) {
+                        protected Write(FieldDescription fieldDescription, Assigner assigner, Assigner.Typing typing, int index) {
                             super(fieldDescription, assigner, typing);
                             this.index = index;
                         }
@@ -2164,6 +2205,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                              * The index of the parameter being accessed. If the targeted element is a non-static method, is increased by one.
                              */
                             private final int index;
+
+                            /**
+                             * Creates a factory for writing to a field.
+                             *
+                             * @param field The field to write to.
+                             * @param index The index of the parameter being accessed. If the targeted element is a non-static method, is increased by one.
+                             */
+                            public Factory(Field field, int index) {
+                                this(new FieldDescription.ForLoadedField(field), index);
+                            }
 
                             /**
                              * Creates a factory for writing to a field.
@@ -2221,7 +2272,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param assigner          The assigner to use.
                      * @param typing            The typing to use when assigning.
                      */
-                    public ForInvocation(MethodDescription methodDescription, Map<Integer, Integer> substitutions, Assigner assigner, Assigner.Typing typing) {
+                    protected ForInvocation(MethodDescription methodDescription, Map<Integer, Integer> substitutions, Assigner assigner, Assigner.Typing typing) {
                         this.methodDescription = methodDescription;
                         this.substitutions = substitutions;
                         this.assigner = assigner;
@@ -2285,6 +2336,24 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * A mapping of substituted parameter indices. For targets that are non-static methods, the targeted index is increased by one.
                          */
                         private final Map<Integer, Integer> substitutions;
+
+                        /**
+                         * Creates a factory for a method invocation without parameter substitutions.
+                         *
+                         * @param method The invoked method.
+                         */
+                        public Factory(Method method) {
+                            this(new MethodDescription.ForLoadedMethod(method));
+                        }
+
+                        /**
+                         * Creates a factory for a method invocation without parameter substitutions.
+                         *
+                         * @param constructor The constructor.
+                         */
+                        public Factory(Constructor<?> constructor) {
+                            this(new MethodDescription.ForLoadedConstructor(constructor));
+                        }
 
                         /**
                          * Creates a factory for a method invocation without parameter substitutions.
