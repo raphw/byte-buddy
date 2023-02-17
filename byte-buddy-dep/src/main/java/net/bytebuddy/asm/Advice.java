@@ -12177,8 +12177,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * </p>
      * <p>
      * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.This} or
-     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.This}. This annotation should
-     * be used only in combination with {@link Advice}.
+     * {@link net.bytebuddy.asm.MemberSubstitution.This}. This annotation should be used only in combination with {@link Advice}.
      * </p>
      *
      * @see Advice
@@ -12226,8 +12225,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * </p>
      * <p>
      * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Argument} or
-     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.Argument}. This annotation should
-     * be used only in combination with {@link Advice}.
+     * {@link net.bytebuddy.asm.MemberSubstitution.Argument}. This annotation should be used only in combination with {@link Advice}.
      * </p>
      *
      * @see Advice
@@ -12284,8 +12282,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * </p>
      * <p>
      * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.AllArguments} or
-     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.AllArguments}. This annotation should
-     * be used only in combination with {@link Advice}.
+     * {@link net.bytebuddy.asm.MemberSubstitution.AllArguments}. This annotation should be used only in combination with {@link Advice}.
      * </p>
      *
      * @see Advice

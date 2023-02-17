@@ -2667,7 +2667,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * A factory for creating an offset mapping based on an annotation on a parameter, method or constructor.
                          *
-                         * @param <T>
+                         * @param <T> The type of the annotation.
                          */
                         interface Factory<T extends Annotation> {
 
@@ -3027,7 +3027,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             /**
                              * Assigns a value to the annotated parameter that is deserialized from a given input.
                              *
-                             * @param <T>
+                             * @param <T> The type of the annotation.
                              */
                             @HashCodeAndEqualsPlugin.Enhance
                             public static class OfSerializedConstant<T extends Annotation> extends OffsetMapping.Factory.AbstractBase<T> {
