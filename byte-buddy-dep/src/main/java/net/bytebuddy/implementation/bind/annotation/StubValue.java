@@ -38,11 +38,9 @@ import java.lang.annotation.*;
  * representing the numeric value {@code 0}.
  * </p>
  * <p>
- * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.StubValue} annotation. This
- * annotation should be used only in combination with method delegation
- * ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}).
- * For {@link net.bytebuddy.asm.Advice} ASM visitor use alternative annotation from
- * <code>net.bytebuddy.asm.Advice</code> package.
+ * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.StubValue} or
+ * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.StubValue}. This
+ * annotation should be used with {@link net.bytebuddy.implementation.MethodDelegation} only.
  * </p>
  *
  * @see net.bytebuddy.implementation.MethodDelegation

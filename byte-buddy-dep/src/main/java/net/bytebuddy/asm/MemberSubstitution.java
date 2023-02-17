@@ -5035,9 +5035,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * be used only in combination with {@link ForDelegation}.
                      * </p>
                      *
-                     * @see Advice
-                     * @see Advice.OnMethodEnter
-                     * @see Advice.OnMethodExit
+                     * @see ForDelegation
                      */
                     @Documented
                     @Retention(RetentionPolicy.RUNTIME)
@@ -5074,9 +5072,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * {@link net.bytebuddy.asm.Advice.FieldValue}. This annotation should be used only in combination with {@link ForDelegation}.
                      * </p>
                      *
-                     * @see Advice
-                     * @see Advice.OnMethodEnter
-                     * @see Advice.OnMethodExit
+                     * @see ForDelegation
                      */
                     @Documented
                     @Retention(RetentionPolicy.RUNTIME)
@@ -5122,9 +5118,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * {@link net.bytebuddy.asm.Advice.FieldGetterHandle}. This annotation should be used only in combination with {@link ForDelegation}.
                      * </p>
                      *
-                     * @see Advice
-                     * @see Advice.OnMethodEnter
-                     * @see Advice.OnMethodExit
+                     * @see ForDelegation
                      */
                     @Documented
                     @Retention(RetentionPolicy.RUNTIME)
@@ -5163,9 +5157,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * {@link net.bytebuddy.asm.Advice.FieldSetterHandle}. This annotation should be used only in combination with {@link ForDelegation}.
                      * </p>
                      *
-                     * @see Advice
-                     * @see Advice.OnMethodEnter
-                     * @see Advice.OnMethodExit
+                     * @see ForDelegation
                      */
                     @Documented
                     @Retention(RetentionPolicy.RUNTIME)
@@ -5190,6 +5182,24 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         Class<?> declaringType() default void.class;
                     }
 
+                    /**
+                     * <p>
+                     * Indicates that the annotated parameter should be mapped to a representation of the substituted element or
+                     * instrumented method. This representation can be a string representation, a constant representing
+                     * the {@link Class}, a {@link Method}, {@link Constructor} or {@code java.lang.reflect.Executable}. It can also load
+                     * a {@code java.lang.invoke.MethodType}, a {@code java.lang.invoke.MethodHandle} or a {@code java.lang.invoke.MethodHandles$Lookup}.
+                     * </p>
+                     * <p>
+                     * <b>Note</b>: A constant representing a {@link Method} or {@link Constructor} is not cached but is recreated for
+                     * every delegation.
+                     * </p>
+                     * <p>
+                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Origin} or
+                     * {@link Advice.Origin}. This annotation should be used only in combination with {@link ForDelegation}.
+                     * </p>
+                     *
+                     * @see ForDelegation
+                     */
                     @Documented
                     @Retention(RetentionPolicy.RUNTIME)
                     @java.lang.annotation.Target(ElementType.PARAMETER)
@@ -5206,19 +5216,15 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
                     /**
                      * <p>
-                     * Indicates that the annotated parameter should always return a default a boxed version of the instrumented methods return value
-                     * (i.e. {@code 0} for numeric values, {@code false} for {@code boolean} types and {@code null} for reference types). The annotated
-                     * parameter must be of type {@link Object} and cannot be assigned a value.
+                     * Indicates that the annotated parameter should always return a default value (i.e. {@code 0} for numeric values, {@code false}
+                     * for {@code boolean} types and {@code null} for reference types).
                      * </p>
                      * <p>
-                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.StubValue} or
-                     * {@link Unused}. This annotation should
-                     * be used only in combination with {@link Advice}.
+                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Empty} or
+                     * {@link Advice.Unused}. This annotation should be used only in combination with {@link ForDelegation}.
                      * </p>
                      *
-                     * @see Advice
-                     * @see Advice.OnMethodEnter
-                     * @see Advice.OnMethodExit
+                     * @see ForDelegation
                      */
                     @Documented
                     @Retention(RetentionPolicy.RUNTIME)
@@ -5226,7 +5232,19 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     public @interface Unused {
                         /* empty */
                     }
-
+                    /**
+                     * <p>
+                     * Indicates that the annotated parameter should always return a boxed version of the instrumented method's return value
+                     * (i.e. {@code 0} for numeric values, {@code false} for {@code boolean} types and {@code null} for reference types). The annotated
+                     * parameter must be of type {@link Object}.
+                     * </p>
+                     * <p>
+                     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.StubValue} or
+                     * {@link Advice.StubValue}. This annotation should be used only in combination with {@link ForDelegation}.
+                     * </p>
+                     *
+                     * @see ForDelegation
+                     */
                     @Documented
                     @Retention(RetentionPolicy.RUNTIME)
                     @java.lang.annotation.Target(ElementType.PARAMETER)
@@ -5235,8 +5253,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     }
 
                     /**
-                     * Indicates that the annotated parameter should be assigned the value of the result yielded by the previous chain
-                     * expression.
+                     * Indicates that the annotated parameter should be assigned the value of the result that was
+                     * yielded by the previous chain expression.
                      *
                      * @see ForDelegation
                      */

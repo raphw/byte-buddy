@@ -12753,7 +12753,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * </p>
      * <p>
      * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.StubValue} or
-     * {@link MemberSubstitution.Substitution.Chain.Step.ForDelegation.Unused}. This annotation should
+     * {@link MemberSubstitution.Substitution.Chain.Step.ForDelegation.StubValue}. This annotation should
      * be used only in combination with {@link Advice}.
      * </p>
      *
@@ -12769,8 +12769,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
+     * <p>
      * Indicates that the annotated parameter should always return a default value (i.e. {@code 0} for numeric values, {@code false}
-     * for {@code boolean} types and {@code null} for reference types). Any assignments to this variable are without any effect.
+     * for {@code boolean} types and {@code null} for reference types).
+     * </p>
+     * <p>
+     * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.implementation.bind.annotation.Empty} or
+     * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.Unused}. This annotation should be
+     * used only in combination with {@link Advice}.
+     * </p>
      *
      * @see Advice
      * @see OnMethodEnter

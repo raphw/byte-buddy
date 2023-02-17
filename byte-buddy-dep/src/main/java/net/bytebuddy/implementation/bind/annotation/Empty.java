@@ -26,8 +26,15 @@ import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import java.lang.annotation.*;
 
 /**
+ * <p>
  * Binds the parameter type's default value to the annotated parameter, i.e. {@code null} or a numeric value
  * representing zero.
+ * </p>
+ * <p>
+ * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.Unused} or
+ * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.Unused}. This
+ * annotation should be used with {@link net.bytebuddy.implementation.MethodDelegation} only.
+ * </p>
  *
  * @see net.bytebuddy.implementation.MethodDelegation
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder

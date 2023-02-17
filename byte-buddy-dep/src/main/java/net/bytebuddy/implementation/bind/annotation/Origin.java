@@ -68,11 +68,9 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * to the instrumented type or an {@link IllegalAccessError} will be thrown at runtime.
  * </p>
  * <p>
- * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.Origin} annotation. This annotation
- * should be used only in combination with method delegation
- * ({@link net.bytebuddy.implementation.MethodDelegation MethodDelegation.to(...)}).
- * For {@link net.bytebuddy.asm.Advice} ASM visitor use alternative annotation from
- * <code>net.bytebuddy.asm.Advice</code> package.
+ * <b>Important</b>: Don't confuse this annotation with {@link net.bytebuddy.asm.Advice.Origin} or
+ * {@link net.bytebuddy.asm.MemberSubstitution.Substitution.Chain.Step.ForDelegation.Origin}. This
+ * annotation should be used with {@link net.bytebuddy.implementation.MethodDelegation} only.
  * </p>
  *
  * @see net.bytebuddy.implementation.MethodDelegation
