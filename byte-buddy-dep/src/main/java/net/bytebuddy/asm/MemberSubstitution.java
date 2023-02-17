@@ -2467,6 +2467,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 OffsetMapping.ForThisReference.Factory.INSTANCE,
                                 OffsetMapping.ForAllArguments.Factory.INSTANCE,
                                 OffsetMapping.ForSelfCallHandle.Factory.INSTANCE,
+                                OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
                                 OffsetMapping.ForFieldHandle.Unresolved.GetterFactory.INSTANCE,
                                 OffsetMapping.ForFieldHandle.Unresolved.SetterFactory.INSTANCE,
                                 OffsetMapping.ForOrigin.Factory.INSTANCE,
@@ -4136,7 +4137,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 if (!assignment.isValid()) {
                                     throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + target);
                                 }
-                                return new OffsetMapping.Resolved.ForStackManipulation(new StackManipulation.Compound(FieldAccess.forField(fieldDescription).read(), assignment));
+                                return new OffsetMapping.Resolved.ForStackManipulation(new StackManipulation.Compound(fieldDescription.isStatic()
+                                        ? StackManipulation.Trivial.INSTANCE
+                                        : MethodVariableAccess.loadThis(), FieldAccess.forField(fieldDescription).read(), assignment));
                             }
 
                             /**
