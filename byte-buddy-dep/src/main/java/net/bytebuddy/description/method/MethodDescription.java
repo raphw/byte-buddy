@@ -59,7 +59,7 @@ public interface MethodDescription extends TypeVariableSource,
         ModifierReviewable.ForMethodDescription,
         ByteCodeElement.Member,
         DeclaredByType.WithMandatoryDeclaration,
-        ByteCodeElement.TypeDependant<MethodDescription.InDefinedShape, MethodDescription.Token>{
+        ByteCodeElement.TypeDependant<MethodDescription.InDefinedShape, MethodDescription.Token> {
 
     /**
      * The internal name of a Java constructor.
