@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.DeclaredByType;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -56,8 +57,9 @@ import static net.bytebuddy.matcher.ElementMatchers.ofSort;
  */
 public interface MethodDescription extends TypeVariableSource,
         ModifierReviewable.ForMethodDescription,
-        ByteCodeElement.TypeDependant<MethodDescription.InDefinedShape, MethodDescription.Token>,
-        ByteCodeElement.Member {
+        ByteCodeElement.Member,
+        DeclaredByType.WithMandatoryDeclaration,
+        ByteCodeElement.TypeDependant<MethodDescription.InDefinedShape, MethodDescription.Token>{
 
     /**
      * The internal name of a Java constructor.

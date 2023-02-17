@@ -18,6 +18,7 @@ package net.bytebuddy.description.field;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.DeclaredByType;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -41,8 +42,9 @@ import java.util.List;
  */
 public interface FieldDescription extends ByteCodeElement,
         ModifierReviewable.ForFieldDescription,
-        ByteCodeElement.TypeDependant<FieldDescription.InDefinedShape, FieldDescription.Token>,
-        ByteCodeElement.Member {
+        ByteCodeElement.Member,
+        DeclaredByType.WithMandatoryDeclaration,
+        ByteCodeElement.TypeDependant<FieldDescription.InDefinedShape, FieldDescription.Token> {
 
     /**
      * A representative of a field's non-set default value.
