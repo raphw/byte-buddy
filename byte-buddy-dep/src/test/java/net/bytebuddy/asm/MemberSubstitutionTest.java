@@ -923,6 +923,42 @@ public class MemberSubstitutionTest {
         assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAZ));
     }
 
+    @Test
+    public void testSubstitutionChainTypeAssignment() throws Exception{
+        Class<?> type = new ByteBuddy()
+                .redefine(StaticFieldAccessSample.class)
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(
+                        new MemberSubstitution.Substitution.Chain.Step.ForInvocation.Factory(new MethodDescription.ForLoadedMethod(StaticFieldAccessSample.class.getDeclaredMethod("foobar"))),
+                        MemberSubstitution.Substitution.Chain.Step.ForAssignment.castToSubstitutionResult()).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAZ));
+    }
+
+    @Test
+    public void testSubstitutionChainTypeAssignmentExplicit() throws Exception{
+        Class<?> type = new ByteBuddy()
+                .redefine(StaticFieldAccessSample.class)
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithChain(
+                        new MemberSubstitution.Substitution.Chain.Step.ForInvocation.Factory(new MethodDescription.ForLoadedMethod(StaticFieldAccessSample.class.getDeclaredMethod("foobar"))),
+                        MemberSubstitution.Substitution.Chain.Step.ForAssignment.castTo(TypeDescription.ForLoadedType.of(String.class).asGenericType())).on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAR));
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(instance), is((Object) FOO));
+        assertThat(type.getDeclaredField(BAR).get(instance), is((Object) BAZ));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testFieldNotAccessible() throws Exception {
         new ByteBuddy()
@@ -1162,6 +1198,10 @@ public class MemberSubstitutionTest {
         @SuppressWarnings("unused")
         private static void baz(String baz) {
             StaticFieldAccessSample.baz = baz;
+        }
+
+        private static Object foobar() {
+            return BAZ;
         }
     }
 

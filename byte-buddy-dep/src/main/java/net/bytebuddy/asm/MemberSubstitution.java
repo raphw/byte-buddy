@@ -1710,6 +1710,104 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 }
 
                 /**
+                 * A step within a substitution chain that converts the current type to the expected return type.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class ForAssignment implements Step {
+
+                    /**
+                     * The result type or {@code null} if the type of the substitution result should be targeted.
+                     */
+                    @MaybeNull
+                    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
+                    private final TypeDescription.Generic result;
+
+                    /**
+                     * The assigner to use.
+                     */
+                    private final Assigner assigner;
+
+                    /**
+                     * Creates a step for a type assignment.
+                     *
+                     * @param result   The result type or {@code null} if the type of the substitution result should be targeted.
+                     * @param assigner The assigner to use.
+                     */
+                    protected ForAssignment(@MaybeNull TypeDescription.Generic result, Assigner assigner) {
+                        this.result = result;
+                        this.assigner = assigner;
+                    }
+
+                    /**
+                     * Creates a step factory that casts the current stack top value to the specified type.
+                     *
+                     * @param typeDescription The description of the type that should be cast to.
+                     * @return An appropriate step factory.
+                     */
+                    public static Step.Factory castTo(TypeDescription.Generic typeDescription) {
+                        return new Factory(typeDescription);
+                    }
+
+                    /**
+                     * Creates a step factory that casts the current stack top value to the expected return value.
+                     *
+                     * @return An appropriate step factory.
+                     */
+                    public static Step.Factory castToSubstitutionResult() {
+                        return new Factory(null);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Resolution resolve(TypeDescription receiver,
+                                              ByteCodeElement.Member original,
+                                              TypeList.Generic parameters,
+                                              TypeDescription.Generic result,
+                                              JavaConstant.MethodHandle methodHandle,
+                                              StackManipulation stackManipulation,
+                                              TypeDescription.Generic current,
+                                              Map<Integer, Integer> offsets,
+                                              int freeOffset) {
+                        StackManipulation assignment = assigner.assign(current, this.result == null ? result : this.result, Assigner.Typing.DYNAMIC);
+                        if (!assignment.isValid()) {
+                            throw new IllegalStateException("Failed to assign " + current + " to " + (this.result == null ? result : this.result));
+                        }
+                        return new Simple(assignment, this.result == null ? result : this.result);
+                    }
+
+                    /**
+                     * A factory for creating a step for a dynamic type assignment.
+                     */
+                    @HashCodeAndEqualsPlugin.Enhance
+                    protected static class Factory implements Step.Factory {
+
+                        /**
+                         * The result type or {@code null} if the type of the substitution result should be targeted.
+                         */
+                        @MaybeNull
+                        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
+                        private final TypeDescription.Generic result;
+
+                        /**
+                         * Creates a new factory for a step that applies a type assignment.
+                         *
+                         * @param result The result type or {@code null} if the type of the substitution result should be targeted.
+                         */
+                        protected Factory(@MaybeNull TypeDescription.Generic result) {
+                            this.result = result;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                            return new ForAssignment(result, assigner);
+                        }
+                    }
+                }
+
+                /**
                  * A step that substitutes an argument of a given index with a compatible type.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
@@ -7602,18 +7700,18 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             Replacement.InvocationType.of(opcode, candidates.getOnly()));
                     if (binding.isBound()) {
                         StackManipulation.Size size = binding.make(
-                                        candidates.getOnly().isStatic() || candidates.getOnly().isConstructor()
-                                                ? candidates.getOnly().getParameters().asTypeList()
-                                                : new TypeList.Generic.Explicit(CompoundList.of(resolution.resolve(), candidates.getOnly().getParameters().asTypeList())),
-                                        candidates.getOnly().isConstructor()
-                                                ? candidates.getOnly().getDeclaringType().asGenericType()
-                                                : candidates.getOnly().getReturnType(),
-                                        opcode == Opcodes.INVOKESPECIAL && candidates.getOnly().isMethod() && !candidates.getOnly().isPrivate()
-                                                ? JavaConstant.MethodHandle.ofSpecial(candidates.getOnly().asDefined(), resolution.resolve())
-                                                : JavaConstant.MethodHandle.of(candidates.getOnly().asDefined()),
-                                        opcode == Opcodes.INVOKESPECIAL && candidates.getOnly().isMethod() && !candidates.getOnly().isPrivate()
-                                                ? MethodInvocation.invoke(candidates.getOnly()).special(resolution.resolve())
-                                                : MethodInvocation.invoke(candidates.getOnly()), getFreeOffset()).apply(new LocalVariableTracingMethodVisitor(mv), implementationContext);
+                                candidates.getOnly().isStatic() || candidates.getOnly().isConstructor()
+                                        ? candidates.getOnly().getParameters().asTypeList()
+                                        : new TypeList.Generic.Explicit(CompoundList.of(resolution.resolve(), candidates.getOnly().getParameters().asTypeList())),
+                                candidates.getOnly().isConstructor()
+                                        ? candidates.getOnly().getDeclaringType().asGenericType()
+                                        : candidates.getOnly().getReturnType(),
+                                opcode == Opcodes.INVOKESPECIAL && candidates.getOnly().isMethod() && !candidates.getOnly().isPrivate()
+                                        ? JavaConstant.MethodHandle.ofSpecial(candidates.getOnly().asDefined(), resolution.resolve())
+                                        : JavaConstant.MethodHandle.of(candidates.getOnly().asDefined()),
+                                opcode == Opcodes.INVOKESPECIAL && candidates.getOnly().isMethod() && !candidates.getOnly().isPrivate()
+                                        ? MethodInvocation.invoke(candidates.getOnly()).special(resolution.resolve())
+                                        : MethodInvocation.invoke(candidates.getOnly()), getFreeOffset()).apply(new LocalVariableTracingMethodVisitor(mv), implementationContext);
                         if (candidates.getOnly().isConstructor()) {
                             stackSizeBuffer = Math.max(stackSizeBuffer, size.getMaximalSize() + 2);
                             stackSizeBuffer = Math.max(stackSizeBuffer, new StackManipulation.Compound(Duplication.SINGLE.flipOver(TypeDescription.ForLoadedType.of(Object.class)),
