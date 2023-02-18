@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.utility;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
@@ -1000,6 +1001,7 @@ public interface JavaConstant extends ConstantValue {
          * @param fieldDescription The field to extract a setter type for.
          * @return The type of a setter for the given field.
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
         public static MethodType ofSetter(FieldDescription fieldDescription) {
             return new MethodType(TypeDescription.ForLoadedType.of(void.class), fieldDescription.isStatic()
                     ? Collections.singletonList(fieldDescription.getType().asErasure())
@@ -1022,6 +1024,7 @@ public interface JavaConstant extends ConstantValue {
          * @param fieldDescription The field to extract a getter type for.
          * @return The type of a getter for the given field.
          */
+        @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming declaring type for type member.")
         public static MethodType ofGetter(FieldDescription fieldDescription) {
             return new MethodType(fieldDescription.getType().asErasure(), fieldDescription.isStatic()
                     ? Collections.<TypeDescription>emptyList()
