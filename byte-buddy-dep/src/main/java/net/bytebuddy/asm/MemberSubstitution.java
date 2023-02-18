@@ -6217,6 +6217,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * Defines the supplied constructor as a dynamic invocation bootstrap target for delegating advice methods. The bootstrap
                          * method arguments are:
+                         * <ul>
                          * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
                          * <li>A {@link String} representing the constructor's internal name {@code <init>}.</li>
                          * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
@@ -6226,6 +6227,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * <li>A {@code java.lang.invoke.MethodHandle} to the substituted element.</li>
                          * <li>A {@link Class} describing the instrumented type.</li>
                          * <li>A {@link String} representing the instrumented method or constructor.</li>
+                         * </ul>
                          *
                          * @param constructor The bootstrap constructor.
                          * @return A new builder for a delegation within a member substitution that uses the supplied constructor for bootstrapping.
@@ -6248,6 +6250,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * Defines the supplied method as a dynamic invocation bootstrap target for delegating advice methods. The bootstrap
                          * method arguments are:
+                         * <ul>
                          * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
                          * <li>A {@link String} representing the method's name.</li>
                          * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
@@ -6257,6 +6260,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * <li>A {@code java.lang.invoke.MethodHandle} to the substituted element.</li>
                          * <li>A {@link Class} describing the instrumented type.</li>
                          * <li>A {@link String} representing the instrumented method or constructor.</li>
+                         * </ul>
                          *
                          * @param method The bootstrap method.
                          * @return A new builder for a delegation within a member substitution that uses the supplied method for bootstrapping.
