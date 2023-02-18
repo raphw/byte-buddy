@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 18. February 2023: version 1.14.0
+
+- Add `Step.Factory.ForDelegation` in `MemberSubstitution` that allows for delegation similar to `MethodDelegation` but in-code.
+- Add handlers for `MethodDelegation` and `Advice` that leverage method handles for field access and self-invocation.
+- Add `Step.Factory` for type assignment that allows casting the return value from a previous step to another type.
+- Avoid usage of `URL` class loader as it is deprecated, and use newer method if available.
+
 ### 13. February 2023: version 1.13.0
 
 - Complete `MemberSubstitution` API which now retains the original instruction for invocation.
