@@ -1,5 +1,6 @@
 package net.bytebuddy.utility;
 
+import jdk.nashorn.internal.codegen.types.Type;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -32,8 +33,8 @@ public class JavaConstantMethodTypeTest {
     public void testMethodTypeOfMethod() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.of(Foo.class.getDeclaredMethod(BAR, Void.class));
         assertThat(methodType.getReturnType(), is(TypeDescription.ForLoadedType.of(void.class)));
-        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
-        assertThat(methodType.getDescriptor(), is(new MethodDescription.ForLoadedMethod(Foo.class.getDeclaredMethod(BAR, Void.class)).getDescriptor()));
+        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Foo.class, Void.class)));
+        assertThat(methodType.getDescriptor(), is(Type.getMethodDescriptor(void.class, Foo.class, Void.class)));
     }
 
     @Test
@@ -46,7 +47,7 @@ public class JavaConstantMethodTypeTest {
     @Test
     public void testMethodTypeOfConstructor() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.of(Foo.class.getDeclaredConstructor(Void.class));
-        assertThat(methodType.getReturnType(), is(TypeDescription.ForLoadedType.of(void.class)));
+        assertThat(methodType.getReturnType(), is(TypeDescription.ForLoadedType.of(Foo.class)));
         assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
@@ -55,7 +56,7 @@ public class JavaConstantMethodTypeTest {
     public void testMethodTypeOfGetter() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.ofGetter(Foo.class.getDeclaredField(BAR));
         assertThat(methodType.getReturnType(), is((TypeDescription) TypeDescription.ForLoadedType.of(Void.class)));
-        assertThat(methodType.getParameterTypes(), is(Collections.<TypeDescription>emptyList()));
+        assertThat(methodType.getParameterTypes(), is(Collections.singletonList(TypeDescription.ForLoadedType.of(Foo.class))));
     }
 
     @Test
@@ -70,7 +71,7 @@ public class JavaConstantMethodTypeTest {
     public void testMethodTypeOfSetter() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.ofSetter(Foo.class.getDeclaredField(BAR));
         assertThat(methodType.getReturnType(), is(TypeDescription.ForLoadedType.of(void.class)));
-        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
+        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Foo.class, Void.class)));
     }
 
     @Test

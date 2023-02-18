@@ -143,6 +143,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void testMethodTypeBinding() throws Exception {
         when(genericTargetType.asErasure()).thenReturn(TypeDescription.ForLoadedType.of(JavaType.METHOD_TYPE.load()));
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(void.class));
+        when(methodDescription.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(Void.class));
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);

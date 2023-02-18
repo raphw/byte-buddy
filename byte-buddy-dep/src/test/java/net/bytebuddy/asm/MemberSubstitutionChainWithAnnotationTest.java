@@ -5,6 +5,7 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.InjectionClassLoader;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Rule;
 import org.junit.Test;
@@ -13,6 +14,9 @@ import org.junit.rules.MethodRule;
 import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -21,8 +25,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MemberSubstitutionChainWithAnnotationTest {
@@ -361,6 +364,23 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    public void testFieldValueProvided() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FieldValueTest.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(BAR))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.withCustomMapping()
+                                .bind(Custom.class, FieldValueTest.class.getDeclaredField(FOO))
+                                .to(FieldValueTest.class.getMethod("provided", String.class)))
+                        .on(named("getFoo")))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(FieldValueTest.class.getName()).getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod("getFoo").invoke(instance), is((Object) FOO));
+    }
+
+    @Test
     @JavaVersionRule.Enforce(value = 7, target = FieldGetterHandlerTest.class)
     public void testFieldGetterHandleNamedImplicit() throws Exception {
         Class<?> type = new ByteBuddy()
@@ -593,6 +613,91 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(7)
+    public void testOriginElementMethodHandle() throws Exception {
+        Class<?> origin = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionOriginMethodHandle");
+        Class<?> type = new ByteBuddy()
+                .redefine(origin)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(origin.getDeclaredMethod("handleElement", JavaType.METHOD_HANDLE.load())))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(origin.getName()).getDeclaredConstructor().newInstance();
+        assertThat(JavaConstant.MethodHandle.ofLoaded(type.getDeclaredMethod(RUN).invoke(instance)), is(JavaConstant.MethodHandle.ofGetter(origin.getDeclaredField(FOO))));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testOriginMethodMethodHandle() throws Exception {
+        Class<?> origin = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionOriginMethodHandle");
+        Class<?> type = new ByteBuddy()
+                .redefine(origin)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(origin.getDeclaredMethod("handleMethod", JavaType.METHOD_HANDLE.load())))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(origin.getName()).getDeclaredConstructor().newInstance();
+        assertThat(JavaConstant.MethodHandle.ofLoaded(type.getDeclaredMethod(RUN).invoke(instance)), is(JavaConstant.MethodHandle.of(origin.getDeclaredMethod(RUN))));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testOriginElementMethodType() throws Exception {
+        Class<?> origin = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionOriginMethodType");
+        Class<?> type = new ByteBuddy()
+                .redefine(origin)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(origin.getDeclaredMethod("methodTypeElement", JavaType.METHOD_TYPE.load())))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(origin.getName()).getDeclaredConstructor().newInstance();
+        assertThat(JavaConstant.MethodType.ofLoaded(type.getDeclaredMethod(RUN).invoke(instance)), is(JavaConstant.MethodType.ofGetter(origin.getDeclaredField(FOO))));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testOriginMethodMethodType() throws Exception {
+        Class<?> origin = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionOriginMethodType");
+        Class<?> type = new ByteBuddy()
+                .redefine(origin)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(origin.getDeclaredMethod("methodTypeMethod", JavaType.METHOD_TYPE.load())))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(origin.getName()).getDeclaredConstructor().newInstance();
+        assertThat(JavaConstant.MethodType.ofLoaded(type.getDeclaredMethod(RUN).invoke(instance)), is(JavaConstant.MethodType.of(origin.getDeclaredMethod(RUN))));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testOriginLookup() throws Exception {
+        Class<?> origin = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionOriginMethodHandlesLookup");
+        Class<?> type = new ByteBuddy()
+                .redefine(origin)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.to(origin.getDeclaredMethod("lookup", JavaType.METHOD_HANDLES_LOOKUP.load())))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(origin.getName()).getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), instanceOf(JavaType.METHOD_HANDLES_LOOKUP.load()));
+    }
+
+    @Test
     public void testCurrent() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(CurrentTest.class)
@@ -635,16 +740,58 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .visit(MemberSubstitution.strict()
                         .field(named(FOO))
                         .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.withCustomMapping().bindDynamic(Custom.class,
-                        Class.forName("net.bytebuddy.test.precompiled.v7.DynamicSampleBootstrap").getMethod("callable",
-                                JavaType.METHOD_HANDLES_LOOKUP.load(),
-                                String.class,
-                                JavaType.METHOD_TYPE.load(),
-                                String.class),
-                        FOO).to(DynamicSample.class.getDeclaredMethod("delegate", Callable.class))).on(named(RUN)))
+                                Class.forName("net.bytebuddy.test.precompiled.v7.DynamicSampleBootstrap").getMethod("callable",
+                                        JavaType.METHOD_HANDLES_LOOKUP.load(),
+                                        String.class,
+                                        JavaType.METHOD_TYPE.load(),
+                                        String.class),
+                                FOO).to(DynamicSample.class.getDeclaredMethod("delegate", Callable.class))).on(named(RUN)))
                 .make()
                 .load(DynamicSample.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertThat(type.getMethod(RUN).invoke(type.getConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(value = 8, target = DynamicSample.class)
+    public void testDynamicLambdaInvocation() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(DynamicSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.withCustomMapping().bindLambda(Custom.class,
+                                DynamicSample.class.getDeclaredMethod("baz"),
+                                Callable.class).to(DynamicSample.class.getDeclaredMethod("delegate", Callable.class))).on(named(RUN)))
+                .make()
+                .load(DynamicSample.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getMethod(RUN).invoke(type.getConstructor().newInstance()), is((Object) FOO));
+    }
+
+
+    @Test
+    @JavaVersionRule.Enforce(value = 7, target = BootstrapSample.class)
+    public void testDelegationBootstrapped() throws Exception {
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionBootstrap");
+        Class<?> type = new ByteBuddy()
+                .redefine(BootstrapSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.withCustomMapping().bootstrap(bootstrap.getMethod("bootstrap",
+                                JavaType.METHOD_HANDLES_LOOKUP.load(),
+                                String.class,
+                                JavaType.METHOD_TYPE.load(),
+                                String.class,
+                                Class.class,
+                                String.class,
+                                JavaType.METHOD_HANDLE.load(),
+                                Class.class,
+                                String.class,
+                                JavaType.METHOD_HANDLE.load())).to(BootstrapSample.class.getDeclaredMethod("delegate"))).on(named(RUN)))
+                .make()
+                .load(BootstrapSample.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(RUN).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
     }
 
     public static class ArgumentSample {
@@ -819,6 +966,10 @@ public class MemberSubstitutionChainWithAnnotationTest {
         }
 
         public String explicit(@MemberSubstitution.FieldValue(value = FOO, declaringType = FieldValueTest.class) String value) {
+            return value;
+        }
+
+        public String provided(@Custom String value) {
             return value;
         }
     }
@@ -1006,6 +1157,23 @@ public class MemberSubstitutionChainWithAnnotationTest {
 
         private Callable<?> delegate(@Custom Callable<?> callable) {
             return callable;
+        }
+
+        private static Object baz() {
+            return BAZ;
+        }
+    }
+
+    public static class BootstrapSample {
+
+        private String foo;
+
+        public String run() {
+            return foo;
+        }
+
+        private static String delegate() {
+            return FOO;
         }
     }
 }

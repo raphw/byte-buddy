@@ -944,7 +944,11 @@ public interface JavaConstant extends ConstantValue {
          * @return The method type of the given method.
          */
         public static MethodType of(MethodDescription methodDescription) {
-            return new MethodType(methodDescription.getReturnType().asErasure(), methodDescription.getParameters().asTypeList().asErasures());
+            return new MethodType(
+                    (methodDescription.isConstructor() ? methodDescription.getDeclaringType() : methodDescription.getReturnType()).asErasure(),
+                    methodDescription.isStatic() || methodDescription.isConstructor()
+                            ? methodDescription.getParameters().asTypeList().asErasures()
+                            : CompoundList.of(methodDescription.getDeclaringType().asErasure(), methodDescription.getParameters().asTypeList().asErasures()));
         }
 
         /**
@@ -964,7 +968,9 @@ public interface JavaConstant extends ConstantValue {
          * @return The type of a setter for the given field.
          */
         public static MethodType ofSetter(FieldDescription fieldDescription) {
-            return new MethodType(TypeDescription.ForLoadedType.of(void.class), Collections.singletonList(fieldDescription.getType().asErasure()));
+            return new MethodType(TypeDescription.ForLoadedType.of(void.class), fieldDescription.isStatic()
+                    ? Collections.singletonList(fieldDescription.getType().asErasure())
+                    : Arrays.asList(fieldDescription.getDeclaringType().asErasure(), fieldDescription.getType().asErasure()));
         }
 
         /**
@@ -984,7 +990,9 @@ public interface JavaConstant extends ConstantValue {
          * @return The type of a getter for the given field.
          */
         public static MethodType ofGetter(FieldDescription fieldDescription) {
-            return new MethodType(fieldDescription.getType().asErasure(), Collections.<TypeDescription>emptyList());
+            return new MethodType(fieldDescription.getType().asErasure(), fieldDescription.isStatic()
+                    ? Collections.<TypeDescription>emptyList()
+                    : Collections.singletonList(fieldDescription.getDeclaringType().asErasure()));
         }
 
         /**

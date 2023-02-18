@@ -4871,7 +4871,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
 
                                     @Override
-                                    protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
+                                    protected StackManipulation resolve(ByteCodeElement.Member original, List<TypeDescription> parameterTypes, TypeDescription returnType) {
                                         return MethodConstant.of(((MethodDescription) original).asDefined());
                                     }
                                 },
@@ -4886,7 +4886,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
 
                                     @Override
-                                    protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
+                                    protected StackManipulation resolve(ByteCodeElement.Member original, List<TypeDescription> parameterTypes, TypeDescription returnType) {
                                         return MethodConstant.of(((MethodDescription) original).asDefined());
                                     }
                                 },
@@ -4901,7 +4901,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
 
                                     @Override
-                                    protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
+                                    protected StackManipulation resolve(ByteCodeElement.Member original, List<TypeDescription> parameterTypes, TypeDescription returnType) {
                                         return new FieldConstant(((FieldDescription) original).asDefined());
                                     }
                                 },
@@ -4916,7 +4916,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
 
                                     @Override
-                                    protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
+                                    protected StackManipulation resolve(ByteCodeElement.Member original, List<TypeDescription> parameterTypes, TypeDescription returnType) {
                                         return MethodConstant.of(((MethodDescription) original).asDefined());
                                     }
                                 },
@@ -4931,7 +4931,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
 
                                     @Override
-                                    protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
+                                    protected StackManipulation resolve(ByteCodeElement.Member original, List<TypeDescription> parameterTypes, TypeDescription returnType) {
                                         return ClassConstant.of(original.getDeclaringType().asErasure());
                                     }
                                 },
@@ -4946,7 +4946,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
 
                                     @Override
-                                    protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
+                                    protected StackManipulation resolve(ByteCodeElement.Member original, List<TypeDescription> parameterTypes, TypeDescription returnType) {
                                         return MethodInvocation.lookup();
                                     }
                                 },
@@ -4961,7 +4961,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
 
                                     @Override
-                                    protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
+                                    protected StackManipulation resolve(ByteCodeElement.Member original, List<TypeDescription> parameterTypes, TypeDescription returnType) {
                                         JavaConstant.MethodHandle handle;
                                         if (original instanceof MethodDescription) {
                                             handle = JavaConstant.MethodHandle.of(((MethodDescription) original).asDefined());
@@ -4986,7 +4986,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
 
                                     @Override
-                                    protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
+                                    protected StackManipulation resolve(ByteCodeElement.Member original, List<TypeDescription> parameterTypes, TypeDescription returnType) {
                                         return JavaConstant.MethodType.of(returnType, parameterTypes).toStackManipulation();
                                     }
                                 },
@@ -5001,7 +5001,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     }
 
                                     @Override
-                                    protected StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType) {
+                                    protected StackManipulation resolve(ByteCodeElement.Member original, List<TypeDescription> parameterTypes, TypeDescription returnType) {
                                         return new TextConstant(original.toString());
                                     }
                                 };
@@ -5022,7 +5022,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                  * @param returnType     The return type.
                                  * @return A stack manipulation loading the supplied byte code element's representation onto the stack.
                                  */
-                                protected abstract StackManipulation resolve(ByteCodeElement.Member original, TypeList parameterTypes, TypeDescription returnType);
+                                protected abstract StackManipulation resolve(ByteCodeElement.Member original, List<TypeDescription> parameterTypes, TypeDescription returnType);
                             }
 
                             /**
@@ -5598,7 +5598,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                     if (!bootstrapMethod.isInvokeBootstrap(TypeList.Explicit.of(constants))) {
                                         throw new IllegalArgumentException(bootstrapMethod + " is not accepting advice bootstrap arguments: " + constants);
                                     }
-                                    return MethodInvocation.invoke(bootstrapMethod).dynamic(delegate.getDeclaringType().asErasure().getName(),
+                                    return MethodInvocation.invoke(bootstrapMethod).dynamic(delegate.getInternalName(),
                                             delegate.getReturnType().asErasure(),
                                             delegate.getParameters().asTypeList().asErasures(),
                                             constants);
@@ -5687,7 +5687,18 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         }
 
                         /**
-                         * An implementation that supplies a default set of arguments to a bootstrap method.
+                         * An implementation that supplies a default set of arguments to a bootstrap method. The arguments are:
+                         * <ul>
+                         * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
+                         * <li>A {@link String} representing the target's internal name.</li>
+                         * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
+                         * <li>A {@link String} representation of the delegate's binary class name.</li>
+                         * <li>A {@link Class} representing the receiver type of the substituted element.</li>
+                         * <li>A {@link String} representing the internal name of the substituted element.</li>
+                         * <li>A {@code java.lang.invoke.MethodHandle} to the substituted element.</li>
+                         * <li>A {@link Class} describing the instrumented type.</li>
+                         * <li>A {@link String} representing the instrumented method or constructor.</li>
+                         * </ul>
                          */
                         @HashCodeAndEqualsPlugin.Enhance
                         class ForDefaultValues implements BootstrapArgumentResolver {
@@ -5714,16 +5725,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             }
 
                             /**
-                             * A resolved default bootstrap argument resolver. The explicitly provided arguments are:
-                             * <ul>
-                             * <li>A string representation of the delegate's binary class name.</li>
-                             * <li>A method handle of the substituted expression.</li>
-                             * <li>A {@link Class} representing the type upon which the substituted expression is executed upon.</li>
-                             * <li>The name of the field, method or constructor that is being substituted.</li>
-                             * <li>A {@link Class} describing the instrumented type.</li>
-                             * <li>The name of the instrumented method or constructor.</li>
-                             * <li>A method handle of the instrumented method or constructor, only if the instrumented method is not a type initializer.</li>
-                             * </ul>
+                             * A resolved default bootstrap argument resolver.
                              */
                             @HashCodeAndEqualsPlugin.Enhance
                             protected static class Resolved implements BootstrapArgumentResolver.Resolved {
@@ -5762,16 +5764,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 public List<JavaConstant> make(TypeDescription receiver, ByteCodeElement.Member original, JavaConstant.MethodHandle methodHandle) {
                                     if (instrumentedMethod.isTypeInitializer()) {
                                         return Arrays.asList(JavaConstant.Simple.ofLoaded(delegate.getDeclaringType().getName()),
-                                                methodHandle,
                                                 JavaConstant.Simple.of(receiver),
                                                 JavaConstant.Simple.ofLoaded(original.getInternalName()),
+                                                methodHandle,
                                                 JavaConstant.Simple.of(instrumentedType),
                                                 JavaConstant.Simple.ofLoaded(instrumentedMethod.getInternalName()));
                                     } else {
                                         return Arrays.asList(JavaConstant.Simple.ofLoaded(delegate.getDeclaringType().getName()),
-                                                methodHandle,
                                                 JavaConstant.Simple.of(receiver),
                                                 JavaConstant.Simple.ofLoaded(original.getInternalName()),
+                                                methodHandle,
                                                 JavaConstant.Simple.of(instrumentedType),
                                                 JavaConstant.Simple.ofLoaded(instrumentedMethod.getInternalName()),
                                                 JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()));
@@ -6215,18 +6217,15 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * Defines the supplied constructor as a dynamic invocation bootstrap target for delegating advice methods. The bootstrap
                          * method arguments are:
-                         * <ul>
                          * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
                          * <li>A {@link String} representing the constructor's internal name {@code <init>}.</li>
                          * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
-                         * <li>A string representation of the delegate's binary class name.</li>
-                         * <li>A method handle of the substituted expression.</li>
-                         * <li>A {@link Class} representing the type upon which the substituted expression is executed upon.</li>
-                         * <li>The name of the field, method or constructor that is being substituted.</li>
+                         * <li>A {@link String} representation of the delegate's binary class name.</li>
+                         * <li>A {@link Class} representing the receiver type of the substituted element.</li>
+                         * <li>A {@link String} representing the internal name of the substituted element.</li>
+                         * <li>A {@code java.lang.invoke.MethodHandle} to the substituted element.</li>
                          * <li>A {@link Class} describing the instrumented type.</li>
-                         * <li>The name of the instrumented method or constructor.</li>
-                         * <li>A method handle of the instrumented method or constructor, only if the instrumented method is not a type initializer.</li>
-                         * </ul>
+                         * <li>A {@link String} representing the instrumented method or constructor.</li>
                          *
                          * @param constructor The bootstrap constructor.
                          * @return A new builder for a delegation within a member substitution that uses the supplied constructor for bootstrapping.
@@ -6249,18 +6248,15 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         /**
                          * Defines the supplied method as a dynamic invocation bootstrap target for delegating advice methods. The bootstrap
                          * method arguments are:
-                         * <ul>
                          * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
-                         * <li>A {@link String} representing the constructor's internal name {@code <init>}.</li>
+                         * <li>A {@link String} representing the method's name.</li>
                          * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
-                         * <li>A string representation of the delegate's binary class name.</li>
-                         * <li>A method handle of the substituted expression.</li>
-                         * <li>A {@link Class} representing the type upon which the substituted expression is executed upon.</li>
-                         * <li>The name of the field, method or constructor that is being substituted.</li>
+                         * <li>A {@link String} representation of the delegate's binary class name.</li>
+                         * <li>A {@link Class} representing the receiver type of the substituted element.</li>
+                         * <li>A {@link String} representing the internal name of the substituted element.</li>
+                         * <li>A {@code java.lang.invoke.MethodHandle} to the substituted element.</li>
                          * <li>A {@link Class} describing the instrumented type.</li>
-                         * <li>The name of the instrumented method or constructor.</li>
-                         * <li>A method handle of the instrumented method or constructor, only if the instrumented method is not a type initializer.</li>
-                         * </ul>
+                         * <li>A {@link String} representing the instrumented method or constructor.</li>
                          *
                          * @param method The bootstrap method.
                          * @return A new builder for a delegation within a member substitution that uses the supplied method for bootstrapping.
@@ -6285,14 +6281,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                          * method arguments are:
                          * <ul>
                          * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
-                         * <li>A {@link String} representing the constructor's internal name {@code <init>}.</li>
+                         * <li>A {@link String} representing the target's internal name.</li>
                          * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
-                         * <li>A string representation of the delegate's binary class name.</li>
-                         * <li>A method handle of the substituted expression.</li>
-                         * <li>A {@link Class} representing the type upon which the substituted expression is executed upon.</li>
-                         * <li>The name of the field, method or constructor that is being substituted.</li>
+                         * <li>A {@link String} representation of the delegate's binary class name.</li>
+                         * <li>A {@link Class} representing the receiver type of the substituted element.</li>
+                         * <li>A {@link String} representing the internal name of the substituted element.</li>
+                         * <li>A {@code java.lang.invoke.MethodHandle} to the substituted element.</li>
                          * <li>A {@link Class} describing the instrumented type.</li>
-                         * <li>The name of the instrumented method or constructor.</li>
+                         * <li>A {@link String} representing the instrumented method or constructor.</li>
                          * <li>A method handle of the instrumented method or constructor, only if the instrumented method is not a type initializer.</li>
                          * </ul>
                          *
@@ -7728,7 +7724,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                                 TypeList.Generic parameters,
                                                 TypeDescription.Generic result,
                                                 MethodDescription instrumentedMethod) {
-                return sort.resolve(instrumentedMethod, instrumentedMethod.getParameters().asTypeList().asErasures(), instrumentedMethod.getReturnType().asErasure());
+                return sort.resolve(instrumentedMethod,
+                        instrumentedMethod.isStatic() || instrumentedMethod.isConstructor()
+                                ? instrumentedMethod.getParameters().asTypeList().asErasures()
+                                : CompoundList.of(instrumentedMethod.getDeclaringType().asErasure(), instrumentedMethod.getParameters().asTypeList().asErasures()),
+                        instrumentedMethod.isConstructor()
+                                ? instrumentedMethod.getDeclaringType().asErasure()
+                                : instrumentedMethod.getReturnType().asErasure());
             }
         };
 
