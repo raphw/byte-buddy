@@ -765,7 +765,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 .make()
                 .load(DynamicSample.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
-        assertThat(type.getMethod(RUN).invoke(type.getConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getMethod(RUN).invoke(type.getConstructor().newInstance()), is((Object) BAZ));
     }
 
 
