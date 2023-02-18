@@ -963,7 +963,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 try {
                     String path = URLEncoder.encode(typeName.replace('.', '/'), ENCODING);
                     URLStreamHandler handler = new ByteArrayUrlStreamHandler(binaryRepresentation);
-                    URL url = DISPATCHER.fromURI(URI.create(URL_SCHEMA + "/" + path), handler);
+                    URL url = DISPATCHER.of(URI.create(URL_SCHEMA + "/" + path), handler);
                     return url == null
                             ? DISPATCHER.make(URL_SCHEMA, path, NO_PORT, NO_FILE, handler)
                             : url;
@@ -1054,7 +1054,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                  * @param file     The file on the URL.
                  * @param handler  The stream handler to use.
                  * @return An appropriate URL.
-                 * @throws MalformedURLException If the URL is malformed.
+                 * @throws MalformedURLException If the supplied URL is malformed.
                  */
                 @JavaDispatcher.IsConstructor
                 URL make(String protocol, String host, int port, String file, URLStreamHandler handler) throws MalformedURLException;
@@ -1065,11 +1065,12 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                  * @param uri     The URI to represent.
                  * @param handler The stream handler to attach to that URL.
                  * @return An appropriate URL.
+                 * @throws MalformedURLException If the supplied URL is malformed.
                  */
                 @MaybeNull
                 @JavaDispatcher.IsStatic
                 @JavaDispatcher.Defaults
-                URL fromURI(URI uri, URLStreamHandler handler);
+                URL of(URI uri, URLStreamHandler handler) throws MalformedURLException;
             }
         }
     }
