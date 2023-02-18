@@ -2478,6 +2478,15 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     }
 
                     /**
+                     * Returns a builder for creating a {@link ForDelegation} with custom configuration.
+                     *
+                     * @return A bulder for creating a custom delegator.
+                     */
+                    public static WithCustomMapping withCustomMapping() {
+                        return new WithCustomMapping(Dispatcher.ForRegularInvocation.Factory.INSTANCE, Collections.<Class<? extends Annotation>, OffsetMapping.Factory<?>>emptyMap());
+                    }
+
+                    /**
                      * {@inheritDoc}
                      */
                     public Resolution resolve(TypeDescription receiver,

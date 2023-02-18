@@ -5,14 +5,20 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.InjectionClassLoader;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.JavaType;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import java.io.Serializable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
@@ -604,6 +610,43 @@ public class MemberSubstitutionChainWithAnnotationTest {
         assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) QUX));
     }
 
+    @Test
+    public void testSerializable() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(SerializableSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.withCustomMapping()
+                                .bindSerialized(Custom.class, (Serializable) Collections.singletonMap(FOO, BAR))
+                                .to(SerializableSample.class.getDeclaredMethod("delegate", Map.class)))
+                        .on(named(RUN)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getClassLoader().loadClass(SerializableSample.class.getName()).getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) BAR));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(value = 7, target = DynamicSample.class)
+    public void testAdviceDynamicInvocation() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(DynamicSample.class)
+                .visit(MemberSubstitution.strict()
+                        .field(named(FOO))
+                        .replaceWithChain(MemberSubstitution.Substitution.Chain.Step.ForDelegation.withCustomMapping().bindDynamic(Custom.class,
+                        Class.forName("net.bytebuddy.test.precompiled.v7.DynamicSampleBootstrap").getMethod("callable",
+                                JavaType.METHOD_HANDLES_LOOKUP.load(),
+                                String.class,
+                                JavaType.METHOD_TYPE.load(),
+                                String.class),
+                        FOO).to(DynamicSample.class.getDeclaredMethod("delegate", Callable.class))).on(named(RUN)))
+                .make()
+                .load(DynamicSample.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getMethod(RUN).invoke(type.getConstructor().newInstance()), is((Object) FOO));
+    }
+
     public static class ArgumentSample {
 
         public String foo = FOO, bar = BAR;
@@ -928,6 +971,41 @@ public class MemberSubstitutionChainWithAnnotationTest {
                 throw new AssertionError();
             }
             return QUX;
+        }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Custom {
+        /* empty */
+    }
+
+    @SuppressWarnings("unused")
+    public static class SerializableSample {
+
+        private String foo = FOO;
+
+        public String run() {
+            return foo;
+        }
+
+        private String delegate(@Custom Map<String, String> value) {
+            if (value.size() != 1) {
+                throw new AssertionError();
+            }
+            return value.get(FOO);
+        }
+    }
+
+    public static class DynamicSample {
+
+        private Callable<?> foo;
+
+        public Object run() throws Exception {
+            return foo.call();
+        }
+
+        private Callable<?> delegate(@Custom Callable<?> callable) {
+            return callable;
         }
     }
 }
