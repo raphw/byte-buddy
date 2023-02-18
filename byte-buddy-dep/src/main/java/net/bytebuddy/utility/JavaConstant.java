@@ -952,6 +952,39 @@ public interface JavaConstant extends ConstantValue {
         }
 
         /**
+         * Returns a method type description of the given method's signature without considering the method's actual stack consumption
+         * and production.
+         *
+         * @param method The method to extract the method type from.
+         * @return The method type of the given method's signature.
+         */
+        public static MethodType ofSignature(Method method) {
+            return ofSignature(new MethodDescription.ForLoadedMethod(method));
+        }
+
+        /**
+         * Returns a method type description of the given constructor's signature without considering the constructor's
+         * actual stack consumption and production.
+         *
+         * @param constructor The constructor to extract the method type from.
+         * @return The method type of the given method's signature.
+         */
+        public static MethodType ofSignature(Constructor<?> constructor) {
+            return ofSignature(new MethodDescription.ForLoadedConstructor(constructor));
+        }
+
+        /**
+         * Returns a method type description of the given method's signature without considering the method's actual stack consumption
+         * and production.
+         *
+         * @param methodDescription The method to extract the method type from.
+         * @return The method type of the given method's signature.
+         */
+        public static MethodType ofSignature(MethodDescription methodDescription) {
+            return new MethodType(methodDescription.getReturnType().asErasure(), methodDescription.getParameters().asTypeList().asErasures());
+        }
+
+        /**
          * Returns a method type for a setter of the given field.
          *
          * @param field The field to extract a setter type for.

@@ -15016,9 +15016,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     Collections.<AnnotationDescription>emptyList(),
                     AnnotationValue.UNDEFINED,
                     TypeDescription.Generic.UNDEFINED),
-                JavaConstant.MethodType.of(methods.asDefined().getOnly()),
+                JavaConstant.MethodType.ofSignature(methods.asDefined().getOnly()),
                 JavaConstant.MethodHandle.of(methodDescription),
-                JavaConstant.MethodType.of(methods.asDefined().getOnly()));
+                JavaConstant.MethodType.ofSignature(methods.asDefined().getOnly()));
         }
 
         /**
