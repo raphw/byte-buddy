@@ -610,7 +610,7 @@ public class MemberSubstitutionChainWithAnnotationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(7)
+    @JavaVersionRule.Enforce(8) // Cannot resolve field types from method handles prior to Java 8
     public void testOriginElementMethodHandle() throws Exception {
         Class<?> origin = Class.forName("net.bytebuddy.test.precompiled.v7.MemberSubstitutionOriginMethodHandle");
         Class<?> type = new ByteBuddy()
