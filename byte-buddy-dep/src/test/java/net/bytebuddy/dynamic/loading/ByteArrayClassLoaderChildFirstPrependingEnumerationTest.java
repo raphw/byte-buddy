@@ -6,6 +6,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import java.net.URI;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
@@ -23,9 +24,9 @@ public class ByteArrayClassLoaderChildFirstPrependingEnumerationTest {
 
     @Before
     public void setUp() throws Exception {
-        first = new URL("file://foo");
-        second = new URL("file://bar");
-        third = new URL("file://qux");
+        first = URI.create("file://foo").toURL();
+        second = URI.create("file://bar").toURL();
+        third = URI.create("file://qux").toURL();
     }
 
     @Test

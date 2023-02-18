@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 
 import java.io.File;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.jar.Attributes;
@@ -29,7 +30,7 @@ public class PackageDefinitionStrategyTypeSimpleTest {
 
     @Before
     public void setUp() throws Exception {
-        sealBase = new URL("file://foo");
+        sealBase = URI.create("file://foo").toURL();
         definition = new PackageDefinitionStrategy.Definition.Simple(FOO, BAR, QUX, BAZ, FOO + BAR, QUX + BAZ, sealBase);
     }
 

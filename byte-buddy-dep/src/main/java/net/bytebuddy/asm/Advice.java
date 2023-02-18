@@ -11297,6 +11297,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param writerFlags           The ASM writer flags that were set.
          * @param readerFlags           The ASM reader flags that were set.
          */
+        @SuppressFBWarnings(value = "MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR", justification = "Self reference is not used before constructor completion.")
         protected AdviceVisitor(MethodVisitor methodVisitor,
                                 Context implementationContext,
                                 Assigner assigner,

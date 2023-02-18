@@ -105,9 +105,9 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName,
     /**
      * A byte code element that is declared by a type.
      */
-    interface Member extends ByteCodeElement,
-            NamedElement.WithGenericName,
-            DeclaredByType.WithMandatoryDeclaration {
+    interface Member extends DeclaredByType.WithMandatoryDeclaration,
+            ByteCodeElement,
+            NamedElement.WithGenericName {
         /* empty */
     }
 

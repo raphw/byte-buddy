@@ -9,6 +9,7 @@ import org.junit.rules.MethodRule;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 
+import java.net.URI;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
@@ -44,10 +45,10 @@ public class MultipleParentClassLoaderTest {
         when(second.loadClass(BAR)).thenReturn((Class) BarSecond.class);
         when(second.loadClass(QUX)).thenReturn((Class) Qux.class);
         when(second.loadClass(BAZ)).thenThrow(new ClassNotFoundException());
-        fooUrl = new URL(SCHEME + FOO);
-        barFirstUrl = new URL(SCHEME + BAR);
-        barSecondUrl = new URL(SCHEME + BAZ);
-        quxUrl = new URL(SCHEME + QUX);
+        fooUrl = URI.create(SCHEME + FOO).toURL();
+        barFirstUrl = URI.create(SCHEME + BAR).toURL();
+        barSecondUrl = URI.create(SCHEME + BAZ).toURL();
+        quxUrl = URI.create(SCHEME + QUX).toURL();
         when(first.getResource(FOO)).thenReturn(fooUrl);
         when(first.getResource(BAR)).thenReturn(barFirstUrl);
         when(second.getResource(BAR)).thenReturn(barSecondUrl);

@@ -16,6 +16,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.stubbing.Answer;
 
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
@@ -78,7 +79,7 @@ public class ByteArrayClassLoaderTest {
                 persistenceHandler,
                 packageDefinitionStrategy,
                 classFilePostProcessor);
-        sealBase = new URL("file://foo");
+        sealBase = URI.create("file://foo").toURL();
         when(packageDefinitionStrategy.define(classLoader, Foo.class.getPackage().getName(), Foo.class.getName()))
                 .thenReturn(new PackageDefinitionStrategy.Definition.Simple(FOO, BAR, QUX, QUX, FOO, BAR, sealBase));
         when(packageDefinitionStrategy.define(classLoader, Bar.class.getPackage().getName(), Bar.class.getName()))

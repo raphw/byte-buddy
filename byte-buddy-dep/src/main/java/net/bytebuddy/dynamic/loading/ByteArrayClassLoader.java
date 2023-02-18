@@ -22,6 +22,7 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.GraalImageCode;
 import net.bytebuddy.utility.JavaModule;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 
@@ -903,6 +904,11 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         protected static class UrlDefinitionAction implements PrivilegedAction<URL> {
 
             /**
+             * A dispatcher for creating URLs.
+             */
+            private static final Dispatcher DISPATCHER = doPrivileged(JavaDispatcher.of(Dispatcher.class));
+
+            /**
              * The URL's encoding character set.
              */
             private static final String ENCODING = "UTF-8";
@@ -939,15 +945,28 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             }
 
             /**
+             * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+             *
+             * @param action The action to execute from a privileged context.
+             * @param <T>    The type of the action's resolved value.
+             * @return The action's resolved value.
+             */
+            @AccessControllerPlugin.Enhance
+            private static <T> T doPrivileged(PrivilegedAction<T> action) {
+                return action.run();
+            }
+
+            /**
              * {@inheritDoc}
              */
             public URL run() {
                 try {
-                    return new URL(URL_SCHEMA,
-                            URLEncoder.encode(typeName.replace('.', '/'), ENCODING),
-                            NO_PORT,
-                            NO_FILE,
-                            new ByteArrayUrlStreamHandler(binaryRepresentation));
+                    String path = URLEncoder.encode(typeName.replace('.', '/'), ENCODING);
+                    URLStreamHandler handler = new ByteArrayUrlStreamHandler(binaryRepresentation);
+                    URL url = DISPATCHER.fromURI(URI.create(URL_SCHEMA + "/" + path), handler);
+                    return url == null
+                            ? DISPATCHER.make(URL_SCHEMA, path, NO_PORT, NO_FILE, handler)
+                            : url;
                 } catch (MalformedURLException exception) {
                     throw new IllegalStateException("Cannot create URL for " + typeName, exception);
                 } catch (UnsupportedEncodingException exception) {
@@ -1018,6 +1037,39 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                         return inputStream;
                     }
                 }
+            }
+
+            /**
+             * A dispatcher for interacting with {@link URL}.
+             */
+            @JavaDispatcher.Proxied("java.net.URL")
+            protected interface Dispatcher {
+
+                /**
+                 * Creates a {@link URL}.
+                 *
+                 * @param protocol The URL's protocol.
+                 * @param host     The host on the URL.
+                 * @param port     The port on the URL or a negative value if no port is defined.
+                 * @param file     The file on the URL.
+                 * @param handler  The stream handler to use.
+                 * @return An appropriate URL.
+                 * @throws MalformedURLException If the URL is malformed.
+                 */
+                @JavaDispatcher.IsConstructor
+                URL make(String protocol, String host, int port, String file, URLStreamHandler handler) throws MalformedURLException;
+
+                /**
+                 * Resolves a URL from an URI, if possible.
+                 *
+                 * @param uri     The URI to represent.
+                 * @param handler The stream handler to attach to that URL.
+                 * @return An appropriate URL.
+                 */
+                @MaybeNull
+                @JavaDispatcher.IsStatic
+                @JavaDispatcher.Defaults
+                URL fromURI(URI uri, URLStreamHandler handler);
             }
         }
     }

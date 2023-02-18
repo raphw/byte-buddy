@@ -10,6 +10,7 @@ import org.junit.rules.MethodRule;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
 import java.util.jar.JarEntry;
@@ -66,7 +67,7 @@ public class ClassFileLocatorForUrlTest {
     @Test
     @JavaVersionRule.Enforce(7) // Avoid leak since class loader cannot be closed
     public void testJarFileClosable() throws Exception {
-        URL url = new URL("http://localhost:123");
+        URL url = URI.create("http://localhost:123").toURL();
         Closeable classFileLocator = new ClassFileLocator.ForUrl(url);
         classFileLocator.close();
     }

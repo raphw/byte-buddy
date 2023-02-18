@@ -2458,6 +2458,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                      * @param userFactories     Factories for custom annotation bindings.
                      * @return An appropriate step factory.
                      */
+                    @SuppressWarnings("unchecked")
                     private static Step.Factory to(MethodDescription.InDefinedShape delegate, Dispatcher.Factory dispatcherFactory, List<? extends OffsetMapping.Factory<?>> userFactories) {
                         if (delegate.isTypeInitializer()) {
                             throw new IllegalArgumentException("Cannot delegate to type initializer: " + delegate);

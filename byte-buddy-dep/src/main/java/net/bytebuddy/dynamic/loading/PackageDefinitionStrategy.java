@@ -23,6 +23,7 @@ import net.bytebuddy.utility.nullability.MaybeNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -754,7 +755,7 @@ public interface PackageDefinitionStrategy {
                     if (url != null) {
                         try {
                             if (url.getProtocol().equals(JAR_FILE)) {
-                                return new URL(url.getPath().substring(0, url.getPath().indexOf('!')));
+                                return URI.create(url.getPath().substring(0, url.getPath().indexOf('!'))).toURL();
                             } else if (url.getProtocol().equals(FILE_SYSTEM)) {
                                 return url;
                             } else if (url.getProtocol().equals(RUNTIME_IMAGE)) {
@@ -762,7 +763,7 @@ public interface PackageDefinitionStrategy {
                                 int modulePathIndex = path.indexOf('/', EXCLUDE_INITIAL_SLASH);
                                 return modulePathIndex == -1
                                         ? url
-                                        : new URL(RUNTIME_IMAGE + ":" + path.substring(0, modulePathIndex));
+                                        : URI.create(RUNTIME_IMAGE + ":" + path.substring(0, modulePathIndex)).toURL();
                             }
                         } catch (MalformedURLException exception) {
                             throw new IllegalStateException("Unexpected URL: " + url, exception);

@@ -5,6 +5,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import java.net.URI;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
@@ -20,7 +21,7 @@ public class ByteArrayClassLoaderSingletonEnumerationTest {
     @Test
     @IntegrationRule.Enforce
     public void testIteration() throws Exception {
-        URL url = new URL("file://foo");
+        URL url = URI.create("file://foo").toURL();
         Enumeration<URL> enumeration = new ByteArrayClassLoader.SingletonEnumeration(url);
         assertThat(enumeration.hasMoreElements(), is(true));
         assertThat(enumeration.nextElement(), is(url));
@@ -29,7 +30,7 @@ public class ByteArrayClassLoaderSingletonEnumerationTest {
 
     @Test(expected = NoSuchElementException.class)
     public void testSecondElementThrowsException() throws Exception {
-        Enumeration<URL> enumeration = new ByteArrayClassLoader.SingletonEnumeration(new URL("file://foo"));
+        Enumeration<URL> enumeration = new ByteArrayClassLoader.SingletonEnumeration(URI.create("file://foo").toURL());
         enumeration.nextElement();
         enumeration.nextElement();
     }
