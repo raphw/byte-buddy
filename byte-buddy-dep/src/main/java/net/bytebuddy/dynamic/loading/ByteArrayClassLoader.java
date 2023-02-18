@@ -963,7 +963,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 try {
                     String path = URLEncoder.encode(typeName.replace('.', '/'), ENCODING);
                     URLStreamHandler handler = new ByteArrayUrlStreamHandler(binaryRepresentation);
-                    URL url = DISPATCHER.of(URI.create(URL_SCHEMA + "/" + path), handler);
+                    URL url = DISPATCHER.of(URI.create(URL_SCHEMA + ":/" + path), handler);
                     return url == null
                             ? DISPATCHER.make(URL_SCHEMA, path, NO_PORT, NO_FILE, handler)
                             : url;
