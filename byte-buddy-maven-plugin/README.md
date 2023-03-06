@@ -32,7 +32,7 @@ The **Byte Buddy Maven Plugin** enables you to apply bytecode enhancements durin
   </build>
 ```
 
-This example transformation uses a standard plugin that is shipped with Byte Buddy, which caches any method return value if annotated by `CachedReturnPlugin.Enhance`. The plugin in the example is applied onto the main source set, test classes can be transformed by specifying the *transform-test* goal. Custom plugins must implement Byte Buddy's `Plugin` interface where the plugin's location is specified by Maven artifact coordinates as shown in the example. The coordinates can be dropped if the plugin is contained within the transformed artifact itself.
+This example transformation uses a standard plugin that is shipped with Byte Buddy, which caches any method return value if annotated by `CachedReturnPlugin.Enhance`. The plugin in the example is applied onto the main source set, test classes can be transformed by specifying the *transform-test* goal. Furthermore, it is possible to transform production classes while retaining runtime classes by using *transform-runtime*, or to retain dependencies of all non-test scopes by *transform-extended*. Custom plugins must implement Byte Buddy's `Plugin` interface where the plugin's location is specified by Maven artifact coordinates as shown in the example. The coordinates can be dropped if the plugin is contained within the transformed artifact itself.
 
 A plugin can declare a constructor that takes arguments of type `File`, `BuildLogger` or a Gradle-specific `Logger` where the class file root directory or an appropriate logger is provided. It is also possible to supply an argument explicitly by specifying an argument in the plugin configuration.
 

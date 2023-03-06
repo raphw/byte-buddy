@@ -27,6 +27,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.nullability.MaybeNull;
 import net.bytebuddy.utility.nullability.UnknownNull;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.PluginManagement;
@@ -35,7 +36,11 @@ import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugins.annotations.*;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.codehaus.plexus.util.Scanner;
@@ -44,11 +49,23 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -596,7 +613,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     throw new MojoFailureException("Could not resolve class path", e);
                 }
             }
-
         }
 
         /**
@@ -607,12 +623,39 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         public static class WithRuntimeDependencies extends ForProductionTypes {
 
             @Override
-            protected List<String> getClassPathElements() throws MojoFailureException {
+            protected List<String> getClassPathElements() {
                 try {
                     return project.getRuntimeClasspathElements();
                 } catch (DependencyResolutionRequiredException e) {
-                    throw new MojoFailureException("Could not resolve class path", e);
+                    throw new RuntimeException(e);
                 }
+            }
+        }
+
+        /**
+         * A Byte Buddy plugin that transforms a project's production class files where all scopes but the test scope are included.
+         */
+        @Mojo(name = "transform-extended", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+        public static class WithExtendedDependencies extends ForProductionTypes {
+
+            @Override
+            protected List<String> getClassPathElements() {
+                List<String> classPath = new ArrayList<String>(project.getArtifacts().size() + 1);
+                String directory = project.getBuild().getOutputDirectory();
+                if (directory != null) {
+                    classPath.add(directory);
+                }
+                for (Artifact artifact : project.getArtifacts()) {
+                    if (artifact.getArtifactHandler().isAddedToClasspath()
+                            && !Artifact.SCOPE_TEST.equals(artifact.getScope())
+                            && !Artifact.SCOPE_IMPORT.equals(artifact.getScope())) {
+                        File file = artifact.getFile();
+                        if (file != null) {
+                            classPath.add(file.getPath());
+                        }
+                    }
+                }
+                return classPath;
             }
         }
     }
