@@ -48,10 +48,12 @@ public class AdviceLocalVariableArrayTest {
 
     public static class ShiftVariablesAdvice {
 
+        @Advice.OnMethodEnter
         static void enter(@Advice.Argument(1) Void ignored) {
             /* empty */
         }
 
+        @Advice.OnMethodExit
         static void exit(@Advice.Argument(1) Void ignored) {
             /* empty */
         }

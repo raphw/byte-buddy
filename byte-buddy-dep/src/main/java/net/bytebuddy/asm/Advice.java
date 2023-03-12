@@ -8354,7 +8354,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * {@inheritDoc}
                      */
                     public Bound bind(MethodDescription instrumentedMethod, Relocation relocation) {
-                        return new ForValue.Bound(instrumentedMethod, relocation, index, true);
+                        return new ForValue.Bound(instrumentedMethod, relocation, index, false);
                     }
                 }
 
@@ -8437,6 +8437,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         Label noSkip = new Label();
                         int size;
                         if (index < 0) {
+                            size = requiredSize;
                             methodVisitor.visitVarInsn(load, offset);
                         } else {
                             methodVisitor.visitVarInsn(Opcodes.ALOAD, offset);
@@ -8453,7 +8454,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 : defaultJump, noSkip);
                         relocation.apply(methodVisitor);
                         methodVisitor.visitLabel(noSkip);
-                        return requiredSize;
+                        return size;
                     }
                 }
             }
