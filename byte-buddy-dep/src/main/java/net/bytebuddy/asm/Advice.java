@@ -8291,6 +8291,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Resolves a relocation handler for a given type.
                  *
                  * @param typeDefinition The type to be resolved for a relocation attempt.
+                 * @param index          The index in the array returned by the advice method that contains the value to be checked.
                  * @param inverted       {@code true} if the relocation should be applied for any non-default value of a type.
                  * @return An appropriate relocation handler.
                  */
@@ -8318,8 +8319,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         skipDispatcher = REFERENCE;
                     }
                     return inverted
-                            ? skipDispatcher.new Inverted(index)
-                            : skipDispatcher.new Regular(index);
+                            ? skipDispatcher.new OfNonDefault(index)
+                            : skipDispatcher.new OfDefault(index);
                 }
 
                 /**
@@ -8330,14 +8331,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract void convertValue(MethodVisitor methodVisitor);
 
                 /**
-                 * An inverted version of the outer relocation handler.
+                 * A relocation handler that checks for a value being a default value.
                  */
                 @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-                protected class Regular implements RelocationHandler {
+                protected class OfDefault implements RelocationHandler {
 
+                    /**
+                     * The index of the array returned by the advice method that contains the value to check for its value.
+                     */
                     private final int index;
 
-                    public Regular(int index) {
+                    /**
+                     * A relocation handler that checks if a value is a default value.
+                     *
+                     * @param index The index of the array returned by the advice method that contains the value to check for its value.
+                     */
+                    public OfDefault(int index) {
                         this.index = index;
                     }
 
@@ -8350,14 +8359,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 /**
-                 * An inverted version of the outer relocation handler.
+                 * A relocation handler that checks for a value being a non-default value.
                  */
                 @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-                protected class Inverted implements RelocationHandler {
+                protected class OfNonDefault implements RelocationHandler {
 
+                    /**
+                     * The index of the array returned by the advice method that contains the value to check for its value.
+                     */
                     private final int index;
 
-                    protected Inverted(int index) {
+                    /**
+                     * A relocation handler that checks if a value is a non-default value.
+                     *
+                     * @param index The index of the array returned by the advice method that contains the value to check for its value.
+                     */
+                    protected OfNonDefault(int index) {
                         this.index = index;
                     }
 
@@ -8418,13 +8435,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             throw new IllegalStateException("Cannot skip code execution from constructor: " + instrumentedMethod);
                         }
                         Label noSkip = new Label();
+                        int size;
                         if (index < 0) {
                             methodVisitor.visitVarInsn(load, offset);
                         } else {
                             methodVisitor.visitVarInsn(Opcodes.ALOAD, offset);
                             methodVisitor.visitJumpInsn(Opcodes.IFNULL, noSkip);
                             methodVisitor.visitVarInsn(Opcodes.ALOAD, offset);
-                            methodVisitor.visitLdcInsn(index); // TODO: index opt, size opt
+                            size = Math.max(requiredSize, IntegerConstant.forValue(index)
+                                    .apply(methodVisitor, implementationContext)
+                                    .getMaximalSize() + 1);
                             methodVisitor.visitInsn(arrayLoad);
                         }
                         convertValue(methodVisitor);
@@ -8449,12 +8469,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private final TypeDescription typeDescription;
 
+                /**
+                 * The index of the array returned by the advice method that contains the value to check for its type.
+                 */
                 private final int index;
 
                 /**
                  * Creates a new relocation handler that triggers a relocation if a value is an instance of a given type.
                  *
                  * @param typeDescription The type that triggers a relocation.
+                 * @param index           The index of the array returned by the advice method that contains the value to check for its type.
                  */
                 protected ForType(TypeDescription typeDescription, int index) {
                     this.typeDescription = typeDescription;
@@ -8466,27 +8490,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param typeDescription The type that triggers a relocation.
                  * @param index           The array index of the value that is returned.
-                 * @param checkedType     The type that is carrying the checked value.
+                 * @param returnedType    The type that is returned by the advice method.
                  * @return An appropriate relocation handler.
                  */
                 @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification = "Assuming component type for array type.")
-                protected static RelocationHandler of(TypeDescription typeDescription, int index, TypeDefinition checkedType) {
-                    TypeDefinition target;
+                protected static RelocationHandler of(TypeDescription typeDescription, int index, TypeDefinition returnedType) {
+                    TypeDefinition targetType;
                     if (index < 0) {
-                        target = checkedType;
-                    } else if (checkedType.isArray()) {
-                        target = checkedType.getComponentType();
+                        targetType = returnedType;
+                    } else if (returnedType.isArray()) {
+                        targetType = returnedType.getComponentType();
                     } else {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException(returnedType + " is not an array type but an index for a relocation is defined");
                     }
-                    // TODO: index for array
                     if (typeDescription.represents(void.class)) {
                         return Disabled.INSTANCE;
                     } else if (typeDescription.represents(OnDefaultValue.class)) {
-                        return ForValue.of(checkedType, index, false);
+                        return ForValue.of(targetType, index, false);
                     } else if (typeDescription.represents(OnNonDefaultValue.class)) {
-                        return ForValue.of(target, index, true);
-                    } else if (typeDescription.isPrimitive() || target.isPrimitive()) {
+                        return ForValue.of(targetType, index, true);
+                    } else if (typeDescription.isPrimitive() || targetType.isPrimitive()) {
                         throw new IllegalStateException("Cannot relocate execution by instance type for primitive type");
                     } else {
                         return new ForType(typeDescription, index);
@@ -8536,17 +8559,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                         methodVisitor.visitVarInsn(Opcodes.ALOAD, offset);
                         Label noSkip = new Label();
-                        if (index >= 0) {
+                        int size;
+                        if (index < 0) {
+                            size = NO_REQUIRED_SIZE;
+                        } else {
                             methodVisitor.visitJumpInsn(Opcodes.IFNULL, noSkip);
                             methodVisitor.visitVarInsn(Opcodes.ALOAD, offset);
-                            methodVisitor.visitLdcInsn(index); // TODO: offset
+                            size = IntegerConstant.forValue(index)
+                                    .apply(methodVisitor, implementationContext)
+                                    .getMaximalSize() + 1;
                             methodVisitor.visitInsn(Opcodes.AALOAD);
                         }
                         methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, typeDescription.getInternalName());
                         methodVisitor.visitJumpInsn(Opcodes.IFEQ, noSkip);
                         relocation.apply(methodVisitor);
                         methodVisitor.visitLabel(noSkip);
-                        return NO_REQUIRED_SIZE;
+                        return size;
                     }
                 }
             }
@@ -8665,12 +8693,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a new resolved version of a dispatcher.
                  *
-                 * @param adviceMethod    The represented advice method.
-                 * @param postProcessor   The post processor to use.
-                 * @param factories       A list of factories to resolve for the parameters of the advice method.
-                 * @param throwableType   The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
-                 * @param relocatableType The type to trigger a relocation of the method's control flow or {@code void} if no relocation should be executed.
-                 * @param adviceType      The applied advice type.
+                 * @param adviceMethod     The represented advice method.
+                 * @param postProcessor    The post processor to use.
+                 * @param factories        A list of factories to resolve for the parameters of the advice method.
+                 * @param throwableType    The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
+                 * @param relocatableType  The type to trigger a relocation of the method's control flow or {@code void} if no relocation should be executed.
+                 * @param relocatableIndex The index within an array that is returned by the advice method, indicating the value to consider for relocation.
+                 * @param adviceType       The applied advice type.
                  */
                 protected AbstractBase(MethodDescription.InDefinedShape adviceMethod,
                                        PostProcessor postProcessor,
@@ -8981,12 +9010,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a new resolved version of a dispatcher.
                  *
-                 * @param adviceMethod    The represented advice method.
-                 * @param postProcessor   The post processor to apply.
-                 * @param factories       A list of factories to resolve for the parameters of the advice method.
-                 * @param throwableType   The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
-                 * @param relocatableType The type to trigger a relocation of the method's control flow or {@code void} if no relocation should be executed.
-                 * @param classReader     A class reader to query for the class file of the advice method.
+                 * @param adviceMethod     The represented advice method.
+                 * @param postProcessor    The post processor to apply.
+                 * @param factories        A list of factories to resolve for the parameters of the advice method.
+                 * @param throwableType    The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
+                 * @param relocatableType  The type to trigger a relocation of the method's control flow or {@code void} if no relocation should be executed.
+                 * @param relocatableIndex The index within an array that is returned by the advice method, indicating the value to consider for relocation.
+                 * @param classReader      A class reader to query for the class file of the advice method.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod,
                                    PostProcessor postProcessor,
@@ -10402,12 +10432,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a new resolved version of a dispatcher.
                  *
-                 * @param adviceMethod    The represented advice method.
-                 * @param postProcessor   The post processor to apply.
-                 * @param factories       A list of factories to resolve for the parameters of the advice method.
-                 * @param throwableType   The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
-                 * @param relocatableType The type to trigger a relocation of the method's control flow or {@code void} if no relocation should be executed.
-                 * @param delegator       The delegator to use.
+                 * @param adviceMethod     The represented advice method.
+                 * @param postProcessor    The post processor to apply.
+                 * @param factories        A list of factories to resolve for the parameters of the advice method.
+                 * @param throwableType    The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
+                 * @param relocatableType  The type to trigger a relocation of the method's control flow or {@code void} if no relocation should be executed.
+                 * @param relocatableIndex The index within an array that is returned by the advice method, indicating the value to consider for relocation.
+                 * @param delegator        The delegator to use.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod,
                                    PostProcessor postProcessor,
