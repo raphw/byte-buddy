@@ -559,11 +559,11 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
                                                                   @MaybeNull TypePath typePath,
                                                                   Label[] start,
                                                                   Label[] end,
-                                                                  int[] index,
+                                                                  int[] offset,
                                                                   String descriptor,
                                                                   boolean visible) {
                 observedTypes.add(Type.getType(descriptor).getInternalName());
-                AnnotationVisitor annotationVisitor = super.visitLocalVariableAnnotation(typeReference, typePath, start, end, index, descriptor, visible);
+                AnnotationVisitor annotationVisitor = super.visitLocalVariableAnnotation(typeReference, typePath, start, end, offset, descriptor, visible);
                 if (annotationVisitor != null) {
                     return new TypeReferenceAnnotationVisitor(annotationVisitor);
                 } else {

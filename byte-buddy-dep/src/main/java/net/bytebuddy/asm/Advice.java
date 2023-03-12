@@ -4925,14 +4925,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         interface ForInstrumentedMethod extends ArgumentHandler {
 
             /**
-             * Resolves a local variable index.
-             *
-             * @param index The index to resolve.
-             * @return The resolved local variable index.
-             */
-            int variable(int index);
-
-            /**
              * Prepares this argument handler for future offset access.
              *
              * @param methodVisitor The method visitor to which to write any potential byte code.
@@ -5123,15 +5115,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * {@inheritDoc}
                      */
-                    public int variable(int index) {
-                        return index < (instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size()
-                            ? index
-                            : index + (exitType.represents(void.class) ? 0 : 1) + namedTypes.size() + (enterType.represents(void.class) ? 0 : 1);
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
                     public boolean isCopyingArguments() {
                         return false;
                     }
@@ -5174,18 +5157,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             + StackSize.of(namedTypes.values())
                             + enterType.getStackSize().getSize()
                             + offset;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public int variable(int index) {
-                        return (instrumentedMethod.isStatic() ? 0 : 1)
-                            + instrumentedMethod.getParameters().size()
-                            + (exitType.represents(void.class) ? 0 : 1)
-                            + namedTypes.size()
-                            + (enterType.represents(void.class) ? 0 : 1)
-                            + index;
                     }
 
                     /**
@@ -11415,11 +11386,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         @Override
-        public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
+        public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int offset) {
             // The 'this' variable is exempt from remapping as it is assumed immutable and remapping it confuses debuggers to not display the variable.
-            mv.visitLocalVariable(name, descriptor, signature, start, end, index == THIS_VARIABLE_INDEX && THIS_VARIABLE_NAME.equals(name)
-                ? index
-                : argumentHandler.variable(index));
+            mv.visitLocalVariable(name, descriptor, signature, start, end, offset == THIS_VARIABLE_INDEX && THIS_VARIABLE_NAME.equals(name)
+                ? offset
+                : argumentHandler.argument(offset));
         }
 
         @Override
@@ -11427,12 +11398,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                               TypePath typePath,
                                                               Label[] start,
                                                               Label[] end,
-                                                              int[] index,
+                                                              int[] offset,
                                                               String descriptor,
                                                               boolean visible) {
-            int[] translated = new int[index.length];
-            for (int anIndex = 0; anIndex < index.length; anIndex++) {
-                translated[anIndex] = argumentHandler.variable(index[anIndex]);
+            int[] translated = new int[offset.length];
+            for (int index = 0; index < offset.length; index++) {
+                translated[index] = argumentHandler.argument(offset[index]);
             }
             return mv.visitLocalVariableAnnotation(typeReference, typePath, start, end, translated, descriptor, visible);
         }

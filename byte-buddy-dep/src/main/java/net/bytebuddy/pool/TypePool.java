@@ -8769,9 +8769,9 @@ public interface TypePool {
                 }
 
                 @Override
-                public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
+                public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int offset) {
                     if (readerMode.isExtended() && start == firstLabel) {
-                        legacyParameterBag.register(index, name);
+                        legacyParameterBag.register(offset, name);
                     }
                 }
 
