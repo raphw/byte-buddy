@@ -100,7 +100,16 @@ public class AdviceSkipOnDefaultValueTest {
                 {FloatDelegateWithOutExitNoSkipAdvice.class, 42f},
                 {DoubleDelegateWithOutExitNoSkipAdvice.class, 42d},
                 {ReferenceDelegateWithOutExitNoSkipAdvice.class, FOO},
-                {VoidDelegateWithOutExitNoSkipAdvice.class, null}
+                {VoidDelegateWithOutExitNoSkipAdvice.class, null},
+                {BooleanArrayAdvice.class, false},
+                {ByteArrayAdvice.class, (byte) 0},
+                {ShortArrayAdvice.class, (short) 0},
+                {CharacterArrayAdvice.class, (char) 0},
+                {IntegerArrayAdvice.class, 0},
+                {LongArrayAdvice.class, 0L},
+                {FloatArrayAdvice.class, 0f},
+                {DoubleArrayAdvice.class, 0d},
+                {ReferenceArrayAdvice.class, null}
         });
     }
 
@@ -1435,4 +1444,185 @@ public class AdviceSkipOnDefaultValueTest {
             return true;
         }
     }
+
+    @SuppressWarnings("unused")
+    public static class BooleanArrayAdvice {
+
+        public boolean foo() {
+            throw new AssertionError();
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, skipOnIndex = 0)
+        private static boolean[] enter() {
+            return new boolean[1];
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return boolean value) {
+            if (value) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ByteArrayAdvice {
+
+        public byte foo() {
+            throw new AssertionError();
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, skipOnIndex = 0)
+        private static byte[] enter() {
+            return new byte[1];
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return byte value) {
+            if (value != 0) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ShortArrayAdvice {
+
+        public short foo() {
+            throw new AssertionError();
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, skipOnIndex = 0)
+        private static short[] enter() {
+            return new short[1];
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return short value) {
+            if (value != 0) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CharacterArrayAdvice {
+
+        public char foo() {
+            throw new AssertionError();
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, skipOnIndex = 0)
+        private static char[] enter() {
+            return new char[1];
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return char value) {
+            if (value != 0) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IntegerArrayAdvice {
+
+        public int foo() {
+            throw new AssertionError();
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, skipOnIndex = 0)
+        private static int[] enter() {
+            return new int[1];
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return int value) {
+            if (value != 0) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class LongArrayAdvice {
+
+        public long foo() {
+            throw new AssertionError();
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, skipOnIndex = 0)
+        private static long[] enter() {
+            return new long[1];
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return long value) {
+            if (value != 0L) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FloatArrayAdvice {
+
+        public float foo() {
+            throw new AssertionError();
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, skipOnIndex = 0)
+        private static float[] enter() {
+            return new float[1];
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return float value) {
+            if (value != 0f) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DoubleArrayAdvice {
+
+        public double foo() {
+            throw new AssertionError();
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, skipOnIndex = 0)
+        private static double[] enter() {
+            return new double[1];
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return double value) {
+            if (value != 0d) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ReferenceArrayAdvice {
+
+        public Object foo() {
+            throw new AssertionError();
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, skipOnIndex = 0)
+        private static Object[] enter() {
+            return new Object[1];
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return Object value) {
+            if (value != null) {
+                throw new AssertionError("Equality");
+            }
+        }
+    }
+
 }
