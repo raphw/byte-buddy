@@ -12183,7 +12183,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         /**
          * Indicates that the value to be used for {@link OnMethodEnter#skipOn()} should be read from an array that is returned by
-         * the advice method, if the assigned property is non-negative.
+         * the advice method, if the assigned property is non-negative. If the returned array is shorter than the supplied index,
+         * an {@link ArrayIndexOutOfBoundsException} will be thrown, even if suppression is used.
          *
          * @return The array index for the value to be considered for skipping a method, or a negative value for using the returned value.
          */
@@ -12266,7 +12267,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         /**
          * Indicates that the value to be used for {@link OnMethodExit#repeatOn()} should be read from an array that is returned by
-         * the advice method, if the assigned property is non-negative.
+         * the advice method, if the assigned property is non-negative. If the returned array is shorter than the supplied index,
+         * an {@link ArrayIndexOutOfBoundsException} will be thrown, even if suppression is used.
          *
          * @return The array index for the value to be considered for repeating a method, or a negative value for using the returned value.
          */
