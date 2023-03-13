@@ -1,6 +1,15 @@
 Byte Buddy release notes
 ------------------------
 
+### 13. March 2023: version 1.14.2
+
+- Fix offset mapping for local variable array remapping in `Advice`.
+- Add possibility to specify an index for `skipOn` and `repeatOn` which resolves the checked value from a returned array.
+
+### 7. March 2023: version 1.14.1
+
+- Add *extended* scope for Maven Byte Buddy plugin to include all non-test-dependencies.
+
 ### 18. February 2023: version 1.14.0
 
 - Add `Step.Factory.ForDelegation` in `MemberSubstitution` that allows for delegation similar to `MethodDelegation` but in-code.
