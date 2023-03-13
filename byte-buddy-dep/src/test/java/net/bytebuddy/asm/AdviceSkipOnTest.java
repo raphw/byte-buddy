@@ -36,6 +36,39 @@ public class AdviceSkipOnTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
     }
 
+    @Test
+    public void testInstanceOfSkipArray() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(InstanceOfSkipArray.class)
+                .visit(Advice.to(InstanceOfSkipArray.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testInstanceOfNoSkipArray() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(InstanceOfNoSkipArray.class)
+                .visit(Advice.to(InstanceOfNoSkipArray.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testInstanceOfNoSkipNullArray() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(InstanceOfNoSkipNullArray.class)
+                .visit(Advice.to(InstanceOfNoSkipNullArray.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testInstanceOfSkipOnConstructor() throws Exception {
         new ByteBuddy()
@@ -72,6 +105,11 @@ public class AdviceSkipOnTest {
         Advice.to(NonDefaultValueIllegalPrimitiveSkip.class);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testRepeatOnNonArrayType() throws Exception {
+        Advice.to(NoArrayRepeatOnIndex.class);
+    }
+
     public static class Sample {
 
         public String foo() {
@@ -97,8 +135,44 @@ public class AdviceSkipOnTest {
             return FOO;
         }
 
-        @Advice.OnMethodEnter(skipOn = InstanceOfSkip.class)
+        @Advice.OnMethodEnter(skipOn = InstanceOfNoSkip.class)
         private static Object enter() {
+            return null;
+        }
+    }
+
+    public static class InstanceOfSkipArray {
+
+        public String foo() {
+            throw new AssertionError();
+        }
+
+        @Advice.OnMethodEnter(skipOn = InstanceOfSkipArray.class, skipOnIndex = 0)
+        private static Object[] enter() {
+            return new Object[]{new InstanceOfSkipArray()};
+        }
+    }
+
+    public static class InstanceOfNoSkipArray {
+
+        public String foo() {
+            return FOO;
+        }
+
+        @Advice.OnMethodEnter(skipOn = InstanceOfNoSkipArray.class, skipOnIndex = 0)
+        private static Object[] enter() {
+            return new Object[1];
+        }
+    }
+
+    public static class InstanceOfNoSkipNullArray {
+
+        public String foo() {
+            return FOO;
+        }
+
+        @Advice.OnMethodEnter(skipOn = InstanceOfSkip.class, skipOnIndex = 0)
+        private static Object[] enter() {
             return null;
         }
     }
@@ -135,4 +209,11 @@ public class AdviceSkipOnTest {
         }
     }
 
+    public static class NoArrayRepeatOnIndex {
+
+        @Advice.OnMethodEnter(skipOn = Object.class, skipOnIndex = 0)
+        private static Object enter() {
+            return null;
+        }
+    }
 }

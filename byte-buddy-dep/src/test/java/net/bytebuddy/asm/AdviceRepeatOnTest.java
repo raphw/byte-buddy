@@ -35,6 +35,39 @@ public class AdviceRepeatOnTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) 1));
     }
 
+    @Test
+    public void testInstanceOfRepeatArray() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(InstanceOfRepeatArray.class)
+                .visit(Advice.to(InstanceOfRepeatArray.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) 2));
+    }
+
+    @Test
+    public void testInstanceOfNoRepeatArray() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(InstanceOfNoRepeatArray.class)
+                .visit(Advice.to(InstanceOfNoRepeatArray.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) 1));
+    }
+
+    @Test
+    public void testInstanceOfNoRepeatNullArray() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(InstanceOfNoRepeatNullArray.class)
+                .visit(Advice.to(InstanceOfNoRepeatNullArray.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) 1));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testInstanceOfRepeatOnConstructor() throws Exception {
         new ByteBuddy()
@@ -71,6 +104,11 @@ public class AdviceRepeatOnTest {
         Advice.to(NonDefaultValueIllegalPrimitiveRepeat.class);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testRepeatOnNonArrayType() throws Exception {
+        Advice.to(NoArrayRepeatOnIndex.class);
+    }
+
     public static class Sample {
 
         public String foo() {
@@ -100,8 +138,50 @@ public class AdviceRepeatOnTest {
             return ++count;
         }
 
-        @Advice.OnMethodExit(repeatOn = InstanceOfRepeat.class)
+        @Advice.OnMethodExit(repeatOn = InstanceOfNoRepeat.class)
         private static Object exit() {
+            return null;
+        }
+    }
+
+    public static class InstanceOfRepeatArray {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = InstanceOfRepeatArray.class, repeatOnIndex = 0)
+        private static Object[] enter(@Advice.Exit Object[] exit) {
+            return new Object[] {exit == null || exit[0] == null ? new InstanceOfRepeatArray() : null};
+        }
+    }
+
+    public static class InstanceOfNoRepeatArray {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = InstanceOfNoRepeatArray.class, repeatOnIndex = 0)
+        private static Object[] exit() {
+            return new Object[1];
+        }
+    }
+
+    public static class InstanceOfNoRepeatNullArray {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = InstanceOfNoRepeatArray.class, repeatOnIndex = 0)
+        private static Object[] exit() {
             return null;
         }
     }
@@ -138,4 +218,11 @@ public class AdviceRepeatOnTest {
         }
     }
 
+    public static class NoArrayRepeatOnIndex {
+
+        @Advice.OnMethodExit(repeatOn = Object.class, repeatOnIndex = 0)
+        private static Object exit() {
+            return null;
+        }
+    }
 }

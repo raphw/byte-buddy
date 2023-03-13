@@ -18,7 +18,7 @@ public class AdviceRepeatOnNonDefaultValueTest {
 
     private static final String FOO = "foo";
 
-    @Parameterized.Parameters
+    @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {BooleanAdvice.class},
@@ -128,7 +128,25 @@ public class AdviceRepeatOnNonDefaultValueTest {
                 {LongDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
                 {FloatDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
                 {DoubleDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
-                {ReferenceDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class}
+                {ReferenceDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {BooleanArrayAdvice.class},
+                {ByteArrayAdvice.class},
+                {ShortArrayAdvice.class},
+                {CharacterArrayAdvice.class},
+                {IntegerArrayAdvice.class},
+                {LongArrayAdvice.class},
+                {FloatArrayAdvice.class},
+                {DoubleArrayAdvice.class},
+                {ReferenceArrayAdvice.class},
+                {BooleanArrayNullAdvice.class},
+                {ByteArrayNullAdvice.class},
+                {ShortArrayNullAdvice.class},
+                {CharacterArrayNullAdvice.class},
+                {IntegerArrayNullAdvice.class},
+                {LongArrayNullAdvice.class},
+                {FloatArrayNullAdvice.class},
+                {DoubleArrayNullAdvice.class},
+                {ReferenceArrayNullAdvice.class}
         });
     }
 
@@ -2666,6 +2684,330 @@ public class AdviceRepeatOnNonDefaultValueTest {
                 throw new AssertionError();
             }
             return count < 3 ? FOO : null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class BooleanArrayAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static boolean[] exit(@Advice.Return int count, @Advice.Exit boolean[] exit) {
+            if (exit != null && exit[0] == (count == 1)) {
+                throw new AssertionError();
+            }
+            return new boolean[] {count < 3};
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ByteArrayAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static byte[] exit(@Advice.Return int count, @Advice.Exit byte[] exit) {
+            if (exit != null && exit[0] - count != -1) {
+                throw new AssertionError();
+            }
+            return new byte[]{(byte) (count < 3 ? count : 0)};
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ShortArrayAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static short[] exit(@Advice.Return int count, @Advice.Exit short[] exit) {
+            if (exit != null && exit[0] - count != -1) {
+                throw new AssertionError();
+            }
+            return new short[] {(short) (count < 3 ? count : 0)};
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CharacterArrayAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static char[] exit(@Advice.Return int count, @Advice.Exit char[] exit) {
+            if (exit != null && exit[0] - count != -1) {
+                throw new AssertionError();
+            }
+            return new char[] {(char) (count < 3 ? count : 0)};
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IntegerArrayAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static int[] exit(@Advice.Return int count, @Advice.Exit int[] exit) {
+            if (exit != null && exit[0] - count != -1) {
+                throw new AssertionError();
+            }
+            return new int[] {count < 3 ? count : 0};
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class LongArrayAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static long[] exit(@Advice.Return int count, @Advice.Exit long[] exit) {
+            if (exit != null && exit[0] - count != -1L) {
+                throw new AssertionError();
+            }
+            return new long[] {count < 3 ? count : 0L};
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FloatArrayAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static float[] exit(@Advice.Return int count, @Advice.Exit float[] exit) {
+            if (exit != null && exit[0] - count != -1f) {
+                throw new AssertionError();
+            }
+            return new float[] {count < 3 ? count : 0f};
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DoubleArrayAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static double[] exit(@Advice.Return int count, @Advice.Exit double[] exit) {
+            if (exit != null && exit[0] - count != -1d) {
+                throw new AssertionError();
+            }
+            return new double[] {count < 3 ? count : 0d};
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ReferenceArrayAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static Object[] exit(@Advice.Return int count, @Advice.Exit Object[] exit) {
+            if (exit != null && exit[0] != (count == 1 ? null : FOO)) {
+                throw new AssertionError();
+            }
+            return new Object[]{count < 3 ? FOO : null};
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class BooleanArrayNullAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static boolean[] exit(@Advice.Return int count, @Advice.Exit boolean[] exit) {
+            if (exit != null && exit[0] == (count == 1)) {
+                throw new AssertionError();
+            }
+            return count < 3 ? new boolean[] {true} : null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ByteArrayNullAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static byte[] exit(@Advice.Return int count, @Advice.Exit byte[] exit) {
+            if (exit != null && exit[0] - count != -1) {
+                throw new AssertionError();
+            }
+            return count < 3 ? new byte[]{(byte) count} : null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ShortArrayNullAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static short[] exit(@Advice.Return int count, @Advice.Exit short[] exit) {
+            if (exit != null && exit[0] - count != -1) {
+                throw new AssertionError();
+            }
+            return count < 3 ? new short[] {(short) count} : null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CharacterArrayNullAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static char[] exit(@Advice.Return int count, @Advice.Exit char[] exit) {
+            if (exit != null && exit[0] - count != -1) {
+                throw new AssertionError();
+            }
+            return count < 3 ? new char[] {(char) count} : null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IntegerArrayNullAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static int[] exit(@Advice.Return int count, @Advice.Exit int[] exit) {
+            if (exit != null && exit[0] - count != -1) {
+                throw new AssertionError();
+            }
+            return count < 3 ? new int[] {count} : null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class LongArrayNullAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static long[] exit(@Advice.Return int count, @Advice.Exit long[] exit) {
+            if (exit != null && exit[0] - count != -1L) {
+                throw new AssertionError();
+            }
+            return count < 3 ? new long[] {count} : null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FloatArrayNullAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static float[] exit(@Advice.Return int count, @Advice.Exit float[] exit) {
+            if (exit != null && exit[0] - count != -1f) {
+                throw new AssertionError();
+            }
+            return count < 3 ? new float[] {count} : null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DoubleArrayNullAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static double[] exit(@Advice.Return int count, @Advice.Exit double[] exit) {
+            if (exit != null && exit[0] - count != -1d) {
+                throw new AssertionError();
+            }
+            return count < 3 ? new double[] {count} : null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ReferenceArrayNullAdvice {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnNonDefaultValue.class, repeatOnIndex = 0)
+        private static Object[] exit(@Advice.Return int count, @Advice.Exit Object[] exit) {
+            if (exit != null && exit[0] != (count == 1 ? null : FOO)) {
+                throw new AssertionError();
+            }
+            return count < 3 ? new Object[]{FOO} : null;
         }
     }
 }
