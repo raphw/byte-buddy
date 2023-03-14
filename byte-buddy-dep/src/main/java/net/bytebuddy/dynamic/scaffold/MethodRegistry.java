@@ -30,6 +30,7 @@ import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.utility.CompoundList;
 
@@ -471,10 +472,9 @@ public interface MethodRegistry {
             }
             MethodGraph.Linked methodGraph = methodGraphCompiler.compile((TypeDefinition) instrumentedType);
             // Casting required for Java 6 compiler.
-            ElementMatcher<? super MethodDescription> relevanceMatcher = (ElementMatcher<? super MethodDescription>) not(anyOf(implementations.keySet()))
+            ElementMatcher<? super MethodDescription> relevanceMatcher = (ElementMatcher<? super MethodDescription>) failSafe(not(anyOf(implementations.keySet()))
                     .and(returns(isVisibleTo(instrumentedType)))
-                    .and(hasParameters(whereNone(hasType(not(isVisibleTo(instrumentedType))))))
-                    .and(ignoredMethods.resolve(instrumentedType));
+                    .and(hasParameters(whereNone(hasType(not(isVisibleTo(instrumentedType))))))).and(ignoredMethods.resolve(instrumentedType));
             List<MethodDescription> methods = new ArrayList<MethodDescription>();
             for (MethodGraph.Node node : methodGraph.listNodes()) {
                 MethodDescription methodDescription = node.getRepresentative();
