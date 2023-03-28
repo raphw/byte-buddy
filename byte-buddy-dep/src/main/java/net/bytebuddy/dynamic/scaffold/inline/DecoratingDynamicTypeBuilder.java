@@ -505,7 +505,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                 implementationContextFactory,
                 typeValidation,
                 classWriterStrategy,
-                typePool,
+                TypePool.Explicit.wrap(instrumentedType, auxiliaryTypes, typePool),
                 classFileLocator);
     }
 

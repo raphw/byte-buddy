@@ -228,7 +228,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 implementationContextFactory,
                 typeValidation,
                 classWriterStrategy,
-                typePool);
+                TypePool.Explicit.wrap(instrumentedType, auxiliaryTypes, typePool));
     }
 
     /**

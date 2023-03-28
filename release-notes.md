@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 13. March 2023: version 1.14.3
+
+- Make `MethodGraph.Compiler` failsafe when processing incomplete methods.
+- Update ASM.
+
 ### 13. March 2023: version 1.14.2
 
 - Fix offset mapping for local variable array remapping in `Advice`.

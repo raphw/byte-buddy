@@ -218,7 +218,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                 implementationContextFactory,
                 typeValidation,
                 classWriterStrategy,
-                typePool,
+                TypePool.Explicit.wrap(instrumentedType, auxiliaryTypes, typePool),
                 originalType,
                 classFileLocator);
     }
