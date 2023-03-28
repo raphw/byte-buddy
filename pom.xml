@@ -1130,9 +1130,6 @@
                                         <ignoreMissingClasses>true</ignoreMissingClasses>
                                         <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
                                         <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
-                                        <excludes>
-                                            <exclude>net.bytebuddy.asm</exclude>
-                                        </excludes>
                                     </parameter>
                                 </configuration>
                             </execution>
