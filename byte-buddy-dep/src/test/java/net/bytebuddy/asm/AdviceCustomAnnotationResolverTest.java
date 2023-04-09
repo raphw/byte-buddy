@@ -64,7 +64,7 @@ public class AdviceCustomAnnotationResolverTest {
     }
 
     /**
-     * Advice class that modifies the target method's returning by given value
+     * Advice class that modifies the target method's input parameter by given value
      */
     public static class BeforeAdvice {
         @Advice.OnMethodEnter
@@ -104,7 +104,7 @@ public class AdviceCustomAnnotationResolverTest {
 
             if (methodVisitor instanceof Advice.AdviceVisitor) {
                 // It does not matter if both the Enter and Exit method define the Const annotation,
-                // in such case, the Const annotations actually are binded to same instance.
+                // in such case, the Const annotations actually are binded to a same instance.
                 extractConst(((Advice.AdviceVisitor) methodVisitor).getMethodEnter());
                 extractConst(((Advice.AdviceVisitor) methodVisitor).getMethodExit());
             }
