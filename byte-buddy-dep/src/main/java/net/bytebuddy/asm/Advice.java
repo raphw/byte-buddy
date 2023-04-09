@@ -7717,7 +7717,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * A dispatcher for implementing advice.
      */
-    protected interface Dispatcher {
+    public interface Dispatcher {
 
         /**
          * Indicates that a method does not represent advice and does not need to be visited.
@@ -9070,7 +9070,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A bound advice method that copies the code by first extracting the exception table and later appending the
                  * code of the method without copying any meta data.
                  */
-                protected class AdviceMethodInliner extends ClassVisitor implements Bound {
+                public class AdviceMethodInliner extends ClassVisitor implements Bound {
 
                     /**
                      * A description of the instrumented type.
@@ -9137,6 +9137,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected final List<Label> labels;
 
+                    protected final Map<Integer, OffsetMapping> offsetMappings;
+
                     /**
                      * Creates a new advice method inliner.
                      *
@@ -9164,7 +9166,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   SuppressionHandler.Bound suppressionHandler,
                                                   RelocationHandler.Bound relocationHandler,
                                                   StackManipulation exceptionHandler,
-                                                  ClassReader classReader) {
+                                                  ClassReader classReader,
+                                                  Map<Integer, OffsetMapping> offsetMappings) {
                         super(OpenedClassReader.ASM_API);
                         this.instrumentedType = instrumentedType;
                         this.instrumentedMethod = instrumentedMethod;
@@ -9178,6 +9181,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         this.relocationHandler = relocationHandler;
                         this.exceptionHandler = exceptionHandler;
                         this.classReader = classReader;
+                        this.offsetMappings = offsetMappings;
                         labels = new ArrayList<Label>();
                     }
 
@@ -9223,6 +9227,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     public void apply() {
                         classReader.accept(this, ClassReader.SKIP_DEBUG | stackMapFrameHandler.getReaderHint());
+                    }
+
+                    public Map<Integer, OffsetMapping> getOffsetMappings() {
+                        return offsetMappings;
                     }
 
                     @Override
@@ -9507,7 +9515,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 suppressionHandler.bind(exceptionHandler),
                                 relocationHandler.bind(instrumentedMethod, relocation),
                                 exceptionHandler,
-                                classReader);
+                                classReader,
+                                Collections.unmodifiableMap(this.offsetMappings));
                     }
 
                     /**
@@ -9928,7 +9937,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 suppressionHandler.bind(exceptionHandler),
                                 relocationHandler.bind(instrumentedMethod, relocation),
                                 exceptionHandler,
-                                classReader);
+                                classReader,
+                                Collections.unmodifiableMap(this.offsetMappings));
                     }
 
                     /**
@@ -11371,7 +11381,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * A method visitor that weaves the advice methods' byte codes.
      */
-    protected abstract static class AdviceVisitor extends ExceptionTableSensitiveMethodVisitor implements Dispatcher.RelocationHandler.Relocation {
+    public abstract static class AdviceVisitor extends ExceptionTableSensitiveMethodVisitor implements Dispatcher.RelocationHandler.Relocation {
 
         /**
          * The expected index for the {@code this} variable.
@@ -11396,7 +11406,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * The dispatcher to be used for method enter.
          */
-        private final Dispatcher.Bound methodEnter;
+        protected final Dispatcher.Bound methodEnter;
 
         /**
          * The dispatcher to be used for method exit.
@@ -11517,6 +11527,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             stackMapFrameHandler.injectStartFrame(mv);
             mv.visitInsn(Opcodes.NOP);
             onUserStart();
+        }
+
+        /**
+         * The dispatcher to be used for method enter.
+         */
+        public Dispatcher.Bound getMethodEnter() {
+            return methodEnter;
+        }
+
+        /**
+         * The dispatcher to be used for method exit.
+         */
+        public Dispatcher.Bound getMethodExit() {
+            return methodExit;
         }
 
         /**
