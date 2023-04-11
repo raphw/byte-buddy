@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 11. April 2023: version 1.14.4
+
+- Include instrumented type and auxiliary types in `TypePool` that is passed to `TypeWriter`.
+
 ### 13. March 2023: version 1.14.3
 
 - Make `MethodGraph.Compiler` failsafe when processing incomplete methods.
