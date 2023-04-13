@@ -138,6 +138,11 @@ public class ByteBuddyAgent {
     private static final String CLASS_PATH_ARGUMENT = "-cp";
 
     /**
+     * The character that is used to mark the beginning of the argument to the agent.
+     */
+    private static final String AGENT_ARGUMENT_SEPARATOR = "=";
+
+    /**
      * The Java property denoting the Java home directory.
      */
     private static final String JAVA_HOME = "java.home";
@@ -689,7 +694,7 @@ public class ByteBuddyAgent {
             if (new ProcessBuilder(System.getProperty(JAVA_HOME)
                     + File.separatorChar + "bin"
                     + File.separatorChar + (System.getProperty(OS_NAME, "").toLowerCase(Locale.US).contains("windows") ? "java.exe" : "java"),
-                    "-D" + Attacher.DUMP_PROPERTY + "=" + System.getProperty(Attacher.DUMP_PROPERTY, ""),
+                    "-D" + Attacher.DUMP_PROPERTY + AGENT_ARGUMENT_SEPARATOR + System.getProperty(Attacher.DUMP_PROPERTY, ""),
                     CLASS_PATH_ARGUMENT,
                     classPath.toString(),
                     Attacher.class.getName(),
@@ -697,7 +702,7 @@ public class ByteBuddyAgent {
                     processId,
                     agent.getAbsolutePath(),
                     Boolean.toString(isNative),
-                    argument == null ? "" : ("=" + argument)).start().waitFor() != SUCCESSFUL_ATTACH) {
+                    argument == null ? "" : (AGENT_ARGUMENT_SEPARATOR + argument)).start().waitFor() != SUCCESSFUL_ATTACH) {
                 throw new IllegalStateException("Could not self-attach to current VM using external process");
             }
         } finally {
@@ -734,7 +739,11 @@ public class ByteBuddyAgent {
                 return CANNOT_SELF_RESOLVE;
             }
             try {
-                return new File(location.toURI());
+                File file = new File(location.toURI());
+                if (file.getPath().contains(AGENT_ARGUMENT_SEPARATOR)) {
+                    return CANNOT_SELF_RESOLVE;
+                }
+                return file;
             } catch (URISyntaxException ignored) {
                 return new File(location.getPath());
             }
