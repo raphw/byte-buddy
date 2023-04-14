@@ -1541,13 +1541,13 @@ public class ByteBuddyAgent {
              */
             public File resolve() throws IOException {
                 try {
-                    File agentJar = trySelfResolve();
-                    return agentJar == null
-                            ? createJarFile()
-                            : agentJar;
+                    File resolved = trySelfResolve();
+                    if (resolved != null) {
+                        return resolved;
+                    }
                 } catch (Exception ignored) {
-                    return createJarFile();
                 }
+                return createJarFile();
             }
         }
 
