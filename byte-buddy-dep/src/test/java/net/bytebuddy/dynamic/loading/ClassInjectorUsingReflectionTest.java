@@ -17,13 +17,19 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -227,6 +233,43 @@ public class ClassInjectorUsingReflectionTest {
         assertThat(ClassInjector.UsingReflection.isAvailable(), is(true));
         assertThat(new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader()).isAlive(), is(true));
         assertThat(new ClassInjector.UsingReflection.Dispatcher.Initializable.Unavailable(null).isAvailable(), is(false));
+    }
+
+    @Test
+    public void testMultipleClassLoaderUsingDispatch() throws Exception {
+        ClassLoader classLoader = new ClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER) {
+            @Override
+            protected Class<?> findClass(String name) throws ClassNotFoundException {
+                if (name.startsWith("net.bytebuddy.") || name.startsWith("org.objectweb.")) {
+                    InputStream inputStream = ClassInjectorUsingReflectionTest.class.getResourceAsStream("/"
+                        + name.replace('.', '/')
+                        + ".class");
+                    if (inputStream != null) {
+                        try {
+                            try {
+                                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                                byte[] buffer = new byte[1024];
+                                int length;
+                                while ((length = inputStream.read(buffer, 0, buffer.length)) != -1) {
+                                    outputStream.write(buffer, 0, length);
+                                }
+                                byte[] classFile = outputStream.toByteArray();
+                                return defineClass(name, classFile, 0, classFile.length);
+                            } finally {
+                                inputStream.close();
+                            }
+                        } catch (IOException e) {
+                            throw new AssertionError(e);
+                        }
+                    }
+                }
+                return super.findClass(name);
+            }
+        };
+        assertThat(Class.forName(ClassInjector.UsingReflection.class.getName()), not((Object) Class.forName(
+            ClassInjector.UsingReflection.class.getName(),
+            true,
+            classLoader)));
     }
 
     private static class Foo {
