@@ -1818,9 +1818,24 @@ public interface ClassInjector {
                     : classLoader) {
                 for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
                     try {
+                        // first try to load the class from the given class loader
                         result.put(entry.getKey(), Class.forName(entry.getKey(), false, classLoader));
                     } catch (ClassNotFoundException ignored) {
-                        result.put(entry.getKey(), dispatcher.defineClass(classLoader, entry.getKey(), entry.getValue(), protectionDomain));
+                        try {
+                            // if the class does not exist, try to define it
+                            result.put(entry.getKey(), dispatcher.defineClass(classLoader, entry.getKey(), entry.getValue(), protectionDomain));
+                        } catch (Exception defFailure) {
+                            // when the bootstrap loader is in use (i.e. the classloader is null), synchronizing on the BOOTSTRAP_LOADER_LOCK
+                            // is sufficient to prevent this instance of ClassInjector from concurrently trying to define a class.
+                            // however, in an environment where many ClassInjectors exist (either because shaded into multiple projects or
+                            // it is present in multiple classloaders)
+                            try {
+                                result.put(entry.getKey(), Class.forName(entry.getKey(), false, classLoader));
+                            } catch (ClassNotFoundException ignored2) {
+                                //throw the failure from actually trying to define the class
+                                throw defFailure;
+                            }
+                        }
                     }
                 }
             }
