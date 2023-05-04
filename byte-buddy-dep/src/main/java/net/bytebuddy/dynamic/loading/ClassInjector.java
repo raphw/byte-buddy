@@ -1822,7 +1822,7 @@ public interface ClassInjector {
                     } catch (ClassNotFoundException ignored) {
                         try {
                             result.put(entry.getKey(), dispatcher.defineClass(classLoader, entry.getKey(), entry.getValue(), protectionDomain));
-                        } catch (Exception exception) { // The bootstrap loader lock might be replicated throughout multiple class loaders.
+                        } catch (RuntimeException exception) { // The bootstrap loader lock might be replicated throughout multiple class loaders.
                             try {
                                 result.put(entry.getKey(), Class.forName(entry.getKey(), false, classLoader));
                             } catch (ClassNotFoundException ignored2) {
