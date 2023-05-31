@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.AnnotatedElement;
 import java.security.PrivilegedAction;
+import java.util.Set;
 
 /**
  * Type-safe representation of a {@code java.lang.Module}. On platforms that do not support the module API, modules are represented by {@code null}.
@@ -126,6 +127,15 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
      */
     public String getActualName() {
         return MODULE.getName(module);
+    }
+
+    /**
+     * Returns the packages of this module.
+     *
+     * @return A set of the names of the packages that are defined by this module.
+     */
+    public Set<String> getPackages() {
+        return MODULE.getPackages(module);
     }
 
     /**
@@ -270,6 +280,14 @@ public class JavaModule implements NamedElement.WithOptionalName, AnnotationSour
          * @return The module's (implicit or explicit) name.
          */
         String getName(Object value);
+
+        /**
+         * Returns the module's exported packages.
+         *
+         * @param value The {@code java.lang.Module} to check for its packages.
+         * @return The module's packages.
+         */
+        Set<String> getPackages(Object value);
 
         /**
          * Returns the class loader of a module.
