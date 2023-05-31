@@ -7068,6 +7068,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         private int localVariableExtension;
 
+        /**
+         * {@code true} if at least one member was substituted during the application of this visitor.
+         */
         private boolean matched;
 
         /**
