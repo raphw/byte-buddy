@@ -226,8 +226,7 @@
                         <version>${version.plugin.surefire}</version>
                         <configuration>
                             <excludes>
-                                <exclude>net.bytebuddy.agent.builder.AgentBuilderDefaultApplicationTest</exclude>
-                                <exclude>net.bytebuddy.pool.TypePoolDefaultAnnotationDescriptionTest</exclude>
+                                <exclude>net.bytebuddy.asm.MemberSubstitution</exclude>
                             </excludes>
                         </configuration>
                     </plugin>

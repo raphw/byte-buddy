@@ -967,6 +967,14 @@ public class MemberSubstitutionTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testThrowExceptionIfNoMatch() throws Exception {
+        new ByteBuddy()
+                .redefine(FieldAccessSample.class)
+                .visit(MemberSubstitution.strict().failIfNoMatch(true).field(named(BAZ)).stub().on(named(RUN)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testFieldNotAccessible() throws Exception {
         new ByteBuddy()
                 .redefine(StaticFieldAccessSample.class)

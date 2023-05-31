@@ -95,14 +95,19 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
     private final MethodGraph.Compiler methodGraphCompiler;
 
     /**
+     * The type pool resolver to use.
+     */
+    private final TypePoolResolver typePoolResolver;
+
+    /**
      * {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
      */
     private final boolean strict;
 
     /**
-     * The type pool resolver to use.
+     * {@code true} if the instrumentation should fail if applied to a method without match.
      */
-    private final TypePoolResolver typePoolResolver;
+    private final boolean failIfNoMatch;
 
     /**
      * The replacement factory to use.
@@ -115,7 +120,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @param strict {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
      */
     protected MemberSubstitution(boolean strict) {
-        this(MethodGraph.Compiler.DEFAULT, TypePoolResolver.OfImplicitPool.INSTANCE, strict, Replacement.NoOp.INSTANCE);
+        this(MethodGraph.Compiler.DEFAULT, TypePoolResolver.OfImplicitPool.INSTANCE, strict, false, Replacement.NoOp.INSTANCE);
     }
 
     /**
@@ -124,11 +129,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @param methodGraphCompiler The method graph compiler to use.
      * @param typePoolResolver    The type pool resolver to use.
      * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
+     * @param failIfNoMatch       {@code true} if the instrumentation should fail if applied to a method without match.
      * @param replacementFactory  The replacement factory to use.
      */
-    protected MemberSubstitution(MethodGraph.Compiler methodGraphCompiler, TypePoolResolver typePoolResolver, boolean strict, Replacement.Factory replacementFactory) {
+    protected MemberSubstitution(MethodGraph.Compiler methodGraphCompiler,
+                                 TypePoolResolver typePoolResolver,
+                                 boolean strict,
+                                 boolean failIfNoMatch,
+                                 Replacement.Factory replacementFactory) {
         this.methodGraphCompiler = methodGraphCompiler;
         this.typePoolResolver = typePoolResolver;
+        this.failIfNoMatch = failIfNoMatch;
         this.strict = strict;
         this.replacementFactory = replacementFactory;
     }
@@ -161,7 +172,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @return A specification that allows to determine how to substitute any interaction with byte code elements that match the supplied matcher.
      */
     public WithoutSpecification element(ElementMatcher<? super ByteCodeElement.Member> matcher) {
-        return new WithoutSpecification.ForMatchedByteCodeElement(methodGraphCompiler, typePoolResolver, strict, replacementFactory, matcher);
+        return new WithoutSpecification.ForMatchedByteCodeElement(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher);
     }
 
     /**
@@ -171,7 +182,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @return A specification that allows to determine how to substitute any field access that match the supplied matcher.
      */
     public WithoutSpecification.ForMatchedField field(ElementMatcher<? super FieldDescription.InDefinedShape> matcher) {
-        return new WithoutSpecification.ForMatchedField(methodGraphCompiler, typePoolResolver, strict, replacementFactory, matcher);
+        return new WithoutSpecification.ForMatchedField(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher);
     }
 
     /**
@@ -181,7 +192,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @return A specification that allows to determine how to substitute any method invocations that match the supplied matcher.
      */
     public WithoutSpecification.ForMatchedMethod method(ElementMatcher<? super MethodDescription> matcher) {
-        return new WithoutSpecification.ForMatchedMethod(methodGraphCompiler, typePoolResolver, strict, replacementFactory, matcher);
+        return new WithoutSpecification.ForMatchedMethod(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher);
     }
 
     /**
@@ -201,7 +212,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @return A specification that allows to determine how to substitute any constructor invocations that match the supplied matcher.
      */
     public WithoutSpecification invokable(ElementMatcher<? super MethodDescription> matcher) {
-        return new WithoutSpecification.ForMatchedMethod(methodGraphCompiler, typePoolResolver, strict, replacementFactory, matcher);
+        return new WithoutSpecification.ForMatchedMethod(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher);
     }
 
     /**
@@ -211,7 +222,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @return A new member substitution that is equal to this but uses the specified method graph compiler.
      */
     public MemberSubstitution with(MethodGraph.Compiler methodGraphCompiler) {
-        return new MemberSubstitution(methodGraphCompiler, typePoolResolver, strict, replacementFactory);
+        return new MemberSubstitution(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory);
     }
 
     /**
@@ -221,7 +232,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @return A new instance of this member substitution that uses the supplied type pool resolver.
      */
     public MemberSubstitution with(TypePoolResolver typePoolResolver) {
-        return new MemberSubstitution(methodGraphCompiler, typePoolResolver, strict, replacementFactory);
+        return new MemberSubstitution(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory);
+    }
+
+    /**
+     * Specifies if this substitution should fail if applied on a method without a match.
+     * @param failIfNoMatch {@code true} if the instrumentation should fail if applied to a method without match.
+     * @return A new instance of this member substitution that fails if applied on a method without a match.
+     */
+    public MemberSubstitution failIfNoMatch(boolean failIfNoMatch) {
+        return new MemberSubstitution(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory);
     }
 
     /**
@@ -250,6 +270,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 instrumentedMethod,
                 methodGraphCompiler,
                 strict,
+                failIfNoMatch,
                 replacementFactory.make(instrumentedType, instrumentedMethod, typePool),
                 implementationContext,
                 typePool,
@@ -278,6 +299,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         protected final boolean strict;
 
         /**
+         * {@code true} if the instrumentation should fail if applied to a method without match.
+         */
+        protected final boolean failIfNoMatch;
+
+        /**
          * The replacement factory to use for creating substitutions.
          */
         protected final Replacement.Factory replacementFactory;
@@ -288,12 +314,18 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param methodGraphCompiler The method graph compiler to use.
          * @param typePoolResolver    The type pool resolver to use.
          * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
+         * @param failIfNoMatch       {@code true} if the instrumentation should fail if applied to a method without match.
          * @param replacementFactory  The replacement factory to use for creating substitutions.
          */
-        protected WithoutSpecification(MethodGraph.Compiler methodGraphCompiler, TypePoolResolver typePoolResolver, boolean strict, Replacement.Factory replacementFactory) {
+        protected WithoutSpecification(MethodGraph.Compiler methodGraphCompiler,
+                                       TypePoolResolver typePoolResolver,
+                                       boolean strict,
+                                       boolean failIfNoMatch,
+                                       Replacement.Factory replacementFactory) {
             this.methodGraphCompiler = methodGraphCompiler;
             this.typePoolResolver = typePoolResolver;
             this.strict = strict;
+            this.failIfNoMatch = failIfNoMatch;
             this.replacementFactory = replacementFactory;
         }
 
@@ -495,15 +527,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param methodGraphCompiler The method graph compiler to use.
              * @param typePoolResolver    The type pool resolver to use.
              * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
+             * @param failIfNoMatch       {@code true} if the instrumentation should fail if applied to a method without match.
              * @param replacementFactory  The replacement factory to use.
              * @param matcher             A matcher for any byte code elements that should be substituted.
              */
             protected ForMatchedByteCodeElement(MethodGraph.Compiler methodGraphCompiler,
                                                 TypePoolResolver typePoolResolver,
                                                 boolean strict,
+                                                boolean failIfNoMatch,
                                                 Replacement.Factory replacementFactory,
                                                 ElementMatcher<? super ByteCodeElement.Member> matcher) {
-                super(methodGraphCompiler, typePoolResolver, strict, replacementFactory);
+                super(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory);
                 this.matcher = matcher;
             }
 
@@ -514,6 +548,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 return new MemberSubstitution(methodGraphCompiler,
                         typePoolResolver,
                         strict,
+                        failIfNoMatch,
                         new Replacement.Factory.Compound(this.replacementFactory, Replacement.ForElementMatchers.Factory.of(matcher, substitutionFactory)));
             }
         }
@@ -545,15 +580,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param methodGraphCompiler The method graph compiler to use.
              * @param typePoolResolver    The type pool resolver to use.
              * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
+             * @param failIfNoMatch       {@code true} if the instrumentation should fail if applied to a method without match.
              * @param replacementFactory  The replacement factory to use.
              * @param matcher             A matcher for any field that should be substituted.
              */
             protected ForMatchedField(MethodGraph.Compiler methodGraphCompiler,
                                       TypePoolResolver typePoolResolver,
                                       boolean strict,
+                                      boolean failIfNoMatch,
                                       Replacement.Factory replacementFactory,
                                       ElementMatcher<? super FieldDescription.InDefinedShape> matcher) {
-                this(methodGraphCompiler, typePoolResolver, strict, replacementFactory, matcher, true, true);
+                this(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher, true, true);
             }
 
             /**
@@ -562,6 +599,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param methodGraphCompiler The method graph compiler to use.
              * @param typePoolResolver    The type pool resolver to use.
              * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
+             * @param failIfNoMatch       {@code true} if the instrumentation should fail if applied to a method without match.
              * @param replacementFactory  The replacement factory to use.
              * @param matcher             A matcher for any field that should be substituted.
              * @param matchRead           {@code true} if read access to a field should be substituted.
@@ -570,11 +608,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             protected ForMatchedField(MethodGraph.Compiler methodGraphCompiler,
                                       TypePoolResolver typePoolResolver,
                                       boolean strict,
+                                      boolean failIfNoMatch,
                                       Replacement.Factory replacementFactory,
                                       ElementMatcher<? super FieldDescription.InDefinedShape> matcher,
                                       boolean matchRead,
                                       boolean matchWrite) {
-                super(methodGraphCompiler, typePoolResolver, strict, replacementFactory);
+                super(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory);
                 this.matcher = matcher;
                 this.matchRead = matchRead;
                 this.matchWrite = matchWrite;
@@ -586,7 +625,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @return This instance with the limitation that only read access to the matched field is substituted.
              */
             public WithoutSpecification onRead() {
-                return new ForMatchedField(methodGraphCompiler, typePoolResolver, strict, replacementFactory, matcher, true, false);
+                return new ForMatchedField(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher, true, false);
             }
 
             /**
@@ -595,7 +634,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @return This instance with the limitation that only write access to the matched field is substituted.
              */
             public WithoutSpecification onWrite() {
-                return new ForMatchedField(methodGraphCompiler, typePoolResolver, strict, replacementFactory, matcher, false, true);
+                return new ForMatchedField(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher, false, true);
             }
 
             /**
@@ -605,6 +644,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 return new MemberSubstitution(methodGraphCompiler,
                         typePoolResolver,
                         strict,
+                        failIfNoMatch,
                         new Replacement.Factory.Compound(this.replacementFactory, Replacement.ForElementMatchers.Factory.ofField(matcher, matchRead, matchWrite, substitutionFactory)));
             }
         }
@@ -636,15 +676,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param methodGraphCompiler The method graph compiler to use.
              * @param typePoolResolver    The type pool resolver to use.
              * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
+             * @param failIfNoMatch       {@code true} if the instrumentation should fail if applied to a method without match.
              * @param replacementFactory  The replacement factory to use.
              * @param matcher             A matcher for any method or constructor that should be substituted.
              */
             protected ForMatchedMethod(MethodGraph.Compiler methodGraphCompiler,
                                        TypePoolResolver typePoolResolver,
                                        boolean strict,
+                                       boolean failIfNoMatch,
                                        Replacement.Factory replacementFactory,
                                        ElementMatcher<? super MethodDescription> matcher) {
-                this(methodGraphCompiler, typePoolResolver, strict, replacementFactory, matcher, true, true);
+                this(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher, true, true);
             }
 
             /**
@@ -653,6 +695,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param methodGraphCompiler The method graph compiler to use.
              * @param typePoolResolver    The type pool resolver to use.
              * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
+             * @param failIfNoMatch       {@code true} if the instrumentation should fail if applied to a method without match.
              * @param replacementFactory  The replacement factory to use.
              * @param matcher             A matcher for any method or constructor that should be substituted.
              * @param includeVirtualCalls {@code true} if this specification includes virtual invocations.
@@ -661,11 +704,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             protected ForMatchedMethod(MethodGraph.Compiler methodGraphCompiler,
                                        TypePoolResolver typePoolResolver,
                                        boolean strict,
+                                       boolean failIfNoMatch,
                                        Replacement.Factory replacementFactory,
                                        ElementMatcher<? super MethodDescription> matcher,
                                        boolean includeVirtualCalls,
                                        boolean includeSuperCalls) {
-                super(methodGraphCompiler, typePoolResolver, strict, replacementFactory);
+                super(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory);
                 this.matcher = matcher;
                 this.includeVirtualCalls = includeVirtualCalls;
                 this.includeSuperCalls = includeSuperCalls;
@@ -680,6 +724,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 return new ForMatchedMethod(methodGraphCompiler,
                         typePoolResolver,
                         strict,
+                        failIfNoMatch,
                         replacementFactory,
                         isVirtual().and(matcher),
                         true,
@@ -695,6 +740,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 return new ForMatchedMethod(methodGraphCompiler,
                         typePoolResolver,
                         strict,
+                        failIfNoMatch,
                         replacementFactory,
                         isVirtual().and(matcher),
                         false,
@@ -708,6 +754,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 return new MemberSubstitution(methodGraphCompiler,
                         typePoolResolver,
                         strict,
+                        failIfNoMatch,
                         new Replacement.Factory.Compound(this.replacementFactory, Replacement.ForElementMatchers.Factory.ofMethod(matcher, includeVirtualCalls, includeSuperCalls, substitutionFactory)));
             }
         }
@@ -6987,6 +7034,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         private final boolean strict;
 
         /**
+         * {@code true} if the instrumentation should fail if applied to a method without match.
+         */
+        private final boolean failIfNoMatch;
+
+        /**
          * The replacement to use for creating substitutions.
          */
         private final Replacement replacement;
@@ -7016,6 +7068,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         private int localVariableExtension;
 
+        private boolean matched;
+
         /**
          * Creates a new substituting method visitor.
          *
@@ -7024,6 +7078,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @param instrumentedMethod    The instrumented method.
          * @param methodGraphCompiler   The method graph compiler to use.
          * @param strict                {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
+         * @param failIfNoMatch         {@code true} if the instrumentation should fail if applied to a method without match.
          * @param replacement           The replacement to use for creating substitutions.
          * @param implementationContext The implementation context to use.
          * @param typePool              The type pool to use.
@@ -7034,6 +7089,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                             MethodDescription instrumentedMethod,
                                             MethodGraph.Compiler methodGraphCompiler,
                                             boolean strict,
+                                            boolean failIfNoMatch,
                                             Replacement replacement,
                                             Implementation.Context implementationContext,
                                             TypePool typePool,
@@ -7043,6 +7099,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             this.instrumentedMethod = instrumentedMethod;
             this.methodGraphCompiler = methodGraphCompiler;
             this.strict = strict;
+            this.failIfNoMatch = failIfNoMatch;
             this.replacement = replacement;
             this.implementationContext = implementationContext;
             this.typePool = typePool;
@@ -7097,6 +7154,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                         ? FieldAccess.forField(candidates.getOnly()).read()
                                         : FieldAccess.forField(candidates.getOnly()).write(),
                                 getFreeOffset()).apply(new LocalVariableTracingMethodVisitor(mv), implementationContext).getMaximalSize());
+                        matched = true;
                         return;
                     }
                 } else if (strict) {
@@ -7166,6 +7224,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         } else {
                             stackSizeBuffer = Math.max(stackSizeBuffer, size.getMaximalSize());
                         }
+                        matched = true;
                         return;
                     }
                 } else if (strict) {
@@ -7179,6 +7238,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
         @Override
         public void visitMaxs(int stackSize, int localVariableLength) {
+            if (failIfNoMatch && !matched) {
+                throw new IllegalStateException("No substitution found within " + instrumentedMethod + " of " + instrumentedType);
+            }
             super.visitMaxs(stackSize + stackSizeBuffer, Math.max(localVariableExtension, localVariableLength));
         }
 
@@ -7214,7 +7276,6 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
         }
     }
-
 
     /**
      * <p>
