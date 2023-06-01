@@ -88,8 +88,7 @@ public interface TypePool {
     /**
      * Locates and describes the given type by its name.
      *
-     * @param name The name of the type to describe. The name is to be written as when calling {@link Object#toString()}
-     *             on a loaded {@link java.lang.Class}.
+     * @param name The name of the type to describe. The name is to be written as when calling {@link Class#getName()}.
      * @return A resolution of the type to describe. If the type to be described was found, the returned
      * {@link net.bytebuddy.pool.TypePool.Resolution} represents this type. Otherwise, an illegal resolution is returned.
      */
