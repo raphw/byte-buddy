@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 1. June 2023: version 1.14.5
+
+- Avoid use of location if agent argument separator is contained.
+- Allow failure of member substitution if no element is separated.
+- Allow retry in case of parallel class injection.
+
 ### 11. April 2023: version 1.14.4
 
 - Include instrumented type and auxiliary types in `TypePool` that is passed to `TypeWriter`.
