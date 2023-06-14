@@ -25,7 +25,7 @@
         <version.maven.plexus-util>3.4.2</version.maven.plexus-util>
         <version.commons-io>2.11.0</version.commons-io>
         <version.commons-compress>1.21</version.commons-compress>
-        <version.guava>31.1-jre</version.guava>
+        <version.guava>32.0.0-jre</version.guava>
         <japicmp.skip>true</japicmp.skip>
     </properties>
 
