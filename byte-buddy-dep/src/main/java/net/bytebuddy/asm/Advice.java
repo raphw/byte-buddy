@@ -8998,6 +8998,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodEnter.getAdviceType());
             }
 
+            @Override
+            public String toString() {
+                return "Delegate to " + adviceMethod;
+            }
+
             /**
              * A resolved version of a dispatcher.
              */
@@ -10418,6 +10423,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         namedTypes,
                         userFactories,
                         methodEnter.getAdviceType());
+            }
+
+            @Override
+            public String toString() {
+                return "Delegate to " + adviceMethod;
             }
 
             /**
