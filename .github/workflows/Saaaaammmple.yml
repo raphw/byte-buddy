@@ -15,7 +15,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: 8
-          distribution: openjdk 
+          distribution: jdk 
           architecture: x64
 
 
