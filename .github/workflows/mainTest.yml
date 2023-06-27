@@ -11,10 +11,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up JDK
+      - name: Set up Java
         uses: actions/setup-java@v2
         with:
-          java-version: '8' # Specify the desired JDK version
+          java-version: 8
+          distribution: jdk
+          architecture: x64
 
       - name: Build and test
         run: |
