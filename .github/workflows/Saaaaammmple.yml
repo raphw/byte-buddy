@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  workflow_dispatch
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: 8
+          distribution: jdk #dis
+          architecture: x64
+
+      - name: Build and test
+        run: |
+          mvn clean install -DskipTests -pl byte-buddy-dep -am -Dcheckstyle.skip
+
+      - name: Run specific test
+        run: |
+          mvn -pl byte-buddy-dep test -Dtest=net.bytebuddy.description.type.TypeDescriptionGenericBuilderTest#testTypeAnnotationExceptionType
+
+      - name: Run NonDex plugin
+        run: |
+          mvn -pl byte-buddy-dep edu.illinois:nondex-maven-plugin:2.1.1:nondex -Dtest=net.bytebuddy.description.type.TypeDescriptionGenericBuilderTest#testTypeAnnotationExceptionType
