@@ -15,8 +15,10 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: 8
-          distribution: jdk #dis
+          distribution: openjdk 
           architecture: x64
+
+
 
       - name: Build and test
         run: |
