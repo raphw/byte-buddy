@@ -273,6 +273,20 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                   AgentBuilder.RedefinitionStrategy.Listener redefinitionListener);
 
     /**
+     * A {@link ResettableClassFileTransformer} which allows for substitution the actual class file transformer without
+     * changes in the order of the transformer chain.
+     */
+    interface Substitutable extends ResettableClassFileTransformer {
+
+        /**
+         * Substitutes the current class file transformer.
+         *
+         * @param classFileTransformer The class file transformer to use.
+         */
+        void substitute(ResettableClassFileTransformer classFileTransformer);
+    }
+
+    /**
      * An abstract base implementation of a {@link ResettableClassFileTransformer}.
      */
     abstract class AbstractBase implements ResettableClassFileTransformer {
@@ -416,6 +430,62 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                     redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener);
+        }
+
+        /**
+         * A standard implementation of a substitutable {@link ResettableClassFileTransformer}.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        public static class Substitutable extends AbstractBase implements ResettableClassFileTransformer.Substitutable {
+
+            /**
+             * The class file transformer to delegate to.
+             */
+            protected volatile ResettableClassFileTransformer classFileTransformer;
+
+            /**
+             * Creates a new delegating resettable class file transformer.
+             *
+             * @param classFileTransformer The class file transformer to delegate to.
+             */
+            protected Substitutable(ResettableClassFileTransformer classFileTransformer) {
+                this.classFileTransformer = classFileTransformer;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void substitute(ResettableClassFileTransformer classFileTransformer) {
+                this.classFileTransformer = classFileTransformer;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Iterator<AgentBuilder.Transformer> iterator(TypeDescription typeDescription,
+                                                               @MaybeNull ClassLoader classLoader,
+                                                               @MaybeNull JavaModule module,
+                                                               @MaybeNull Class<?> classBeingRedefined,
+                                                               ProtectionDomain protectionDomain) {
+                return classFileTransformer.iterator(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean reset(Instrumentation instrumentation,
+                                 ResettableClassFileTransformer classFileTransformer,
+                                 AgentBuilder.RedefinitionStrategy redefinitionStrategy,
+                                 AgentBuilder.RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
+                                 AgentBuilder.RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                 AgentBuilder.RedefinitionStrategy.Listener redefinitionListener) {
+                return this.classFileTransformer.reset(instrumentation,
+                        classFileTransformer,
+                        redefinitionStrategy,
+                        redefinitionDiscoveryStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener);
+            }
         }
     }
 }

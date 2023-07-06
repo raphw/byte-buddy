@@ -28,10 +28,18 @@ import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.modifier.*;
+import net.bytebuddy.description.modifier.FieldManifestation;
+import net.bytebuddy.description.modifier.MethodManifestation;
+import net.bytebuddy.description.modifier.Ownership;
+import net.bytebuddy.description.modifier.TypeManifestation;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.*;
+import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.NexusAccessor;
+import net.bytebuddy.dynamic.TypeResolutionStrategy;
+import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
 import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
@@ -69,23 +77,71 @@ import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
-import org.objectweb.asm.*;
+import org.objectweb.asm.ConstantDynamic;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
-import java.io.*;
-import java.lang.instrument.*;
+import java.io.File;
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintStream;
+import java.io.Serializable;
+import java.lang.instrument.ClassDefinition;
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.IllegalClassFormatException;
+import java.lang.instrument.Instrumentation;
+import java.lang.instrument.UnmodifiableClassException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.AbstractSet;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.any;
+import static net.bytebuddy.matcher.ElementMatchers.hasMethodName;
+import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.isExtensionClassLoader;
+import static net.bytebuddy.matcher.ElementMatchers.isSynthetic;
+import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
+import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.returns;
+import static net.bytebuddy.matcher.ElementMatchers.supportsModules;
+import static net.bytebuddy.matcher.ElementMatchers.takesArgument;
+import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
 /**
  * <p>
@@ -5451,6 +5507,24 @@ public interface AgentBuilder {
         }
 
         /**
+         * Wraps a class file transformer to become substitutable.
+         */
+        enum ForSubstitution implements TransformerDecorator {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public ResettableClassFileTransformer decorate(ResettableClassFileTransformer classFileTransformer) {
+                return new ResettableClassFileTransformer.WithDelegation.Substitutable(classFileTransformer);
+            }
+        }
+
+        /**
          * A compound transformer decorator.
          */
         @HashCodeAndEqualsPlugin.Enhance
@@ -9839,6 +9913,23 @@ public interface AgentBuilder {
             protected Handler toHandler(ResettableClassFileTransformer classFileTransformer) {
                 return new Handler.ForPatchWithOverlap(classFileTransformer);
             }
+        },
+
+        /**
+         * Requires a {@link net.bytebuddy.agent.builder.ResettableClassFileTransformer.Substitutable} class file
+         * transformer which can exchange the actual class file transformer without any overlaps or changes in order.
+         * Normally, this can be achieved easily by adding {@link TransformerDecorator.ForSubstitution} as a last
+         * step before an installation. Patched transformers should avoid adding this decorator as this adds
+         * non-necessary indirections.
+         */
+        SUBSTITUTE {
+            @Override
+            protected Handler toHandler(ResettableClassFileTransformer classFileTransformer) {
+                if (!(classFileTransformer instanceof ResettableClassFileTransformer.Substitutable)) {
+                    throw new IllegalArgumentException("Original class file transformer is not substitutable: " + classFileTransformer);
+                }
+                return new Handler.ForPatchWithSubstitution((ResettableClassFileTransformer.Substitutable) classFileTransformer);
+            }
         };
 
         /**
@@ -9862,6 +9953,14 @@ public interface AgentBuilder {
             void onBeforeRegistration(Instrumentation instrumentation);
 
             /**
+             * Invoked upon registering a class file transformer.
+             *
+             * @param classFileTransformer The class file transformer to register.
+             * @return {@code true} if a regular registration should be applied to the transformer.
+             */
+            boolean onRegistration(ResettableClassFileTransformer classFileTransformer);
+
+            /**
              * Invoked right after registering a class file transformer.
              *
              * @param instrumentation The instrumentation to use.
@@ -9883,6 +9982,13 @@ public interface AgentBuilder {
                  */
                 public void onBeforeRegistration(Instrumentation instrumentation) {
                     /* do nothing */
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean onRegistration(ResettableClassFileTransformer classFileTransformer) {
+                    return true;
                 }
 
                 /**
@@ -9925,6 +10031,13 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
+                public boolean onRegistration(ResettableClassFileTransformer classFileTransformer) {
+                    return true;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onAfterRegistration(Instrumentation instrumentation) {
                     /* do nothing */
                 }
@@ -9960,10 +10073,49 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
+                public boolean onRegistration(ResettableClassFileTransformer classFileTransformer) {
+                    return true;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onAfterRegistration(Instrumentation instrumentation) {
                     if (!classFileTransformer.reset(instrumentation, RedefinitionStrategy.DISABLED)) {
                         throw new IllegalArgumentException("Failed to deregister patched class file transformer: " + classFileTransformer);
                     }
+                }
+            }
+
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForPatchWithSubstitution implements Handler {
+
+                private final ResettableClassFileTransformer.Substitutable classFileTransformer;
+
+                protected ForPatchWithSubstitution(ResettableClassFileTransformer.Substitutable classFileTransformer) {
+                    this.classFileTransformer = classFileTransformer;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onBeforeRegistration(Instrumentation instrumentation) {
+                    /* do nothing */
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean onRegistration(ResettableClassFileTransformer classFileTransformer) {
+                    this.classFileTransformer.substitute(classFileTransformer);
+                    return false;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onAfterRegistration(Instrumentation instrumentation) {
+                    /* do nothing */
                 }
             }
         }
@@ -11166,7 +11318,9 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
-            return patchOn(instrumentation, classFileTransformer, PatchMode.OVERLAP);
+            return patchOn(instrumentation, classFileTransformer, classFileTransformer instanceof ResettableClassFileTransformer.Substitutable
+                ? PatchMode.SUBSTITUTE
+                : PatchMode.OVERLAP);
         }
 
         /**
@@ -11180,7 +11334,7 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer) {
-            return patchOnByteBuddyAgent(classFileTransformer, PatchMode.OVERLAP);
+            return patchOn(resolveByteBuddyAgentInstrumentation(), classFileTransformer);
         }
 
         /**
@@ -11226,10 +11380,12 @@ public interface AgentBuilder {
                             circularityLock,
                             installation.getInstallationListener());
                     handler.onBeforeRegistration(instrumentation);
-                    if (redefinitionStrategy.isRetransforming()) {
-                        DISPATCHER.addTransformer(instrumentation, classFileTransformer, true);
-                    } else {
-                        instrumentation.addTransformer(classFileTransformer);
+                    if (handler.onRegistration(classFileTransformer)) {
+                        if (redefinitionStrategy.isRetransforming()) {
+                            DISPATCHER.addTransformer(instrumentation, classFileTransformer, true);
+                        } else {
+                            instrumentation.addTransformer(classFileTransformer);
+                        }
                     }
                     handler.onAfterRegistration(instrumentation);
                     nativeMethodStrategy.apply(instrumentation, classFileTransformer);
