@@ -10087,11 +10087,22 @@ public interface AgentBuilder {
                 }
             }
 
+            /**
+             * A handler for patching by {@link PatchMode#SUBSTITUTE}.
+             */
             @HashCodeAndEqualsPlugin.Enhance
             class ForPatchWithSubstitution implements Handler {
 
+                /**
+                 * The class file transformer to substitute.
+                 */
                 private final ResettableClassFileTransformer.Substitutable classFileTransformer;
 
+                /**
+                 * Creates a new handler for substitution.
+                 *
+                 * @param classFileTransformer The class file transformer to substitute.
+                 */
                 protected ForPatchWithSubstitution(ResettableClassFileTransformer.Substitutable classFileTransformer) {
                     this.classFileTransformer = classFileTransformer;
                 }
@@ -11319,8 +11330,8 @@ public interface AgentBuilder {
          */
         public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
             return patchOn(instrumentation, classFileTransformer, classFileTransformer instanceof ResettableClassFileTransformer.Substitutable
-                ? PatchMode.SUBSTITUTE
-                : PatchMode.OVERLAP);
+                    ? PatchMode.SUBSTITUTE
+                    : PatchMode.OVERLAP);
         }
 
         /**
