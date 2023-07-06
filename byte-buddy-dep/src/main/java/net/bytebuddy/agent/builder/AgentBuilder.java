@@ -5520,7 +5520,7 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public ResettableClassFileTransformer decorate(ResettableClassFileTransformer classFileTransformer) {
-                return new ResettableClassFileTransformer.WithDelegation.Substitutable(classFileTransformer);
+                return ResettableClassFileTransformer.WithDelegation.Substitutable.of(classFileTransformer);
             }
         }
 
