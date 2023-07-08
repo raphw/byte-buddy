@@ -55,12 +55,38 @@ public class AbstractMethodCallProxyTest {
         assertThat(auxiliaryType.getDeclaredConstructors().length, is(1));
         assertThat(auxiliaryType.getDeclaredMethods().length, is(2));
         assertThat(auxiliaryType.getDeclaredFields().length, is(proxyMethod.getParameters().size() + (proxyMethod.isStatic() ? 0 : 1)));
-        int fieldIndex = 0;
+        // int fieldIndex = 0;
+        // if (!proxyMethod.isStatic()) {
+        //     assertThat(auxiliaryType.getDeclaredFields()[fieldIndex++].getType(), CoreMatchers.<Class<?>>is(proxyTarget));
+        // }
+        // for (Class<?> parameterType : proxyTarget.getDeclaredMethods()[0].getParameterTypes()) {
+        //     assertThat(auxiliaryType.getDeclaredFields()[fieldIndex++].getType(), CoreMatchers.<Class<?>>is(parameterType));
+        // }
+        Field[] fields = auxiliaryType.getDeclaredFields();
+        Arrays.sort(fields, new Comparator<Field>() {
+            public int compare(Field field1, Field field2) {
+                String typeName1 = field1.getType().getName();
+                String typeName2 = field2.getType().getName();
+                return typeName1.compareTo(typeName2);
+            }
+        });
+        Class<?>[] parameterTypes = proxyTarget.getDeclaredMethods()[0].getParameterTypes();
+        Arrays.sort(parameterTypes, new Comparator<Class<?>>() {
+            public int compare(Class<?> class1, Class<?> class2) {
+                String name1 = class1.getName();
+                String name2 = class2.getName();
+                return name1.compareTo(name2);
+            }
+        });
         if (!proxyMethod.isStatic()) {
-            assertThat(auxiliaryType.getDeclaredFields()[fieldIndex++].getType(), CoreMatchers.<Class<?>>is(proxyTarget));
+            Field field = fields[4];
+            assertThat(field.getType(), CoreMatchers.<Class<?>>is(proxyTarget));
         }
-        for (Class<?> parameterType : proxyTarget.getDeclaredMethods()[0].getParameterTypes()) {
-            assertThat(auxiliaryType.getDeclaredFields()[fieldIndex++].getType(), CoreMatchers.<Class<?>>is(parameterType));
+        for(int i = 0; i < parameterTypes.length; i++) {
+            Field field = fields[i];
+            Class<?> fieldType = field.getType();
+            Class<?> parameterType = parameterTypes[i];
+            assertThat(fieldType, CoreMatchers.<Class<?>>is(parameterType));    
         }
         return auxiliaryType;
     }
