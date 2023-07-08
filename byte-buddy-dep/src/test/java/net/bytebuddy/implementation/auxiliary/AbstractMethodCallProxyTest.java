@@ -74,8 +74,16 @@ public class AbstractMethodCallProxyTest {
                 return name1.compareTo(name2);
             }
         });
+        int proxyTargetPosition = -1;
+        for (int i = 0; i < fields.length; i++) {
+            if (fields[i].getType() == proxyTarget) {
+                proxyTargetPosition = i;
+                break;
+            }
+        }
         if (!proxyMethod.isStatic()) {
-        	Field field = fields[fields.length-1];
+        	Field field = fields[proxyTargetPosition];
+        	System.out.println(proxyTarget);
             assertThat(field.getType(), CoreMatchers.<Class<?>>is(proxyTarget));
         }
         for(int i = 0; i < parameterTypes.length; i++) {
