@@ -176,3 +176,23 @@ jobs:
           git config user.name "${{ github.event.head_commit.committer.name }}"
           git config user.email "${{ github.event.head_commit.committer.email }}"
           ./mvnw -B -s .mvn/release.settings.xml release:prepare release:perform -Drepository.url=https://${{ github.actor }}:${{ secrets.github_token }}@github.com/${{ github.repository }}.git -Dcentral.username=raphw -Dcentral.password=${{ secrets.central_password }} -Dgpg.passphrase=${{ secrets.gpg_passphrase }} -Dgpg.keyname=B4AC8CDC141AF0AE468D16921DA784CCB5C46DD5 -Dgradle.key=${{ secrets.gradle_key }} -Dgradle.secret=${{ secrets.gradle_secret }} -Pchecksum-enforce
+
+  Flaky-tests:
+    name: Detecting flaky tests using NonDex
+    runs-on: ubuntu-20.04
+    needs: [extended]
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      - uses: actions/setup-java@2c7a4878f5d120bd643426d54ae1209b29cc01a3 # v3.4.1
+        with:
+          java-version: 8
+          distribution: temurin
+          architecture: x64
+          cache: maven
+      - name: Build project (skip tests)
+        run: mvn clean install -DskipTests -pl byte-buddy-dep -am -Dcheckstyle.skip
+      - name: Run specific test
+        run: mvn -pl byte-buddy-dep test -Dtest=net.bytebuddy.implementation.auxiliary.MethodCallProxyTest#testMultipleParameterMethod
+      - name: Run Nondex plugin
+        run: mvn -pl byte-buddy-dep edu.illinois:nondex-maven-plugin:2.1.1:nondex -Dtest=net.bytebuddy.implementation.auxiliary.MethodCallProxyTest#testMultipleParameterMethod
+
