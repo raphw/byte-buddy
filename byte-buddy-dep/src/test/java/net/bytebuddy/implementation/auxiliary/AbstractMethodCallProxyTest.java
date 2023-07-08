@@ -13,7 +13,9 @@ import org.junit.rules.MethodRule;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.objectweb.asm.Opcodes;
-
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
@@ -55,13 +57,7 @@ public class AbstractMethodCallProxyTest {
         assertThat(auxiliaryType.getDeclaredConstructors().length, is(1));
         assertThat(auxiliaryType.getDeclaredMethods().length, is(2));
         assertThat(auxiliaryType.getDeclaredFields().length, is(proxyMethod.getParameters().size() + (proxyMethod.isStatic() ? 0 : 1)));
-        // int fieldIndex = 0;
-        // if (!proxyMethod.isStatic()) {
-        //     assertThat(auxiliaryType.getDeclaredFields()[fieldIndex++].getType(), CoreMatchers.<Class<?>>is(proxyTarget));
-        // }
-        // for (Class<?> parameterType : proxyTarget.getDeclaredMethods()[0].getParameterTypes()) {
-        //     assertThat(auxiliaryType.getDeclaredFields()[fieldIndex++].getType(), CoreMatchers.<Class<?>>is(parameterType));
-        // }
+        int fieldIndex = 0;
         Field[] fields = auxiliaryType.getDeclaredFields();
         Arrays.sort(fields, new Comparator<Field>() {
             public int compare(Field field1, Field field2) {
@@ -79,7 +75,7 @@ public class AbstractMethodCallProxyTest {
             }
         });
         if (!proxyMethod.isStatic()) {
-            Field field = fields[4];
+        	Field field = fields[4];
             assertThat(field.getType(), CoreMatchers.<Class<?>>is(proxyTarget));
         }
         for(int i = 0; i < parameterTypes.length; i++) {
@@ -91,3 +87,4 @@ public class AbstractMethodCallProxyTest {
         return auxiliaryType;
     }
 }
+
