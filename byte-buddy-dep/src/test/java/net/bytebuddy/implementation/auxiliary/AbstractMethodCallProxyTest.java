@@ -75,7 +75,7 @@ public class AbstractMethodCallProxyTest {
             }
         });
         if (!proxyMethod.isStatic()) {
-        	Field field = fields[4];
+        	Field field = fields[fields.length-1];
             assertThat(field.getType(), CoreMatchers.<Class<?>>is(proxyTarget));
         }
         for(int i = 0; i < parameterTypes.length; i++) {
