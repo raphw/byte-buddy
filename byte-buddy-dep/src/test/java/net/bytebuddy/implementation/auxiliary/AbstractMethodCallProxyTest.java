@@ -21,6 +21,7 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
+import java.lang.reflect.Field;
 
 public class AbstractMethodCallProxyTest {
 
@@ -55,13 +56,33 @@ public class AbstractMethodCallProxyTest {
         assertThat(auxiliaryType.getDeclaredConstructors().length, is(1));
         assertThat(auxiliaryType.getDeclaredMethods().length, is(2));
         assertThat(auxiliaryType.getDeclaredFields().length, is(proxyMethod.getParameters().size() + (proxyMethod.isStatic() ? 0 : 1)));
-        int fieldIndex = 0;
-        // simple comment
-        if (!proxyMethod.isStatic()) {
-            assertThat(auxiliaryType.getDeclaredFields()[fieldIndex++].getType(), CoreMatchers.<Class<?>>is(proxyTarget));
+        Field[] fields = auxiliaryType.getDeclaredFields();     
+        Class<?>[] parameterTypes = proxyTarget.getDeclaredMethods()[0].getParameterTypes();
+        Class<?> found ;
+        int proxyTargetPosition = -1;
+        for (int i = 0; i < fields.length; i++) {
+            if (fields[i].getType() == proxyTarget) {
+                proxyTargetPosition = i;
+                break;
+            }
         }
-        for (Class<?> parameterType : proxyTarget.getDeclaredMethods()[0].getParameterTypes()) {
-            assertThat(auxiliaryType.getDeclaredFields()[fieldIndex++].getType(), CoreMatchers.<Class<?>>is(parameterType));
+        if (!proxyMethod.isStatic()) {
+        	Field field = fields[proxyTargetPosition];
+            assertThat(field.getType(), CoreMatchers.<Class<?>>is(proxyTarget));
+        }
+        for (int i = 0; i < parameterTypes.length; i++) {
+            Field field = fields[i];
+            Class<?> fieldType = field.getType();
+            Class<?> parameterType = parameterTypes[i];
+            found =null;
+            for (Field field1 : fields) {
+                Class<?> fieldType1 = field1.getType();
+                if (fieldType1.equals(parameterType)) {
+                    found = fieldType1;
+                    break;
+                }
+            }
+            assertThat(found, CoreMatchers.<Class<?>>is(parameterType));
         }
         return auxiliaryType;
     }
