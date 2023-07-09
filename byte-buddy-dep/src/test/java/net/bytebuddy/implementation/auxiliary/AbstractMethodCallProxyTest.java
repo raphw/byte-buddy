@@ -56,6 +56,7 @@ public class AbstractMethodCallProxyTest {
         assertThat(auxiliaryType.getDeclaredMethods().length, is(2));
         assertThat(auxiliaryType.getDeclaredFields().length, is(proxyMethod.getParameters().size() + (proxyMethod.isStatic() ? 0 : 1)));
         int fieldIndex = 0;
+        // simple comment
         if (!proxyMethod.isStatic()) {
             assertThat(auxiliaryType.getDeclaredFields()[fieldIndex++].getType(), CoreMatchers.<Class<?>>is(proxyTarget));
         }
