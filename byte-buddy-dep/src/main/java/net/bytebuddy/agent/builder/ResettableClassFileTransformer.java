@@ -578,7 +578,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                                             byte[].class)).onField("classFileTransformer").withAllArguments())
                                     .make()
                                     .load(WithDelegation.Substitutable.class.getClassLoader(),
-                                            ClassLoadingStrategy.Default.WRAPPER_PERSISTENT.with(WithDelegation.Substitutable.class.getProtectionDomain()))
+                                          ClassLoadingStrategy.Default.WRAPPER_PERSISTENT.with(WithDelegation.Substitutable.class.getProtectionDomain()))
                                     .getLoaded()
                                     .getDeclaredConstructor(ResettableClassFileTransformer.class));
                         } catch (Exception ignored) {
