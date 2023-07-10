@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.agent.builder;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.build.AccessControllerPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
@@ -560,6 +561,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                     /**
                      * {@inheritDoc}
                      */
+                    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback.")
                     public Factory run() {
                         try {
                             return new ForJava9CapableVm(new ByteBuddy()
