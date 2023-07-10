@@ -21,8 +21,6 @@ public class ResettableClassFileTransformerSubstitutableTest {
 
     private static final String FOO = "foo";
 
-    private static final byte[] FIRST = new byte[]{0}, SECOND = new byte[]{1};
-
     @Rule
     public MethodRule mockitoRule = MockitoJUnit.rule();
 
@@ -38,12 +36,12 @@ public class ResettableClassFileTransformerSubstitutableTest {
             FOO,
             Foo.class,
             Foo.class.getProtectionDomain(),
-            FIRST)).thenReturn(SECOND);
+            Holder.FIRST)).thenReturn(Holder.SECOND);
         assertThat(ResettableClassFileTransformer.WithDelegation.Substitutable.of(classFileTransformer).transform(Foo.class.getClassLoader(),
             FOO,
             Foo.class,
             Foo.class.getProtectionDomain(),
-            FIRST), is(SECOND));
+            Holder.FIRST), is(Holder.SECOND));
     }
 
     @Test
@@ -63,14 +61,14 @@ public class ResettableClassFileTransformerSubstitutableTest {
                 FOO,
                 Foo.class,
                 Foo.class.getProtectionDomain(),
-                FIRST)).thenReturn(SECOND);
+                Holder.FIRST)).thenReturn(Holder.SECOND);
         assertThat(transform.invoke(ResettableClassFileTransformer.WithDelegation.Substitutable.of(classFileTransformer),
                 module,
                 Foo.class.getClassLoader(),
                 FOO,
                 Foo.class,
                 Foo.class.getProtectionDomain(),
-                FIRST), is((Object) SECOND));
+                Holder.FIRST), is((Object) Holder.SECOND));
     }
 
     @Test
@@ -79,18 +77,23 @@ public class ResettableClassFileTransformerSubstitutableTest {
                 FOO,
                 Foo.class,
                 Foo.class.getProtectionDomain(),
-                FIRST)).thenReturn(SECOND);
+                Holder.FIRST)).thenReturn(Holder.SECOND);
         ResettableClassFileTransformer.Substitutable substitutable = ResettableClassFileTransformer.WithDelegation.Substitutable.of(other);
         substitutable.substitute(classFileTransformer);
         assertThat(substitutable.transform(Foo.class.getClassLoader(),
                 FOO,
                 Foo.class,
                 Foo.class.getProtectionDomain(),
-                FIRST), is(SECOND));
+                Holder.FIRST), is(Holder.SECOND));
 
     }
 
     private static class Foo {
         /* empty */
+    }
+
+    private static class Holder {
+
+        private static final byte[] FIRST = new byte[]{0}, SECOND = new byte[]{1};
     }
 }
