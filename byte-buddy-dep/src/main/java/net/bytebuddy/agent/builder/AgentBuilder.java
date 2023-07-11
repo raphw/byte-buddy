@@ -9919,8 +9919,7 @@ public interface AgentBuilder {
          * Requires a {@link net.bytebuddy.agent.builder.ResettableClassFileTransformer.Substitutable} class file
          * transformer which can exchange the actual class file transformer without any overlaps or changes in order.
          * Normally, this can be achieved easily by adding {@link TransformerDecorator.ForSubstitution} as a last
-         * step before an installation. Patched transformers should avoid adding this decorator as this adds
-         * non-necessary indirections.
+         * decorator prior to installation.
          */
         SUBSTITUTE {
             @Override

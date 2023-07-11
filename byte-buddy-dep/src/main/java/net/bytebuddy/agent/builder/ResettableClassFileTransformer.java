@@ -450,7 +450,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
          * A standard implementation of a substitutable {@link ResettableClassFileTransformer}.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        public static class Substitutable extends AbstractBase implements ResettableClassFileTransformer.Substitutable {
+        protected static class Substitutable extends AbstractBase implements ResettableClassFileTransformer.Substitutable {
 
             /**
              * A dispatcher for invoking the correct transformer method.
@@ -494,9 +494,21 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
             }
 
             /**
+             * Returns the delegate class file transformer.
+             *
+             * @return The delegate class file transformer.
+             */
+            protected ResettableClassFileTransformer getClassFileTransformer() {
+                return classFileTransformer;
+            }
+
+            /**
              * {@inheritDoc}
              */
             public void substitute(ResettableClassFileTransformer classFileTransformer) {
+                while (classFileTransformer instanceof WithDelegation.Substitutable) {
+                    classFileTransformer = ((WithDelegation.Substitutable) classFileTransformer).getClassFileTransformer();
+                }
                 this.classFileTransformer = classFileTransformer;
             }
 
@@ -578,7 +590,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                                             byte[].class)).onField("classFileTransformer").withAllArguments())
                                     .make()
                                     .load(WithDelegation.Substitutable.class.getClassLoader(),
-                                          ClassLoadingStrategy.Default.WRAPPER_PERSISTENT.with(WithDelegation.Substitutable.class.getProtectionDomain()))
+                                            ClassLoadingStrategy.Default.WRAPPER_PERSISTENT.with(WithDelegation.Substitutable.class.getProtectionDomain()))
                                     .getLoaded()
                                     .getDeclaredConstructor(ResettableClassFileTransformer.class));
                         } catch (Exception ignored) {
