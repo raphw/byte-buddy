@@ -31,6 +31,7 @@ public class ResettableClassFileTransformerSubstitutableTest {
     private ResettableClassFileTransformer classFileTransformer, other;
 
     @Test
+    @JavaVersionRule.Enforce(7) // avoids bug in legacy Mockito
     public void testTransformLegacy() throws Exception {
         when(classFileTransformer.transform(Foo.class.getClassLoader(),
             FOO,
@@ -72,6 +73,7 @@ public class ResettableClassFileTransformerSubstitutableTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(7) // avoids bug in legacy Mockito
     public void testReplace() throws Exception {
         when(classFileTransformer.transform(Foo.class.getClassLoader(),
                 FOO,
@@ -92,7 +94,7 @@ public class ResettableClassFileTransformerSubstitutableTest {
         /* empty */
     }
 
-    private static class Holder {
+    private static class Holder { // avoids bug in legacy Mockito
 
         private static final byte[] FIRST = new byte[]{0}, SECOND = new byte[]{1};
     }
