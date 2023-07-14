@@ -5,6 +5,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.matcher.ElementMatchers;
@@ -197,6 +198,19 @@ public class ByteBuddyTest {
         assertThat(type.getName(), is("foo.Bar$"
                 + ByteBuddyTest.class.getName().replace('.', '$')
                 + "$testCallerSuffixNamingStrategy$SuffixedName"));
+    }
+
+    @Test
+    public void testCallerSuffixNamingStrategy2() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class)
+                .defineField("Foo", String.class)
+                .defineMethod("getFoo", String.class, Visibility.PUBLIC)
+                .intercept(FieldAccessor.ofBeanProperty())
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type, notNullValue());
     }
 
     public static class Recorder {

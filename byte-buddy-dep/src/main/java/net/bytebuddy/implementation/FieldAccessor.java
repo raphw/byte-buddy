@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -345,6 +346,7 @@ public abstract class FieldAccessor implements Implementation {
              * {@inheritDoc}
              */
             public String resolve(MethodDescription methodDescription) {
+                TypeDefinition parentType = methodDescription.getDeclaringType();
                 String name = methodDescription.getInternalName();
                 int crop;
                 if (name.startsWith("get") || name.startsWith("set")) {
@@ -357,6 +359,11 @@ public abstract class FieldAccessor implements Implementation {
                 name = name.substring(crop);
                 if (name.length() == 0) {
                     throw new IllegalArgumentException(methodDescription + " does not specify a bean name");
+                }
+                for (FieldDescription field : parentType.getDeclaredFields()) {
+                    if (field.getName().equals(name)) {
+                        return name;
+                    }
                 }
                 return Character.toLowerCase(name.charAt(0)) + name.substring(1);
             }
