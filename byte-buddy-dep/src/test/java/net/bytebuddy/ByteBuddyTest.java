@@ -201,7 +201,7 @@ public class ByteBuddyTest {
     }
 
     @Test
-    public void testCallerSuffixNamingStrategy2() throws Exception {
+    public void testClassWithFieldInitialCapitalized() throws Exception {
         Class<?> type = new ByteBuddy()
                 .subclass(Object.class)
                 .defineField("Foo", String.class)
