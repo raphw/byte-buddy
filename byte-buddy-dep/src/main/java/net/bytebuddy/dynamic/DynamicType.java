@@ -193,6 +193,12 @@ public interface DynamicType extends ClassFileLocator {
     File toJar(File file, Manifest manifest) throws IOException;
 
     /**
+     * Releases any resources this instance may hold.
+     */
+    @Override
+    void close();
+
+    /**
      * A builder for creating a dynamic type.
      *
      * @param <T> A loaded type that the built type is guaranteed to be a subclass of.
