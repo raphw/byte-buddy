@@ -193,6 +193,11 @@ public interface DynamicType extends ClassFileLocator {
     File toJar(File file, Manifest manifest) throws IOException;
 
     /**
+     * {@inheritDoc}
+     */
+    void close();
+
+    /**
      * A builder for creating a dynamic type.
      *
      * @param <T> A loaded type that the built type is guaranteed to be a subclass of.
@@ -6069,6 +6074,9 @@ public interface DynamicType extends ClassFileLocator {
             return new Resolution.Illegal(name);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public void close() {
             /* do nothing */
         }
