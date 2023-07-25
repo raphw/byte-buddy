@@ -21,7 +21,7 @@
         <version.maven.plexus-build-api>0.0.7</version.maven.plexus-build-api>
         <version.maven.test>3.3.0</version.maven.test>
         <version.slf4j>1.7.36</version.slf4j>
-        <version.maven.plexus-archiver>3.7.0</version.maven.plexus-archiver>
+        <version.maven.plexus-archiver>4.8.0</version.maven.plexus-archiver>
         <version.maven.plexus-util>3.4.2</version.maven.plexus-util>
         <version.commons-io>2.11.0</version.commons-io>
         <version.commons-compress>1.21</version.commons-compress>
