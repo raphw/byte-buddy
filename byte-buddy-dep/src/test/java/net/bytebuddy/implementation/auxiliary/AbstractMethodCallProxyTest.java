@@ -14,8 +14,9 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.objectweb.asm.Opcodes;
 
-import java.util.concurrent.Callable;
 import java.lang.reflect.Field;
+import java.util.concurrent.Callable;
+
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.not;
