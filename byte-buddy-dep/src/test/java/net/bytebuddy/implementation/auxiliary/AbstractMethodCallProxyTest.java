@@ -15,13 +15,14 @@ import org.mockito.junit.MockitoJUnit;
 import org.objectweb.asm.Opcodes;
 
 import java.util.concurrent.Callable;
+import java.lang.reflect.Field;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
-import java.lang.reflect.Field;
+
 
 public class AbstractMethodCallProxyTest {
 
@@ -67,18 +68,15 @@ public class AbstractMethodCallProxyTest {
             }
         }
         if (!proxyMethod.isStatic()) {
-        	Field field = fields[proxyTargetPosition];
-            assertThat(field.getType(), CoreMatchers.<Class<?>>is(proxyTarget));
+            assertThat(fields[proxyTargetPosition].getType(), CoreMatchers.<Class<?>>is(proxyTarget));
         }
         for (int i = 0; i < parameterTypes.length; i++) {
-            Field field = fields[i];
-            Class<?> fieldType = field.getType();
+            Class<?> fieldType = fields[i].getType();
             Class<?> parameterType = parameterTypes[i];
             found =null;
             for (Field field1 : fields) {
-                Class<?> fieldType1 = field1.getType();
-                if (fieldType1.equals(parameterType)) {
-                    found = fieldType1;
+                if (field1.getType().equals(parameterType)) {
+                    found = field1.getType();
                     break;
                 }
             }
