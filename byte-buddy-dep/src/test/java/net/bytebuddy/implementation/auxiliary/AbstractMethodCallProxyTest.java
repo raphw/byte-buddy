@@ -74,9 +74,9 @@ public class AbstractMethodCallProxyTest {
         for (int i = 0; i < parameterTypes.length; i++){
             Class<?> parameterType = parameterTypes[i];
             found =null;
-            for (Field field1 : fields) {
-                if (field1.getType().equals(parameterType)) {
-                    found = field1.getType();
+            for (Field field : fields) {
+                if (field.getType().equals(parameterType)) {
+                    found = field.getType();
                     break;
                 }
             }
