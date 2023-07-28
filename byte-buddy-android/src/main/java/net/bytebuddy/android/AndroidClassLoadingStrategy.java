@@ -137,13 +137,16 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
             if (!jar.createNewFile()) {
                 throw new IllegalStateException("Cannot create " + jar);
             }
-            JarOutputStream zipOutputStream = new JarOutputStream(new FileOutputStream(jar));
+            JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(jar));
             try {
-                zipOutputStream.putNextEntry(new JarEntry(DEX_CLASS_FILE));
-                conversion.drainTo(zipOutputStream);
-                zipOutputStream.closeEntry();
+                outputStream.putNextEntry(new JarEntry(DEX_CLASS_FILE));
+                conversion.drainTo(outputStream);
+                outputStream.closeEntry();
             } finally {
-                zipOutputStream.close();
+                outputStream.close();
+            }
+            if (!jar.setReadOnly()) {
+                throw new IllegalStateException("Failed to set jar read-only " + jar.getAbsolutePath());
             }
             return doLoad(classLoader, types.keySet(), jar);
         } catch (IOException exception) {
