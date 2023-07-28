@@ -71,8 +71,7 @@ public class AbstractMethodCallProxyTest {
         if (!proxyMethod.isStatic()) {
             assertThat(fields[proxyTargetPosition].getType(), CoreMatchers.<Class<?>>is(proxyTarget));
         }
-        for (int i = 0; i < parameterTypes.length; i++) {
-            Class<?> fieldType = fields[i].getType();
+        for (int i = 0; i < parameterTypes.length; i++){
             Class<?> parameterType = parameterTypes[i];
             found =null;
             for (Field field1 : fields) {
