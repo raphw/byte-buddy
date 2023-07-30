@@ -23,7 +23,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-
 public class AbstractMethodCallProxyTest {
 
     protected static final String FOO = "foo";
