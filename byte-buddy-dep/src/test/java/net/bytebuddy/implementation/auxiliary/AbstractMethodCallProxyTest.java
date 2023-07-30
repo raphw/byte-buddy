@@ -17,7 +17,6 @@ import org.objectweb.asm.Opcodes;
 import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
 
-
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
@@ -58,23 +57,21 @@ public class AbstractMethodCallProxyTest {
         assertThat(auxiliaryType.getDeclaredConstructors().length, is(1));
         assertThat(auxiliaryType.getDeclaredMethods().length, is(2));
         assertThat(auxiliaryType.getDeclaredFields().length, is(proxyMethod.getParameters().size() + (proxyMethod.isStatic() ? 0 : 1)));
-        Field[] fields = auxiliaryType.getDeclaredFields();     
+             
         Class<?>[] parameterTypes = proxyTarget.getDeclaredMethods()[0].getParameterTypes();
-        Class<?> found ;
-        int proxyTargetPosition = -1;
-        for (int i = 0; i < fields.length; i++) {
-            if (fields[i].getType() == proxyTarget) {
-                proxyTargetPosition = i;
+        Field targetField = null;
+        for (Field field : auxiliaryType.getDeclaredFields()) {
+            if (field.getType() == proxyTarget) {
+                targetField = field;
                 break;
             }
         }
-        if (!proxyMethod.isStatic()) {
-            assertThat(fields[proxyTargetPosition].getType(), CoreMatchers.<Class<?>>is(proxyTarget));
+        if (!proxyMethod.isStatic() && targetField != null) {
+            assertThat(targetField.getType(), CoreMatchers.<Class<?>>is(proxyTarget));
         }
-        for (int i = 0; i < parameterTypes.length; i++){
-            Class<?> parameterType = parameterTypes[i];
-            found =null;
-            for (Field field : fields) {
+        for (Class<?> parameterType = parameterTypes){
+            Class<?> found = null;
+            for (Field field : auxiliaryType.getDeclaredFields()) {
                 if (field.getType().equals(parameterType)) {
                     found = field.getType();
                     break;
