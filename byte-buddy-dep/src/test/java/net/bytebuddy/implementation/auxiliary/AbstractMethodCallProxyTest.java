@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.auxiliary;
 
 import net.bytebuddy.ClassFileVersion;
+import java.lang.reflect.Parameter;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -15,7 +16,11 @@ import org.mockito.junit.MockitoJUnit;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
+import java.util.Collections;
+import java.util.Comparator;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.not;
@@ -56,26 +61,34 @@ public class AbstractMethodCallProxyTest {
         assertThat(auxiliaryType.getDeclaredConstructors().length, is(1));
         assertThat(auxiliaryType.getDeclaredMethods().length, is(2));
         assertThat(auxiliaryType.getDeclaredFields().length, is(proxyMethod.getParameters().size() + (proxyMethod.isStatic() ? 0 : 1)));       
-        Field targetField = null;
-        for (Field field : auxiliaryType.getDeclaredFields()) {
-            if (field.getType() == proxyTarget) {
-                targetField = field;
-                break;
-            }
-        }
-        if (!proxyMethod.isStatic() && targetField != null) {
-            assertThat(targetField.getType(), CoreMatchers.<Class<?>>is(proxyTarget));
-        }
-        for (Class<?> parameterType : proxyTarget.getDeclaredMethods()[0].getParameterTypes()){
-            Class<?> found = null;
-            for (Field field : auxiliaryType.getDeclaredFields()) {
-                if (field.getType().equals(parameterType)) {
-                    found = field.getType();
+        if(!proxyMethod.isStatic()){
+            for (Field field : auxiliaryType.getDeclaredFields()){
+                if (field.getType() == proxyTarget){
+                	assertThat(field.getType(), CoreMatchers.<Class<?>>is(proxyTarget));
                     break;
-                }
+                }  
             }
-            assertThat(found, CoreMatchers.<Class<?>>is(parameterType));
         }
+        ArrayList<Class<?>> filteredFields = new ArrayList<>();
+        for(Field field : auxiliaryType.getDeclaredFields()) {
+        	  if (field.getType() != proxyTarget){
+        		  filteredFields.add(field.getType());
+              }  
+        }
+        Collections.sort(filteredFields, new Comparator<Class<?>>() {
+            @Override
+            public int compare(Class<?> class1, Class<?> class2) {
+                return class1.getSimpleName().compareTo(class2.getSimpleName());
+            }
+        });
+        ArrayList<Class<?>> parameterTypes = new ArrayList<Class<?>>(Arrays.asList(proxyTarget.getDeclaredMethods()[0].getParameterTypes()));
+        Collections.sort(parameterTypes, new Comparator<Class<?>>() {
+            @Override
+            public int compare(Class<?> class1, Class<?> class2) {
+                return class1.getSimpleName().compareTo(class2.getSimpleName());
+            }
+        });
+        assertThat(filteredFields, CoreMatchers.is(parameterTypes));
         return auxiliaryType;
     }
 }
