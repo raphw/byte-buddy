@@ -88,7 +88,6 @@ public class AbstractMethodCallProxyTest {
                 return class1.getSimpleName().compareTo(class2.getSimpleName());
             }
         });
-        //
         assertThat(filteredFields, CoreMatchers.is(parameterTypes));
         return auxiliaryType;
     }
