@@ -1,7 +1,6 @@
 package net.bytebuddy.implementation.auxiliary;
 
 import net.bytebuddy.ClassFileVersion;
-import java.lang.reflect.Parameter;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -88,7 +87,6 @@ public class AbstractMethodCallProxyTest {
                 return class1.getSimpleName().compareTo(class2.getSimpleName());
             }
         });
-        //
         assertThat(filteredFields, CoreMatchers.is(parameterTypes));
         return auxiliaryType;
     }
