@@ -69,7 +69,7 @@ public class AbstractMethodCallProxyTest {
                 }  
             }
         }
-        ArrayList<Class<?>> filteredFields = new ArrayList<>();
+        ArrayList<Class<?>> filteredFields = new ArrayList<Class<?>>();
         for(Field field : auxiliaryType.getDeclaredFields()) {
         	  if (field.getType() != proxyTarget){
         		  filteredFields.add(field.getType());
@@ -88,7 +88,6 @@ public class AbstractMethodCallProxyTest {
                 return class1.getSimpleName().compareTo(class2.getSimpleName());
             }
         });
-        //
         assertThat(filteredFields, CoreMatchers.is(parameterTypes));
         return auxiliaryType;
     }
