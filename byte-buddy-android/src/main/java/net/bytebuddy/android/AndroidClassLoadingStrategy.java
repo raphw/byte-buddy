@@ -33,11 +33,16 @@ import net.bytebuddy.utility.RandomString;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -90,6 +95,31 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
      */
     @AlwaysNull
     private static final String EMPTY_LIBRARY_PATH = null;
+
+    /**
+     * A processor for files before adding them to a dex file.
+     */
+    private static final FileProcessor FILE_PROCESSOR;
+
+    /*
+     * Resolves the file processor.
+     */
+    static {
+        FileProcessor fileProcessor;
+        try {
+            fileProcessor = new FileProcessor.ForReadOnlyClassFile(
+                    Class.forName("java.nio.file.Files").getMethod("setPosixFilePermissions",
+                            Class.forName("java.nio.file.Path"),
+                            Set.class),
+                    File.class.getMethod("toPath"),
+                    Collections.singleton(Class.forName("java.nio.file.attribute.PosixFilePermission")
+                            .getMethod("valueOf", String.class)
+                            .invoke(null, "OWNER_READ")));
+        } catch (Throwable ignored) {
+            fileProcessor = FileProcessor.Disabled.INSTANCE;
+        }
+        FILE_PROCESSOR = fileProcessor;
+    }
 
     /**
      * The dex creator to be used by this Android class loading strategy.
@@ -145,9 +175,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
             } finally {
                 outputStream.close();
             }
-            if (!jar.setReadOnly()) {
-                throw new IllegalStateException("Failed to set jar read-only " + jar.getAbsolutePath());
-            }
+            FILE_PROCESSOR.accept(jar);
             return doLoad(classLoader, types.keySet(), jar);
         } catch (IOException exception) {
             throw new IllegalStateException("Cannot write to zip file " + jar, exception);
@@ -168,6 +196,84 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
      * @throws IOException If an I/O exception occurs.
      */
     protected abstract Map<TypeDescription, Class<?>> doLoad(@MaybeNull ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) throws IOException;
+
+    /**
+     * A processor for files that are added to a dex file.
+     */
+    protected interface FileProcessor {
+
+        /**
+         * Accepts a file for processing.
+         *
+         * @param file The file to process.
+         */
+        void accept(File file);
+
+        /**
+         * A non-operational file processor.
+         */
+        enum Disabled implements FileProcessor {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public void accept(File file) {
+                /* do nothing */
+            }
+        }
+
+        /**
+         * A file processor that marks a file as read-only.
+         */
+        class ForReadOnlyClassFile implements FileProcessor {
+
+            /**
+             * The {@code java.nio.file.Files#setPosixFilePermissions} method.
+             */
+            private final Method setPosixFilePermissions;
+
+            /**
+             * The {@code java.io.File#toPath} method.
+             */
+            private final Method toPath;
+
+            /**
+             * The set of permissions to set.
+             */
+            private final Set<?> permissions;
+
+            /**
+             * Creates a new file processor for a read only file.
+             *
+             * @param setPosixFilePermissions The {@code java.nio.file.Files#setPosixFilePermissions} method.
+             * @param toPath                  The {@code java.io.File#toPath} method.
+             * @param permissions             The set of {java.nio.file.attribute.FilePermission} to set.
+             */
+            protected ForReadOnlyClassFile(Method setPosixFilePermissions, Method toPath, Set<?> permissions) {
+                this.setPosixFilePermissions = setPosixFilePermissions;
+                this.toPath = toPath;
+                this.permissions = permissions;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void accept(File file) {
+                try {
+                    setPosixFilePermissions.invoke(null, toPath.invoke(file), permissions);
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Cannot access file system permissions", exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Cannot invoke file system permissions method", exception.getTargetException());
+                }
+            }
+        }
+    }
 
     /**
      * A dex processor is responsible for converting a collection of Java class files into a Android dex file.
@@ -342,7 +448,9 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                  * {@inheritDoc}
                  */
                 public void register(String name, byte[] binaryRepresentation) {
-                    DirectClassFile directClassFile = new DirectClassFile(binaryRepresentation, name.replace('.', '/') + CLASS_FILE_EXTENSION, NON_STRICT);
+                    DirectClassFile directClassFile = new DirectClassFile(binaryRepresentation,
+                            name.replace('.', '/') + CLASS_FILE_EXTENSION,
+                            NON_STRICT);
                     directClassFile.setAttributeFactory(new StdAttributeFactory());
                     dexFile.add(DISPATCHER.translate(directClassFile,
                             binaryRepresentation,
@@ -466,7 +574,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                                     binaryRepresentation,
                                     dexCompilerOptions,
                                     dexFileOptions,
-                                    new DexFile(dexFileOptions));
+                                    dexFile);
                         } catch (IllegalAccessException exception) {
                             throw new IllegalStateException("Cannot access an Android dex file translation method", exception);
                         } catch (InvocationTargetException exception) {
@@ -527,7 +635,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                                     binaryRepresentation,
                                     dexCompilerOptions,
                                     dexFileOptions,
-                                    new DexFile(dexFileOptions));
+                                    dexFile);
                         } catch (IllegalAccessException exception) {
                             throw new IllegalStateException("Cannot access an Android dex file translation method", exception);
                         } catch (InstantiationException exception) {
