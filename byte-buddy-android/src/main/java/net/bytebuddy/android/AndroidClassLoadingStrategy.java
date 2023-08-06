@@ -269,7 +269,9 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access file system permissions", exception);
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Cannot invoke file system permissions method", exception.getTargetException());
+                    if (!(exception.getTargetException() instanceof UnsupportedOperationException)) {
+                        throw new IllegalStateException("Cannot invoke file system permissions method", exception.getTargetException());
+                    }
                 }
             }
         }
