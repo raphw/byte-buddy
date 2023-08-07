@@ -25,7 +25,8 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.implementation.bytecode.constant.*;
+import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
+import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
@@ -39,6 +40,10 @@ import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
@@ -109,7 +114,7 @@ public abstract class FieldAccessor implements Implementation {
      * @return A field accessor that follows the Java naming conventions for bean properties.
      */
     public static OwnerTypeLocatable ofBeanProperty() {
-        return of(FieldNameExtractor.ForBeanProperty.INSTANCE);
+        return of(FieldNameExtractor.ForBeanProperty.INSTANCE, FieldNameExtractor.ForBeanProperty.CAPITALIZED);
     }
 
     /**
@@ -119,7 +124,27 @@ public abstract class FieldAccessor implements Implementation {
      * @return A field accessor using the given field name extractor.
      */
     public static OwnerTypeLocatable of(FieldNameExtractor fieldNameExtractor) {
-        return new ForImplicitProperty(new FieldLocation.Relative(fieldNameExtractor));
+        return of(Collections.singletonList(fieldNameExtractor));
+    }
+
+    /**
+     * Defines a custom strategy for determining the field that is accessed by this field accessor.
+     *
+     * @param fieldNameExtractor The field name extractors to use in their application order.
+     * @return A field accessor using the given field name extractor.
+     */
+    public static OwnerTypeLocatable of(FieldNameExtractor... fieldNameExtractor) {
+        return of(Arrays.asList(fieldNameExtractor));
+    }
+
+    /**
+     * Defines a custom strategy for determining the field that is accessed by this field accessor.
+     *
+     * @param fieldNameExtractors The field name extractors to use in their application order.
+     * @return A field accessor using the given field name extractor.
+     */
+    public static OwnerTypeLocatable of(List<? extends FieldNameExtractor> fieldNameExtractors) {
+        return new ForImplicitProperty(new FieldLocation.Relative(fieldNameExtractors));
     }
 
     /**
@@ -232,9 +257,9 @@ public abstract class FieldAccessor implements Implementation {
         class Relative implements FieldLocation {
 
             /**
-             * The field name extractor to use.
+             * The field name extractors to use in their application order.
              */
-            private final FieldNameExtractor fieldNameExtractor;
+            private final List<? extends FieldNameExtractor> fieldNameExtractors;
 
             /**
              * The field locator factory to use.
@@ -244,20 +269,20 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * Creates a new relative field location.
              *
-             * @param fieldNameExtractor The field name extractor to use.
+             * @param fieldNameExtractors The field name extractors to use in their application order.
              */
-            protected Relative(FieldNameExtractor fieldNameExtractor) {
-                this(fieldNameExtractor, FieldLocator.ForClassHierarchy.Factory.INSTANCE);
+            protected Relative(List<? extends FieldNameExtractor> fieldNameExtractors) {
+                this(fieldNameExtractors, FieldLocator.ForClassHierarchy.Factory.INSTANCE);
             }
 
             /**
              * Creates a new relative field location.
              *
-             * @param fieldNameExtractor  The field name extractor to use.
+             * @param fieldNameExtractors  The field name extractors to use in their application order.
              * @param fieldLocatorFactory The field locator factory to use.
              */
-            private Relative(FieldNameExtractor fieldNameExtractor, FieldLocator.Factory fieldLocatorFactory) {
-                this.fieldNameExtractor = fieldNameExtractor;
+            private Relative(List<? extends FieldNameExtractor> fieldNameExtractors, FieldLocator.Factory fieldLocatorFactory) {
+                this.fieldNameExtractors = fieldNameExtractors;
                 this.fieldLocatorFactory = fieldLocatorFactory;
             }
 
@@ -265,14 +290,14 @@ public abstract class FieldAccessor implements Implementation {
              * {@inheritDoc}
              */
             public FieldLocation with(FieldLocator.Factory fieldLocatorFactory) {
-                return new Relative(fieldNameExtractor, fieldLocatorFactory);
+                return new Relative(fieldNameExtractors, fieldLocatorFactory);
             }
 
             /**
              * {@inheritDoc}
              */
             public FieldLocation.Prepared prepare(TypeDescription instrumentedType) {
-                return new Prepared(fieldNameExtractor, fieldLocatorFactory.make(instrumentedType));
+                return new Prepared(fieldNameExtractors, fieldLocatorFactory.make(instrumentedType));
             }
 
             /**
@@ -282,9 +307,9 @@ public abstract class FieldAccessor implements Implementation {
             protected static class Prepared implements FieldLocation.Prepared {
 
                 /**
-                 * The field name extractor to use.
+                 * The field name extractor to use in their application order.
                  */
-                private final FieldNameExtractor fieldNameExtractor;
+                private final List<? extends FieldNameExtractor> fieldNameExtractors;
 
                 /**
                  * The field locator factory to use.
@@ -294,11 +319,11 @@ public abstract class FieldAccessor implements Implementation {
                 /**
                  * Creates a new relative field location.
                  *
-                 * @param fieldNameExtractor The field name extractor to use.
-                 * @param fieldLocator       The field locator to use.
+                 * @param fieldNameExtractors The field name extractors to use in their application order.
+                 * @param fieldLocator        The field locator to use.
                  */
-                protected Prepared(FieldNameExtractor fieldNameExtractor, FieldLocator fieldLocator) {
-                    this.fieldNameExtractor = fieldNameExtractor;
+                protected Prepared(List<? extends FieldNameExtractor> fieldNameExtractors, FieldLocator fieldLocator) {
+                    this.fieldNameExtractors = fieldNameExtractors;
                     this.fieldLocator = fieldLocator;
                 }
 
@@ -306,7 +331,11 @@ public abstract class FieldAccessor implements Implementation {
                  * {@inheritDoc}
                  */
                 public FieldDescription resolve(MethodDescription instrumentedMethod) {
-                    FieldLocator.Resolution resolution = fieldLocator.locate(fieldNameExtractor.resolve(instrumentedMethod));
+                    FieldLocator.Resolution resolution = FieldLocator.Resolution.Illegal.INSTANCE;
+                    Iterator<? extends FieldNameExtractor> iterator = fieldNameExtractors.iterator();
+                    while (iterator.hasNext() && !resolution.isResolved()) {
+                        resolution = fieldLocator.locate(iterator.next().resolve(instrumentedMethod));
+                    }
                     if (!resolution.isResolved()) {
                         throw new IllegalStateException("Cannot resolve field for " + instrumentedMethod + " using " + fieldLocator);
                     }
@@ -337,9 +366,24 @@ public abstract class FieldAccessor implements Implementation {
         enum ForBeanProperty implements FieldNameExtractor {
 
             /**
-             * The singleton instance.
+             * A resolver that resolves a standard bean property name.
              */
-            INSTANCE;
+            INSTANCE {
+                @Override
+                protected char resolve(char character) {
+                    return Character.toLowerCase(character);
+                }
+            },
+
+            /**
+             * A resolver that resolves a field name with a capital letter.
+             */
+            CAPITALIZED {
+                @Override
+                protected char resolve(char character) {
+                    return Character.toUpperCase(character);
+                }
+            };
 
             /**
              * {@inheritDoc}
@@ -358,8 +402,16 @@ public abstract class FieldAccessor implements Implementation {
                 if (name.length() == 0) {
                     throw new IllegalArgumentException(methodDescription + " does not specify a bean name");
                 }
-                return Character.toLowerCase(name.charAt(0)) + name.substring(1);
+                return resolve(name.charAt(0)) + name.substring(1);
             }
+
+            /**
+             * Resolves the first character of the bean property.
+             *
+             * @param character The first character.
+             * @return The resolved first character.
+             */
+            protected abstract char resolve(char character);
         }
 
         /**
@@ -799,7 +851,7 @@ public abstract class FieldAccessor implements Implementation {
                     assigner,
                     typing,
                     ForSetter.TerminationHandler.RETURNING,
-                    new FieldLocation.Relative(fieldNameExtractor));
+                    new FieldLocation.Relative(Collections.singletonList(fieldNameExtractor)));
         }
 
         /**
