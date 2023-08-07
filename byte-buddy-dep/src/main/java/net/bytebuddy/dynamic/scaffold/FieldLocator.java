@@ -129,7 +129,10 @@ public interface FieldLocator {
                 } else {
                     return FieldLocator.Resolution.Illegal.INSTANCE;
                 }
-                return fieldLocator.locate(Character.toLowerCase(name.charAt(0)) + name.substring(1));
+                Resolution resolution = fieldLocator.locate(Character.toLowerCase(name.charAt(0)) + name.substring(1));
+                return resolution.isResolved()
+                        ? resolution
+                        : fieldLocator.locate(Character.toUpperCase(name.charAt(0)) + name.substring(1));
             }
 
             /**
