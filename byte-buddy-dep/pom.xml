@@ -227,7 +227,6 @@
                         <configuration>
                             <excludes>
                                 <exclude>net.bytebuddy.asm.MemberSubstitution</exclude>
-                                <exclude>net.bytebuddy.implementation.FieldAccessor</exclude>
                             </excludes>
                         </configuration>
                     </plugin>

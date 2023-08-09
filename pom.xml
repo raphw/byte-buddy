@@ -1130,6 +1130,9 @@
                                         <ignoreMissingClasses>true</ignoreMissingClasses>
                                         <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
                                         <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
+                                        <excludes>
+                                            <exclude>net.bytebuddy.implementation.FieldAccessor$FieldNameExtractor$ForBeanProperty</exclude>
+                                        </excludes>
                                     </parameter>
                                 </configuration>
                             </execution>
