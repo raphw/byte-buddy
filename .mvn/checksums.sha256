@@ -168,6 +168,8 @@ com.github.javaparser:javaparser-core:pom:3.24.7 e034f786b14258b27a245293edc669f
 com.github.javaparser:javaparser-parent:pom:3.17.0 8420c10243f57af9b157db372fa382ae84612a9213ee8986732ea8255e439632
 com.github.javaparser:javaparser-parent:pom:3.24.7 c5cc18340dbf9cf06599a6c5c8de39ea5613c74268977b0fba4f279282312b90
 com.github.jeluard:oss-parent:pom:9 6389926a69fc90ed74ab33069bd014f1736394aae1bcff46f229e87e25db150e
+com.github.luben:zstd-jni:jar:1.5.5-5 c78d4e139894f555d956d12fbfcf3d45af751d4b2f183880ed5f99b69b284416
+com.github.luben:zstd-jni:pom:1.5.5-5 232c62cff322717d3d9355d278c65904b111f3d7eba038b15e115578208c2d0d
 com.github.rtyley:android-screenshot-celebrity:jar:1.9 5c214a24bbc61650c03fe8b7ddcb1a1e16f04b0f8133832e1d917ad4cc89821f
 com.github.rtyley:android-screenshot-celebrity:pom:1.9 f3c7599e0bfb69f9fbe6edf29853386c4e2eeed42fd2267db09e92d2e551217b
 com.github.rtyley:android-screenshot-paparazzo:jar:1.9 ee878eca3fcd4bf7fe4283f08c7b7fce8a21497fb5e97462253817c72c0f3a54
@@ -1962,6 +1964,7 @@ org.codehaus.plexus:plexus-archiver:jar:4.2.1 c5bb0a59716c337125e8c760f55ebea9a8
 org.codehaus.plexus:plexus-archiver:jar:4.2.2 7e7e132ab98a3a7cc26f5a72ccb8bedeed073a50ae0c076513328e34fe15b85b
 org.codehaus.plexus:plexus-archiver:jar:4.2.7 5e0c49de4c56a25aa242e2de2b5fea1c0368826c2a8ab73764a0c91d3631633b
 org.codehaus.plexus:plexus-archiver:jar:4.4.0 43c75ef577d610ab77ec2894acbde0c72604416ba8ba8b49e9a740d045a40250
+org.codehaus.plexus:plexus-archiver:jar:4.8.0 24513c9bc6d52716f5a22f7ef03e26c310f62ebcde309de9833deac6a4ac32e3
 org.codehaus.plexus:plexus-archiver:pom:2.1 d2e14a5c6bed6ac4fc27d57f6ba227bb64a96742f71ee3fbafd2c019fa9d4449
 org.codehaus.plexus:plexus-archiver:pom:2.1.1 75c476e7025705766994a29b435671046c48b279da29bdad91f01597bc7f3329
 org.codehaus.plexus:plexus-archiver:pom:2.2 5b22030f29c08a11dd801a8881d5eedd919c81d27a0d695704871f415ce2234a
@@ -1978,6 +1981,7 @@ org.codehaus.plexus:plexus-archiver:pom:4.2.1 2b1aa2adef45630f4668144c7c22f829bf
 org.codehaus.plexus:plexus-archiver:pom:4.2.2 76c6f4abb5ef8de6bc93e6ee805bd91e884d2eac4886454ae224c911b31b7552
 org.codehaus.plexus:plexus-archiver:pom:4.2.7 2f8d25a75154d59d3469484320e254f5cc863b8255e470c1a1eb8898ff5ae821
 org.codehaus.plexus:plexus-archiver:pom:4.4.0 01988bc3ce19a1d64f173feffa5eff22fef17772a112cf993a5b8b106e0ebb7b
+org.codehaus.plexus:plexus-archiver:pom:4.8.0 a76eb8d9750adb54408f7186460593ec8068bb9f7ded97634a8c5af296d5a28d
 org.codehaus.plexus:plexus-cipher:jar:2.0 9a7f1b5c5a9effd61eadfd8731452a2f76a8e79111fac391ef75ea801bea203a
 org.codehaus.plexus:plexus-cipher:pom:2.0 04842f331b0225b85a5e20439710d228ea7a6302abe6d53c9c9846fbc5bf99ff
 org.codehaus.plexus:plexus-classworlds:jar:2.2.3 7d95ad21733b060bfda2142b62439a196bde7644f9f127c299ae86d92179b518
@@ -2124,6 +2128,7 @@ org.codehaus.plexus:plexus-io:jar:3.0.1 3806c1798f494eeb8081d952746a99f4bffc2cde
 org.codehaus.plexus:plexus-io:jar:3.1.0 3929f820e5756c871f05d93fad7e9b73517839c158d502c7a4f1a5d6f8fa30cd
 org.codehaus.plexus:plexus-io:jar:3.2.0 15cf8cbd9e014b7156482bbb48e515613158bdd9b4b908d21e6b900f7876f6ff
 org.codehaus.plexus:plexus-io:jar:3.4.0 cd4da2ffd9adddfa30878350878286a5cfb332f7aeb08a39f24465c55e0cfb38
+org.codehaus.plexus:plexus-io:jar:3.4.1 ac3be07c2968f98656604ddb8fdf08f1cfc560bc7b329fd17847f151510dc2c4
 org.codehaus.plexus:plexus-io:pom:2.0.2 67a1ce072ad9ff4ce37985a1c32827eaeda4660cabe7f69eff2ca1ebff2d23bd
 org.codehaus.plexus:plexus-io:pom:2.0.3 ae42459c90f519106498026e462448542bcb32d9dd33c85c5007db3119b68bf2
 org.codehaus.plexus:plexus-io:pom:2.0.4 c9ed35c5468a6b6fd3c306acbb6c0c04d352d744895ac5dbfaffa5ab83dfe4f2
@@ -2137,6 +2142,7 @@ org.codehaus.plexus:plexus-io:pom:3.0.1 a27d26b5c79ab85dda7ea5955893d9f2d6e86a69
 org.codehaus.plexus:plexus-io:pom:3.1.0 e72233004bdd7168f49159629e8087757829239bd0a0e0852643380bf9bac8c7
 org.codehaus.plexus:plexus-io:pom:3.2.0 726b07803e7aea9e03cc1da166b7c5d90d681b5b0c292f57a93cf5b07eaf7f80
 org.codehaus.plexus:plexus-io:pom:3.4.0 962b86912214d3e5fdf6a1227a9a0272b646b8a2953aa3c6d6db5ec9f052912d
+org.codehaus.plexus:plexus-io:pom:3.4.1 7cd6047a0beec84b4d0d4c1a8ff4c9adb10c3f18e4fe18622f6ee7d4592b9a87
 org.codehaus.plexus:plexus-java:jar:0.9.10 9f4c82ea85ccad3c8bb6ae8101ed760aabf5b33b529586a8bd5d1e3d3ab67f1b
 org.codehaus.plexus:plexus-java:jar:1.0.5 1c823e3f3ac75e804d79cb16bd31d525370e6d0d76ca5c82a9d31f17331ceee8
 org.codehaus.plexus:plexus-java:jar:1.1.0 fcdbb5d4ae15f320e772f369456818fd2fa2af487ba112efbc6ad8a9ee121b3a
@@ -2235,6 +2241,7 @@ org.codehaus.plexus:plexus:pom:1.0.5 9a1df7db80ac85a4559a935404b9e57dc3dabeded5f
 org.codehaus.plexus:plexus:pom:1.0.8 a89a2f99088e244b3e52e35f19f5f7d3aba03dbb3cfaea044e2a694119e88f79
 org.codehaus.plexus:plexus:pom:1.0.9 11a987607957fcac04d6ac182308abf5a7d3707f519863e55c8eb419953f5374
 org.codehaus.plexus:plexus:pom:10 bba9c521064b9ca132ce97cc1cc7eb4afc2dbe32bc88cb872c88e99f6162301f
+org.codehaus.plexus:plexus:pom:14 b1a3417f1e63f089aec314043592568a01ba29c5024963c40f5477b21d4d4cd8
 org.codehaus.plexus:plexus:pom:2.0.0 6a93acd52678054d8bab70f4eabd48082311de16939a125624243d5717a6215c
 org.codehaus.plexus:plexus:pom:2.0.2 e246e2a062b5d989fdefc521c9c56431ba5554ff8d2344edee9218a34a546a33
 org.codehaus.plexus:plexus:pom:2.0.3 fcc5670db8864c50c16bd96972f0da876f6651a8edc99850e68b2d569c5a4776
@@ -2421,6 +2428,7 @@ org.junit:junit-bom:pom:5.8.1 ef7dc47f8e4a16864f4779728e87ed78539819e4fb892768a9
 org.junit:junit-bom:pom:5.8.2 836069ca9e8ee3c56e48376222da291263f137bd3fd16d84fdd47efcc3f286e2
 org.junit:junit-bom:pom:5.9.0 d83e87f1676cde44191eec5cda690492392f26923b1e498148ca739dfed75295
 org.junit:junit-bom:pom:5.9.1 b163c1cfc8fc1fd58b457a00d586c04c46e986d75904e9ca54c03a97d65b496c
+org.junit:junit-bom:pom:5.9.3 4d0329cd9e72f2420e5ca15724cbfe6ffa6e5fd2888361516271190fdc342ed7
 org.jvnet.staxex:stax-ex:jar:1.8.1 20522549056e9e50aa35ef0b445a2e47a53d06be0b0a9467d704e2483ffb049a
 org.jvnet.staxex:stax-ex:pom:1.8.1 8fc84f36ce6da6ce8c893b6538199a7f69a69a0706d9b17a3ee6a3a09452eed6
 org.khronos:opengl-api:jar:gl1.1-android-2.1_r1 cc08393220f706ef9299b453cd88f741382cee49dbeea2c667b4be1435768145
