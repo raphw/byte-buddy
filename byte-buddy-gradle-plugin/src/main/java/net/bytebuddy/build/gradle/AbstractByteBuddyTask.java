@@ -418,6 +418,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
                 }
             }
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
+            classFileLocators.add(ClassFileLocator.ForClassLoader.ofPlatformLoader());
             for (File artifact : classPath()) {
                 classFileLocators.add(artifact.isFile()
                         ? ClassFileLocator.ForJarFile.of(artifact)
