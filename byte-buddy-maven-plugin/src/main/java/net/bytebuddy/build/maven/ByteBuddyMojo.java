@@ -438,6 +438,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             EntryPoint entryPoint = (initialization == null ? new Initialization() : initialization).getEntryPoint(classLoaderResolver, project.getGroupId(), project.getArtifactId(), managed == null ? project.getVersion() : managed, project.getPackaging());
             getLog().info("Resolved entry point: " + entryPoint);
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(classPath.size());
+            classFileLocators.add(ClassFileLocator.ForClassLoader.ofPlatformLoader());
             for (String target : classPath) {
                 File artifact = new File(target);
                 classFileLocators.add(artifact.isFile() ? ClassFileLocator.ForJarFile.of(artifact) : new ClassFileLocator.ForFolder(artifact));
