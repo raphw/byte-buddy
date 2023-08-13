@@ -788,6 +788,25 @@ public interface AgentBuilder {
      * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
      * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
      * the installation also causes all loaded types to be retransformed which have changed compared to the previous
+     * class file transformer that is provided as an argument. Without specification, {@link PatchMode#OVERLAP} is used.
+     * </p>
+     * <p>
+     * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
+     * via the {@link ResettableClassFileTransformer}'s {@code reset} methods.
+     * </p>
+     *
+     * @param instrumentation      The instrumentation on which this agent builder's configuration is to be installed.
+     * @param classFileTransformer The class file transformer that is being patched.
+     * @param differentialMatcher  The differential matcher to decide what types need retransformation.
+     * @return The installed class file transformer.
+     */
+    ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, RawMatcher differentialMatcher);
+
+    /**
+     * <p>
+     * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
+     * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
+     * the installation also causes all loaded types to be retransformed which have changed compared to the previous
      * class file transformer that is provided as an argument.
      * </p>
      * <p>
@@ -801,6 +820,26 @@ public interface AgentBuilder {
      * @return The installed class file transformer.
      */
     ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, PatchMode patchMode);
+
+    /**
+     * <p>
+     * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
+     * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
+     * the installation also causes all loaded types to be retransformed which have changed compared to the previous
+     * class file transformer that is provided as an argument.
+     * </p>
+     * <p>
+     * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
+     * via the {@link ResettableClassFileTransformer}'s {@code reset} methods.
+     * </p>
+     *
+     * @param instrumentation      The instrumentation on which this agent builder's configuration is to be installed.
+     * @param classFileTransformer The class file transformer that is being patched.
+     * @param differentialMatcher  The differential matcher to decide what types need retransformation.
+     * @param patchMode            The patch mode to apply.
+     * @return The installed class file transformer.
+     */
+    ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, RawMatcher differentialMatcher, PatchMode patchMode);
 
     /**
      * <p>
@@ -9932,6 +9971,18 @@ public interface AgentBuilder {
         };
 
         /**
+         * Resolves a default patch mode for a given {@link ResettableClassFileTransformer}.
+         *
+         * @param classFileTransformer The class file transformer to consider.
+         * @return A meaningful default patch mode.
+         */
+        protected static PatchMode of(ResettableClassFileTransformer classFileTransformer) {
+            return classFileTransformer instanceof ResettableClassFileTransformer.Substitutable
+                    ? PatchMode.SUBSTITUTE
+                    : PatchMode.OVERLAP;
+        }
+
+        /**
          * Resolves this strategy to a handler.
          *
          * @param classFileTransformer The class file transformer to deregister.
@@ -10710,7 +10761,9 @@ public interface AgentBuilder {
                     transformations);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder with(ClassFileLocator classFileLocator) {
             return new Default(byteBuddy,
                     listener,
@@ -11328,18 +11381,30 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
-            return patchOn(instrumentation, classFileTransformer, classFileTransformer instanceof ResettableClassFileTransformer.Substitutable
-                    ? PatchMode.SUBSTITUTE
-                    : PatchMode.OVERLAP);
+            return patchOn(instrumentation, classFileTransformer, PatchMode.of(classFileTransformer));
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, RawMatcher differentialMatcher) {
+            return patchOn(instrumentation, classFileTransformer, differentialMatcher, PatchMode.of(classFileTransformer));
         }
 
         /**
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, PatchMode patchMode) {
-            return doInstall(instrumentation, new Transformation.DifferentialMatcher(ignoreMatcher, transformations, classFileTransformer instanceof ResettableClassFileTransformer.Substitutable
-                        ? ((ResettableClassFileTransformer.Substitutable) classFileTransformer).unwrap()
-                        : classFileTransformer), patchMode.toHandler(classFileTransformer));
+            return patchOn(instrumentation, classFileTransformer, new Transformation.DifferentialMatcher(ignoreMatcher, transformations, classFileTransformer instanceof ResettableClassFileTransformer.Substitutable
+                    ? ((ResettableClassFileTransformer.Substitutable) classFileTransformer).unwrap()
+                    : classFileTransformer), patchMode);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, RawMatcher differentialMatcher, PatchMode patchMode) {
+            return doInstall(instrumentation, differentialMatcher, patchMode.toHandler(classFileTransformer));
         }
 
         /**
@@ -12876,7 +12941,9 @@ public interface AgentBuilder {
                 return materialize().with(locationStrategy);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder with(ClassFileLocator classFileLocator) {
                 return materialize().with(classFileLocator);
             }
@@ -13112,8 +13179,22 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
+            public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, RawMatcher differentialMatcher) {
+                return materialize().patchOn(instrumentation, classFileTransformer, differentialMatcher);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, PatchMode patchMode) {
                 return materialize().patchOn(instrumentation, classFileTransformer, patchMode);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, RawMatcher differentialMatcher, PatchMode patchMode) {
+                return materialize().patchOn(instrumentation, classFileTransformer, differentialMatcher, patchMode);
             }
 
             /**
