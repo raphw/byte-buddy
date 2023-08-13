@@ -11337,7 +11337,9 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, PatchMode patchMode) {
-            return doInstall(instrumentation, new Transformation.DifferentialMatcher(ignoreMatcher, transformations, classFileTransformer), patchMode.toHandler(classFileTransformer));
+            return doInstall(instrumentation, new Transformation.DifferentialMatcher(ignoreMatcher, transformations, classFileTransformer instanceof ResettableClassFileTransformer.Substitutable
+                        ? ((ResettableClassFileTransformer.Substitutable) classFileTransformer).unwrap()
+                        : classFileTransformer), patchMode.toHandler(classFileTransformer));
         }
 
         /**

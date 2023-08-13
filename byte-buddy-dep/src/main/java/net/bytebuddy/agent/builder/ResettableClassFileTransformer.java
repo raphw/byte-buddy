@@ -298,6 +298,13 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
          * @param classFileTransformer The class file transformer to use.
          */
         void substitute(ResettableClassFileTransformer classFileTransformer);
+
+        /**
+         * Returns the underlying non-substitutable class file transformer.
+         *
+         * @return The underlying non-substitutable class file transformer.
+         */
+        ResettableClassFileTransformer unwrap();
     }
 
     /**
@@ -489,27 +496,25 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
              * @param classFileTransformer The class file transformer to wrap.
              * @return A substitutable version of the supplied class file transformer.
              */
-            public static ResettableClassFileTransformer.Substitutable of(ResettableClassFileTransformer classFileTransformer) {
+            public static Substitutable of(ResettableClassFileTransformer classFileTransformer) {
                 return DISPATCHER.make(classFileTransformer);
-            }
-
-            /**
-             * Returns the delegate class file transformer.
-             *
-             * @return The delegate class file transformer.
-             */
-            protected ResettableClassFileTransformer getClassFileTransformer() {
-                return classFileTransformer;
             }
 
             /**
              * {@inheritDoc}
              */
             public void substitute(ResettableClassFileTransformer classFileTransformer) {
-                while (classFileTransformer instanceof WithDelegation.Substitutable) {
-                    classFileTransformer = ((WithDelegation.Substitutable) classFileTransformer).getClassFileTransformer();
+                while (classFileTransformer instanceof Substitutable) {
+                    classFileTransformer = ((Substitutable) classFileTransformer).unwrap();
                 }
                 this.classFileTransformer = classFileTransformer;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ResettableClassFileTransformer unwrap() {
+                return classFileTransformer;
             }
 
             /**
