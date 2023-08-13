@@ -70,8 +70,8 @@ public class AbstractMethodCallProxyTest {
         }
         Comparator<Class<?>> typeComparator = new Comparator<Class<?>>() {
             @Override
-            public int compare(Class<?> class1, Class<?> class2) {
-                return class1.getSimpleName().compareTo(class2.getSimpleName());
+            public int compare(Class<?> a, Class<?> b) {
+                return a.getSimpleName().compareTo(b.getSimpleName());
             }
         };
         ArrayList<Class<?>> filteredFields = new ArrayList<Class<?>>();
@@ -80,8 +80,8 @@ public class AbstractMethodCallProxyTest {
                 filteredFields.add(field.getType());
             }
         }
-        ArrayList<Class<?>> parameterTypes = new ArrayList<Class<?>>(Arrays.asList(proxyTarget.getDeclaredMethods()[0].getParameterTypes()));
         Collections.sort(filteredFields, typeComparator);
+        ArrayList<Class<?>> parameterTypes = new ArrayList<Class<?>>(Arrays.asList(proxyTarget.getDeclaredMethods()[0].getParameterTypes()));
         Collections.sort(parameterTypes, typeComparator);
         assertThat(filteredFields, CoreMatchers.is(parameterTypes));
         return auxiliaryType;
