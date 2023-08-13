@@ -81,8 +81,8 @@ public class AbstractMethodCallProxyTest {
             }
         };
         ArrayList<Class<?>> parameterTypes = new ArrayList<Class<?>>(Arrays.asList(proxyTarget.getDeclaredMethods()[0].getParameterTypes()));
-        Collection.sort(filteredFields,classComparator);
-        Collection.sort(parameterTypes,classComparator);
+        Collections.sort(filteredFields,classComparator);
+        Collections.sort(parameterTypes,classComparator);
         // Collections.sort(filteredFields, new Comparator<Class<?>>() {
         //     @Override
         //     public int compare(Class<?> class1, Class<?> class2) {
