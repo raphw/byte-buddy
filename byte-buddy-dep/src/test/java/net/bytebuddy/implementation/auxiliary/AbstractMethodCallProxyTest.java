@@ -74,19 +74,28 @@ public class AbstractMethodCallProxyTest {
         		  filteredFields.add(field.getType());
               }  
         }
-        Collections.sort(filteredFields, new Comparator<Class<?>>() {
+        Comparator<Class<?>> classComparator = new Comparator<Class<?>>() {
             @Override
             public int compare(Class<?> class1, Class<?> class2) {
                 return class1.getSimpleName().compareTo(class2.getSimpleName());
             }
-        });
+        };
         ArrayList<Class<?>> parameterTypes = new ArrayList<Class<?>>(Arrays.asList(proxyTarget.getDeclaredMethods()[0].getParameterTypes()));
-        Collections.sort(parameterTypes, new Comparator<Class<?>>() {
-            @Override
-            public int compare(Class<?> class1, Class<?> class2) {
-                return class1.getSimpleName().compareTo(class2.getSimpleName());
-            }
-        });
+        Collection.sort(filteredFields,classComparator);
+        Collection.sort(parameterTypes,classComparator);
+        // Collections.sort(filteredFields, new Comparator<Class<?>>() {
+        //     @Override
+        //     public int compare(Class<?> class1, Class<?> class2) {
+        //         return class1.getSimpleName().compareTo(class2.getSimpleName());
+        //     }
+        // });
+       
+        // Collections.sort(parameterTypes, new Comparator<Class<?>>() {
+        //     @Override
+        //     public int compare(Class<?> class1, Class<?> class2) {
+        //         return class1.getSimpleName().compareTo(class2.getSimpleName());
+        //     }
+        // });
         assertThat(filteredFields, CoreMatchers.is(parameterTypes));
         return auxiliaryType;
     }
