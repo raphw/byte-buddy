@@ -60,19 +60,13 @@ public class AbstractMethodCallProxyTest {
         assertThat(auxiliaryType.getDeclaredConstructors().length, is(1));
         assertThat(auxiliaryType.getDeclaredMethods().length, is(2));
         assertThat(auxiliaryType.getDeclaredFields().length, is(proxyMethod.getParameters().size() + (proxyMethod.isStatic() ? 0 : 1)));
-        if(!proxyMethod.isStatic()){
-            for (Field field : auxiliaryType.getDeclaredFields()){
-                if (field.getType() == proxyTarget){
-                	assertThat(field.getType(), CoreMatchers.<Class<?>>is(proxyTarget));
+        if (!proxyMethod.isStatic()) {
+            for (Field field : auxiliaryType.getDeclaredFields()) {
+                if (field.getType() == proxyTarget) {
+                    assertThat(field.getType(), CoreMatchers.<Class<?>>is(proxyTarget));
                     break;
-                }  
+                }
             }
-        }
-        ArrayList<Class<?>> filteredFields = new ArrayList<Class<?>>();
-        for(Field field : auxiliaryType.getDeclaredFields()) {
-        	  if (field.getType() != proxyTarget){
-        		  filteredFields.add(field.getType());
-              }  
         }
         Comparator<Class<?>> classComparator = new Comparator<Class<?>>() {
             @Override
@@ -80,22 +74,15 @@ public class AbstractMethodCallProxyTest {
                 return class1.getSimpleName().compareTo(class2.getSimpleName());
             }
         };
+        ArrayList<Class<?>> filteredFields = new ArrayList<Class<?>>();
+        for (Field field : auxiliaryType.getDeclaredFields()) {
+            if (field.getType() != proxyTarget) {
+                filteredFields.add(field.getType());
+            }
+        }
         ArrayList<Class<?>> parameterTypes = new ArrayList<Class<?>>(Arrays.asList(proxyTarget.getDeclaredMethods()[0].getParameterTypes()));
-        Collections.sort(filteredFields,classComparator);
-        Collections.sort(parameterTypes,classComparator);
-        // Collections.sort(filteredFields, new Comparator<Class<?>>() {
-        //     @Override
-        //     public int compare(Class<?> class1, Class<?> class2) {
-        //         return class1.getSimpleName().compareTo(class2.getSimpleName());
-        //     }
-        // });
-       
-        // Collections.sort(parameterTypes, new Comparator<Class<?>>() {
-        //     @Override
-        //     public int compare(Class<?> class1, Class<?> class2) {
-        //         return class1.getSimpleName().compareTo(class2.getSimpleName());
-        //     }
-        // });
+        Collections.sort(filteredFields, classComparator);
+        Collections.sort(parameterTypes, classComparator);
         assertThat(filteredFields, CoreMatchers.is(parameterTypes));
         return auxiliaryType;
     }
