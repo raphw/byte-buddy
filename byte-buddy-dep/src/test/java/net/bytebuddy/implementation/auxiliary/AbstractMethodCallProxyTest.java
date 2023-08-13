@@ -68,7 +68,7 @@ public class AbstractMethodCallProxyTest {
                 }
             }
         }
-        Comparator<Class<?>> classComparator = new Comparator<Class<?>>() {
+        Comparator<Class<?>> typeComparator = new Comparator<Class<?>>() {
             @Override
             public int compare(Class<?> class1, Class<?> class2) {
                 return class1.getSimpleName().compareTo(class2.getSimpleName());
@@ -81,8 +81,8 @@ public class AbstractMethodCallProxyTest {
             }
         }
         ArrayList<Class<?>> parameterTypes = new ArrayList<Class<?>>(Arrays.asList(proxyTarget.getDeclaredMethods()[0].getParameterTypes()));
-        Collections.sort(filteredFields, classComparator);
-        Collections.sort(parameterTypes, classComparator);
+        Collections.sort(filteredFields, typeComparator);
+        Collections.sort(parameterTypes, typeComparator);
         assertThat(filteredFields, CoreMatchers.is(parameterTypes));
         return auxiliaryType;
     }
