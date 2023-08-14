@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 15. August 2023: version 1.14.6
+
+- Add `PatchMode.SUBSTITUTE` and `ResettableClassFileTransformer.Substitutable` for in-order patching.
+- Allow for explicit specification og differential matcher when patching an `AgentBuilder`.
+- Add platform loader to locator for build plugins.
+- Correctly resolve accessors for fields with capitalized first letter.
+- Make jars for Android read-only as newer versions require it.
+
 ### 1. June 2023: version 1.14.5
 
 - Avoid use of location if agent argument separator is contained.
