@@ -26,6 +26,7 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -91,6 +92,14 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
      * @return A list of the annotation types of this list.
      */
     TypeList asTypeList();
+
+    /**
+     * Returns a list of the names of the annotation types. This list might contain the names of
+     * annotations that are not otherwise resolvable.
+     *
+     * @return A list of binary names of the represented annotations.
+     */
+    List<String> asTypeNames();
 
     /**
      * An abstract base implementation of an annotation list.
@@ -183,6 +192,17 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
                 annotationTypes.add(annotation.getAnnotationType());
             }
             return new TypeList.Explicit(annotationTypes);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public List<String> asTypeNames() {
+            List<String> typeNames = new ArrayList<String>(size());
+            for (AnnotationDescription annotation : this) {
+                typeNames.add(annotation.getAnnotationType().getName());
+            }
+            return typeNames;
         }
 
         @Override
@@ -374,6 +394,13 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
          */
         public TypeList asTypeList() {
             return new TypeList.Empty();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public List<String> asTypeNames() {
+            return Collections.emptyList();
         }
     }
 }

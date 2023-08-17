@@ -42,4 +42,9 @@ public class AnnotationListEmptyTest {
     public void testAsTypeList() throws Exception {
         assertThat(new AnnotationList.Empty().asTypeList().size(), is(0));
     }
+
+    @Test
+    public void testAsTypeNames() throws Exception {
+        assertThat(new AnnotationList.Empty().asTypeNames().size(), is(0));
+    }
 }

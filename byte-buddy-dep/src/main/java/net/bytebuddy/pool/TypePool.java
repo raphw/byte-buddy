@@ -6189,7 +6189,7 @@ public interface TypePool {
                  *
                  * @param typePool The type pool to be used for looking up linked types.
                  * @param tokens   The tokens to represent in the list.
-                 * @return A list of the loadable annotations.
+                 * @return A list of the represented annotations.
                  */
                 protected static AnnotationList asList(TypePool typePool, List<? extends AnnotationToken> tokens) {
                     List<AnnotationDescription> annotationDescriptions = new ArrayList<AnnotationDescription>(tokens.size());
@@ -6199,7 +6199,7 @@ public interface TypePool {
                             annotationDescriptions.add(resolution.resolve());
                         }
                     }
-                    return new AnnotationList.Explicit(annotationDescriptions);
+                    return new UnresolvedAnnotationList(annotationDescriptions, tokens);
                 }
 
                 /**
@@ -6266,6 +6266,37 @@ public interface TypePool {
                      */
                     public S load() {
                         return AnnotationInvocationHandler.of(annotationType.getClassLoader(), annotationType, values);
+                    }
+                }
+
+                /**
+                 * A list of annotations which allows for resolving the names of the annotations even if the annotations cannot be resolved.
+                 */
+                private static class UnresolvedAnnotationList extends AnnotationList.Explicit {
+
+                    /**
+                     * The list of represented annotation tokens.
+                     */
+                    private final List<? extends AnnotationToken> tokens;
+
+                    /**
+                     * Creates a list of unresolved annotations.
+                     *
+                     * @param annotationDescriptions The list of represented annotation descriptions.
+                     * @param tokens                 The list of represented annotation tokens.
+                     */
+                    private UnresolvedAnnotationList(List<? extends AnnotationDescription> annotationDescriptions, List<? extends AnnotationToken> tokens) {
+                        super(annotationDescriptions);
+                        this.tokens = tokens;
+                    }
+
+                    @Override
+                    public List<String> asTypeNames() {
+                        List<String> typeNames = new ArrayList<String>(tokens.size());
+                        for (AnnotationToken token : tokens) {
+                            typeNames.add(token.getBinaryName());
+                        }
+                        return typeNames;
                     }
                 }
             }

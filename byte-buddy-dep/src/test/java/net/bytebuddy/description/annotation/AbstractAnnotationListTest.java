@@ -88,6 +88,11 @@ public abstract class AbstractAnnotationListTest<U> extends AbstractFilterableLi
         assertThat(asList(getFirst()).asTypeList(), is(Collections.singletonList(asElement(getFirst()).getAnnotationType())));
     }
 
+    @Test
+    public void testAsTypeNames() throws Exception {
+        assertThat(asList(getFirst()).asTypeNames(), is(Collections.singletonList(asElement(getFirst()).getAnnotationType().getName())));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     @Inherited
     protected @interface Foo {
