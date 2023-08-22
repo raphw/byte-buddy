@@ -402,7 +402,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
         if (binaryRepresentation.length < 7) {
             throw new IllegalArgumentException("Supplied byte array is too short to be a class file with " + binaryRepresentation.length + " byte");
         }
-        return ofMinorMajor(binaryRepresentation[6] << 8 | binaryRepresentation[7] & 0xFF);
+        return ofMinorMajor(binaryRepresentation[5] << 16 | binaryRepresentation[7] & 0xFF);
     }
 
     /**
