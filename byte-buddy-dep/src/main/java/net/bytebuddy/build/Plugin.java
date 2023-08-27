@@ -4890,14 +4890,20 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                 listener.onError(typeDescription, errored);
                                 return new Dispatcher.Materializable.ForFailedElement(element, typeDescription, errored);
                             } else if (!applied.isEmpty()) {
-                                DynamicType dynamicType = builder.make(TypeResolutionStrategy.Disabled.INSTANCE, typePool);
-                                listener.onTransformation(typeDescription, applied);
-                                for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {
-                                    if (entry.getValue().isAlive()) {
-                                        listener.onLiveInitializer(typeDescription, entry.getKey());
+                                try {
+                                    DynamicType dynamicType = builder.make(TypeResolutionStrategy.Disabled.INSTANCE, typePool);
+                                    listener.onTransformation(typeDescription, applied);
+                                    for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {
+                                        if (entry.getValue().isAlive()) {
+                                            listener.onLiveInitializer(typeDescription, entry.getKey());
+                                        }
                                     }
+                                    return new Dispatcher.Materializable.ForTransformedElement(dynamicType);
+                                } catch (Throwable throwable) {
+                                    errored.add(throwable);
+                                    listener.onError(typeDescription, errored);
+                                    return new Dispatcher.Materializable.ForFailedElement(element, typeDescription, errored);
                                 }
-                                return new Dispatcher.Materializable.ForTransformedElement(dynamicType);
                             } else {
                                 listener.onIgnored(typeDescription, ignored);
                                 return new Dispatcher.Materializable.ForRetainedElement(element);
