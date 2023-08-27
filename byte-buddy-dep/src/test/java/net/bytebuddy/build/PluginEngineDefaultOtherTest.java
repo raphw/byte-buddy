@@ -59,7 +59,10 @@ public class PluginEngineDefaultOtherTest {
         File jar = temporaryFolder.newFile("source.jar");
         JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(jar));
         try {
-            for (Class<?> type : Arrays.asList(TypeWithDependency.class, TypeWithoutDependency.class)) {
+            for (Class<?> type : Arrays.asList(
+                    PluginEngineDefaultOtherTest.class,
+                    TypeWithDependency.class,
+                    TypeWithoutDependency.class)) {
                 outputStream.putNextEntry(new JarEntry(type.getName().replace(".", "/") + ".class"));
                 outputStream.write(ClassFileLocator.ForClassLoader.read(type));
                 outputStream.closeEntry();
