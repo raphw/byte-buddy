@@ -165,6 +165,11 @@ public class ClassFileVersionKnownVersionsTest {
     }
 
     @Test
+    public void testClassFileParsing() throws Exception {
+        assertThat(ClassFileVersion.ofClassFile(new byte[]{0, 0, 0, 0, 0, (byte) minorVersion, 0, (byte) majorVersion}), is(ClassFileVersion.ofJavaVersion(javaVersion)));
+    }
+
+    @Test
     public void testToString() {
         assertThat(ClassFileVersion.ofJavaVersion(javaVersion).toString(), is("Java " + derivedVersion + " (" + minorMajorVersion + ")"));
     }

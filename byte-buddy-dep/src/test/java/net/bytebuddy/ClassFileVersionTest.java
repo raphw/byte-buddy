@@ -77,17 +77,6 @@ public class ClassFileVersionTest {
         ClassFileVersion.ofClassFile(new byte[0]);
     }
 
-    @Test
-    public void testClassFileVersion() {
-        for (int i = 1; i < ClassFileVersion.latest().getJavaVersion(); i++) {
-            byte major = (byte) (44 + i);
-            byte minor = (byte) (i == 1 ? 3 : 0);
-
-            ClassFileVersion expected = ClassFileVersion.ofJavaVersion(i);
-            assertThat(ClassFileVersion.ofClassFile(new byte[]{0, 0, 0, 0, 0, minor, 0, major}), is(expected));
-        }
-    }
-
     private static class Foo {
         /* empty */
     }
