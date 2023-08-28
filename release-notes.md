@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 28. August 2023: version 1.14.7
+
+- Correctly read minor version from class file.
+- Catch type resolution errors when applying `Plugin.Engine`.
+
 ### 15. August 2023: version 1.14.6
 
 - Add `PatchMode.SUBSTITUTE` and `ResettableClassFileTransformer.Substitutable` for in-order patching.

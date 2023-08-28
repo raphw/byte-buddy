@@ -86,9 +86,13 @@ public class OpenedClassReader {
         ClassFileVersion classFileVersion = ClassFileVersion.ofClassFile(binaryRepresentation), latest = ClassFileVersion.latest();
         if (classFileVersion.isGreaterThan(latest)) {
             if (EXPERIMENTAL) {
+                binaryRepresentation[4] = (byte) (latest.getMinorVersion() >>> 8);
+                binaryRepresentation[5] = (byte) latest.getMinorVersion();
                 binaryRepresentation[6] = (byte) (latest.getMajorVersion() >>> 8);
                 binaryRepresentation[7] = (byte) latest.getMajorVersion();
                 ClassReader classReader = new ClassReader(binaryRepresentation);
+                binaryRepresentation[4] = (byte) (classFileVersion.getMinorVersion() >>> 8);
+                binaryRepresentation[5] = (byte) classFileVersion.getMinorVersion();
                 binaryRepresentation[6] = (byte) (classFileVersion.getMajorVersion() >>> 8);
                 binaryRepresentation[7] = (byte) classFileVersion.getMajorVersion();
                 return classReader;

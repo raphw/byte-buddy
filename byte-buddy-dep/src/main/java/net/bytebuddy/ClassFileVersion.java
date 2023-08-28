@@ -189,7 +189,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
      */
     public static ClassFileVersion ofMinorMajor(int versionNumber) {
         ClassFileVersion classFileVersion = new ClassFileVersion(versionNumber);
-        if (classFileVersion.getMajorVersion() <= BASE_VERSION) {
+        if (classFileVersion.getMajorVersion() > 0 && classFileVersion.getMajorVersion() <= BASE_VERSION) {
             throw new IllegalArgumentException("Class version " + versionNumber + " is not valid");
         }
         return classFileVersion;
@@ -402,7 +402,10 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
         if (binaryRepresentation.length < 7) {
             throw new IllegalArgumentException("Supplied byte array is too short to be a class file with " + binaryRepresentation.length + " byte");
         }
-        return ofMinorMajor(binaryRepresentation[5] << 16 | binaryRepresentation[7] & 0xFF);
+        return ofMinorMajor(binaryRepresentation[4] << 24
+                | binaryRepresentation[5] << 16
+                | binaryRepresentation[6] << 8
+                | binaryRepresentation[7]);
     }
 
     /**
@@ -420,7 +423,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
      * @return The major version this instance represents.
      */
     public short getMajorVersion() {
-        return (short) (versionNumber & 0xFF);
+        return (short) (versionNumber & 0xFFFF);
     }
 
     /**
@@ -429,7 +432,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
      * @return The minor version this instance represents.
      */
     public short getMinorVersion() {
-        return (short) (versionNumber >> 16);
+        return (short) (versionNumber >>> 16);
     }
 
     /**

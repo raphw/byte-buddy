@@ -16,7 +16,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Set;
@@ -25,7 +24,6 @@ import java.util.jar.JarOutputStream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 public class PluginEngineDefaultOtherTest {
 
@@ -59,10 +57,10 @@ public class PluginEngineDefaultOtherTest {
         File jar = temporaryFolder.newFile("source.jar");
         JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(jar));
         try {
-            for (Class<?> type : Arrays.asList(
+            for (Class<?> type : new Class<?>[] {
                     PluginEngineDefaultOtherTest.class,
                     TypeWithDependency.class,
-                    TypeWithoutDependency.class)) {
+                    TypeWithoutDependency.class}) {
                 outputStream.putNextEntry(new JarEntry(type.getName().replace(".", "/") + ".class"));
                 outputStream.write(ClassFileLocator.ForClassLoader.read(type));
                 outputStream.closeEntry();
