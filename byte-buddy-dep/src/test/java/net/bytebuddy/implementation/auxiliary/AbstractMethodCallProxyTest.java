@@ -83,7 +83,6 @@ public class AbstractMethodCallProxyTest {
         Collections.sort(filteredFields, typeComparator);
         ArrayList<Class<?>> parameterTypes = new ArrayList<Class<?>>(Arrays.asList(proxyTarget.getDeclaredMethods()[0].getParameterTypes()));
         Collections.sort(parameterTypes, typeComparator);
-       
         assertThat(filteredFields, CoreMatchers.is(parameterTypes));
         return auxiliaryType;
     }
