@@ -181,7 +181,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @param matcher The matcher to determine what fields to substitute.
      * @return A specification that allows to determine how to substitute any field access that match the supplied matcher.
      */
-    public WithoutSpecification.ForMatchedField field(ElementMatcher<? super FieldDescription.InDefinedShape> matcher) {
+    public WithoutSpecification.ForMatchedField field(ElementMatcher<? super FieldDescription> matcher) {
         return new WithoutSpecification.ForMatchedField(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher);
     }
 
@@ -562,7 +562,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * A matcher for any field that should be substituted.
              */
-            private final ElementMatcher<? super FieldDescription.InDefinedShape> matcher;
+            private final ElementMatcher<? super FieldDescription> matcher;
 
             /**
              * {@code true} if read access to a field should be substituted.
@@ -589,7 +589,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                       boolean strict,
                                       boolean failIfNoMatch,
                                       Replacement.Factory replacementFactory,
-                                      ElementMatcher<? super FieldDescription.InDefinedShape> matcher) {
+                                      ElementMatcher<? super FieldDescription> matcher) {
                 this(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory, matcher, true, true);
             }
 
@@ -610,7 +610,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                       boolean strict,
                                       boolean failIfNoMatch,
                                       Replacement.Factory replacementFactory,
-                                      ElementMatcher<? super FieldDescription.InDefinedShape> matcher,
+                                      ElementMatcher<? super FieldDescription> matcher,
                                       boolean matchRead,
                                       boolean matchWrite) {
                 super(methodGraphCompiler, typePoolResolver, strict, failIfNoMatch, replacementFactory);
@@ -6475,16 +6475,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          *
          * @param instrumentedType   The instrumented type.
          * @param instrumentedMethod The instrumented method.
+         * @param typeDescription    The type on which the field was read.
          * @param fieldDescription   The field that was discovered.
          * @param writeAccess        {@code true} if this field was written to.
          * @return A binding for the discovered field access.
          */
-        Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, FieldDescription.InDefinedShape fieldDescription, boolean writeAccess);
+        Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, FieldDescription fieldDescription, boolean writeAccess);
 
         /**
          * Binds this replacement for a field that was discovered.
          *
-         * @param instrumentedType   The instrumented type.
+         * @param instrumentedType   The instrumented type.FieldDescription
          * @param instrumentedMethod The instrumented method.
          * @param typeDescription    The type on which the method was invoked.
          * @param methodDescription  The method that was discovered.
@@ -6738,7 +6739,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, FieldDescription.InDefinedShape fieldDescription, boolean writeAccess) {
+            public Binding bind(TypeDescription instrumentedType,
+                                MethodDescription instrumentedMethod,
+                                TypeDescription typeDescription,
+                                FieldDescription fieldDescription,
+                                boolean writeAccess) {
                 return Binding.Unresolved.INSTANCE;
             }
 
@@ -6763,7 +6768,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * The field matcher to consider when discovering fields.
              */
-            private final ElementMatcher<? super FieldDescription.InDefinedShape> fieldMatcher;
+            private final ElementMatcher<? super FieldDescription> fieldMatcher;
 
             /**
              * The method matcher to consider when discovering methods.
@@ -6806,7 +6811,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param includeSuperCalls   {@code true} if super method calls should be matched.
              * @param substitution        The substitution to trigger if a member is matched.
              */
-            protected ForElementMatchers(ElementMatcher<? super FieldDescription.InDefinedShape> fieldMatcher,
+            protected ForElementMatchers(ElementMatcher<? super FieldDescription> fieldMatcher,
                                          ElementMatcher<? super MethodDescription> methodMatcher,
                                          boolean matchFieldRead,
                                          boolean matchFieldWrite,
@@ -6825,9 +6830,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, FieldDescription.InDefinedShape fieldDescription, boolean writeAccess) {
+            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, FieldDescription fieldDescription, boolean writeAccess) {
                 return (writeAccess ? matchFieldWrite : matchFieldRead) && fieldMatcher.matches(fieldDescription)
-                        ? new Binding.Resolved(fieldDescription.getDeclaringType(), fieldDescription, substitution)
+                        ? new Binding.Resolved(typeDescription, fieldDescription, substitution)
                         : Binding.Unresolved.INSTANCE;
             }
 
@@ -6849,7 +6854,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * The field matcher to consider when discovering fields.
                  */
-                private final ElementMatcher<? super FieldDescription.InDefinedShape> fieldMatcher;
+                private final ElementMatcher<? super FieldDescription> fieldMatcher;
 
                 /**
                  * The method matcher to consider when discovering methods.
@@ -6892,7 +6897,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param includeSuperCalls   {@code true} if super method calls should be matched.
                  * @param substitutionFactory The substitution factory to create a substitution from.
                  */
-                protected Factory(ElementMatcher<? super FieldDescription.InDefinedShape> fieldMatcher,
+                protected Factory(ElementMatcher<? super FieldDescription> fieldMatcher,
                                   ElementMatcher<? super MethodDescription> methodMatcher,
                                   boolean matchFieldRead,
                                   boolean matchFieldWrite,
@@ -6928,7 +6933,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param factory         The substitution factory to apply for fields that match the specified criteria.
                  * @return An appropriate replacement factory.
                  */
-                protected static Replacement.Factory ofField(ElementMatcher<? super FieldDescription.InDefinedShape> matcher, boolean matchFieldRead, boolean matchFieldWrite, Substitution.Factory factory) {
+                protected static Replacement.Factory ofField(ElementMatcher<? super FieldDescription> matcher, boolean matchFieldRead, boolean matchFieldWrite, Substitution.Factory factory) {
                     return new Factory(matcher, none(), matchFieldRead, matchFieldWrite, false, false, factory);
                 }
 
@@ -6983,9 +6988,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, FieldDescription.InDefinedShape fieldDescription, boolean writeAccess) {
+            public Binding bind(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypeDescription typeDescription, FieldDescription fieldDescription, boolean writeAccess) {
                 for (Replacement replacement : replacements) {
-                    Binding binding = replacement.bind(instrumentedType, instrumentedMethod, fieldDescription, writeAccess);
+                    Binding binding = replacement.bind(instrumentedType, instrumentedMethod, typeDescription, fieldDescription, writeAccess);
                     if (binding.isBound()) {
                         return binding;
                     }
@@ -7115,11 +7120,19 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         public void visitFieldInsn(int opcode, String owner, String internalName, String descriptor) {
             TypePool.Resolution resolution = typePool.describe(owner.replace('/', '.'));
             if (resolution.isResolved()) {
-                FieldList<FieldDescription.InDefinedShape> candidates = resolution.resolve().getDeclaredFields().filter(strict
-                        ? ElementMatchers.<FieldDescription>named(internalName).and(hasDescriptor(descriptor))
-                        : ElementMatchers.<FieldDescription>failSafe(named(internalName).and(hasDescriptor(descriptor))));
+                FieldList<?> candidates;
+                Iterator<TypeDefinition> iterator = resolution.resolve().iterator();
+                do {
+                    candidates = iterator.next().getDeclaredFields().filter(strict
+                            ? ElementMatchers.<FieldDescription>named(internalName).and(hasDescriptor(descriptor))
+                            : ElementMatchers.<FieldDescription>failSafe(named(internalName).and(hasDescriptor(descriptor))));
+                } while (iterator.hasNext() && candidates.isEmpty());
                 if (!candidates.isEmpty()) {
-                    Replacement.Binding binding = replacement.bind(instrumentedType, instrumentedMethod, candidates.getOnly(), opcode == Opcodes.PUTFIELD || opcode == Opcodes.PUTSTATIC);
+                    Replacement.Binding binding = replacement.bind(instrumentedType,
+                            instrumentedMethod,
+                            resolution.resolve(),
+                            candidates.getOnly(),
+                            opcode == Opcodes.PUTFIELD || opcode == Opcodes.PUTSTATIC);
                     if (binding.isBound()) {
                         TypeList.Generic parameters;
                         TypeDescription.Generic result;
@@ -7151,8 +7164,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         stackSizeBuffer = Math.max(stackSizeBuffer, binding.make(parameters,
                                 result,
                                 read
-                                        ? JavaConstant.MethodHandle.ofGetter(candidates.getOnly())
-                                        : JavaConstant.MethodHandle.ofSetter(candidates.getOnly()),
+                                        ? JavaConstant.MethodHandle.ofGetter(candidates.getOnly().asDefined())
+                                        : JavaConstant.MethodHandle.ofSetter(candidates.getOnly().asDefined()),
                                 read
                                         ? FieldAccess.forField(candidates.getOnly()).read()
                                         : FieldAccess.forField(candidates.getOnly()).write(),

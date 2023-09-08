@@ -84,6 +84,12 @@ public interface MethodDescription extends TypeVariableSource,
     InDefinedShape UNDEFINED = null;
 
     /**
+     * {@inheritDoc}
+     */
+    @Nonnull
+    TypeDefinition getDeclaringType();
+
+    /**
      * Returns the return type of the described method.
      *
      * @return The return type of the described method.
