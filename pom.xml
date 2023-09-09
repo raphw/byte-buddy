@@ -1132,6 +1132,9 @@
                                         <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
                                         <excludes>
                                             <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$Binding</exclude>
+                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$ForElementMatchers</exclude>
+                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$ForFirstBinding</exclude>
+                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$NoOp</exclude>
                                         </excludes>
                                     </parameter>
                                 </configuration>
