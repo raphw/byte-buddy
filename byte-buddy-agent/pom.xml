@@ -96,7 +96,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${version.plugin.surefire}</version>
                 <configuration combine.children="append">
-                    <argLine>-Djna.library.path=${net.bytebuddy.test.jnapath}</argLine>
+                    <argLine>-Djna.library.path=${net.bytebuddy.test.jnapath} ${surefire.arguments}</argLine>
                 </configuration>
             </plugin>
             <!-- Create manifest file which is required for creating an OSGi bundle. -->

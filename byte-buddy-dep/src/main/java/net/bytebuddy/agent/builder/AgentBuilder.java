@@ -163,6 +163,7 @@ import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
  * only when enabling the builder's {@link LambdaInstrumentationStrategy}.
  * </p>
  */
+@SuppressWarnings("overloads")
 public interface AgentBuilder {
 
     /**
@@ -209,7 +210,6 @@ public interface AgentBuilder {
      * @param locationStrategy The location strategy to use.
      * @return A new instance of this agent builder which uses the given location strategy for looking up class files.
      */
-    @SuppressWarnings("overloads")
     AgentBuilder with(LocationStrategy locationStrategy);
 
     /**
@@ -297,7 +297,6 @@ public interface AgentBuilder {
      * @param fallbackStrategy The fallback strategy to be used.
      * @return A new agent builder that applies the supplied fallback strategy.
      */
-    @SuppressWarnings("overloads")
     AgentBuilder with(FallbackStrategy fallbackStrategy);
 
     /**
@@ -324,7 +323,6 @@ public interface AgentBuilder {
      * @param injectionStrategy The injection strategy to use.
      * @return A new agent builder with the supplied injection strategy configured.
      */
-    @SuppressWarnings("overloads")
     AgentBuilder with(InjectionStrategy injectionStrategy);
 
     /**
@@ -1549,7 +1547,6 @@ public interface AgentBuilder {
              * @param redefinitionDiscoveryStrategy The redefinition discovery strategy to use.
              * @return A new instance of this agent builder which makes use of the specified discovery strategy.
              */
-            @SuppressWarnings("overloads")
             RedefinitionListenable with(RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy);
         }
 
@@ -1566,7 +1563,6 @@ public interface AgentBuilder {
              * @param redefinitionBatchAllocator The batch allocator to use.
              * @return A new instance of this agent builder which makes use of the specified batch allocator.
              */
-            @SuppressWarnings("overloads")
             WithImplicitDiscoveryStrategy with(RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator);
         }
     }
@@ -3146,7 +3142,6 @@ public interface AgentBuilder {
              * @param name    The fully-qualified, binary name of the advice class.
              * @return A new instance of this advice transformer that applies the given advice to all matched methods of an instrumented type.
              */
-            @SuppressWarnings("overloads")
             public ForAdvice advice(ElementMatcher<? super MethodDescription> matcher, String name) {
                 return advice(new LatentMatcher.Resolved<MethodDescription>(matcher), name);
             }
@@ -3158,7 +3153,6 @@ public interface AgentBuilder {
              * @param name    The fully-qualified, binary name of the advice class.
              * @return A new instance of this advice transformer that applies the given advice to all matched methods of an instrumented type.
              */
-            @SuppressWarnings("overloads")
             public ForAdvice advice(LatentMatcher<? super MethodDescription> matcher, String name) {
                 return make(advice,
                         exceptionHandler,
@@ -3177,7 +3171,6 @@ public interface AgentBuilder {
              * @param exit    The fully-qualified, binary name of the exit advice class.
              * @return A new instance of this advice transformer that applies the given advice to all matched methods of an instrumented type.
              */
-            @SuppressWarnings("overloads")
             public ForAdvice advice(ElementMatcher<? super MethodDescription> matcher, String enter, String exit) {
                 return advice(new LatentMatcher.Resolved<MethodDescription>(matcher), enter, exit);
             }
@@ -3190,7 +3183,6 @@ public interface AgentBuilder {
              * @param exit    The fully-qualified, binary name of the exit advice class.
              * @return A new instance of this advice transformer that applies the given advice to all matched methods of an instrumented type.
              */
-            @SuppressWarnings("overloads")
             public ForAdvice advice(LatentMatcher<? super MethodDescription> matcher, String enter, String exit) {
                 return make(advice,
                         exceptionHandler,

@@ -335,7 +335,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
      * @return The latest officially supported Java version.
      */
     public static ClassFileVersion latest() {
-        return ClassFileVersion.JAVA_V22;
+        return ClassFileVersion.JAVA_V21;
     }
 
     /**

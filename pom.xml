@@ -120,6 +120,7 @@
         <modulemaker.skip>false</modulemaker.skip>
         <javadoc.download.skip>false</javadoc.download.skip>
         <repository.url>git@github.com:raphw/byte-buddy.git</repository.url>
+        <surefire.arguments/>
     </properties>
 
     <licenses>
@@ -340,6 +341,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${version.plugin.surefire}</version>
                     <configuration>
+                        <argLine>${surefire.arguments}</argLine>
                         <systemPropertyVariables>
                             <net.bytebuddy.experimental>${bytebuddy.experimental}</net.bytebuddy.experimental>
                             <net.bytebuddy.test.integration>${bytebuddy.integration}</net.bytebuddy.test.integration>
@@ -952,6 +954,17 @@
                 <bytecode.main.version>22</bytecode.main.version>
                 <bytecode.test.version>22</bytecode.test.version>
                 <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Enables dynamic agent loading when running a JDK 22 or newer. -->
+        <profile>
+            <id>surefire-enable-dynamic-attach</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>[22,)</jdk>
+            </activation>
+            <properties>
+                <surefire.arguments>-XX:+EnableDynamicAgentLoading</surefire.arguments>
             </properties>
         </profile>
         <!-- Creates additional artifacts that are required for deployment. -->
