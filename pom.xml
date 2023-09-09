@@ -1131,7 +1131,7 @@
                                         <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
                                         <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
                                         <excludes>
-                                            <exclude>net.bytebuddy.implementation.FieldAccessor$FieldNameExtractor$ForBeanProperty</exclude>
+                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$Binding</exclude>
                                         </excludes>
                                     </parameter>
                                 </configuration>
