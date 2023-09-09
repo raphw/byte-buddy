@@ -151,6 +151,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
     public static final ClassFileVersion JAVA_V21 = new ClassFileVersion(Opcodes.V21);
 
     /**
+     * The class file version of Java 22.
+     */
+    public static final ClassFileVersion JAVA_V22 = new ClassFileVersion(Opcodes.V21 + 1);
+
+    /**
      * A version locator for the executing JVM.
      */
     private static final VersionLocator VERSION_LOCATOR = doPrivileged(VersionLocator.Resolver.INSTANCE);
@@ -244,6 +249,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
             return JAVA_V20;
         } else if (javaVersionString.equals("1.21") || javaVersionString.equals("21")) {
             return JAVA_V21;
+        } else if (javaVersionString.equals("1.22") || javaVersionString.equals("22")) {
+            return JAVA_V22;
         } else {
             if (OpenedClassReader.EXPERIMENTAL) {
                 try {
@@ -311,6 +318,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
                 return JAVA_V20;
             case 21:
                 return JAVA_V21;
+            case 22:
+                return JAVA_V22;
             default:
                 if (OpenedClassReader.EXPERIMENTAL && javaVersion > 0) {
                     return new ClassFileVersion(BASE_VERSION + javaVersion);
@@ -326,7 +335,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
      * @return The latest officially supported Java version.
      */
     public static ClassFileVersion latest() {
-        return ClassFileVersion.JAVA_V21;
+        return ClassFileVersion.JAVA_V22;
     }
 
     /**

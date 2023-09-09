@@ -733,6 +733,36 @@
                 <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
+        <!-- Runs the build with compatibility for Java 21 JVMs. -->
+        <profile>
+            <id>java21-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>21</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>8</sourcecode.main.version>
+                <sourcecode.test.version>8</sourcecode.test.version>
+                <bytecode.main.version>8</bytecode.main.version>
+                <bytecode.test.version>8</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
+            </properties>
+        </profile>
+        <!-- Runs the build with compatibility for Java 22 JVMs. -->
+        <profile>
+            <id>java22-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>22</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>8</sourcecode.main.version>
+                <sourcecode.test.version>8</sourcecode.test.version>
+                <bytecode.main.version>8</bytecode.main.version>
+                <bytecode.test.version>8</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
+            </properties>
+        </profile>
         <!-- Builds using a byte code target for Java 6. -->
         <profile>
             <id>java6</id>
@@ -897,6 +927,30 @@
             <properties>
                 <bytecode.main.version>20</bytecode.main.version>
                 <bytecode.test.version>20</bytecode.test.version>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Builds using a byte code target for Java 21. -->
+        <profile>
+            <id>java21</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>21</bytecode.main.version>
+                <bytecode.test.version>21</bytecode.test.version>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Builds using a byte code target for Java 22. -->
+        <profile>
+            <id>java22</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>22</bytecode.main.version>
+                <bytecode.test.version>22</bytecode.test.version>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
