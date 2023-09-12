@@ -17,9 +17,11 @@ package net.bytebuddy.build.gradle.android;
 
 import com.android.build.api.AndroidPluginVersion;
 import com.android.build.api.artifact.MultipleArtifact;
+import com.android.build.api.artifact.ScopedArtifact;
 import com.android.build.api.attributes.BuildTypeAttr;
 import com.android.build.api.instrumentation.InstrumentationScope;
 import com.android.build.api.variant.AndroidComponentsExtension;
+import com.android.build.api.variant.ScopedArtifacts;
 import com.android.build.api.variant.Variant;
 import com.android.build.gradle.BaseExtension;
 import com.android.build.gradle.internal.component.ComponentCreationConfig;
@@ -132,9 +134,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             TaskProvider<ByteBuddyLocalClassesEnhancerTask> localClassesTransformation = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
                     ByteBuddyLocalClassesEnhancerTask.class,
                     new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
-            variant.getArtifacts().use(localClassesTransformation)
-                    .wiredWith(ByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, ByteBuddyLocalClassesEnhancerTask::getOutputDir)
-                    .toTransform(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE);
+            variant.getArtifacts().forScope(ScopedArtifacts.Scope.PROJECT)
+                    .use(localClassesTransformation)
+                    .toTransform(ScopedArtifact.CLASSES.INSTANCE, ByteBuddyLocalClassesEnhancerTask::getLocalJars, ByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, ByteBuddyLocalClassesEnhancerTask::getOutputFile);
         }
     }
 
