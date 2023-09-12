@@ -1,0 +1,4 @@
+include ":app"
+include ":aar-bytebuddy-target"
+include ":aar-bytebuddy-plugin"
+include ":jar-bytebuddy-plugin"

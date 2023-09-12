@@ -35,9 +35,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        setTextTo(R.id.text_from_local_java_class, new SomeClass().someMethod());
-        setTextTo(R.id.text_from_aar_dependency, new SomeAarClass().someMethod());
-        setTextTo(R.id.text_instrumented_from_aar, new AnotherClass().someMethod());
+        setTextTo(R.id.text_from_local_java_class, new SomeClass().method());
+        setTextTo(R.id.text_from_aar_dependency, new SomeAarClass().method());
+        setTextTo(R.id.text_instrumented_from_aar, new AnotherClass().method());
     }
 
     /**
