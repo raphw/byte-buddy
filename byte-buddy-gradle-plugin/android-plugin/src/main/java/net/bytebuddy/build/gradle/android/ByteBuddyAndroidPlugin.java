@@ -23,15 +23,8 @@ import com.android.build.api.variant.Variant;
 import com.android.build.gradle.BaseExtension;
 import com.android.build.gradle.internal.component.ComponentCreationConfig;
 import com.android.build.gradle.internal.publishing.AndroidArtifacts;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
-import net.bytebuddy.build.gradle.android.wiring.CurrentLocalTransformationTaskWiring;
-import net.bytebuddy.build.gradle.android.wiring.LegacyLocalTransformationTaskWiring;
-import net.bytebuddy.build.gradle.android.wiring.LocalTransformationTaskWiring;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
@@ -47,6 +40,12 @@ import org.gradle.api.attributes.CompatibilityCheckDetails;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.TaskProvider;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * A Byte Buddy plugin-variant to use in combination with Gradle's support for Android.
@@ -57,6 +56,11 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
      * The name of the artifact type attribute.
      */
     protected static final Attribute<String> ARTIFACT_TYPE_ATTRIBUTE = Attribute.of("artifactType", String.class);
+
+    /**
+     * The dispatcher to use for registering the transformation.
+     */
+    protected static final TransformationDispatcher TRANSFORMATION_DISPATCHER = TransformationDispatcher.resolve();
 
     /**
      * The name of the Byte Buddy jar type.
@@ -99,11 +103,6 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         private final ConcurrentMap<String, Configuration> configurations;
 
         /**
-         * Utility for wiring the local transformation tasks.
-         */
-        private final LocalTransformationTaskWiring wiring;
-
-        /**
          * Creates a new variant action.
          *
          * @param project       The current Gradle project.
@@ -113,16 +112,6 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             this.project = project;
             this.configuration = configuration;
             configurations = new ConcurrentHashMap<String, Configuration>();
-            LocalTransformationTaskWiring wiring;
-            try {
-                Class.forName("com.android.build.api.variant.ScopedArtifacts");
-                project.getLogger().debug("Transforming local classes using the scoped artifacts API.");
-                wiring = new CurrentLocalTransformationTaskWiring(project);
-            } catch (ClassNotFoundException e) {
-                project.getLogger().debug("Transforming local classes using the legacy API.");
-                wiring = new LegacyLocalTransformationTaskWiring(project);
-            }
-            this.wiring = wiring;
         }
 
         /**
@@ -150,7 +139,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     configuration,
                     byteBuddyAndroidServiceProvider,
                     classPath));
-            wiring.wireTask(variant, configuration, classPath);
+            TRANSFORMATION_DISPATCHER.accept(variant, configuration, classPath);
         }
     }
 
@@ -422,5 +411,58 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                 details.compatible();
             }
         }
+    }
+
+    /**
+     * Used to wire the local transformation task depending on the API being used in the host project.
+     */
+    protected enum TransformationDispatcher {
+        LEGACY {
+            @Override
+            protected void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
+                TaskProvider<LegacyByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
+                    LegacyByteBuddyLocalClassesEnhancerTask.class,
+                    new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
+                variant.getArtifacts().use(provider)
+                    .wiredWith(LegacyByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, LegacyByteBuddyLocalClassesEnhancerTask::getOutputDir)
+                    .toTransform(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE);
+            }
+        },
+
+        AKP_7_4_CAPABLE {
+            @Override
+            protected void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
+                TaskProvider<ByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
+                    ByteBuddyLocalClassesEnhancerTask.class,
+                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
+                variant.getArtifacts().forScope(ScopedArtifacts.Scope.PROJECT)
+                    .use(provider)
+                    .toTransform(ScopedArtifact.CLASSES.INSTANCE, ByteBuddyLocalClassesEnhancerTask::getLocalJars, ByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, ByteBuddyLocalClassesEnhancerTask::getOutputFile);
+            }
+        };
+
+        /**
+         * Resolves an appropriate dispatcher for the current VM.
+         *
+         * @return The appropriate dispatcher.
+         */
+        protected static TransformationDispatcher resolve() {
+            try {
+                Class.forName("com.android.build.api.variant.ScopedArtifacts");
+                return AKP_7_4_CAPABLE;
+            } catch (ClassNotFoundException ignored) {
+                return LEGACY;
+            }
+        }
+
+        /**
+         * Applies this dispatcher.
+         *
+         * @param project       The current project.
+         * @param variant       The variant to use.
+         * @param configuration The configuration to use.
+         * @param classPath     The class path to use.
+         */
+        protected abstract void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath);
     }
 }
