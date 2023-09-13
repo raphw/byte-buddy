@@ -213,7 +213,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     /**
      * A configuration action for the {@link ByteBuddyLocalClassesEnhancerTask} task.
      */
-    protected static class ConfigurationAction implements Action<ByteBuddyLocalClassesEnhancerTask> {
+    public static class ConfigurationAction implements Action<ByteBuddyLocalClassesEnhancerTask> {
 
         /**
          * The current variant's Byte Buddy configuration.

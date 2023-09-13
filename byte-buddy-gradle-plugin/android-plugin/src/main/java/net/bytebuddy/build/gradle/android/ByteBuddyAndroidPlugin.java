@@ -16,33 +16,37 @@
 package net.bytebuddy.build.gradle.android;
 
 import com.android.build.api.AndroidPluginVersion;
-import com.android.build.api.artifact.MultipleArtifact;
-import com.android.build.api.artifact.ScopedArtifact;
 import com.android.build.api.attributes.BuildTypeAttr;
 import com.android.build.api.instrumentation.InstrumentationScope;
 import com.android.build.api.variant.AndroidComponentsExtension;
-import com.android.build.api.variant.ScopedArtifacts;
 import com.android.build.api.variant.Variant;
 import com.android.build.gradle.BaseExtension;
 import com.android.build.gradle.internal.component.ComponentCreationConfig;
 import com.android.build.gradle.internal.publishing.AndroidArtifacts;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
+import net.bytebuddy.build.gradle.android.wiring.CurrentLocalTransformationTaskWiring;
+import net.bytebuddy.build.gradle.android.wiring.LegacyLocalTransformationTaskWiring;
+import net.bytebuddy.build.gradle.android.wiring.LocalTransformationTaskWiring;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.attributes.*;
+import org.gradle.api.attributes.Attribute;
+import org.gradle.api.attributes.AttributeCompatibilityRule;
+import org.gradle.api.attributes.AttributeContainer;
+import org.gradle.api.attributes.AttributeMatchingStrategy;
+import org.gradle.api.attributes.Category;
+import org.gradle.api.attributes.CompatibilityCheckDetails;
+import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.TaskProvider;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * A Byte Buddy plugin-variant to use in combination with Gradle's support for Android.
@@ -95,6 +99,11 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         private final ConcurrentMap<String, Configuration> configurations;
 
         /**
+         * Utility for wiring the local transformation tasks.
+         */
+        private final LocalTransformationTaskWiring taskWiring;
+
+        /**
          * Creates a new variant action.
          *
          * @param project       The current Gradle project.
@@ -104,6 +113,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             this.project = project;
             this.configuration = configuration;
             configurations = new ConcurrentHashMap<String, Configuration>();
+            taskWiring = getTaskWiring(project);
         }
 
         /**
@@ -131,34 +141,19 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     configuration,
                     byteBuddyAndroidServiceProvider,
                     classPath));
+
+            taskWiring.wireTask(variant, configuration, classPath);
+        }
+
+        private LocalTransformationTaskWiring getTaskWiring(Project project) {
             try {
                 Class.forName("com.android.build.api.variant.ScopedArtifacts");
-                wireLocalTransformationTask(variant, configuration, classPath);
+                project.getLogger().debug("Transforming local classes using the scoped artifacts API.");
+                return new CurrentLocalTransformationTaskWiring(project);
             } catch (ClassNotFoundException e) {
-                wireLegacyLocalTransformationTask(variant, configuration, classPath);
+                project.getLogger().debug("Transforming local classes using the legacy API.");
+                return new LegacyLocalTransformationTaskWiring(project);
             }
-        }
-
-        private void wireLocalTransformationTask(Variant variant, Configuration configuration, FileCollection classPath) {
-            project.getLogger().debug("Transforming local classes using the scoped artifacts API.");
-            TaskProvider<ByteBuddyLocalClassesEnhancerTask> localClassesTransformation = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
-                    ByteBuddyLocalClassesEnhancerTask.class,
-                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
-
-            variant.getArtifacts().forScope(ScopedArtifacts.Scope.PROJECT)
-                    .use(localClassesTransformation)
-                    .toTransform(ScopedArtifact.CLASSES.INSTANCE, ByteBuddyLocalClassesEnhancerTask::getLocalJars, ByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, ByteBuddyLocalClassesEnhancerTask::getOutputFile);
-        }
-
-        private void wireLegacyLocalTransformationTask(Variant variant, Configuration configuration, FileCollection classPath) {
-            project.getLogger().debug("Transforming local classes using the legacy API.");
-            TaskProvider<LegacyByteBuddyLocalClassesEnhancerTask> localClassesTransformation = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
-                    LegacyByteBuddyLocalClassesEnhancerTask.class,
-                    new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
-
-            variant.getArtifacts().use(localClassesTransformation)
-                    .wiredWith(LegacyByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, LegacyByteBuddyLocalClassesEnhancerTask::getOutputDir)
-                    .toTransform(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE);
         }
     }
 
