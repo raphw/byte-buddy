@@ -199,9 +199,9 @@ public abstract class LegacyByteBuddyLocalClassesEnhancerTask extends DefaultTas
     }
 
     /**
-     * A configuration action for the {@link ByteBuddyLocalClassesEnhancerTask} task.
+     * A configuration action for the {@link LegacyByteBuddyLocalClassesEnhancerTask} task.
      */
-    public static class ConfigurationAction implements Action<ByteBuddyLocalClassesEnhancerTask> {
+    public static class ConfigurationAction implements Action<LegacyByteBuddyLocalClassesEnhancerTask> {
 
         /**
          * The current variant's Byte Buddy configuration.
@@ -230,7 +230,7 @@ public abstract class LegacyByteBuddyLocalClassesEnhancerTask extends DefaultTas
         }
 
         @Override
-        public void execute(ByteBuddyLocalClassesEnhancerTask task) {
+        public void execute(LegacyByteBuddyLocalClassesEnhancerTask task) {
             task.getByteBuddyClasspath().from(byteBuddyConfiguration);
             task.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
             task.getRuntimeClasspath().from(runtimeClasspath);
