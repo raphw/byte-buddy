@@ -46,6 +46,7 @@ import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.CompatibilityCheckDetails;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.Directory;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.RegularFileProperty;
@@ -150,16 +151,16 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          */
         public void execute(Variant variant) {
             Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider = project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "ByteBuddyAndroidService",
-                    ByteBuddyAndroidService.class,
-                    new ByteBuddyAndroidService.ConfigurationAction(project.getExtensions().getByType(BaseExtension.class)));
+                ByteBuddyAndroidService.class,
+                new ByteBuddyAndroidService.ConfigurationAction(project.getExtensions().getByType(BaseExtension.class)));
             if (variant.getBuildType() == null) {
                 throw new GradleException("Build type for " + variant + " was null");
             }
             Configuration configuration = configurations.get(variant.getBuildType());
             if (configuration == null) {
                 configuration = project.getConfigurations().create(variant.getBuildType() + "ByteBuddy", new VariantConfigurationConfigurationAction(project,
-                        this.configuration,
-                        variant.getBuildType()));
+                    this.configuration,
+                    variant.getBuildType()));
                 Configuration previous = configurations.putIfAbsent(variant.getBuildType(), configuration);
                 if (previous != null) {
                     configuration = previous;
@@ -167,9 +168,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             }
             FileCollection classPath = RuntimeClassPathResolver.INSTANCE.apply(variant);
             variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, new ByteBuddyTransformationConfiguration(project,
-                    configuration,
-                    byteBuddyAndroidServiceProvider,
-                    classPath));
+                configuration,
+                byteBuddyAndroidServiceProvider,
+                classPath));
             TRANSFORMATION_DISPATCHER.accept(project, variant, configuration, classPath);
         }
     }
@@ -217,8 +218,8 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     throw new GradleException("Cannot resolve runtime class path for " + variant);
                 }
                 return ((ComponentCreationConfig) variant).getVariantDependencies().getArtifactFileCollection(AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
-                        AndroidArtifacts.ArtifactScope.ALL,
-                        AndroidArtifacts.ArtifactType.CLASSES_JAR);
+                    AndroidArtifacts.ArtifactScope.ALL,
+                    AndroidArtifacts.ArtifactType.CLASSES_JAR);
             }
         }
 
@@ -464,12 +465,12 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
              */
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<LegacyByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
-                        LegacyByteBuddyLocalClassesEnhancerTask.class,
-                        new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
+                    LegacyByteBuddyLocalClassesEnhancerTask.class,
+                    new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
                 variant.getArtifacts()
-                        .use(provider)
-                        .wiredWith(LegacyByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, LegacyByteBuddyLocalClassesEnhancerTask::getOutputDir)
-                        .toTransform(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE);
+                    .use(provider)
+                    .wiredWith(GetLocalJarsFunction.INSTANCE, GetOutputDirFunction.INSTANCE)
+                    .toTransform(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE);
             }
         }
 
@@ -530,9 +531,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                 try {
                     toTransform.invoke(use.invoke(forScope.invoke(variant.getArtifacts(), scope), provider),
                         artifact,
-                        (Function1<ByteBuddyLocalClassesEnhancerTask, ListProperty<RegularFile>>) ByteBuddyLocalClassesEnhancerTask::getLocalJars,
-                        (Function1<ByteBuddyLocalClassesEnhancerTask, ListProperty<Directory>>) ByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs,
-                        (Function1<ByteBuddyLocalClassesEnhancerTask, RegularFileProperty>) ByteBuddyLocalClassesEnhancerTask::getOutputFile);
+                        GetLocalJarsFunction.INSTANCE,
+                        GetLocalClassesDirsFunction.INSTANCE,
+                        GetOutputFileFunction.INSTANCE);
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Failed to variant scope", exception);
                 } catch (InvocationTargetException exception) {
@@ -550,5 +551,77 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          * @param classPath     The class path to use.
          */
         void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath);
+
+        /**
+         * A function representation of resolving local jars.
+         */
+        enum GetLocalJarsFunction implements Function1<ByteBuddyLocalClassesEnhancerTask, ListProperty<RegularFile>> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public ListProperty<RegularFile> invoke(ByteBuddyLocalClassesEnhancerTask task) {
+                return task.getLocalJars();
+            }
+        }
+
+        /**
+         * A function representation of getting the local classes directory.
+         */
+        enum GetLocalClassesDirsFunction implements Function1<ByteBuddyLocalClassesEnhancerTask, ListProperty<Directory>> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public ListProperty<Directory> invoke(ByteBuddyLocalClassesEnhancerTask task) {
+                return task.getLocalClassesDirs();
+            }
+        }
+
+        /**
+         * A function representation of getting the output directory.
+         */
+        enum GetOutputDirFunction implements Function1<LegacyByteBuddyLocalClassesEnhancerTask, DirectoryProperty> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public DirectoryProperty invoke(LegacyByteBuddyLocalClassesEnhancerTask task) {
+                return task.getOutputDir();
+            }
+        }
+
+        /**
+         * A function representation of getting the output file.
+         */
+        enum GetOutputFileFunction implements Function1<ByteBuddyLocalClassesEnhancerTask, RegularFileProperty> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public RegularFileProperty invoke(ByteBuddyLocalClassesEnhancerTask task) {
+                return task.getOutputFile();
+            }
+        }
     }
 }
