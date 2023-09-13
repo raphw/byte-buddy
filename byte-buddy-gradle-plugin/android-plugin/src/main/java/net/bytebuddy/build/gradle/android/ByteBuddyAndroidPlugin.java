@@ -31,6 +31,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.PublishArtifactSet;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.AttributeCompatibilityRule;
 import org.gradle.api.attributes.AttributeContainer;
@@ -38,6 +39,7 @@ import org.gradle.api.attributes.AttributeMatchingStrategy;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.CompatibilityCheckDetails;
 import org.gradle.api.attributes.Usage;
+import org.gradle.api.component.Artifact;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
@@ -46,6 +48,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 
 /**
  * A Byte Buddy plugin-variant to use in combination with Gradle's support for Android.
@@ -60,12 +63,28 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     /**
      * The dispatcher to use for registering the transformation.
      */
-    protected static final TransformationDispatcher TRANSFORMATION_DISPATCHER = TransformationDispatcher.resolve();
+    protected static final TransformationDispatcher TRANSFORMATION_DISPATCHER;
 
     /**
      * The name of the Byte Buddy jar type.
      */
     private static final String BYTE_BUDDY_JAR_TYPE = "bytebuddy-jar";
+
+    static {
+        TransformationDispatcher dispatcher;
+        try {
+            Class<?> scope = Class.forName("com.android.build.api.variant.ScopedArtifacts$Scope");
+            @SuppressWarnings("unchecked")
+            Object project = Enum.valueOf((Class) scope, "PROJECT");
+            dispatcher = new TransformationDispatcher.ForApk74CompatibleAndroid(
+                PublishArtifactSet.class.getMethod("forScope", scope),
+                project,
+                (Artifact) Class.forName("com.android.build.api.variant.ScopedArtifacts$CLASSES").getField("INSTANCE").get(null));
+        } catch (Throwable ignored) {
+            dispatcher = TransformationDispatcher.ForLegacyAndroid.INSTANCE;
+        }
+        TRANSFORMATION_DISPATCHER = dispatcher;
+    }
 
     /**
      * {@inheritDoc}
@@ -416,10 +435,14 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     /**
      * Used to wire the local transformation task depending on the API being used in the host project.
      */
-    protected enum TransformationDispatcher {
-        LEGACY {
+    protected interface TransformationDispatcher {
+
+        enum ForLegacyAndroid implements TransformationDispatcher {
+
+            INSTANCE;
+
             @Override
-            protected void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
+            public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<LegacyByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
                     LegacyByteBuddyLocalClassesEnhancerTask.class,
                     new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
@@ -428,32 +451,36 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     .wiredWith(LegacyByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, LegacyByteBuddyLocalClassesEnhancerTask::getOutputDir)
                     .toTransform(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE);
             }
-        },
+        }
 
-        AKP_7_4_CAPABLE {
+        class ForApk74CompatibleAndroid implements TransformationDispatcher {
+
+            private final Method forScope;
+            
+            private final Object scope;
+
+            private final Artifact artifact;
+
+            protected ForApk74CompatibleAndroid(Method forScope, Object scope, Artifact artifact) {
+                this.forScope = forScope;
+                this.scope = scope;
+                this.artifact = artifact;
+            }
+
             @Override
-            protected void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
+            public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<ByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
                     ByteBuddyLocalClassesEnhancerTask.class,
                     new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
-                variant.getArtifacts()
-                    .forScope(ScopedArtifacts.Scope.PROJECT)
-                    .use(provider)
-                    .toTransform(ScopedArtifact.CLASSES.INSTANCE, ByteBuddyLocalClassesEnhancerTask::getLocalJars, ByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, ByteBuddyLocalClassesEnhancerTask::getOutputFile);
-            }
-        };
-
-        /**
-         * Resolves an appropriate dispatcher for the current VM.
-         *
-         * @return The appropriate dispatcher.
-         */
-        protected static TransformationDispatcher resolve() {
-            try {
-                Class.forName("com.android.build.api.variant.ScopedArtifacts");
-                return AKP_7_4_CAPABLE;
-            } catch (ClassNotFoundException ignored) {
-                return LEGACY;
+                try {
+                    ((PublishArtifactSet) forScope.invoke(variant.getArtifacts(), scope))
+                        .use(provider)
+                        .toTransform(artifact, ByteBuddyLocalClassesEnhancerTask::getLocalJars, ByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, ByteBuddyLocalClassesEnhancerTask::getOutputFile);
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Failed to variant scope", exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Failed to resolve runtime scope", exception.getCause());
+                }
             }
         }
 
@@ -465,6 +492,6 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          * @param configuration The configuration to use.
          * @param classPath     The class path to use.
          */
-        protected abstract void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath);
+        void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath);
     }
 }
