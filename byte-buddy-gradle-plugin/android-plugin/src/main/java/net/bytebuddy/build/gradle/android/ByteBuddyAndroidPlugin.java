@@ -423,7 +423,8 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                 TaskProvider<LegacyByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
                     LegacyByteBuddyLocalClassesEnhancerTask.class,
                     new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
-                variant.getArtifacts().use(provider)
+                variant.getArtifacts()
+                    .use(provider)
                     .wiredWith(LegacyByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, LegacyByteBuddyLocalClassesEnhancerTask::getOutputDir)
                     .toTransform(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE);
             }
@@ -435,7 +436,8 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                 TaskProvider<ByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
                     ByteBuddyLocalClassesEnhancerTask.class,
                     new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
-                variant.getArtifacts().forScope(ScopedArtifacts.Scope.PROJECT)
+                variant.getArtifacts()
+                    .forScope(ScopedArtifacts.Scope.PROJECT)
                     .use(provider)
                     .toTransform(ScopedArtifact.CLASSES.INSTANCE, ByteBuddyLocalClassesEnhancerTask::getLocalJars, ByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, ByteBuddyLocalClassesEnhancerTask::getOutputFile);
             }
