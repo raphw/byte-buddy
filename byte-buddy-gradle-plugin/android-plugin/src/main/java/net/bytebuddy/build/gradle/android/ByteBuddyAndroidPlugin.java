@@ -469,8 +469,44 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
                 variant.getArtifacts()
                     .use(provider)
-                    .wiredWith(GetLocalJarsFunction.INSTANCE, GetOutputDirFunction.INSTANCE)
+                    .wiredWith(GetLocalClassesFunction.INSTANCE, GetOutputDirFunction.INSTANCE)
                     .toTransform(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE);
+            }
+
+            /**
+             * A function representation of getting the local classes.
+             */
+            protected enum GetLocalClassesFunction implements Function1<LegacyByteBuddyLocalClassesEnhancerTask, ListProperty<Directory>> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ListProperty<Directory> invoke(LegacyByteBuddyLocalClassesEnhancerTask task) {
+                    return task.getLocalClassesDirs();
+                }
+            }
+
+            /**
+             * A function representation of getting the output directory.
+             */
+            protected enum GetOutputDirFunction implements Function1<LegacyByteBuddyLocalClassesEnhancerTask, DirectoryProperty> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public DirectoryProperty invoke(LegacyByteBuddyLocalClassesEnhancerTask task) {
+                    return task.getOutputDir();
+                }
             }
         }
 
@@ -526,8 +562,8 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
              */
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<ByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
-                        ByteBuddyLocalClassesEnhancerTask.class,
-                        new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
+                    ByteBuddyLocalClassesEnhancerTask.class,
+                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
                 try {
                     toTransform.invoke(use.invoke(forScope.invoke(variant.getArtifacts(), scope), provider),
                         artifact,
@@ -538,6 +574,60 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     throw new IllegalStateException("Failed to variant scope", exception);
                 } catch (InvocationTargetException exception) {
                     throw new IllegalStateException("Failed to resolve runtime scope", exception.getCause());
+                }
+            }
+
+            /**
+             * A function representation of resolving local jars.
+             */
+            protected enum GetLocalJarsFunction implements Function1<ByteBuddyLocalClassesEnhancerTask, ListProperty<RegularFile>> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ListProperty<RegularFile> invoke(ByteBuddyLocalClassesEnhancerTask task) {
+                    return task.getLocalJars();
+                }
+            }
+
+            /**
+             * A function representation of getting the local classes directory.
+             */
+            protected enum GetLocalClassesDirsFunction implements Function1<ByteBuddyLocalClassesEnhancerTask, ListProperty<Directory>> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ListProperty<Directory> invoke(ByteBuddyLocalClassesEnhancerTask task) {
+                    return task.getLocalClassesDirs();
+                }
+            }
+
+            /**
+             * A function representation of getting the output file.
+             */
+            protected enum GetOutputFileFunction implements Function1<ByteBuddyLocalClassesEnhancerTask, RegularFileProperty> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RegularFileProperty invoke(ByteBuddyLocalClassesEnhancerTask task) {
+                    return task.getOutputFile();
                 }
             }
         }
@@ -551,77 +641,5 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          * @param classPath     The class path to use.
          */
         void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath);
-
-        /**
-         * A function representation of resolving local jars.
-         */
-        enum GetLocalJarsFunction implements Function1<ByteBuddyLocalClassesEnhancerTask, ListProperty<RegularFile>> {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            /**
-             * {@inheritDoc}
-             */
-            public ListProperty<RegularFile> invoke(ByteBuddyLocalClassesEnhancerTask task) {
-                return task.getLocalJars();
-            }
-        }
-
-        /**
-         * A function representation of getting the local classes directory.
-         */
-        enum GetLocalClassesDirsFunction implements Function1<ByteBuddyLocalClassesEnhancerTask, ListProperty<Directory>> {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            /**
-             * {@inheritDoc}
-             */
-            public ListProperty<Directory> invoke(ByteBuddyLocalClassesEnhancerTask task) {
-                return task.getLocalClassesDirs();
-            }
-        }
-
-        /**
-         * A function representation of getting the output directory.
-         */
-        enum GetOutputDirFunction implements Function1<LegacyByteBuddyLocalClassesEnhancerTask, DirectoryProperty> {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            /**
-             * {@inheritDoc}
-             */
-            public DirectoryProperty invoke(LegacyByteBuddyLocalClassesEnhancerTask task) {
-                return task.getOutputDir();
-            }
-        }
-
-        /**
-         * A function representation of getting the output file.
-         */
-        enum GetOutputFileFunction implements Function1<ByteBuddyLocalClassesEnhancerTask, RegularFileProperty> {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            /**
-             * {@inheritDoc}
-             */
-            public RegularFileProperty invoke(ByteBuddyLocalClassesEnhancerTask task) {
-                return task.getOutputFile();
-            }
-        }
     }
 }
