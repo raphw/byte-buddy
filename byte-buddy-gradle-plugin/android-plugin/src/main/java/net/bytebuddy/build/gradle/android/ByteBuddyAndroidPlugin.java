@@ -82,7 +82,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             dispatcher = new TransformationDispatcher.ForApk74CompatibleAndroid(
                     Artifacts.class.getMethod("forScope", scope),
                     project,
-                    (Artifact) Class.forName("com.android.build.api.variant.ScopedArtifacts$CLASSES").getField("INSTANCE").get(null));
+                    (Artifact) Class.forName("com.android.build.api.artifact.ScopedArtifact$CLASSES").getField("INSTANCE").get(null));
         } catch (Throwable ignored) {
             dispatcher = TransformationDispatcher.ForLegacyAndroid.INSTANCE;
         }
