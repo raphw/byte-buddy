@@ -101,7 +101,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         /**
          * Utility for wiring the local transformation tasks.
          */
-        private final LocalTransformationTaskWiring taskWiring;
+        private final LocalTransformationTaskWiring wiring;
 
         /**
          * Creates a new variant action.
@@ -113,7 +113,16 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             this.project = project;
             this.configuration = configuration;
             configurations = new ConcurrentHashMap<String, Configuration>();
-            taskWiring = getTaskWiring(project);
+            LocalTransformationTaskWiring wiring;
+            try {
+                Class.forName("com.android.build.api.variant.ScopedArtifacts");
+                project.getLogger().debug("Transforming local classes using the scoped artifacts API.");
+                wiring = new CurrentLocalTransformationTaskWiring(project);
+            } catch (ClassNotFoundException e) {
+                project.getLogger().debug("Transforming local classes using the legacy API.");
+                wiring = new LegacyLocalTransformationTaskWiring(project);
+            }
+            this.wiring = wiring;
         }
 
         /**
@@ -141,19 +150,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     configuration,
                     byteBuddyAndroidServiceProvider,
                     classPath));
-
-            taskWiring.wireTask(variant, configuration, classPath);
-        }
-
-        private LocalTransformationTaskWiring getTaskWiring(Project project) {
-            try {
-                Class.forName("com.android.build.api.variant.ScopedArtifacts");
-                project.getLogger().debug("Transforming local classes using the scoped artifacts API.");
-                return new CurrentLocalTransformationTaskWiring(project);
-            } catch (ClassNotFoundException e) {
-                project.getLogger().debug("Transforming local classes using the legacy API.");
-                return new LegacyLocalTransformationTaskWiring(project);
-            }
+            wiring.wireTask(variant, configuration, classPath);
         }
     }
 

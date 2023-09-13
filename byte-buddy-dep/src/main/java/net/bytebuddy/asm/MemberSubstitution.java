@@ -7261,6 +7261,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         }
 
         @Override
+        public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
+            TypePool.Resolution resolution = typePool.describe(bootstrapMethodHandle.getOwner().replace('/', '.'));
+            new JavaConstant.MethodHandle(null, resolution.resolve(), name, null, null);
+            JavaConstant.MethodType.of();
+            ConstantValue
+
+            super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
+        }
+
+        @Override
         public void visitMaxs(int stackSize, int localVariableLength) {
             if (failIfNoMatch && !matched) {
                 throw new IllegalStateException("No substitution found within " + instrumentedMethod + " of " + instrumentedType);
