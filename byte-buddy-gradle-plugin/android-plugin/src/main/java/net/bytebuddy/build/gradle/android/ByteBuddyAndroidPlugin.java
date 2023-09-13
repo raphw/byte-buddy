@@ -73,6 +73,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
      */
     private static final String BYTE_BUDDY_JAR_TYPE = "bytebuddy-jar";
 
+    /*
+     * Resolves the dispatcher.
+     */
     static {
         TransformationDispatcher dispatcher;
         try {
@@ -440,11 +443,19 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
      */
     protected interface TransformationDispatcher {
 
+        /**
+         * A dispatcher that is used for Android versions that do not support APK version 7.4 or newer.
+         */
         enum ForLegacyAndroid implements TransformationDispatcher {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<LegacyByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
                         LegacyByteBuddyLocalClassesEnhancerTask.class,
@@ -456,21 +467,42 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             }
         }
 
+        /**
+         * A dispatcher that is used for Android versions that do support APK version 7.4 or newer.
+         */
         class ForApk74CompatibleAndroid implements TransformationDispatcher {
 
+            /**
+             * The {@code com.android.build.api.variant.ScopedArtifacts$Scope#forScope} method.
+             */
             private final Method forScope;
 
+            /**
+             * The {@code com.android.build.api.variant.ScopedArtifacts$Scope#PROJECT} value.
+             */
             private final Object scope;
 
+            /**
+             * The {@code com.android.build.api.artifact.ScopedArtifact$CLASSES#INSTANCE} value.
+             */
             private final Artifact artifact;
 
+            /**
+             * Creates a new dispatcher.
+             *
+             * @param forScope The {@code com.android.build.api.variant.ScopedArtifacts$Scope#forScope} method.
+             * @param scope    The {@code com.android.build.api.variant.ScopedArtifacts$Scope#PROJECT} value.
+             * @param artifact The {@code com.android.build.api.artifact.ScopedArtifact$CLASSES#INSTANCE} value.
+             */
             protected ForApk74CompatibleAndroid(Method forScope, Object scope, Artifact artifact) {
                 this.forScope = forScope;
                 this.scope = scope;
                 this.artifact = artifact;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<ByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
                         ByteBuddyLocalClassesEnhancerTask.class,
