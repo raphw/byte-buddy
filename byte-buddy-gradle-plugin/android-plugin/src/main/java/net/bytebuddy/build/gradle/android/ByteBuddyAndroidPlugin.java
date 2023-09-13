@@ -470,7 +470,6 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                 this.artifact = artifact;
             }
 
-            @SuppressWarnings("JavaReflectionInvocation")
             @Override
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<ByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
