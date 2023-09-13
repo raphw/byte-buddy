@@ -16,6 +16,9 @@
 package net.bytebuddy.build.gradle.android;
 
 import com.android.build.api.AndroidPluginVersion;
+import com.android.build.api.artifact.Artifact;
+import com.android.build.api.artifact.Artifacts;
+import com.android.build.api.artifact.MultipleArtifact;
 import com.android.build.api.attributes.BuildTypeAttr;
 import com.android.build.api.instrumentation.InstrumentationScope;
 import com.android.build.api.variant.AndroidComponentsExtension;
@@ -23,6 +26,10 @@ import com.android.build.api.variant.Variant;
 import com.android.build.gradle.BaseExtension;
 import com.android.build.gradle.internal.component.ComponentCreationConfig;
 import com.android.build.gradle.internal.publishing.AndroidArtifacts;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import org.gradle.api.Action;
@@ -31,7 +38,6 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ArtifactView;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.PublishArtifactSet;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.AttributeCompatibilityRule;
 import org.gradle.api.attributes.AttributeContainer;
@@ -39,16 +45,13 @@ import org.gradle.api.attributes.AttributeMatchingStrategy;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.CompatibilityCheckDetails;
 import org.gradle.api.attributes.Usage;
-import org.gradle.api.component.Artifact;
+import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.RegularFile;
+import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
 
 /**
  * A Byte Buddy plugin-variant to use in combination with Gradle's support for Android.
@@ -77,9 +80,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             @SuppressWarnings("unchecked")
             Object project = Enum.valueOf((Class) scope, "PROJECT");
             dispatcher = new TransformationDispatcher.ForApk74CompatibleAndroid(
-                PublishArtifactSet.class.getMethod("forScope", scope),
-                project,
-                (Artifact) Class.forName("com.android.build.api.variant.ScopedArtifacts$CLASSES").getField("INSTANCE").get(null));
+                    Artifacts.class.getMethod("forScope", scope),
+                    project,
+                    (Artifact) Class.forName("com.android.build.api.variant.ScopedArtifacts$CLASSES").getField("INSTANCE").get(null));
         } catch (Throwable ignored) {
             dispatcher = TransformationDispatcher.ForLegacyAndroid.INSTANCE;
         }
@@ -158,7 +161,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     configuration,
                     byteBuddyAndroidServiceProvider,
                     classPath));
-            TRANSFORMATION_DISPATCHER.accept(variant, configuration, classPath);
+            TRANSFORMATION_DISPATCHER.accept(project, variant, configuration, classPath);
         }
     }
 
@@ -444,19 +447,19 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             @Override
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<LegacyByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
-                    LegacyByteBuddyLocalClassesEnhancerTask.class,
-                    new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
+                        LegacyByteBuddyLocalClassesEnhancerTask.class,
+                        new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
                 variant.getArtifacts()
-                    .use(provider)
-                    .wiredWith(LegacyByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, LegacyByteBuddyLocalClassesEnhancerTask::getOutputDir)
-                    .toTransform(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE);
+                        .use(provider)
+                        .wiredWith(LegacyByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, LegacyByteBuddyLocalClassesEnhancerTask::getOutputDir)
+                        .toTransform(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE);
             }
         }
 
         class ForApk74CompatibleAndroid implements TransformationDispatcher {
 
             private final Method forScope;
-            
+
             private final Object scope;
 
             private final Artifact artifact;
@@ -467,19 +470,32 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                 this.artifact = artifact;
             }
 
+            @SuppressWarnings("JavaReflectionInvocation")
             @Override
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<ByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
-                    ByteBuddyLocalClassesEnhancerTask.class,
-                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
+                        ByteBuddyLocalClassesEnhancerTask.class,
+                        new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
                 try {
-                    ((PublishArtifactSet) forScope.invoke(variant.getArtifacts(), scope))
-                        .use(provider)
-                        .toTransform(artifact, ByteBuddyLocalClassesEnhancerTask::getLocalJars, ByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, ByteBuddyLocalClassesEnhancerTask::getOutputFile);
+                    Object scopedArtifacts = forScope.invoke(variant.getArtifacts(), scope);
+                    Method useMethod = scopedArtifacts.getClass().getMethod("use", TaskProvider.class);
+                    Object scopedArtifactsOperation = useMethod.invoke(scopedArtifacts, provider);
+                    Class<?> scopedArtifactClass = Class.forName("com.android.build.api.artifact.ScopedArtifact");
+                    Method toTransformMethod = scopedArtifactsOperation.getClass().getMethod("toTransform", scopedArtifactClass, Function1.class, Function1.class, Function1.class);
+                    toTransformMethod.invoke(scopedArtifactsOperation,
+                            scopedArtifactClass.cast(artifact),
+                            (Function1<ByteBuddyLocalClassesEnhancerTask, ListProperty<RegularFile>>) ByteBuddyLocalClassesEnhancerTask::getLocalJars,
+                            (Function1<ByteBuddyLocalClassesEnhancerTask, ListProperty<Directory>>) ByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs,
+                            (Function1<ByteBuddyLocalClassesEnhancerTask, RegularFileProperty>) ByteBuddyLocalClassesEnhancerTask::getOutputFile
+                    );
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Failed to variant scope", exception);
                 } catch (InvocationTargetException exception) {
                     throw new IllegalStateException("Failed to resolve runtime scope", exception.getCause());
+                } catch (NoSuchMethodException exception) {
+                    throw new IllegalStateException("Failed to resolve runtime method", exception.getCause());
+                } catch (ClassNotFoundException exception) {
+                    throw new IllegalStateException("Failed to resolve runtime class", exception.getCause());
                 }
             }
         }
