@@ -131,12 +131,34 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                     configuration,
                     byteBuddyAndroidServiceProvider,
                     classPath));
+            try {
+                Class.forName("com.android.build.api.variant.ScopedArtifacts");
+                wireLocalTransformationTask(variant, configuration, classPath);
+            } catch (ClassNotFoundException e) {
+                wireLegacyLocalTransformationTask(variant, configuration, classPath);
+            }
+        }
+
+        private void wireLocalTransformationTask(Variant variant, Configuration configuration, FileCollection classPath) {
+            project.getLogger().debug("Transforming local classes using the scoped artifacts API.");
             TaskProvider<ByteBuddyLocalClassesEnhancerTask> localClassesTransformation = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
                     ByteBuddyLocalClassesEnhancerTask.class,
                     new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
+
             variant.getArtifacts().forScope(ScopedArtifacts.Scope.PROJECT)
                     .use(localClassesTransformation)
                     .toTransform(ScopedArtifact.CLASSES.INSTANCE, ByteBuddyLocalClassesEnhancerTask::getLocalJars, ByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, ByteBuddyLocalClassesEnhancerTask::getOutputFile);
+        }
+
+        private void wireLegacyLocalTransformationTask(Variant variant, Configuration configuration, FileCollection classPath) {
+            project.getLogger().debug("Transforming local classes using the legacy API.");
+            TaskProvider<LegacyByteBuddyLocalClassesEnhancerTask> localClassesTransformation = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
+                    LegacyByteBuddyLocalClassesEnhancerTask.class,
+                    new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(configuration, project.getExtensions().getByType(BaseExtension.class), classPath));
+
+            variant.getArtifacts().use(localClassesTransformation)
+                    .wiredWith(LegacyByteBuddyLocalClassesEnhancerTask::getLocalClassesDirs, LegacyByteBuddyLocalClassesEnhancerTask::getOutputDir)
+                    .toTransform(MultipleArtifact.ALL_CLASSES_DIRS.INSTANCE);
         }
     }
 
