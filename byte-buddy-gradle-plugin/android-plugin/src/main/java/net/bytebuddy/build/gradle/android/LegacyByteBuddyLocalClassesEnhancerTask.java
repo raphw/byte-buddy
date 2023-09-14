@@ -31,15 +31,14 @@ import org.gradle.api.JavaVersion;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.Directory;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.RegularFile;
-import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.Closeable;
@@ -51,9 +50,9 @@ import java.net.URLClassLoader;
 import java.util.*;
 
 /**
- * Transformation task for instrumenting the project's local classes.
+ * Transformation task for instrumenting the project's local classes using the legacy AGP api < 7.4.0.
  */
-public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
+public abstract class LegacyByteBuddyLocalClassesEnhancerTask extends DefaultTask {
 
     /**
      * Returns the boot class path of Android.
@@ -88,14 +87,6 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     public abstract Property<JavaVersion> getJavaTargetCompatibilityVersion();
 
     /**
-     * Target project's local jars.
-     *
-     * @return The target project's local jars.
-     */
-    @InputFiles
-    public abstract ListProperty<RegularFile> getLocalJars();
-
-    /**
      * Target project's local classes dirs.
      *
      * @return The target project's local classes dirs.
@@ -104,12 +95,12 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     public abstract ListProperty<Directory> getLocalClassesDirs();
 
     /**
-     * The instrumented classes destination jar file.
+     * The instrumented classes destination dir.
      *
-     * @return The instrumented classes destination jar file.
+     * @return The instrumented classes destination dir.
      */
-    @OutputFile
-    public abstract RegularFileProperty getOutputFile();
+    @OutputDirectory
+    public abstract DirectoryProperty getOutputDir();
 
     /**
      * Translates a collection of files to {@link URL}s.
@@ -150,9 +141,6 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                 for (Directory directory : getLocalClassesDirs().get()) {
                     sources.add(new Plugin.Engine.Source.ForFolder(directory.getAsFile()));
                 }
-                for (RegularFile jarFile : getLocalJars().get()) {
-                    sources.add(new Plugin.Engine.Source.ForJarFile(jarFile.getAsFile()));
-                }
                 ClassLoader classLoader = new URLClassLoader(
                         toUrls(getByteBuddyClasspath().getFiles()),
                         new URLClassLoader(toUrls(getAndroidBootClasspath().getFiles()), ByteBuddy.class.getClassLoader()));
@@ -186,7 +174,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                                     classFileVersion,
                                     MethodNameTransformer.Suffixing.withRandomSuffix())
                             .with(classFileLocator)
-                            .apply(new Plugin.Engine.Source.Compound(sources), new Plugin.Engine.Target.ForJarFile(getOutputFile().get().getAsFile()), factories);
+                            .apply(new Plugin.Engine.Source.Compound(sources), new Plugin.Engine.Target.ForFolder(getOutputDir().get().getAsFile()), factories);
                     if (!summary.getFailed().isEmpty()) {
                         throw new IllegalStateException(summary.getFailed() + " local type transformations have failed");
                     } else if (summary.getTransformed().isEmpty()) {
@@ -211,9 +199,9 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     }
 
     /**
-     * A configuration action for the {@link ByteBuddyLocalClassesEnhancerTask} task.
+     * A configuration action for the {@link LegacyByteBuddyLocalClassesEnhancerTask} task.
      */
-    public static class ConfigurationAction implements Action<ByteBuddyLocalClassesEnhancerTask> {
+    public static class ConfigurationAction implements Action<LegacyByteBuddyLocalClassesEnhancerTask> {
 
         /**
          * The current variant's Byte Buddy configuration.
@@ -242,7 +230,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
         }
 
         @Override
-        public void execute(ByteBuddyLocalClassesEnhancerTask task) {
+        public void execute(LegacyByteBuddyLocalClassesEnhancerTask task) {
             task.getByteBuddyClasspath().from(byteBuddyConfiguration);
             task.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
             task.getRuntimeClasspath().from(runtimeClasspath);

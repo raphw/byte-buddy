@@ -7191,7 +7191,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     candidates = resolution.resolve().getDeclaredMethods().filter(strict
                             ? ElementMatchers.<MethodDescription>isConstructor().and(hasDescriptor(descriptor))
                             : ElementMatchers.<MethodDescription>failSafe(isConstructor().and(hasDescriptor(descriptor))));
-                } else if (opcode == Opcodes.INVOKESTATIC || opcode == Opcodes.INVOKESPECIAL) {
+                } else if (opcode == Opcodes.INVOKESTATIC) {
+                    Iterator<TypeDefinition> iterator = resolution.resolve().iterator();
+                    do {
+                        candidates = iterator.next().getDeclaredMethods().filter(strict
+                                ? ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))
+                                : ElementMatchers.<MethodDescription>failSafe(named(internalName).and(hasDescriptor(descriptor))));
+                    } while (iterator.hasNext() && candidates.isEmpty());
+                } else if (opcode == Opcodes.INVOKESPECIAL) {
                     candidates = resolution.resolve().getDeclaredMethods().filter(strict
                             ? ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))
                             : ElementMatchers.<MethodDescription>failSafe(named(internalName).and(hasDescriptor(descriptor))));

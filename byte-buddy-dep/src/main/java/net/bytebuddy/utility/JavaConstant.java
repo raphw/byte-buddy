@@ -1244,11 +1244,11 @@ public interface JavaConstant extends ConstantValue {
          * @param returnType     The return type that is represented by this instance.
          * @param parameterTypes The parameter types that is represented by this instance.
          */
-        protected MethodHandle(HandleType handleType,
-                               TypeDescription ownerType,
-                               String name,
-                               TypeDescription returnType,
-                               List<? extends TypeDescription> parameterTypes) {
+        public MethodHandle(HandleType handleType,
+                            TypeDescription ownerType,
+                            String name,
+                            TypeDescription returnType,
+                            List<? extends TypeDescription> parameterTypes) {
             this.handleType = handleType;
             this.ownerType = ownerType;
             this.name = name;
