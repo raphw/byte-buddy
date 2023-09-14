@@ -4,7 +4,7 @@
 
     <groupId>net.bytebuddy</groupId>
     <artifactId>byte-buddy-parent</artifactId>
-    <version>1.14.8-SNAPSHOT</version>
+    <version>1.14.8</version>
     <packaging>pom</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -61,7 +61,7 @@
         <bytebuddy.integration>false</bytebuddy.integration>
         <bytebuddy.experimental>false</bytebuddy.experimental>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputTimestamp>1693174785</project.build.outputTimestamp>
+        <project.build.outputTimestamp>1694699743</project.build.outputTimestamp>
         <sourcecode.main.version>1.5</sourcecode.main.version>
         <sourcecode.test.version>1.6</sourcecode.test.version>
         <bytecode.main.version>1.5</bytecode.main.version>
@@ -120,7 +120,7 @@
         <modulemaker.skip>false</modulemaker.skip>
         <javadoc.download.skip>false</javadoc.download.skip>
         <repository.url>git@github.com:raphw/byte-buddy.git</repository.url>
-        <surefire.arguments/>
+        <surefire.arguments />
     </properties>
 
     <licenses>
@@ -154,7 +154,7 @@
         <connection>scm:git:${repository.url}</connection>
         <developerConnection>scm:git:${repository.url}</developerConnection>
         <url>${repository.url}</url>
-        <tag>HEAD</tag>
+        <tag>byte-buddy-1.14.8</tag>
     </scm>
 
     <dependencies>
