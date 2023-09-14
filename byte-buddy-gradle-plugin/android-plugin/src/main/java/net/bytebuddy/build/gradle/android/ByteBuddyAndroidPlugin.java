@@ -82,13 +82,14 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         try {
             Class<?> scope = Class.forName("com.android.build.api.variant.ScopedArtifacts$Scope");
             Class<?> scopedArtifacts = Class.forName("com.android.build.api.variant.ScopedArtifacts");
+            Class<?> scopedArtifact = Class.forName("com.android.build.api.artifact.ScopedArtifact");
             @SuppressWarnings("unchecked")
             Object project = Enum.valueOf((Class) scope, "PROJECT");
             dispatcher = new TransformationDispatcher.ForApk74CompatibleAndroid(
                 Artifacts.class.getMethod("forScope", scope),
                 scopedArtifacts.getMethod("use", TaskProvider.class),
                 Class.forName("com.android.build.api.variant.ScopedArtifactsOperation").getMethod("toTransform",
-                    scopedArtifacts,
+                    scopedArtifact,
                     Function1.class,
                     Function1.class,
                     Function1.class),
