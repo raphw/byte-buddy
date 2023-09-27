@@ -28,9 +28,6 @@ import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
-import org.gradle.api.Task;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.attributes.LibraryElements;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
@@ -208,7 +205,7 @@ public abstract class LegacyByteBuddyLocalClassesEnhancerTask extends DefaultTas
         /**
          * The current variant's Byte Buddy configuration.
          */
-        private final Configuration byteBuddyConfiguration;
+        private final FileCollection byteBuddyConfiguration;
         /**
          * The android gradle extension.
          */
@@ -225,7 +222,7 @@ public abstract class LegacyByteBuddyLocalClassesEnhancerTask extends DefaultTas
          * @param androidExtension       The android gradle extension.
          * @param runtimeClasspath       The current variant's runtime classpath.
          */
-        public ConfigurationAction(Configuration byteBuddyConfiguration, BaseExtension androidExtension, FileCollection runtimeClasspath) {
+        public ConfigurationAction(FileCollection byteBuddyConfiguration, BaseExtension androidExtension, FileCollection runtimeClasspath) {
             this.byteBuddyConfiguration = byteBuddyConfiguration;
             this.androidExtension = androidExtension;
             this.runtimeClasspath = runtimeClasspath;
@@ -233,17 +230,10 @@ public abstract class LegacyByteBuddyLocalClassesEnhancerTask extends DefaultTas
 
         @Override
         public void execute(LegacyByteBuddyLocalClassesEnhancerTask task) {
-            task.getByteBuddyClasspath().from(byteBuddyConfiguration).from(getByteBuddyClasspathResources(task));
+            task.getByteBuddyClasspath().from(byteBuddyConfiguration);
             task.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
             task.getRuntimeClasspath().from(runtimeClasspath);
             task.getJavaTargetCompatibilityVersion().set(androidExtension.getCompileOptions().getTargetCompatibility());
-        }
-
-        private FileCollection getByteBuddyClasspathResources(Task task) {
-            return byteBuddyConfiguration.getIncoming().artifactView(viewConfiguration -> {
-                viewConfiguration.lenient(false);
-                viewConfiguration.getAttributes().attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, task.getProject().getObjects().named(LibraryElements.class, LibraryElements.RESOURCES));
-            }).getFiles();
         }
     }
 }
