@@ -28,7 +28,10 @@ android {
 
 dependencies {
     implementation group: 'androidx.appcompat', name: 'appcompat', version: '1.5.0'
+    implementation project(":service-definition-lib")
     implementation project(':aar-bytebuddy-target')
+    implementation project(":service-implementation-lib")
+    implementation project(":service-implementation2-lib")
     byteBuddy project(":jar-bytebuddy-plugin")
     byteBuddy project(":aar-bytebuddy-plugin")
     testImplementation group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
