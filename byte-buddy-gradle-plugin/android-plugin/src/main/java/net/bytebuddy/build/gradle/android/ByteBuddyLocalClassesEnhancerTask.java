@@ -22,8 +22,10 @@ import net.bytebuddy.build.AndroidDescriptor;
 import net.bytebuddy.build.BuildLogger;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
+import net.bytebuddy.utility.QueueFactory;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -138,9 +140,13 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
             ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
             try {
                 Set<Plugin.Engine.Source> sources = new LinkedHashSet<Plugin.Engine.Source>();
+                Set<File> localClasspath = new HashSet<>();
                 for (Directory directory : getLocalClassesDirs().get()) {
-                    sources.add(new Plugin.Engine.Source.ForFolder(directory.getAsFile()));
+                    File file = directory.getAsFile();
+                    localClasspath.add(file);
+                    sources.add(new Plugin.Engine.Source.ForFolder(file));
                 }
+                AndroidDescriptor androidDescriptor = DefaultAndroidDescriptor.ofClassPath(localClasspath);
                 for (RegularFile jarFile : getLocalJars().get()) {
                     sources.add(new Plugin.Engine.Source.ForJarFile(jarFile.getAsFile()));
                 }
@@ -165,7 +171,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                                 throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
                             }
                             factories.add(new Plugin.Factory.UsingReflection(type)
-                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, AndroidDescriptor.Trivial.LOCAL))
+                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor))
                                     .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, getProject().getLogger()))
                                     .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, getProject().getLogger()))
                                     .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, buildLogger)));
@@ -230,6 +236,66 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
             task.getByteBuddyClasspath().from(byteBuddyConfiguration);
             task.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
             task.getJavaTargetCompatibilityVersion().set(androidExtension.getCompileOptions().getTargetCompatibility());
+        }
+    }
+
+    /**
+     * An implementation for an Android descriptor based on resolving class names against the class path.
+     */
+    protected static class DefaultAndroidDescriptor implements AndroidDescriptor {
+
+        /**
+         * The file name extension of a Java class file.
+         */
+        private static final String CLASS_FILE_EXTENSION = ".class";
+
+        /**
+         * The files on the class path.
+         */
+        private final Set<String> names;
+
+        /**
+         * Creates a default Android descriptor.
+         *
+         * @param names The names of all classes on the class path.
+         */
+        protected DefaultAndroidDescriptor(Set<String> names) {
+            this.names = names;
+        }
+
+        /**
+         * Resolves class names of a set of class files from the class path.
+         *
+         * @param roots The class path roots to resolve.
+         * @return A suitable Android descriptor.
+         */
+        protected static AndroidDescriptor ofClassPath(Set<File> roots) {
+            Set<String> names = new HashSet<String>();
+            for (File root : roots) {
+                Queue<File> queue = QueueFactory.make(Collections.singleton(root));
+                while (!queue.isEmpty()) {
+                    File file = queue.remove();
+                    if (file.isDirectory()) {
+                        File[] value = file.listFiles();
+                        if (value != null) {
+                            queue.addAll(Arrays.asList(value));
+                        }
+                    } else if (file.getName().endsWith(CLASS_FILE_EXTENSION)) {
+                        String path = root.getAbsoluteFile().toURI().relativize(file.getAbsoluteFile().toURI()).getPath();
+                        names.add(path.substring(0, path.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.'));
+                    }
+                }
+            }
+            return new DefaultAndroidDescriptor(names);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeScope getTypeScope(TypeDescription typeDescription) {
+            return names.contains(typeDescription.getName())
+                    ? TypeScope.LOCAL
+                    : TypeScope.EXTERNAL;
         }
     }
 }
