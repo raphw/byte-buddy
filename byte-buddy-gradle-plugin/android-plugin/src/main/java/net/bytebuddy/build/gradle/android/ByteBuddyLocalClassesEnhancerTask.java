@@ -71,14 +71,6 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     public abstract ConfigurableFileCollection getByteBuddyClasspath();
 
     /**
-     * Returns the runtime class path.
-     *
-     * @return The runtime class path.
-     */
-    @InputFiles
-    public abstract ConfigurableFileCollection getRuntimeClasspath();
-
-    /**
      * Returns the Java target compatibility version.
      *
      * @return The Java target compatibility version.
@@ -137,7 +129,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
         try {
             ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersionString(getJavaTargetCompatibilityVersion().get().toString());
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
-            for (File file : getRuntimeClasspath().plus(getAndroidBootClasspath()).plus(getByteBuddyClasspath()).getFiles()) {
+            for (File file : getAndroidBootClasspath().plus(getByteBuddyClasspath()).getFiles()) {
                 classFileLocators.add(file.isFile()
                         ? ClassFileLocator.ForJarFile.of(file)
                         : new ClassFileLocator.ForFolder(file));
@@ -185,7 +177,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                                     classFileVersion,
                                     MethodNameTransformer.Suffixing.withRandomSuffix())
                             .with(classFileLocator)
-                            .apply(new Plugin.Engine.Source.Compound(sources), new Plugin.Engine.Target.ForJarFile(getOutputFile().get().getAsFile()), factories);
+                            .apply(new Plugin.Engine.Source.Compound(sources), new TargetForAndroidAppJarFile(getOutputFile().get().getAsFile()), factories);
                     if (!summary.getFailed().isEmpty()) {
                         throw new IllegalStateException(summary.getFailed() + " local type transformations have failed");
                     } else if (summary.getTransformed().isEmpty()) {
@@ -223,28 +215,20 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
          */
 
         private final BaseExtension androidExtension;
-        /**
-         * The current variant's runtime classpath.
-         */
-
-        private final FileCollection runtimeClasspath;
 
         /**
          * @param byteBuddyConfiguration The current variant Byte Buddy configuration.
          * @param androidExtension       The android gradle extension.
-         * @param runtimeClasspath       The current variant's runtime classpath.
          */
-        public ConfigurationAction(FileCollection byteBuddyConfiguration, BaseExtension androidExtension, FileCollection runtimeClasspath) {
+        public ConfigurationAction(FileCollection byteBuddyConfiguration, BaseExtension androidExtension) {
             this.byteBuddyConfiguration = byteBuddyConfiguration;
             this.androidExtension = androidExtension;
-            this.runtimeClasspath = runtimeClasspath;
         }
 
         @Override
         public void execute(ByteBuddyLocalClassesEnhancerTask task) {
             task.getByteBuddyClasspath().from(byteBuddyConfiguration);
             task.getAndroidBootClasspath().from(androidExtension.getBootClasspath());
-            task.getRuntimeClasspath().from(runtimeClasspath);
             task.getJavaTargetCompatibilityVersion().set(androidExtension.getCompileOptions().getTargetCompatibility());
         }
     }
