@@ -27,7 +27,6 @@ android {
 }
 
 dependencies {
-    implementation group: 'androidx.appcompat', name: 'appcompat', version: '1.5.0'
     implementation project(":service-definition-lib")
     implementation project(':aar-bytebuddy-target')
     implementation project(":service-implementation-lib")
@@ -35,6 +34,7 @@ dependencies {
     byteBuddy project(":jar-bytebuddy-plugin")
     byteBuddy project(":aar-bytebuddy-plugin")
     testImplementation group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
-    androidTestImplementation group: 'androidx.test.ext', name: 'junit', version: '1.1.3'
-    androidTestImplementation group: 'androidx.test.espresso', name: 'espresso-core', version: '3.4.0'
+    androidTestImplementation group: 'androidx.test', name: 'rules', version: '1.5.0'
+    androidTestImplementation group: 'androidx.test', name: 'runner', version: '1.5.2'
+    androidTestImplementation group: 'androidx.test.ext', name: 'junit', version: '1.1.5'
 }
