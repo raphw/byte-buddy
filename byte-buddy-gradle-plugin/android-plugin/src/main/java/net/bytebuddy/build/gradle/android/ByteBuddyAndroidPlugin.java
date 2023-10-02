@@ -587,7 +587,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                 try {
                     toTransform.invoke(use.invoke(forScope.invoke(variant.getArtifacts(), scope), provider),
                         artifact,
-                        GetLocalJarsFunction.INSTANCE,
+                        GetProjectJarsFunction.INSTANCE,
                         GetLocalClassesDirsFunction.INSTANCE,
                         GetOutputFileFunction.INSTANCE);
                 } catch (IllegalAccessException exception) {
@@ -598,9 +598,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             }
 
             /**
-             * A function representation of resolving local jars.
+             * A function representation of resolving local and dependencies jars.
              */
-            protected enum GetLocalJarsFunction implements Function1<ByteBuddyLocalClassesEnhancerTask, ListProperty<RegularFile>> {
+            protected enum GetProjectJarsFunction implements Function1<ByteBuddyLocalClassesEnhancerTask, ListProperty<RegularFile>> {
 
                 /**
                  * The singleton instance.
