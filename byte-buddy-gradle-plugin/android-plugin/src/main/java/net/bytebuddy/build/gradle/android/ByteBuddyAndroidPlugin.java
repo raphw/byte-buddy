@@ -260,9 +260,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             protected FileCollection apply(Variant variant) {
                 try {
                     return ((Configuration) getRuntimeConfiguration.invoke(variant)).getIncoming()
-                            .artifactView(this)
-                            .getArtifacts()
-                            .getArtifactFiles();
+                        .artifactView(this)
+                        .getArtifacts()
+                        .getArtifactFiles();
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Failed to access runtime configuration", exception);
                 } catch (InvocationTargetException exception) {
@@ -327,7 +327,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          * {@inheritDoc}
          */
         public Unit invoke(ByteBuddyInstrumentationParameters parameters) {
-            parameters.getByteBuddyClasspath().from(getByteBuddyProperClasspath(project, configuration));
+            parameters.getByteBuddyClasspath().from(getByteBuddyClasspath(project, configuration));
             parameters.getAndroidBootClasspath().from(project.getExtensions().getByType(BaseExtension.class).getBootClasspath());
             parameters.getRuntimeClasspath().from(classPath);
             parameters.getByteBuddyService().set(byteBuddyAndroidServiceProvider);
@@ -486,7 +486,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<LegacyByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
                     LegacyByteBuddyLocalClassesEnhancerTask.class,
-                    new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(getByteBuddyProperClasspath(project, configuration), project.getExtensions().getByType(BaseExtension.class), classPath));
+                    new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(getByteBuddyClasspath(project, configuration), project.getExtensions().getByType(BaseExtension.class), classPath));
                 variant.getArtifacts()
                     .use(provider)
                     .wiredWith(GetLocalClassesFunction.INSTANCE, GetOutputDirFunction.INSTANCE)
@@ -583,7 +583,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<ByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
                     ByteBuddyLocalClassesEnhancerTask.class,
-                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(getByteBuddyProperClasspath(project, configuration), project.getExtensions().getByType(BaseExtension.class)));
+                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(getByteBuddyClasspath(project, configuration), project.getExtensions().getByType(BaseExtension.class)));
                 try {
                     toTransform.invoke(use.invoke(forScope.invoke(variant.getArtifacts(), scope), provider),
                         artifact,
@@ -663,22 +663,20 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
         void accept(Project project, Variant variant, Configuration configuration, @MaybeNull FileCollection classPath);
     }
 
-    private static FileCollection getByteBuddyClasspathResources(Configuration byteBuddyConfiguration) {
-        return byteBuddyConfiguration.getIncoming().artifactView(viewConfiguration -> {
+    /**
+     * For external dependencies, it provides their JAR files. For local project's dependencies, it provides their local
+     * build dirs for both classes and resources. The latter allows for faster and more reliable (up-to-date) compilation processes
+     * when using local plugins.
+     */
+    private static FileCollection getByteBuddyClasspath(Project project, Configuration byteBuddyConfiguration) {
+        FileCollection resources = byteBuddyConfiguration.getIncoming().artifactView(viewConfiguration -> {
             viewConfiguration.lenient(false);
             viewConfiguration.getAttributes().attribute(ARTIFACT_TYPE_ATTRIBUTE, BYTE_BUDDY_RESOURCES_TYPE);
         }).getFiles();
-    }
-
-    private static FileCollection getByteBuddyClasspathClasses(Configuration byteBuddyConfiguration) {
-        return byteBuddyConfiguration.getIncoming().artifactView(viewConfiguration -> {
+        FileCollection classes = byteBuddyConfiguration.getIncoming().artifactView(viewConfiguration -> {
             viewConfiguration.lenient(false);
             viewConfiguration.getAttributes().attribute(ARTIFACT_TYPE_ATTRIBUTE, BYTE_BUDDY_CLASSES_TYPE);
         }).getFiles();
-    }
-
-    private static FileCollection getByteBuddyProperClasspath(Project project, Configuration byteBuddyConfiguration) {
-        return project.files(getByteBuddyClasspathClasses(byteBuddyConfiguration),
-            getByteBuddyClasspathResources(byteBuddyConfiguration));
+        return project.files(classes, resources);
     }
 }
