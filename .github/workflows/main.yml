@@ -23,7 +23,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Build project
-        run: ./mvnw verify -Pjava21 -Dnet.bytebuddy.experimental
+        run: ./mvnw verify -Pjava22 -Dnet.bytebuddy.experimental
         continue-on-error: false
   hotspot-supported:
     name: Any (supported)
