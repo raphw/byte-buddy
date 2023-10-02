@@ -53,7 +53,7 @@ import java.net.URLClassLoader;
 import java.util.*;
 
 /**
- * Transformation task for instrumenting the project's local classes.
+ * Transformation task for instrumenting the project's local and dependencies' classes.
  */
 public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
 
@@ -82,12 +82,12 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     public abstract Property<JavaVersion> getJavaTargetCompatibilityVersion();
 
     /**
-     * Target project's local jars.
+     * Target project's local and dependencies jars.
      *
-     * @return The target project's local jars.
+     * @return The target project's local and dependencies jars.
      */
     @InputFiles
-    public abstract ListProperty<RegularFile> getLocalJars();
+    public abstract ListProperty<RegularFile> getInputJars();
 
     /**
      * Target project's local classes dirs.
@@ -127,7 +127,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     }
 
     /**
-     * Executes the plugin for transforming local classes.
+     * Executes the plugin for transforming all project's classes.
      */
     @TaskAction
     public void execute() {
@@ -150,7 +150,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                     sources.add(new Plugin.Engine.Source.ForFolder(file));
                 }
                 AndroidDescriptor androidDescriptor = DefaultAndroidDescriptor.ofClassPath(localClasspath);
-                for (RegularFile jarFile : getLocalJars().get()) {
+                for (RegularFile jarFile : getInputJars().get()) {
                     sources.add(new Plugin.Engine.Source.ForJarFile(jarFile.getAsFile()));
                 }
                 ClassLoader classLoader = new URLClassLoader(
@@ -188,11 +188,11 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                             .with(classFileLocator)
                             .apply(new Plugin.Engine.Source.Compound(sources), new TargetForAndroidAppJarFile(getOutputFile().get().getAsFile()), factories);
                     if (!summary.getFailed().isEmpty()) {
-                        throw new IllegalStateException(summary.getFailed() + " local type transformations have failed");
+                        throw new IllegalStateException(summary.getFailed() + " type transformations have failed");
                     } else if (summary.getTransformed().isEmpty()) {
-                        LOGGER.info("No local types were transformed during plugin execution");
+                        LOGGER.info("No types were transformed during plugin execution");
                     } else {
-                        LOGGER.info("Transformed {} local type(s)", summary.getTransformed().size());
+                        LOGGER.info("Transformed {} type(s)", summary.getTransformed().size());
                     }
                 } finally {
                     if (classLoader instanceof Closeable) {
@@ -206,7 +206,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                 classFileLocator.close();
             }
         } catch (IOException exception) {
-            throw new GradleException("Failed to transform local classes", exception);
+            throw new GradleException("Failed to transform classes", exception);
         }
     }
 

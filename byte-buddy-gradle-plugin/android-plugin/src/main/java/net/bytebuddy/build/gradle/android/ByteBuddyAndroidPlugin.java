@@ -611,7 +611,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                  * {@inheritDoc}
                  */
                 public ListProperty<RegularFile> invoke(ByteBuddyLocalClassesEnhancerTask task) {
-                    return task.getLocalJars();
+                    return task.getInputJars();
                 }
             }
 
