@@ -28,7 +28,6 @@ import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
-import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
@@ -206,7 +205,7 @@ public abstract class LegacyByteBuddyLocalClassesEnhancerTask extends DefaultTas
         /**
          * The current variant's Byte Buddy configuration.
          */
-        private final Configuration byteBuddyConfiguration;
+        private final FileCollection byteBuddyConfiguration;
         /**
          * The android gradle extension.
          */
@@ -223,7 +222,7 @@ public abstract class LegacyByteBuddyLocalClassesEnhancerTask extends DefaultTas
          * @param androidExtension       The android gradle extension.
          * @param runtimeClasspath       The current variant's runtime classpath.
          */
-        public ConfigurationAction(Configuration byteBuddyConfiguration, BaseExtension androidExtension, FileCollection runtimeClasspath) {
+        public ConfigurationAction(FileCollection byteBuddyConfiguration, BaseExtension androidExtension, FileCollection runtimeClasspath) {
             this.byteBuddyConfiguration = byteBuddyConfiguration;
             this.androidExtension = androidExtension;
             this.runtimeClasspath = runtimeClasspath;
