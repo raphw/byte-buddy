@@ -26,6 +26,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.utility.QueueFactory;
+import net.bytebuddy.utility.nullability.MaybeNull;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -46,7 +47,13 @@ import org.gradle.api.tasks.TaskAction;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
+import java.util.zip.ZipException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -160,7 +167,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                     try {
                         buildLogger = (BuildLogger) Class.forName("net.bytebuddy.build.gradle.GradleBuildLogger")
                                 .getConstructor(Logger.class)
-                                .newInstance(LOGGER);
+                                .newInstance(getProject().getLogger());
                     } catch (Exception exception) {
                         throw new GradleException("Failed to resolve Gradle build logger", exception);
                     }
@@ -181,7 +188,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                         }
                     }
                     Plugin.Engine.Summary summary = Plugin.Engine.Default.of(new EntryPoint.Unvalidated(EntryPoint.Default.DECORATE),
-                                    classFileVersion,Logger
+                                    classFileVersion,
                                     MethodNameTransformer.Suffixing.withRandomSuffix())
                             .with(classFileLocator)
                             .apply(new Plugin.Engine.Source.Compound(sources), new TargetForAndroidAppJarFile(getOutputFile().get().getAsFile()), factories);

@@ -323,7 +323,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          * {@inheritDoc}
          */
         public Unit invoke(ByteBuddyInstrumentationParameters parameters) {
-            parameters.getByteBuddyClasspath().from(getByteBuddyClasspath(project, configuration));
+            parameters.getByteBuddyClasspath().from(ByteBuddyViewConfiguration.toClassPath(project, configuration));
             parameters.getAndroidBootClasspath().from(project.getExtensions().getByType(BaseExtension.class).getBootClasspath());
             parameters.getRuntimeClasspath().from(classPath);
             parameters.getByteBuddyService().set(byteBuddyAndroidServiceProvider);
@@ -482,7 +482,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<LegacyByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
                     LegacyByteBuddyLocalClassesEnhancerTask.class,
-                    new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(getByteBuddyClasspath(project, configuration), project.getExtensions().getByType(BaseExtension.class), classPath));
+                    new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(ByteBuddyViewConfiguration.toClassPath(project, configuration),
+                        project.getExtensions().getByType(BaseExtension.class),
+                        classPath));
                 variant.getArtifacts()
                     .use(provider)
                     .wiredWith(GetLocalClassesFunction.INSTANCE, GetOutputDirFunction.INSTANCE)
@@ -579,7 +581,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<ByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyTransform",
                     ByteBuddyLocalClassesEnhancerTask.class,
-                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(getByteBuddyClasspath(project, configuration), project.getExtensions().getByType(BaseExtension.class)));
+                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(ByteBuddyViewConfiguration.toClassPath(project, configuration), project.getExtensions().getByType(BaseExtension.class)));
                 try {
                     toTransform.invoke(use.invoke(forScope.invoke(variant.getArtifacts(), scope), provider),
                         artifact,
@@ -660,19 +662,32 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     }
 
     /**
-     * For external dependencies, it provides their JAR files. For local project's dependencies, it provides their local
-     * build dirs for both classes and resources. The latter allows for faster and more reliable (up-to-date) compilation processes
-     * when using local plugins.
+     * A view configuration for creating the Byte Buddy class path.
      */
-    private static FileCollection getByteBuddyClasspath(Project project, Configuration byteBuddyConfiguration) {
-        FileCollection resources = byteBuddyConfiguration.getIncoming().artifactView(viewConfiguration -> {
-            viewConfiguration.lenient(false);
-            viewConfiguration.getAttributes().attribute(ARTIFACT_TYPE_ATTRIBUTE, BYTE_BUDDY_RESOURCES_TYPE);
-        }).getFiles();
-        FileCollection classes = byteBuddyConfiguration.getIncoming().artifactView(viewConfiguration -> {
-            viewConfiguration.lenient(false);
-            viewConfiguration.getAttributes().attribute(ARTIFACT_TYPE_ATTRIBUTE, BYTE_BUDDY_CLASSES_TYPE);
-        }).getFiles();
-        return project.files(classes, resources);
+    protected enum ByteBuddyViewConfiguration implements Action<ArtifactView.ViewConfiguration> {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        /**
+         * For external dependencies, it provides their JAR files. For local project's dependencies, it provides their local
+         * build dirs for both classes and resources. The latter allows for faster and more reliable (up-to-date) compilation processes
+         * when using local plugins.
+         */
+        protected static FileCollection toClassPath(Project project, Configuration configuration) {
+            return project.files(
+                configuration.getIncoming().artifactView(INSTANCE).getFiles(),
+                configuration.getIncoming().artifactView(INSTANCE).getFiles());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void execute(ArtifactView.ViewConfiguration configuration) {
+            configuration.lenient(false);
+            configuration.getAttributes().attribute(ARTIFACT_TYPE_ATTRIBUTE, BYTE_BUDDY_RESOURCES_TYPE);
+        }
     }
 }
