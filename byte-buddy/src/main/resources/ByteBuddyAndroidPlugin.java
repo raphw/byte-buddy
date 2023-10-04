@@ -667,9 +667,28 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     protected enum ByteBuddyViewConfiguration implements Action<ArtifactView.ViewConfiguration> {
 
         /**
-         * The singleton instance.
+         * A view configuration for classes.
          */
-        INSTANCE;
+        FOR_CLASSES(BYTE_BUDDY_CLASSES_TYPE),
+
+        /**
+         * A view configuration for resources.
+         */
+        FOR_RESOURCES(BYTE_BUDDY_RESOURCES_TYPE);
+
+        /**
+         * The type of the configuration attribute.
+         */
+        private final String type;
+
+        /**
+         * Creates a new view configuration.
+         *
+         * @param type The type of the configuration attribute.
+         */
+        ByteBuddyViewConfiguration(String type) {
+            this.type = type;
+        }
 
         /**
          * For external dependencies, it provides their JAR files. For local project's dependencies, it provides their local
@@ -678,8 +697,8 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          */
         protected static FileCollection toClassPath(Project project, Configuration configuration) {
             return project.files(
-                configuration.getIncoming().artifactView(INSTANCE).getFiles(),
-                configuration.getIncoming().artifactView(INSTANCE).getFiles());
+                configuration.getIncoming().artifactView(FOR_CLASSES).getFiles(),
+                configuration.getIncoming().artifactView(FOR_RESOURCES).getFiles());
         }
 
         /**
@@ -687,7 +706,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          */
         public void execute(ArtifactView.ViewConfiguration configuration) {
             configuration.lenient(false);
-            configuration.getAttributes().attribute(ARTIFACT_TYPE_ATTRIBUTE, BYTE_BUDDY_RESOURCES_TYPE);
+            configuration.getAttributes().attribute(ARTIFACT_TYPE_ATTRIBUTE, type);
         }
     }
 }
