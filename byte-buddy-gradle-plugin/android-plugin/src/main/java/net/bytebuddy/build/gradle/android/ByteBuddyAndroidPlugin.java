@@ -74,6 +74,10 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
      * The name of the Byte Buddy jar type.
      */
     public static final String BYTE_BUDDY_CLASSES_TYPE = "bytebuddy-classes";
+
+    /**
+     * The name of the Byte Buddy resources type.
+     */
     public static final String BYTE_BUDDY_RESOURCES_TYPE = "bytebuddy-resources";
 
     /*
@@ -152,40 +156,32 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          * {@inheritDoc}
          */
         public void execute(Variant variant) {
-            Configuration configuration = getByteBuddyConfiguration(variant);
-
-            if (TRANSFORMATION_DISPATCHER instanceof TransformationDispatcher.ForApk74CompatibleAndroid) {
-                TRANSFORMATION_DISPATCHER.accept(project, variant, configuration, null);
-                return;
-            }
-
-            // Legacy api usage.
-            Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider = project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "ByteBuddyAndroidService",
-                ByteBuddyAndroidService.class,
-                new ByteBuddyAndroidService.ConfigurationAction(project.getExtensions().getByType(BaseExtension.class)));
-            FileCollection classPath = RuntimeClassPathResolver.INSTANCE.apply(variant);
-            variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, new ByteBuddyTransformationConfiguration(project,
-                configuration,
-                byteBuddyAndroidServiceProvider,
-                classPath));
-            TRANSFORMATION_DISPATCHER.accept(project, variant, configuration, classPath);
-        }
-
-        private Configuration getByteBuddyConfiguration(Variant variant) {
             if (variant.getBuildType() == null) {
                 throw new GradleException("Build type for " + variant + " was null");
             }
             Configuration configuration = configurations.get(variant.getBuildType());
             if (configuration == null) {
                 configuration = project.getConfigurations().create(variant.getBuildType() + "ByteBuddy", new VariantConfigurationConfigurationAction(project,
-                    this.configuration,
-                    variant.getBuildType()));
+                        this.configuration,
+                        variant.getBuildType()));
                 Configuration previous = configurations.putIfAbsent(variant.getBuildType(), configuration);
                 if (previous != null) {
                     configuration = previous;
                 }
             }
-            return configuration;
+            if (TRANSFORMATION_DISPATCHER instanceof TransformationDispatcher.ForApk74CompatibleAndroid) {
+                TRANSFORMATION_DISPATCHER.accept(project, variant, configuration, null);
+            } else {
+                Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider = project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "ByteBuddyAndroidService",
+                        ByteBuddyAndroidService.class,
+                        new ByteBuddyAndroidService.ConfigurationAction(project.getExtensions().getByType(BaseExtension.class)));
+                FileCollection classPath = RuntimeClassPathResolver.INSTANCE.apply(variant);
+                variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, new ByteBuddyTransformationConfiguration(project,
+                        configuration,
+                        byteBuddyAndroidServiceProvider,
+                        classPath));
+                TRANSFORMATION_DISPATCHER.accept(project, variant, configuration, classPath);
+            }
         }
     }
 

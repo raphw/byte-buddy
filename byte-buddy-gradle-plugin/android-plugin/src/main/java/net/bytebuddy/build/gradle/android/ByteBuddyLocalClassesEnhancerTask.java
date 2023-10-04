@@ -105,8 +105,6 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
 
-    private static final Logger LOGGER = Logging.getLogger(ByteBuddyLocalClassesEnhancerTask.class);
-
     /**
      * Translates a collection of files to {@link URL}s.
      *
@@ -175,24 +173,24 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                             }
                             factories.add(new Plugin.Factory.UsingReflection(type)
                                     .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor))
-                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, LOGGER))
-                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, LOGGER))
+                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, getProject().getLogger()))
+                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, getProject().getLogger()))
                                     .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, buildLogger)));
                         } catch (Throwable throwable) {
                             throw new IllegalStateException("Cannot resolve plugin: " + name, throwable);
                         }
                     }
                     Plugin.Engine.Summary summary = Plugin.Engine.Default.of(new EntryPoint.Unvalidated(EntryPoint.Default.DECORATE),
-                                    classFileVersion,
+                                    classFileVersion,Logger
                                     MethodNameTransformer.Suffixing.withRandomSuffix())
                             .with(classFileLocator)
                             .apply(new Plugin.Engine.Source.Compound(sources), new TargetForAndroidAppJarFile(getOutputFile().get().getAsFile()), factories);
                     if (!summary.getFailed().isEmpty()) {
                         throw new IllegalStateException(summary.getFailed() + " type transformations have failed");
                     } else if (summary.getTransformed().isEmpty()) {
-                        LOGGER.info("No types were transformed during plugin execution");
+                        getProject().getLogger().info("No types were transformed during plugin execution");
                     } else {
-                        LOGGER.info("Transformed {} type(s)", summary.getTransformed().size());
+                        getProject().getLogger().info("Transformed {} type(s)", summary.getTransformed().size());
                     }
                 } finally {
                     if (classLoader instanceof Closeable) {
@@ -299,6 +297,85 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
             return names.contains(typeDescription.getName())
                     ? TypeScope.LOCAL
                     : TypeScope.EXTERNAL;
+        }
+    }
+
+    /**
+     * A Byte Buddy compilation target that merges an enhanced android app's runtime classpath into a jar file.
+     */
+    protected static class TargetForAndroidAppJarFile extends Plugin.Engine.Target.ForJarFile {
+
+        /**
+         * The targeted file.
+         */
+        private final File file;
+
+        /**
+         * Creates a new Byte Buddy compilation target for Android.
+         *
+         * @param file The targeted file.
+         */
+        protected TargetForAndroidAppJarFile(File file) {
+            super(file);
+            this.file = file;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Sink write(@MaybeNull Manifest manifest) throws IOException {
+            return manifest == null
+                    ? new ForAndroidAppOutputStream(new JarOutputStream(new FileOutputStream(file)))
+                    : new ForAndroidAppOutputStream(new JarOutputStream(new FileOutputStream(file), manifest));
+        }
+
+        /**
+         * A sink for an Android file.
+         */
+        protected static class ForAndroidAppOutputStream extends Sink.ForJarOutputStream {
+
+            /**
+             * The targeted output stream.
+             */
+            private final JarOutputStream outputStream;
+
+            /**
+             * Creates an output stream for an Android file.
+             *
+             * @param outputStream The targeted output stream.
+             */
+            protected ForAndroidAppOutputStream(JarOutputStream outputStream) {
+                super(outputStream);
+                this.outputStream = outputStream;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public void retain(Plugin.Engine.Source.Element element) throws IOException {
+                JarEntry entry = element.resolveAs(JarEntry.class);
+                if (entry != null && entry.isDirectory()) {
+                    return;
+                }
+                try {
+                    outputStream.putNextEntry(new JarEntry(element.getName()));
+                    InputStream inputStream = element.getInputStream();
+                    try {
+                        byte[] buffer = new byte[1024];
+                        int length;
+                        while ((length = inputStream.read(buffer)) != -1) {
+                            outputStream.write(buffer, 0, length);
+                        }
+                    } finally {
+                        inputStream.close();
+                    }
+                    outputStream.closeEntry();
+                } catch (ZipException exception) {
+                    if (!element.getName().startsWith("META-INF")) {
+                        throw exception;
+                    }
+                }
+            }
         }
     }
 }
