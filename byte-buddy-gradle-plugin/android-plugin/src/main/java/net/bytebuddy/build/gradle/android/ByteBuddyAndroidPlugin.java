@@ -162,8 +162,8 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             Configuration configuration = configurations.get(variant.getBuildType());
             if (configuration == null) {
                 configuration = project.getConfigurations().create(variant.getBuildType() + "ByteBuddy", new VariantConfigurationConfigurationAction(project,
-                        this.configuration,
-                        variant.getBuildType()));
+                    this.configuration,
+                    variant.getBuildType()));
                 Configuration previous = configurations.putIfAbsent(variant.getBuildType(), configuration);
                 if (previous != null) {
                     configuration = previous;
@@ -173,13 +173,13 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
                 TRANSFORMATION_DISPATCHER.accept(project, variant, configuration, null);
             } else {
                 Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider = project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "ByteBuddyAndroidService",
-                        ByteBuddyAndroidService.class,
-                        new ByteBuddyAndroidService.ConfigurationAction(project.getExtensions().getByType(BaseExtension.class)));
+                    ByteBuddyAndroidService.class,
+                    new ByteBuddyAndroidService.ConfigurationAction(project.getExtensions().getByType(BaseExtension.class)));
                 FileCollection classPath = RuntimeClassPathResolver.INSTANCE.apply(variant);
                 variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, new ByteBuddyTransformationConfiguration(project,
-                        configuration,
-                        byteBuddyAndroidServiceProvider,
-                        classPath));
+                    configuration,
+                    byteBuddyAndroidServiceProvider,
+                    classPath));
                 TRANSFORMATION_DISPATCHER.accept(project, variant, configuration, classPath);
             }
         }
