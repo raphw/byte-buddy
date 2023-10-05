@@ -37,7 +37,6 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -112,8 +111,6 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
 
-    private static final Logger LOGGER = Logging.getLogger(ByteBuddyLocalClassesEnhancerTask.class);
-
     /**
      * Translates a collection of files to {@link URL}s.
      *
@@ -169,7 +166,7 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                     try {
                         buildLogger = (BuildLogger) Class.forName("net.bytebuddy.build.gradle.GradleBuildLogger")
                                 .getConstructor(Logger.class)
-                                .newInstance(LOGGER);
+                                .newInstance(getLogger());
                     } catch (Exception exception) {
                         throw new GradleException("Failed to resolve Gradle build logger", exception);
                     }
@@ -182,8 +179,8 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                             }
                             factories.add(new Plugin.Factory.UsingReflection(type)
                                     .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(AndroidDescriptor.class, androidDescriptor))
-                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, LOGGER))
-                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, LOGGER))
+                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, getLogger()))
+                                    .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(org.slf4j.Logger.class, getLogger()))
                                     .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, buildLogger)));
                         } catch (Throwable throwable) {
                             throw new IllegalStateException("Cannot resolve plugin: " + name, throwable);
@@ -197,9 +194,9 @@ public abstract class ByteBuddyLocalClassesEnhancerTask extends DefaultTask {
                     if (!summary.getFailed().isEmpty()) {
                         throw new IllegalStateException(summary.getFailed() + " type transformations have failed");
                     } else if (summary.getTransformed().isEmpty()) {
-                        LOGGER.info("No types were transformed during plugin execution");
+                        getLogger().info("No types were transformed during plugin execution");
                     } else {
-                        LOGGER.info("Transformed {} type(s)", summary.getTransformed().size());
+                        getLogger().info("Transformed {} type(s)", summary.getTransformed().size());
                     }
                 } finally {
                     if (classLoader instanceof Closeable) {
