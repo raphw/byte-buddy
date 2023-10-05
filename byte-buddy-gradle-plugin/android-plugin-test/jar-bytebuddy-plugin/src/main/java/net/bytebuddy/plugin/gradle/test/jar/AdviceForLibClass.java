@@ -29,6 +29,6 @@ public class AdviceForLibClass {
      */
     @Advice.OnMethodExit
     public static void enter(@Advice.Return(readOnly = false) String returned) {
-        returned = "instrumented aar lib from jar plugin";
+        returned = "instrumented aar lib's class from jar plugin";
     }
 }

@@ -17,9 +17,9 @@ public class ByteBuddyInstrumentedTest {
 
     @Test
     public void bytecodeInstrumentation() {
-        assertEquals("instrumented local from jar plugin", new SomeClass().method());
-        assertEquals("instrumented local from aar plugin", new AnotherClass().method());
-        assertEquals("instrumented aar lib from jar plugin", new SomeAarClass().method());
+        assertEquals("instrumented local class from jar plugin", new SomeClass().method());
+        assertEquals("instrumented local class from aar plugin", new AnotherClass().method());
+        assertEquals("instrumented aar lib's class from jar plugin", new SomeAarClass().method());
     }
 
     @Test

@@ -29,6 +29,6 @@ public class AdviceForLocalClass {
      */
     @Advice.OnMethodExit
     public static void enter(@Advice.Return(readOnly = false) String returned) {
-        returned = "instrumented local from jar plugin";
+        returned = "instrumented local class from jar plugin";
     }
 }
