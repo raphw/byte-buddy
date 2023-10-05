@@ -74,6 +74,10 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
      * The name of the Byte Buddy jar type.
      */
     public static final String BYTE_BUDDY_CLASSES_TYPE = "bytebuddy-classes";
+
+    /**
+     * The name of the Byte Buddy resources type.
+     */
     public static final String BYTE_BUDDY_RESOURCES_TYPE = "bytebuddy-resources";
 
     /*
@@ -152,40 +156,32 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          * {@inheritDoc}
          */
         public void execute(Variant variant) {
-            Configuration configuration = getByteBuddyConfiguration(variant);
-
-            if (TRANSFORMATION_DISPATCHER instanceof TransformationDispatcher.ForApk74CompatibleAndroid) {
-                TRANSFORMATION_DISPATCHER.accept(project, variant, configuration, null);
-                return;
-            }
-
-            // Legacy api usage.
-            Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider = project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "ByteBuddyAndroidService",
-                ByteBuddyAndroidService.class,
-                new ByteBuddyAndroidService.ConfigurationAction(project.getExtensions().getByType(BaseExtension.class)));
-            FileCollection classPath = RuntimeClassPathResolver.INSTANCE.apply(variant);
-            variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, new ByteBuddyTransformationConfiguration(project,
-                configuration,
-                byteBuddyAndroidServiceProvider,
-                classPath));
-            TRANSFORMATION_DISPATCHER.accept(project, variant, configuration, classPath);
-        }
-
-        private Configuration getByteBuddyConfiguration(Variant variant) {
             if (variant.getBuildType() == null) {
                 throw new GradleException("Build type for " + variant + " was null");
             }
             Configuration configuration = configurations.get(variant.getBuildType());
             if (configuration == null) {
                 configuration = project.getConfigurations().create(variant.getBuildType() + "ByteBuddy", new VariantConfigurationConfigurationAction(project,
-                    this.configuration,
-                    variant.getBuildType()));
+                        this.configuration,
+                        variant.getBuildType()));
                 Configuration previous = configurations.putIfAbsent(variant.getBuildType(), configuration);
                 if (previous != null) {
                     configuration = previous;
                 }
             }
-            return configuration;
+            if (TRANSFORMATION_DISPATCHER instanceof TransformationDispatcher.ForApk74CompatibleAndroid) {
+                TRANSFORMATION_DISPATCHER.accept(project, variant, configuration, null);
+            } else {
+                Provider<ByteBuddyAndroidService> byteBuddyAndroidServiceProvider = project.getGradle().getSharedServices().registerIfAbsent(variant.getName() + "ByteBuddyAndroidService",
+                        ByteBuddyAndroidService.class,
+                        new ByteBuddyAndroidService.ConfigurationAction(project.getExtensions().getByType(BaseExtension.class)));
+                FileCollection classPath = RuntimeClassPathResolver.INSTANCE.apply(variant);
+                variant.getInstrumentation().transformClassesWith(ByteBuddyAsmClassVisitorFactory.class, InstrumentationScope.ALL, new ByteBuddyTransformationConfiguration(project,
+                        configuration,
+                        byteBuddyAndroidServiceProvider,
+                        classPath));
+                TRANSFORMATION_DISPATCHER.accept(project, variant, configuration, classPath);
+            }
         }
     }
 
@@ -327,7 +323,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
          * {@inheritDoc}
          */
         public Unit invoke(ByteBuddyInstrumentationParameters parameters) {
-            parameters.getByteBuddyClasspath().from(getByteBuddyClasspath(project, configuration));
+            parameters.getByteBuddyClasspath().from(ByteBuddyViewConfiguration.toClassPath(project, configuration));
             parameters.getAndroidBootClasspath().from(project.getExtensions().getByType(BaseExtension.class).getBootClasspath());
             parameters.getRuntimeClasspath().from(classPath);
             parameters.getByteBuddyService().set(byteBuddyAndroidServiceProvider);
@@ -486,7 +482,9 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<LegacyByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyLocalTransform",
                     LegacyByteBuddyLocalClassesEnhancerTask.class,
-                    new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(getByteBuddyClasspath(project, configuration), project.getExtensions().getByType(BaseExtension.class), classPath));
+                    new LegacyByteBuddyLocalClassesEnhancerTask.ConfigurationAction(ByteBuddyViewConfiguration.toClassPath(project, configuration),
+                        project.getExtensions().getByType(BaseExtension.class),
+                        classPath));
                 variant.getArtifacts()
                     .use(provider)
                     .wiredWith(GetLocalClassesFunction.INSTANCE, GetOutputDirFunction.INSTANCE)
@@ -583,7 +581,7 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
             public void accept(Project project, Variant variant, Configuration configuration, FileCollection classPath) {
                 TaskProvider<ByteBuddyLocalClassesEnhancerTask> provider = project.getTasks().register(variant.getName() + "BytebuddyTransform",
                     ByteBuddyLocalClassesEnhancerTask.class,
-                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(getByteBuddyClasspath(project, configuration), project.getExtensions().getByType(BaseExtension.class)));
+                    new ByteBuddyLocalClassesEnhancerTask.ConfigurationAction(ByteBuddyViewConfiguration.toClassPath(project, configuration), project.getExtensions().getByType(BaseExtension.class)));
                 try {
                     toTransform.invoke(use.invoke(forScope.invoke(variant.getArtifacts(), scope), provider),
                         artifact,
@@ -664,19 +662,51 @@ public class ByteBuddyAndroidPlugin implements Plugin<Project> {
     }
 
     /**
-     * For external dependencies, it provides their JAR files. For local project's dependencies, it provides their local
-     * build dirs for both classes and resources. The latter allows for faster and more reliable (up-to-date) compilation processes
-     * when using local plugins.
+     * A view configuration for creating the Byte Buddy class path.
      */
-    private static FileCollection getByteBuddyClasspath(Project project, Configuration byteBuddyConfiguration) {
-        FileCollection resources = byteBuddyConfiguration.getIncoming().artifactView(viewConfiguration -> {
-            viewConfiguration.lenient(false);
-            viewConfiguration.getAttributes().attribute(ARTIFACT_TYPE_ATTRIBUTE, BYTE_BUDDY_RESOURCES_TYPE);
-        }).getFiles();
-        FileCollection classes = byteBuddyConfiguration.getIncoming().artifactView(viewConfiguration -> {
-            viewConfiguration.lenient(false);
-            viewConfiguration.getAttributes().attribute(ARTIFACT_TYPE_ATTRIBUTE, BYTE_BUDDY_CLASSES_TYPE);
-        }).getFiles();
-        return project.files(classes, resources);
+    protected enum ByteBuddyViewConfiguration implements Action<ArtifactView.ViewConfiguration> {
+
+        /**
+         * A view configuration for classes.
+         */
+        FOR_CLASSES(BYTE_BUDDY_CLASSES_TYPE),
+
+        /**
+         * A view configuration for resources.
+         */
+        FOR_RESOURCES(BYTE_BUDDY_RESOURCES_TYPE);
+
+        /**
+         * The type of the configuration attribute.
+         */
+        private final String type;
+
+        /**
+         * Creates a new view configuration.
+         *
+         * @param type The type of the configuration attribute.
+         */
+        ByteBuddyViewConfiguration(String type) {
+            this.type = type;
+        }
+
+        /**
+         * For external dependencies, it provides their JAR files. For local project's dependencies, it provides their local
+         * build dirs for both classes and resources. The latter allows for faster and more reliable (up-to-date) compilation processes
+         * when using local plugins.
+         */
+        protected static FileCollection toClassPath(Project project, Configuration configuration) {
+            return project.files(
+                configuration.getIncoming().artifactView(FOR_CLASSES).getFiles(),
+                configuration.getIncoming().artifactView(FOR_RESOURCES).getFiles());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void execute(ArtifactView.ViewConfiguration configuration) {
+            configuration.lenient(false);
+            configuration.getAttributes().attribute(ARTIFACT_TYPE_ATTRIBUTE, type);
+        }
     }
 }

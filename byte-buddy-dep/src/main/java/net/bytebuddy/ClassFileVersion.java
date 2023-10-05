@@ -153,7 +153,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
     /**
      * The class file version of Java 22.
      */
-    public static final ClassFileVersion JAVA_V22 = new ClassFileVersion(Opcodes.V21 + 1);
+    public static final ClassFileVersion JAVA_V22 = new ClassFileVersion(Opcodes.V22);
 
     /**
      * A version locator for the executing JVM.
@@ -335,7 +335,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
      * @return The latest officially supported Java version.
      */
     public static ClassFileVersion latest() {
-        return ClassFileVersion.JAVA_V21;
+        return ClassFileVersion.JAVA_V22;
     }
 
     /**
