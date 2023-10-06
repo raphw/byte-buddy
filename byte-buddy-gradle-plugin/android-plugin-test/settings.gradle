@@ -1,0 +1,7 @@
+include ":app"
+include ":aar-bytebuddy-target"
+include ":aar-bytebuddy-plugin"
+include ":jar-bytebuddy-plugin"
+include ":service-definition-lib"
+include ":service-implementation-lib"
+include ":service-implementation2-lib"

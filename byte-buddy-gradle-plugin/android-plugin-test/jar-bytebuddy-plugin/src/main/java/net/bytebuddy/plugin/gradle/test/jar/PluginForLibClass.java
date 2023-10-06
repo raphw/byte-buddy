@@ -16,31 +16,35 @@
 package net.bytebuddy.plugin.gradle.test.jar;
 
 import net.bytebuddy.asm.Advice;
+import net.bytebuddy.build.AndroidDescriptor;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatchers;
 
-import java.io.IOException;
-
 /**
  * A sample plugin for instrumenting a jar file.
  */
-public class JarPlugin implements Plugin {
+public class PluginForLibClass implements Plugin {
+    private final AndroidDescriptor androidDescriptor;
+
+    public PluginForLibClass(AndroidDescriptor androidDescriptor) {
+        this.androidDescriptor = androidDescriptor;
+    }
 
     /**
      * {@inheritDoc}
      */
     public boolean matches(TypeDescription typeDefinitions) {
-        return typeDefinitions.getSimpleName().contains("Some");
+        return typeDefinitions.getSimpleName().contains("Some") && androidDescriptor.getTypeScope(typeDefinitions).equals(AndroidDescriptor.TypeScope.EXTERNAL);
     }
 
     /**
      * {@inheritDoc}
      */
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
-        return builder.visit(Advice.to(JarAdvice.class).on(ElementMatchers.named("method")));
+        return builder.visit(Advice.to(AdviceForLibClass.class).on(ElementMatchers.named("method")));
     }
 
     /**

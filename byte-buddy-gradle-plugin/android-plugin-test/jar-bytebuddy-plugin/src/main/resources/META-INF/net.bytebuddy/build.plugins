@@ -1,1 +1,2 @@
-net.bytebuddy.plugin.gradle.test.jar.JarPlugin
+net.bytebuddy.plugin.gradle.test.jar.PluginForLocalClass
+net.bytebuddy.plugin.gradle.test.jar.PluginForLibClass

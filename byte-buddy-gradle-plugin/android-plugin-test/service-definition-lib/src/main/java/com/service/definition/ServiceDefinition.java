@@ -13,22 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.plugin.gradle.test.aar;
+package com.service.definition;
 
-import net.bytebuddy.asm.Advice;
+public interface ServiceDefinition {
 
-/**
- * A sample advice class.
- */
-public class AarAdvice {
-
-    /**
-     * Applies an exit advice.
-     *
-     * @param returned The return value.
-     */
-    @Advice.OnMethodExit
-    public static void onExit(@Advice.Return(readOnly = false) String returned) {
-        returned = "instrumented local class from aar plugin";
-    }
+    String getValue();
 }

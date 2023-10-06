@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.bytebuddy.plugin.gradle.test.aar;
+package net.bytebuddy.plugin.gradle.test.jar;
 
 import net.bytebuddy.asm.Advice;
 
 /**
  * A sample advice class.
  */
-public class AarAdvice {
+public class AdviceForLocalClass {
 
     /**
      * Applies an exit advice.
@@ -28,7 +28,7 @@ public class AarAdvice {
      * @param returned The return value.
      */
     @Advice.OnMethodExit
-    public static void onExit(@Advice.Return(readOnly = false) String returned) {
-        returned = "instrumented local class from aar plugin";
+    public static void enter(@Advice.Return(readOnly = false) String returned) {
+        returned = "instrumented local class from jar plugin";
     }
 }
