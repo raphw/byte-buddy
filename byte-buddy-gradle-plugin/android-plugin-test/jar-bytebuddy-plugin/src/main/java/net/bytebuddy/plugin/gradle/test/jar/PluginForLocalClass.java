@@ -27,8 +27,17 @@ import net.bytebuddy.matcher.ElementMatchers;
  * A sample plugin for instrumenting a jar file.
  */
 public class PluginForLocalClass implements Plugin {
+
+    /**
+     * The Android descriptor.
+     */
     private final AndroidDescriptor androidDescriptor;
 
+    /**
+     * Creates a new plugin.
+     *
+     * @param androidDescriptor The Android descriptor.
+     */
     public PluginForLocalClass(AndroidDescriptor androidDescriptor) {
         this.androidDescriptor = androidDescriptor;
     }
@@ -36,8 +45,8 @@ public class PluginForLocalClass implements Plugin {
     /**
      * {@inheritDoc}
      */
-    public boolean matches(TypeDescription typeDefinitions) {
-        return typeDefinitions.getSimpleName().contains("Some") && androidDescriptor.getTypeScope(typeDefinitions).equals(AndroidDescriptor.TypeScope.LOCAL);
+    public boolean matches(TypeDescription typeDescription) {
+        return typeDescription.getSimpleName().contains("Some") && androidDescriptor.getTypeScope(typeDescription).equals(AndroidDescriptor.TypeScope.LOCAL);
     }
 
     /**

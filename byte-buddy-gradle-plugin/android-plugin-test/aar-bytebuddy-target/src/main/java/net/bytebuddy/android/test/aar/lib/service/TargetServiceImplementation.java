@@ -19,7 +19,6 @@ import com.service.definition.ServiceDefinition;
 
 public class TargetServiceImplementation implements ServiceDefinition {
 
-    @Override
     public String getValue() {
         return "Target service impl";
     }

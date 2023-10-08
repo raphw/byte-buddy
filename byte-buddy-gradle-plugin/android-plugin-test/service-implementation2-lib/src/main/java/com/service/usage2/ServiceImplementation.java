@@ -18,7 +18,7 @@ package com.service.usage2;
 import com.service.definition.ServiceDefinition;
 
 public class ServiceImplementation implements ServiceDefinition {
-    @Override
+
     public String getValue() {
         return "Service implementation2";
     }
