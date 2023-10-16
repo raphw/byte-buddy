@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 9. October 2023: version 1.14.9
+
+- Update ASM to version 9.6
+- Support Android plugin to support APG version 7.4
+
 ### 15. September 2023: version 1.14.8
 
 - Correctly read versions from class file that would use both bytes.
