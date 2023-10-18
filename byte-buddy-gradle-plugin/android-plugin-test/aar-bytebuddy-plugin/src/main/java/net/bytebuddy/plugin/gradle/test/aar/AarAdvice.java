@@ -29,6 +29,6 @@ public class AarAdvice {
      */
     @Advice.OnMethodExit
     public static void onExit(@Advice.Return(readOnly = false) String returned) {
-        returned = "bar";
+        returned = "instrumented local class from aar plugin";
     }
 }

@@ -1,6 +1,18 @@
 Byte Buddy release notes
 ------------------------
 
+### 9. October 2023: version 1.14.9
+
+- Update ASM to version 9.6
+- Support Android plugin to support APG version 7.4
+
+### 15. September 2023: version 1.14.8
+
+- Correctly read versions from class file that would use both bytes.
+- Fix Byte Buddy Gradle plugin for Gradle 8.3+.
+- Correct field and static method access on subtypes in `MemberSubstitution`.
+- Support APK 7.4+ versions in Byte Buddy Gradle for Android plugin.
+
 ### 28. August 2023: version 1.14.7
 
 - Correctly read minor version from class file.

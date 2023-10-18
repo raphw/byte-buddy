@@ -4,7 +4,7 @@
 
     <groupId>net.bytebuddy</groupId>
     <artifactId>byte-buddy-parent</artifactId>
-    <version>1.14.8-SNAPSHOT</version>
+    <version>1.14.10-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -61,14 +61,14 @@
         <bytebuddy.integration>false</bytebuddy.integration>
         <bytebuddy.experimental>false</bytebuddy.experimental>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputTimestamp>1693174785</project.build.outputTimestamp>
+        <project.build.outputTimestamp>1696849496</project.build.outputTimestamp>
         <sourcecode.main.version>1.5</sourcecode.main.version>
         <sourcecode.test.version>1.6</sourcecode.test.version>
         <bytecode.main.version>1.5</bytecode.main.version>
         <bytecode.test.version>1.6</bytecode.test.version>
         <pitest.target>net.bytebuddy</pitest.target>
         <nexus.url>https://s01.oss.sonatype.org</nexus.url>
-        <version.asm>9.5</version.asm>
+        <version.asm>9.6</version.asm>
         <version.jna>5.12.1</version.jna>
         <version.junit>4.13.2</version.junit>
         <version.mockito>2.28.2</version.mockito>
@@ -120,6 +120,7 @@
         <modulemaker.skip>false</modulemaker.skip>
         <javadoc.download.skip>false</javadoc.download.skip>
         <repository.url>git@github.com:raphw/byte-buddy.git</repository.url>
+        <surefire.arguments />
     </properties>
 
     <licenses>
@@ -340,6 +341,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${version.plugin.surefire}</version>
                     <configuration>
+                        <argLine>${surefire.arguments}</argLine>
                         <systemPropertyVariables>
                             <net.bytebuddy.experimental>${bytebuddy.experimental}</net.bytebuddy.experimental>
                             <net.bytebuddy.test.integration>${bytebuddy.integration}</net.bytebuddy.test.integration>
@@ -733,6 +735,36 @@
                 <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
+        <!-- Runs the build with compatibility for Java 21 JVMs. -->
+        <profile>
+            <id>java21-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>21</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>8</sourcecode.main.version>
+                <sourcecode.test.version>8</sourcecode.test.version>
+                <bytecode.main.version>8</bytecode.main.version>
+                <bytecode.test.version>8</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
+            </properties>
+        </profile>
+        <!-- Runs the build with compatibility for Java 22 JVMs. -->
+        <profile>
+            <id>java22-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>22</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>8</sourcecode.main.version>
+                <sourcecode.test.version>8</sourcecode.test.version>
+                <bytecode.main.version>8</bytecode.main.version>
+                <bytecode.test.version>8</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
+            </properties>
+        </profile>
         <!-- Builds using a byte code target for Java 6. -->
         <profile>
             <id>java6</id>
@@ -898,6 +930,41 @@
                 <bytecode.main.version>20</bytecode.main.version>
                 <bytecode.test.version>20</bytecode.test.version>
                 <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Builds using a byte code target for Java 21. -->
+        <profile>
+            <id>java21</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>21</bytecode.main.version>
+                <bytecode.test.version>21</bytecode.test.version>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Builds using a byte code target for Java 22. -->
+        <profile>
+            <id>java22</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>22</bytecode.main.version>
+                <bytecode.test.version>22</bytecode.test.version>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Enables dynamic agent loading when running a JDK 22 or newer. -->
+        <profile>
+            <id>surefire-enable-dynamic-attach</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>[22,)</jdk>
+            </activation>
+            <properties>
+                <surefire.arguments>-XX:+EnableDynamicAgentLoading</surefire.arguments>
             </properties>
         </profile>
         <!-- Creates additional artifacts that are required for deployment. -->
@@ -1131,7 +1198,10 @@
                                         <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
                                         <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
                                         <excludes>
-                                            <exclude>net.bytebuddy.implementation.FieldAccessor$FieldNameExtractor$ForBeanProperty</exclude>
+                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$Binding</exclude>
+                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$ForElementMatchers</exclude>
+                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$ForFirstBinding</exclude>
+                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$NoOp</exclude>
                                         </excludes>
                                     </parameter>
                                 </configuration>

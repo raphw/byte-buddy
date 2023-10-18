@@ -1,0 +1,4 @@
+dependencies {
+    def location = new File("$rootDir/../../byte-buddy/target/byte-buddy-${byteBuddyVersion}.jar").canonicalFile
+    implementation files(location.absolutePath)
+}

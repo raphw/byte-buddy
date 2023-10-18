@@ -25,4 +25,5 @@ android {
 
 dependencies {
     implementation group: 'com.google.android.material', name: 'material', version: '1.6.1'
+    implementation project(":service-definition-lib")
 }

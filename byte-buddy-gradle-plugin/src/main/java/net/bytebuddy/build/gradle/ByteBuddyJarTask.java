@@ -85,7 +85,6 @@ public class ByteBuddyJarTask extends AbstractByteBuddyTask {
      * @return The task's target jar.
      */
     @OutputFile
-    @PathSensitive(PathSensitivity.RELATIVE)
     public File getTarget() {
         return target;
     }

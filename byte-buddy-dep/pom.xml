@@ -5,7 +5,7 @@
     <parent>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
-        <version>1.14.8-SNAPSHOT</version>
+        <version>1.14.10-SNAPSHOT</version>
     </parent>
 
     <!--
@@ -127,7 +127,7 @@
             <plugin>
                 <groupId>net.bytebuddy</groupId>
                 <artifactId>byte-buddy-maven-plugin</artifactId>
-                <version>1.14.6</version>
+                <version>1.14.9</version>
                 <executions>
                     <execution>
                         <phase>compile</phase>
@@ -142,7 +142,7 @@
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.14.6</version>
+                                    <version>1.14.9</version>
                                     <plugin>net.bytebuddy.build.HashCodeAndEqualsPlugin$WithNonNullableFields</plugin>
                                     <arguments>
                                         <argument>
@@ -154,13 +154,13 @@
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.14.6</version>
+                                    <version>1.14.9</version>
                                     <plugin>net.bytebuddy.build.CachedReturnPlugin</plugin>
                                 </transformation>
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.14.6</version>
+                                    <version>1.14.9</version>
                                     <plugin>net.bytebuddy.build.AccessControllerPlugin</plugin>
                                     <arguments>
                                         <argument>
@@ -172,13 +172,13 @@
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.14.6</version>
+                                    <version>1.14.9</version>
                                     <plugin>net.bytebuddy.build.DispatcherAnnotationPlugin</plugin>
                                 </transformation>
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.14.6</version>
+                                    <version>1.14.9</version>
                                     <plugin>net.bytebuddy.build.RepeatedAnnotationPlugin</plugin>
                                 </transformation>
                             </transformations>
@@ -224,7 +224,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${version.plugin.surefire}</version>
-                        <configuration>
+                        <configuration combine.children="append">
                             <excludes>
                                 <exclude>net.bytebuddy.asm.MemberSubstitution</exclude>
                             </excludes>
@@ -246,7 +246,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${version.plugin.surefire}</version>
-                        <configuration>
+                        <configuration combine.children="append">
                             <excludes>
                                 <exclude>net.bytebuddy.description.type.TypeDescriptionArrayProjectionTest</exclude>
                                 <exclude>net.bytebuddy.description.annotation.AnnotationDescriptionForLoadedAnnotationTest</exclude>
@@ -275,7 +275,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${version.plugin.surefire}</version>
-                        <configuration>
+                        <configuration combine.children="append">
                             <excludes>
                                 <exclude>net.bytebuddy.description.type.TypeDescriptionArrayProjectionTest</exclude>
                                 <exclude>net.bytebuddy.description.annotation.AnnotationDescriptionForLoadedAnnotationTest</exclude>

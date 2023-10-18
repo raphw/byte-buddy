@@ -22,6 +22,7 @@ import net.bytebuddy.description.DeclaredByType;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.nullability.AlwaysNull;
@@ -40,8 +41,7 @@ import java.util.List;
  * Implementations of this interface describe a Java field. Implementations of this interface must provide meaningful
  * {@code equal(Object)} and {@code hashCode()} implementations.
  */
-public interface FieldDescription extends ByteCodeElement,
-        ModifierReviewable.ForFieldDescription,
+public interface FieldDescription extends ModifierReviewable.ForFieldDescription,
         DeclaredByType.WithMandatoryDeclaration,
         ByteCodeElement.Member,
         ByteCodeElement.TypeDependant<FieldDescription.InDefinedShape, FieldDescription.Token> {
@@ -51,6 +51,12 @@ public interface FieldDescription extends ByteCodeElement,
      */
     @AlwaysNull
     Object NO_DEFAULT_VALUE = null;
+
+    /**
+     * {@inheritDoc}
+     */
+    @Nonnull
+    TypeDefinition getDeclaringType();
 
     /**
      * Returns the type of the described field.

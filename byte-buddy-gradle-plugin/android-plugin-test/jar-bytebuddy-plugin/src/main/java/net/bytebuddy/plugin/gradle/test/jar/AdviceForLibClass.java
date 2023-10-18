@@ -20,7 +20,7 @@ import net.bytebuddy.asm.Advice;
 /**
  * A sample advice class.
  */
-public class JarAdvice {
+public class AdviceForLibClass {
 
     /**
      * Applies an exit advice.
@@ -29,6 +29,6 @@ public class JarAdvice {
      */
     @Advice.OnMethodExit
     public static void enter(@Advice.Return(readOnly = false) String returned) {
-        returned = "bar";
+        returned = "instrumented aar lib's class from jar plugin";
     }
 }

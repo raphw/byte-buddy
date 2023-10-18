@@ -1,17 +1,14 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Visibility;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
-import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.MemberSubstitutionTestHelper;
 import org.junit.Test;
@@ -586,6 +583,18 @@ public class MemberSubstitutionTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(instance), nullValue(Object.class));
         assertThat(type.getDeclaredField(FOO).getInt(instance), is(0));
         assertThat(type.getDeclaredField(BAR).getInt(instance), is(1));
+    }
+
+    @Test
+    public void testFieldAccessOnSubType() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sub.class)
+                .visit(MemberSubstitution.strict().field(any()).replaceWith(MemberSubstitution.Substitution.Stubbing.INSTANCE).on(named(FOO)))
+                .make()
+                .load(Base.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        Object instance = type.getConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(FOO).invoke(instance), is((Object) 0));
     }
 
     @Test
@@ -1405,6 +1414,19 @@ public class MemberSubstitutionTest {
         public static void run() {
             ValidationTarget.bar = null;
             ValidationTarget.bar();
+        }
+    }
+
+    public static class Base {
+
+        protected int foo = 42;
+    }
+
+    public static class Sub extends Base {
+
+        public int foo() {
+            Sub sub = this;
+            return sub.foo;
         }
     }
 

@@ -77,11 +77,11 @@ public interface ConstantValue {
          * @return An appropriate representation of the constant value.
          */
         public static ConstantValue wrap(Object value) {
-            ConstantValue of = wrapOrNull(value);
-            if (of == null) {
+            ConstantValue constant = wrapOrNull(value);
+            if (constant == null) {
                 throw new IllegalArgumentException("Not a constant value: " + value);
             } else {
-                return of;
+                return constant;
             }
         }
 

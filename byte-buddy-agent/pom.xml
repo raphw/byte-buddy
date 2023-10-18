@@ -5,7 +5,7 @@
     <parent>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
-        <version>1.14.8-SNAPSHOT</version>
+        <version>1.14.10-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy-agent</artifactId>
@@ -69,7 +69,7 @@
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
-            <version>1.14.6</version>
+            <version>1.14.9</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -96,7 +96,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${version.plugin.surefire}</version>
                 <configuration combine.children="append">
-                    <argLine>-Djna.library.path=${net.bytebuddy.test.jnapath}</argLine>
+                    <argLine>-Djna.library.path=${net.bytebuddy.test.jnapath} ${surefire.arguments}</argLine>
                 </configuration>
             </plugin>
             <!-- Create manifest file which is required for creating an OSGi bundle. -->
