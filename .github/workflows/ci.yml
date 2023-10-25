@@ -1,0 +1,41 @@
+name: CI1
+
+on:
+  push:
+    branches:
+      - swe637
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+      - name: Clear Node.js Cache
+        run: |
+          npm cache clean --force
+        if: runner.os == 'Windows'
+      - name: Clear Node.js Cache
+        run: |
+          sudo npm cache clean --force
+        if: runner.os != 'Windows'
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+    
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '16' # You can change this to the Java version you need
+          distribution: 'adopt'
+
+      - name: Build with Maven
+        run: mvn clean install -DskipTests -pl byte-buddy-dep -am
+
+      - name: Run NonDex
+        run: |
+          mvn -pl byte-buddy-dep test -Dtest=net.bytebuddy.description.method.MethodDescriptionForLoadedTest#testExceptions
+          mvn -pl byte-buddy-dep edu.illinois:nondex-maven-plugin:2.1.1:nondex -Dtest=net.bytebuddy.description.method.MethodDescriptionForLoadedTest#testExceptions
