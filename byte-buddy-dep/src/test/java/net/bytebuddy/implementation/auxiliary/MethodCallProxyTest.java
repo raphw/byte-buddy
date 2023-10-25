@@ -6,7 +6,10 @@ import net.bytebuddy.utility.RandomString;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.concurrent.Callable;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -81,8 +84,15 @@ public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
         Class<?> auxiliaryType = proxyOnlyDeclaredMethodOf(GenericType.class);
         assertThat(auxiliaryType.getTypeParameters().length, is(0));
         assertThat(auxiliaryType.getDeclaredMethod("call").getGenericReturnType(), is((Type) Object.class));
-        assertThat(auxiliaryType.getDeclaredFields()[1].getGenericType(), is((Type) Object.class));
-        assertThat(auxiliaryType.getDeclaredFields()[2].getGenericType(), is((Type) Number.class));
+        Field[] declaredFields = auxiliaryType.getDeclaredFields();
+        Arrays.sort(declaredFields, new Comparator<Field>() {
+            @Override
+            public int compare(Field field1, Field field2) {
+                return field1.getName().compareTo(field2.getName());
+            }
+        });
+        assertThat(declaredFields[1].getGenericType(), is((Type) Object.class));
+        assertThat(declaredFields[2].getGenericType(), is((Type) Number.class));
     }
 
     @Test

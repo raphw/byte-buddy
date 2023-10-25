@@ -74,16 +74,19 @@ public class ClassFileVersionOtherTest {
     @Test
     public void testLatestVersion() throws Exception {
         double version = 0d;
-        int value = 0;
+        int latestValue = 0;
         Pattern pattern = Pattern.compile("V[0-9]+(_[0-9]+)?");
         for (Field field : Opcodes.class.getFields()) {
             if (pattern.matcher(field.getName()).matches()) {
                 if (version < Double.parseDouble(field.getName().substring(1).replace('_', '.'))) {
-                    value = field.getInt(null);
+                    short value = (short) field.getInt(null);
+                    if (value > latestValue) {
+                        latestValue = value;
+                    }
                 }
             }
         }
-        assertThat(ClassFileVersion.latest().getMajorVersion(), is((short) value));
+        assertThat(ClassFileVersion.latest().getMajorVersion(), is((short) latestValue));
     }
 
     @Test(expected = IllegalArgumentException.class)
