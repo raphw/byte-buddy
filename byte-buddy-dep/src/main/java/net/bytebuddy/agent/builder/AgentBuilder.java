@@ -3370,7 +3370,9 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader) {
-                return new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode);
+                return new TypePool.LazyFacade(new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(),
+                        classFileLocator,
+                        readerMode));
             }
 
             /**
