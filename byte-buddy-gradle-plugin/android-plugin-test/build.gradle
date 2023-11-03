@@ -16,6 +16,8 @@ buildscript {
     }
 }
 
+ext.javaVersion = JavaVersion.VERSION_11
+
 subprojects {
     repositories {
         mavenCentral()
