@@ -98,6 +98,8 @@ import java.lang.instrument.UnmodifiableClassException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.AbstractSet;
@@ -3370,7 +3372,9 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader) {
-                return new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode);
+                return new TypePool.LazyFacade(new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(),
+                        classFileLocator,
+                        readerMode));
             }
 
             /**
@@ -3526,16 +3530,16 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader) {
-                return new TypePool.Default.WithLazyResolution(locate(classLoader), classFileLocator, readerMode);
+                return new TypePool.LazyFacade(new TypePool.Default.WithLazyResolution(locate(classLoader), classFileLocator, readerMode));
             }
 
             /**
              * {@inheritDoc}
              */
             public TypePool typePool(ClassFileLocator classFileLocator, @MaybeNull ClassLoader classLoader, String name) {
-                return new TypePool.Default.WithLazyResolution(new TypePool.CacheProvider.Discriminating(ElementMatchers.<String>is(name),
+                return new TypePool.LazyFacade(new TypePool.Default.WithLazyResolution(new TypePool.CacheProvider.Discriminating(ElementMatchers.<String>is(name),
                         new TypePool.CacheProvider.Simple(),
-                        locate(classLoader)), classFileLocator, readerMode);
+                        locate(classLoader)), classFileLocator, readerMode));
             }
 
             /**
@@ -3553,6 +3557,11 @@ public interface AgentBuilder {
              */
             @HashCodeAndEqualsPlugin.Enhance
             public static class Simple extends WithTypePoolCache {
+
+                /**
+                 * A default value for marking the boostrap class loader.
+                 */
+                private static final ClassLoader BOOTSTRAP_MARKER = doPrivileged(BootstrapMarkerAction.INSTANCE);
 
                 /**
                  * The concurrent map that is used for storing a cache provider per class loader.
@@ -3580,6 +3589,18 @@ public interface AgentBuilder {
                     this.cacheProviders = cacheProviders;
                 }
 
+                /**
+                 * A proxy for {@code java.security.AccessController#doPrivileged} that is activated if available.
+                 *
+                 * @param action The action to execute from a privileged context.
+                 * @param <T>    The type of the action's resolved value.
+                 * @return The action's resolved value.
+                 */
+                @AccessControllerPlugin.Enhance
+                private static <T> T doPrivileged(PrivilegedAction<T> action) {
+                    return action.run();
+                }
+
                 @Override
                 protected TypePool.CacheProvider locate(@MaybeNull ClassLoader classLoader) {
                     classLoader = classLoader == null ? getBootstrapMarkerLoader() : classLoader;
@@ -3601,15 +3622,31 @@ public interface AgentBuilder {
                  * implementations.
                  * </p>
                  * <p>
-                 * By default, {@link ClassLoader#getSystemClassLoader()} is used as such a key as any resource location for the
-                 * bootstrap class loader is performed via the system class loader within Byte Buddy as {@code null} cannot be queried
-                 * for resources via method calls such that this does not make a difference.
+                 * By default, a custom class loader is created to use as a marker.
                  * </p>
                  *
                  * @return A class loader to represent the bootstrap class loader.
                  */
                 protected ClassLoader getBootstrapMarkerLoader() {
-                    return ClassLoader.getSystemClassLoader();
+                    return BOOTSTRAP_MARKER;
+                }
+
+                /**
+                 * An action that creates a class loader to mark the bootstrap loader without using {@code null}.
+                 */
+                protected enum BootstrapMarkerAction implements PrivilegedAction<ClassLoader> {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ClassLoader run() {
+                        return new URLClassLoader(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER);
+                    }
                 }
             }
         }
