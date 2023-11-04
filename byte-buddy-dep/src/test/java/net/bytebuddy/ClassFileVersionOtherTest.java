@@ -19,7 +19,9 @@ public class ClassFileVersionOtherTest {
         Pattern pattern = Pattern.compile("V[0-9]+(_[0-9]+)?");
         for (Field field : Opcodes.class.getFields()) {
             if (pattern.matcher(field.getName()).matches()) {
-                if (version < Double.parseDouble(field.getName().substring(1).replace('_', '.'))) {
+                double candidate = Double.parseDouble(field.getName().substring(1).replace('_', '.'));
+                if (version < candidate) {
+                    version = candidate;
                     value = field.getInt(null);
                 }
             }
