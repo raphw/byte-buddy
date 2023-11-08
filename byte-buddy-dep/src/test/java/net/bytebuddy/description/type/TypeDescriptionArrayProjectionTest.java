@@ -38,15 +38,13 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
     }
 
     protected TypeDescription.Generic describeExceptionType(Method method, int index) {
-        Type[] genericExceptionTypes = method.getGenericExceptionTypes();
-        Arrays.sort(genericExceptionTypes, new Comparator<Type>() {
-            @Override
-            public int compare(Type type, Type t1) {
-                return type.getTypeName().compareTo(t1.getTypeName());
+        Type[] type = method.getGenericExceptionTypes();
+        Arrays.sort(type, new Comparator<Type>() {
+            public int compare(Type left, Type right) {
+                return left.getTypeName().compareTo(right.getTypeName());
             }
         });
-
-        return TypeDefinition.Sort.describe(genericExceptionTypes[index],
+        return TypeDefinition.Sort.describe(type[index],
                 new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedExecutableExceptionType(method, index));
     }
 

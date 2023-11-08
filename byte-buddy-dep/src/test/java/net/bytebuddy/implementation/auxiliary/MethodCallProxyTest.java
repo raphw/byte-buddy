@@ -84,15 +84,14 @@ public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
         Class<?> auxiliaryType = proxyOnlyDeclaredMethodOf(GenericType.class);
         assertThat(auxiliaryType.getTypeParameters().length, is(0));
         assertThat(auxiliaryType.getDeclaredMethod("call").getGenericReturnType(), is((Type) Object.class));
-        Field[] declaredFields = auxiliaryType.getDeclaredFields();
-        Arrays.sort(declaredFields, new Comparator<Field>() {
-            @Override
-            public int compare(Field field1, Field field2) {
-                return field1.getName().compareTo(field2.getName());
+        Field[] field = auxiliaryType.getDeclaredFields();
+        Arrays.sort(field, new Comparator<Field>() {
+            public int compare(Field left, Field right) {
+                return left.getName().compareTo(right.getName());
             }
         });
-        assertThat(declaredFields[1].getGenericType(), is((Type) Object.class));
-        assertThat(declaredFields[2].getGenericType(), is((Type) Number.class));
+        assertThat(field[1].getGenericType(), is((Type) Object.class));
+        assertThat(field[2].getGenericType(), is((Type) Number.class));
     }
 
     @Test
