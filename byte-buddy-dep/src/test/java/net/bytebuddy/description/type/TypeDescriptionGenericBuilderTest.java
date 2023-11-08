@@ -45,7 +45,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
         Type[] type = method.getGenericExceptionTypes();
         Arrays.sort(type, new Comparator<Type>() {
             public int compare(Type left, Type right) {
-                return left.getTypeName().compareTo(right.getTypeName());
+                return left.toString().compareTo(right.toString());
             }
         });
         return describe(type[index], new TypeDescription.Generic.AnnotationReader.Delegator.ForLoadedExecutableExceptionType(method, index))
