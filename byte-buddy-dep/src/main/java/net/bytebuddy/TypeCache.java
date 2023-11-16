@@ -92,7 +92,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     /**
      * Finds a stored type or returns {@code null} if no type was stored.
      *
-     * @param classLoader The class loader for which this type is stored.
+     * @param classLoader The class loader for which this type is stored or {@code null} for the bootstrap loader.
      * @param key         The key for the type in question.
      * @return The stored type or {@code null} if no type was stored.
      */
@@ -117,7 +117,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     /**
      * Inserts a new type into the cache. If a type with the same class loader and key was inserted previously, the cache is not updated.
      *
-     * @param classLoader The class loader for which this type is stored.
+     * @param classLoader The class loader for which this type is stored or {@code null} for the bootstrap loader.
      * @param key         The key for the type in question.
      * @param type        The type to insert of no previous type was stored in the cache.
      * @return The supplied type or a previously submitted type for the same class loader and key combination.
@@ -154,12 +154,12 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     /**
      * Finds an existing type or inserts a new one if the previous type was not found.
      *
-     * @param classLoader The class loader for which this type is stored.
+     * @param classLoader The class loader for which this type is stored or {@code null} for the bootstrap loader.
      * @param key         The key for the type in question.
      * @param lazy        A lazy creator for the type to insert of no previous type was stored in the cache.
      * @return The lazily created type or a previously submitted type for the same class loader and key combination.
      */
-    public Class<?> findOrInsert(ClassLoader classLoader, T key, Callable<Class<?>> lazy) {
+    public Class<?> findOrInsert(@MaybeNull ClassLoader classLoader, T key, Callable<Class<?>> lazy) {
         Class<?> type = find(classLoader, key);
         if (type != null) {
             return type;
@@ -175,7 +175,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     /**
      * Finds an existing type or inserts a new one if the previous type was not found.
      *
-     * @param classLoader The class loader for which this type is stored.
+     * @param classLoader The class loader for which this type is stored or {@code null} for the bootstrap loader.
      * @param key         The key for the type in question.
      * @param lazy        A lazy creator for the type to insert of no previous type was stored in the cache.
      * @param monitor     A monitor to lock before creating the lazy type.
@@ -259,7 +259,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     protected static class LookupKey {
 
         /**
-         * The referenced class loader.
+         * The referenced class loader or {@code null} for the bootstrap loader.
          */
         @MaybeNull
         private final ClassLoader classLoader;
@@ -272,7 +272,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         /**
          * Creates a new lookup key.
          *
-         * @param classLoader The represented class loader.
+         * @param classLoader The represented class loader or {@code null} for the bootstrap loader.
          */
         protected LookupKey(@MaybeNull ClassLoader classLoader) {
             this.classLoader = classLoader;
@@ -313,7 +313,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         /**
          * Creates a new storage key.
          *
-         * @param classLoader    The represented class loader.
+         * @param classLoader    The represented class loader or {@code null} for the bootstrap loader.
          * @param referenceQueue The reference queue to notify upon a garbage collection.
          */
         protected StorageKey(@MaybeNull ClassLoader classLoader, ReferenceQueue<? super ClassLoader> referenceQueue) {
@@ -394,7 +394,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         /**
          * {@inheritDoc}
          */
-        public Class<?> findOrInsert(ClassLoader classLoader, S key, Callable<Class<?>> builder) {
+        public Class<?> findOrInsert(@MaybeNull ClassLoader classLoader, S key, Callable<Class<?>> builder) {
             try {
                 return super.findOrInsert(classLoader, key, builder);
             } finally {
