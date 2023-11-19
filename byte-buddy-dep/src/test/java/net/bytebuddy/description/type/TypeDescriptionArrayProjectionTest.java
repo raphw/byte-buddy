@@ -41,7 +41,7 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
         Type[] type = method.getGenericExceptionTypes();
         Arrays.sort(type, new Comparator<Type>() {
             public int compare(Type left, Type right) {
-                return left.getTypeName().compareTo(right.getTypeName());
+                return left.toString().compareTo(right.toString());
             }
         });
         return TypeDefinition.Sort.describe(type[index],
