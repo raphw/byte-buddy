@@ -19,8 +19,8 @@ jobs:
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
         with:
-          java-version: 21-ea
-          distribution: zulu
+          java-version: 22-ea
+          distribution: temurin
           cache: maven
       - name: Build project
         run: ./mvnw verify -Pjava21 -Dnet.bytebuddy.experimental
@@ -76,7 +76,7 @@ jobs:
       - uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
         with:
           java-version: ${{ matrix.java }}
-          distribution: zulu
+          distribution: temurin
           architecture: x64
           cache: maven
       - name: Build project
@@ -95,7 +95,7 @@ jobs:
       - uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
         with:
           java-version: ${{ matrix.java }}
-          distribution: zulu
+          distribution: temurin
           architecture: x86
           cache: maven
       - name: Build project
