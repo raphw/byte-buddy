@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 9. October 2023: version 1.14.10
+
+- Add lazy facade to default `TypePool` in `AgentBuilder` to avoid parsing of types ignored by name.
+- Avoid module info classes in Android plugin.
+
 ### 9. October 2023: version 1.14.9
 
 - Update ASM to version 9.6
