@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'java-gradle-plugin'
-    id 'com.gradle.plugin-publish' version '1.0.0'
+    id 'com.gradle.plugin-publish' version '1.2.1'
 }
 
 if (gradle.gradleVersion.startsWith("2.")) {
@@ -60,19 +60,16 @@ tasks.named("jar") {
     }
 }
 
-pluginBundle {
-    website = 'https://bytebuddy.net'
-    vcsUrl = 'https://github.com/raphw/byte-buddy'
-    tags = ['Byte Buddy', 'bytecode', 'enhancement']
-}
-
 gradlePlugin {
+    website.set("https://bytebuddy.net")
+    vcsUrl.set("https://github.com/raphw/byte-buddy")
     plugins {
         byteBuddyPlugin {
             id = 'net.bytebuddy.byte-buddy-gradle-plugin'
             implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
             displayName = 'Byte Buddy Gradle plugin'
             description = 'The Byte Buddy plugin allows for post processing Java classes with byte code transformation.'
+            tags.set(['Byte Buddy', 'bytecode', 'enhancement'])
         }
     }
 }

@@ -21,7 +21,6 @@ import org.gradle.api.JavaVersion;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.SourceDirectorySet;
-import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
@@ -292,20 +291,28 @@ public class ByteBuddyPlugin implements Plugin<Project> {
         @MaybeNull
         private static final Method GET_TARGET_COMPATIBILITY_EXTENSION;
 
+        /**
+         * The {@code org.gradle.api.plugins.Convention#findPlugin(Class)} method or {@code null} if not available.
+         */
+        @MaybeNull
+        private static final Method FIND_PLUGIN;
+
         /*
          * Resolves the convention methods which might no longer be supported.
          */
         static {
             Class<?> javaPluginConvention, javaPluginExtension;
-            Method getConvention, getExtensions, findByType, getSourceSetsConvention, getSourceSetsExtension, getTargetCompatibilityConvention, getTargetCompatibilityExtension;
+            Method getConvention, getExtensions, findPlugin, findByType, getSourceSetsConvention, getSourceSetsExtension, getTargetCompatibilityConvention, getTargetCompatibilityExtension;
             try {
                 javaPluginConvention = Class.forName("org.gradle.api.plugins.JavaPluginConvention");
                 getConvention = Project.class.getMethod("getConvention");
+                findPlugin = Class.forName("org.gradle.api.plugins.Convention").getMethod("findClass", Class.class);
                 getSourceSetsConvention = javaPluginConvention.getMethod("getSourceSets");
                 getTargetCompatibilityConvention = javaPluginConvention.getMethod("getTargetCompatibility");
             } catch (Throwable ignored) {
                 javaPluginConvention = null;
                 getConvention = null;
+                findPlugin = null;
                 getSourceSetsConvention = null;
                 getTargetCompatibilityConvention = null;
             }
@@ -326,6 +333,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
             JAVA_PLUGIN_EXTENSION = javaPluginExtension;
             GET_CONVENTION = getConvention;
             GET_EXTENSIONS = getExtensions;
+            FIND_PLUGIN = findPlugin;
             FIND_BY_TYPE = findByType;
             GET_SOURCE_SETS_CONVENTION = getSourceSetsConvention;
             GET_SOURCE_SETS_EXTENSION = getSourceSetsExtension;
@@ -380,10 +388,11 @@ public class ByteBuddyPlugin implements Plugin<Project> {
             }
             if (JAVA_PLUGIN_CONVENTION != null
                     && GET_CONVENTION != null
+                    && FIND_PLUGIN != null
                     && GET_SOURCE_SETS_CONVENTION != null
                     && GET_TARGET_COMPATIBILITY_CONVENTION != null) {
                 try {
-                    Object convention = ((Convention) GET_CONVENTION.invoke(project)).findPlugin(JAVA_PLUGIN_CONVENTION);
+                    Object convention = FIND_PLUGIN.invoke(GET_CONVENTION.invoke(project), JAVA_PLUGIN_CONVENTION);
                     if (convention != null) {
                         return new JavaConventionConfiguration(
                                 (SourceSetContainer) GET_SOURCE_SETS_CONVENTION.invoke(convention),
