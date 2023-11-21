@@ -108,6 +108,9 @@
                                 <argument>build</argument>
                                 <argument>copyJavadoc</argument>
                                 <argument>--info</argument>
+                                <argument>--stacktrace</argument>
+                                <argument>--warning-mode</argument>
+                                <argument>all</argument>
                                 <argument>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</argument>
                                 <argument>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</argument>
                                 <argument>-Dnet.bytebuddy.gradle.release=${gradle.release}</argument>
