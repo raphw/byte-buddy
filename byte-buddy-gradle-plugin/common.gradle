@@ -23,7 +23,7 @@ if (!raw.startsWith("1.") && raw.contains(".")) {
 
 def java19Version
 try {
-    java19Version = JavaVersion.valueOf("JAVA_19");
+    java19Version = JavaVersion.valueOf("VERSION_19");
 } catch (Exception ignored) {
     java19Version = null
 }
