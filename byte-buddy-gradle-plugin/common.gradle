@@ -22,27 +22,40 @@ if (!raw.startsWith("1.") && raw.contains(".")) {
 }
 
 def sourceVersion = System.getProperty("net.bytebuddy.gradle.version.source")
+def source
 if (sourceVersion != null) {
-    sourceCompatibility = JavaVersion.toVersion(sourceVersion)
+    source = JavaVersion.toVersion(sourceVersion)
 } else if (current > JavaVersion.VERSION_1_9) {
-    sourceCompatibility = JavaVersion.VERSION_1_7
+    source = JavaVersion.VERSION_1_7
 } else if (current > JavaVersion.VERSION_1_8) {
-    sourceCompatibility = JavaVersion.VERSION_1_6
+    source = JavaVersion.VERSION_1_6
 } else {
-    sourceCompatibility = JavaVersion.VERSION_1_5
+    source = JavaVersion.VERSION_1_5
 }
 def targetVersion = System.getProperty("net.bytebuddy.gradle.version.target")
+def target
 if (targetVersion != null) {
-    targetCompatibility = JavaVersion.toVersion(targetVersion)
+    target = JavaVersion.toVersion(targetVersion)
 } else if (current > JavaVersion.VERSION_1_9) {
-    targetCompatibility = JavaVersion.VERSION_1_7
+    target = JavaVersion.VERSION_1_7
 } else if (current > JavaVersion.VERSION_1_8) {
-    targetCompatibility = JavaVersion.VERSION_1_6
+    target = JavaVersion.VERSION_1_6
 } else {
-    targetCompatibility = JavaVersion.VERSION_1_5
+    target = JavaVersion.VERSION_1_5
 }
 
-logger.info("Compiling class files from version ${sourceCompatibility} to ${targetCompatibility}.")
+
+if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
+    sourceCompatibility = source
+    targetCompatibility = target
+} else {
+    java {
+        sourceCompatibility = source
+        targetCompatibility = target
+    }
+}
+
+logger.info("Compiling class files from version ${source} to ${target}.")
 
 // Without the extras property, creating a javadoc artifact is not necessary.
 if (Boolean.getBoolean('net.bytebuddy.misc.extras')) {

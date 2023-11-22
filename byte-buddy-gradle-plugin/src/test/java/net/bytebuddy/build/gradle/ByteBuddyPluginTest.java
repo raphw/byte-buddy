@@ -106,7 +106,7 @@ public class ByteBuddyPluginTest {
             "public class SampleClass { }");
         BuildResult result = GradleRunner.create()
             .withProjectDir(folder)
-            .withArguments("build", "-Dorg.gradle.unsafe.configuration-cache=true", "--stacktrace")
+            .withArguments("build", "-Dorg.gradle.unsafe.configuration-cache=true", "--warning-mode", "all")
             .withPluginClasspath()
             .build();
         BuildTask task = result.task(":byteBuddy");
@@ -169,7 +169,7 @@ public class ByteBuddyPluginTest {
             "public class SampleClass { }");
         BuildResult result = GradleRunner.create()
             .withProjectDir(folder)
-            .withArguments("build", "-Dorg.gradle.unsafe.configuration-cache=true")
+            .withArguments("build", "-Dorg.gradle.unsafe.configuration-cache=true", "--warning-mode", "all")
             .withPluginClasspath()
             .build();
         BuildTask task = result.task(":byteBuddy");
