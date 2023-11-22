@@ -177,6 +177,9 @@ public class Transformation {
             if (pluginName != null && !plugin.getName().equals(pluginName)) {
                 throw new GradleException("Defined both plugin (" + plugin + ") and plugin name (" + pluginName + ") but they are not equal");
             }
+            if (Plugin.class.isAssignableFrom(plugin)) {
+                return plugin;
+            }
             @SuppressWarnings("unchecked")
             Class<? extends Plugin> type = (Class<? extends Plugin>) PluginResolvingClassLoader.wrap(getClass().getClassLoader(), plugin);
             if (!Plugin.class.isAssignableFrom(type)) {
