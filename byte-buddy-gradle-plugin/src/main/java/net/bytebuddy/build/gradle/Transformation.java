@@ -26,6 +26,10 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 
 import javax.inject.Inject;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -173,7 +177,12 @@ public class Transformation {
             if (pluginName != null && !plugin.getName().equals(pluginName)) {
                 throw new GradleException("Defined both plugin (" + plugin + ") and plugin name (" + pluginName + ") but they are not equal");
             }
-            return plugin;
+            @SuppressWarnings("unchecked")
+            Class<? extends Plugin> type = (Class<? extends Plugin>) PluginResolvingClassLoader.wrap(getClass().getClassLoader(), plugin);
+            if (!Plugin.class.isAssignableFrom(type)) {
+                throw new GradleException(type.getName() + " does not implement " + Plugin.class.getName());
+            }
+            return type;
         } else if (pluginName != null) {
             try {
                 @SuppressWarnings("unchecked")
@@ -205,6 +214,89 @@ public class Transformation {
             return pluginName;
         } else {
             throw new GradleException("No plugin or plugin name defined for transformation");
+        }
+    }
+
+    /**
+     * A class loader that resolves the plugin against a class loader that is a parent of the Byte Buddy plugin's
+     * class loader.
+     */
+    protected static class PluginResolvingClassLoader extends ClassLoader {
+
+        /**
+         * The class loader of the user supplied plugin.
+         */
+        private final ClassLoader classLoader;
+
+        /**
+         * The protection domain to resolve.
+         */
+        private final ProtectionDomain protectionDomain;
+
+        /**
+         * Creates a new plugin resolving class loader.
+         *
+         * @param parent           The parent class loader.
+         * @param classLoader      The class loader of the user supplied plugin.
+         * @param protectionDomain The protection domain to resolve.
+         */
+        protected PluginResolvingClassLoader(ClassLoader parent, ClassLoader classLoader, ProtectionDomain protectionDomain) {
+            super(parent);
+            this.classLoader = classLoader;
+            this.protectionDomain = protectionDomain;
+        }
+
+        /**
+         * Wraps a plugin type with a class loader that resolves Byte Buddy via the Byte Buddy plugin's class loader.
+         *
+         * @param parent The parent class loader.
+         * @param type   The supplied type.
+         * @return The wrapped type.
+         */
+        public static Class<?> wrap(ClassLoader parent, Class<?> type) {
+            try {
+                Class<?> t = Class.forName(type.getName(),
+                    false,
+                    new PluginResolvingClassLoader(parent, type.getClassLoader(), type.getProtectionDomain()));
+                System.out.println("XXXXX");
+                System.out.println(t.getClassLoader());
+                System.out.println(Plugin.class.getClassLoader());
+                System.out.println(parent);
+                return t;
+            } catch (ClassNotFoundException e) {
+                throw new IllegalStateException("Failed to wrap plugin type " + type.getName(), e);
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        protected Class<?> findClass(String name) throws ClassNotFoundException {
+            if (!name.startsWith("net.bytebuddy.")) {
+                InputStream inputStream = classLoader.getResourceAsStream(name.replace('.', '/') + ".class");
+                if (inputStream == null) {
+                    return super.findClass(name);
+                }
+                byte[] binaryRepresentation;
+                try {
+                    ByteArrayOutputStream outputStream;
+                    try {
+                        outputStream = new ByteArrayOutputStream();
+                        byte[] buffer = new byte[1024];
+                        int length;
+                        while ((length = inputStream.read(buffer)) != -1) {
+                            outputStream.write(buffer, 0, length);
+                        }
+                    } finally {
+                        inputStream.close();
+                    }
+                    binaryRepresentation = outputStream.toByteArray();
+                } catch (IOException exception) {
+                    throw new IllegalStateException(exception);
+                }
+                return defineClass(name, binaryRepresentation, 0, binaryRepresentation.length, protectionDomain);
+            }
+            return super.findClass(name);
         }
     }
 }
