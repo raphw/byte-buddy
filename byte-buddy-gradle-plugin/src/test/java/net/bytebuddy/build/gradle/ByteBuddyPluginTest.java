@@ -11,8 +11,14 @@ import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.TaskOutcome;
 import org.junit.*;
 import org.junit.rules.MethodRule;
+import org.w3c.dom.Document;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 import java.io.*;
+import java.net.URL;
+import java.security.CodeSource;
 import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -32,13 +38,43 @@ public class ByteBuddyPluginTest {
 
     private File folder;
 
-    private File byteBuddyJar = new File("/home/rafael/workspace/byte-buddy/byte-buddy/target/byte-buddy-1.14.11-SNAPSHOT.jar");
+    private File byteBuddyJar;
 
     @Before
     public void setUp() throws Exception {
         folder = File.createTempFile("byte-buddy-gradle-plugin", "");
         assertThat(folder.delete(), is(true));
         assertThat(folder.mkdir(), is(true));
+        CodeSource source = ByteBuddyPluginTest.class.getProtectionDomain().getCodeSource();
+        if (source == null) {
+            throw new IllegalStateException("Failed to resolve code source");
+        }
+        URL location = source.getLocation();
+        if (location == null || !location.getProtocol().equals("file")) {
+            throw new IllegalStateException("Expected location to be a file location: " + location);
+        }
+        File file = new File(location.getPath());
+        while (!new File(file, "pom.xml").isFile()) {
+            file = file.getParentFile();
+        }
+        while (new File(file.getParentFile(), "pom.xml").isFile()) {
+            file = file.getParentFile();
+        }
+        assertThat(file.isDirectory(), is(true));
+        InputStream inputStream = new FileInputStream(new File(file, "pom.xml"));
+        Document document;
+        try {
+            document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream);
+        } finally {
+            inputStream.close();
+        }
+        String version = (String) XPathFactory.newInstance()
+                .newXPath()
+                .compile("/project/version")
+                .evaluate(document, XPathConstants.STRING);
+        assertThat(version, notNullValue(String.class));
+        byteBuddyJar = new File(file, "byte-buddy/target/byte-buddy-" + version + ".jar");
+        assertThat(byteBuddyJar.isFile(), is(true));
     }
 
     @After
@@ -106,7 +142,7 @@ public class ByteBuddyPluginTest {
             "public class SampleClass { }");
         BuildResult result = GradleRunner.create()
             .withProjectDir(folder)
-            .withArguments("build", "-Dorg.gradle.unsafe.configuration-cache=true", "--warning-mode", "all")
+            .withArguments("build", "-Dorg.gradle.unsafe.configuration-cache=true")
             .withPluginClasspath()
             .build();
         BuildTask task = result.task(":byteBuddy");
@@ -169,7 +205,7 @@ public class ByteBuddyPluginTest {
             "public class SampleClass { }");
         BuildResult result = GradleRunner.create()
             .withProjectDir(folder)
-            .withArguments("build", "-Dorg.gradle.unsafe.configuration-cache=true", "--warning-mode", "all")
+            .withArguments("build", "-Dorg.gradle.unsafe.configuration-cache=true")
             .withPluginClasspath()
             .build();
         BuildTask task = result.task(":byteBuddy");
