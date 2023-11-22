@@ -111,9 +111,13 @@ public class ByteBuddyPluginTest {
             "  }",
             "}");
         write("buildSrc/build.gradle",
-            "dependencies {",
-            "  implementation files('" + byteBuddyJar.getAbsolutePath() + "')",
-            "}");
+                "dependencies {",
+                "  if (gradle.gradleVersion.startsWith(\"2.\")) {",
+                "    compile files('" + byteBuddyJar.getAbsolutePath() + "')",
+                "  } else {",
+                "    implementation files('" + byteBuddyJar.getAbsolutePath() + "')",
+                "  }",
+                "}");
         write("buildSrc/src/main/java/sample/SamplePlugin.java",
             "package sample;",
             "",
@@ -171,7 +175,11 @@ public class ByteBuddyPluginTest {
             "}");
         write("buildSrc/build.gradle",
             "dependencies {",
-            "  implementation files('" + byteBuddyJar.getAbsolutePath() + "')",
+            "  if (gradle.gradleVersion.startsWith(\"2.\")) {",
+            "    compile files('" + byteBuddyJar.getAbsolutePath() + "')",
+            "  } else {",
+            "    implementation files('" + byteBuddyJar.getAbsolutePath() + "')",
+            "  }",
             "}");
         write("buildSrc/src/main/java/sample/SamplePlugin.java",
             "package sample;",
