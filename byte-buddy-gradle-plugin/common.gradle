@@ -25,6 +25,8 @@ def sourceVersion = System.getProperty("net.bytebuddy.gradle.version.source")
 def source
 if (sourceVersion != null) {
     source = JavaVersion.toVersion(sourceVersion)
+} else if (current > JavaVersion.VERSION_19) {
+    source = JavaVersion.VERSION_1_8
 } else if (current > JavaVersion.VERSION_1_9) {
     source = JavaVersion.VERSION_1_7
 } else if (current > JavaVersion.VERSION_1_8) {
@@ -36,6 +38,8 @@ def targetVersion = System.getProperty("net.bytebuddy.gradle.version.target")
 def target
 if (targetVersion != null) {
     target = JavaVersion.toVersion(targetVersion)
+} else if (current > JavaVersion.VERSION_19) {
+    target = JavaVersion.VERSION_1_8
 } else if (current > JavaVersion.VERSION_1_9) {
     target = JavaVersion.VERSION_1_7
 } else if (current > JavaVersion.VERSION_1_8) {
