@@ -306,7 +306,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
             try {
                 javaPluginConvention = Class.forName("org.gradle.api.plugins.JavaPluginConvention");
                 getConvention = Project.class.getMethod("getConvention");
-                findPlugin = Class.forName("org.gradle.api.plugins.Convention").getMethod("findClass", Class.class);
+                findPlugin = Class.forName("org.gradle.api.plugins.Convention").getMethod("findPlugin", Class.class);
                 getSourceSetsConvention = javaPluginConvention.getMethod("getSourceSets");
                 getTargetCompatibilityConvention = javaPluginConvention.getMethod("getTargetCompatibility");
             } catch (Throwable ignored) {
