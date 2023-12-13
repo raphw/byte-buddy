@@ -40,7 +40,7 @@ public abstract class AbstractMethodDescriptionTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    protected Method firstMethod, secondMethod, thirdMethod, genericMethod, genericMethodWithRawException, genericMethodWithTypeVariable;
+    protected Method firstMethod, secondMethod, thirdMethod, genericMethod, genericMethodWithRawException, genericMethodWithTypeVariable, nativeMethod;
 
     protected Constructor<?> firstConstructor, secondConstructor;
 
@@ -72,6 +72,7 @@ public abstract class AbstractMethodDescriptionTest {
         genericMethod = GenericMethod.class.getDeclaredMethod("foo", Exception.class);
         genericMethodWithRawException = GenericMethod.class.getDeclaredMethod("bar", Exception.class);
         genericMethodWithTypeVariable = GenericMethod.class.getDeclaredMethod("qux");
+        nativeMethod = NativeMethod.class.getDeclaredMethod("foo");
     }
 
     @Test
@@ -735,6 +736,8 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(DeprecationSample.class.getDeclaredMethod("foo")).getActualModifiers(), is(Opcodes.ACC_PRIVATE | Opcodes.ACC_DEPRECATED));
         assertThat(describe(firstMethod).getActualModifiers(true, Visibility.PUBLIC), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC));
         assertThat(describe(secondMethod).getActualModifiers(false, Visibility.PRIVATE), is(Opcodes.ACC_PROTECTED | Opcodes.ACC_ABSTRACT));
+        assertThat(describe(nativeMethod).getActualModifiers(false, Visibility.PRIVATE), is(Opcodes.ACC_NATIVE));
+        assertThat(describe(nativeMethod).getActualModifiers(true, Visibility.PRIVATE), is(0));
     }
 
     @Test
@@ -958,6 +961,11 @@ public abstract class AbstractMethodDescriptionTest {
         <Q> void qux() {
             /* empty */
         }
+    }
+
+    static class NativeMethod {
+
+        native void foo();
     }
 
     private static class DeprecationSample {

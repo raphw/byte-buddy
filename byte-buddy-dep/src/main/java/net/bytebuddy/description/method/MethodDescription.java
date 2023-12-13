@@ -589,9 +589,14 @@ public interface MethodDescription extends TypeVariableSource,
          * {@inheritDoc}
          */
         public int getActualModifiers(boolean manifest) {
-            return manifest
-                    ? getActualModifiers() & ~(Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)
-                    : getActualModifiers() & ~Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT;
+            int modifiers = getActualModifiers();
+            if (manifest) {
+                return modifiers & ~(Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE);
+            } else if ((modifiers & (Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT)) == 0) {
+                return modifiers | Opcodes.ACC_ABSTRACT;
+            } else {
+                return modifiers;
+            }
         }
 
         /**
