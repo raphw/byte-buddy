@@ -36,12 +36,12 @@ public class PluginEngineErrorHandlerTest {
         Plugin.Engine.ErrorHandler.Failing.FAIL_FAST.onError(typeDescription, plugin, throwable);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test(expected = IllegalStateException.class)
     public void testFailingFailFastDoesNotSupportFailAfterType() {
         Plugin.Engine.ErrorHandler.Failing.FAIL_FAST.onError(typeDescription, Collections.singletonList(throwable));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test(expected = IllegalStateException.class)
     public void testFailingFailFastDoesNotSupportFailLast() {
         Plugin.Engine.ErrorHandler.Failing.FAIL_FAST.onError(Collections.singletonMap(typeDescription, Collections.singletonList(throwable)));
     }
@@ -61,7 +61,7 @@ public class PluginEngineErrorHandlerTest {
         Plugin.Engine.ErrorHandler.Failing.FAIL_AFTER_TYPE.onError(typeDescription, Collections.singletonList(throwable));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test(expected = IllegalStateException.class)
     public void testFailingFailAfterTypeDoesNotSupportFailLast() {
         Plugin.Engine.ErrorHandler.Failing.FAIL_AFTER_TYPE.onError(Collections.singletonMap(typeDescription, Collections.singletonList(throwable)));
     }
