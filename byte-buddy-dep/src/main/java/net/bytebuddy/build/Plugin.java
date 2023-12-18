@@ -1183,14 +1183,14 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      * {@inheritDoc}
                      */
                     public void onError(TypeDescription typeDescription, List<Throwable> throwables) {
-                        throw new UnsupportedOperationException("onError");
+                        throw new IllegalStateException("Failed to transform " + typeDescription + ": " + throwables);
                     }
 
                     /**
                      * {@inheritDoc}
                      */
                     public void onError(Map<TypeDescription, List<Throwable>> throwables) {
-                        throw new UnsupportedOperationException("onError");
+                        throw new IllegalStateException("Failed to transform at least one type: " + throwables);
                     }
                 },
 
@@ -1216,7 +1216,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      * {@inheritDoc}
                      */
                     public void onError(Map<TypeDescription, List<Throwable>> throwables) {
-                        throw new UnsupportedOperationException("onError");
+                        throw new IllegalStateException("Failed to transform at least one type: " + throwables);
                     }
                 },
 
