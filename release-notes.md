@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 21. December 2023: version 1.14.11
+
+- Adjusts Gradle plugin to support Gradle 8.4 without warnings.
+- Avoid blurry exception on build plugin for fail fast.
+
 ### 9. October 2023: version 1.14.10
 
 - Add lazy facade to default `TypePool` in `AgentBuilder` to avoid parsing of types ignored by name.
