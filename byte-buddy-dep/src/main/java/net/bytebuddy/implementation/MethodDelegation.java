@@ -75,7 +75,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * <li>{@link net.bytebuddy.implementation.bind.annotation.Default}: A parameter that is annotated with
  * this annotation is assigned a proxy that allows calling an instrumented type's directly implemented interfaces'
  * default methods.</li>
- * <li>{@link net.bytebuddy.implementation.bind.annotation.SuperCall}: A parameter
+ * <li>{@link net.bytebuddy.implementation.bind.annotation.DefaultCall}: A parameter
  * of {@code Qux#baz} that is annotated with {@code SuperCall} will be assigned an instance of a type implementing both
  * {@link java.lang.Runnable} and {@link java.util.concurrent.Callable} which will invoke the instrumented method on the
  * invocation of either interface's method. The call is made using the original arguments of the method invocation.
