@@ -25,7 +25,7 @@ import javax.inject.Inject;
 import java.io.Serializable;
 
 /**
- * Describes an argument to a {@link Plugin} constuctor.
+ * Describes an argument to a {@link Plugin} constructor.
  */
 public class PluginArgument implements Serializable {
 
@@ -43,6 +43,7 @@ public class PluginArgument implements Serializable {
      * The argument value.
      */
     @MaybeNull
+    @SuppressWarnings("serial")
     private Object value;
 
     /**

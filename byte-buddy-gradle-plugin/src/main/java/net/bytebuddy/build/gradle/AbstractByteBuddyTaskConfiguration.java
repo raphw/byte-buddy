@@ -199,6 +199,7 @@ public abstract class AbstractByteBuddyTaskConfiguration<
      * A closure to execute an action on the {@link TaskExecutionGraph}. Older Gradle versions do not offer an overloaded method that accepts an
      * action such that a dispatch requires an explicit wrapping with a {@link Closure}.
      */
+    @SuppressWarnings("serial")
     protected static class TaskExecutionGraphClosure extends Closure<Void> {
 
         /**

@@ -55,6 +55,7 @@ public class ByteBuddySimpleTask extends AbstractByteBuddyTask {
      * Creates a new simple Byte Buddy task.
      */
     @Inject
+    @SuppressWarnings("this-escape")
     public ByteBuddySimpleTask() {
         new ByteBuddySimpleTaskExtension(null).configure(this);
     }
