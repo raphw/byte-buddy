@@ -1235,7 +1235,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         @SuppressFBWarnings(value = {"REC_CATCH_EXCEPTION", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"}, justification = "Expected internal invocation.")
         protected static Object proxy(Class<?> proxy, Map<Method, Dispatcher> dispatchers) {
             ClassWriter classWriter = new ClassWriter(0);
-            classWriter.visit(ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).getMinorMajorVersion(),
+            classWriter.visit(ClassFileVersion.JAVA_V5.getMinorMajorVersion(),
                     Opcodes.ACC_PUBLIC,
                     Type.getInternalName(proxy) + "$Proxy",
                     null,
@@ -1311,7 +1311,7 @@ public class JavaDispatcher<T> implements PrivilegedAction<T> {
         @SuppressFBWarnings(value = {"REC_CATCH_EXCEPTION", "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED"}, justification = "Expected internal invocation.")
         protected static Invoker invoker() {
             ClassWriter classWriter = new ClassWriter(0);
-            classWriter.visit(ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V5).getMinorMajorVersion(),
+            classWriter.visit(ClassFileVersion.JAVA_V5.getMinorMajorVersion(),
                     Opcodes.ACC_PUBLIC,
                     Type.getInternalName(Invoker.class) + "$Dispatcher",
                     null,
