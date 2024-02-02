@@ -1628,7 +1628,7 @@ public interface AgentBuilder {
          * @param module              The transformed type's module or {@code null} if the current VM does not support modules.
          * @param classBeingRedefined The class being redefined which is only not {@code null} if a retransformation
          *                            is applied.
-         * @param protectionDomain    The protection domain of the type being transformed.
+         * @param protectionDomain    The protection domain of the type being transformed or {@code null} if none is available.
          * @return {@code true} if the entailed {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should
          * be applied for the given {@code typeDescription}.
          */
@@ -1636,7 +1636,7 @@ public interface AgentBuilder {
                         @MaybeNull ClassLoader classLoader,
                         @MaybeNull JavaModule module,
                         @MaybeNull Class<?> classBeingRedefined,
-                        ProtectionDomain protectionDomain);
+                        @MaybeNull ProtectionDomain protectionDomain);
 
         /**
          * A matcher that always or never matches a type.
@@ -1674,7 +1674,7 @@ public interface AgentBuilder {
                                    @MaybeNull ClassLoader classLoader,
                                    @MaybeNull JavaModule module,
                                    @MaybeNull Class<?> classBeingRedefined,
-                                   ProtectionDomain protectionDomain) {
+                                   @MaybeNull ProtectionDomain protectionDomain) {
                 return matches;
             }
         }
@@ -1715,7 +1715,7 @@ public interface AgentBuilder {
                                    @MaybeNull ClassLoader classLoader,
                                    @MaybeNull JavaModule module,
                                    @MaybeNull Class<?> classBeingRedefined,
-                                   ProtectionDomain protectionDomain) {
+                                   @MaybeNull ProtectionDomain protectionDomain) {
                 return classBeingRedefined == null == unloaded;
             }
         }
@@ -1738,7 +1738,7 @@ public interface AgentBuilder {
                                    @MaybeNull ClassLoader classLoader,
                                    @MaybeNull JavaModule module,
                                    @MaybeNull Class<?> classBeingRedefined,
-                                   ProtectionDomain protectionDomain) {
+                                   @MaybeNull ProtectionDomain protectionDomain) {
                 if (classBeingRedefined != null) {
                     try {
                         return Class.forName(classBeingRedefined.getName(), true, classLoader) == classBeingRedefined;
@@ -1803,7 +1803,7 @@ public interface AgentBuilder {
                                    @MaybeNull ClassLoader classLoader,
                                    @MaybeNull JavaModule module,
                                    @MaybeNull Class<?> classBeingRedefined,
-                                   ProtectionDomain protectionDomain) {
+                                   @MaybeNull ProtectionDomain protectionDomain) {
                 for (RawMatcher matcher : matchers) {
                     if (!matcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
                         return false;
@@ -1856,7 +1856,7 @@ public interface AgentBuilder {
                                    @MaybeNull ClassLoader classLoader,
                                    @MaybeNull JavaModule module,
                                    @MaybeNull Class<?> classBeingRedefined,
-                                   ProtectionDomain protectionDomain) {
+                                   @MaybeNull ProtectionDomain protectionDomain) {
                 for (RawMatcher matcher : matchers) {
                     if (matcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
                         return true;
@@ -1893,7 +1893,7 @@ public interface AgentBuilder {
                                    @MaybeNull ClassLoader classLoader,
                                    @MaybeNull JavaModule module,
                                    @MaybeNull Class<?> classBeingRedefined,
-                                   ProtectionDomain protectionDomain) {
+                                   @MaybeNull ProtectionDomain protectionDomain) {
                 return !matcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
             }
         }
@@ -1969,7 +1969,7 @@ public interface AgentBuilder {
                                    @MaybeNull ClassLoader classLoader,
                                    @MaybeNull JavaModule module,
                                    @MaybeNull Class<?> classBeingRedefined,
-                                   ProtectionDomain protectionDomain) {
+                                   @MaybeNull ProtectionDomain protectionDomain) {
                 return moduleMatcher.matches(module) && classLoaderMatcher.matches(classLoader) && typeMatcher.matches(typeDescription);
             }
         }
@@ -2851,14 +2851,14 @@ public interface AgentBuilder {
          * @param typeDescription  The description of the type currently being instrumented.
          * @param classLoader      The class loader of the instrumented class. Might be {@code null} to represent the bootstrap class loader.
          * @param module           The class's module or {@code null} if the current VM does not support modules.
-         * @param protectionDomain The protection domain of the transformed type.
+         * @param protectionDomain The protection domain of the transformed type or {@code null} if not available
          * @return A transformed version of the supplied {@code builder}.
          */
         DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                          TypeDescription typeDescription,
                                          @MaybeNull ClassLoader classLoader,
                                          @MaybeNull JavaModule module,
-                                         ProtectionDomain protectionDomain);
+                                         @MaybeNull ProtectionDomain protectionDomain);
 
         /**
          * A transformer that applies a build {@link Plugin}. Note that a transformer is never completed as class loading
@@ -2888,7 +2888,7 @@ public interface AgentBuilder {
                                                     TypeDescription typeDescription,
                                                     @MaybeNull ClassLoader classLoader,
                                                     @MaybeNull JavaModule module,
-                                                    ProtectionDomain protectionDomain) {
+                                                    @MaybeNull ProtectionDomain protectionDomain) {
                 return plugin.apply(builder, typeDescription, ClassFileLocator.ForClassLoader.of(classLoader));
             }
         }
@@ -2994,7 +2994,7 @@ public interface AgentBuilder {
                                                     TypeDescription typeDescription,
                                                     @MaybeNull ClassLoader classLoader,
                                                     @MaybeNull JavaModule module,
-                                                    ProtectionDomain protectionDomain) {
+                                                    @MaybeNull ProtectionDomain protectionDomain) {
                 ClassFileLocator classFileLocator = new ClassFileLocator.Compound(this.classFileLocator, locationStrategy.classFileLocator(classLoader, module));
                 TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
                 AsmVisitorWrapper.ForDeclaredMethods asmVisitorWrapper = new AsmVisitorWrapper.ForDeclaredMethods();
@@ -3016,7 +3016,7 @@ public interface AgentBuilder {
              * @param typeDescription  The description of the type currently being instrumented.
              * @param classLoader      The class loader of the instrumented class. Might be {@code null} to represent the bootstrap class loader.
              * @param module           The class's module or {@code null} if the current VM does not support modules.
-             * @param protectionDomain The protection domain of the transformed type.
+             * @param protectionDomain The protection domain of the transformed type or {@code null} if not available
              * @param advice           The advice to wrap.
              * @return A visitor wrapper that represents the supplied advice.
              */
@@ -3024,7 +3024,7 @@ public interface AgentBuilder {
             protected AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper wrap(TypeDescription typeDescription,
                                                                                      @MaybeNull ClassLoader classLoader,
                                                                                      @MaybeNull JavaModule module,
-                                                                                     ProtectionDomain protectionDomain,
+                                                                                     @MaybeNull ProtectionDomain protectionDomain,
                                                                                      Advice advice) {
                 return advice;
             }
@@ -3687,7 +3687,10 @@ public interface AgentBuilder {
              * @param protectionDomain  The instrumented type's protection domain or {@code null} if no protection domain is available.
              * @param injectionStrategy The injection strategy to use.
              */
-            void register(DynamicType dynamicType, @MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy);
+            void register(DynamicType dynamicType,
+                          @MaybeNull ClassLoader classLoader,
+                          @MaybeNull ProtectionDomain protectionDomain,
+                          InjectionStrategy injectionStrategy);
         }
 
         /**
@@ -3717,7 +3720,10 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void register(DynamicType dynamicType, @MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
+            public void register(DynamicType dynamicType,
+                                 @MaybeNull ClassLoader classLoader,
+                                 @MaybeNull ProtectionDomain protectionDomain,
+                                 InjectionStrategy injectionStrategy) {
                 /* do nothing */
             }
         }
@@ -3751,7 +3757,10 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void register(DynamicType dynamicType, @MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
+            public void register(DynamicType dynamicType,
+                                 @MaybeNull ClassLoader classLoader,
+                                 @MaybeNull ProtectionDomain protectionDomain,
+                                 InjectionStrategy injectionStrategy) {
                 Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                 Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                 for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
@@ -3950,7 +3959,10 @@ public interface AgentBuilder {
                     /**
                      * {@inheritDoc}
                      */
-                    public void register(DynamicType dynamicType, @MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
+                    public void register(DynamicType dynamicType,
+                                         @MaybeNull ClassLoader classLoader,
+                                         @MaybeNull ProtectionDomain protectionDomain,
+                                         InjectionStrategy injectionStrategy) {
                         Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                         LoadedTypeInitializer loadedTypeInitializer;
                         if (!auxiliaryTypes.isEmpty()) {
@@ -4026,7 +4038,10 @@ public interface AgentBuilder {
                     /**
                      * {@inheritDoc}
                      */
-                    public void register(DynamicType dynamicType, @MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
+                    public void register(DynamicType dynamicType,
+                                         @MaybeNull ClassLoader classLoader,
+                                         @MaybeNull ProtectionDomain protectionDomain,
+                                         InjectionStrategy injectionStrategy) {
                         Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                         LoadedTypeInitializer loadedTypeInitializer = auxiliaryTypes.isEmpty()
                                 ? dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription())
@@ -4080,7 +4095,10 @@ public interface AgentBuilder {
                     /**
                      * {@inheritDoc}
                      */
-                    public void register(DynamicType dynamicType, @MaybeNull ClassLoader classLoader, @MaybeNull ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
+                    public void register(DynamicType dynamicType,
+                                         @MaybeNull ClassLoader classLoader,
+                                         @MaybeNull ProtectionDomain protectionDomain,
+                                         InjectionStrategy injectionStrategy) {
                         Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                         if (!auxiliaryTypes.isEmpty()) {
@@ -5471,10 +5489,14 @@ public interface AgentBuilder {
          * @param binaryRepresentation The instrumented type's binary representation.
          * @param classLoader          The instrumented type's class loader or {@code null} if the type is loaded by the bootstrap class loader.
          * @param module               The instrumented type's module or {@code null} if the current VM does not support modules.
-         * @param protectionDomain     The instrumented type's protection domain.
+         * @param protectionDomain     The instrumented type's protection domain or {@code null} if not available
          * @return An appropriate class file locator.
          */
-        ClassFileLocator resolve(String name, byte[] binaryRepresentation, @MaybeNull ClassLoader classLoader, @MaybeNull JavaModule module, ProtectionDomain protectionDomain);
+        ClassFileLocator resolve(String name,
+                                 byte[] binaryRepresentation,
+                                 @MaybeNull ClassLoader classLoader,
+                                 @MaybeNull JavaModule module,
+                                 @MaybeNull ProtectionDomain protectionDomain);
 
         /**
          * Resolves the type pool for a given type name by the supplied {@link PoolStrategy}.
@@ -5501,7 +5523,7 @@ public interface AgentBuilder {
                                                 byte[] binaryRepresentation,
                                                 @MaybeNull ClassLoader classLoader,
                                                 @MaybeNull JavaModule module,
-                                                ProtectionDomain protectionDomain) {
+                                                @MaybeNull ProtectionDomain protectionDomain) {
                     return ClassFileLocator.Simple.of(name, binaryRepresentation);
                 }
 
@@ -5528,7 +5550,7 @@ public interface AgentBuilder {
                                                 byte[] binaryRepresentation,
                                                 @MaybeNull ClassLoader classLoader,
                                                 @MaybeNull JavaModule module,
-                                                ProtectionDomain protectionDomain) {
+                                                @MaybeNull ProtectionDomain protectionDomain) {
                     return ClassFileLocator.NoOp.INSTANCE;
                 }
 
@@ -11826,7 +11848,7 @@ public interface AgentBuilder {
                      * @param classLoader          The class loader of the transformed class or {@code null} if loaded by the boot loader.
                      * @param name                 The internal name of the transformed class.
                      * @param classBeingRedefined  The class being redefined or {@code null} if not a retransformation.
-                     * @param protectionDomain     The class's protection domain.
+                     * @param protectionDomain     The class's protection domain or {@code null} if not available.
                      * @param binaryRepresentation The class's binary representation.
                      * @return The transformed class file or {@code null} if untransformed.
                      * @throws IllegalClassFormatException If the class file cannot be generated.
@@ -11837,7 +11859,7 @@ public interface AgentBuilder {
                                      @MaybeNull ClassLoader classLoader,
                                      String name,
                                      @MaybeNull Class<?> classBeingRedefined,
-                                     ProtectionDomain protectionDomain,
+                                     @MaybeNull ProtectionDomain protectionDomain,
                                      byte[] binaryRepresentation) throws IllegalClassFormatException;
                 }
             }
@@ -11944,7 +11966,7 @@ public interface AgentBuilder {
                                        @MaybeNull ClassLoader classLoader,
                                        @MaybeNull JavaModule module,
                                        @MaybeNull Class<?> classBeingRedefined,
-                                       ProtectionDomain protectionDomain) {
+                                       @MaybeNull ProtectionDomain protectionDomain) {
                     if (ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
                         return false;
                     }
@@ -12000,7 +12022,7 @@ public interface AgentBuilder {
                                        @MaybeNull ClassLoader classLoader,
                                        @MaybeNull JavaModule module,
                                        @MaybeNull Class<?> classBeingRedefined,
-                                       ProtectionDomain protectionDomain) {
+                                       @MaybeNull ProtectionDomain protectionDomain) {
                     Iterator<Transformer> iterator = classFileTransformer.iterator(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
                     if (ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
                         return iterator.hasNext();
@@ -12047,8 +12069,9 @@ public interface AgentBuilder {
                 private final Class<?> classBeingRedefined;
 
                 /**
-                 * The type's protection domain.
+                 * The type's protection domain or {@code null} if not available.
                  */
+                @MaybeNull
                 private final ProtectionDomain protectionDomain;
 
                 /**
@@ -12068,14 +12091,14 @@ public interface AgentBuilder {
                  * @param classLoader         The type's class loader.
                  * @param module              The type's module.
                  * @param classBeingRedefined The class being redefined or {@code null} if the type was not previously loaded.
-                 * @param protectionDomain    The type's protection domain.
+                 * @param protectionDomain    The type's protection domain or {@code null} if not available.
                  * @param transformations     The matched transformations.
                  */
                 protected TransformerIterator(TypeDescription typeDescription,
                                               @MaybeNull ClassLoader classLoader,
                                               @MaybeNull JavaModule module,
                                               @MaybeNull Class<?> classBeingRedefined,
-                                              ProtectionDomain protectionDomain,
+                                              @MaybeNull ProtectionDomain protectionDomain,
                                               List<Transformation> transformations) {
                     this.typeDescription = typeDescription;
                     this.classLoader = classLoader;
@@ -12324,7 +12347,7 @@ public interface AgentBuilder {
             public byte[] transform(@MaybeNull ClassLoader classLoader,
                                     @MaybeNull String internalTypeName,
                                     @MaybeNull Class<?> classBeingRedefined,
-                                    ProtectionDomain protectionDomain,
+                                    @MaybeNull ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) {
                 if (circularityLock.acquire()) {
                     try {
@@ -12349,7 +12372,7 @@ public interface AgentBuilder {
              * @param classLoader          The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
              * @param internalTypeName     The internal name of the instrumented class.
              * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
-             * @param protectionDomain     The instrumented type's protection domain.
+             * @param protectionDomain     The instrumented type's protection domain or {@code null} if not available.
              * @param binaryRepresentation The class file of the instrumented class in its current state.
              * @return The transformed class file or an empty byte array if this transformer does not apply an instrumentation.
              */
@@ -12358,7 +12381,7 @@ public interface AgentBuilder {
                                        @MaybeNull ClassLoader classLoader,
                                        @MaybeNull String internalTypeName,
                                        @MaybeNull Class<?> classBeingRedefined,
-                                       ProtectionDomain protectionDomain,
+                                       @MaybeNull ProtectionDomain protectionDomain,
                                        byte[] binaryRepresentation) {
                 if (circularityLock.acquire()) {
                     try {
@@ -12383,7 +12406,7 @@ public interface AgentBuilder {
              * @param classLoader          The instrumented class's class loader.
              * @param internalTypeName     The internal name of the instrumented class.
              * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
-             * @param protectionDomain     The instrumented type's protection domain.
+             * @param protectionDomain     The instrumented type's protection domain or {@code null} if not available.
              * @param binaryRepresentation The class file of the instrumented class in its current state.
              * @return The transformed class file or an empty byte array if this transformer does not apply an instrumentation.
              */
@@ -12392,7 +12415,7 @@ public interface AgentBuilder {
                                      @MaybeNull ClassLoader classLoader,
                                      @MaybeNull String internalTypeName,
                                      @MaybeNull Class<?> classBeingRedefined,
-                                     ProtectionDomain protectionDomain,
+                                     @MaybeNull ProtectionDomain protectionDomain,
                                      byte[] binaryRepresentation) {
                 if (internalTypeName == null || !lambdaInstrumentationStrategy.isInstrumented(classBeingRedefined)) {
                     return NO_TRANSFORMATION;
@@ -12443,7 +12466,7 @@ public interface AgentBuilder {
              * @param name                The binary name of the instrumented class.
              * @param classBeingRedefined The loaded {@link Class} being redefined or {@code null} if no such class exists.
              * @param loaded              {@code true} if the instrumented type is loaded.
-             * @param protectionDomain    The instrumented type's protection domain.
+             * @param protectionDomain    The instrumented type's protection domain or {@code null} if not available.
              * @param typePool            The type pool to use.
              * @param classFileLocator    The class file locator to use.
              * @return The transformed class file or an empty byte array if this transformer does not apply an instrumentation.
@@ -12454,7 +12477,7 @@ public interface AgentBuilder {
                                        String name,
                                        @MaybeNull Class<?> classBeingRedefined,
                                        boolean loaded,
-                                       ProtectionDomain protectionDomain,
+                                       @MaybeNull ProtectionDomain protectionDomain,
                                        TypePool typePool,
                                        ClassFileLocator classFileLocator) {
                 TypeDescription typeDescription = descriptionStrategy.apply(name, classBeingRedefined, typePool, circularityLock, classLoader, module);
@@ -12497,7 +12520,7 @@ public interface AgentBuilder {
                                                   @MaybeNull ClassLoader classLoader,
                                                   @MaybeNull JavaModule module,
                                                   @MaybeNull Class<?> classBeingRedefined,
-                                                  ProtectionDomain protectionDomain) {
+                                                  @MaybeNull ProtectionDomain protectionDomain) {
                 return ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
                         ? Collections.<Transformer>emptySet().iterator()
                         : new Transformation.TransformerIterator(typeDescription, classLoader, module, classBeingRedefined, protectionDomain, transformations);
@@ -12791,8 +12814,10 @@ public interface AgentBuilder {
                 private final Class<?> classBeingRedefined;
 
                 /**
-                 * The type's protection domain.
+                 * The type's protection domain or {@code null} if not available.
                  */
+                @MaybeNull
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final ProtectionDomain protectionDomain;
 
                 /**
@@ -12806,13 +12831,13 @@ public interface AgentBuilder {
                  * @param classLoader          The type's class loader or {@code null} if the bootstrap class loader is represented.
                  * @param internalTypeName     The type's internal name or {@code null} if no such name exists.
                  * @param classBeingRedefined  The class being redefined or {@code null} if no such class exists.
-                 * @param protectionDomain     The type's protection domain.
+                 * @param protectionDomain     The type's protection domain or {@code null} if not available.
                  * @param binaryRepresentation The type's binary representation.
                  */
                 protected LegacyVmDispatcher(@MaybeNull ClassLoader classLoader,
                                              @MaybeNull String internalTypeName,
                                              @MaybeNull Class<?> classBeingRedefined,
-                                             ProtectionDomain protectionDomain,
+                                             @MaybeNull ProtectionDomain protectionDomain,
                                              byte[] binaryRepresentation) {
                     this.classLoader = classLoader;
                     this.internalTypeName = internalTypeName;
@@ -12868,8 +12893,10 @@ public interface AgentBuilder {
                 private final Class<?> classBeingRedefined;
 
                 /**
-                 * The type's protection domain.
+                 * The type's protection domain or {@code null} if not available.
                  */
+                @MaybeNull
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final ProtectionDomain protectionDomain;
 
                 /**
@@ -12884,14 +12911,14 @@ public interface AgentBuilder {
                  * @param classLoader          The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
                  * @param internalTypeName     The type's internal name or {@code null} if no such name exists.
                  * @param classBeingRedefined  The class being redefined or {@code null} if no such class exists.
-                 * @param protectionDomain     The type's protection domain.
+                 * @param protectionDomain     The type's protection domain or {@code null} if not available.
                  * @param binaryRepresentation The type's binary representation.
                  */
                 protected Java9CapableVmDispatcher(Object rawModule,
                                                    @MaybeNull ClassLoader classLoader,
                                                    @MaybeNull String internalTypeName,
                                                    @MaybeNull Class<?> classBeingRedefined,
-                                                   ProtectionDomain protectionDomain,
+                                                   @MaybeNull ProtectionDomain protectionDomain,
                                                    byte[] binaryRepresentation) {
                     this.rawModule = rawModule;
                     this.classLoader = classLoader;

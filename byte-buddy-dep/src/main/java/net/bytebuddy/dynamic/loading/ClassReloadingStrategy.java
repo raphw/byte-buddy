@@ -520,7 +520,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
             public byte[] transform(@MaybeNull ClassLoader classLoader,
                                     @MaybeNull String internalTypeName,
                                     @MaybeNull Class<?> classBeingRedefined,
-                                    ProtectionDomain protectionDomain,
+                                    @MaybeNull ProtectionDomain protectionDomain,
                                     byte[] classfileBuffer) {
                 if (internalTypeName == null) {
                     return NO_REDEFINITION;
@@ -558,7 +558,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
             public byte[] transform(@MaybeNull ClassLoader classLoader,
                                     @MaybeNull String internalTypeName,
                                     @MaybeNull Class<?> classBeingRedefined,
-                                    ProtectionDomain protectionDomain,
+                                    @MaybeNull ProtectionDomain protectionDomain,
                                     byte[] classfileBuffer) {
                 return NO_REDEFINITION;
             }
