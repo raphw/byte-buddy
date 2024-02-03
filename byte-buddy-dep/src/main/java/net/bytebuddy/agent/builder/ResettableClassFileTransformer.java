@@ -51,14 +51,14 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
      * @param classLoader         The type's class loader or {@code null} if the boot loader.
      * @param module              The type's module or {@code null} if the module system is not supported by the current VM.
      * @param classBeingRedefined The class being redefined or {@code null} if the type is not yet loaded.
-     * @param protectionDomain    The type's protection domain.
+     * @param protectionDomain    The type's protection domain or {@code null} if not available.
      * @return An iterator over the transformers that are applied by this class file transformer if the given type is discovered.
      */
     Iterator<AgentBuilder.Transformer> iterator(TypeDescription typeDescription,
                                                 @MaybeNull ClassLoader classLoader,
                                                 @MaybeNull JavaModule module,
                                                 @MaybeNull Class<?> classBeingRedefined,
-                                                ProtectionDomain protectionDomain);
+                                                @MaybeNull ProtectionDomain protectionDomain);
 
     /**
      * <p>
@@ -432,7 +432,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                                                            @MaybeNull ClassLoader classLoader,
                                                            @MaybeNull JavaModule module,
                                                            @MaybeNull Class<?> classBeingRedefined,
-                                                           ProtectionDomain protectionDomain) {
+                                                           @MaybeNull ProtectionDomain protectionDomain) {
             return classFileTransformer.iterator(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
         }
 
@@ -524,7 +524,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                                                                @MaybeNull ClassLoader classLoader,
                                                                @MaybeNull JavaModule module,
                                                                @MaybeNull Class<?> classBeingRedefined,
-                                                               ProtectionDomain protectionDomain) {
+                                                               @MaybeNull ProtectionDomain protectionDomain) {
                 return classFileTransformer.iterator(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
             }
 
