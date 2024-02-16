@@ -156,6 +156,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
     public static final ClassFileVersion JAVA_V22 = new ClassFileVersion(Opcodes.V22);
 
     /**
+     * The class file version of Java 23.
+     */
+    public static final ClassFileVersion JAVA_V23 = new ClassFileVersion(Opcodes.V22 + 1);
+
+    /**
      * A version locator for the executing JVM.
      */
     private static final VersionLocator VERSION_LOCATOR = doPrivileged(VersionLocator.Resolver.INSTANCE);
@@ -251,6 +256,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
             return JAVA_V21;
         } else if (javaVersionString.equals("1.22") || javaVersionString.equals("22")) {
             return JAVA_V22;
+        } else if (javaVersionString.equals("1.23") || javaVersionString.equals("23")) {
+            return JAVA_V23;
         } else {
             if (OpenedClassReader.EXPERIMENTAL) {
                 try {
@@ -320,6 +327,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion>, Serializa
                 return JAVA_V21;
             case 22:
                 return JAVA_V22;
+            case 23:
+                return JAVA_V23;
             default:
                 if (OpenedClassReader.EXPERIMENTAL && javaVersion > 0) {
                     return new ClassFileVersion(BASE_VERSION + javaVersion);

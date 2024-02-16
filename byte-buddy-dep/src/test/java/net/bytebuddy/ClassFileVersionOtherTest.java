@@ -70,7 +70,7 @@ public class ClassFileVersionOtherTest {
 
     @Test
     public void testThisVm() {
-        ClassFileVersion.ofThisVm();
+        assertThat(ClassFileVersion.ofThisVm(), is(ClassFileVersion.ofThisVm()));
     }
 
     @Test

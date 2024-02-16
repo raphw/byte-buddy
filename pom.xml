@@ -765,6 +765,21 @@
                 <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
+        <!-- Runs the build with compatibility for Java 22 JVMs. -->
+        <profile>
+            <id>java23-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>23</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>8</sourcecode.main.version>
+                <sourcecode.test.version>8</sourcecode.test.version>
+                <bytecode.main.version>8</bytecode.main.version>
+                <bytecode.test.version>8</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
+            </properties>
+        </profile>
         <!-- Builds using a byte code target for Java 6. -->
         <profile>
             <id>java6</id>
@@ -953,6 +968,18 @@
             <properties>
                 <bytecode.main.version>22</bytecode.main.version>
                 <bytecode.test.version>22</bytecode.test.version>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Builds using a byte code target for Java 22. -->
+        <profile>
+            <id>java23</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>23</bytecode.main.version>
+                <bytecode.test.version>23</bytecode.test.version>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
