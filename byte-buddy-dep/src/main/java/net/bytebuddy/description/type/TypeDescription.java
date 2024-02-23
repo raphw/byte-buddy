@@ -8408,7 +8408,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return internalName;
                     }
                 }
-                while (simpleNameIndex < internalName.length() && !Character.isLetter(internalName.charAt(simpleNameIndex))) {
+                while (simpleNameIndex < internalName.length() && !Character.isJavaIdentifierStart(internalName.charAt(simpleNameIndex))) {
                     simpleNameIndex += 1;
                 }
                 return internalName.substring(simpleNameIndex);

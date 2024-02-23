@@ -224,6 +224,13 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
         verifyNoMoreInteractions(classFileLocator);
     }
 
+    @Test
+    @Override
+    public void testSimpleName() throws Exception {
+        super.testSimpleName();
+        assertThat(describe($DollarInName.class).getSimpleName(), CoreMatchers.is($DollarInName.class.getSimpleName()));
+    }
+
     private static class SuperClass {
         /* empty */
     }
@@ -264,5 +271,9 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
         T foo(T argument) throws T {
             return argument;
         }
+    }
+
+    private static class $DollarInName {
+        /* empty */
     }
 }
