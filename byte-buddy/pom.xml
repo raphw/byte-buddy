@@ -169,9 +169,9 @@
                 </dependencies>
                 <executions>
                     <execution>
-                        <phase>prepare-package</phase>
+                        <phase>package</phase>
                         <goals>
-                            <goal>make-module</goal>
+                            <goal>inject-module</goal>
                         </goals>
                         <configuration>
                             <skip>${modulemaker.skip}</skip>
