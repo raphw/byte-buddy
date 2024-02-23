@@ -81,7 +81,7 @@
         <version.plugin.versions>2.11.0</version.plugin.versions>
         <version.plugin.javadoc>3.4.0</version.plugin.javadoc>
         <version.plugin.source>3.2.1</version.plugin.source>
-        <version.plugin.shade>3.3.0</version.plugin.shade>
+        <version.plugin.shade>3.5.2</version.plugin.shade>
         <version.plugin.gpg>3.0.1</version.plugin.gpg>
         <version.plugin.jxr>3.2.0</version.plugin.jxr>
         <version.plugin.buildhelper>3.3.0</version.plugin.buildhelper>
@@ -103,7 +103,7 @@
         <version.plugin.checkstyle>3.1.2</version.plugin.checkstyle>
         <version.plugin.jitwatch>1.1</version.plugin.jitwatch>
         <version.plugin.spotbugs>4.7.3.0</version.plugin.spotbugs>
-        <version.plugin.modulemaker>1.9</version.plugin.modulemaker>
+        <version.plugin.modulemaker>1.10</version.plugin.modulemaker>
         <version.plugin.license>3.0</version.plugin.license>
         <version.plugin.japicmp>0.15.7</version.plugin.japicmp>
         <version.plugin.antrun>3.1.0</version.plugin.antrun>

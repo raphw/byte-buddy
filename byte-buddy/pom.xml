@@ -188,6 +188,7 @@
                                 com.sun.jna,
                                 com.sun.jna.platform
                             </static-requires>
+                            <main-class>net.bytebuddy.build.Plugin$Engine$Default</main-class>
                         </configuration>
                     </execution>
                 </executions>
