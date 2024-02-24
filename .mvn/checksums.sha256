@@ -38,7 +38,9 @@ classworlds:classworlds:jar:1.1 4e3e0ad158ec60917e0de544c550f31cd65d5a97c3af1c19
 classworlds:classworlds:jar:1.1-alpha-2 2bf4e59f3acd106fea6145a9a88fe8956509f8b9c0fdd11eb96fee757269e3f3
 classworlds:classworlds:pom:1.1 25a1efc00bcd1f029fd20c44df843b8b12d1fa17485235470764f011d2f5cb29
 classworlds:classworlds:pom:1.1-alpha-2 0cc647963b74ad1d7a37c9868e9e5a8f474e49297e1863582253a08a4c719cb1
+codes.rafael.modulemaker:modulemaker-maven-plugin:jar:1.11 21873e7ae9bab90de820bc35108c1891f9c49b698ef300f19ed79232213c690f
 codes.rafael.modulemaker:modulemaker-maven-plugin:jar:1.9 ddaf9e624b0c92f6193f97084d1384613694ff7bc73e183e73fff51567c4c7fa
+codes.rafael.modulemaker:modulemaker-maven-plugin:pom:1.11 e212d74e3b0734238617531d1a55ad8df74c2da18a0da6a10d3fa7a9c574fc9c
 codes.rafael.modulemaker:modulemaker-maven-plugin:pom:1.9 33dcc9067f73cb375f1d97fdd7df8de26aa2ff09e24d20ab56c5081f867bfd87
 com.android.tools.analytics-library:protos:jar:25.3.0 428719a449a74c8e1b9f9efa2680d03f66d49566e97fde5f4a053eee9ebc55dd
 com.android.tools.analytics-library:protos:pom:25.3.0 3243846f4f7f2595e07a75eb59608ca2d7e8c4198c2a74f142df3b12a94928c7
@@ -463,6 +465,7 @@ commons-digester:commons-digester:pom:1.8 c10144f223d7ab697ccea7da0e753b75603ea7
 commons-digester:commons-digester:pom:2.1 15a59c0e757c6c07c3d1b689d735c8e3a9ec5695d6ceb6a941d4062ab22901b7
 commons-io:commons-io:jar:1.4 a7f713593007813bf07d19bd1df9f81c86c0719e9a0bb2ef1b98b78313fc940d
 commons-io:commons-io:jar:2.11.0 961b2f6d87dbacc5d54abf45ab7a6e2495f89b75598962d8c723cea9bc210908
+commons-io:commons-io:jar:2.13.0 671eaa39688dac2ffaa4645b3c9980ae2d0ea2471e4ae6a5da199cd15ae23666
 commons-io:commons-io:jar:2.2 675f60bd11a82d481736591fe4054c66471fa5463d45616652fd71585792ba87
 commons-io:commons-io:jar:2.4 cc6a41dc3eaacc9e440a6bd0d2890b20d36b4ee408fe2d67122f328bb6e01581
 commons-io:commons-io:jar:2.5 a10418348d234968600ccb1d988efcbbd08716e1d96936ccc1880e7d22513474
@@ -470,6 +473,7 @@ commons-io:commons-io:jar:2.6 f877d304660ac2a142f3865badfc971dec7ed73c747c7f8d5d
 commons-io:commons-io:jar:2.8.0 02f291e5d1243dc143496e3cbbb40a1ced47aa58f2d633d3e38780cd068d5074
 commons-io:commons-io:pom:1.4 2dae496a19c82b8e9985a1246aa80cf98082b1ae2217cf4b2d4d5ff13a365af2
 commons-io:commons-io:pom:2.11.0 2e016fd7e3244b5f2c20acad834d93aa4790486ee1e4564641361a3e831eef59
+commons-io:commons-io:pom:2.13.0 db3fed64c2e1774ebfd6b1a749037732b149b9111dd7e6b985f08dda55470439
 commons-io:commons-io:pom:2.2 6c221dc2dca94331a92a9cb19b3943631f7cb7c0302255fb5cd0450654e812c7
 commons-io:commons-io:pom:2.4 b2b5dd46cf998fa626eb6f8a1c114f6167c8d392694164e62533e5898e9b31f2
 commons-io:commons-io:pom:2.5 28ebb2998bc7d7acb25078526971640892000f3413586ff42d611f1043bfec30
@@ -588,6 +592,7 @@ net.bytebuddy:byte-buddy-agent:jar:1.14.0 4b23cda64beade8b78ec80fd321e017a0cc241
 net.bytebuddy:byte-buddy-agent:jar:1.14.1 f4809b9d0f00e71be98a61a25b3e14437f53f6821485694011beeb25e9231dde
 net.bytebuddy:byte-buddy-agent:jar:1.14.10 67993a89d47ca58ff868802a4448ddd150e5fe4e5a5645ded990d7b4d557a6b9
 net.bytebuddy:byte-buddy-agent:jar:1.14.11 2f537a621a64fa7013d68c695a76a34ee8d79dad74e635caca16dd56257aeb80
+net.bytebuddy:byte-buddy-agent:jar:1.14.12 2b309a9300092e0b696f7c471fd51d9969001df784c8ab9f07997437d757ad6d
 net.bytebuddy:byte-buddy-agent:jar:1.14.2 f428c7417b4cf7031d88f1f63d876811cea3b015803017ba9e06ce2acdd5a1e7
 net.bytebuddy:byte-buddy-agent:jar:1.14.3 3b362963597f11e28ad55bd405ddfe56dd3ae73850cdd2de70b28ef6e9520bf1
 net.bytebuddy:byte-buddy-agent:jar:1.14.4 fbd1ab3db43c6c78b8804908cb95b656517f5c82e7fde8d255d8bdceef412d70
@@ -606,6 +611,7 @@ net.bytebuddy:byte-buddy-android:jar:1.14.0 cfd097dc755b7cea2b14e84d2d9f03790dbd
 net.bytebuddy:byte-buddy-android:jar:1.14.1 83d6797bcef10eef89f2ef524a1467a2723ffc2f26e62984a54afa6a8c312c29
 net.bytebuddy:byte-buddy-android:jar:1.14.10 b86b928dd498ca057fa91bcdee31e46eb96f13be7ddba219c4e63167376dfd49
 net.bytebuddy:byte-buddy-android:jar:1.14.11 c4f4b199aa692a7f367387bb7bc68fd53851b667d018f22c1f60ed3fb2a7c180
+net.bytebuddy:byte-buddy-android:jar:1.14.12 ea36ce0d479299f9dcb08a1157eeb59fe047e7a79ffcd6ecbba72ea48dd85a9e
 net.bytebuddy:byte-buddy-android:jar:1.14.2 96821d15b3c14adc5443a2ac95ab349d66f833c1bc23689d5a47382a50b00520
 net.bytebuddy:byte-buddy-android:jar:1.14.3 97d9b94b433682be1309b2954819d7f4303961aba8ed6e20b088f51a769009ef
 net.bytebuddy:byte-buddy-android:jar:1.14.4 d93dec5cd2a80ff953e4fda26308d0b99e2465262e7956dd7b3003a16a5b04a0
@@ -624,6 +630,7 @@ net.bytebuddy:byte-buddy-dep:jar:1.14.0 d771306fe18539a3f59f78266f4ee388d9f9c0fc
 net.bytebuddy:byte-buddy-dep:jar:1.14.1 401015c8fbf6b8ac5f2e118b6ee6b4ad6ac8dd7a28f11c51db3231296d8d12f7
 net.bytebuddy:byte-buddy-dep:jar:1.14.10 44d088a83d4a1b6bb2b626af266a76730821b2efb935c6b40a1bf62e3a0a8994
 net.bytebuddy:byte-buddy-dep:jar:1.14.11 a15f65066e0f9c2eef1b906ff4c72ea4e5a66a8f065555a09314e80aae22022f
+net.bytebuddy:byte-buddy-dep:jar:1.14.12 38baa48fe8fae456ab65e3b0c0fc22ad7d94b34486af76672a94cea678d29fa3
 net.bytebuddy:byte-buddy-dep:jar:1.14.2 d6723d41a4be755c875c18e21554b04ac062a1460105154763800df1ae01c096
 net.bytebuddy:byte-buddy-dep:jar:1.14.3 ac4dcc6dbee75b8c10af7ce2a9d4e050a6849fb5442dadc73d8b90c782f9cb80
 net.bytebuddy:byte-buddy-dep:jar:1.14.4 7905516fb7c112ba424c26e84b3989ccaec71115914d6c46d09e385a4bf410e1
@@ -642,6 +649,7 @@ net.bytebuddy:byte-buddy-maven-plugin:jar:1.14.0 cd5194f72dda1e634479278c8feb071
 net.bytebuddy:byte-buddy-maven-plugin:jar:1.14.1 9cb63d477916fa6b02b021fc44681da43172284c8c49e9cc1a5917f4705d82ae
 net.bytebuddy:byte-buddy-maven-plugin:jar:1.14.10 be7d361c11e49d23de021051b28662422f2cf5dfd8eb2c14666e06b8eb53ee2d
 net.bytebuddy:byte-buddy-maven-plugin:jar:1.14.11 239e3d2e527c8be6170a74b1f1f3fce5bb068ed1e0aacd1726c3804d726e2851
+net.bytebuddy:byte-buddy-maven-plugin:jar:1.14.12 f1b30b30e327c9b3146cb9e862165fb40a87fc189b3ae55f6adfe1f600e6a01d
 net.bytebuddy:byte-buddy-maven-plugin:jar:1.14.2 f5d2be6baf531ebbde91274181504fcb92ff07d0a2c21c55dcc7ff6a87cbc790
 net.bytebuddy:byte-buddy-maven-plugin:jar:1.14.3 3d52c7d65b9fdac180f90612c377a39fc9b81e1d48f02aced9fbdcdfeda57659
 net.bytebuddy:byte-buddy-maven-plugin:jar:1.14.4 acdae6ef4609d3fbe7de4dfa8a5fe39a23386056ab67c16ead74e71519ddf477
@@ -657,6 +665,7 @@ net.bytebuddy:byte-buddy-maven-plugin:pom:1.14.0 77180195e35ece94e22f50d5645c15e
 net.bytebuddy:byte-buddy-maven-plugin:pom:1.14.1 b823df6013839c201a837490dc085af9753cd179d7dd0287d62549d7ec417148
 net.bytebuddy:byte-buddy-maven-plugin:pom:1.14.10 66b4d761a0d0f45167379a3e7457f1b55610c2ee638434040e2570f6a7b52606
 net.bytebuddy:byte-buddy-maven-plugin:pom:1.14.11 77c87d90356e479eaa43c597af530f5a34836d61815fd2c4ad225200a756b955
+net.bytebuddy:byte-buddy-maven-plugin:pom:1.14.12 36ac9b997cc58477c45da945fbc3d2286f779ce4a798d1b68e23aabbb523aacd
 net.bytebuddy:byte-buddy-maven-plugin:pom:1.14.2 d8b553fee46eba6a96de2d9b4bea1efc23fa13e33c9e935b0db492935e447f4c
 net.bytebuddy:byte-buddy-maven-plugin:pom:1.14.3 8ddbd06f4a027c86e16d3d5e9e685d5980be893c5f3991ebbda600c6e260fa1e
 net.bytebuddy:byte-buddy-maven-plugin:pom:1.14.4 e02f1c97f27accbd3ee14ebe7559a448e75fd42e311eacde8a2f0bbf14cc41ac
@@ -672,6 +681,7 @@ net.bytebuddy:byte-buddy-parent:pom:1.14.0 c5f22b13c9e304af7d0439d1ce982e07967f6
 net.bytebuddy:byte-buddy-parent:pom:1.14.1 1b64c399c745548ac41d6f11429f2f39a749acc33a7cae3d28c5f0301cc9a131
 net.bytebuddy:byte-buddy-parent:pom:1.14.10 c698219060fb0e565a0f2c96094e92b20efe146fd61636b2c9e4c03bd9ba4a7b
 net.bytebuddy:byte-buddy-parent:pom:1.14.11 46c0f13fc9778dc2ebb69748823aa2c4cbf07eab7d18c6aa191c529d1650892b
+net.bytebuddy:byte-buddy-parent:pom:1.14.12 9b7fd2bf292531acb0e974d955e4a36ca41332dd0dafe89c24d8fe439bae57b0
 net.bytebuddy:byte-buddy-parent:pom:1.14.2 6db003ef2b312e8c30e67cf5a7f39d8be1eaa3bac99e79d715c03d02c520f587
 net.bytebuddy:byte-buddy-parent:pom:1.14.3 18d87a7371f2d5d7bf9473124e51ed8a9ae1ad86ed1085cc151c8266deb519d2
 net.bytebuddy:byte-buddy-parent:pom:1.14.4 ac4f0167ff070f263acad009f8a289dc92e34ff1090e90e5bd8a2046cf5bc38c
@@ -687,6 +697,7 @@ net.bytebuddy:byte-buddy:jar:1.14.0 0af7cfa59aaf7dff002de984896eb43c987c596f726a
 net.bytebuddy:byte-buddy:jar:1.14.1 63479f9a0a1b28f98313230d688a46b02bd80d09a700e127482d0bd635b47bad
 net.bytebuddy:byte-buddy:jar:1.14.10 30e6e0446437a67db37e2b7f7d33f50787ddfd970359319dfd05469daa2dcbce
 net.bytebuddy:byte-buddy:jar:1.14.11 62ae28187ed2b062813da6a9d567bfee733c341582699b62dd980230729a0313
+net.bytebuddy:byte-buddy:jar:1.14.12 970636134d61c183b19f8f58fa631e30d2f2abca344b37848a393cac7863dd70
 net.bytebuddy:byte-buddy:jar:1.14.2 042e6b26e1f3fdd1e6244e9dcb381065b15d230ecd93838691dcc03918c9d525
 net.bytebuddy:byte-buddy:jar:1.14.3 1db7ee74714ed852a2bd23c33d066e8a4f6031411cbd0ce75daa58b7670894ad
 net.bytebuddy:byte-buddy:jar:1.14.4 7ae2b39ac230be9e3e09ce020406c017ff8ceba06eaf078c62a88c218a0ff2b4
@@ -702,6 +713,7 @@ net.bytebuddy:byte-buddy:pom:1.14.0 e8a0805e953c75ed5a5803288e87f2721244df4427a9
 net.bytebuddy:byte-buddy:pom:1.14.1 2b6c20e711394870362fcbeec485abbd5026620974dacad719d454bc1077f192
 net.bytebuddy:byte-buddy:pom:1.14.10 cd58782845ff8eedf2ed83a0c3edf45eeeb99e14c05af8a2e901860ea080ceaf
 net.bytebuddy:byte-buddy:pom:1.14.11 358449d6c73538584508dd8ae6cfde56baf4a34b767b71d9cc4644f0f1f4211a
+net.bytebuddy:byte-buddy:pom:1.14.12 5da995c70de7b7f4a848a85437c7ddee803d1ab7cac2d7d8df7194c3d5e2714d
 net.bytebuddy:byte-buddy:pom:1.14.2 c18ad7b621b3910528c7a9038d74e7e33fe79aca88e7f2b58bb853eabb6b33ff
 net.bytebuddy:byte-buddy:pom:1.14.3 50e1c99fcf83f3131f32aed4225ee8ff56e40496ffed4daf946b24e50873481d
 net.bytebuddy:byte-buddy:pom:1.14.4 d79615b646178d735ae2ca1f7400fdc6138aeb2cfd5f81427c8f1035cdea4bc4
@@ -784,12 +796,16 @@ org.apache.bcel:bcel:jar:6.5.0 bdeb381d0d19999e221e6a0f8d8bf44f5b19c2e57eabf68b7
 org.apache.bcel:bcel:pom:6.1 50642169aea73f15d1efd6d884fd36b1d0d7776563b41f3d2ead6300eb819216
 org.apache.bcel:bcel:pom:6.5.0 fc1e9e6f5ed4bd200cb0662086c898c00026386a2eb4a6348411f7e0e068b5c5
 org.apache.commons:commons-collections4:jar:4.2 6a594721d51444fd97b3eaefc998a77f606dedb03def494f74755aead3c9df3e
+org.apache.commons:commons-collections4:jar:4.4 1df8b9430b5c8ed143d7815e403e33ef5371b2400aadbe9bda0883762e0846d1
 org.apache.commons:commons-collections4:pom:4.2 52fd0e75a913b7058e47a8a7cfbfede9daec791310e7067e783419390f8c987b
+org.apache.commons:commons-collections4:pom:4.4 271bd673839af46e73aff957e2918d4bf96f5ac4f6c6cf4d5be93fd1f1271c4d
 org.apache.commons:commons-compress:jar:1.11 9fc905a68dcf3038d4866a54040706998e0202a34ecd95d734e819b0bccf439e
 org.apache.commons:commons-compress:jar:1.16.1 a20d8e45315abbe07faf952e095817b9925f38c4fc39e8a211c7d072702e97eb
 org.apache.commons:commons-compress:jar:1.19 ff2d59fad74e867630fbc7daab14c432654712ac624dbee468d220677b124dd5
 org.apache.commons:commons-compress:jar:1.20 0aeb625c948c697ea7b205156e112363b59ed5e2551212cd4e460bdb72c7c06e
 org.apache.commons:commons-compress:jar:1.21 6aecfd5459728a595601cfa07258d131972ffc39b492eb48bdd596577a2f244a
+org.apache.commons:commons-compress:jar:1.25.0 d0ec8014ebbb0749f471803122b21796afddf2e98e194e4374622e5fbaf69f49
+org.apache.commons:commons-compress:jar:1.26.0 051aceb8bbcc62d0f5b2b8ac72c53767f9c59bfbd050151e65bef6f51c8ed9c9
 org.apache.commons:commons-compress:jar:1.8.1 5fca136503f86ecc6cb61fbd17b137d59e56b45c7a5494e6b8fd3cabd4697fbd
 org.apache.commons:commons-compress:jar:1.9 b8e0a1700023359a2b4d9f04b9287d7b9aa200f4feac1079812337eef2dcb8e2
 org.apache.commons:commons-compress:pom:1.11 5c30f064df89ae967592e38c16b5b89ce70817859171fc938c9ed6e1d20c6a17
@@ -797,11 +813,14 @@ org.apache.commons:commons-compress:pom:1.16.1 5efe65bb54d680ae9c2b119228d45dcff
 org.apache.commons:commons-compress:pom:1.19 9d5a690d1dea6a747e0dd8e74e64447167f395cb8f148010b8241334f58b525b
 org.apache.commons:commons-compress:pom:1.20 d95678e3af56b17c7db6cff9645efad5eb59be9f3c1caaaf5f0146edf04691d7
 org.apache.commons:commons-compress:pom:1.21 675bb023c9beedde3232949979b9742a5fea946280a55a1b462d4ca7801088cd
+org.apache.commons:commons-compress:pom:1.25.0 ba5cda496643a906fcb77b1f13c5c7de817133c977a417e8a835fe28a6518ece
+org.apache.commons:commons-compress:pom:1.26.0 c1c9681f88d9421730c4da6176492bbaa54052a2326df9e40bc34f4c405227af
 org.apache.commons:commons-compress:pom:1.8.1 10137adb14e8520b2abcddc308003e432eb836c4d1f9a00f68601d63583b9fb8
 org.apache.commons:commons-compress:pom:1.9 7ad155ed7d6c44976eaeae2a3acbe145b09ceccc39aa4f094cf08e70df8825cc
 org.apache.commons:commons-exec:jar:1.3 cb49812dc1bfb0ea4f20f398bcae1a88c6406e213e67f7524fb10d4f8ad9347b
 org.apache.commons:commons-exec:pom:1.3 82827f6019c0f71bd74fba886ab337ff6da291f63df9723379a209d6ad3b44f8
 org.apache.commons:commons-lang3:jar:3.12.0 d919d904486c037f8d193412da0c92e22a9fa24230b9d67a57855c5c31c7e94e
+org.apache.commons:commons-lang3:jar:3.14.0 7b96bf3ee68949abb5bc465559ac270e0551596fa34523fddf890ec418dde13c
 org.apache.commons:commons-lang3:jar:3.4 734c8356420cc8e30c795d64fd1fcd5d44ea9d90342a2cc3262c5158fbc6d98b
 org.apache.commons:commons-lang3:jar:3.5 8ac96fc686512d777fca85e144f196cd7cfe0c0aec23127229497d1a38ff651c
 org.apache.commons:commons-lang3:jar:3.7 6e8dc31e046508d9953c96534edf0c2e0bfe6f468966b5b842b3f87e43b6a847
@@ -809,6 +828,7 @@ org.apache.commons:commons-lang3:jar:3.8.1 dac807f65b07698ff39b1b07bfef3d87ae3fd
 org.apache.commons:commons-lang3:jar:3.9 de2e1dcdcf3ef917a8ce858661a06726a9a944f28e33ad7f9e08bea44dc3c230
 org.apache.commons:commons-lang3:pom:3.11 980d665d83fed04665134f0578e507442a0e750691073784391b0a7988724a75
 org.apache.commons:commons-lang3:pom:3.12.0 82d31f1dcc4583effd744e979165b16da64bf86bca623fc5d1b03ed94f45c85a
+org.apache.commons:commons-lang3:pom:3.14.0 110438863bad37c28f906bf87016e38c7a8c758ba321e09d11dc5a2363a8e79e
 org.apache.commons:commons-lang3:pom:3.4 686e75b561a13c1031d43a7647a364e2ed3e456467050eac4527b94b06d73fd1
 org.apache.commons:commons-lang3:pom:3.5 45e7fbb2c231db903a5d5aadafc636a173a4d54560f78a11ff498028ef9e345e
 org.apache.commons:commons-lang3:pom:3.7 16bf63e86f5ea0404e89ed0f654b0915bea0030129aea9531d74369b71f764da
@@ -841,6 +861,9 @@ org.apache.commons:commons-parent:pom:50 7b7a2db3f747074b5867f553d5efc8072be26ed
 org.apache.commons:commons-parent:pom:51 9b779d18b22d8de559605558e7bb0a0a31b3f00c2abb9c878117c398aacabeca
 org.apache.commons:commons-parent:pom:52 75dbe8f34e98e4c3ff42daae4a2f9eb4cbcd3b5f1047d54460ace906dbb4502e
 org.apache.commons:commons-parent:pom:54 000d8187952b223702fde296df799563f35de82ce72adb4e7bf157342378fbe3
+org.apache.commons:commons-parent:pom:58 2d4b12e18899063abd7c75278b5fa97a3729d80878ceecb6a40d946e9c0d5590
+org.apache.commons:commons-parent:pom:64 6f19638994e8357b4ed734696f992057efaafa1235673998133299798e2ccddb
+org.apache.commons:commons-parent:pom:66 48fd6dc846e56b1f408660d163e75300f9e384bb63be482a8082a21d72a8db9c
 org.apache.commons:commons-parent:pom:7 01e97067a1f9bd0e0a34f2f32bbf43fe6e9b11910f3b0dfe77fd7fb418619105
 org.apache.commons:commons-parent:pom:9 5331b7d3e0aed59728c80f1118e4dbf78565d4109e81d16602c9cadbdb23a128
 org.apache.commons:commons-pool2:jar:2.2 8780b3bbb31a8797e74e9f3022f043ddadc2aee8be63d94f8082a6a16546c41b
@@ -1222,6 +1245,7 @@ org.apache.maven.plugins:maven-plugins:pom:33 5db02c6f379712fa428b82f7742407bb71
 org.apache.maven.plugins:maven-plugins:pom:34 83e11813318d17e4693f17f25935b3c1dd4d75025bed955ee80e7bba8c220441
 org.apache.maven.plugins:maven-plugins:pom:35 42d759c550d723373ae34556e80930b9ed2e13495dace134adf99e64ddc8d2e1
 org.apache.maven.plugins:maven-plugins:pom:36 b0020d55af2afd9bff042d627dd52b7a4828243014ded0ae89412e1717582056
+org.apache.maven.plugins:maven-plugins:pom:41 9e64593239bb69d80b2db9e595d8c0fc3cb44cf2aa5c1ed547718b4cfd732efe
 org.apache.maven.plugins:maven-release-plugin:jar:2.3.2 e43eb0c8b63107d605993589dacd139975def691842458c2c256d4d5b36ac7bf
 org.apache.maven.plugins:maven-release-plugin:jar:2.5.3 2eda2eb7dcbb415eca11891f8ff3a347e9089dfb91deaa6e44732d2e0a260f6b
 org.apache.maven.plugins:maven-release-plugin:jar:3.0.0-M7 6ea543eecc6d242e5295f4d7f9a47016474da86ca6c9a5470903d69fd66ee1f8
@@ -1235,9 +1259,11 @@ org.apache.maven.plugins:maven-resources-plugin:pom:3.2.0 f93b0d15ab92831463539a
 org.apache.maven.plugins:maven-shade-plugin:jar:2.3 dcc95f7246ab355b60d8989b8ec9f556ceb3f564446b689bddb752c4871cdd4e
 org.apache.maven.plugins:maven-shade-plugin:jar:3.1.1 9cf8a3dd2df4a42f15e11c7724e3082111625805dfe4be81b77bd0a69c403cc5
 org.apache.maven.plugins:maven-shade-plugin:jar:3.3.0 918b898d4a7754161532dd088ee70bc711546191eb80cf44653b214b7bc1b0c3
+org.apache.maven.plugins:maven-shade-plugin:jar:3.5.2 4d49517a0a1278ce83482fc41de3e51f7307010e1a259d8abfa4d7694dc5c9d5
 org.apache.maven.plugins:maven-shade-plugin:pom:2.3 1beade31bcd73f193fd1729dbd0d854d63b0d15d9a49dc7a2cefb8369b556e49
 org.apache.maven.plugins:maven-shade-plugin:pom:3.1.1 68211d31c21a3855100350bc35f09f549ebce780b659ab5b69436d7f9a6ec728
 org.apache.maven.plugins:maven-shade-plugin:pom:3.3.0 3ce45d6afedb6441da9cac95d0ce1a30e3baa8559cb7dd14d0dc4144da43f7c2
+org.apache.maven.plugins:maven-shade-plugin:pom:3.5.2 b063995ad9c11f7154e7166bf81522a748c3a145aacafb6f7e58d29f08611a4e
 org.apache.maven.plugins:maven-site-plugin:jar:3.12.0 361f16ce421b590f8c0616f0fe0a236b4caa93b0a48696ccff920d725ee99ceb
 org.apache.maven.plugins:maven-site-plugin:jar:3.7.1 f37db063922636ff33f2315ee85c905bba98daa411765b8b28bd8567da8be2ef
 org.apache.maven.plugins:maven-site-plugin:pom:3.12.0 c915c3dc5669bb5bed08564bff1c0225612a9019946e014cfb607cd82200cd32
@@ -1415,12 +1441,14 @@ org.apache.maven.shared:maven-dependency-tree:jar:3.0 53150e9b638a45958a8d0c6821
 org.apache.maven.shared:maven-dependency-tree:jar:3.0.1 c7d0968a60678fcabd3f6e7ef32812c77f14bb964e66f4ae2b907d4efd675067
 org.apache.maven.shared:maven-dependency-tree:jar:3.1.0 d0e2bd3e0625d5d55226dcac0276fcb6ad59f8d993078a30003d67c7043ae7d9
 org.apache.maven.shared:maven-dependency-tree:jar:3.1.1 328b4baa813834f2b7fb674521e463521ce357db5eacc5139a0fc7a385ad8486
+org.apache.maven.shared:maven-dependency-tree:jar:3.2.1 482811ea38f339d2b0867a7852a195b56e329fdb37066b2f3035a209c111a2bc
 org.apache.maven.shared:maven-dependency-tree:pom:2.1 71f09cac39ffb470144b3885a8aae65d35dc79f658d6c5e0b0900f87a79677c0
 org.apache.maven.shared:maven-dependency-tree:pom:2.2 3fb4145aed54ac2a8139317627a26b75389c889c16aea26374790f4cd3525a4a
 org.apache.maven.shared:maven-dependency-tree:pom:3.0 fbfb7cb73ee048d37e592f8ca571b4c8cd78a61c8a937a2215298e4a7c278c55
 org.apache.maven.shared:maven-dependency-tree:pom:3.0.1 c3fea9f8a49214d045f8687cf6c2e0204e844165de67e347c38fd1f5f721353b
 org.apache.maven.shared:maven-dependency-tree:pom:3.1.0 7a6978786a5a60d04f382356a86987de67e82e603ecd8f0b16dce1257101615b
 org.apache.maven.shared:maven-dependency-tree:pom:3.1.1 493fea32848611fd98c5eb437d338d52ce47682c74eae38b35408d45f459cd14
+org.apache.maven.shared:maven-dependency-tree:pom:3.2.1 8e15debdc0761dc91e0314147002052b81d3a326295296641ae81b16603ae44a
 org.apache.maven.shared:maven-doxia-tools:jar:1.4 0505ff2ac8c87fb9b7c86c754e6dbe2116bd156fc2e2ed5d7ee95842168d4205
 org.apache.maven.shared:maven-doxia-tools:pom:1.4 2a79879bd8602466e0d752872163c00112ec393d47a4e3464d47e38818cdbc05
 org.apache.maven.shared:maven-filtering:jar:1.3 5fde05573d419d473e26400bab517289c0dfcfcdc9fa8f816ed9543fb0c4de75
@@ -1696,6 +1724,7 @@ org.apache.maven:maven-parent:pom:35 d2edd4077c0abc9cc8202883c459503180424636cb3
 org.apache.maven:maven-parent:pom:36 fcc3ab64c3cc80966d562a9aa604d8c280b3b7092441dd09e5290b081dfbedb5
 org.apache.maven:maven-parent:pom:37 bcf3700301e8221ef14da27a2f0cff71fcd03fc45276bfd84adace401e88bebc
 org.apache.maven:maven-parent:pom:4 2b4fe0b8d8b098514fae7bc73891864abc1da4a530613f836f298fa9640d7b63
+org.apache.maven:maven-parent:pom:41 762fcdd4ce8621c5fa0a2cf6495ad26972a8093eb432aa3e402bc2d4e2500c53
 org.apache.maven:maven-parent:pom:5 5d7c2a229173155823c45380332f221bf0d27e52c9db76e9217940306765bd50
 org.apache.maven:maven-parent:pom:6 df8f5fc5e956249833fe9e9bd6df891ca7224ceff1cb729dd84848376545afda
 org.apache.maven:maven-parent:pom:7 54adf65728e30283650f9a9fac0d2d33f60f2c99fbcdea27671e6f6b076f6df3
@@ -1889,7 +1918,10 @@ org.apache:apache:pom:24 2e93bbabe3413af89a0c3bfb9e6bf71dbc9e8f9fb14ccbb1d78bd02
 org.apache:apache:pom:25 e68fc19a48cec582a6732fd0b10dbfe9feca25060963def89e547f8a3759d379
 org.apache:apache:pom:26 765b9c71832d2faad9611869c1f07263e3dfd000ebefdcd434d1f14cb2be3ea1
 org.apache:apache:pom:27 b2b0fc69e22a650c3892f1c366d77076f29575c6738df4c7a70a44844484cdf9
+org.apache:apache:pom:29 3e49037174820bbd0df63420a977255886398954c2a06291fa61f727ac35b377
 org.apache:apache:pom:3 393c50afb4b7aa6eb57e5377a55a1a0610b19f75b52ece01308db04a1187a20e
+org.apache:apache:pom:30 63dd4a393a9c0dfcb314efe83871a41d243bc8d200cbc7f2d197f30da78239d8
+org.apache:apache:pom:31 555d0c9eaa69c042aff924927b9381e8f8174136d355eead445224452e6291cc
 org.apache:apache:pom:4 9e9323a26ba8eb2394efef0c96d31b70df570808630dc147cab1e73541cc5194
 org.apache:apache:pom:5 1933a6037439b389bda2feaccfc0113880fd8d88f7d240d2052b91108dd5ae89
 org.apache:apache:pom:6 12edb5096e13f40c362d0bd40902589fa9586505123fa26799ce50b116fa5bb3
@@ -2228,6 +2260,7 @@ org.codehaus.plexus:plexus-utils:jar:3.3.1 4b570fcdbe5a894f249d2eb9b929358a9c88c
 org.codehaus.plexus:plexus-utils:jar:3.4.1 52d85e04b3918722af11d12855b4a8257df96a0e76c8f4e3852e6faa851f357b
 org.codehaus.plexus:plexus-utils:jar:3.4.2 f957f13604ea1686de805801862f339dbbb6eab9a66f9cc7e4a5c5b27e4fcecc
 org.codehaus.plexus:plexus-utils:jar:3.5.0 e5182eb3e5e73cf89d6426ca7f5cbae2e72819b9bed68d872f80f3b535269cb8
+org.codehaus.plexus:plexus-utils:jar:4.0.0 270cd703b48c6e5c8c691f1875f22d62d22cfe072c73ae2f5814d83d68c1da0b
 org.codehaus.plexus:plexus-utils:pom:1.0.4 36623a9539061d87f078af61ca62c3eacf422eb374641cf8903cdeb759671eb3
 org.codehaus.plexus:plexus-utils:pom:1.1 e1772a8a6be92088ae069a3dd4f7c9dcbc0888434341028735da0f22481bcd47
 org.codehaus.plexus:plexus-utils:pom:1.2 71b8f080225e4a18aaeb18f43aab9a98bc76a6052d864e89eff79070b2b498c6
@@ -2268,12 +2301,15 @@ org.codehaus.plexus:plexus-utils:pom:3.3.1 5e583878df905b5f33a230ef690a52b8f19da
 org.codehaus.plexus:plexus-utils:pom:3.4.1 b144cff9b1c6259fec4fee5bdfc0f360d69c23abd4ea6e544533a949b69e3582
 org.codehaus.plexus:plexus-utils:pom:3.4.2 0515626f5abaa0bdb5ad87d291953eae358b97e2d10d6ecab84aca0d486063bf
 org.codehaus.plexus:plexus-utils:pom:3.5.0 aa4ea451bb6fa92e9cc96654eef53e334ff4d36a946633e01765fed41e845e03
+org.codehaus.plexus:plexus-utils:pom:4.0.0 a44c5479426dea0e7bfffd2ec3adf49c68515019788965c4d231fc3f04da4129
 org.codehaus.plexus:plexus-velocity:jar:1.1.7 1c9c994fbcd31526d451797072d7afb19f9b1962e710f3088f54fd1267b45fae
 org.codehaus.plexus:plexus-velocity:jar:1.1.8 36b3ea3d0cef03f36bd2c4e0f34729c3de80fd375059bdccbf52b10a42c6ec2c
 org.codehaus.plexus:plexus-velocity:jar:1.2 b4c4a0dbeacad54306a1ae230eff5ab45d58e3ab88c86ab7245d3a0772be57ab
 org.codehaus.plexus:plexus-velocity:pom:1.1.7 f3812df661f0a82e501d6b1ee14df1b277df29ab58c6c8c785624d6b1149b76d
 org.codehaus.plexus:plexus-velocity:pom:1.1.8 9da04533f1d723753d176f99aa084540b08369e6fc6303149057caad8a9e31be
 org.codehaus.plexus:plexus-velocity:pom:1.2 508a1682a95da8220e9bd582e2a9e1629d016cfe67c4769ee0b1755279ff5fd6
+org.codehaus.plexus:plexus-xml:jar:3.0.0 d2622dc9339b16f5b8c9cad2add440e965831d0e16f19ae1de24e1202b0de536
+org.codehaus.plexus:plexus-xml:pom:3.0.0 c07d67161cdf7f8fdce4cd921be5d3cccb9e2c259105ca1afeb772cbcb0cbec5
 org.codehaus.plexus:plexus:pom:1.0.10 09b999a969e73525a6cc3ad2868ea744766e1d93b25c6c656d61a5ff9c881da9
 org.codehaus.plexus:plexus:pom:1.0.11 5197630dcd2336f5b4ab8e6d26e5b8675f5ebd83bd8c91d6aba431b09627d626
 org.codehaus.plexus:plexus:pom:1.0.12 e3feb169478a21ea8e3af27f90b2d8551309ee771f24176e37ad48bbd7bdad04
@@ -2282,6 +2318,7 @@ org.codehaus.plexus:plexus:pom:1.0.5 9a1df7db80ac85a4559a935404b9e57dc3dabeded5f
 org.codehaus.plexus:plexus:pom:1.0.8 a89a2f99088e244b3e52e35f19f5f7d3aba03dbb3cfaea044e2a694119e88f79
 org.codehaus.plexus:plexus:pom:1.0.9 11a987607957fcac04d6ac182308abf5a7d3707f519863e55c8eb419953f5374
 org.codehaus.plexus:plexus:pom:10 bba9c521064b9ca132ce97cc1cc7eb4afc2dbe32bc88cb872c88e99f6162301f
+org.codehaus.plexus:plexus:pom:13 575945dc08966c66eb03d5bae9135bd22ca3920a1865bb99d3ecd93bef55abd3
 org.codehaus.plexus:plexus:pom:14 b1a3417f1e63f089aec314043592568a01ba29c5024963c40f5477b21d4d4cd8
 org.codehaus.plexus:plexus:pom:2.0.0 6a93acd52678054d8bab70f4eabd48082311de16939a125624243d5717a6215c
 org.codehaus.plexus:plexus:pom:2.0.2 e246e2a062b5d989fdefc521c9c56431ba5554ff8d2344edee9218a34a546a33
@@ -2465,6 +2502,8 @@ org.json:json:pom:20220320 14a364843ac2ba88a481269e3c6bc6a2c0ca5118c2a07b1ddff2b
 org.json:json:pom:20220924 fd85086ca221dd086a970db980c5a8494659d6ef67e1ffc1e184777081cd8cde
 org.json:json:pom:20230227 c392694961cacf0ea863f582c874df1d86eb591bbfb526aa058eff7942da9070
 org.json:json:pom:20231013 c5004023d39f54635b35bbeb40e21a2ad551fca0f2e350b1ce37bd0e7cb2a466
+org.junit:junit-bom:pom:5.10.0 e006dd8894f9fc7b75fc32bb12fe5ed8be65667d5b454f99e2e0b8c5bb8d30b3
+org.junit:junit-bom:pom:5.10.1 21c4b0286f4b20069577ff4b20978a85c100ac8a46b6f1c8672fbaab337bc3f2
 org.junit:junit-bom:pom:5.7.1 0b9b14a3d62106fafe8c68a717b87b87ad18685899451b753c04fa41b6857784
 org.junit:junit-bom:pom:5.7.2 cd14aaa869991f82021c585d570d31ff342bcba58bb44233b70193771b96487b
 org.junit:junit-bom:pom:5.8.1 ef7dc47f8e4a16864f4779728e87ed78539819e4fb892768a9da6b8ef903f863
@@ -2900,7 +2939,9 @@ org.tukaani:xz:jar:1.9 211b306cfc44f8f96df3a0a3ddaf75ba8c5289eed77d60d72f889bb85
 org.tukaani:xz:pom:1.5 4391dc71e2ace68b210a9763e929e7365348003ddb5e1f60f46edc8809c22f0e
 org.tukaani:xz:pom:1.8 f29e75cb88eb4acbf7e5aa5c09ed55eac2cbae601d63a9f375231f45452c1013
 org.tukaani:xz:pom:1.9 093be1b03331bce2932d6825c37e98272d7621e6a9e9fb93289a002518b8dd5a
+org.vafer:jdependency:jar:2.10 1dcd8355ab9ebced687715bf1252eb2aee5d0e74497a2014fd3387cfce8df85f
 org.vafer:jdependency:jar:2.7.0 d63efd5746ff408943a7dd7ef85ae9f09aa7fb63bb2b16911427ce6c45b59fd0
+org.vafer:jdependency:pom:2.10 ab53f259ab5f6483d3dbb0235469e078d4a22cfd890771ab04f87db3a5b46067
 org.vafer:jdependency:pom:2.7.0 eb24422b0a3e9e87d5ac6ea8087786fb51c4b1bbe0d225ef752152c736a204d0
 org.xmlresolver:xmlresolver:jar:4.4.3 9d642c96c3f6811e20a9f6cfee3ca15ec84ecb939f6be639fee065670773a7d1
 org.xmlresolver:xmlresolver:jar:data:4.4.3 a57db23d75c3580cb15eb6e1a854683f4579cfd265f5cf1011a6983d9aed0f1f

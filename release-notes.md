@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 16. February 2024: version 1.14.11
+
+- Pin proxy class file version to avoid implicit changes when using Graal native image.
+- Add support for Java 23.
+- Add missing `@MaybeNull` annotation.
+
 ### 21. December 2023: version 1.14.11
 
 - Adjusts Gradle plugin to support Gradle 8.4 without warnings.
