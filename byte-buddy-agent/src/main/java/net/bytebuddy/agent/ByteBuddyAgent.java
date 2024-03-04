@@ -703,7 +703,9 @@ public class ByteBuddyAgent {
                     agent.getAbsolutePath(),
                     Boolean.toString(isNative),
                     argument == null ? "" : (AGENT_ARGUMENT_SEPARATOR + argument)).start().waitFor() != SUCCESSFUL_ATTACH) {
-                throw new IllegalStateException("Could not self-attach to current VM using external process");
+                throw new IllegalStateException("Could not self-attach to current VM using external process - set a property "
+                        + Attacher.DUMP_PROPERTY
+                        + " to dump the process output to a file at the specified location");
             }
         } finally {
             if (attachmentJar != null) {
