@@ -25,6 +25,6 @@ public class TypeDescriptionGenericVisitorSubstitutorForTypeVariableBindingWithR
         when(parameterizedType.getTypeArguments()).thenReturn(new TypeList.Generic.Explicit(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Object.class)));
         TypeDescription.Generic result = new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(visitedType).onParameterizedType(parameterizedType);
 
-        assertThat(result.getTypeArguments(), CoreMatchers.is(new TypeList.Generic.Explicit()));
+        assertThat(result.getTypeArguments(), CoreMatchers.<TypeList.Generic>is(new TypeList.Generic.Explicit()));
     }
 }
