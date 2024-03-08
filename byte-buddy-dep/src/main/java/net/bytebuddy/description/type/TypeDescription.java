@@ -1907,7 +1907,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     if (TypeDescription.AbstractBase.RAW_TYPES) {
                         typeArguments = Collections.emptyList();
                     } else {
-                        typeArguments = new ArrayList<>(parameterizedType.getTypeArguments().size());
+                        typeArguments = new ArrayList<Generic>(parameterizedType.getTypeArguments().size());
                         for (Generic typeArgument : parameterizedType.getTypeArguments()) {
                             typeArguments.add(typeArgument.accept(this));
                         }
