@@ -1905,7 +1905,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     Generic ownerType = parameterizedType.getOwnerType();
                     List<Generic> typeArguments;
                     if (TypeDescription.AbstractBase.RAW_TYPES) {
-                        typeArguments = Collections.emptyList();
+                        typeArguments = Collections.<Generic>emptyList();
                     } else {
                         typeArguments = new ArrayList<Generic>(parameterizedType.getTypeArguments().size());
                         for (Generic typeArgument : parameterizedType.getTypeArguments()) {
