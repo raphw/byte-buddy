@@ -1903,9 +1903,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 public Generic onParameterizedType(Generic parameterizedType) {
                     Generic ownerType = parameterizedType.getOwnerType();
-                    List<Generic> typeArguments = new ArrayList<Generic>(parameterizedType.getTypeArguments().size());
-                    for (Generic typeArgument : parameterizedType.getTypeArguments()) {
-                        typeArguments.add(typeArgument.accept(this));
+                    List<Generic> typeArguments;
+                    if (TypeDescription.AbstractBase.RAW_TYPES) {
+                        typeArguments = Collections.emptyList();
+                    } else {
+                        typeArguments = new ArrayList<>(parameterizedType.getTypeArguments().size());
+                        for (Generic typeArgument : parameterizedType.getTypeArguments()) {
+                            typeArguments.add(typeArgument.accept(this));
+                        }
                     }
                     return new OfParameterizedType.Latent(parameterizedType.asRawType().accept(this).asErasure(),
                             ownerType == null
