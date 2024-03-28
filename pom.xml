@@ -102,7 +102,7 @@
         <version.plugin.coveralls>4.3.0</version.plugin.coveralls>
         <version.plugin.checkstyle>3.1.2</version.plugin.checkstyle>
         <version.plugin.jitwatch>1.1</version.plugin.jitwatch>
-        <version.plugin.spotbugs>4.7.3.0</version.plugin.spotbugs>
+        <version.plugin.spotbugs>4.8.3.1</version.plugin.spotbugs>
         <version.plugin.modulemaker>1.11</version.plugin.modulemaker>
         <version.plugin.license>3.0</version.plugin.license>
         <version.plugin.japicmp>0.15.7</version.plugin.japicmp>
@@ -1224,12 +1224,6 @@
                                         <ignoreMissingClasses>true</ignoreMissingClasses>
                                         <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
                                         <breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
-                                        <excludes>
-                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$Binding</exclude>
-                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$ForElementMatchers</exclude>
-                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$ForFirstBinding</exclude>
-                                            <exclude>net.bytebuddy.asm.MemberSubstitution$Replacement$NoOp</exclude>
-                                        </excludes>
                                     </parameter>
                                 </configuration>
                             </execution>

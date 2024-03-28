@@ -72,6 +72,8 @@ public interface ByteCodeAppender {
         private final int localVariableSize;
 
         /**
+         * Creates a size representation.
+         *
          * @param operandStackSize  The operand stack size that is required for running given byte code.
          * @param localVariableSize The local variable array size that is required for running given byte code.
          */

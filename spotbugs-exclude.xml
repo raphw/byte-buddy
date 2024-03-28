@@ -16,4 +16,7 @@
     <Match>
         <Bug pattern="EI_EXPOSE_STATIC_REP2"/>
     </Match>
+    <Match>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
 </FindBugsFilter>
