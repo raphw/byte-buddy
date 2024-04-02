@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - uses: actions/setup-java@cd89f46ac9d01407894225f350157564c9c7cee2 # v3.12.0
         with:
-          java-version: 22-ea
+          java-version: 23-ea
           distribution: temurin
           cache: maven
       - name: Build project
@@ -68,7 +68,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [ 9, 10, 12, 13, 14, 15, 16, 18, 19, 20 ]
+        java: [ 9, 10, 12, 13, 14, 15, 16, 18, 19, 20, 22 ]
     runs-on: ubuntu-20.04
     needs: [ extended ]
     steps:
