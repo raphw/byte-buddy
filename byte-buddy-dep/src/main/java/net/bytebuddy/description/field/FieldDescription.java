@@ -371,8 +371,8 @@ public interface FieldDescription extends ModifierReviewable.ForFieldDescription
          *
          * @param declaringType       The declaring type of the field.
          * @param name                The name of the field.
-         * @param fieldType           The field's modifiers.
-         * @param modifiers           The type of the field.
+         * @param fieldType           The type of the field.
+         * @param modifiers           The field's modifiers.
          * @param declaredAnnotations The annotations of this field.
          */
         public Latent(TypeDescription declaringType,
