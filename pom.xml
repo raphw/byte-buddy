@@ -988,7 +988,7 @@
             <id>surefire-enable-dynamic-attach</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
-                <jdk>[22,)</jdk>
+                <jdk>[21,)</jdk>
             </activation>
             <properties>
                 <surefire.arguments>-XX:+EnableDynamicAgentLoading</surefire.arguments>

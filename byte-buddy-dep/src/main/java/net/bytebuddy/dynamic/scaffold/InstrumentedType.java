@@ -1842,13 +1842,16 @@ public interface InstrumentedType extends TypeDescription {
          * @return {@code true} if the given identifier is valid.
          */
         private static boolean isValidIdentifier(String identifier) {
-            if (KEYWORDS.contains(identifier) || identifier.length() == 0 || !Character.isUnicodeIdentifierStart(identifier.charAt(0))) {
+            if (KEYWORDS.contains(identifier)
+                    || identifier.length() == 0
+                    || !(Character.isJavaIdentifierStart(identifier.charAt(0))
+                    || Character.isUnicodeIdentifierStart(identifier.charAt(0)))) {
                 return false;
             } else if (identifier.equals(PackageDescription.PACKAGE_CLASS_NAME)) {
                 return true;
             }
             for (int index = 1; index < identifier.length(); index++) {
-                if (!Character.isUnicodeIdentifierPart(identifier.charAt(index))) {
+                if (!(Character.isJavaIdentifierPart(identifier.charAt(index)) || Character.isUnicodeIdentifierPart(identifier.charAt(index)))) {
                     return false;
                 }
             }
