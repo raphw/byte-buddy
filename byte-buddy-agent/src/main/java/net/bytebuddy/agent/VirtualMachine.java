@@ -1007,6 +1007,9 @@ public interface VirtualMachine {
                         throw new IllegalArgumentException("Cannot supply more then four arguments to Windows attach mechanism: " + Arrays.asList(argument));
                     }
                     String name = "\\\\.\\pipe\\javatool" + Math.abs(random.nextInt() + 1);
+
+                    WinBase.SECURITY_ATTRIBUTES sa = createSecurityAttributesToAllowMediumIntegrity();
+
                     WinNT.HANDLE pipe = Kernel32.INSTANCE.CreateNamedPipe(name,
                             WinBase.PIPE_ACCESS_INBOUND,
                             WinBase.PIPE_TYPE_BYTE | WinBase.PIPE_READMODE_BYTE | WinBase.PIPE_WAIT,
@@ -1014,7 +1017,7 @@ public interface VirtualMachine {
                             4096,
                             8192,
                             WinBase.NMPWAIT_USE_DEFAULT_WAIT,
-                            null);
+                            sa);
                     if (pipe == null) {
                         throw new Win32Exception(Native.getLastError());
                     }
@@ -1070,6 +1073,61 @@ public interface VirtualMachine {
                             throw new IllegalStateException(throwable);
                         }
                     }
+                }
+
+                /**
+                 * Custom Security Descriptor is required here to "get" Medium Integrity Level.
+                 * In order to allow Medium Integrity Level clients to open
+                 * and use a NamedPipe created by an High Integrity Level process.
+                 */
+                private WinBase.SECURITY_ATTRIBUTES createSecurityAttributesToAllowMediumIntegrity() {
+                    // Allow read/write to Everybody
+                    WinNT.PSID pSidEverybody = new WinNT.PSID(WinNT.SECURITY_MAX_SID_SIZE);
+                    if (!Advapi32.INSTANCE.CreateWellKnownSid(WinNT.WELL_KNOWN_SID_TYPE.WinWorldSid, null, pSidEverybody, new IntByReference(WinNT.SECURITY_MAX_SID_SIZE))) {
+                        throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                    }
+                    // Allow full control to System
+                    WinNT.PSID pSidSystem = new WinNT.PSID(WinNT.SECURITY_MAX_SID_SIZE);
+                    if (!Advapi32.INSTANCE.CreateWellKnownSid(WinNT.WELL_KNOWN_SID_TYPE.WinBuiltinSystemOperatorsSid, null, pSidSystem, new IntByReference(WinNT.SECURITY_MAX_SID_SIZE))) {
+                        throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                    }
+                    // Allow full control to Administrators
+                    WinNT.PSID pSidAdmin = new WinNT.PSID(WinNT.SECURITY_MAX_SID_SIZE);
+                    if (!Advapi32.INSTANCE.CreateWellKnownSid(WinNT.WELL_KNOWN_SID_TYPE.WinBuiltinAdministratorsSid, null, pSidAdmin, new IntByReference(WinNT.SECURITY_MAX_SID_SIZE))) {
+                        throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                    }
+
+                    // Prepare ACL
+                    int cbAcl = Native.getNativeSize(WinNT.ACL.class, null);
+                    cbAcl += Native.getNativeSize(WinNT.ACCESS_ALLOWED_ACE.class, null) * 3;
+                    cbAcl += (Advapi32.INSTANCE.GetLengthSid(pSidEverybody) - WinDef.DWORD.SIZE);
+                    cbAcl += (Advapi32.INSTANCE.GetLengthSid(pSidSystem) - WinDef.DWORD.SIZE);
+                    cbAcl += (Advapi32.INSTANCE.GetLengthSid(pSidAdmin) - WinDef.DWORD.SIZE);
+                    cbAcl = Advapi32Util.alignOnDWORD(cbAcl);
+                    WinNT.ACL pAcl = new WinNT.ACL(cbAcl);
+                    if (!Advapi32.INSTANCE.InitializeAcl(pAcl, cbAcl, WinNT.ACL_REVISION)) {
+                        throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                    }
+                    if (!Advapi32.INSTANCE.AddAccessAllowedAce(pAcl, WinNT.ACL_REVISION, WinNT.GENERIC_READ | WinNT.GENERIC_WRITE, pSidEverybody)) {
+                        throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                    }
+                    if (!Advapi32.INSTANCE.AddAccessAllowedAce(pAcl, WinNT.ACL_REVISION, WinNT.GENERIC_ALL, pSidSystem)) {
+                        throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                    }
+                    if (!Advapi32.INSTANCE.AddAccessAllowedAce(pAcl, WinNT.ACL_REVISION, WinNT.GENERIC_ALL, pSidAdmin)) {
+                        throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                    }
+                    WinNT.SECURITY_DESCRIPTOR sd = new WinNT.SECURITY_DESCRIPTOR(64 * 1024);
+                    if (!Advapi32.INSTANCE.InitializeSecurityDescriptor(sd, WinNT.SECURITY_DESCRIPTOR_REVISION)) {
+                        throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                    }
+                    if (!Advapi32.INSTANCE.SetSecurityDescriptorDacl(sd, true, pAcl, false)) {
+                        throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                    }
+                    WinBase.SECURITY_ATTRIBUTES sa = new WinBase.SECURITY_ATTRIBUTES();
+                    sa.dwLength = new WinDef.DWORD(sa.size());
+                    sa.lpSecurityDescriptor = sd.getPointer();
+                    return sa;
                 }
 
                 /**
