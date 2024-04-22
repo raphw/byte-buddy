@@ -1049,7 +1049,7 @@ public interface MethodDescription extends TypeVariableSource,
                 stringBuilder.append(Modifier.toString(modifiers)).append(' ');
             }
             if (isMethod()) {
-                stringBuilder.append(getReturnType().asErasure().getActualName()).append(' ');
+                stringBuilder.append('?').append(' ');
                 stringBuilder.append(getDeclaringType().asErasure().getActualName()).append('.');
             }
             return stringBuilder.append(getName()).append("(?)").toString();
