@@ -33,6 +33,7 @@ import net.bytebuddy.utility.RandomString;
 import net.bytebuddy.utility.nullability.AlwaysNull;
 import net.bytebuddy.utility.nullability.MaybeNull;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -167,7 +168,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
             if (!jar.createNewFile()) {
                 throw new IllegalStateException("Cannot create " + jar);
             }
-            JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(jar));
+            JarOutputStream outputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jar)));
             try {
                 outputStream.putNextEntry(new JarEntry(DEX_CLASS_FILE));
                 conversion.drainTo(outputStream);
