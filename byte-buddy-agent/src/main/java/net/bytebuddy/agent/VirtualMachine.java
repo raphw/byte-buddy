@@ -1076,9 +1076,10 @@ public interface VirtualMachine {
                 }
 
                 /**
-                 * Custom Security Descriptor is required here to "get" Medium Integrity Level.
+                 * Custom {@link WinBase.SECURITY_ATTRIBUTES} is required here to "get" Medium Integrity Level.
                  * In order to allow Medium Integrity Level clients to open
                  * and use a NamedPipe created by an High Integrity Level process.
+                 * @return A security attributes object that gives everyone read and write access.
                  */
                 private WinBase.SECURITY_ATTRIBUTES createSecurityAttributesToAllowMediumIntegrity() {
                     // Allow read/write to Everybody
