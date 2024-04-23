@@ -1,7 +1,19 @@
 Byte Buddy release notes
 ------------------------
 
-### 16. February 2024: version 1.14.11
+### 23. April 2024: version 1.14.14
+
+- Adjust type validation to accept additional names that are legal in the class file format.
+- Fix dynamic attach on Windows when a service user is active.
+- Avoid failure when using Android's strict mode.
+
+### 28. March 2024: version 1.14.13
+
+- Avoid resolving type variables when generic type processing is disabled.
+- Improve error message for Byte Buddy agent external attach.
+- Fix build for modular jars when using later version than Java 8.
+
+### 16. February 2024: version 1.14.12
 
 - Pin proxy class file version to avoid implicit changes when using Graal native image.
 - Add support for Java 23.
