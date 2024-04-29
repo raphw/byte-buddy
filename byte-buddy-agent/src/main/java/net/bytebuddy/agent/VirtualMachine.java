@@ -1628,6 +1628,13 @@ public interface VirtualMachine {
     class ForOpenJ9 extends AbstractBase {
 
         /**
+         * Property to indicate that the attachment does not validate that the attach file is owned by
+         * the current user. J9 requires this by its documentation but it does not appear to always be
+         * implemented.
+         */
+        public static final String IGNORE_USER = "net.bytebuddy.attach.j9.ignoreuser";
+
+        /**
          * The temporary folder for attachment files for OpenJ9 VMs.
          */
         private static final String IBM_TEMPORARY_FOLDER = "com.ibm.tools.attach.directory";
@@ -1688,10 +1695,11 @@ public interface VirtualMachine {
                             if (vmFolder == null) {
                                 throw new IllegalStateException("No descriptor files found in " + directory);
                             }
+                            boolean ignoreUser = Boolean.getBoolean(IGNORE_USER);
                             long userId = dispatcher.userId();
                             virtualMachines = new ArrayList<Properties>();
                             for (File aVmFolder : vmFolder) {
-                                if (aVmFolder.isDirectory() && dispatcher.getOwnerIdOf(aVmFolder) == userId) {
+                                if (aVmFolder.isDirectory() && (ignoreUser || dispatcher.getOwnerIdOf(aVmFolder) == userId)) {
                                     File attachInfo = new File(aVmFolder, "attachInfo");
                                     if (attachInfo.isFile()) {
                                         Properties virtualMachine = new Properties();
