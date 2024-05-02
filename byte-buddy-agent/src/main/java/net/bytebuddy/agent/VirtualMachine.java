@@ -1628,13 +1628,6 @@ public interface VirtualMachine {
     class ForOpenJ9 extends AbstractBase {
 
         /**
-         * Property to indicate that the attachment does not validate that the attach file is owned by
-         * the current user. J9 requires this by its documentation but it does not appear to always be
-         * implemented.
-         */
-        public static final String IGNORE_USER = "net.bytebuddy.attach.j9.ignoreuser";
-
-        /**
          * The temporary folder for attachment files for OpenJ9 VMs.
          */
         private static final String IBM_TEMPORARY_FOLDER = "com.ibm.tools.attach.directory";
@@ -1659,20 +1652,34 @@ public interface VirtualMachine {
         }
 
         /**
-         * Attaches to the supplied process id using the default JNA implementation.
+         * Attaches to the supplied process id using the default JNA implementation. This method will not consider
+         * attaching to VMs owned by different users than the current user.
          *
          * @param processId The process id.
          * @return A suitable virtual machine implementation.
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId) throws IOException {
+            return attach(processId, false);
+        }
+
+        /**
+         * Attaches to the supplied process id using the default JNA implementation.
+         *
+         * @param processId  The process id.
+         * @param ignoreUser {@code true} if VM processes that are owned by different users should be considered.
+         * @return A suitable virtual machine implementation.
+         * @throws IOException If an IO exception occurs during establishing the connection.
+         */
+        public static VirtualMachine attach(String processId, boolean ignoreUser) throws IOException {
             return attach(processId, 5000, Platform.isWindows()
                     ? new Dispatcher.ForJnaWindowsEnvironment()
                     : new Dispatcher.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS));
         }
 
         /**
-         * Attaches to the supplied process id.
+         * Attaches to the supplied process id. This method will not consider attaching to VMs owned by
+         * different users than the current user.
          *
          * @param processId  The process id.
          * @param timeout    The timeout for establishing the socket connection.
@@ -1681,6 +1688,20 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId, int timeout, Dispatcher dispatcher) throws IOException {
+            return attach(processId, timeout, dispatcher, false);
+        }
+
+        /**
+         * Attaches to the supplied process id.
+         *
+         * @param processId  The process id.
+         * @param timeout    The timeout for establishing the socket connection.
+         * @param dispatcher The connector to use to communicate with the target VM.
+         * @param ignoreUser {@code true} if VM processes that are owned by different users should be considered.
+         * @return A suitable virtual machine implementation.
+         * @throws IOException If an IO exception occurs during establishing the connection.
+         */
+        public static VirtualMachine attach(String processId, int timeout, Dispatcher dispatcher, boolean ignoreUser) throws IOException {
             File directory = new File(System.getProperty(IBM_TEMPORARY_FOLDER, dispatcher.getTemporaryFolder(processId)), ".com_ibm_tools_attach");
             RandomAccessFile attachLock = new RandomAccessFile(new File(directory, "_attachlock"), "rw");
             try {
@@ -1695,7 +1716,6 @@ public interface VirtualMachine {
                             if (vmFolder == null) {
                                 throw new IllegalStateException("No descriptor files found in " + directory);
                             }
-                            boolean ignoreUser = Boolean.getBoolean(IGNORE_USER);
                             long userId = dispatcher.userId();
                             virtualMachines = new ArrayList<Properties>();
                             for (File aVmFolder : vmFolder) {
