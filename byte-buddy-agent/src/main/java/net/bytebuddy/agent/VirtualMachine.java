@@ -1839,6 +1839,11 @@ public interface VirtualMachine {
             }
         }
 
+        /**
+         * Returns the userUid present in the virtualMachine properties file
+         * @param virtualMachine Properties of the J9 attachInfo file
+         * @return the userUid if it can be parsed, <code>0L</code> otherwise.
+         */
         private static long getUserId(Properties virtualMachine) {
             long targetUserId;
             try {
