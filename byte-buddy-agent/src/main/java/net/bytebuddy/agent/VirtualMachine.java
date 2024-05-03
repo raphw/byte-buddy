@@ -1662,7 +1662,7 @@ public interface VirtualMachine {
         public static VirtualMachine attach(String processId) throws IOException {
             return attach(processId, 5000, Platform.isWindows()
                     ? new Dispatcher.ForJnaWindowsEnvironment()
-                    : new Dispatcher.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS), ignoreUser);
+                    : new Dispatcher.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS));
         }
 
         /**
@@ -1692,7 +1692,7 @@ public interface VirtualMachine {
                             }
                             virtualMachines = new ArrayList<Properties>();
                             for (File aVmFolder : vmFolder) {
-                                if (aVmFolder.isDirectory() && isFileOwnedByUid(dispatcher, aVmFolder, userId)) {
+                                if (aVmFolder.isDirectory() && (userId == 0L || dispatcher.getOwnerIdOf(aVmFolder) == userId)) {
                                     File attachInfo = new File(aVmFolder, "attachInfo");
                                     if (attachInfo.isFile()) {
                                         Properties virtualMachine = new Properties();
@@ -1703,7 +1703,12 @@ public interface VirtualMachine {
                                             inputStream.close();
                                         }
                                         int targetProcessId = Integer.parseInt(virtualMachine.getProperty("processId"));
-                                        long targetUserId = getUserId(virtualMachine);
+                                        long targetUserId;
+                                        try {
+                                            targetUserId = Long.parseLong(virtualMachine.getProperty("userUid"));
+                                        } catch (NumberFormatException ignored) {
+                                            targetUserId = 0L;
+                                        }
                                         if (userId != 0L && targetUserId == 0L) {
                                             targetUserId = dispatcher.getOwnerIdOf(attachInfo);
                                         }
@@ -1750,13 +1755,18 @@ public interface VirtualMachine {
                             key = Long.toHexString(SECURE_RANDOM.nextLong());
                         }
                         File reply = new File(receiver, "replyInfo");
-                        long targetUserId = getUserId(target);
+                        long targetUserId;
+                        try {
+                            targetUserId = Long.parseLong(target.getProperty("userUid"));
+                        } catch (NumberFormatException ignored) {
+                            targetUserId = 0L;
+                        }
                         try {
                             if (reply.createNewFile()) {
                                 dispatcher.setPermissions(reply, 0600);
                             }
-                            if (0 == userId && 0 != targetUserId) {
-                                dispatcher.chownFileToTargetUid(reply, targetUserId);
+                            if (userId == 0L && targetUserId != 0L) {
+                                dispatcher.chownFileToUser(reply, targetUserId);
                             }
                             FileOutputStream outputStream = new FileOutputStream(reply);
                             try {
@@ -1837,31 +1847,6 @@ public interface VirtualMachine {
             } finally {
                 attachLock.close();
             }
-        }
-
-        /**
-         * Returns the userUid present in the virtualMachine properties file
-         * @param virtualMachine Properties of the J9 attachInfo file
-         * @return the userUid if it can be parsed, <code>0L</code> otherwise.
-         */
-        private static long getUserId(Properties virtualMachine) {
-            long targetUserId;
-            try {
-                targetUserId = Long.parseLong(virtualMachine.getProperty("userUid"));
-            } catch (NumberFormatException ignored) {
-                targetUserId = 0L;
-            }
-            return targetUserId;
-        }
-
-        /**
-         * Check if the file is owned by the UID.  Note that UID 0 "owns" all files.
-         * @param aVmFolder File or directory
-         * @param userId user UID.
-         * @return true if the uid owns the file or uid == 0.
-         */
-        private static boolean isFileOwnedByUid(Dispatcher dispatcher, File aVmFolder, long userId) {
-            return 0 == userId || dispatcher.getOwnerIdOf(aVmFolder) == userId;
         }
 
         /**
@@ -2075,11 +2060,12 @@ public interface VirtualMachine {
             void decrementSemaphore(File directory, String name, boolean global, int count);
 
             /**
-             * change the ownership of a file.  Can be called only if this process is owned by root.
-             * @param path path to the file
-             * @param targetUserId effective userid
+             * Changes the ownership of a file. Can be called only if this process is owned by root.
+             *
+             * @param file The path of the file to change ownership of.
+             * @param userId The user that should own the file.
              */
-            void chownFileToTargetUid(File path, long targetUserId);
+            void chownFileToUser(File file, long userId);
 
             /**
              * A connector implementation for a POSIX environment using JNA.
@@ -2221,9 +2207,8 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                @Override
-                public void chownFileToTargetUid(File file, long targetUserId) {
-                    library.chown(file.getAbsolutePath(), targetUserId);
+                public void chownFileToUser(File file, long userId) {
+                    library.chown(file.getAbsolutePath(), userId);
                 }
 
                 /**
@@ -2334,12 +2319,12 @@ public interface VirtualMachine {
                     /**
                      * Runs the {@code chown} command.
                      *
-                     * @param path The file path.
-                     * @param uid The userid to set.
+                     * @param path   The file path.
+                     * @param userId The user id to set.
                      * @return The return code.
                      * @throws LastErrorException If an error occurred.
                      */
-                    int chown(String path, long uid) throws LastErrorException;
+                    int chown(String path, long userId) throws LastErrorException;
 
                     /**
                      * Runs the {@code ftok} command.
@@ -2527,8 +2512,7 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                @Override
-                public void chownFileToTargetUid(File path, long targetUserId) {
+                public void chownFileToUser(File file, long userId) {
                     /* do nothing */
                 }
 
